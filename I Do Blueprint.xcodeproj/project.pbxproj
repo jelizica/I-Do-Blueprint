@@ -6,6 +6,28 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		162469802E9051C100920873 /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 1624697F2E9051C100920873 /* Auth */; };
+		162469822E9051C100920873 /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 162469812E9051C100920873 /* Functions */; };
+		162469842E9051C100920873 /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 162469832E9051C100920873 /* PostgREST */; };
+		162469862E9051C100920873 /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 162469852E9051C100920873 /* Realtime */; };
+		162469882E9051C100920873 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 162469872E9051C100920873 /* Supabase */; };
+		1624698B2E90521200920873 /* GoogleAPIClientForREST_Drive in Frameworks */ = {isa = PBXBuildFile; productRef = 1624698A2E90521200920873 /* GoogleAPIClientForREST_Drive */; };
+		1624698D2E90521200920873 /* GoogleAPIClientForREST_Sheets in Frameworks */ = {isa = PBXBuildFile; productRef = 1624698C2E90521200920873 /* GoogleAPIClientForREST_Sheets */; };
+		162469902E90526300920873 /* AppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 1624698F2E90526300920873 /* AppAuth */; };
+		162469932E9052A300920873 /* GTMAppAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 162469922E9052A300920873 /* GTMAppAuth */; };
+		162469962E9052DB00920873 /* MarkdownUI in Frameworks */ = {isa = PBXBuildFile; productRef = 162469952E9052DB00920873 /* MarkdownUI */; };
+		162469992E90530500920873 /* SwiftUICharts in Frameworks */ = {isa = PBXBuildFile; productRef = 162469982E90530500920873 /* SwiftUICharts */; };
+		1624699C2E90533300920873 /* Lottie in Frameworks */ = {isa = PBXBuildFile; productRef = 1624699B2E90533300920873 /* Lottie */; };
+		1624699F2E90535100920873 /* AxisTooltip in Frameworks */ = {isa = PBXBuildFile; productRef = 1624699E2E90535100920873 /* AxisTooltip */; };
+		162469A22E90537500920873 /* ExyteGrid in Frameworks */ = {isa = PBXBuildFile; productRef = 162469A12E90537500920873 /* ExyteGrid */; };
+		162469A52E90539D00920873 /* SwiftUIX in Frameworks */ = {isa = PBXBuildFile; productRef = 162469A42E90539D00920873 /* SwiftUIX */; };
+		162469A82E9053E400920873 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 162469A72E9053E400920873 /* Kingfisher */; };
+		162469AB2E90540F00920873 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 162469AA2E90540F00920873 /* SwiftUIIntrospect */; };
+		162469AE2E90544A00920873 /* TPPDF in Frameworks */ = {isa = PBXBuildFile; productRef = 162469AD2E90544A00920873 /* TPPDF */; };
+		162469B12E90546B00920873 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 162469B02E90546B00920873 /* Dependencies */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		1624654D2E904FFF00920873 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +74,25 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1624698B2E90521200920873 /* GoogleAPIClientForREST_Drive in Frameworks */,
+				162469AB2E90540F00920873 /* SwiftUIIntrospect in Frameworks */,
+				162469882E9051C100920873 /* Supabase in Frameworks */,
+				162469AE2E90544A00920873 /* TPPDF in Frameworks */,
+				162469932E9052A300920873 /* GTMAppAuth in Frameworks */,
+				162469A52E90539D00920873 /* SwiftUIX in Frameworks */,
+				162469A82E9053E400920873 /* Kingfisher in Frameworks */,
+				162469902E90526300920873 /* AppAuth in Frameworks */,
+				162469842E9051C100920873 /* PostgREST in Frameworks */,
+				1624698D2E90521200920873 /* GoogleAPIClientForREST_Sheets in Frameworks */,
+				162469822E9051C100920873 /* Functions in Frameworks */,
+				162469992E90530500920873 /* SwiftUICharts in Frameworks */,
+				162469A22E90537500920873 /* ExyteGrid in Frameworks */,
+				162469802E9051C100920873 /* Auth in Frameworks */,
+				162469B12E90546B00920873 /* Dependencies in Frameworks */,
+				162469862E9051C100920873 /* Realtime in Frameworks */,
+				162469962E9052DB00920873 /* MarkdownUI in Frameworks */,
+				1624699F2E90535100920873 /* AxisTooltip in Frameworks */,
+				1624699C2E90533300920873 /* Lottie in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -112,6 +153,25 @@
 			);
 			name = "I Do Blueprint";
 			packageProductDependencies = (
+				1624697F2E9051C100920873 /* Auth */,
+				162469812E9051C100920873 /* Functions */,
+				162469832E9051C100920873 /* PostgREST */,
+				162469852E9051C100920873 /* Realtime */,
+				162469872E9051C100920873 /* Supabase */,
+				1624698A2E90521200920873 /* GoogleAPIClientForREST_Drive */,
+				1624698C2E90521200920873 /* GoogleAPIClientForREST_Sheets */,
+				1624698F2E90526300920873 /* AppAuth */,
+				162469922E9052A300920873 /* GTMAppAuth */,
+				162469952E9052DB00920873 /* MarkdownUI */,
+				162469982E90530500920873 /* SwiftUICharts */,
+				1624699B2E90533300920873 /* Lottie */,
+				1624699E2E90535100920873 /* AxisTooltip */,
+				162469A12E90537500920873 /* ExyteGrid */,
+				162469A42E90539D00920873 /* SwiftUIX */,
+				162469A72E9053E400920873 /* Kingfisher */,
+				162469AA2E90540F00920873 /* SwiftUIIntrospect */,
+				162469AD2E90544A00920873 /* TPPDF */,
+				162469B02E90546B00920873 /* Dependencies */,
 			);
 			productName = "I Do Blueprint";
 			productReference = 1624653D2E904FFC00920873 /* I Do Blueprint.app */;
@@ -195,6 +255,22 @@
 			);
 			mainGroup = 162465342E904FFC00920873;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1624697E2E9051C100920873 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+				162469892E90521200920873 /* XCRemoteSwiftPackageReference "google-api-objectivec-client-for-rest" */,
+				1624698E2E90526300920873 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */,
+				162469912E9052A300920873 /* XCRemoteSwiftPackageReference "GTMAppAuth" */,
+				162469942E9052DB00920873 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */,
+				162469972E90530500920873 /* XCRemoteSwiftPackageReference "SwiftUICharts" */,
+				1624699A2E90533300920873 /* XCRemoteSwiftPackageReference "lottie-spm" */,
+				1624699D2E90535100920873 /* XCRemoteSwiftPackageReference "AxisTooltip" */,
+				162469A02E90537500920873 /* XCRemoteSwiftPackageReference "Grid" */,
+				162469A32E90539D00920873 /* XCRemoteSwiftPackageReference "SwiftUIX" */,
+				162469A62E9053E400920873 /* XCRemoteSwiftPackageReference "Kingfisher" */,
+				162469A92E90540F00920873 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
+				162469AC2E90544A00920873 /* XCRemoteSwiftPackageReference "TPPDF" */,
+				162469AF2E90546B00920873 /* XCRemoteSwiftPackageReference "swift-dependencies" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1624653E2E904FFC00920873 /* Products */;
 			projectDirPath = "";
@@ -400,7 +476,17 @@
 				DEVELOPMENT_TEAM = UH855H4KP3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -432,7 +518,17 @@
 				DEVELOPMENT_TEAM = UH855H4KP3;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
+				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
 				ENABLE_PREVIEWS = YES;
+				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
+				ENABLE_RESOURCE_ACCESS_BLUETOOTH = NO;
+				ENABLE_RESOURCE_ACCESS_CALENDARS = NO;
+				ENABLE_RESOURCE_ACCESS_CAMERA = NO;
+				ENABLE_RESOURCE_ACCESS_CONTACTS = NO;
+				ENABLE_RESOURCE_ACCESS_LOCATION = NO;
+				ENABLE_RESOURCE_ACCESS_PRINTING = NO;
+				ENABLE_RESOURCE_ACCESS_USB = NO;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -573,6 +669,219 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1624697E2E9051C100920873 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
+		162469892E90521200920873 /* XCRemoteSwiftPackageReference "google-api-objectivec-client-for-rest" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/google-api-objectivec-client-for-rest";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+		1624698E2E90526300920873 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/openid/AppAuth-iOS.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.0.0;
+			};
+		};
+		162469912E9052A300920873 /* XCRemoteSwiftPackageReference "GTMAppAuth" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GTMAppAuth";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.0.0;
+			};
+		};
+		162469942E9052DB00920873 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/gonzalezreal/swift-markdown-ui";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.4.1;
+			};
+		};
+		162469972E90530500920873 /* XCRemoteSwiftPackageReference "SwiftUICharts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/willdale/SwiftUICharts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.10.4;
+			};
+		};
+		1624699A2E90533300920873 /* XCRemoteSwiftPackageReference "lottie-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/airbnb/lottie-spm";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.5.2;
+			};
+		};
+		1624699D2E90535100920873 /* XCRemoteSwiftPackageReference "AxisTooltip" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jasudev/AxisTooltip";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.5.0;
+			};
+		};
+		162469A02E90537500920873 /* XCRemoteSwiftPackageReference "Grid" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/exyte/Grid.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.5.0;
+			};
+		};
+		162469A32E90539D00920873 /* XCRemoteSwiftPackageReference "SwiftUIX" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SwiftUIX/SwiftUIX.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.2.4;
+			};
+		};
+		162469A62E9053E400920873 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.5.0;
+			};
+		};
+		162469A92E90540F00920873 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/siteline/SwiftUI-Introspect.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 26.0.0;
+			};
+		};
+		162469AC2E90544A00920873 /* XCRemoteSwiftPackageReference "TPPDF" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/techprimate/TPPDF";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.6.1;
+			};
+		};
+		162469AF2E90546B00920873 /* XCRemoteSwiftPackageReference "swift-dependencies" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/swift-dependencies";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1624697F2E9051C100920873 /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624697E2E9051C100920873 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		162469812E9051C100920873 /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624697E2E9051C100920873 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		162469832E9051C100920873 /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624697E2E9051C100920873 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		162469852E9051C100920873 /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624697E2E9051C100920873 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		162469872E9051C100920873 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624697E2E9051C100920873 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+		1624698A2E90521200920873 /* GoogleAPIClientForREST_Drive */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469892E90521200920873 /* XCRemoteSwiftPackageReference "google-api-objectivec-client-for-rest" */;
+			productName = GoogleAPIClientForREST_Drive;
+		};
+		1624698C2E90521200920873 /* GoogleAPIClientForREST_Sheets */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469892E90521200920873 /* XCRemoteSwiftPackageReference "google-api-objectivec-client-for-rest" */;
+			productName = GoogleAPIClientForREST_Sheets;
+		};
+		1624698F2E90526300920873 /* AppAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624698E2E90526300920873 /* XCRemoteSwiftPackageReference "AppAuth-iOS" */;
+			productName = AppAuth;
+		};
+		162469922E9052A300920873 /* GTMAppAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469912E9052A300920873 /* XCRemoteSwiftPackageReference "GTMAppAuth" */;
+			productName = GTMAppAuth;
+		};
+		162469952E9052DB00920873 /* MarkdownUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469942E9052DB00920873 /* XCRemoteSwiftPackageReference "swift-markdown-ui" */;
+			productName = MarkdownUI;
+		};
+		162469982E90530500920873 /* SwiftUICharts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469972E90530500920873 /* XCRemoteSwiftPackageReference "SwiftUICharts" */;
+			productName = SwiftUICharts;
+		};
+		1624699B2E90533300920873 /* Lottie */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624699A2E90533300920873 /* XCRemoteSwiftPackageReference "lottie-spm" */;
+			productName = Lottie;
+		};
+		1624699E2E90535100920873 /* AxisTooltip */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1624699D2E90535100920873 /* XCRemoteSwiftPackageReference "AxisTooltip" */;
+			productName = AxisTooltip;
+		};
+		162469A12E90537500920873 /* ExyteGrid */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469A02E90537500920873 /* XCRemoteSwiftPackageReference "Grid" */;
+			productName = ExyteGrid;
+		};
+		162469A42E90539D00920873 /* SwiftUIX */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469A32E90539D00920873 /* XCRemoteSwiftPackageReference "SwiftUIX" */;
+			productName = SwiftUIX;
+		};
+		162469A72E9053E400920873 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469A62E9053E400920873 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+		162469AA2E90540F00920873 /* SwiftUIIntrospect */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469A92E90540F00920873 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */;
+			productName = SwiftUIIntrospect;
+		};
+		162469AD2E90544A00920873 /* TPPDF */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469AC2E90544A00920873 /* XCRemoteSwiftPackageReference "TPPDF" */;
+			productName = TPPDF;
+		};
+		162469B02E90546B00920873 /* Dependencies */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 162469AF2E90546B00920873 /* XCRemoteSwiftPackageReference "swift-dependencies" */;
+			productName = Dependencies;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 162465352E904FFC00920873 /* Project object */;
 }

@@ -1,0 +1,53 @@
+//
+//  ThemeSettingsView.swift
+//  My Wedding Planning App
+//
+//  Created by Claude Code on 9/29/25.
+//
+
+import SwiftUI
+
+struct ThemeSettingsView: View {
+    @ObservedObject var viewModel: SettingsStoreV2
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            SettingsSectionHeader(
+                title: "Theme",
+                subtitle: "Appearance and color preferences",
+                sectionName: "theme",
+                isSaving: viewModel.savingSections.contains("theme"),
+                hasUnsavedChanges: viewModel.localSettings.theme != viewModel.settings.theme,
+                onSave: {
+                    Task {
+                        await viewModel.saveThemeSettings()
+                    }
+                })
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 16) {
+                SettingsRow(label: "Color Scheme") {
+                    Picker("Color Scheme", selection: $viewModel.localSettings.theme.colorScheme) {
+                        Text("Default").tag("default")
+                        Text("Blue").tag("blue")
+                        Text("Purple").tag("purple")
+                        Text("Pink").tag("pink")
+                    }
+                    .pickerStyle(.menu)
+                    .frame(maxWidth: 200)
+                }
+
+                SettingsRow(label: "Dark Mode") {
+                    Toggle("", isOn: $viewModel.localSettings.theme.darkMode)
+                        .labelsHidden()
+                }
+            }
+        }
+    }
+}
+
+#Preview {
+    ThemeSettingsView(viewModel: SettingsStoreV2())
+        .padding()
+}
