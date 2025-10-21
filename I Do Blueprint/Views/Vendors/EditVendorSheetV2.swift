@@ -257,7 +257,7 @@ struct SectionHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundColor(AppColors.Vendor.contacted)
             Text(title)
                 .font(.headline)
         }

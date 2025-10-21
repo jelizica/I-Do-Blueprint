@@ -15,7 +15,7 @@ struct VendorNotesSection: View {
             SectionHeaderV2(
                 title: "Notes",
                 icon: "note.text",
-                color: .gray
+                color: AppColors.Vendor.notContacted
             )
 
             VStack(alignment: .leading, spacing: Spacing.sm) {

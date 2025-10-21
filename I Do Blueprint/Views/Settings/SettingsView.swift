@@ -19,6 +19,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case collaboration = "Collaboration"
     case notifications = "Notifications"
     case links = "Links"
+    case apiKeys = "API Keys"
     case account = "Account"
     case featureFlags = "Feature Flags"
     case danger = "Danger Zone"
@@ -38,6 +39,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .collaboration: "person.2.badge.gearshape"
         case .notifications: "bell"
         case .links: "link"
+        case .apiKeys: "key.fill"
         case .account: "person.circle"
         case .featureFlags: "flag.fill"
         case .danger: "exclamationmark.triangle"
@@ -83,17 +85,26 @@ struct SettingsView: View {
             // Detail View
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Error/Success Messages
+                    // Error/Success Messages - Using Component Library
                     if let error = store.error {
-                        AlertMessage(message: error.localizedDescription ?? "An error occurred", type: .error) {
-                            store.clearError()
-                        }
+                        ErrorBannerView(
+                            message: error.localizedDescription ?? "An error occurred",
+                            onDismiss: {
+                                store.clearError()
+                            }
+                        )
                     }
 
                     if let success = store.successMessage {
-                        AlertMessage(message: success, type: .success) {
-                            store.clearSuccessMessage()
-                        }
+                        InfoCard(
+                            icon: "checkmark.circle.fill",
+                            title: "Success",
+                            content: success,
+                            color: .green,
+                            action: {
+                                store.clearSuccessMessage()
+                            }
+                        )
                     }
 
                     // Section Content
@@ -137,6 +148,8 @@ struct SettingsView: View {
             NotificationsSettingsView(viewModel: store)
         case .links:
             LinksSettingsView(viewModel: store)
+        case .apiKeys:
+            APIKeysSettingsView()
         case .account:
             AccountSettingsView()
         case .featureFlags:
@@ -147,55 +160,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Alert Message Component
-
-struct AlertMessage: View {
-    enum AlertType {
-        case error, success
-
-        var color: Color {
-            switch self {
-            case .error: .red
-            case .success: .green
-            }
-        }
-
-        var icon: String {
-            switch self {
-            case .error: "exclamationmark.triangle.fill"
-            case .success: "checkmark.circle.fill"
-            }
-        }
-    }
-
-    let message: String
-    let type: AlertType
-    let onDismiss: () -> Void
-
-    var body: some View {
-        HStack {
-            Image(systemName: type.icon)
-                .foregroundColor(type.color)
-
-            Text(message)
-                .font(.body)
-
-            Spacer()
-
-            Button(action: onDismiss) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding()
-        .background(type.color.opacity(0.1))
-        .cornerRadius(8)
-        .overlay(
-            RoundedRectangle(cornerRadius: 8)
-                .stroke(type.color.opacity(0.3), lineWidth: 1))
-    }
-}
+// Note: AlertMessage component replaced with ErrorBannerView and InfoCard from component library
 
 #Preview {
     SettingsView()

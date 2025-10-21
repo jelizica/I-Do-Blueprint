@@ -9,17 +9,29 @@ import Foundation
 import Supabase
 
 actor LiveTimelineRepository: TimelineRepositoryProtocol {
-    private let client = SupabaseManager.shared.client
+    private let client: SupabaseClient?
     private let logger = AppLogger.repository
+    
+    init(client: SupabaseClient? = SupabaseManager.shared.client) {
+        self.client = client
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let client = client else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return client
+    }
 
     // MARK: - Timeline Items
 
     func fetchTimelineItems() async throws -> [TimelineItem] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let items: [TimelineItem] = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("timeline_items")
                     .select("""
                         *,
@@ -47,11 +59,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func fetchTimelineItem(id: UUID) async throws -> TimelineItem? {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let items: [TimelineItem] = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("timeline_items")
                     .select("""
                         *,
@@ -67,8 +80,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.debug("Fetched timeline item in \(duration)s")
-            AnalyticsService.trackNetwork(operation: "fetchTimelineItem", outcome: .success, duration: duration)
+                        AnalyticsService.trackNetwork(operation: "fetchTimelineItem", outcome: .success, duration: duration)
 
             return items.first
         } catch {
@@ -80,11 +92,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func createTimelineItem(_ insertData: TimelineItemInsertData) async throws -> TimelineItem {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let item: TimelineItem = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("timeline_items")
                     .insert(insertData)
                     .select()
@@ -107,11 +120,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func updateTimelineItem(_ item: TimelineItem) async throws -> TimelineItem {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let updated: TimelineItem = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("timeline_items")
                     .update(item)
                     .eq("id", value: item.id)
@@ -135,11 +149,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func deleteTimelineItem(id: UUID) async throws {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("timeline_items")
                     .delete()
                     .eq("id", value: id)
@@ -160,11 +175,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     // MARK: - Milestones
 
     func fetchMilestones() async throws -> [Milestone] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let milestones: [Milestone] = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("wedding_milestones")
                     .select()
                     .order("milestone_date", ascending: true)
@@ -186,11 +202,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func fetchMilestone(id: UUID) async throws -> Milestone? {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let milestones: [Milestone] = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("wedding_milestones")
                     .select()
                     .eq("id", value: id)
@@ -200,8 +217,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.debug("Fetched milestone in \(duration)s")
-            AnalyticsService.trackNetwork(operation: "fetchMilestone", outcome: .success, duration: duration)
+                        AnalyticsService.trackNetwork(operation: "fetchMilestone", outcome: .success, duration: duration)
 
             return milestones.first
         } catch {
@@ -213,11 +229,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func createMilestone(_ insertData: MilestoneInsertData) async throws -> Milestone {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let milestone: Milestone = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("wedding_milestones")
                     .insert(insertData)
                     .select()
@@ -240,11 +257,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func updateMilestone(_ milestone: Milestone) async throws -> Milestone {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let updated: Milestone = try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("wedding_milestones")
                     .update(milestone)
                     .eq("id", value: milestone.id)
@@ -268,11 +286,12 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func deleteMilestone(id: UUID) async throws {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.client.database
+                try await client.database
                     .from("wedding_milestones")
                     .delete()
                     .eq("id", value: id)

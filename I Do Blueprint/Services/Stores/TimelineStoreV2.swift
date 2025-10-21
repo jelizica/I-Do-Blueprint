@@ -12,11 +12,8 @@ import SwiftUI
 
 @MainActor
 class TimelineStoreV2: ObservableObject {
-    @Published private(set) var timelineItems: [TimelineItem] = []
+    @Published var loadingState: LoadingState<[TimelineItem]> = .idle
     @Published private(set) var milestones: [Milestone] = []
-
-    @Published var isLoading = false
-    @Published var error: TimelineError?
 
     // View state
     @Published var viewMode: TimelineViewMode = .grouped
@@ -24,24 +21,42 @@ class TimelineStoreV2: ObservableObject {
     @Published var showCompleted = true
 
     @Dependency(\.timelineRepository) var repository
+    
+    // MARK: - Computed Properties for Backward Compatibility
+    
+    var timelineItems: [TimelineItem] {
+        loadingState.data ?? []
+    }
+    
+    var isLoading: Bool {
+        loadingState.isLoading
+    }
+    
+    var error: TimelineError? {
+        if case .error(let err) = loadingState {
+            return err as? TimelineError ?? .fetchFailed(underlying: err)
+        }
+        return nil
+    }
 
     // MARK: - Timeline Items
 
     func loadTimelineItems() async {
-        isLoading = true
-        error = nil
+        guard loadingState.isIdle || loadingState.hasError else { return }
+        
+        loadingState = .loading
 
         do {
             async let itemsResult = repository.fetchTimelineItems()
             async let milestonesResult = repository.fetchMilestones()
 
-            timelineItems = try await itemsResult
+            let fetchedItems = try await itemsResult
             milestones = try await milestonesResult
+            
+            loadingState = .loaded(fetchedItems)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(TimelineError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func refreshTimeline() async {
@@ -49,44 +64,83 @@ class TimelineStoreV2: ObservableObject {
     }
 
     func createTimelineItem(_ insertData: TimelineItemInsertData) async {
-        do {
-            let item = try await repository.createTimelineItem(insertData)
-            timelineItems.append(item)
-            timelineItems.sort { $0.itemDate < $1.itemDate }
-        } catch {
-            self.error = .createFailed(underlying: error)
-        }
+    do {
+    let item = try await repository.createTimelineItem(insertData)
+    
+    if case .loaded(var currentItems) = loadingState {
+    currentItems.append(item)
+    currentItems.sort { $0.itemDate < $1.itemDate }
+    loadingState = .loaded(currentItems)
+    }
+    
+    showSuccess("Timeline item created successfully")
+    } catch {
+    loadingState = .error(TimelineError.createFailed(underlying: error))
+    await handleError(error, operation: "create timeline item") { [weak self] in
+    await self?.createTimelineItem(insertData)
+    }
+    }
     }
 
     func updateTimelineItem(_ item: TimelineItem) async {
         // Optimistic update
-        if let index = timelineItems.firstIndex(where: { $0.id == item.id }) {
-            let original = timelineItems[index]
-            timelineItems[index] = item
+        guard case .loaded(var currentItems) = loadingState,
+              let index = currentItems.firstIndex(where: { $0.id == item.id }) else {
+            return
+        }
+        
+        let original = currentItems[index]
+        currentItems[index] = item
+        loadingState = .loaded(currentItems)
 
-            do {
-                let updated = try await repository.updateTimelineItem(item)
-                timelineItems[index] = updated
-                timelineItems.sort { $0.itemDate < $1.itemDate }
-            } catch {
-                // Rollback on error
-                timelineItems[index] = original
-                self.error = .updateFailed(underlying: error)
+        do {
+            let updated = try await repository.updateTimelineItem(item)
+            
+            if case .loaded(var items) = loadingState,
+               let idx = items.firstIndex(where: { $0.id == item.id }) {
+                items[idx] = updated
+                items.sort { $0.itemDate < $1.itemDate }
+                loadingState = .loaded(items)
+            }
+            
+            showSuccess("Timeline item updated successfully")
+        } catch {
+            // Rollback on error
+            if case .loaded(var items) = loadingState,
+               let idx = items.firstIndex(where: { $0.id == item.id }) {
+                items[idx] = original
+                loadingState = .loaded(items)
+            }
+            loadingState = .error(TimelineError.updateFailed(underlying: error))
+            await handleError(error, operation: "update timeline item") { [weak self] in
+                await self?.updateTimelineItem(item)
             }
         }
     }
 
     func deleteTimelineItem(_ item: TimelineItem) async {
         // Optimistic delete
-        guard let index = timelineItems.firstIndex(where: { $0.id == item.id }) else { return }
-        let removed = timelineItems.remove(at: index)
+        guard case .loaded(var currentItems) = loadingState,
+              let index = currentItems.firstIndex(where: { $0.id == item.id }) else {
+            return
+        }
+        
+        let removed = currentItems.remove(at: index)
+        loadingState = .loaded(currentItems)
 
         do {
             try await repository.deleteTimelineItem(id: item.id)
+            showSuccess("Timeline item deleted successfully")
         } catch {
             // Rollback on error
-            timelineItems.insert(removed, at: index)
-            self.error = .deleteFailed(underlying: error)
+            if case .loaded(var items) = loadingState {
+                items.insert(removed, at: index)
+                loadingState = .loaded(items)
+            }
+            loadingState = .error(TimelineError.deleteFailed(underlying: error))
+            await handleError(error, operation: "delete timeline item") { [weak self] in
+                await self?.deleteTimelineItem(item)
+            }
         }
     }
 
@@ -105,7 +159,7 @@ class TimelineStoreV2: ObservableObject {
             milestones.append(milestone)
             milestones.sort { $0.milestoneDate < $1.milestoneDate }
         } catch {
-            self.error = .createFailed(underlying: error)
+            loadingState = .error(TimelineError.createFailed(underlying: error))
         }
     }
 
@@ -122,7 +176,7 @@ class TimelineStoreV2: ObservableObject {
             } catch {
                 // Rollback on error
                 milestones[index] = original
-                self.error = .updateFailed(underlying: error)
+                loadingState = .error(TimelineError.updateFailed(underlying: error))
             }
         }
     }
@@ -137,7 +191,7 @@ class TimelineStoreV2: ObservableObject {
         } catch {
             // Rollback on error
             milestones.insert(removed, at: index)
-            self.error = .deleteFailed(underlying: error)
+            loadingState = .error(TimelineError.deleteFailed(underlying: error))
         }
     }
 
@@ -205,6 +259,55 @@ class TimelineStoreV2: ObservableObject {
     }
 
     var upcomingMilestones: [Milestone] {
-        milestones.filter { !$0.completed }
+        let now = Date()
+        return milestones
+            .filter { !$0.completed && $0.milestoneDate >= now }
+            .sorted(by: { $0.milestoneDate < $1.milestoneDate })
+    }
+
+    // MARK: - Helper Methods
+
+    func groupedItemsByMonth() -> [String: [TimelineItem]] {
+        var grouped: [String: [TimelineItem]] = [:]
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+
+        for item in filteredItems {
+            let key = formatter.string(from: item.itemDate)
+            if grouped[key] == nil {
+                grouped[key] = []
+            }
+            grouped[key]?.append(item)
+        }
+
+        return grouped
+    }
+
+    func sortedMonthKeys() -> [String] {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+
+        return groupedItemsByMonth().keys.sorted { month1, month2 in
+            guard let date1 = formatter.date(from: month1),
+                  let date2 = formatter.date(from: month2) else {
+                return month1 < month2
+            }
+            return date1 < date2
+        }
+    }
+
+    func clearFilters() {
+        filterType = nil
+        showCompleted = true
+    }
+
+    func completedItemsCount() -> Int {
+        filteredItems.filter(\.completed).count
+    }
+    
+    // MARK: - Retry Helper
+    
+    func retryLoad() async {
+        await loadTimelineItems()
     }
 }

@@ -21,6 +21,7 @@ class VisualPlanningStoreV2: ObservableObject {
     @Published var selectedSeatingChart: SeatingChart?
 
     @Published var isLoading = false
+    @Published private(set) var hasLoaded = false
     @Published var error: VisualPlanningError?
 
     // Sheet presentation
@@ -51,8 +52,12 @@ class VisualPlanningStoreV2: ObservableObject {
         do {
             let created = try await repository.createMoodBoard(moodBoard)
             moodBoards.insert(created, at: 0)
+            showSuccess("Mood board created successfully")
         } catch {
             self.error = .createFailed(underlying: error)
+            await handleError(error, operation: "create mood board") { [weak self] in
+                await self?.createMoodBoard(moodBoard)
+            }
         }
     }
 
@@ -65,10 +70,14 @@ class VisualPlanningStoreV2: ObservableObject {
             do {
                 let updated = try await repository.updateMoodBoard(moodBoard)
                 moodBoards[index] = updated
+                showSuccess("Mood board updated successfully")
             } catch {
                 // Rollback on error
                 moodBoards[index] = original
                 self.error = .updateFailed(underlying: error)
+                await handleError(error, operation: "update mood board") { [weak self] in
+                    await self?.updateMoodBoard(moodBoard)
+                }
             }
         }
     }
@@ -80,10 +89,14 @@ class VisualPlanningStoreV2: ObservableObject {
 
         do {
             try await repository.deleteMoodBoard(id: moodBoard.id)
+            showSuccess("Mood board deleted successfully")
         } catch {
             // Rollback on error
             moodBoards.insert(removed, at: index)
             self.error = .deleteFailed(underlying: error)
+            await handleError(error, operation: "delete mood board") { [weak self] in
+                await self?.deleteMoodBoard(moodBoard)
+            }
         }
     }
 
@@ -106,8 +119,12 @@ class VisualPlanningStoreV2: ObservableObject {
         do {
             let created = try await repository.createColorPalette(palette)
             colorPalettes.insert(created, at: 0)
+            showSuccess("Color palette created successfully")
         } catch {
             self.error = .createFailed(underlying: error)
+            await handleError(error, operation: "create color palette") { [weak self] in
+                await self?.createColorPalette(palette)
+            }
         }
     }
 
@@ -120,10 +137,14 @@ class VisualPlanningStoreV2: ObservableObject {
             do {
                 let updated = try await repository.updateColorPalette(palette)
                 colorPalettes[index] = updated
+                showSuccess("Color palette updated successfully")
             } catch {
                 // Rollback on error
                 colorPalettes[index] = original
                 self.error = .updateFailed(underlying: error)
+                await handleError(error, operation: "update color palette") { [weak self] in
+                    await self?.updateColorPalette(palette)
+                }
             }
         }
     }
@@ -135,10 +156,14 @@ class VisualPlanningStoreV2: ObservableObject {
 
         do {
             try await repository.deleteColorPalette(id: palette.id)
+            showSuccess("Color palette deleted successfully")
         } catch {
             // Rollback on error
             colorPalettes.insert(removed, at: index)
             self.error = .deleteFailed(underlying: error)
+            await handleError(error, operation: "delete color palette") { [weak self] in
+                await self?.deleteColorPalette(palette)
+            }
         }
     }
 
@@ -180,8 +205,12 @@ class VisualPlanningStoreV2: ObservableObject {
         do {
             let created = try await repository.createSeatingChart(chart)
             seatingCharts.insert(created, at: 0)
+            showSuccess("Seating chart created successfully")
         } catch {
             self.error = .createFailed(underlying: error)
+            await handleError(error, operation: "create seating chart") { [weak self] in
+                await self?.createSeatingChart(chart)
+            }
         }
     }
 
@@ -194,10 +223,14 @@ class VisualPlanningStoreV2: ObservableObject {
             do {
                 let updated = try await repository.updateSeatingChart(chart)
                 seatingCharts[index] = updated
+                showSuccess("Seating chart updated successfully")
             } catch {
                 // Rollback on error
                 seatingCharts[index] = original
                 self.error = .updateFailed(underlying: error)
+                await handleError(error, operation: "update seating chart") { [weak self] in
+                    await self?.updateSeatingChart(chart)
+                }
             }
         }
     }
@@ -209,10 +242,14 @@ class VisualPlanningStoreV2: ObservableObject {
 
         do {
             try await repository.deleteSeatingChart(id: chart.id)
+            showSuccess("Seating chart deleted successfully")
         } catch {
             // Rollback on error
             seatingCharts.insert(removed, at: index)
             self.error = .deleteFailed(underlying: error)
+            await handleError(error, operation: "delete seating chart") { [weak self] in
+                await self?.deleteSeatingChart(chart)
+            }
         }
     }
 

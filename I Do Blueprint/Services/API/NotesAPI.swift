@@ -9,21 +9,29 @@ import Foundation
 import Supabase
 
 class NotesAPI {
-    private let supabase: SupabaseClient
+    private let supabase: SupabaseClient?
     private let logger = AppLogger.api
 
-    init(supabase: SupabaseClient = SupabaseManager.shared.client) {
+    init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     // MARK: - Fetch Notes
 
     func fetchNotes() async throws -> [Note] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Note] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .select()
                     .order("updated_at", ascending: false)
@@ -45,11 +53,12 @@ class NotesAPI {
     }
 
     func fetchNoteById(_ id: UUID) async throws -> Note {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: Note = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .select()
                     .eq("id", value: id.uuidString)
@@ -72,11 +81,12 @@ class NotesAPI {
     }
 
     func fetchNotesByType(_ type: NoteRelatedType) async throws -> [Note] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Note] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .select()
                     .eq("related_type", value: type.rawValue)
@@ -99,11 +109,12 @@ class NotesAPI {
     }
 
     func fetchNotesByRelatedEntity(type: NoteRelatedType, relatedId: String) async throws -> [Note] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Note] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .select()
                     .eq("related_type", value: type.rawValue)
@@ -129,6 +140,8 @@ class NotesAPI {
     // MARK: - Create Note
 
     func createNote(_ data: NoteInsertData) async throws -> Note {
+        let client = try getClient()
+        
         struct NoteInsert: Encodable {
             let coupleId: String
             let title: String?
@@ -156,7 +169,7 @@ class NotesAPI {
 
         do {
             let response: Note = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .insert(insertData)
                     .select()
@@ -181,6 +194,8 @@ class NotesAPI {
     // MARK: - Update Note
 
     func updateNote(_ id: UUID, data: NoteInsertData) async throws -> Note {
+        let client = try getClient()
+        
         struct NoteUpdate: Encodable {
             let title: String?
             let content: String
@@ -205,7 +220,7 @@ class NotesAPI {
 
         do {
             let response: Note = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .update(updateData)
                     .eq("id", value: id.uuidString)
@@ -231,11 +246,12 @@ class NotesAPI {
     // MARK: - Delete Note
 
     func deleteNote(_ id: UUID) async throws {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .delete()
                     .eq("id", value: id.uuidString)
@@ -256,11 +272,12 @@ class NotesAPI {
     // MARK: - Search Notes
 
     func searchNotes(query: String) async throws -> [Note] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Note] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .select()
                     .or("title.ilike.%\(query)%,content.ilike.%\(query)%")

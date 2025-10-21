@@ -14,24 +14,32 @@ struct BudgetOverviewSummaryCards: View {
     let itemCount: Int
 
     var body: some View {
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 16) {
+        LazyVGrid(
+            columns: [
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16),
+                GridItem(.flexible(), spacing: 16)
+            ],
+            spacing: 16
+        ) {
             SummaryCardView(
                 title: "Total Budget",
                 value: totalBudget,
                 icon: "dollarsign.circle",
-                color: .blue)
+                color: AppColors.Budget.allocated)
 
             SummaryCardView(
                 title: "Total Expenses",
                 value: totalExpenses,
                 icon: "receipt",
-                color: .orange)
+                color: AppColors.Budget.pending)
 
             SummaryCardView(
                 title: "Remaining",
                 value: totalRemaining,
                 icon: "target",
-                color: totalRemaining >= 0 ? .green : .red)
+                color: totalRemaining >= 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget)
 
             SummaryCardView(
                 title: "Budget Items",

@@ -9,11 +9,18 @@ import Foundation
 import Supabase
 
 class TimelineAPI {
-    private let supabase: SupabaseClient
+    private let supabase: SupabaseClient?
     private let logger = AppLogger.api
 
-    init(supabase: SupabaseClient = SupabaseManager.shared.client) {
+    init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
+    }
+
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     // MARK: - Fetch Timeline Items
@@ -50,8 +57,6 @@ class TimelineAPI {
     // MARK: - Fetch from Individual Tables
 
     private func fetchPaymentTimelineItems() async throws -> [TimelineItem] {
-        logger.debug("Fetching from paymentPlans table...")
-
         struct PaymentRow: Codable {
             let id: Int
             let vendor: String?
@@ -75,9 +80,10 @@ class TimelineAPI {
         }
 
         do {
+            let client = try getClient()
             let rows: [PaymentRow] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("paymentPlans")
+                try await client
+                    .from("payment_plans")
                     .select()
                     .execute()
                     .value
@@ -159,7 +165,6 @@ class TimelineAPI {
     }
 
     private func fetchExpenseTimelineItems() async throws -> [TimelineItem] {
-        logger.debug("Fetching from expenses table...")
         let startTime = Date()
 
         struct ExpenseRow: Codable {
@@ -187,8 +192,9 @@ class TimelineAPI {
         }
 
         do {
+            let client = try getClient()
             let rows: [ExpenseRow] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("expenses")
                     .select()
                     .execute()
@@ -242,7 +248,6 @@ class TimelineAPI {
     }
 
     private func fetchVendorTimelineItems() async throws -> [TimelineItem] {
-        logger.debug("Fetching from vendorInformation table...")
         let startTime = Date()
 
         struct VendorRow: Codable {
@@ -268,9 +273,10 @@ class TimelineAPI {
         }
 
         do {
+            let client = try getClient()
             let rows: [VendorRow] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("vendorInformation")
+                try await client
+                    .from("vendor_information")
                     .select()
                     .execute()
                     .value
@@ -322,7 +328,6 @@ class TimelineAPI {
     }
 
     private func fetchGuestTimelineItems() async throws -> [TimelineItem] {
-        logger.debug("Fetching from guest_list table...")
         let startTime = Date()
 
         struct GuestRow: Codable {
@@ -348,8 +353,9 @@ class TimelineAPI {
         }
 
         do {
+            let client = try getClient()
             let rows: [GuestRow] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("guest_list")
                     .select()
                     .execute()
@@ -404,7 +410,8 @@ class TimelineAPI {
     }
 
     func fetchTimelineItemById(_ id: UUID) async throws -> TimelineItem {
-        let response: TimelineItem = try await supabase
+        let client = try getClient()
+        let response: TimelineItem = try await client
             .from("timeline_items")
             .select()
             .eq("id", value: id.uuidString)
@@ -450,7 +457,8 @@ class TimelineAPI {
             relatedId: data.relatedId,
             description: data.description)
 
-        let response: TimelineItem = try await supabase
+        let client = try getClient()
+        let response: TimelineItem = try await client
             .from("timeline_items")
             .insert(insertData)
             .select()
@@ -493,7 +501,8 @@ class TimelineAPI {
             relatedId: data.relatedId,
             description: data.description)
 
-        let response: TimelineItem = try await supabase
+        let client = try getClient()
+        let response: TimelineItem = try await client
             .from("timeline_items")
             .update(updateData)
             .eq("id", value: id.uuidString)
@@ -506,7 +515,8 @@ class TimelineAPI {
     }
 
     func updateTimelineItemCompletion(_ id: UUID, completed: Bool) async throws -> TimelineItem {
-        let response: TimelineItem = try await supabase
+        let client = try getClient()
+        let response: TimelineItem = try await client
             .from("timeline_items")
             .update(["completed": completed])
             .eq("id", value: id.uuidString)
@@ -521,7 +531,8 @@ class TimelineAPI {
     // MARK: - Delete Timeline Item
 
     func deleteTimelineItem(_ id: UUID) async throws {
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("timeline_items")
             .delete()
             .eq("id", value: id.uuidString)
@@ -531,7 +542,8 @@ class TimelineAPI {
     // MARK: - Milestones
 
     func fetchMilestones() async throws -> [Milestone] {
-        let response: [Milestone] = try await supabase
+        let client = try getClient()
+        let response: [Milestone] = try await client
             .from("milestones")
             .select()
             .order("milestone_date", ascending: true)
@@ -542,7 +554,8 @@ class TimelineAPI {
     }
 
     func fetchMilestoneById(_ id: UUID) async throws -> Milestone {
-        let response: Milestone = try await supabase
+        let client = try getClient()
+        let response: Milestone = try await client
             .from("milestones")
             .select()
             .eq("id", value: id.uuidString)
@@ -583,7 +596,8 @@ class TimelineAPI {
             description: data.description,
             color: data.color)
 
-        let response: Milestone = try await supabase
+        let client = try getClient()
+        let response: Milestone = try await client
             .from("milestones")
             .insert(insertData)
             .select()
@@ -621,7 +635,8 @@ class TimelineAPI {
             description: data.description,
             color: data.color)
 
-        let response: Milestone = try await supabase
+        let client = try getClient()
+        let response: Milestone = try await client
             .from("milestones")
             .update(updateData)
             .eq("id", value: id.uuidString)
@@ -634,7 +649,8 @@ class TimelineAPI {
     }
 
     func updateMilestoneCompletion(_ id: UUID, completed: Bool) async throws -> Milestone {
-        let response: Milestone = try await supabase
+        let client = try getClient()
+        let response: Milestone = try await client
             .from("milestones")
             .update(["completed": completed])
             .eq("id", value: id.uuidString)
@@ -647,7 +663,8 @@ class TimelineAPI {
     }
 
     func deleteMilestone(_ id: UUID) async throws {
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("milestones")
             .delete()
             .eq("id", value: id.uuidString)

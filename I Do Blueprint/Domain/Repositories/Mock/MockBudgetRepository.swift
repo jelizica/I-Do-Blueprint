@@ -141,6 +141,29 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         return giftsAndOwed
     }
 
+    func createGiftOrOwed(_ gift: GiftOrOwed) async throws -> GiftOrOwed {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        giftsAndOwed.append(gift)
+        return gift
+    }
+
+    func updateGiftOrOwed(_ gift: GiftOrOwed) async throws -> GiftOrOwed {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        if let index = giftsAndOwed.firstIndex(where: { $0.id == gift.id }) {
+            giftsAndOwed[index] = gift
+            return gift
+        }
+        throw NSError(domain: "MockBudgetRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Gift not found"])
+    }
+
+    func deleteGiftOrOwed(id: UUID) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        giftsAndOwed.removeAll { $0.id == id }
+    }
+
     // MARK: - Budget Development
 
     var budgetDevelopmentScenarios: [SavedScenario] = []
@@ -313,6 +336,98 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         // Mock implementation - in real implementation this would set scenario_id to null
     }
+    
+    // MARK: - Expense Allocations
+    
+    private var expenseAllocations: [ExpenseAllocation] = []
+    
+    func fetchExpenseAllocations(scenarioId: String, budgetItemId: String) async throws -> [ExpenseAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return expenseAllocations.filter {
+            $0.scenarioId == scenarioId && $0.budgetItemId == budgetItemId
+        }
+    }
+    
+    func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        expenseAllocations.append(allocation)
+        return allocation
+    }
+    
+    func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        // Mock implementation - update in-memory budget items
+        if let index = budgetDevelopmentItems.firstIndex(where: { $0.id == budgetItemId }) {
+            budgetDevelopmentItems[index].linkedGiftOwedId = giftId.uuidString
+        }
+    }
+    
+    // MARK: - Gift Received Operations
+    
+    var giftsReceived: [GiftReceived] = []
+    
+    func fetchGiftsReceived() async throws -> [GiftReceived] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return giftsReceived
+    }
+    
+    func createGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        giftsReceived.append(gift)
+        return gift
+    }
+    
+    func updateGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        if let index = giftsReceived.firstIndex(where: { $0.id == gift.id }) {
+            giftsReceived[index] = gift
+        }
+        return gift
+    }
+    
+    func deleteGiftReceived(id: UUID) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        giftsReceived.removeAll { $0.id == id }
+    }
+    
+    // MARK: - Money Owed Operations
+    
+    var moneyOwed: [MoneyOwed] = []
+    
+    func fetchMoneyOwed() async throws -> [MoneyOwed] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return moneyOwed
+    }
+    
+    func createMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        moneyOwed.append(money)
+        return money
+    }
+    
+    func updateMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        if let index = moneyOwed.firstIndex(where: { $0.id == money.id }) {
+            moneyOwed[index] = money
+        }
+        return money
+    }
+    
+    func deleteMoneyOwed(id: UUID) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        moneyOwed.removeAll { $0.id == id }
+    }
 
     // MARK: - Testing Utilities
 
@@ -327,14 +442,6 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         createExpenseCalled = false
     }
 
-    func updateGiftOrOwed(_ gift: GiftOrOwed) async throws -> GiftOrOwed {
-        if let index = giftsAndOwed.firstIndex(where: { $0.id == gift.id }) {
-            giftsAndOwed[index] = gift
-            return gift
-        }
-        throw NSError(domain: "MockBudgetRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Gift not found"])
-    }
-
     /// Reset all data
     func resetData() {
         budgetSummary = nil
@@ -342,5 +449,6 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         expenses.removeAll()
         paymentSchedules.removeAll()
         giftsAndOwed.removeAll()
+        expenseAllocations.removeAll()
     }
 }

@@ -30,7 +30,7 @@ protocol TaskRepositoryProtocol: Sendable {
     func fetchTaskStats() async throws -> TaskStats
 }
 
-struct TaskStats: Equatable {
+struct TaskStats: Equatable, Codable, Sendable {
     let total: Int
     let notStarted: Int
     let inProgress: Int

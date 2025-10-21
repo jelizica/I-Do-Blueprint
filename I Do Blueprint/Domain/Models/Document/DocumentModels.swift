@@ -136,12 +136,14 @@ enum DocumentBucket: String, Codable, CaseIterable {
     case vendorProfilePics = "vendor-profile-pics"
     case invoicesAndContracts = "invoices-and-contracts"
     case moodBoardAssets = "mood-board-assets"
+    case contracts = "contracts"
 
     var displayName: String {
         switch self {
         case .vendorProfilePics: "Vendor Profile Pictures"
         case .invoicesAndContracts: "Invoices & Contracts"
         case .moodBoardAssets: "Mood Board Assets"
+        case .contracts: "Contracts"
         }
     }
 
@@ -150,6 +152,7 @@ enum DocumentBucket: String, Codable, CaseIterable {
         case .vendorProfilePics: "person.crop.circle"
         case .invoicesAndContracts: "folder.fill"
         case .moodBoardAssets: "paintpalette.fill"
+        case .contracts: "doc.text.fill"
         }
     }
 }

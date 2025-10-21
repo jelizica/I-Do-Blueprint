@@ -26,6 +26,8 @@
 		162469AB2E90540F00920873 /* SwiftUIIntrospect in Frameworks */ = {isa = PBXBuildFile; productRef = 162469AA2E90540F00920873 /* SwiftUIIntrospect */; };
 		162469AE2E90544A00920873 /* TPPDF in Frameworks */ = {isa = PBXBuildFile; productRef = 162469AD2E90544A00920873 /* TPPDF */; };
 		162469B12E90546B00920873 /* Dependencies in Frameworks */ = {isa = PBXBuildFile; productRef = 162469B02E90546B00920873 /* Dependencies */; };
+		169ADED92EA817330097916E /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 169ADED82EA817330097916E /* Sentry */; };
+		169ADEDB2EA817330097916E /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 169ADEDA2EA817330097916E /* SentrySwiftUI */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -75,6 +77,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				1624698B2E90521200920873 /* GoogleAPIClientForREST_Drive in Frameworks */,
+				169ADEDB2EA817330097916E /* SentrySwiftUI in Frameworks */,
 				162469AB2E90540F00920873 /* SwiftUIIntrospect in Frameworks */,
 				162469882E9051C100920873 /* Supabase in Frameworks */,
 				162469AE2E90544A00920873 /* TPPDF in Frameworks */,
@@ -89,6 +92,7 @@
 				162469A22E90537500920873 /* ExyteGrid in Frameworks */,
 				162469802E9051C100920873 /* Auth in Frameworks */,
 				162469B12E90546B00920873 /* Dependencies in Frameworks */,
+				169ADED92EA817330097916E /* Sentry in Frameworks */,
 				162469862E9051C100920873 /* Realtime in Frameworks */,
 				162469962E9052DB00920873 /* MarkdownUI in Frameworks */,
 				1624699F2E90535100920873 /* AxisTooltip in Frameworks */,
@@ -172,6 +176,8 @@
 				162469AA2E90540F00920873 /* SwiftUIIntrospect */,
 				162469AD2E90544A00920873 /* TPPDF */,
 				162469B02E90546B00920873 /* Dependencies */,
+				169ADED82EA817330097916E /* Sentry */,
+				169ADEDA2EA817330097916E /* SentrySwiftUI */,
 			);
 			productName = "I Do Blueprint";
 			productReference = 1624653D2E904FFC00920873 /* I Do Blueprint.app */;
@@ -270,6 +276,7 @@
 				162469A92E90540F00920873 /* XCRemoteSwiftPackageReference "SwiftUI-Introspect" */,
 				162469AC2E90544A00920873 /* XCRemoteSwiftPackageReference "TPPDF" */,
 				162469AF2E90546B00920873 /* XCRemoteSwiftPackageReference "swift-dependencies" */,
+				169ADED72EA817330097916E /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1624653E2E904FFC00920873 /* Products */;
@@ -783,6 +790,14 @@
 				minimumVersion = 1.10.0;
 			};
 		};
+		169ADED72EA817330097916E /* XCRemoteSwiftPackageReference "sentry-cocoa" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/getsentry/sentry-cocoa.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.57.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -880,6 +895,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 162469AF2E90546B00920873 /* XCRemoteSwiftPackageReference "swift-dependencies" */;
 			productName = Dependencies;
+		};
+		169ADED82EA817330097916E /* Sentry */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 169ADED72EA817330097916E /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = Sentry;
+		};
+		169ADEDA2EA817330097916E /* SentrySwiftUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 169ADED72EA817330097916E /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
+			productName = SentrySwiftUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

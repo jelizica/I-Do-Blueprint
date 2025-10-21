@@ -1,188 +1,59 @@
 import SwiftUI
 
-// MARK: - Navigation Enums
-
-enum BudgetSection: String, CaseIterable {
-    case overview = "Overview"
-    case expenses = "Expenses"
-    case payments = "Payments"
-    case giftsOwed = "Gifts & Owed"
-
-    var icon: String {
-        switch self {
-        case .overview: "chart.bar.fill"
-        case .expenses: "receipt.fill"
-        case .payments: "calendar.badge.clock"
-        case .giftsOwed: "dollarsign.circle.fill"
-        }
-    }
-}
-
-enum OverviewSubsection: String, CaseIterable {
-    case analyticsHub = "Analytics Hub"
-    case accountCashFlow = "Account Cash Flow"
-    case budgetDashboard = "Budget Dashboard"
-    case budgetDevelopment = "Budget Development"
-    case calculator = "Calculator"
-
-    var icon: String {
-        switch self {
-        case .analyticsHub: "chart.xyaxis.line"
-        case .accountCashFlow: "chart.line.uptrend.xyaxis"
-        case .budgetDashboard: "chart.bar.fill"
-        case .budgetDevelopment: "hammer.fill"
-        case .calculator: "function"
-        }
-    }
-}
-
-enum ExpenseSubsection: String, CaseIterable {
-    case expenseTracker = "Expense Tracker"
-    case expenseReports = "Expense Reports"
-    case expenseCategories = "Expense Categories"
-
-    var icon: String {
-        switch self {
-        case .expenseTracker: "receipt.fill"
-        case .expenseReports: "chart.bar.doc.horizontal.fill"
-        case .expenseCategories: "folder.fill"
-        }
-    }
-}
-
-enum PaymentSubsection: String, CaseIterable {
-    case paymentsSchedule = "Payments Schedule"
-
-    var icon: String {
-        switch self {
-        case .paymentsSchedule: "calendar.badge.clock"
-        }
-    }
-}
-
-enum GiftsOwedSubsection: String, CaseIterable {
-    case moneyTracker = "Money Tracker"
-    case moneyReceived = "Money Received"
-    case moneyOwed = "Money Owed"
-
-    var icon: String {
-        switch self {
-        case .moneyTracker: "dollarsign.circle.fill"
-        case .moneyReceived: "arrow.down.circle.fill"
-        case .moneyOwed: "arrow.up.circle.fill"
-        }
-    }
-}
-
 struct BudgetMainView: View {
-    @StateObject private var budgetStore = BudgetStoreV2()
-    @State private var selectedSection: BudgetSection = .overview
-    @State private var selectedOverviewTab: OverviewSubsection = .budgetDashboard
-    @State private var selectedExpenseTab: ExpenseSubsection = .expenseTracker
-    @State private var selectedPaymentTab: PaymentSubsection = .paymentsSchedule
-    @State private var selectedGiftsOwedTab: GiftsOwedSubsection = .moneyTracker
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
+    @State private var selectedItem: BudgetNavigationItem = .budgetDashboard
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Main section navigation (4 sections)
-            VStack(spacing: 0) {
-                HStack(spacing: 4) {
-                    ForEach(BudgetSection.allCases, id: \.self) { section in
-                        Button(action: {
-                            selectedSection = section
-                        }) {
-                            VStack(spacing: 4) {
-                                Image(systemName: section.icon)
-                                    .font(.system(size: 16, weight: selectedSection == section ? .semibold : .medium))
-                                Text(section.rawValue)
-                                    .font(.system(size: 11, weight: selectedSection == section ? .semibold : .medium))
-                            }
-                            .foregroundColor(selectedSection == section ? .accentColor : .secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
-                            .background(
-                                selectedSection == section ?
-                                    Color.accentColor.opacity(0.1) :
-                                    Color.clear)
-                            .cornerRadius(8)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-
-                // Dynamic sub-navigation based on selected section
-                Group {
-                    if selectedSection == .overview {
-                        SubNavigationView(
-                            items: OverviewSubsection.allCases,
-                            selection: $selectedOverviewTab)
-                    } else if selectedSection == .expenses {
-                        SubNavigationView(
-                            items: ExpenseSubsection.allCases,
-                            selection: $selectedExpenseTab)
-                    } else if selectedSection == .payments {
-                        SubNavigationView(
-                            items: PaymentSubsection.allCases,
-                            selection: $selectedPaymentTab)
-                    } else if selectedSection == .giftsOwed {
-                        SubNavigationView(
-                            items: GiftsOwedSubsection.allCases,
-                            selection: $selectedGiftsOwedTab)
-                    }
-                }
-            }
-            .background(
-                Color(.windowBackgroundColor)
-                    .shadow(color: .black.opacity(0.05), radius: 1, x: 0, y: 1))
-
-            // Content area
+        HStack(spacing: 0) {
+            // Sidebar with all navigation items (all 12 views accessible)
+            BudgetSidebarView(selection: $selectedItem)
+                .frame(width: 240)
+            
+            Divider()
+            
+            // Content area - all 12 views preserved
             Group {
-                switch selectedSection {
-                case .overview:
-                    switch selectedOverviewTab {
-                    case .analyticsHub:
-                        BudgetAnalyticsView()
-                    case .accountCashFlow:
-                        BudgetCashFlowView()
-                    case .budgetDashboard:
-                        BudgetOverviewDashboardViewV2()
-                    case .budgetDevelopment:
-                        BudgetDevelopmentView()
-                    case .calculator:
-                        BudgetCalculatorView()
-                    }
-                case .expenses:
-                    switch selectedExpenseTab {
-                    case .expenseTracker:
-                        ExpenseTrackerView()
-                    case .expenseReports:
-                        ExpenseReportsView()
-                    case .expenseCategories:
-                        ExpenseCategoriesView()
-                    }
-                case .payments:
-                    switch selectedPaymentTab {
-                    case .paymentsSchedule:
-                        PaymentScheduleView()
-                    }
-                case .giftsOwed:
-                    switch selectedGiftsOwedTab {
-                    case .moneyTracker:
-                        GiftsAndOwedView()
-                    case .moneyReceived:
-                        MoneyReceivedView()
-                    case .moneyOwed:
-                        MoneyOwedView()
-                    }
+                switch selectedItem {
+                // Overview group (5 views)
+                case .budgetDashboard:
+                    BudgetOverviewDashboardViewV2()
+                case .analyticsHub:
+                    BudgetAnalyticsView()
+                case .accountCashFlow:
+                    BudgetCashFlowView()
+                case .budgetDevelopment:
+                    BudgetDevelopmentView()
+                case .calculator:
+                    BudgetCalculatorView()
+
+                // Expenses group (3 views)
+                case .expenseTracker:
+                    ExpenseTrackerView()
+                case .expenseReports:
+                    ExpenseReportsView()
+                case .expenseCategories:
+                    ExpenseCategoriesView()
+
+                // Payments group (1 view)
+                case .paymentSchedule:
+                    PaymentScheduleView()
+
+                // Gifts & Owed group (3 views)
+                case .moneyTracker:
+                    GiftsAndOwedView()
+                case .moneyReceived:
+                    MoneyReceivedView()
+                case .moneyOwed:
+                    MoneyOwedView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .navigationTitle(selectedItem.title)
         }
         .environmentObject(budgetStore)
         .onAppear {
-            // Trigger initial data load that both views can access
             Task {
                 await budgetStore.loadBudgetData()
             }
@@ -483,59 +354,6 @@ struct EventSettingsView: View {
         }
     }
 }
-
-// MARK: - Sub Navigation Component
-
-struct SubNavigationView<T: RawRepresentable & CaseIterable & Hashable>: View where T.RawValue == String,
-    T: SubNavigationItem {
-    let items: [T]
-    @Binding var selection: T
-
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(items, id: \.self) { item in
-                Button(action: {
-                    selection = item
-                }) {
-                    HStack(spacing: 6) {
-                        Image(systemName: item.icon)
-                            .font(.system(size: 12, weight: .medium))
-                        Text(item.rawValue)
-                            .font(.system(size: 12, weight: .medium))
-                    }
-                    .foregroundColor(selection == item ? .white : .secondary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
-                        selection == item ?
-                            Color.accentColor :
-                            Color.clear)
-                    .cornerRadius(16)
-                }
-                .buttonStyle(.plain)
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
-        .background(
-            LinearGradient(
-                colors: [Color.accentColor.opacity(0.05), Color.clear],
-                startPoint: .top,
-                endPoint: .bottom))
-    }
-}
-
-// MARK: - Protocol for Sub Navigation Items
-
-protocol SubNavigationItem {
-    var icon: String { get }
-}
-
-extension OverviewSubsection: SubNavigationItem {}
-extension ExpenseSubsection: SubNavigationItem {}
-extension PaymentSubsection: SubNavigationItem {}
-extension GiftsOwedSubsection: SubNavigationItem {}
 
 #Preview {
     BudgetMainView()

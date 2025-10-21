@@ -31,10 +31,10 @@ struct ModernGuestListView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             } else if guests.isEmpty {
                 if isSearching {
-                    SearchEmptyStateView(searchText: "", onClearSearch: onClearSearch)
+                    UnifiedEmptyStateView(config: .searchResults(query: ""))
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 } else {
-                    EmptyGuestListView()
+                    UnifiedEmptyStateView(config: .guests(onAdd: {}))
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 }
             } else {
@@ -60,6 +60,7 @@ struct ModernGuestListView: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
+                                .id(guest.id)
                                 .transition(.asymmetric(
                                     insertion: .move(edge: .leading).combined(with: .opacity),
                                     removal: .opacity

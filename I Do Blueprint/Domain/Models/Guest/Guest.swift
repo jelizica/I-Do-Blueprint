@@ -38,10 +38,10 @@ enum RSVPStatus: String, CaseIterable, Codable {
 
     var color: Color {
         switch self {
-        case .attending, .confirmed: .green
-        case .declined: .red
-        case .maybe: .yellow
-        default: .gray
+        case .attending, .confirmed: AppColors.Guest.confirmed
+        case .declined: AppColors.Guest.declined
+        case .maybe, .pending: AppColors.Guest.pending
+        case .invited, .saveTheDateSent, .invitationSent, .reminded, .noResponse: AppColors.Guest.invited
         }
     }
 }
@@ -96,7 +96,7 @@ enum PreferredContactMethod: String, CaseIterable, Codable {
     }
 }
 
-struct Guest: Identifiable, Codable, Hashable {
+struct Guest: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
     let createdAt: Date
     var updatedAt: Date
@@ -191,7 +191,7 @@ struct Guest: Identifiable, Codable, Hashable {
 }
 
 // Guest statistics for dashboard
-struct GuestStats: Codable, Equatable {
+struct GuestStats: Codable, Equatable, Sendable {
     let totalGuests: Int
     let attendingGuests: Int
     let pendingGuests: Int
@@ -208,7 +208,7 @@ struct GuestStats: Codable, Equatable {
 }
 
 // Guest group model
-struct GuestGroup: Identifiable, Codable, Hashable {
+struct GuestGroup: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
     let createdAt: Date
     var updatedAt: Date

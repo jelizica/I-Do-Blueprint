@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TimelineViewV2: View {
-    @StateObject private var viewModel = TimelineViewModel()
+    @EnvironmentObject private var store: TimelineStoreV2
     @State private var showingItemModal = false
     @State private var showingMilestoneModal = false
     @State private var selectedItem: TimelineItem?
@@ -22,16 +22,14 @@ struct TimelineViewV2: View {
     var body: some View {
         NavigationStack {
             Group {
-                if viewModel.isLoading, viewModel.timelineItems.isEmpty {
+                if store.isLoading, store.timelineItems.isEmpty {
                     loadingView
                         .onAppear {
-                            logger.debug("Showing loading view - isLoading: \(viewModel.isLoading), timelineItems: \(viewModel.timelineItems.count)")
-                        }
+                                                    }
                 } else {
                     contentView
                         .onAppear {
-                            logger.debug("Showing content view - isLoading: \(viewModel.isLoading), timelineItems: \(viewModel.timelineItems.count), filteredItems: \(viewModel.filteredItems.count)")
-                        }
+                                                    }
                 }
             }
             .navigationTitle("Timeline")
@@ -45,9 +43,17 @@ struct TimelineViewV2: View {
                     item: selectedItem,
                     onSave: { data in
                         if let item = selectedItem {
-                            await viewModel.updateTimelineItem(item.id, data: data)
+                            var updatedItem = item
+                            updatedItem.title = data.title
+                            updatedItem.description = data.description
+                            updatedItem.itemType = data.itemType
+                            updatedItem.itemDate = data.itemDate
+                            updatedItem.endDate = data.endDate
+                            updatedItem.completed = data.completed
+                            updatedItem.relatedId = data.relatedId
+                            await store.updateTimelineItem(updatedItem)
                         } else {
-                            await viewModel.createTimelineItem(data)
+                            await store.createTimelineItem(data)
                         }
                         selectedItem = nil
                     },
@@ -60,9 +66,15 @@ struct TimelineViewV2: View {
                     milestone: selectedMilestone,
                     onSave: { data in
                         if let milestone = selectedMilestone {
-                            await viewModel.updateMilestone(milestone.id, data: data)
+                            var updatedMilestone = milestone
+                            updatedMilestone.milestoneName = data.milestoneName
+                            updatedMilestone.description = data.description
+                            updatedMilestone.milestoneDate = data.milestoneDate
+                            updatedMilestone.color = data.color
+                            updatedMilestone.completed = data.completed
+                            await store.updateMilestone(updatedMilestone)
                         } else {
-                            await viewModel.createMilestone(data)
+                            await store.createMilestone(data)
                         }
                         selectedMilestone = nil
                     },
@@ -71,34 +83,24 @@ struct TimelineViewV2: View {
                     })
             }
             .sheet(isPresented: $showingFilters) {
-                TimelineFiltersView(viewModel: viewModel)
+                TimelineFiltersView(store: store)
             }
             .task {
-                logger.debug("About to call load()")
-                await viewModel.load()
-                logger.debug("Load completed - timelineItems: \(viewModel.timelineItems.count), filteredItems: \(viewModel.filteredItems.count)")
-            }
+                                await store.loadTimelineItems()
+                            }
             .onAppear {
                 Task {
-                    logger.debug("View appeared - refreshing data")
-                    await viewModel.refresh()
+                                        await store.refreshTimeline()
                 }
             }
         }
     }
 
-    // MARK: - Loading View
+    // MARK: - Loading View - Using Component Library
 
     private var loadingView: some View {
-        ScrollView {
-            VStack(spacing: Spacing.lg) {
-                ForEach(0..<6, id: \.self) { _ in
-                    TimelineItemSkeleton()
-                }
-            }
-            .padding(Spacing.lg)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        LoadingView(message: "Loading timeline...")
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     // MARK: - Toolbar
@@ -109,10 +111,10 @@ struct TimelineViewV2: View {
                 Image(systemName: "line.3.horizontal.decrease.circle")
             }
 
-            Button(action: { Task { await viewModel.refresh() } }) {
+            Button(action: { Task { await store.refreshTimeline() } }) {
                 Image(systemName: "arrow.clockwise")
             }
-            .disabled(viewModel.isLoading)
+            .disabled(store.isLoading)
 
             Menu {
                 Button("Add Timeline Item") {
@@ -141,8 +143,8 @@ struct TimelineViewV2: View {
 
                     // Horizontal Timeline Graph
                     HorizontalTimelineGraph(
-                        items: viewModel.filteredItems,
-                        milestones: viewModel.milestones,
+                        items: store.filteredItems,
+                        milestones: store.milestones,
                         onSelectItem: { item in
                             selectedItem = item
                             showingItemModal = true
@@ -182,22 +184,21 @@ struct TimelineViewV2: View {
                 HStack(spacing: 24) {
                     statBadge(
                         title: "Total Events",
-                        value: "\(viewModel.filteredItems.count)",
+                        value: "\(store.filteredItems.count)",
                         icon: "calendar"
                     )
                     .onAppear {
-                        logger.debug("Header rendered - filteredItems: \(viewModel.filteredItems.count), timelineItems: \(viewModel.timelineItems.count)")
-                    }
+                                            }
 
                     statBadge(
                         title: "Milestones",
-                        value: "\(viewModel.milestones.count)",
+                        value: "\(store.milestones.count)",
                         icon: "star.fill"
                     )
 
                     statBadge(
                         title: "Completed",
-                        value: "\(viewModel.completedItemsCount())",
+                        value: "\(store.completedItemsCount())",
                         icon: "checkmark.circle.fill"
                     )
                 }
@@ -209,6 +210,8 @@ struct TimelineViewV2: View {
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
     }
 
+    // Note: statBadge could be replaced with CompactSummaryCard from component library
+    // Keeping as-is for now since it's a simple inline component
     private func statBadge(title: String, value: String, icon: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             HStack(spacing: 6) {
@@ -253,7 +256,7 @@ struct TimelineViewV2: View {
     }
 
     private func itemsByType(_ type: TimelineItemType) -> [TimelineItem]? {
-        let items = viewModel.filteredItems.filter { $0.itemType == type }
+        let items = store.filteredItems.filter { $0.itemType == type }
         return items.isEmpty ? nil : items
     }
 }
@@ -580,14 +583,6 @@ struct EventCard: View {
         .frame(width: 180)
         .background(Color(NSColor.windowBackgroundColor))
         .cornerRadius(8)
-    }
-}
-
-// MARK: - ViewModel Extension
-
-extension TimelineViewModel {
-    func completedItemsCount() -> Int {
-        filteredItems.filter(\.completed).count
     }
 }
 

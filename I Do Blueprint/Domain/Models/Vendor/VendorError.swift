@@ -70,4 +70,18 @@ enum VendorError: LocalizedError {
             return nil
         }
     }
+
+    /// Indicates whether this error is transient and can be retried
+    var isRetryable: Bool {
+        switch self {
+        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed:
+            return true
+        case .networkUnavailable:
+            return true
+        case .contractUploadFailed:
+            return true
+        case .notFound, .validationFailed, .unauthorized, .duplicateVendor, .invalidContact, .categoryNotFound:
+            return false
+        }
+    }
 }

@@ -70,7 +70,10 @@ struct RemoteFeatureFlagProvider: FeatureFlagProvider {
         let logger = AppLogger.general
 
         do {
-            let client = SupabaseManager.shared.client
+            guard let client = SupabaseManager.shared.client else {
+                logger.warning("Supabase client not available - using cached/default feature flags")
+                return
+            }
 
             // Query the current_feature_flags view for the active flags
             let response: FeatureFlagsResponse = try await client

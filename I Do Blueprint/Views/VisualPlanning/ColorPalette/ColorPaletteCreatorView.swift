@@ -367,8 +367,7 @@ struct ColorPaletteCreatorView: View {
             description: "Custom \(currentHarmonyType.displayName) palette",
             isDefault: false)
 
-        logger.debug("Saving palette: \(newPalette.name)")
-        Task {
+                Task {
             await visualPlanningStore.createColorPalette(newPalette)
             dismiss()
         }

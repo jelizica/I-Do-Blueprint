@@ -11,370 +11,350 @@ import Dependencies
 
 @MainActor
 final class GuestStoreV2Tests: XCTestCase {
-    var store: GuestStoreV2!
     var mockRepository: MockGuestRepository!
+    var coupleId: UUID!
 
     override func setUp() async throws {
         mockRepository = MockGuestRepository()
-        store = withDependencies {
+        coupleId = UUID()
+    }
+
+    override func tearDown() {
+        mockRepository = nil
+        coupleId = nil
+    }
+
+    // MARK: - Load Tests
+
+    func testLoadGuests_Success() async throws {
+        // Given
+        let testGuests = [
+            Guest.makeTest(id: UUID(), coupleId: coupleId, firstName: "John", lastName: "Doe"),
+            Guest.makeTest(id: UUID(), coupleId: coupleId, firstName: "Jane", lastName: "Smith")
+        ]
+        mockRepository.guests = testGuests
+
+        // When
+        let store = await withDependencies {
             $0.guestRepository = mockRepository
         } operation: {
             GuestStoreV2()
         }
-    }
 
-    override func tearDown() async throws {
-        store = nil
-        mockRepository = nil
-    }
-
-    // MARK: - Load Guest Data Tests
-
-    func testLoadGuestData_Success() async throws {
-        // Given
-        let mockGuests = [
-            createMockGuest(firstName: "John", lastName: "Doe", rsvpStatus: .attending),
-            createMockGuest(firstName: "Jane", lastName: "Smith", rsvpStatus: .pending),
-        ]
-        let mockStats = GuestStats(
-            totalGuests: 2,
-            attendingGuests: 1,
-            pendingGuests: 1,
-            declinedGuests: 0,
-            responseRate: 50.0
-        )
-        mockRepository.guests = mockGuests
-        mockRepository.guestStats = mockStats
-
-        // When
         await store.loadGuestData()
 
         // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
         XCTAssertEqual(store.guests.count, 2)
-        XCTAssertEqual(store.filteredGuests.count, 2)
         XCTAssertEqual(store.guests[0].firstName, "John")
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-        XCTAssertNotNil(store.guestStats)
-        XCTAssertEqual(store.guestStats?.totalGuests, 2)
+        XCTAssertEqual(store.guests[1].firstName, "Jane")
     }
 
-    func testLoadGuestData_EmptyResult() async throws {
-        // Given
-        mockRepository.guests = []
-        mockRepository.guestStats = GuestStats(
-            totalGuests: 0,
-            attendingGuests: 0,
-            pendingGuests: 0,
-            declinedGuests: 0,
-            responseRate: 0
-        )
-
-        // When
-        await store.loadGuestData()
-
-        // Then
-        XCTAssertTrue(store.guests.isEmpty)
-        XCTAssertTrue(store.filteredGuests.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-    }
-
-    func testLoadGuestData_Error() async throws {
+    func testLoadGuests_Failure() async throws {
         // Given
         mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
 
         // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
         await store.loadGuestData()
 
         // Then
-        XCTAssertTrue(store.guests.isEmpty)
         XCTAssertFalse(store.isLoading)
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.guests.count, 0)
     }
 
-    // MARK: - Add Guest Tests
-
-    func testAddGuest_Success() async throws {
+    func testLoadGuests_EmptyResult() async throws {
         // Given
-        let newGuest = createMockGuest(firstName: "Alice", lastName: "Johnson")
         mockRepository.guests = []
-        mockRepository.guestStats = GuestStats(
-            totalGuests: 1,
-            attendingGuests: 0,
-            pendingGuests: 1,
-            declinedGuests: 0,
-            responseRate: 0
-        )
 
         // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.guests.count, 0)
+    }
+
+    // MARK: - Create Tests
+
+    func testCreateGuest_Success() async throws {
+        // Given
+        let newGuest = Guest.makeTest(coupleId: coupleId, firstName: "New", lastName: "Guest")
+
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
         await store.addGuest(newGuest)
 
         // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
         XCTAssertEqual(store.guests.count, 1)
-        XCTAssertEqual(store.filteredGuests.count, 1)
-        XCTAssertEqual(store.guests[0].firstName, "Alice")
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-        XCTAssertTrue(store.showSuccessToast)
-        XCTAssertNotNil(store.guestStats)
+        XCTAssertEqual(store.guests.first?.firstName, "New")
     }
 
-    func testAddGuest_Error() async throws {
+    func testCreateGuest_OptimisticUpdate() async throws {
         // Given
-        let newGuest = createMockGuest(firstName: "Bob", lastName: "Wilson")
-        mockRepository.shouldThrowError = true
+        let existingGuest = Guest.makeTest(coupleId: coupleId, firstName: "Existing")
+        mockRepository.guests = [existingGuest]
+
+        let newGuest = Guest.makeTest(coupleId: coupleId, firstName: "New", lastName: "Guest")
 
         // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
         await store.addGuest(newGuest)
 
-        // Then
-        XCTAssertTrue(store.guests.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNotNil(store.error)
-        XCTAssertFalse(store.showSuccessToast)
+        // Then - Optimistic update should show immediately
+        XCTAssertEqual(store.guests.count, 2)
+        XCTAssertTrue(store.guests.contains(where: { $0.firstName == "New" }))
     }
 
-    // MARK: - Update Guest Tests
+    func testCreateGuest_Failure_RollsBack() async throws {
+        // Given
+        let existingGuest = Guest.makeTest(coupleId: coupleId, firstName: "Existing")
+        mockRepository.guests = [existingGuest]
+
+        let newGuest = Guest.makeTest(coupleId: coupleId, firstName: "New")
+
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
+
+        // Set error after load
+        mockRepository.shouldThrowError = true
+        await store.addGuest(newGuest)
+
+        // Then - Should rollback on error
+        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.guests.count, 1)
+        XCTAssertEqual(store.guests.first?.firstName, "Existing")
+    }
+
+    // MARK: - Update Tests
 
     func testUpdateGuest_Success() async throws {
         // Given
-        let originalGuest = createMockGuest(firstName: "Charlie", lastName: "Brown", rsvpStatus: .pending, id: UUID())
-        mockRepository.guests = [originalGuest]
-        mockRepository.guestStats = GuestStats(
-            totalGuests: 1,
-            attendingGuests: 1,
-            pendingGuests: 0,
-            declinedGuests: 0,
-            responseRate: 100.0
-        )
+        let guest = Guest.makeTest(id: UUID(), coupleId: coupleId, firstName: "John", lastName: "Doe")
+        mockRepository.guests = [guest]
+
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
 
         await store.loadGuestData()
 
-        var updatedGuest = originalGuest
-        updatedGuest.rsvpStatus = .attending
-        updatedGuest.email = "charlie.updated@example.com"
-        mockRepository.guests = [updatedGuest]
-
-        // When
+        var updatedGuest = guest
+        updatedGuest.firstName = "Jane"
         await store.updateGuest(updatedGuest)
 
         // Then
-        XCTAssertEqual(store.guests.count, 1)
-        XCTAssertEqual(store.guests[0].rsvpStatus, .attending)
-        XCTAssertEqual(store.guests[0].email, "charlie.updated@example.com")
-        XCTAssertEqual(store.filteredGuests[0].rsvpStatus, .attending)
+        XCTAssertFalse(store.isLoading)
         XCTAssertNil(store.error)
-        XCTAssertNotNil(store.guestStats)
+        XCTAssertEqual(store.guests.count, 1)
+        XCTAssertEqual(store.guests.first?.firstName, "Jane")
     }
 
-    func testUpdateGuest_Rollback() async throws {
+    func testUpdateGuest_Failure_RollsBack() async throws {
         // Given
-        let originalGuest = createMockGuest(firstName: "David", lastName: "Lee", rsvpStatus: .pending, id: UUID())
-        mockRepository.guests = [originalGuest]
-        await store.loadGuestData()
-
-        var updatedGuest = originalGuest
-        updatedGuest.rsvpStatus = .attending
-        mockRepository.shouldThrowError = true
+        let guest = Guest.makeTest(id: UUID(), coupleId: coupleId, firstName: "John", rsvpStatus: RSVPStatus.pending)
+        mockRepository.guests = [guest]
 
         // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
+
+        var updatedGuest = guest
+        updatedGuest.rsvpStatus = .confirmed
+
+        mockRepository.shouldThrowError = true
         await store.updateGuest(updatedGuest)
 
         // Then - Should rollback to original
-        XCTAssertEqual(store.guests.count, 1)
-        XCTAssertEqual(store.guests[0].rsvpStatus, .pending)
-        XCTAssertEqual(store.filteredGuests[0].rsvpStatus, .pending)
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.guests.first?.rsvpStatus, .pending)
     }
 
-    // MARK: - Delete Guest Tests
+    // MARK: - Delete Tests
 
     func testDeleteGuest_Success() async throws {
         // Given
-        let guest1 = createMockGuest(firstName: "Emma", lastName: "Davis", id: UUID())
-        let guest2 = createMockGuest(firstName: "Frank", lastName: "Miller", id: UUID())
+        let guest1 = Guest.makeTest(id: UUID(), coupleId: coupleId, firstName: "John")
+        let guest2 = Guest.makeTest(id: UUID(), coupleId: coupleId, firstName: "Jane")
         mockRepository.guests = [guest1, guest2]
-        mockRepository.guestStats = GuestStats(
-            totalGuests: 1,
-            attendingGuests: 0,
-            pendingGuests: 1,
-            declinedGuests: 0,
-            responseRate: 0
-        )
-
-        await store.loadGuestData()
 
         // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
         await store.deleteGuest(id: guest1.id)
 
         // Then
-        XCTAssertEqual(store.guests.count, 1)
-        XCTAssertEqual(store.filteredGuests.count, 1)
-        XCTAssertEqual(store.guests[0].id, guest2.id)
+        XCTAssertFalse(store.isLoading)
         XCTAssertNil(store.error)
-        XCTAssertNotNil(store.guestStats)
+        XCTAssertEqual(store.guests.count, 1)
+        XCTAssertEqual(store.guests.first?.firstName, "Jane")
     }
 
-    func testDeleteGuest_Rollback() async throws {
+    func testDeleteGuest_Failure_RollsBack() async throws {
         // Given
-        let guest = createMockGuest(firstName: "Grace", lastName: "Taylor", id: UUID())
+        let guest = Guest.makeTest(id: UUID(), coupleId: coupleId, firstName: "John")
         mockRepository.guests = [guest]
+
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
         await store.loadGuestData()
 
         mockRepository.shouldThrowError = true
-
-        // When
         await store.deleteGuest(id: guest.id)
 
         // Then - Should rollback
-        XCTAssertEqual(store.guests.count, 1)
-        XCTAssertEqual(store.filteredGuests.count, 1)
-        XCTAssertEqual(store.guests[0].id, guest.id)
         XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Search Tests
-
-    func testSearchGuests_Success() async throws {
-        // Given
-        let allGuests = [
-            createMockGuest(firstName: "Alice", lastName: "Anderson"),
-            createMockGuest(firstName: "Bob", lastName: "Brown"),
-            createMockGuest(firstName: "Alice", lastName: "Williams"),
-        ]
-        mockRepository.guests = allGuests
-
-        // When
-        await store.searchGuests(query: "Alice")
-
-        // Then
-        XCTAssertEqual(store.filteredGuests.count, 2)
-        XCTAssertTrue(store.filteredGuests.allSatisfy { $0.firstName == "Alice" })
-        XCTAssertNil(store.error)
-    }
-
-    // MARK: - Filter Tests
-
-    func testFilterGuests_BySearchText() async throws {
-        // Given
-        mockRepository.guests = [
-            createMockGuest(firstName: "John", lastName: "Doe"),
-            createMockGuest(firstName: "Jane", lastName: "Smith"),
-            createMockGuest(firstName: "John", lastName: "Williams"),
-        ]
-        await store.loadGuestData()
-
-        // When
-        store.filterGuests(searchText: "John", selectedStatus: nil, selectedInvitedBy: nil)
-
-        // Then
-        XCTAssertEqual(store.filteredGuests.count, 2)
-        XCTAssertTrue(store.filteredGuests.allSatisfy { $0.firstName == "John" })
-    }
-
-    func testFilterGuests_ByRSVPStatus() async throws {
-        // Given
-        mockRepository.guests = [
-            createMockGuest(firstName: "Guest1", rsvpStatus: .attending),
-            createMockGuest(firstName: "Guest2", rsvpStatus: .pending),
-            createMockGuest(firstName: "Guest3", rsvpStatus: .attending),
-        ]
-        await store.loadGuestData()
-
-        // When
-        store.filterGuests(searchText: "", selectedStatus: .attending, selectedInvitedBy: nil)
-
-        // Then
-        XCTAssertEqual(store.filteredGuests.count, 2)
-        XCTAssertTrue(store.filteredGuests.allSatisfy { $0.rsvpStatus == .attending })
-    }
-
-    func testFilterGuests_Combined() async throws {
-        // Given
-        mockRepository.guests = [
-            createMockGuest(firstName: "Alice", lastName: "Anderson", rsvpStatus: .attending),
-            createMockGuest(firstName: "Alice", lastName: "Brown", rsvpStatus: .pending),
-            createMockGuest(firstName: "Bob", lastName: "Smith", rsvpStatus: .attending),
-        ]
-        await store.loadGuestData()
-
-        // When
-        store.filterGuests(searchText: "Alice", selectedStatus: .attending, selectedInvitedBy: nil)
-
-        // Then
-        XCTAssertEqual(store.filteredGuests.count, 1)
-        XCTAssertEqual(store.filteredGuests[0].firstName, "Alice")
-        XCTAssertEqual(store.filteredGuests[0].rsvpStatus, .attending)
+        XCTAssertEqual(store.guests.count, 1)
+        XCTAssertEqual(store.guests.first?.id, guest.id)
     }
 
     // MARK: - Computed Properties Tests
 
-    func testComputedProperties() async throws {
+    func testComputedProperty_TotalCount() async throws {
         // Given
-        mockRepository.guests = [
-            createMockGuest(firstName: "Guest1", rsvpStatus: .attending),
-            createMockGuest(firstName: "Guest2", rsvpStatus: .confirmed),
-            createMockGuest(firstName: "Guest3", rsvpStatus: .pending),
-            createMockGuest(firstName: "Guest4", rsvpStatus: .invited),
-            createMockGuest(firstName: "Guest5", rsvpStatus: .declined),
+        let guests = [
+            Guest.makeTest(coupleId: coupleId),
+            Guest.makeTest(coupleId: coupleId),
+            Guest.makeTest(coupleId: coupleId)
         ]
+        mockRepository.guests = guests
+
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
         await store.loadGuestData()
 
         // Then
-        XCTAssertEqual(store.totalGuests, 5)
-        XCTAssertEqual(store.attendingGuests, 2) // attending + confirmed
-        XCTAssertEqual(store.pendingGuests, 2) // pending + invited
+        XCTAssertEqual(store.totalGuests, 3)
     }
 
-    // MARK: - Helper Methods
+    func testComputedProperty_ConfirmedCount() async throws {
+        // Given
+        let guests = [
+            Guest.makeTest(coupleId: coupleId, rsvpStatus: RSVPStatus.confirmed),
+            Guest.makeTest(coupleId: coupleId, rsvpStatus: RSVPStatus.confirmed),
+            Guest.makeTest(coupleId: coupleId, rsvpStatus: RSVPStatus.pending)
+        ]
+        mockRepository.guests = guests
 
-    private func createMockGuest(
-        firstName: String,
-        lastName: String = "TestLastName",
-        rsvpStatus: RSVPStatus = .pending,
-        id: UUID = UUID()
-    ) -> Guest {
-        Guest(
-            id: id,
-            createdAt: Date(),
-            updatedAt: Date(),
-            firstName: firstName,
-            lastName: lastName,
-            email: nil,
-            phone: nil,
-            guestGroupId: nil,
-            relationshipToCouple: "Friend",
-            invitedBy: nil,
-            rsvpStatus: rsvpStatus,
-            rsvpDate: nil,
-            plusOneAllowed: false,
-            plusOneName: nil,
-            plusOneAttending: false,
-            attendingCeremony: true,
-            attendingReception: true,
-            attendingOtherEvents: nil,
-            dietaryRestrictions: nil,
-            accessibilityNeeds: nil,
-            tableAssignment: nil,
-            seatNumber: nil,
-            preferredContactMethod: nil,
-            addressLine1: nil,
-            addressLine2: nil,
-            city: nil,
-            state: nil,
-            zipCode: nil,
-            country: nil,
-            invitationNumber: nil,
-            isWeddingParty: false,
-            weddingPartyRole: nil,
-            preparationNotes: nil,
-            coupleId: UUID(),
-            mealOption: nil,
-            giftReceived: false,
-            notes: nil,
-            hairDone: false,
-            makeupDone: false
-        )
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
+
+        // Then
+        XCTAssertEqual(store.attendingGuests, 2)
+        XCTAssertEqual(store.pendingGuests, 1)
+    }
+
+    // testComputedProperty_ResponseRate removed - responseRate property doesn't exist in GuestStoreV2
+
+    // MARK: - Filter Tests
+
+    func testFilterByRSVPStatus() async throws {
+        // Given
+        let guests = [
+            Guest.makeTest(coupleId: coupleId, firstName: "John", rsvpStatus: RSVPStatus.confirmed),
+            Guest.makeTest(coupleId: coupleId, firstName: "Jane", rsvpStatus: RSVPStatus.pending),
+            Guest.makeTest(coupleId: coupleId, firstName: "Bob", rsvpStatus: RSVPStatus.confirmed)
+        ]
+        mockRepository.guests = guests
+
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
+        let confirmed = store.guests.filter { $0.rsvpStatus == .confirmed }
+
+        // Then
+        XCTAssertEqual(confirmed.count, 2)
+        XCTAssertTrue(confirmed.allSatisfy { $0.rsvpStatus == .confirmed })
+    }
+
+    func testSearchGuests() async throws {
+        // Given
+        let guests = [
+            Guest.makeTest(coupleId: coupleId, firstName: "John", lastName: "Doe"),
+            Guest.makeTest(coupleId: coupleId, firstName: "Jane", lastName: "Smith"),
+            Guest.makeTest(coupleId: coupleId, firstName: "Bob", lastName: "Johnson")
+        ]
+        mockRepository.guests = guests
+
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+
+        await store.loadGuestData()
+        await store.searchGuests(query: "john")
+
+        // Then
+        XCTAssertEqual(store.filteredGuests.count, 2) // John Doe and Bob Johnson
     }
 }

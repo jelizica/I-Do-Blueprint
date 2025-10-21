@@ -68,14 +68,14 @@ struct PaymentRecordView: View {
                         Text("Already Paid")
                         Spacer()
                         Text(NumberFormatter.currency.string(from: NSNumber(value: expense.paidAmount)) ?? "$0")
-                            .foregroundColor(.green)
+                            .foregroundColor(AppColors.Budget.income)
                     }
 
                     HStack {
                         Text("Remaining")
                         Spacer()
                         Text(NumberFormatter.currency.string(from: NSNumber(value: expense.remainingAmount)) ?? "$0")
-                            .foregroundColor(.orange)
+                            .foregroundColor(AppColors.Budget.pending)
                             .fontWeight(.semibold)
                     }
                 }
@@ -123,7 +123,7 @@ struct PaymentRecordView: View {
                         Text("Payment Amount")
                         Spacer()
                         Text(NumberFormatter.currency.string(from: NSNumber(value: paymentAmountValue)) ?? "$0")
-                            .foregroundColor(.blue)
+                            .foregroundColor(AppColors.Budget.allocated)
                             .fontWeight(.semibold)
                     }
 
@@ -131,14 +131,14 @@ struct PaymentRecordView: View {
                         Text("New Paid Total")
                         Spacer()
                         Text(NumberFormatter.currency.string(from: NSNumber(value: newPaidAmount)) ?? "$0")
-                            .foregroundColor(.green)
+                            .foregroundColor(AppColors.Budget.income)
                     }
 
                     HStack {
                         Text("New Remaining")
                         Spacer()
                         Text(NumberFormatter.currency.string(from: NSNumber(value: max(0, newRemainingAmount))) ?? "$0")
-                            .foregroundColor(newRemainingAmount <= 0.01 ? .green : .orange)
+                            .foregroundColor(newRemainingAmount <= 0.01 ? AppColors.Budget.income : AppColors.Budget.pending)
                     }
 
                     HStack {
@@ -150,10 +150,10 @@ struct PaymentRecordView: View {
                     if paymentAmountValue > expense.remainingAmount + 0.01 {
                         HStack {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(.red)
+                                .foregroundColor(AppColors.Budget.overBudget)
                             Text("Payment amount exceeds remaining balance")
                                 .font(.caption)
-                                .foregroundColor(.red)
+                                .foregroundColor(AppColors.Budget.overBudget)
                             Spacer()
                         }
                     }

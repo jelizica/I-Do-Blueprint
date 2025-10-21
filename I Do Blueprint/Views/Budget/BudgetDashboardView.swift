@@ -2,7 +2,7 @@ import Charts
 import SwiftUI
 
 struct BudgetDashboardView: View {
-    @StateObject private var budgetStore = BudgetStoreV2()
+    @EnvironmentObject var budgetStore: BudgetStoreV2
     @State private var selectedPeriod: DashboardPeriod = .month
     @State private var showingFilters = false
 
@@ -49,100 +49,102 @@ struct BudgetDashboardView: View {
                 .background(Color(NSColor.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // Key Metrics Grid
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
-                    DashboardMetricCard(
-                        title: "Budget Used",
-                        value: "\(Int(budgetStore.budgetUtilization))%",
-                        subtitle: "of total budget",
-                        color: budgetStore.budgetUtilization > 80 ? .red : .blue,
-                        icon: "chart.pie.fill",
-                        trend: .stable)
-
-                    DashboardMetricCard(
-                        title: "Avg Monthly Spend",
-                        value: NumberFormatter.currencyShort
-                            .string(from: NSNumber(value: budgetStore.averageMonthlySpend)) ?? "$0",
-                        subtitle: "last 3 months",
-                        color: .orange,
-                        icon: "calendar",
-                        trend: .down)
-
-                    DashboardMetricCard(
-                        title: "Days to Wedding",
-                        value: "\(budgetStore.daysToWedding)",
-                        subtitle: "remaining",
-                        color: .purple,
-                        icon: "heart.fill",
-                        trend: .down)
-
-                    DashboardMetricCard(
-                        title: "Pending Payments",
-                        value: NumberFormatter.currencyShort
-                            .string(from: NSNumber(value: budgetStore.pendingPayments)) ?? "$0",
-                        subtitle: "due this month",
-                        color: .yellow,
-                        icon: "clock.fill",
-                        trend: .stable)
-
-                    // Note: Vendor data not available in BudgetStore - use VendorStore instead
-                    DashboardMetricCard(
-                        title: "Vendors",
-                        value: "See Vendors",
-                        subtitle: "View in Vendors tab",
-                        color: .green,
-                        icon: "person.3.fill",
-                        trend: .stable)
-
-                    DashboardMetricCard(
-                        title: "Budget Remaining",
-                        value: NumberFormatter.currencyShort
-                            .string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
-                        subtitle: "unallocated",
-                        color: budgetStore.remainingBudget > 0 ? .green : .red,
-                        icon: "dollarsign.circle.fill",
-                        trend: .down)
-                }
+                // Key Metrics Grid - Using Component Library
+                StatsGridView(
+                    stats: [
+                        StatItem(
+                            icon: "chart.pie.fill",
+                            label: "Budget Used",
+                            value: "\(Int(budgetStore.budgetUtilization))%",
+                            color: budgetStore.budgetUtilization > 80 ? AppColors.Budget.overBudget : AppColors.Budget.allocated,
+                            trend: .neutral
+                        ),
+                        StatItem(
+                            icon: "calendar",
+                            label: "Avg Monthly Spend",
+                            value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.averageMonthlySpend)) ?? "$0",
+                            color: AppColors.Budget.pending,
+                            trend: .down("-5%")
+                        ),
+                        StatItem(
+                            icon: "heart.fill",
+                            label: "Days to Wedding",
+                            value: "\(budgetStore.daysToWedding)",
+                            color: .purple,
+                            trend: nil
+                        ),
+                        StatItem(
+                            icon: "clock.fill",
+                            label: "Pending Payments",
+                            value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.pendingPayments)) ?? "$0",
+                            color: AppColors.Budget.pending,
+                            trend: .neutral
+                        ),
+                        StatItem(
+                            icon: "person.3.fill",
+                            label: "Vendors",
+                            value: "See Vendors",
+                            color: AppColors.Budget.income,
+                            trend: nil
+                        ),
+                        StatItem(
+                            icon: "dollarsign.circle.fill",
+                            label: "Budget Remaining",
+                            value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
+                            color: budgetStore.remainingBudget > 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget,
+                            trend: nil
+                        )
+                    ],
+                    columns: 3
+                )
 
                 // Spending Trend Chart
                 SpendingTrendDashboardChart(
                     expenses: budgetStore.expenses,
                     period: selectedPeriod)
 
-                // Quick Actions Grid
+                // Quick Actions Grid - Using Component Library
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Quick Actions")
                         .font(.title2)
                         .fontWeight(.semibold)
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: 12) {
-                        QuickActionButton(
-                            title: "Add Expense",
+                        CompactActionCard(
                             icon: "plus.circle",
-                            color: .blue) {
-                            // Add expense action
-                        }
+                            title: "Add Expense",
+                            color: AppColors.Budget.allocated,
+                            action: {
+                                // Add expense action
+                            }
+                        )
 
-                        QuickActionButton(
-                            title: "Schedule Payment",
+                        CompactActionCard(
                             icon: "calendar.badge.plus",
-                            color: .orange) {
-                            // Schedule payment action
-                        }
+                            title: "Schedule Payment",
+                            color: AppColors.Budget.pending,
+                            action: {
+                                // Schedule payment action
+                            }
+                        )
 
-                        QuickActionButton(
-                            title: "View Categories",
+                        CompactActionCard(
                             icon: "list.bullet.rectangle",
-                            color: .purple) {
-                            // View categories action
-                        }
+                            title: "View Categories",
+                            color: .purple,
+                            action: {
+                                // View categories action
+                            }
+                        )
 
-                        QuickActionButton(
-                            title: "Export Data",
+                        CompactActionCard(
                             icon: "square.and.arrow.up",
-                            color: .green) {
-                            // Export data action
-                        }
+                            title: "Export Data",
+                            color: AppColors.Budget.income,
+                            action: {
+                                // Export data action
+                            }
+                        )
                     }
                 }
                 .padding()
@@ -159,9 +161,6 @@ struct BudgetDashboardView: View {
             }
             .padding()
         }
-        .task {
-            await budgetStore.loadBudgetData()
-        }
         .sheet(isPresented: $showingFilters) {
             DashboardFiltersView(budgetStore: budgetStore)
         }
@@ -169,51 +168,7 @@ struct BudgetDashboardView: View {
 }
 
 // MARK: - Dashboard Components
-
-struct DashboardMetricCard: View {
-    let title: String
-    let value: String
-    let subtitle: String
-    let color: Color
-    let icon: String
-    let trend: TrendDirection
-
-    var body: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .font(.title3)
-
-                Spacer()
-
-                Image(systemName: trend.iconName)
-                    .foregroundColor(trend.color)
-                    .font(.caption)
-            }
-
-            VStack(spacing: 4) {
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(color)
-
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.center)
-
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-        }
-        .padding()
-        .background(color.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
+// Note: DashboardMetricCard replaced with StatsCardView from component library
 
 struct SpendingTrendDashboardChart: View {
     let expenses: [Expense]
@@ -256,12 +211,12 @@ struct SpendingTrendDashboardChart: View {
                 AreaMark(
                     x: .value("Date", dataPoint.date),
                     y: .value("Amount", dataPoint.amount))
-                    .foregroundStyle(.blue.opacity(0.3))
+                    .foregroundStyle(AppColors.Budget.allocated.opacity(0.3))
 
                 LineMark(
                     x: .value("Date", dataPoint.date),
                     y: .value("Amount", dataPoint.amount))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(AppColors.Budget.allocated)
                     .symbol(.circle)
             }
             .frame(height: 200)
@@ -272,33 +227,7 @@ struct SpendingTrendDashboardChart: View {
     }
 }
 
-struct QuickActionButton: View {
-    let title: String
-    let icon: String
-    let color: Color
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundColor(color)
-
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(.primary)
-            }
-            .frame(maxWidth: .infinity)
-            .padding()
-            .background(color.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
-        }
-        .buttonStyle(PlainButtonStyle())
-    }
-}
+// Note: QuickActionButton replaced with CompactActionCard from component library
 
 struct RecentActivityDashboard: View {
     let activities: [BudgetActivity]
@@ -310,17 +239,17 @@ struct RecentActivityDashboard: View {
                 .fontWeight(.semibold)
 
             if activities.isEmpty {
-                HStack {
-                    Image(systemName: "clock")
-                        .foregroundColor(.secondary)
-                    Text("No recent activity")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .padding()
-                .background(Color(NSColor.windowBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                // Using Component Library Empty State
+                UnifiedEmptyStateView(
+                    config: .custom(
+                        icon: "clock",
+                        title: "No Recent Activity",
+                        message: "Budget activities will appear here as you add expenses and payments",
+                        actionTitle: nil,
+                        onAction: nil
+                    )
+                )
+                .padding(.vertical)
             } else {
                 ForEach(activities.prefix(5), id: \.id) { activity in
                     HStack(spacing: 12) {
@@ -455,7 +384,7 @@ struct SpendingDataPoint {
     let amount: Double
 }
 
-struct BudgetActivity {
+struct BudgetActivity: Identifiable {
     let id = UUID()
     let type: ActivityType
     let description: String
@@ -476,16 +405,16 @@ struct BudgetActivity {
 
         var color: Color {
             switch self {
-            case .expense: .red
-            case .payment: .green
-            case .category: .blue
+            case .expense: AppColors.Budget.expense
+            case .payment: AppColors.Budget.income
+            case .category: AppColors.Budget.allocated
             case .vendor: .purple
             }
         }
     }
 }
 
-struct BudgetAlert {
+struct BudgetAlert: Identifiable {
     let id = UUID()
     let severity: AlertSeverity
     let title: String
@@ -505,9 +434,9 @@ struct BudgetAlert {
 
         var color: Color {
             switch self {
-            case .info: .blue
-            case .warning: .orange
-            case .critical: .red
+            case .info: AppColors.Budget.allocated
+            case .warning: AppColors.Budget.pending
+            case .critical: AppColors.Budget.overBudget
             }
         }
     }

@@ -136,16 +136,27 @@ struct LinkRow: View {
                         .font(.body)
                         .fontWeight(.medium)
 
-                    Link(destination: URL(string: link.url) ?? URL(string: "https://example.com")!) {
+                    if let url = InputValidator.safeURLConversion(link.url) {
+                        Link(destination: url) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "link")
+                                    .font(.caption)
+                                Text(link.url)
+                                    .font(.caption)
+                                    .lineLimit(1)
+                            }
+                        }
+                        .foregroundColor(.blue)
+                    } else {
                         HStack(spacing: 4) {
-                            Image(systemName: "link")
+                            Image(systemName: "exclamationmark.triangle")
                                 .font(.caption)
-                            Text(link.url)
+                            Text("Invalid URL: \(link.url)")
                                 .font(.caption)
                                 .lineLimit(1)
                         }
+                        .foregroundColor(.red)
                     }
-                    .foregroundColor(.blue)
 
                     if let description = link.description, !description.isEmpty {
                         Text(description)

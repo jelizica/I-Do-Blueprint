@@ -68,4 +68,16 @@ enum BudgetError: LocalizedError {
             return nil
         }
     }
+
+    /// Indicates whether this error is transient and can be retried
+    var isRetryable: Bool {
+        switch self {
+        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed:
+            return true
+        case .networkUnavailable:
+            return true
+        case .notFound, .validationFailed, .unauthorized, .budgetExceeded, .invalidAmount, .categoryNotFound, .notImplemented:
+            return false
+        }
+    }
 }

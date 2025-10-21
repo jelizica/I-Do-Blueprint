@@ -387,8 +387,7 @@ struct EditGuestView: View {
         // Post notification with the updated guest data
         do {
             let guestData = try JSONEncoder().encode(updatedGuest)
-            logger.debug("Posting update notification for guest: \(updatedGuest.firstName) \(updatedGuest.lastName)")
-            NotificationCenter.default.post(
+                        NotificationCenter.default.post(
                 name: .updateGuest,
                 object: nil,
                 userInfo: ["guest": guestData])

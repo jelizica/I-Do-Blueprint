@@ -10,7 +10,7 @@ import Supabase
 import SwiftUI
 
 struct GuestListView: View {
-    @StateObject private var guestStore = GuestStoreV2()
+    @EnvironmentObject private var guestStore: GuestStoreV2
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
@@ -100,8 +100,7 @@ struct GuestListView: View {
             .onReceive(NotificationCenter.default.publisher(for: .deleteGuest)) { notification in
                 if let guestIdString = notification.userInfo?["guestId"] as? String,
                    let guestId = UUID(uuidString: guestIdString) {
-                    logger.debug("Received delete notification for guest ID: \(guestId)")
-                    Task {
+                                        Task {
                         await guestStore.deleteGuest(id: guestId)
                         selectedGuest = nil
                     }
@@ -110,8 +109,7 @@ struct GuestListView: View {
             .onReceive(NotificationCenter.default.publisher(for: .updateGuest)) { notification in
                 if let updatedGuestData = notification.userInfo?["guest"] as? Data,
                    let updatedGuest = try? JSONDecoder().decode(Guest.self, from: updatedGuestData) {
-                    logger.debug("Received update notification for guest: \(updatedGuest.firstName) \(updatedGuest.lastName)")
-                    Task {
+                                        Task {
                         await guestStore.updateGuest(updatedGuest)
                     }
                 }
@@ -134,9 +132,17 @@ struct GuestListView: View {
                     selectedStatus: selectedStatus,
                     selectedInvitedBy: selectedInvitedBy)
             }
-            .alert("Error", isPresented: .constant(guestStore.error != nil)) {
-                Button("OK") {
-                    guestStore.error = nil
+            .alert("Error", isPresented: Binding(
+                get: { guestStore.error != nil },
+                set: { _ in }
+            )) {
+                Button("OK") {}
+                if guestStore.error != nil {
+                    Button("Retry") {
+                        Task {
+                            await guestStore.retryLoad()
+                        }
+                    }
                 }
             } message: {
                 if let error = guestStore.error {

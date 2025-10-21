@@ -125,7 +125,9 @@ struct ColorPaletteListView: View {
 
             // Content
             if filteredPalettes.isEmpty {
-                EmptyColorPaletteView()
+                UnifiedEmptyStateView(config: .colorPalettes(onAdd: {
+                    visualPlanningStore.showingColorPaletteCreator = true
+                }))
             } else {
                 ScrollView {
                     LazyVGrid(columns: gridColumns, spacing: 20) {

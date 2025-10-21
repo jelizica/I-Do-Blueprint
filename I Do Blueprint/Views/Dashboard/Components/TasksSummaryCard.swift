@@ -20,11 +20,13 @@ struct TasksSummaryCard: View {
             isHovered: $isHovered,
             hasAlert: metrics.overdue > 0) {
             VStack(spacing: 16) {
-                CircleProgressView(
-                    progress: metrics.completionRate / 100,
+                CircularProgress(
+                    value: metrics.completionRate / 100,
+                    color: metrics.completionRate >= 75 ? .green : metrics.completionRate >= 50 ? .orange : .red,
                     lineWidth: 12,
-                    color: metrics.completionRate >= 75 ? .green : metrics.completionRate >= 50 ? .orange : .red)
-                    .frame(width: 100, height: 100)
+                    size: 100,
+                    showPercentage: true
+                )
 
                 LazyVGrid(columns: [
                     GridItem(.flexible()),

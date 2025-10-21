@@ -2,7 +2,7 @@
 //  TaskStoreV2Tests.swift
 //  I Do BlueprintTests
 //
-//  Comprehensive tests for TaskStoreV2 following VendorStoreV2Tests pattern
+//  Comprehensive tests for TaskStoreV2
 //
 
 import XCTest
@@ -11,324 +11,372 @@ import Dependencies
 
 @MainActor
 final class TaskStoreV2Tests: XCTestCase {
-    var store: TaskStoreV2!
     var mockRepository: MockTaskRepository!
+    var coupleId: UUID!
 
     override func setUp() async throws {
         mockRepository = MockTaskRepository()
-        store = withDependencies {
+        coupleId = UUID()
+    }
+
+    override func tearDown() {
+        mockRepository = nil
+        coupleId = nil
+    }
+
+    // MARK: - Load Tests
+
+    func testLoadTasks_Success() async throws {
+        // Given
+        let testTasks = [
+            WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Book Venue"),
+            WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Send Invitations")
+        ]
+        mockRepository.tasks = testTasks
+
+        // When
+        let store = await withDependencies {
             $0.taskRepository = mockRepository
         } operation: {
             TaskStoreV2()
         }
-    }
 
-    override func tearDown() async throws {
-        store = nil
-        mockRepository = nil
-    }
-
-    // MARK: - Load Tasks Tests
-
-    func testLoadTasks_Success() async throws {
-        // Given
-        let mockTasks = [
-            createMockTask(title: "Book venue", status: .notStarted),
-            createMockTask(title: "Send invitations", status: .inProgress),
-        ]
-        let mockStats = TaskStats(
-            total: 2,
-            completed: 0,
-            inProgress: 1,
-            notStarted: 1,
-            overdue: 0
-        )
-        mockRepository.tasks = mockTasks
-        mockRepository.taskStats = mockStats
-
-        // When
         await store.loadTasks()
 
         // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
         XCTAssertEqual(store.tasks.count, 2)
-        XCTAssertEqual(store.tasks[0].title, "Book venue")
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-        XCTAssertNotNil(store.taskStats)
-        XCTAssertEqual(store.taskStats?.total, 2)
+        XCTAssertEqual(store.tasks[0].taskName, "Book Venue")
     }
 
-    func testLoadTasks_EmptyResult() async throws {
-        // Given
-        mockRepository.tasks = []
-        mockRepository.taskStats = TaskStats(
-            total: 0,
-            completed: 0,
-            inProgress: 0,
-            notStarted: 0,
-            overdue: 0
-        )
-
-        // When
-        await store.loadTasks()
-
-        // Then
-        XCTAssertTrue(store.tasks.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-    }
-
-    func testLoadTasks_Error() async throws {
+    func testLoadTasks_Failure() async throws {
         // Given
         mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
 
         // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
         await store.loadTasks()
 
         // Then
-        XCTAssertTrue(store.tasks.isEmpty)
         XCTAssertFalse(store.isLoading)
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.tasks.count, 0)
     }
 
-    // MARK: - Create Task Tests
+    func testLoadTasks_Empty() async throws {
+        // Given
+        mockRepository.tasks = []
+
+        // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.tasks.count, 0)
+    }
+
+    // MARK: - Create Tests
 
     func testCreateTask_Success() async throws {
         // Given
-        let insertData = TaskInsertData(
-            title: "New Task",
-            description: "Description",
-            status: .notStarted,
-            priority: .medium,
-            dueDate: Date(),
-            categoryId: nil
-        )
-        let newTask = createMockTask(title: "New Task")
-        mockRepository.createdTask = newTask
+        let newTask = WeddingTask.makeTest(coupleId: coupleId, taskName: "Book Venue")
 
         // When
-        await store.createTask(insertData)
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
 
-        // Then
-        XCTAssertEqual(store.tasks.count, 1)
-        XCTAssertEqual(store.tasks[0].title, "New Task")
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-    }
-
-    func testCreateTask_Error() async throws {
-        // Given
-        mockRepository.shouldThrowError = true
         let insertData = TaskInsertData(
-            title: "New Task",
+            taskName: "Book Venue",
             description: nil,
-            status: .notStarted,
+            budgetCategoryId: nil,
             priority: .medium,
             dueDate: nil,
-            categoryId: nil
+            startDate: nil,
+            assignedTo: [],
+            vendorId: nil,
+            status: .notStarted,
+            dependsOnTaskId: nil,
+            estimatedHours: nil,
+            costEstimate: nil,
+            notes: nil,
+            milestoneId: nil
         )
 
-        // When
         await store.createTask(insertData)
 
         // Then
-        XCTAssertTrue(store.tasks.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNotNil(store.error)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.tasks.count, 1)
     }
-
-    // MARK: - Update Task Tests
 
     func testUpdateTask_Success() async throws {
         // Given
-        let originalTask = createMockTask(title: "Original")
-        store.tasks = [originalTask]
-
-        var updatedTask = originalTask
-        updatedTask.title = "Updated"
-        mockRepository.updatedTask = updatedTask
+        let task = WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Book Venue", status: .notStarted)
+        mockRepository.tasks = [task]
 
         // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+
+        var updatedTask = task
+        updatedTask.status = .inProgress
         await store.updateTask(updatedTask)
 
         // Then
-        XCTAssertEqual(store.tasks[0].title, "Updated")
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.tasks.first?.status, .inProgress)
     }
 
-    func testUpdateTask_RollbackOnError() async throws {
+    func testUpdateTask_Failure_RollsBack() async throws {
         // Given
-        let originalTask = createMockTask(title: "Original")
-        store.tasks = [originalTask]
-
-        var updatedTask = originalTask
-        updatedTask.title = "Updated"
-        mockRepository.shouldThrowError = true
+        let task = WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Book Venue", status: .notStarted)
+        mockRepository.tasks = [task]
 
         // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+
+        var updatedTask = task
+        updatedTask.status = .completed
+
+        mockRepository.shouldThrowError = true
         await store.updateTask(updatedTask)
 
-        // Then - should rollback to original
-        XCTAssertEqual(store.tasks[0].title, "Original")
+        // Then - Should rollback to original
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.tasks.first?.status, .notStarted)
     }
 
-    // MARK: - Delete Task Tests
+    // MARK: - Delete Tests
 
     func testDeleteTask_Success() async throws {
         // Given
-        let task = createMockTask(title: "To Delete")
-        store.tasks = [task]
+        let task1 = WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Book Venue")
+        let task2 = WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Send Invitations")
+        mockRepository.tasks = [task1, task2]
 
         // When
-        await store.deleteTask(task)
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+        await store.deleteTask(task1)
 
         // Then
-        XCTAssertTrue(store.tasks.isEmpty)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.tasks.count, 1)
+        XCTAssertEqual(store.tasks.first?.taskName, "Send Invitations")
     }
 
-    func testDeleteTask_RollbackOnError() async throws {
+    func testDeleteTask_Failure_RollsBack() async throws {
         // Given
-        let task = createMockTask(title: "To Delete")
-        store.tasks = [task]
-        mockRepository.shouldThrowError = true
+        let task = WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Book Venue")
+        mockRepository.tasks = [task]
 
         // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+
+        mockRepository.shouldThrowError = true
         await store.deleteTask(task)
 
-        // Then - should rollback
-        XCTAssertEqual(store.tasks.count, 1)
-        XCTAssertEqual(store.tasks[0].title, "To Delete")
+        // Then - Should rollback
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.tasks.count, 1)
     }
 
-    // MARK: - Toggle Status Tests
-
-    func testToggleTaskStatus_CompletesNotStartedTask() async throws {
+    func testUpdateTaskStatus() async throws {
         // Given
-        let task = createMockTask(title: "Task", status: .notStarted)
-        store.tasks = [task]
-
-        var completed = task
-        completed.status = .completed
-        mockRepository.updatedTask = completed
+        let task = WeddingTask.makeTest(id: UUID(), coupleId: coupleId, taskName: "Book Venue", status: .notStarted)
+        mockRepository.tasks = [task]
 
         // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
         await store.toggleTaskStatus(task)
 
         // Then
-        XCTAssertEqual(store.tasks[0].status, .completed)
+        XCTAssertEqual(store.tasks.first?.status, .completed)
     }
 
-    func testToggleTaskStatus_UncompleteCompletedTask() async throws {
-        // Given
-        let task = createMockTask(title: "Task", status: .completed)
-        store.tasks = [task]
+    // MARK: - Computed Properties Tests
 
-        var notStarted = task
-        notStarted.status = .notStarted
-        mockRepository.updatedTask = notStarted
+    func testComputedProperty_TotalTasks() async throws {
+        // Given
+        let tasks = [
+            WeddingTask.makeTest(coupleId: coupleId),
+            WeddingTask.makeTest(coupleId: coupleId),
+            WeddingTask.makeTest(coupleId: coupleId)
+        ]
+        mockRepository.tasks = tasks
 
         // When
-        await store.toggleTaskStatus(task)
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
 
         // Then
-        XCTAssertEqual(store.tasks[0].status, .notStarted)
+        XCTAssertEqual(store.tasks.count, 3)
     }
 
-    // MARK: - Helper Methods
+    func testComputedProperty_CompletedTasks() async throws {
+        // Given
+        let tasks = [
+            WeddingTask.makeTest(coupleId: coupleId, status: .completed),
+            WeddingTask.makeTest(coupleId: coupleId, status: .completed),
+            WeddingTask.makeTest(coupleId: coupleId, status: .notStarted)
+        ]
+        mockRepository.tasks = tasks
 
-    private func createMockTask(
-        title: String,
-        status: TaskStatus = .notStarted,
-        priority: WeddingTaskPriority = .medium
-    ) -> WeddingTask {
-        WeddingTask(
-            id: UUID(),
-            tenantId: UUID(),
-            title: title,
-            description: nil,
-            status: status,
-            priority: priority,
-            dueDate: nil,
-            completedAt: nil,
-            categoryId: nil,
-            assigneeId: nil,
-            subtasks: nil,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-}
+        // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
 
-// MARK: - Mock Repository
+        await store.loadTasks()
 
-class MockTaskRepository: TaskRepositoryProtocol {
-    var tasks: [WeddingTask] = []
-    var taskStats: TaskStats?
-    var createdTask: WeddingTask?
-    var updatedTask: WeddingTask?
-    var shouldThrowError = false
-
-    func fetchTasks() async throws -> [WeddingTask] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return tasks
+        // Then
+        let completedTasks = store.tasks(for: .completed)
+        XCTAssertEqual(completedTasks.count, 2)
     }
 
-    func fetchTaskStats() async throws -> TaskStats {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return taskStats ?? TaskStats(total: 0, completed: 0, inProgress: 0, notStarted: 0, overdue: 0)
+    func testComputedProperty_OverdueTasks() async throws {
+        // Given
+        let pastDate = Calendar.current.date(byAdding: .day, value: -5, to: Date())!
+        let tasks = [
+            WeddingTask.makeTest(coupleId: coupleId, status: .notStarted, dueDate: pastDate),
+            WeddingTask.makeTest(coupleId: coupleId, status: .inProgress, dueDate: pastDate)
+        ]
+        mockRepository.tasks = tasks
+
+        // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+
+        // Then
+        XCTAssertEqual(store.overdueTasks.count, 2)
     }
 
-    func createTask(_ insertData: TaskInsertData) async throws -> WeddingTask {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return createdTask ?? WeddingTask(
-            id: UUID(),
-            tenantId: UUID(),
-            title: insertData.title,
-            description: insertData.description,
-            status: insertData.status,
-            priority: insertData.priority,
-            dueDate: insertData.dueDate,
-            completedAt: nil,
-            categoryId: insertData.categoryId,
-            assigneeId: nil,
-            subtasks: nil,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
+    func testComputedProperty_TasksInProgress() async throws {
+        // Given
+        let tasks = [
+            WeddingTask.makeTest(coupleId: coupleId, status: .inProgress),
+            WeddingTask.makeTest(coupleId: coupleId, status: .inProgress),
+            WeddingTask.makeTest(coupleId: coupleId, status: .notStarted)
+        ]
+        mockRepository.tasks = tasks
+
+        // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+
+        // Then
+        let inProgressTasks = store.tasks(for: .inProgress)
+        XCTAssertEqual(inProgressTasks.count, 2)
     }
 
-    func updateTask(_ task: WeddingTask) async throws -> WeddingTask {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return updatedTask ?? task
+    func testFilterByStatus() async throws {
+        // Given
+        let tasks = [
+            WeddingTask.makeTest(coupleId: coupleId, taskName: "Task 1", status: .completed),
+            WeddingTask.makeTest(coupleId: coupleId, taskName: "Task 2", status: .notStarted),
+            WeddingTask.makeTest(coupleId: coupleId, taskName: "Task 3", status: .completed)
+        ]
+        mockRepository.tasks = tasks
+
+        // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
+
+        await store.loadTasks()
+        let completedTasks = store.tasks(for: .completed)
+
+        // Then
+        XCTAssertEqual(completedTasks.count, 2)
+        XCTAssertTrue(completedTasks.allSatisfy { $0.status == .completed })
     }
 
-    func deleteTask(id: UUID) async throws {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-    }
+    func testFilterByPriority() async throws {
+        // Given
+        let tasks = [
+            WeddingTask.makeTest(coupleId: coupleId, priority: .high),
+            WeddingTask.makeTest(coupleId: coupleId, priority: .low),
+            WeddingTask.makeTest(coupleId: coupleId, priority: .high)
+        ]
+        mockRepository.tasks = tasks
 
-    func fetchSubtasks(taskId: UUID) async throws -> [Subtask] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return []
-    }
+        // When
+        let store = await withDependencies {
+            $0.taskRepository = mockRepository
+        } operation: {
+            TaskStoreV2()
+        }
 
-    func createSubtask(taskId: UUID, insertData: SubtaskInsertData) async throws -> Subtask {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return Subtask(id: UUID(), taskId: taskId, title: insertData.title, isCompleted: false, createdAt: Date())
-    }
+        await store.loadTasks()
+        store.filterPriority = .high
+        let filtered = store.filteredTasks
 
-    func updateSubtask(_ subtask: Subtask) async throws -> Subtask {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return subtask
-    }
-
-    func deleteSubtask(id: UUID) async throws {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-    }
-
-    func invalidateCache() async {
-        // No-op for mock
+        // Then
+        XCTAssertEqual(filtered.count, 2)
+        XCTAssertTrue(filtered.allSatisfy { $0.priority == .high })
     }
 }

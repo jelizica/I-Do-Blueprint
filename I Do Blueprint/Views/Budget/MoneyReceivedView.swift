@@ -35,7 +35,7 @@ struct MoneyReceivedView: View {
         .sheet(isPresented: $showingNewGiftForm) {
             AddGiftOrOwedModal { newGift in
                 Task {
-                    await budgetStore.addGiftOrOwed(newGift)
+                    await budgetStore.gifts.addGiftOrOwed(newGift)
                 }
             }
         }
@@ -55,7 +55,7 @@ struct MoneyReceivedView: View {
                     Text("$\(totalReceived, specifier: "%.0f")")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundColor(.green)
+                        .foregroundColor(AppColors.Budget.income)
                 }
 
                 Spacer()
@@ -78,7 +78,7 @@ struct MoneyReceivedView: View {
                     Text("$\(averageGiftAmount, specifier: "%.0f")")
                         .font(.title2)
                         .fontWeight(.semibold)
-                        .foregroundColor(.blue)
+                        .foregroundColor(AppColors.Budget.allocated)
                 }
             }
 
@@ -91,7 +91,7 @@ struct MoneyReceivedView: View {
                     Text("\(thankYouSentCount)")
                         .font(.title3)
                         .fontWeight(.medium)
-                        .foregroundColor(.green)
+                        .foregroundColor(AppColors.Budget.income)
                 }
 
                 Spacer()
@@ -103,7 +103,7 @@ struct MoneyReceivedView: View {
                     Text("\(thankYouPendingCount)")
                         .font(.title3)
                         .fontWeight(.medium)
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppColors.Budget.pending)
                 }
             }
         }
@@ -323,7 +323,7 @@ struct MoneyReceivedView: View {
 
     private var giftTypeData: [GiftTypeData] {
         let grouped = Dictionary(grouping: filteredGifts) { $0.giftType }
-        let colors: [Color] = [.blue, .green, .orange, .purple, .red, .pink]
+        let colors: [Color] = [AppColors.Budget.allocated, AppColors.Budget.income, AppColors.Budget.pending, .purple, AppColors.Budget.expense, .pink]
 
         return GiftType.allCases.enumerated().compactMap { index, type in
             let gifts = grouped[type] ?? []
@@ -385,7 +385,7 @@ struct GiftRowView: View {
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.orange)
+                            .background(AppColors.Budget.pending)
                             .foregroundColor(.white)
                             .cornerRadius(4)
                     }
@@ -405,13 +405,13 @@ struct GiftRowView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text("$\(gift.amount, specifier: "%.0f")")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.green)
+                    .foregroundColor(AppColors.Budget.income)
 
                 Button(action: {
                     toggleThankYouStatus()
                 }) {
                     Image(systemName: gift.isThankYouSent ? "checkmark.circle.fill" : "circle")
-                        .foregroundColor(gift.isThankYouSent ? .green : .gray)
+                        .foregroundColor(gift.isThankYouSent ? AppColors.Budget.income : .gray)
                 }
                 .buttonStyle(.plain)
             }
@@ -426,10 +426,10 @@ struct GiftRowView: View {
 
     private var giftTypeColor: Color {
         switch gift.giftType {
-        case .cash: .green
-        case .check: .blue
+        case .cash: AppColors.Budget.income
+        case .check: AppColors.Budget.allocated
         case .gift: .purple
-        case .giftCard: .orange
+        case .giftCard: AppColors.Budget.pending
         case .other: .gray
         }
     }
@@ -448,7 +448,7 @@ struct GiftRowView: View {
         var updatedGift = gift
         updatedGift.isThankYouSent.toggle()
         Task {
-            await budgetStore.updateGiftReceived(updatedGift)
+            await budgetStore.gifts.updateGiftReceived(updatedGift)
         }
     }
 }
@@ -467,7 +467,7 @@ struct GiftDetailView: View {
                     Text("$\(gift.amount, specifier: "%.2f")")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(.green)
+                        .foregroundColor(AppColors.Budget.income)
 
                     Spacer()
 
@@ -475,7 +475,7 @@ struct GiftDetailView: View {
                         var updatedGift = gift
                         updatedGift.isThankYouSent.toggle()
                         Task {
-                            await budgetStore.updateGiftReceived(updatedGift)
+                            await budgetStore.gifts.updateGiftReceived(updatedGift)
                         }
                     }) {
                         HStack(spacing: 4) {
@@ -485,7 +485,7 @@ struct GiftDetailView: View {
                         .font(.caption)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
-                        .background(gift.isThankYouSent ? Color.green : Color.orange)
+                        .background(gift.isThankYouSent ? AppColors.Budget.income : AppColors.Budget.pending)
                         .foregroundColor(.white)
                         .cornerRadius(8)
                     }
@@ -529,12 +529,12 @@ struct GiftDetailView: View {
                     giftOrOwed: giftOrOwed,
                     onSave: { updatedGift in
                         Task {
-                            await budgetStore.updateGiftOrOwed(updatedGift)
+                            await budgetStore.gifts.updateGiftOrOwed(updatedGift)
                         }
                     },
                     onDelete: { giftToDelete in
                         Task {
-                            await budgetStore.deleteGiftOrOwed(id: giftToDelete.id)
+                            await budgetStore.gifts.deleteGiftOrOwed(id: giftToDelete.id)
                         }
                     })
             }

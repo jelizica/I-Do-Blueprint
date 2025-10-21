@@ -9,7 +9,7 @@ import Foundation
 
 /// Mock implementation for testing
 @MainActor
-class MockVendorRepository: VendorRepositoryProtocol {
+class MockVendorRepository: VendorRepositoryProtocol, @unchecked Sendable {
     // Storage
     var vendors: [Vendor] = []
     var vendorStats: VendorStats?
@@ -129,6 +129,16 @@ class MockVendorRepository: VendorRepositoryProtocol {
         details.paymentSummary = try? await fetchVendorPaymentSummary(vendorId: id)
         details.contractInfo = try? await fetchVendorContractSummary(vendorId: id)
         return details
+    }
+    
+    // MARK: - Vendor Types
+    
+    var vendorTypes: [VendorType] = []
+    
+    func fetchVendorTypes() async throws -> [VendorType] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return vendorTypes
     }
 
     // MARK: - Testing Utilities

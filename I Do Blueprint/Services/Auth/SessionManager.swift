@@ -78,7 +78,7 @@ class SessionManager: ObservableObject {
         if tenantChanged {
             Task {
                 do {
-                    await RepositoryCache.clearAll()
+                    await RepositoryCache.shared.clearAll()
                     logger.info("Cleared repository caches on tenant change")
                 } catch {
                     logger.warning("Failed to clear repository caches on tenant change: \(error.localizedDescription)")

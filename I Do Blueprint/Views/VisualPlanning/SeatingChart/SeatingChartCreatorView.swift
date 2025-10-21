@@ -253,7 +253,7 @@ struct SeatingChartCreatorView: View {
         var newChart = SeatingChart(
             tenantId: tenantId.uuidString,
             chartName: chartName.trimmingCharacters(in: .whitespacesAndNewlines),
-            eventId: nil,  // TODO: Link to actual wedding event
+            eventId: nil,  // Future: Link to wedding event when events system is implemented
             venueLayoutType: layout,
             venueConfiguration: VenueConfiguration())
 

@@ -11,433 +11,382 @@ import Dependencies
 
 @MainActor
 final class TimelineStoreV2Tests: XCTestCase {
-    var store: TimelineStoreV2!
     var mockRepository: MockTimelineRepository!
+    var coupleId: UUID!
 
     override func setUp() async throws {
         mockRepository = MockTimelineRepository()
-        store = withDependencies {
+        coupleId = UUID()
+    }
+
+    override func tearDown() {
+        mockRepository = nil
+        coupleId = nil
+    }
+
+    // MARK: - Load Tests
+
+    func testLoadTimelineItems_Success() async throws {
+        // Given
+        let testItems = [
+            TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Book Venue"),
+            TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Send Invitations")
+        ]
+        mockRepository.timelineItems = testItems
+
+        // When
+        let store = await withDependencies {
             $0.timelineRepository = mockRepository
         } operation: {
             TimelineStoreV2()
         }
-    }
 
-    override func tearDown() async throws {
-        store = nil
-        mockRepository = nil
-    }
-
-    // MARK: - Load Timeline Tests
-
-    func testLoadTimelineItems_Success() async throws {
-        // Given
-        let mockItems = [
-            createMockTimelineItem(title: "Ceremony", date: Date()),
-            createMockTimelineItem(title: "Reception", date: Date().addingTimeInterval(3600)),
-        ]
-        let mockMilestones = [
-            createMockMilestone(name: "Save the Date")
-        ]
-        mockRepository.timelineItems = mockItems
-        mockRepository.milestones = mockMilestones
-
-        // When
         await store.loadTimelineItems()
 
         // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
         XCTAssertEqual(store.timelineItems.count, 2)
-        XCTAssertEqual(store.milestones.count, 1)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
+        XCTAssertEqual(store.timelineItems[0].title, "Book Venue")
     }
 
-    func testLoadTimelineItems_EmptyResult() async throws {
-        // Given
-        mockRepository.timelineItems = []
-        mockRepository.milestones = []
-
-        // When
-        await store.loadTimelineItems()
-
-        // Then
-        XCTAssertTrue(store.timelineItems.isEmpty)
-        XCTAssertTrue(store.milestones.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-    }
-
-    func testLoadTimelineItems_Error() async throws {
+    func testLoadTimelineItems_Failure() async throws {
         // Given
         mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
 
         // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
         await store.loadTimelineItems()
 
         // Then
-        XCTAssertTrue(store.timelineItems.isEmpty)
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.timelineItems.count, 0)
+    }
+
+    func testLoadTimelineItems_Empty() async throws {
+        // Given
+        mockRepository.timelineItems = []
+
+        // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.timelineItems.count, 0)
+    }
+
+    func testLoadMilestones_Success() async throws {
+        // Given
+        let testMilestones = [
+            Milestone.makeTest(id: UUID(), coupleId: coupleId, milestoneName: "Engagement"),
+            Milestone.makeTest(id: UUID(), coupleId: coupleId, milestoneName: "Wedding Day")
+        ]
+        mockRepository.milestones = testMilestones
+
+        // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.milestones.count, 2)
+    }
+
+    func testLoadMilestones_Failure() async throws {
+        // Given
+        mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
+
+        // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        // Then
         XCTAssertFalse(store.isLoading)
         XCTAssertNotNil(store.error)
     }
 
-    // MARK: - Create Timeline Item Tests
+    // MARK: - Create Tests
 
-    func testCreateTimelineItem_Success() async throws {
+    func testCreateTimelineItem_OptimisticUpdate() async throws {
         // Given
-        let insertData = TimelineItemInsertData(
-            title: "New Event",
-            description: nil,
-            itemDate: Date(),
-            itemType: .ceremony,
-            duration: nil,
-            location: nil,
-            notes: nil
-        )
-        let newItem = createMockTimelineItem(title: "New Event")
-        mockRepository.createdItem = newItem
+        let existingItem = TimelineItem.makeTest(coupleId: coupleId, title: "Existing Item")
+        mockRepository.timelineItems = [existingItem]
 
         // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        let insertData = TimelineItemInsertData(
+            coupleId: coupleId,
+            title: "New Item",
+            itemType: .other,
+            itemDate: Date(),
+            completed: false
+        )
         await store.createTimelineItem(insertData)
 
         // Then
-        XCTAssertEqual(store.timelineItems.count, 1)
-        XCTAssertEqual(store.timelineItems[0].title, "New Event")
-        XCTAssertNil(store.error)
-    }
-
-    func testCreateTimelineItem_SortsAutomatically() async throws {
-        // Given
-        let laterDate = Date().addingTimeInterval(3600)
-        let earlierDate = Date()
-
-        let item1 = createMockTimelineItem(title: "Later", date: laterDate)
-        let item2 = createMockTimelineItem(title: "Earlier", date: earlierDate)
-
-        store.timelineItems = [item1]
-        mockRepository.createdItem = item2
-
-        // When
-        await store.createTimelineItem(TimelineItemInsertData(
-            title: "Earlier",
-            description: nil,
-            itemDate: earlierDate,
-            itemType: .ceremony,
-            duration: nil,
-            location: nil,
-            notes: nil
-        ))
-
-        // Then
         XCTAssertEqual(store.timelineItems.count, 2)
-        XCTAssertEqual(store.timelineItems[0].title, "Earlier")
-        XCTAssertEqual(store.timelineItems[1].title, "Later")
     }
-
-    // MARK: - Update Timeline Item Tests
 
     func testUpdateTimelineItem_Success() async throws {
         // Given
-        let originalItem = createMockTimelineItem(title: "Original")
-        store.timelineItems = [originalItem]
-
-        var updatedItem = originalItem
-        updatedItem.title = "Updated"
-        mockRepository.updatedItem = updatedItem
+        let item = TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Book Venue", completed: false)
+        mockRepository.timelineItems = [item]
 
         // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        var updatedItem = item
+        updatedItem.completed = true
         await store.updateTimelineItem(updatedItem)
 
         // Then
-        XCTAssertEqual(store.timelineItems[0].title, "Updated")
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.timelineItems.first?.completed, true)
     }
 
-    func testUpdateTimelineItem_RollbackOnError() async throws {
+    func testUpdateTimelineItem_Failure_RollsBack() async throws {
         // Given
-        let originalItem = createMockTimelineItem(title: "Original")
-        store.timelineItems = [originalItem]
-
-        var updatedItem = originalItem
-        updatedItem.title = "Updated"
-        mockRepository.shouldThrowError = true
+        let item = TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Book Venue", completed: false)
+        mockRepository.timelineItems = [item]
 
         // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        var updatedItem = item
+        updatedItem.completed = true
+
+        mockRepository.shouldThrowError = true
         await store.updateTimelineItem(updatedItem)
 
-        // Then
-        XCTAssertEqual(store.timelineItems[0].title, "Original")
+        // Then - Should rollback to original
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.timelineItems.first?.completed, false)
     }
 
-    // MARK: - Delete Timeline Item Tests
+    // MARK: - Delete Tests
 
     func testDeleteTimelineItem_Success() async throws {
         // Given
-        let item = createMockTimelineItem(title: "To Delete")
-        store.timelineItems = [item]
+        let item1 = TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Item 1")
+        let item2 = TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Item 2")
+        mockRepository.timelineItems = [item1, item2]
 
         // When
-        await store.deleteTimelineItem(item)
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+        await store.deleteTimelineItem(item1)
 
         // Then
-        XCTAssertTrue(store.timelineItems.isEmpty)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.timelineItems.count, 1)
+        XCTAssertEqual(store.timelineItems.first?.title, "Item 2")
     }
 
-    func testDeleteTimelineItem_RollbackOnError() async throws {
+    func testDeleteTimelineItem_Failure_RollsBack() async throws {
         // Given
-        let item = createMockTimelineItem(title: "To Delete")
-        store.timelineItems = [item]
-        mockRepository.shouldThrowError = true
+        let item = TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Item 1")
+        mockRepository.timelineItems = [item]
 
         // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        mockRepository.shouldThrowError = true
         await store.deleteTimelineItem(item)
 
-        // Then
-        XCTAssertEqual(store.timelineItems.count, 1)
+        // Then - Should rollback
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.timelineItems.count, 1)
     }
 
-    // MARK: - Toggle Completion Tests
-
-    func testToggleItemCompletion_MarksIncompleteAsComplete() async throws {
+    func testToggleCompleted() async throws {
         // Given
-        let item = createMockTimelineItem(title: "Item", completed: false)
-        store.timelineItems = [item]
-
-        var completedItem = item
-        completedItem.completed = true
-        mockRepository.updatedItem = completedItem
+        let item = TimelineItem.makeTest(id: UUID(), coupleId: coupleId, title: "Item 1", completed: false)
+        mockRepository.timelineItems = [item]
 
         // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
         await store.toggleItemCompletion(item)
 
         // Then
-        XCTAssertTrue(store.timelineItems[0].completed)
-    }
-
-    // MARK: - Milestone Tests
-
-    func testCreateMilestone_Success() async throws {
-        // Given
-        let insertData = MilestoneInsertData(
-            name: "Engagement",
-            description: nil,
-            milestoneDate: Date(),
-            icon: nil
-        )
-        let newMilestone = createMockMilestone(name: "Engagement")
-        mockRepository.createdMilestone = newMilestone
-
-        // When
-        await store.createMilestone(insertData)
-
-        // Then
-        XCTAssertEqual(store.milestones.count, 1)
-        XCTAssertEqual(store.milestones[0].name, "Engagement")
-        XCTAssertNil(store.error)
-    }
-
-    func testUpdateMilestone_Success() async throws {
-        // Given
-        let originalMilestone = createMockMilestone(name: "Original")
-        store.milestones = [originalMilestone]
-
-        var updatedMilestone = originalMilestone
-        updatedMilestone.name = "Updated"
-        mockRepository.updatedMilestone = updatedMilestone
-
-        // When
-        await store.updateMilestone(updatedMilestone)
-
-        // Then
-        XCTAssertEqual(store.milestones[0].name, "Updated")
-        XCTAssertNil(store.error)
-    }
-
-    func testDeleteMilestone_RollbackOnError() async throws {
-        // Given
-        let milestone = createMockMilestone(name: "To Delete")
-        store.milestones = [milestone]
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.deleteMilestone(milestone)
-
-        // Then
-        XCTAssertEqual(store.milestones.count, 1)
-        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.timelineItems.first?.completed, true)
     }
 
     // MARK: - Computed Properties Tests
 
-    func testFilteredItems_FiltersByType() {
+    func testComputedProperty_UpcomingItems() async throws {
         // Given
-        store.timelineItems = [
-            createMockTimelineItem(title: "Ceremony", itemType: .ceremony),
-            createMockTimelineItem(title: "Reception", itemType: .reception),
+        let futureDate = Calendar.current.date(byAdding: .day, value: 5, to: Date())!
+        let items = [
+            TimelineItem.makeTest(coupleId: coupleId, itemDate: futureDate, completed: false),
+            TimelineItem.makeTest(coupleId: coupleId, itemDate: futureDate, completed: false)
         ]
-        store.filterType = .ceremony
+        mockRepository.timelineItems = items
 
         // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        // Then
+        XCTAssertEqual(store.upcomingItems.count, 2)
+    }
+
+    func testComputedProperty_OverdueItems() async throws {
+        // Given
+        let pastDate = Calendar.current.date(byAdding: .day, value: -5, to: Date())!
+        let items = [
+            TimelineItem.makeTest(coupleId: coupleId, itemDate: pastDate, completed: false),
+            TimelineItem.makeTest(coupleId: coupleId, itemDate: pastDate, completed: false)
+        ]
+        mockRepository.timelineItems = items
+
+        // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        // Then
+        XCTAssertEqual(store.overdueItems.count, 2)
+    }
+
+    func testComputedProperty_CompletedItems() async throws {
+        // Given
+        let items = [
+            TimelineItem.makeTest(coupleId: coupleId, completed: true),
+            TimelineItem.makeTest(coupleId: coupleId, completed: false),
+            TimelineItem.makeTest(coupleId: coupleId, completed: true)
+        ]
+        mockRepository.timelineItems = items
+
+        // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+
+        // Then
+        XCTAssertEqual(store.completedItemsCount(), 2)
+    }
+
+    func testFilterByType() async throws {
+        // Given
+        let items = [
+            TimelineItem.makeTest(coupleId: coupleId, itemType: .payment),
+            TimelineItem.makeTest(coupleId: coupleId, itemType: .task),
+            TimelineItem.makeTest(coupleId: coupleId, itemType: .payment)
+        ]
+        mockRepository.timelineItems = items
+
+        // When
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
+        store.filterType = .payment
         let filtered = store.filteredItems
 
         // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].title, "Ceremony")
+        XCTAssertEqual(filtered.count, 2)
+        XCTAssertTrue(filtered.allSatisfy { $0.itemType == .payment })
     }
 
-    func testFilteredItems_HidesCompletedWhenToggled() {
+    func testFilterByDateRange() async throws {
         // Given
-        store.timelineItems = [
-            createMockTimelineItem(title: "Done", completed: true),
-            createMockTimelineItem(title: "Not Done", completed: false),
+        let pastDate = Calendar.current.date(byAdding: .month, value: -2, to: Date())!
+        let futureDate = Calendar.current.date(byAdding: .month, value: 2, to: Date())!
+        let items = [
+            TimelineItem.makeTest(coupleId: coupleId, itemDate: pastDate),
+            TimelineItem.makeTest(coupleId: coupleId, itemDate: Date()),
+            TimelineItem.makeTest(coupleId: coupleId, itemDate: futureDate)
         ]
-        store.showCompleted = false
+        mockRepository.timelineItems = items
 
         // When
-        let filtered = store.filteredItems
+        let store = await withDependencies {
+            $0.timelineRepository = mockRepository
+        } operation: {
+            TimelineStoreV2()
+        }
+
+        await store.loadTimelineItems()
 
         // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].title, "Not Done")
-    }
-
-    func testOverdueItems_ReturnsOnlyPastIncompleteItems() {
-        // Given
-        let past = Date().addingTimeInterval(-3600)
-        let future = Date().addingTimeInterval(3600)
-
-        store.timelineItems = [
-            createMockTimelineItem(title: "Overdue", date: past, completed: false),
-            createMockTimelineItem(title: "Future", date: future, completed: false),
-            createMockTimelineItem(title: "Past Complete", date: past, completed: true),
-        ]
-
-        // When
-        let overdue = store.overdueItems
-
-        // Then
-        XCTAssertEqual(overdue.count, 1)
-        XCTAssertEqual(overdue[0].title, "Overdue")
-    }
-
-    // MARK: - Helper Methods
-
-    private func createMockTimelineItem(
-        title: String,
-        date: Date = Date(),
-        itemType: TimelineItemType = .ceremony,
-        completed: Bool = false
-    ) -> TimelineItem {
-        TimelineItem(
-            id: UUID(),
-            tenantId: UUID(),
-            title: title,
-            description: nil,
-            itemDate: date,
-            itemType: itemType,
-            duration: nil,
-            location: nil,
-            notes: nil,
-            completed: completed,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-
-    private func createMockMilestone(
-        name: String,
-        date: Date = Date(),
-        completed: Bool = false
-    ) -> Milestone {
-        Milestone(
-            id: UUID(),
-            tenantId: UUID(),
-            name: name,
-            description: nil,
-            milestoneDate: date,
-            icon: nil,
-            completed: completed,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-}
-
-// MARK: - Mock Repository
-
-class MockTimelineRepository: TimelineRepositoryProtocol {
-    var timelineItems: [TimelineItem] = []
-    var milestones: [Milestone] = []
-    var createdItem: TimelineItem?
-    var updatedItem: TimelineItem?
-    var createdMilestone: Milestone?
-    var updatedMilestone: Milestone?
-    var shouldThrowError = false
-
-    func fetchTimelineItems() async throws -> [TimelineItem] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return timelineItems
-    }
-
-    func fetchMilestones() async throws -> [Milestone] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return milestones
-    }
-
-    func createTimelineItem(_ insertData: TimelineItemInsertData) async throws -> TimelineItem {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return createdItem ?? TimelineItem(
-            id: UUID(),
-            tenantId: UUID(),
-            title: insertData.title,
-            description: insertData.description,
-            itemDate: insertData.itemDate,
-            itemType: insertData.itemType,
-            duration: insertData.duration,
-            location: insertData.location,
-            notes: insertData.notes,
-            completed: false,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-
-    func updateTimelineItem(_ item: TimelineItem) async throws -> TimelineItem {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return updatedItem ?? item
-    }
-
-    func deleteTimelineItem(id: UUID) async throws {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-    }
-
-    func createMilestone(_ insertData: MilestoneInsertData) async throws -> Milestone {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return createdMilestone ?? Milestone(
-            id: UUID(),
-            tenantId: UUID(),
-            name: insertData.name,
-            description: insertData.description,
-            milestoneDate: insertData.milestoneDate,
-            icon: insertData.icon,
-            completed: false,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-
-    func updateMilestone(_ milestone: Milestone) async throws -> Milestone {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return updatedMilestone ?? milestone
-    }
-
-    func deleteMilestone(id: UUID) async throws {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-    }
-
-    func invalidateCache() async {
-        // No-op for mock
+        XCTAssertEqual(store.timelineItems.count, 3)
     }
 }

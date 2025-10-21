@@ -405,9 +405,14 @@ class VendorExportService {
             message: "Vendor contact list exported successfully.\n\n\(sheetURL)\n\nClick 'Open in Browser' to view the sheet.",
             style: .informational,
             buttons: ["Open in Browser", "Close"]
-        ) { response in
+        ) { [self] response in
             if response == "Open in Browser" {
-                NSWorkspace.shared.open(URL(string: sheetURL)!)
+                guard let url = InputValidator.safeURLConversion(sheetURL) else {
+                    logger.error("Invalid Google Sheets URL: \(sheetURL)")
+                    completion(false)
+                    return
+                }
+                NSWorkspace.shared.open(url)
                 completion(true)
             } else {
                 completion(false)

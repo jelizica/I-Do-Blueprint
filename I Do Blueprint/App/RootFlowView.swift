@@ -11,8 +11,11 @@ import SwiftUI
 /// This centralizes the branching logic that was previously duplicated between App and ContentView
 struct RootFlowView: View {
     @EnvironmentObject var settingsStore: SettingsStoreV2
-    @StateObject private var coordinator = AppCoordinator()
+    @EnvironmentObject private var appStores: AppStores
     @StateObject private var supabaseManager = SupabaseManager.shared
+    
+    // Create coordinator with shared stores
+    @StateObject private var coordinator: AppCoordinator = AppCoordinator(appStores: .shared)
     @StateObject private var sessionManager = SessionManager.shared
 
     var body: some View {
@@ -26,6 +29,7 @@ struct RootFlowView: View {
             } else {
                 // Authenticated with tenant: Show main app
                 MainAppView()
+                    .environmentObject(appStores)
                     .environmentObject(settingsStore)
                     .environmentObject(coordinator)
             }
@@ -45,6 +49,7 @@ struct RootFlowView: View {
 /// Main application view (after authentication and tenant selection)
 private struct MainAppView: View {
     @EnvironmentObject var settingsStore: SettingsStoreV2
+    @EnvironmentObject var appStores: AppStores
     @EnvironmentObject var coordinator: AppCoordinator
 
     var body: some View {
@@ -55,6 +60,15 @@ private struct MainAppView: View {
         } detail: {
             // Main content - shows the selected tab's view
             coordinator.selectedTab.view
+                .environmentObject(appStores)
+                .environmentObject(appStores.budget)
+                .environmentObject(appStores.guest)
+                .environmentObject(appStores.vendor)
+                .environmentObject(appStores.document)
+                .environmentObject(appStores.task)
+                .environmentObject(appStores.timeline)
+                .environmentObject(appStores.notes)
+                .environmentObject(appStores.visualPlanning)
                 .environmentObject(settingsStore)
         }
         .navigationSplitViewStyle(.balanced)

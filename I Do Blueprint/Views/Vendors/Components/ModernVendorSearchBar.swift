@@ -13,6 +13,13 @@ struct ModernVendorSearchBar: View {
     @Binding var selectedCategory: String?
     @Binding var groupByStatus: Bool
 
+    var filteredCount: Int = 0
+    var totalCount: Int = 0
+
+    private var hasActiveFilters: Bool {
+        selectedFilter != .all || selectedCategory != nil || !searchText.isEmpty
+    }
+
     var body: some View {
         VStack(spacing: Spacing.md) {
             // Search Field
@@ -88,6 +95,55 @@ struct ModernVendorSearchBar: View {
                     }
                     .buttonStyle(.borderless)
                     .foregroundColor(AppColors.primary)
+                }
+            }
+
+            // Active Filter Chips
+            if hasActiveFilters {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        // Filter option chip
+                        if selectedFilter != .all {
+                            ActiveFilterChip(label: "Filter: \(selectedFilter.displayName)") {
+                                selectedFilter = .all
+                            }
+                        }
+
+                        // Category filter chip
+                        if let category = selectedCategory {
+                            ActiveFilterChip(label: "Category: \(category)") {
+                                selectedCategory = nil
+                            }
+                        }
+
+                        // Search filter chip
+                        if !searchText.isEmpty {
+                            ActiveFilterChip(label: "Search: \"\(searchText)\"") {
+                                searchText = ""
+                            }
+                        }
+
+                        // Result count
+                        if totalCount > 0 {
+                            Text("\(filteredCount) of \(totalCount) vendors")
+                                .font(.caption)
+                                .foregroundColor(AppColors.textSecondary)
+                                .padding(.leading, 4)
+                        }
+
+                        Spacer()
+
+                        // Clear all button
+                        Button("Clear all") {
+                            searchText = ""
+                            selectedFilter = .all
+                            selectedCategory = nil
+                        }
+                        .font(.caption)
+                        .foregroundColor(AppColors.primary)
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, Spacing.sm)
                 }
             }
         }

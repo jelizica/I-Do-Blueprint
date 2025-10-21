@@ -19,11 +19,13 @@ struct RemindersSummaryCard: View {
             color: .orange,
             isHovered: $isHovered) {
             VStack(spacing: 16) {
-                CircleProgressView(
-                    progress: metrics.total > 0 ? Double(metrics.completed) / Double(metrics.total) : 0,
+                CircularProgress(
+                    value: metrics.total > 0 ? Double(metrics.completed) / Double(metrics.total) : 0,
+                    color: .orange,
                     lineWidth: 10,
-                    color: .orange)
-                    .frame(width: 80, height: 80)
+                    size: 80,
+                    showPercentage: true
+                )
 
                 LazyVGrid(columns: [
                     GridItem(.flexible()),

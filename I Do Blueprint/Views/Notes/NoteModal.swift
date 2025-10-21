@@ -15,7 +15,7 @@ struct NoteModal: View {
     let onCancel: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
     @State private var title = ""
     @State private var content = ""
     @State private var selectedType: NoteRelatedType?
@@ -357,7 +357,11 @@ struct NoteModal: View {
         defer { isLoadingEntities = false }
 
         do {
-            let supabase = SupabaseManager.shared.client
+            guard let supabase = SupabaseManager.shared.client else {
+                logger.error("Supabase client not available")
+                availableEntities = []
+                return
+            }
 
             switch type {
             case .vendor:
@@ -372,7 +376,7 @@ struct NoteModal: View {
                 }
 
                 let vendors: [VendorResult] = try await supabase
-                    .from("vendorInformation")
+                    .from("vendor_information")
                     .select("id, vendor_name")
                     .order("vendor_name", ascending: true)
                     .execute()
@@ -494,7 +498,7 @@ struct NoteModal: View {
                 }
 
                 let payments: [PaymentResult] = try await supabase
-                    .from("paymentPlans")
+                    .from("payment_plans")
                     .select("id, payment_description")
                     .order("payment_description", ascending: true)
                     .execute()
@@ -532,7 +536,7 @@ struct NoteModal: View {
         isSaving = true
 
         // Get couple ID from settings
-        guard let coupleId = settingsViewModel.coupleId else {
+        guard let coupleId = settingsStore.coupleId else {
             logger.warning("No couple ID available - user not authenticated")
             isSaving = false
             return

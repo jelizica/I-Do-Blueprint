@@ -8,8 +8,8 @@
 import SwiftUI
 
 struct DocumentsView: View {
-    @StateObject private var viewModel = DocumentStoreV2()
-    @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    @EnvironmentObject private var viewModel: DocumentStoreV2
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
     @State private var showingUploadModal = false
     @State private var showingFilterSheet = false
     @State private var showingTypePickerModal = false
@@ -317,21 +317,11 @@ struct DocumentsView: View {
     private var emptyStateView: some View {
         Group {
             if viewModel.hasActiveFilters {
-                SharedEmptyStateView(
-                    icon: "doc.fill",
-                    title: "No Documents Found",
-                    message: "No documents match your current filters. Try adjusting or clearing your filters.",
-                    actionTitle: "Clear Filters",
-                    action: { viewModel.clearFilters() }
-                )
+                UnifiedEmptyStateView(config: .filteredResults())
             } else {
-                SharedEmptyStateView(
-                    icon: "doc.fill",
-                    title: "No Documents Yet",
-                    message: "Upload your first document to get started organizing your wedding files.",
-                    actionTitle: "Upload Document",
-                    action: { showingUploadModal = true }
-                )
+                UnifiedEmptyStateView(config: .documents(onAdd: {
+                    showingUploadModal = true
+                }))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -356,14 +346,14 @@ struct DocumentsView: View {
     // MARK: - Helper Methods
 
     private func handleUpload(_ metadata: FileUploadMetadata) async {
-        guard let coupleId = settingsViewModel.coupleId else {
+        guard let coupleId = settingsStore.coupleId else {
             logger.warning("No couple ID available")
             return
         }
 
         do {
-            // TODO: Get actual user email from auth system
-            let uploadedBy = "current-user@example.com"
+            // Get user email from auth context
+            let uploadedBy = try AuthContext.shared.requireUserEmail()
             _ = try await viewModel.uploadFile(metadata: metadata, coupleId: coupleId, uploadedBy: uploadedBy)
             showingUploadModal = false
         } catch {
@@ -540,5 +530,5 @@ struct BatchTypePickerModal: View {
 
 #Preview {
     DocumentsView()
-        .environmentObject(SettingsViewModel())
+        .environmentObject(SettingsStoreV2())
 }

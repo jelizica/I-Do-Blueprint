@@ -200,7 +200,7 @@ enum VendorFilterOption: String, CaseIterable {
 
 // MARK: - Vendor Statistics
 
-struct VendorStats {
+struct VendorStats: Codable {
     let total: Int
     let booked: Int
     let available: Int

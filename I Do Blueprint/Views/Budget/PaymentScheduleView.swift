@@ -105,7 +105,7 @@ struct PaymentScheduleView: View {
             List {
                 ForEach(groupedPayments, id: \.key) { group in
                     Section(group.key) {
-                        ForEach(group.value) { payment in
+                        ForEach(group.value, id: \.id) { payment in
                             PaymentScheduleRowView(
                                 payment: payment,
                                 expense: getExpenseForPayment(payment),
@@ -128,6 +128,7 @@ struct PaymentScheduleView: View {
                                     return payment.vendor.isEmpty ? nil : payment.vendor
                                 }
                             )
+                            .id(payment.id)
                         }
                     }
                 }
@@ -160,18 +161,19 @@ struct PaymentScheduleView: View {
     private var addPaymentSheet: some View {
         AddPaymentScheduleView(
             expenses: budgetStore.expenses.filter { $0.paymentStatus != .paid },
+            existingPaymentSchedules: budgetStore.paymentSchedules,
             onSave: { newPaymentSchedule in
                 Task {
                     await budgetStore.addPaymentSchedule(newPaymentSchedule)
                 }
             },
             getVendorName: { vendorId in
-                // Try to find vendor name from expenses
-                if let vendorId = vendorId,
-                   let expense = budgetStore.expenses.first(where: { $0.vendorId == vendorId }) {
-                    return expense.vendorName
-                }
-                return nil
+                // Look up vendor name from vendors list using vendor_id
+                guard let vendorId = vendorId else { return nil }
+                
+                // Access vendors from VendorStoreV2 through AppStores
+                let vendors = AppStores.shared.vendor.vendors
+                return vendors.first(where: { $0.id == vendorId })?.vendorName
             }
         )
         #if os(macOS)
@@ -218,21 +220,21 @@ struct PaymentSummaryHeaderView: View {
                     value: NumberFormatter.currency.string(from: NSNumber(value: totalUpcoming)) ?? "$0",
                     subtitle: "Due soon",
                     icon: "calendar",
-                    color: .blue)
+                    color: AppColors.Budget.pending)
 
                 PaymentOverviewCard(
                     title: "Overdue Payments",
                     value: NumberFormatter.currency.string(from: NSNumber(value: totalOverdue)) ?? "$0",
                     subtitle: "Past due",
                     icon: "exclamationmark.triangle.fill",
-                    color: .red)
+                    color: AppColors.Budget.overBudget)
 
                 PaymentOverviewCard(
                     title: "Total Schedules",
                     value: "\(scheduleCount)",
                     subtitle: "Active schedules",
                     icon: "list.number",
-                    color: .green)
+                    color: AppColors.Budget.allocated)
             }
         }
     }
@@ -254,7 +256,7 @@ struct PaymentScheduleRowView: View {
             HStack(spacing: 16) {
                 // Payment status indicator
                 Circle()
-                    .fill(payment.paid ? Color.green : Color.orange)
+                    .fill(payment.paid ? AppColors.Budget.income : AppColors.Budget.pending)
                     .frame(width: 12, height: 12)
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -268,7 +270,7 @@ struct PaymentScheduleRowView: View {
                         Text(NumberFormatter.currency.string(from: NSNumber(value: payment.paymentAmount)) ?? "$0")
                             .font(.title3)
                             .fontWeight(.semibold)
-                            .foregroundColor(payment.paid ? .green : .primary)
+                            .foregroundColor(payment.paid ? AppColors.Budget.income : .primary)
                     }
 
                     Text(payment.notes ?? "No description")
@@ -286,8 +288,8 @@ struct PaymentScheduleRowView: View {
                             .font(.caption)
                             .padding(.horizontal, 8)
                             .padding(.vertical, 2)
-                            .background(payment.paid ? Color.green.opacity(0.2) : Color.orange.opacity(0.2))
-                            .foregroundColor(payment.paid ? .green : .orange)
+                            .background(payment.paid ? AppColors.Budget.income.opacity(0.2) : AppColors.Budget.pending.opacity(0.2))
+                            .foregroundColor(payment.paid ? AppColors.Budget.income : AppColors.Budget.pending)
                             .clipShape(Capsule())
                     }
                 }
@@ -301,7 +303,7 @@ struct PaymentScheduleRowView: View {
                         onUpdate(updatedPayment)
                     }) {
                         Image(systemName: payment.paid ? "checkmark.square.fill" : "square")
-                            .foregroundColor(payment.paid ? .green : .secondary)
+                            .foregroundColor(payment.paid ? AppColors.Budget.income : .secondary)
                             .font(.title2)
                     }
                     .buttonStyle(.plain)

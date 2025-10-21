@@ -35,8 +35,15 @@ class PerformanceOptimizationService: ObservableObject {
 
     init() {
         setupCacheConfiguration()
-        setupMemoryWarningObserver()
-        startPerformanceMonitoring()
+        
+        // Only start monitoring if feature flags allow
+        if PerformanceFeatureFlags.enableMemoryWarningMonitoring {
+            setupMemoryWarningObserver()
+        }
+        
+        if PerformanceFeatureFlags.enablePerformanceMonitoring {
+            startPerformanceMonitoring()
+        }
     }
 
     // MARK: - Cache Configuration
@@ -57,6 +64,13 @@ class PerformanceOptimizationService: ObservableObject {
         // Note: macOS doesn't have a direct memory warning notification like iOS
         // We could monitor system memory pressure through other means if needed
         // For now, we'll handle this through periodic cleanup
+        
+        // Only enable if feature flag is set (disabled by default to save memory)
+        guard PerformanceFeatureFlags.enableMemoryWarningMonitoring else {
+            logger.debug("Memory warning monitoring disabled via feature flag")
+            return
+        }
+        
         memoryWarningCancellable = Timer.publish(every: 60, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
@@ -126,40 +140,42 @@ class PerformanceOptimizationService: ObservableObject {
     // MARK: - Lazy Loading Support
 
     func preloadImages(for elements: [VisualElement], priority: TaskPriority = .medium) {
+        // Check feature flag before preloading
+        guard PerformanceFeatureFlags.enableImagePreloading else {
+            logger.debug("Image preloading disabled via feature flag")
+            return
+        }
+        
         Task(priority: priority) {
-            for element in elements {
-                if let imageUrl = element.elementData.imageUrl,
-                   let url = URL(string: imageUrl) {
-                    do {
-                        let data = try Data(contentsOf: url)
-                        _ = await optimizedImage(from: data)
-                    } catch {
-                        logger.warning("Failed to load image from URL: \(imageUrl)")
-                    }
-                }
+            let urls = elements.compactMap { element -> URL? in
+                guard let imageUrl = element.elementData.imageUrl else { return nil }
+                return URL(string: imageUrl)
             }
+            
+            // Use SafeImageLoader for memory-safe loading
+            await SafeImageLoader.shared.preloadImages(urls: urls, delay: 0.1)
         }
     }
 
     func preloadMoodBoardThumbnails(for moodBoards: [MoodBoard]) {
+        // Check feature flag before preloading
+        guard PerformanceFeatureFlags.enableImagePreloading else {
+            logger.debug("Mood board thumbnail preloading disabled via feature flag")
+            return
+        }
+        
         Task(priority: .low) {
             for moodBoard in moodBoards {
                 let thumbnailElements = Array(moodBoard.elements.prefix(3))
-                await preloadImagesWithDelay(for: thumbnailElements, delay: 0.1)
-            }
-        }
-    }
-
-    private func preloadImagesWithDelay(for elements: [VisualElement], delay: TimeInterval) async {
-        for element in elements {
-            if let imageUrl = element.elementData.imageUrl,
-               let url = URL(string: imageUrl) {
-                do {
-                    let data = try Data(contentsOf: url)
-                    _ = await optimizedImage(from: data, maxSize: CGSize(width: 200, height: 200))
-                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                } catch {
-                    logger.warning("Failed to load image from URL: \(imageUrl)")
+                let urls = thumbnailElements.compactMap { element -> URL? in
+                    guard let imageUrl = element.elementData.imageUrl else { return nil }
+                    return URL(string: imageUrl)
+                }
+                
+                // Use SafeImageLoader for memory-safe thumbnail loading
+                for url in urls {
+                    _ = await SafeImageLoader.shared.loadThumbnail(from: url)
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second delay
                 }
             }
         }
@@ -249,6 +265,12 @@ class PerformanceOptimizationService: ObservableObject {
     // MARK: - Performance Monitoring
 
     private func startPerformanceMonitoring() {
+        // Only start if feature flag allows
+        guard PerformanceFeatureFlags.enablePerformanceMonitoring else {
+            logger.debug("Performance monitoring disabled via feature flag")
+            return
+        }
+        
         Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updatePerformanceMetrics()

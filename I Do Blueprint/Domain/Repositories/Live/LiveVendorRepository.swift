@@ -10,24 +10,28 @@ import Supabase
 
 /// Production implementation of VendorRepositoryProtocol
 actor LiveVendorRepository: VendorRepositoryProtocol {
-    private let supabase: SupabaseClient
-    private let cache: RepositoryCache
+    private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
 
     // SessionManager for tenant scoping
     private let sessionManager: SessionManager
 
-    init(supabase: SupabaseClient, sessionManager: SessionManager = .shared) {
+    init(supabase: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
         self.supabase = supabase
         self.sessionManager = sessionManager
-        cache = RepositoryCache()
     }
 
     // Convenience initializer using SupabaseManager
     init() {
         supabase = SupabaseManager.shared.client
         sessionManager = .shared
-        cache = RepositoryCache()
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     // Helper to get tenant ID, throws if not set
@@ -39,47 +43,58 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
     // Helper to invalidate all vendor-related caches for a specific vendor
     private func invalidateVendorSpecificCaches(vendorId: Int64, tenantId: UUID) async {
-        await cache.remove("vendor_reviews_\(vendorId)_\(tenantId.uuidString)")
-        await cache.remove("vendor_review_stats_\(vendorId)_\(tenantId.uuidString)")
-        await cache.remove("vendor_payment_summary_\(vendorId)_\(tenantId.uuidString)")
-        await cache.remove("vendor_contract_summary_\(vendorId)_\(tenantId.uuidString)")
+        await RepositoryCache.shared.remove("vendor_reviews_\(vendorId)_\(tenantId.uuidString)")
+        await RepositoryCache.shared.remove("vendor_review_stats_\(vendorId)_\(tenantId.uuidString)")
+        await RepositoryCache.shared.remove("vendor_payment_summary_\(vendorId)_\(tenantId.uuidString)")
+        await RepositoryCache.shared.remove("vendor_contract_summary_\(vendorId)_\(tenantId.uuidString)")
     }
 
     func fetchVendors() async throws -> [Vendor] {
+        let client = try getClient()
         let tenantId = try await getTenantId()
         let cacheKey = "vendors_\(tenantId.uuidString)"
         let startTime = Date()
 
-        // Check cache first
-        if let cached: [Vendor] = await cache.get(cacheKey, maxAge: 60) {
-            logger.debug("Cache hit for vendors")
+        // ✅ Check cache first
+        if let cached: [Vendor] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: vendors (\(cached.count) items)")
             return cached
         }
+
+        logger.info("Cache miss: fetching vendors from database")
+        logger.info("🔍 Querying with couple_id: \(tenantId.uuidString.lowercased())")
 
         // Fetch from Supabase with retry and timeout - scoped by tenant
         do {
             let vendors: [Vendor] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("vendorInformation")
+                try await client
+                    .from("vendor_information")
                     .select()
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId.uuidString.lowercased())
                     .order("created_at", ascending: false)
                     .execute()
                     .value
             }
 
-            // Cache the result
-            await cache.set(cacheKey, value: vendors)
-
-            // Emit metrics
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(vendors.count) vendors in \(duration)s")
+            
+            // ✅ Cache the result
+            await RepositoryCache.shared.set(cacheKey, value: vendors, ttl: 60)
+            
+            // ✅ Record performance metrics
+            await PerformanceMonitor.shared.recordOperation("fetchVendors", duration: duration)
+
+            logger.info("Fetched \(vendors.count) vendors in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchVendors", outcome: .success, duration: duration)
 
             return vendors
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to fetch vendors after \(duration)s", error: error)
+            
+            // ✅ Record failed operation
+            await PerformanceMonitor.shared.recordOperation("fetchVendors", duration: duration)
+            
+            logger.error("Failed to fetch vendors after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "fetchVendors", outcome: .failure(code: nil), duration: duration)
             throw error
         }
@@ -88,11 +103,15 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
     func fetchVendorStats() async throws -> VendorStats {
         let tenantId = try await getTenantId()
         let cacheKey = "vendor_stats_\(tenantId.uuidString)"
+        let startTime = Date()
 
-        // Check cache first
-        if let cached: VendorStats = await cache.get(cacheKey, maxAge: 60) {
+        // ✅ Check cache first
+        if let cached: VendorStats = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: vendor stats")
             return cached
         }
+
+        logger.info("Cache miss: calculating vendor stats")
 
         // Fetch vendors to calculate stats (already tenant-scoped)
         let vendors = try await fetchVendors()
@@ -114,20 +133,28 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             totalCost: totalCost,
             averageRating: averageRating)
 
-        // Cache the result
-        await cache.set(cacheKey, value: stats)
+        let duration = Date().timeIntervalSince(startTime)
+        
+        // ✅ Cache the result
+        await RepositoryCache.shared.set(cacheKey, value: stats, ttl: 60)
+        
+        // ✅ Record performance
+        await PerformanceMonitor.shared.recordOperation("fetchVendorStats", duration: duration)
+
+        logger.info("Calculated vendor stats in \(String(format: "%.2f", duration))s")
 
         return stats
     }
 
     func createVendor(_ vendor: Vendor) async throws -> Vendor {
+        let client = try getClient()
         let tenantId = try await getTenantId()
         let startTime = Date()
 
         do {
             let created: Vendor = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("vendorInformation")
+                try await client
+                    .from("vendor_information")
                     .insert(vendor)
                     .select()
                     .single()
@@ -136,24 +163,33 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             }
 
             // Invalidate tenant-scoped cache and vendor-specific caches
-            await cache.remove("vendors_\(tenantId.uuidString)")
-            await cache.remove("vendor_stats_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
             await invalidateVendorSpecificCaches(vendorId: created.id, tenantId: tenantId)
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created vendor in \(duration)s")
+            
+            // ✅ Record performance
+            await PerformanceMonitor.shared.recordOperation("createVendor", duration: duration)
+            
+            logger.info("Created vendor in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "createVendor", outcome: .success, duration: duration)
 
             return created
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to create vendor after \(duration)s", error: error)
+            
+            // ✅ Record failed operation
+            await PerformanceMonitor.shared.recordOperation("createVendor", duration: duration)
+            
+            logger.error("Failed to create vendor after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "createVendor", outcome: .failure(code: nil), duration: duration)
             throw error
         }
     }
 
     func updateVendor(_ vendor: Vendor) async throws -> Vendor {
+        let client = try getClient()
         let tenantId = try await getTenantId()
         var updated = vendor
         updated.updatedAt = Date()
@@ -161,11 +197,11 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
         do {
             let result: Vendor = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("vendorInformation")
+                try await client
+                    .from("vendor_information")
                     .update(updated)
                     .eq("id", value: String(vendor.id))
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .select()
                     .single()
                     .execute()
@@ -173,31 +209,40 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             }
 
             // Invalidate tenant-scoped cache and vendor-specific caches
-            await cache.remove("vendors_\(tenantId.uuidString)")
-            await cache.remove("vendor_stats_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
             await invalidateVendorSpecificCaches(vendorId: vendor.id, tenantId: tenantId)
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated vendor in \(duration)s")
+            
+            // ✅ Record performance
+            await PerformanceMonitor.shared.recordOperation("updateVendor", duration: duration)
+            
+            logger.info("Updated vendor in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "updateVendor", outcome: .success, duration: duration)
 
             return result
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to update vendor after \(duration)s", error: error)
+            
+            // ✅ Record failed operation
+            await PerformanceMonitor.shared.recordOperation("updateVendor", duration: duration)
+            
+            logger.error("Failed to update vendor after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "updateVendor", outcome: .failure(code: nil), duration: duration)
             throw error
         }
     }
 
     func deleteVendor(id: Int64) async throws {
+        let client = try getClient()
         let tenantId = try await getTenantId()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("vendorInformation")
+                try await client
+                    .from("vendor_information")
                     .delete()
                     .eq("id", value: String(id))
                     .eq("couple_id", value: tenantId.uuidString)
@@ -205,16 +250,24 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             }
 
             // Invalidate tenant-scoped cache and vendor-specific caches
-            await cache.remove("vendors_\(tenantId.uuidString)")
-            await cache.remove("vendor_stats_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
             await invalidateVendorSpecificCaches(vendorId: id, tenantId: tenantId)
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted vendor in \(duration)s")
+            
+            // ✅ Record performance
+            await PerformanceMonitor.shared.recordOperation("deleteVendor", duration: duration)
+            
+            logger.info("Deleted vendor in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "deleteVendor", outcome: .success, duration: duration)
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to delete vendor after \(duration)s", error: error)
+            
+            // ✅ Record failed operation
+            await PerformanceMonitor.shared.recordOperation("deleteVendor", duration: duration)
+            
+            logger.error("Failed to delete vendor after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "deleteVendor", outcome: .failure(code: nil), duration: duration)
             throw error
         }
@@ -223,18 +276,19 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
     // MARK: - Extended Vendor Data
 
     func fetchVendorReviews(vendorId: Int64) async throws -> [VendorReview] {
+        let client = try getClient()
         let tenantId = try await getTenantId()
         let cacheKey = "vendor_reviews_\(vendorId)_\(tenantId.uuidString)"
         let startTime = Date()
 
-        if let cached: [VendorReview] = await cache.get(cacheKey, maxAge: 300) {
-            logger.debug("Cache hit for vendor reviews")
+        if let cached: [VendorReview] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
+            logger.info("Cache hit: vendor reviews")
             return cached
         }
 
         do {
             let reviews: [VendorReview] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("vendor_reviews")
                     .select()
                     .eq("vendor_id", value: String(vendorId))
@@ -244,16 +298,16 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .value
             }
 
-            await cache.set(cacheKey, value: reviews)
+            await RepositoryCache.shared.set(cacheKey, value: reviews, ttl: 300)
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(reviews.count) vendor reviews in \(duration)s")
+            logger.info("Fetched \(reviews.count) vendor reviews in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchVendorReviews", outcome: .success, duration: duration)
 
             return reviews
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to fetch vendor reviews after \(duration)s", error: error)
+            logger.error("Failed to fetch vendor reviews after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "fetchVendorReviews", outcome: .failure(code: nil), duration: duration)
             throw error
         }
@@ -263,7 +317,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
         let tenantId = try await getTenantId()
         let cacheKey = "vendor_review_stats_\(vendorId)_\(tenantId.uuidString)"
 
-        if let cached: VendorReviewStats = await cache.get(cacheKey, maxAge: 300) {
+        if let cached: VendorReviewStats = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
             return cached
         }
 
@@ -300,17 +354,18 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             recommendationRate: recommendationRate
         )
 
-        await cache.set(cacheKey, value: stats)
+        await RepositoryCache.shared.set(cacheKey, value: stats, ttl: 300)
         return stats
     }
 
     func fetchVendorPaymentSummary(vendorId: Int64) async throws -> VendorPaymentSummary? {
+        let client = try getClient()
         let tenantId = try await getTenantId()
         let cacheKey = "vendor_payment_summary_\(vendorId)_\(tenantId.uuidString)"
         let startTime = Date()
 
-        if let cached: VendorPaymentSummary = await cache.get(cacheKey, maxAge: 60) {
-            logger.debug("Cache hit for vendor payment summary")
+        if let cached: VendorPaymentSummary = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: vendor payment summary")
             return cached
         }
 
@@ -336,7 +391,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
         do {
             let rows: [PaymentSummaryRow] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("vendor_payment_summary")
                     .select()
                     .eq("vendor_id", value: String(vendorId))
@@ -356,28 +411,29 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                 finalPaymentDue: row.finalPaymentDue
             )
 
-            await cache.set(cacheKey, value: summary)
+            await RepositoryCache.shared.set(cacheKey, value: summary, ttl: 60)
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched vendor payment summary in \(duration)s")
+            logger.info("Fetched vendor payment summary in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchVendorPaymentSummary", outcome: .success, duration: duration)
 
             return summary
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to fetch vendor payment summary after \(duration)s", error: error)
+            logger.error("Failed to fetch vendor payment summary after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "fetchVendorPaymentSummary", outcome: .failure(code: nil), duration: duration)
             throw error
         }
     }
 
     func fetchVendorContractSummary(vendorId: Int64) async throws -> VendorContract? {
+        let client = try getClient()
         let tenantId = try await getTenantId()
         let cacheKey = "vendor_contract_summary_\(vendorId)_\(tenantId.uuidString)"
         let startTime = Date()
 
-        if let cached: VendorContract = await cache.get(cacheKey, maxAge: 300) {
-            logger.debug("Cache hit for vendor contract summary")
+        if let cached: VendorContract = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
+            logger.info("Cache hit: vendor contract summary")
             return cached
         }
 
@@ -399,7 +455,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
         do {
             let rows: [ContractSummaryRow] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("vendor_contract_summary")
                     .select()
                     .eq("vendor_id", value: String(vendorId))
@@ -419,16 +475,16 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                 contractStatus: status
             )
 
-            await cache.set(cacheKey, value: contract)
+            await RepositoryCache.shared.set(cacheKey, value: contract, ttl: 300)
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched vendor contract summary in \(duration)s")
+            logger.info("Fetched vendor contract summary in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchVendorContractSummary", outcome: .success, duration: duration)
 
             return contract
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to fetch vendor contract summary after \(duration)s", error: error)
+            logger.error("Failed to fetch vendor contract summary after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "fetchVendorContractSummary", outcome: .failure(code: nil), duration: duration)
             throw error
         }
@@ -462,5 +518,54 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
         details.contractInfo = contract
 
         return details
+    }
+    
+    // MARK: - Vendor Types
+    
+    func fetchVendorTypes() async throws -> [VendorType] {
+        let client = try getClient()
+        let cacheKey = "vendor_types_all"
+        let startTime = Date()
+        
+        // ✅ Check cache first (long TTL since this is reference data)
+        if let cached: [VendorType] = await RepositoryCache.shared.get(cacheKey, maxAge: 3600) {
+            logger.info("Cache hit: vendor types (\(cached.count) items)")
+            return cached
+        }
+        
+        logger.info("Cache miss: fetching vendor types from database")
+        
+        do {
+            let vendorTypes: [VendorType] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("vendor_types")
+                    .select()
+                    .order("vendor_type", ascending: true)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // ✅ Cache the result (1 hour TTL for reference data)
+            await RepositoryCache.shared.set(cacheKey, value: vendorTypes, ttl: 3600)
+            
+            // ✅ Record performance metrics
+            await PerformanceMonitor.shared.recordOperation("fetchVendorTypes", duration: duration)
+            
+            logger.info("Fetched \(vendorTypes.count) vendor types in \(String(format: "%.2f", duration))s")
+            AnalyticsService.trackNetwork(operation: "fetchVendorTypes", outcome: .success, duration: duration)
+            
+            return vendorTypes
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // ✅ Record failed operation
+            await PerformanceMonitor.shared.recordOperation("fetchVendorTypes", duration: duration)
+            
+            logger.error("Failed to fetch vendor types after \(String(format: "%.2f", duration))s", error: error)
+            AnalyticsService.trackNetwork(operation: "fetchVendorTypes", outcome: .failure(code: nil), duration: duration)
+            throw error
+        }
     }
 }

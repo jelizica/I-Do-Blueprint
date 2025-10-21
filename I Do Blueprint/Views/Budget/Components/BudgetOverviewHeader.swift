@@ -138,7 +138,8 @@ struct BudgetOverviewHeader: View {
                 .frame(width: 100)
             }
         }
-        .padding()
+        .padding(.horizontal)
+        .padding(.vertical, 12)
         .background(Color(NSColor.controlBackgroundColor))
     }
 }

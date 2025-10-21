@@ -9,21 +9,29 @@ import Foundation
 import Supabase
 
 class DocumentsAPI {
-    private let supabase: SupabaseClient
+    private let supabase: SupabaseClient?
     private let logger = AppLogger.api
 
-    init(supabase: SupabaseClient = SupabaseManager.shared.client) {
+    init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     // MARK: - Fetch Documents
 
     func fetchDocuments() async throws -> [Document] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Document] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .select()
                     .order("uploaded_at", ascending: false)
@@ -45,11 +53,12 @@ class DocumentsAPI {
     }
 
     func fetchDocumentById(_ id: UUID) async throws -> Document {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: Document = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .select()
                     .eq("id", value: id.uuidString)
@@ -72,11 +81,12 @@ class DocumentsAPI {
     }
 
     func fetchDocumentsByType(_ type: DocumentType) async throws -> [Document] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Document] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .select()
                     .eq("document_type", value: type.rawValue)
@@ -99,11 +109,12 @@ class DocumentsAPI {
     }
 
     func fetchDocumentsByVendor(_ vendorId: Int) async throws -> [Document] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Document] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .select()
                     .eq("vendor_id", value: String(vendorId))
@@ -126,11 +137,12 @@ class DocumentsAPI {
     }
 
     func fetchDocumentsByExpense(_ expenseId: UUID) async throws -> [Document] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Document] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .select()
                     .eq("expense_id", value: expenseId.uuidString)
@@ -153,11 +165,12 @@ class DocumentsAPI {
     }
 
     func fetchDocumentsByBucket(_ bucketName: String) async throws -> [Document] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Document] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .select()
                     .eq("bucket_name", value: bucketName)
@@ -182,11 +195,12 @@ class DocumentsAPI {
     // MARK: - Create Document
 
     func createDocument(_ data: DocumentInsertData) async throws -> Document {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: Document = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .insert(data)
                     .select()
@@ -243,12 +257,13 @@ class DocumentsAPI {
             expenseId: expenseId?.uuidString
         )
 
+        let client = try getClient()
         let startTime = Date()
 
         do {
             // Use Supabase SDK with user's auth token (RLS will apply)
             let response: Document = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .update(payload)
                     .eq("id", value: id.uuidString)
@@ -274,11 +289,12 @@ class DocumentsAPI {
     // MARK: - Delete Document
 
     func deleteDocument(_ id: UUID) async throws {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .delete()
                     .eq("id", value: id.uuidString)
@@ -322,6 +338,7 @@ class DocumentsAPI {
     // MARK: - Storage Operations
 
     func uploadFile(localURL: URL, bucketName: String, fileName: String) async throws -> String {
+        let client = try getClient()
         let startTime = Date()
 
         // Read file data
@@ -335,7 +352,7 @@ class DocumentsAPI {
         do {
             // Upload to Supabase storage with retry
             try await RepositoryNetwork.withRetry(timeout: 30) {
-                try await self.supabase.storage
+                try await client.storage
                     .from(bucketName)
                     .upload(path: filePath, file: fileData, options: FileOptions(contentType: nil))
             }
@@ -355,7 +372,8 @@ class DocumentsAPI {
     }
 
     func getPublicURL(bucketName: String, path: String) throws -> URL {
-        let url = try supabase.storage
+        let client = try getClient()
+        let url = try client.storage
             .from(bucketName)
             .getPublicURL(path: path)
 
@@ -363,11 +381,12 @@ class DocumentsAPI {
     }
 
     func downloadFile(bucketName: String, path: String) async throws -> Data {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let data = try await RepositoryNetwork.withRetry(timeout: 30) {
-                try await self.supabase.storage
+                try await client.storage
                     .from(bucketName)
                     .download(path: path)
             }
@@ -386,11 +405,12 @@ class DocumentsAPI {
     }
 
     func deleteFile(bucketName: String, path: String) async throws {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry(timeout: 30) {
-                try await self.supabase.storage
+                try await client.storage
                     .from(bucketName)
                     .remove(paths: [path])
             }
@@ -409,11 +429,12 @@ class DocumentsAPI {
     // MARK: - Search Documents
 
     func searchDocuments(query: String) async throws -> [Document] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let response: [Document] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("documents")
                     .select()
                     .or("file_name.ilike.%\(query)%,notes.ilike.%\(query)%")
@@ -514,12 +535,13 @@ class DocumentsAPI {
             }
         }
 
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let vendors: [VendorResult] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("vendorInformation")
+                try await client
+                    .from("vendor_information")
                     .select("id, vendor_name")
                     .order("vendor_name", ascending: true)
                     .execute()
@@ -550,11 +572,12 @@ class DocumentsAPI {
             }
         }
 
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let expenses: [ExpenseResult] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("expenses")
                     .select("id, expense_name")
                     .order("expense_name", ascending: true)
@@ -597,7 +620,8 @@ class DocumentsAPI {
         let startTime = Date()
 
         do {
-            var query = supabase
+            let client = try getClient()
+            var query = client
                 .from("payment_plan_details_with_expenses")
                 .select("id, vendor, payment_amount, payment_date, paid, expense_id")
 

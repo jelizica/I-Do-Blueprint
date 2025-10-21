@@ -123,7 +123,14 @@ struct DocumentDetailView: View {
             HStack(spacing: 12) {
                 Button("View") {
                     if let url = try? getPublicURL() {
-                        NSWorkspace.shared.open(url)
+                        // ✅ Validate URL before opening
+                        do {
+                            try URLValidator.validate(url)
+                            NSWorkspace.shared.open(url)
+                        } catch {
+                            logger.error("Rejected unsafe document URL", error: error)
+                            // TODO: Show alert to user about invalid URL
+                        }
                     }
                 }
                 .buttonStyle(.bordered)

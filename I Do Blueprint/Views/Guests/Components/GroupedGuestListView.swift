@@ -30,14 +30,14 @@ struct GroupedGuestListView: View {
             }
             .background(AppColors.background)
         } else if guests.isEmpty {
-            EmptyGuestListView()
+            UnifiedEmptyStateView(config: .guests(onAdd: {}))
         } else {
             ScrollView {
                 LazyVStack(spacing: Spacing.xl, pinnedViews: [.sectionHeaders]) {
                     ForEach(groupedGuests, id: \.0) { status, statusGuests in
                         Section {
                             LazyVStack(spacing: Spacing.md) {
-                                ForEach(statusGuests) { guest in
+                                ForEach(statusGuests, id: \.id) { guest in
                                     Button {
                                         selectedGuest = guest
                                     } label: {
@@ -47,6 +47,7 @@ struct GroupedGuestListView: View {
                                         )
                                     }
                                     .buttonStyle(.plain)
+                                    .id(guest.id)
                                 }
                             }
                         } header: {

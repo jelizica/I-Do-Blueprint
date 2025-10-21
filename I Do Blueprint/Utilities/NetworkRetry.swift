@@ -73,7 +73,7 @@ enum NetworkRetry {
             // Add timeout task
             group.addTask {
                 try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                throw NetworkError.timeout
+                throw LegacyNetworkError.timeout
             }
 
             // Return first result (either success or timeout)
@@ -95,8 +95,9 @@ enum NetworkRetry {
     }
 }
 
-/// Network-related errors
-enum NetworkError: Error, LocalizedError {
+/// Legacy network-related errors (deprecated - use Core.Common.Errors.NetworkError instead)
+@available(*, deprecated, message: "Use Core.Common.Errors.NetworkError instead")
+enum LegacyNetworkError: Error, LocalizedError {
     case timeout
     case maxRetriesExceeded
 

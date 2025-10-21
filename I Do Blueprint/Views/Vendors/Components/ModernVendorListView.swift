@@ -32,10 +32,10 @@ struct ModernVendorListView: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.95)))
             } else if vendors.isEmpty {
                 if isSearching {
-                    SearchEmptyStateView(searchText: "", onClearSearch: onClearSearch)
+                    UnifiedEmptyStateView(config: .searchResults(query: ""))
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 } else {
-                    EmptyVendorListView()
+                    UnifiedEmptyStateView(config: .vendors(onAdd: {}))
                         .transition(.opacity.combined(with: .scale(scale: 0.95)))
                 }
             } else {
@@ -61,6 +61,7 @@ struct ModernVendorListView: View {
                                     )
                                 }
                                 .buttonStyle(.plain)
+                                .id(vendor.id)
                                 .transition(.asymmetric(
                                     insertion: .move(edge: .leading).combined(with: .opacity),
                                     removal: .opacity

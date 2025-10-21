@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct VendorListView: View {
-    @StateObject private var vendorStore = VendorStoreV2()
+    @EnvironmentObject private var vendorStore: VendorStoreV2
     @State private var searchText = ""
     @State private var selectedFilter: VendorFilterOption = .all
     @State private var selectedSort: VendorSortOption = .name
@@ -196,7 +196,7 @@ struct VendorListView: View {
                     }
                 }
                 #if os(macOS)
-                .frame(minWidth: 500, maxWidth: 600, minHeight: 500, maxHeight: 650)
+                .frame(minWidth: 700, idealWidth: 750, maxWidth: 800, minHeight: 600, idealHeight: 700, maxHeight: 800)
                 #endif
             }
             .task {
@@ -213,10 +213,10 @@ struct VendorStatsHeaderView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            VendorStatCard(title: "Total", value: "\(stats.total)", color: .blue, icon: "building.2.fill")
-            VendorStatCard(title: "Booked", value: "\(stats.booked)", color: .green, icon: "checkmark.circle.fill")
-            VendorStatCard(title: "Available", value: "\(stats.available)", color: .orange, icon: "circle")
-            VendorStatCard(title: "Archived", value: "\(stats.archived)", color: .gray, icon: "archivebox.fill")
+            VendorStatCard(title: "Total", value: "\(stats.total)", color: AppColors.Vendor.contacted, icon: "building.2.fill")
+            VendorStatCard(title: "Booked", value: "\(stats.booked)", color: AppColors.Vendor.booked, icon: "checkmark.circle.fill")
+            VendorStatCard(title: "Available", value: "\(stats.available)", color: AppColors.Vendor.pending, icon: "circle")
+            VendorStatCard(title: "Archived", value: "\(stats.archived)", color: AppColors.Vendor.notContacted, icon: "archivebox.fill")
         }
     }
 }
@@ -271,11 +271,11 @@ struct VendorRowView: View {
                 HStack(spacing: 6) {
                     // Status badges
                     if vendor.isArchived {
-                        StatusBadge(text: "Archived", color: .gray)
+                        StatusBadge(text: "Archived", color: AppColors.Vendor.notContacted)
                     } else if vendor.isBooked == true {
-                        StatusBadge(text: "Booked", color: .green)
+                        StatusBadge(text: "Booked", color: AppColors.Vendor.booked)
                     } else {
-                        StatusBadge(text: "Available", color: .orange)
+                        StatusBadge(text: "Available", color: AppColors.Vendor.pending)
                     }
 
                     // Note: Contract and rating info removed from list view for performance

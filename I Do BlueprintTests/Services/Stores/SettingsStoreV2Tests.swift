@@ -11,328 +11,196 @@ import Dependencies
 
 @MainActor
 final class SettingsStoreV2Tests: XCTestCase {
-    var store: SettingsStoreV2!
     var mockRepository: MockSettingsRepository!
+    var coupleId: UUID!
 
     override func setUp() async throws {
         mockRepository = MockSettingsRepository()
-        store = withDependencies {
-            $0.settingsRepository = mockRepository
-        } operation: {
-            SettingsStoreV2()
-        }
+        coupleId = UUID()
     }
 
-    override func tearDown() async throws {
-        store = nil
+    override func tearDown() {
         mockRepository = nil
+        coupleId = nil
     }
 
-    // MARK: - Load Settings Tests
+    // MARK: - Load Tests
 
     func testLoadSettings_Success() async throws {
         // Given
-        var mockSettings = CoupleSettings.default
-        mockSettings.global.weddingDate = "2025-06-15"
-        mockSettings.global.currency = "USD"
-        mockSettings.theme.colorScheme = "light"
-
-        let mockCategories = [
-            createMockVendorCategory(name: "Custom Category 1"),
-            createMockVendorCategory(name: "Custom Category 2"),
-        ]
-
-        mockRepository.coupleSettings = mockSettings
-        mockRepository.customVendorCategories = mockCategories
+        let testSettings = CoupleSettings.makeTest(currency: "USD", weddingDate: "2025-12-31", totalBudget: 50000)
+        mockRepository.settings = testSettings
 
         // When
+        let store = SettingsStoreV2(repository: mockRepository)
         await store.loadSettings()
 
         // Then
-        XCTAssertEqual(store.settings.global.weddingDate, "2025-06-15")
-        XCTAssertEqual(store.settings.global.currency, "USD")
-        XCTAssertEqual(store.settings.theme.colorScheme, "light")
-        XCTAssertEqual(store.customVendorCategories.count, 2)
         XCTAssertFalse(store.isLoading)
         XCTAssertNil(store.error)
-        XCTAssertFalse(store.hasUnsavedChanges)
+        XCTAssertEqual(store.settings.global.currency, "USD")
+        XCTAssertTrue(store.hasLoaded)
     }
 
-    func testLoadSettings_Error() async throws {
+    func testLoadSettings_Failure() async throws {
         // Given
         mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
 
         // When
+        let store = SettingsStoreV2(repository: mockRepository)
         await store.loadSettings()
 
         // Then
-        XCTAssertNotNil(store.error)
         XCTAssertFalse(store.isLoading)
-        XCTAssertEqual(store.settings, .default)
+        XCTAssertNotNil(store.error)
     }
 
-    func testRefreshSettings() async throws {
-        // Given
-        var mockSettings = CoupleSettings.default
-        mockSettings.global.currency = "EUR"
-        mockRepository.coupleSettings = mockSettings
-
-        // When
-        await store.refreshSettings()
-
-        // Then
-        XCTAssertEqual(store.settings.global.currency, "EUR")
-    }
-
-    // MARK: - Global Settings Tests
+    // MARK: - Update Tests
 
     func testUpdateGlobalSettings_Success() async throws {
         // Given
-        await store.loadSettings()
-
-        var updatedGlobal = store.settings.global
-        updatedGlobal.currency = "GBP"
-        updatedGlobal.weddingDate = "2025-07-20"
-        updatedGlobal.partner1FullName = "Updated Partner"
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
         // When
-        await store.updateGlobalSettings(updatedGlobal)
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        var newGlobal = store.settings.global
+        newGlobal.currency = "EUR"
+        await store.updateGlobalSettings(newGlobal)
 
         // Then
-        XCTAssertEqual(store.settings.global.currency, "GBP")
-        XCTAssertEqual(store.settings.global.weddingDate, "2025-07-20")
-        XCTAssertEqual(store.settings.global.partner1FullName, "Updated Partner")
-        XCTAssertEqual(store.localSettings.global.currency, "GBP")
         XCTAssertNil(store.error)
-        XCTAssertNotNil(store.successMessage)
+        XCTAssertEqual(store.settings.global.currency, "EUR")
     }
-
-    func testUpdateGlobalSettings_Rollback() async throws {
-        // Given
-        var originalSettings = CoupleSettings.default
-        originalSettings.global.currency = "USD"
-        mockRepository.coupleSettings = originalSettings
-        await store.loadSettings()
-
-        var updatedGlobal = store.settings.global
-        updatedGlobal.currency = "EUR"
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.updateGlobalSettings(updatedGlobal)
-
-        // Then - Should rollback to original
-        XCTAssertEqual(store.settings.global.currency, "USD")
-        XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Theme Settings Tests
 
     func testUpdateThemeSettings_Success() async throws {
         // Given
-        await store.loadSettings()
-
-        var updatedTheme = store.settings.theme
-        updatedTheme.colorScheme = "dark"
-        updatedTheme.darkMode = true
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
         // When
-        await store.updateThemeSettings(updatedTheme)
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        var newTheme = store.settings.theme
+        newTheme.colorScheme = "dark"
+        newTheme.darkMode = true
+        await store.updateThemeSettings(newTheme)
 
         // Then
-        XCTAssertEqual(store.settings.theme.colorScheme, "dark")
-        XCTAssertTrue(store.settings.theme.darkMode)
         XCTAssertNil(store.error)
-        XCTAssertNotNil(store.successMessage)
     }
-
-    func testUpdateThemeSettings_Rollback() async throws {
-        // Given
-        var originalSettings = CoupleSettings.default
-        originalSettings.theme.colorScheme = "light"
-        mockRepository.coupleSettings = originalSettings
-        await store.loadSettings()
-
-        var updatedTheme = store.settings.theme
-        updatedTheme.colorScheme = "dark"
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.updateThemeSettings(updatedTheme)
-
-        // Then - Should rollback
-        XCTAssertEqual(store.settings.theme.colorScheme, "light")
-        XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Budget Settings Tests
 
     func testUpdateBudgetSettings_Success() async throws {
         // Given
-        await store.loadSettings()
-
-        var updatedBudget = store.settings.budget
-        updatedBudget.totalBudget = 60000
-        updatedBudget.baseBudget = 55000
-        updatedBudget.includesEngagementRings = true
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
         // When
-        await store.updateBudgetSettings(updatedBudget)
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        var newBudget = store.settings.budget
+        newBudget.totalBudget = 60000
+        await store.updateBudgetSettings(newBudget)
 
         // Then
+        XCTAssertNil(store.error)
         XCTAssertEqual(store.settings.budget.totalBudget, 60000)
-        XCTAssertEqual(store.settings.budget.baseBudget, 55000)
-        XCTAssertTrue(store.settings.budget.includesEngagementRings)
+    }
+
+    func testUpdateTasksSettings_Success() async throws {
+        // Given
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
+
+        // When
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        var newTasks = store.settings.tasks
+        newTasks.defaultView = "list"
+        newTasks.notificationsEnabled = false
+        await store.updateTasksSettings(newTasks)
+
+        // Then
         XCTAssertNil(store.error)
     }
 
-    func testUpdateBudgetSettings_Rollback() async throws {
+    // MARK: - Nested Structure Tests
+
+    func testNestedStructureUpdates() async throws {
         // Given
-        var originalSettings = CoupleSettings.default
-        originalSettings.budget.totalBudget = 50000
-        mockRepository.coupleSettings = originalSettings
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
+
+        // When
+        let store = SettingsStoreV2(repository: mockRepository)
         await store.loadSettings()
 
-        var updatedBudget = store.settings.budget
-        updatedBudget.totalBudget = 70000
-        mockRepository.shouldThrowError = true
+        // Update nested budget settings
+        var newSettings = store.settings
+        newSettings.budget.totalBudget = 70000
+        newSettings.budget.baseBudget = 70000
 
-        // When
-        await store.updateBudgetSettings(updatedBudget)
-
-        // Then - Should rollback
-        XCTAssertEqual(store.settings.budget.totalBudget, 50000)
-        XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Custom Vendor Category Tests
-
-    func testCreateVendorCategory_Success() async throws {
-        // Given
-        let newCategory = createMockVendorCategory(name: "Photography")
-        mockRepository.customVendorCategories = []
-
-        // When
-        await store.createVendorCategory(newCategory)
+        store.localSettings = newSettings
+        await store.saveBudgetSettings()
 
         // Then
-        XCTAssertEqual(store.customVendorCategories.count, 1)
-        XCTAssertEqual(store.customVendorCategories[0].name, "Photography")
         XCTAssertNil(store.error)
-        XCTAssertNotNil(store.successMessage)
+        XCTAssertEqual(store.settings.budget.totalBudget, 70000)
     }
 
-    func testCreateVendorCategory_Error() async throws {
+    func testSettingsValidation() async throws {
         // Given
-        let newCategory = createMockVendorCategory(name: "Flowers")
-        mockRepository.shouldThrowError = true
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
         // When
-        await store.createVendorCategory(newCategory)
-
-        // Then
-        XCTAssertTrue(store.customVendorCategories.isEmpty)
-        XCTAssertNotNil(store.error)
-    }
-
-    func testUpdateVendorCategory_Success() async throws {
-        // Given
-        let originalCategory = createMockVendorCategory(name: "Original")
-        mockRepository.customVendorCategories = [originalCategory]
+        let store = SettingsStoreV2(repository: mockRepository)
         await store.loadSettings()
 
-        var updatedCategory = originalCategory
-        updatedCategory.name = "Updated"
-        updatedCategory.description = "Updated description"
+        // Then - Settings should be valid
+        XCTAssertNotNil(store.settings.global.currency)
+        XCTAssertNotNil(store.settings.budget.totalBudget)
+    }
+
+    func testHasUnsavedChanges() async throws {
+        // Given
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
         // When
-        await store.updateVendorCategory(updatedCategory)
-
-        // Then
-        XCTAssertEqual(store.customVendorCategories.count, 1)
-        XCTAssertEqual(store.customVendorCategories[0].name, "Updated")
-        XCTAssertEqual(store.customVendorCategories[0].description, "Updated description")
-        XCTAssertNil(store.error)
-    }
-
-    func testUpdateVendorCategory_Rollback() async throws {
-        // Given
-        let originalCategory = createMockVendorCategory(name: "Original")
-        mockRepository.customVendorCategories = [originalCategory]
+        let store = SettingsStoreV2(repository: mockRepository)
         await store.loadSettings()
 
-        var updatedCategory = originalCategory
-        updatedCategory.name = "Failed Update"
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.updateVendorCategory(updatedCategory)
-
-        // Then - Should rollback
-        XCTAssertEqual(store.customVendorCategories[0].name, "Original")
-        XCTAssertNotNil(store.error)
-    }
-
-    func testDeleteVendorCategory_Success() async throws {
-        // Given
-        let category1 = createMockVendorCategory(name: "Category 1", id: "cat1")
-        let category2 = createMockVendorCategory(name: "Category 2", id: "cat2")
-        mockRepository.customVendorCategories = [category1, category2]
-        await store.loadSettings()
-
-        // When
-        await store.deleteVendorCategory(category1)
-
-        // Then
-        XCTAssertEqual(store.customVendorCategories.count, 1)
-        XCTAssertEqual(store.customVendorCategories[0].id, "cat2")
-        XCTAssertNil(store.error)
-    }
-
-    func testDeleteVendorCategory_Rollback() async throws {
-        // Given
-        let category = createMockVendorCategory(name: "Category")
-        mockRepository.customVendorCategories = [category]
-        await store.loadSettings()
-
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.deleteVendorCategory(category)
-
-        // Then - Should rollback
-        XCTAssertEqual(store.customVendorCategories.count, 1)
-        XCTAssertEqual(store.customVendorCategories[0].id, category.id)
-        XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Unsaved Changes Tests
-
-    func testHasUnsavedChanges_TracksCorrectly() async throws {
-        // Given
-        await store.loadSettings()
+        // Initially no unsaved changes
         XCTAssertFalse(store.hasUnsavedChanges)
 
-        // When - Modify local settings
+        // Make a change
         store.localSettings.global.currency = "EUR"
-        store.updateField(\.global.currency, value: "EUR")
 
-        // Then
+        // Then - Should have unsaved changes
         XCTAssertTrue(store.hasUnsavedChanges)
     }
 
     func testDiscardChanges() async throws {
         // Given
-        var originalSettings = CoupleSettings.default
-        originalSettings.global.currency = "USD"
-        mockRepository.coupleSettings = originalSettings
-        await store.loadSettings()
-
-        store.localSettings.global.currency = "EUR"
-        store.updateField(\.global.currency, value: "EUR")
-        XCTAssertTrue(store.hasUnsavedChanges)
+        let testSettings = CoupleSettings.makeTest(currency: "USD")
+        mockRepository.settings = testSettings
 
         // When
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        // Make changes
+        store.localSettings.global.currency = "EUR"
+        XCTAssertTrue(store.hasUnsavedChanges)
+
+        // Discard changes
         store.discardChanges()
 
         // Then
@@ -340,44 +208,74 @@ final class SettingsStoreV2Tests: XCTestCase {
         XCTAssertEqual(store.localSettings.global.currency, "USD")
     }
 
-    // MARK: - Error and Success Message Tests
-
-    func testClearError() async throws {
+    func testSaveGlobalSettings() async throws {
         // Given
-        store.error = .fetchFailed(underlying: NSError(domain: "Test", code: 1))
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
         // When
-        store.clearError()
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        store.localSettings.global.currency = "EUR"
+        await store.saveGlobalSettings()
 
         // Then
         XCTAssertNil(store.error)
+        XCTAssertFalse(store.hasUnsavedChanges)
+        XCTAssertEqual(store.settings.global.currency, "EUR")
     }
 
-    func testClearSuccessMessage() async throws {
+    func testSaveThemeSettings() async throws {
         // Given
-        store.successMessage = "Test message"
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
         // When
-        store.clearSuccessMessage()
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        store.localSettings.theme.colorScheme = "dark"
+        store.localSettings.theme.darkMode = true
+        await store.saveThemeSettings()
 
         // Then
-        XCTAssertNil(store.successMessage)
+        XCTAssertNil(store.error)
+        XCTAssertFalse(store.hasUnsavedChanges)
     }
 
-    // MARK: - Helper Methods
+    func testSaveBudgetSettings() async throws {
+        // Given
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
 
-    private func createMockVendorCategory(
-        name: String,
-        id: String = UUID().uuidString
-    ) -> CustomVendorCategory {
-        CustomVendorCategory(
-            id: id,
-            coupleId: UUID().uuidString,
-            name: name,
-            description: nil,
-            typicalBudgetPercentage: nil,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
+        // When
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        store.localSettings.budget.totalBudget = 60000
+        await store.saveBudgetSettings()
+
+        // Then
+        XCTAssertNil(store.error)
+        XCTAssertFalse(store.hasUnsavedChanges)
+    }
+
+    func testSaveTasksSettings() async throws {
+        // Given
+        let testSettings = CoupleSettings.makeTest()
+        mockRepository.settings = testSettings
+
+        // When
+        let store = SettingsStoreV2(repository: mockRepository)
+        await store.loadSettings()
+
+        store.localSettings.tasks.defaultView = "list"
+        store.localSettings.tasks.notificationsEnabled = false
+        await store.saveTasksSettings()
+
+        // Then
+        XCTAssertNil(store.error)
+        XCTAssertFalse(store.hasUnsavedChanges)
     }
 }

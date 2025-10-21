@@ -41,9 +41,9 @@ struct GroupedVendorListView: View {
             .background(AppColors.background)
         } else if vendors.isEmpty {
             if isSearching {
-                SearchEmptyStateView(searchText: "", onClearSearch: onClearSearch)
+                UnifiedEmptyStateView(config: .searchResults(query: ""))
             } else {
-                EmptyVendorListView()
+                UnifiedEmptyStateView(config: .vendors(onAdd: {}))
             }
         } else {
             ScrollView {
@@ -61,6 +61,7 @@ struct GroupedVendorListView: View {
                                         )
                                     }
                                     .buttonStyle(.plain)
+                                    .id(vendor.id)
                                 }
                             }
                         } header: {

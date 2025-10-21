@@ -2,33 +2,37 @@ import Charts
 import SwiftUI
 
 struct BudgetCashFlowView: View {
-    @StateObject private var budgetStore = BudgetStoreV2()
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
     @State private var selectedTimeframe: CashFlowTimeframe = .sixMonths
     @State private var showingProjections = true
 
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
-                // Cash Flow Summary Cards
-                HStack(spacing: 16) {
-                    CashFlowSummaryCard(
-                        title: "Total Inflows",
-                        amount: budgetStore.totalInflows,
-                        color: .green,
-                        icon: "arrow.down.circle.fill")
-
-                    CashFlowSummaryCard(
-                        title: "Total Outflows",
-                        amount: budgetStore.totalOutflows,
-                        color: .red,
-                        icon: "arrow.up.circle.fill")
-
-                    CashFlowSummaryCard(
-                        title: "Net Cash Flow",
-                        amount: budgetStore.netCashFlow,
-                        color: budgetStore.netCashFlow >= 0 ? .green : .red,
-                        icon: "dollarsign.circle.fill")
-                }
+                // Cash Flow Summary Cards - Using Component Library
+                StatsGridView(
+                    stats: [
+                        StatItem(
+                            icon: "arrow.down.circle.fill",
+                            label: "Total Inflows",
+                            value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalInflows)) ?? "$0",
+                            color: AppColors.Budget.income
+                        ),
+                        StatItem(
+                            icon: "arrow.up.circle.fill",
+                            label: "Total Outflows",
+                            value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalOutflows)) ?? "$0",
+                            color: AppColors.Budget.expense
+                        ),
+                        StatItem(
+                            icon: "dollarsign.circle.fill",
+                            label: "Net Cash Flow",
+                            value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.netCashFlow)) ?? "$0",
+                            color: budgetStore.netCashFlow >= 0 ? AppColors.Budget.income : AppColors.Budget.expense
+                        )
+                    ],
+                    columns: 3
+                )
 
                 // Controls
                 VStack(spacing: 12) {
@@ -89,34 +93,7 @@ struct BudgetCashFlowView: View {
 
 // MARK: - Supporting Views
 
-struct CashFlowSummaryCard: View {
-    let title: String
-    let amount: Double
-    let color: Color
-    let icon: String
-
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.title2)
-
-            Text(NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0")
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundColor(color)
-
-            Text(title)
-                .font(.caption)
-                .fontWeight(.medium)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(color.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-}
+// Note: CashFlowSummaryCard replaced with StatsGridView from component library
 
 struct CashFlowChartView: View {
     let timeframe: CashFlowTimeframe
@@ -135,19 +112,19 @@ struct CashFlowChartView: View {
                 BarMark(
                     x: .value("Month", dataPoint.month),
                     y: .value("Income", dataPoint.income))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(AppColors.Budget.income)
 
                 // Expense bars (negative values)
                 BarMark(
                     x: .value("Month", dataPoint.month),
                     y: .value("Expenses", -dataPoint.expenses))
-                    .foregroundStyle(.red)
+                    .foregroundStyle(AppColors.Budget.expense)
 
                 // Net cash flow line
                 LineMark(
                     x: .value("Month", dataPoint.month),
                     y: .value("Net Flow", dataPoint.netFlow))
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(AppColors.Budget.allocated)
                     .symbol(.circle)
             }
             .frame(height: 300)
@@ -172,7 +149,7 @@ struct CashFlowSection: View {
             ForEach(items, id: \.id) { item in
                 HStack {
                     Image(systemName: item.icon)
-                        .foregroundColor(isIncome ? .green : .red)
+                        .foregroundColor(isIncome ? AppColors.Budget.income : AppColors.Budget.expense)
                         .frame(width: 20)
 
                     Text(item.name)
@@ -183,7 +160,7 @@ struct CashFlowSection: View {
                     Text(NumberFormatter.currency.string(from: NSNumber(value: item.amount)) ?? "$0")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(isIncome ? .green : .red)
+                        .foregroundColor(isIncome ? AppColors.Budget.income : AppColors.Budget.expense)
                 }
                 .padding(.vertical, 4)
             }
@@ -228,17 +205,13 @@ struct CashFlowInsightsView: View {
             }
 
             if insights.isEmpty {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    Text("Your cash flow is looking healthy! No major issues detected.")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .padding()
-                .background(Color.green.opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                // Using Component Library - InfoCard
+                InfoCard(
+                    icon: "checkmark.circle.fill",
+                    title: "Healthy Cash Flow",
+                    content: "Your cash flow is looking healthy! No major issues detected.",
+                    color: AppColors.Budget.income
+                )
             }
         }
         .padding()

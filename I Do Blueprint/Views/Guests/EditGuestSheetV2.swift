@@ -338,5 +338,5 @@ struct EditGuestSheetV2: View {
         guestStore: GuestStoreV2(),
         onSave: { _ in }
     )
-    .environmentObject(SettingsViewModel())
+    .environmentObject(SettingsStoreV2())
 }

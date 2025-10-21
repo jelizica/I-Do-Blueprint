@@ -8,22 +8,15 @@
 import SwiftUI
 
 struct EmptyGuestListView: View {
+    var onAddGuest: (() -> Void)? = nil
+
     var body: some View {
-        VStack(spacing: Spacing.lg) {
-            Image(systemName: "person.crop.circle.badge.plus")
-                .font(.system(size: 64))
-                .foregroundColor(AppColors.textSecondary.opacity(0.5))
-
-            Text("No guests found")
-                .font(Typography.title3)
-                .fontWeight(.semibold)
-
-            Text("Add your first guest or adjust your search filters")
-                .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(Spacing.xxxl)
+        SharedEmptyStateView(
+            icon: "person.2.circle",
+            title: "No Guests Yet",
+            message: "Start building your guest list by adding your first guest. You can track RSVPs, meal preferences, plus-ones, and more.",
+            actionTitle: onAddGuest != nil ? "Add Your First Guest" : nil,
+            action: onAddGuest
+        )
     }
 }

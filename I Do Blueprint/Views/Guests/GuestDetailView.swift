@@ -363,8 +363,7 @@ struct GuestDetailView: View {
                         Divider()
 
                         Button(role: .destructive) {
-                            logger.debug("Menu delete button pressed (macOS) - showing alert")
-                            showingDeleteAlert = true
+                                                        showingDeleteAlert = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -384,8 +383,7 @@ struct GuestDetailView: View {
                         Divider()
 
                         Button(role: .destructive) {
-                            logger.debug("Menu delete button pressed (iOS) - showing alert")
-                            showingDeleteAlert = true
+                                                        showingDeleteAlert = true
                         } label: {
                             Label("Delete", systemImage: "trash")
                         }
@@ -404,29 +402,23 @@ struct GuestDetailView: View {
             .onReceive(NotificationCenter.default.publisher(for: .updateGuest)) { notification in
                 if let updatedGuestData = notification.userInfo?["guest"] as? Data,
                    let updatedGuest = try? JSONDecoder().decode(Guest.self, from: updatedGuestData) {
-                    logger.debug("Received update notification for guest: \(updatedGuest.firstName) \(updatedGuest.lastName)")
-                    guest = updatedGuest
+                                        guest = updatedGuest
                 }
             }
             .alert("Delete Guest", isPresented: $showingDeleteAlert) {
                 Button("Delete", role: .destructive) {
-                    logger.debug("Delete button pressed in GuestDetailView")
-                    logger.debug("Guest object details: ID=\(guest.id), firstName=\(guest.firstName), lastName=\(guest.lastName)")
-
+                                        
                     // Capture just the ID to avoid memory corruption
                     let guestId = guest.id
-                    logger.debug("Captured guest ID: \(guestId)")
-
+                    
                     // Post notification with the guest ID instead of using closures
-                    logger.debug("Posting notification to delete guest ID: \(guestId)")
-                    NotificationCenter.default.post(
+                                        NotificationCenter.default.post(
                         name: .deleteGuest,
                         object: nil,
                         userInfo: ["guestId": guestId.uuidString])
                 }
                 Button("Cancel", role: .cancel) {
-                    logger.debug("Delete cancelled")
-                }
+                                    }
             } message: {
                 Text(
                     "Are you sure you want to delete \(guest.firstName) \(guest.lastName)? This action cannot be undone.")

@@ -222,7 +222,7 @@ struct CircularProgressBudgetCard: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "creditcard.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(AppColors.Budget.allocated)
                                 Text(expense.title)
                                     .font(.caption)
                                     .lineLimit(1)
@@ -234,13 +234,13 @@ struct CircularProgressBudgetCard: View {
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.caption)
-                                        .foregroundColor(.red.opacity(0.7))
+                                        .foregroundColor(AppColors.Budget.overBudget.opacity(0.7))
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.blue.opacity(0.1))
+                            .background(AppColors.Budget.allocated.opacity(0.1))
                             .cornerRadius(6)
                         }
 
@@ -248,7 +248,7 @@ struct CircularProgressBudgetCard: View {
                             HStack(spacing: 6) {
                                 Image(systemName: "gift.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.green)
+                                    .foregroundColor(AppColors.Budget.income)
                                 Text(gift.title)
                                     .font(.caption)
                                     .lineLimit(1)
@@ -260,13 +260,13 @@ struct CircularProgressBudgetCard: View {
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.caption)
-                                        .foregroundColor(.red.opacity(0.7))
+                                        .foregroundColor(AppColors.Budget.overBudget.opacity(0.7))
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
-                            .background(Color.green.opacity(0.1))
+                            .background(AppColors.Budget.income.opacity(0.1))
                             .cornerRadius(6)
                         }
                     }

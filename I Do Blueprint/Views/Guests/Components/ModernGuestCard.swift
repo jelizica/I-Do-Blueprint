@@ -77,7 +77,7 @@ struct ModernGuestCard: View {
                     if guest.plusOneAllowed {
                         Label("Plus One", systemImage: "plus.circle")
                             .font(Typography.caption2)
-                            .foregroundColor(AppColors.textTertiary)
+                            .foregroundColor(AppColors.Guest.plusOne)
                     }
 
                     if let table = guest.tableAssignment {

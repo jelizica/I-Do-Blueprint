@@ -9,7 +9,7 @@ struct AffordabilityGiftImportRow: View {
         Button(action: onToggle) {
             HStack(spacing: 16) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .blue : .secondary)
+                    .foregroundStyle(isSelected ? AppColors.Budget.allocated : .secondary)
                     .font(.system(size: 20))
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -22,8 +22,8 @@ struct AffordabilityGiftImportRow: View {
                             .font(.system(size: 11))
                             .padding(.horizontal, 8)
                             .padding(.vertical, 3)
-                            .background(Color.blue.opacity(0.1))
-                            .foregroundStyle(.blue)
+                            .background(AppColors.Budget.allocated.opacity(0.1))
+                            .foregroundStyle(AppColors.Budget.allocated)
                             .clipShape(Capsule())
 
                         if let date = gift.receivedDate ?? gift.expectedDate {
@@ -41,11 +41,11 @@ struct AffordabilityGiftImportRow: View {
                     .foregroundStyle(.primary)
             }
             .padding(12)
-            .background(isSelected ? Color.blue.opacity(0.05) : Color(NSColor.controlBackgroundColor))
+            .background(isSelected ? AppColors.Budget.allocated.opacity(0.05) : Color(NSColor.controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .strokeBorder(isSelected ? Color.blue : Color.clear, lineWidth: 2)
+                    .strokeBorder(isSelected ? AppColors.Budget.allocated : Color.clear, lineWidth: 2)
             )
         }
         .buttonStyle(.plain)

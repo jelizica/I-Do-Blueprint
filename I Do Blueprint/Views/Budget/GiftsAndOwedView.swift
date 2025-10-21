@@ -11,7 +11,7 @@ struct GiftsAndOwedView: View {
                 // Warning: Feature not yet persisted to database
                 HStack {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.orange)
+                        .foregroundColor(AppColors.Budget.pending)
                     Text("Note: Changes in this view are local only and not yet persisted to the database.")
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -19,7 +19,7 @@ struct GiftsAndOwedView: View {
                 .padding(.horizontal)
                 .padding(.vertical, 8)
                 .frame(maxWidth: .infinity)
-                .background(Color.orange.opacity(0.1))
+                .background(AppColors.Budget.pending.opacity(0.1))
 
                 // Header with summary cards
                 summaryCardsView
@@ -59,7 +59,7 @@ struct GiftsAndOwedView: View {
                 AddGiftOrOwedModal(
                     onSave: { newGift in
                         Task {
-                            await budgetStore.addGiftOrOwed(newGift)
+                            await budgetStore.gifts.addGiftOrOwed(newGift)
                         }
                     })
                 #if os(macOS)
@@ -71,12 +71,12 @@ struct GiftsAndOwedView: View {
                     giftOrOwed: gift,
                     onSave: { updatedGift in
                         Task {
-                            await budgetStore.updateGiftOrOwed(updatedGift)
+                            await budgetStore.gifts.updateGiftOrOwed(updatedGift)
                         }
                     },
                     onDelete: { giftToDelete in
                         Task {
-                            await budgetStore.deleteGiftOrOwed(id: giftToDelete.id)
+                            await budgetStore.gifts.deleteGiftOrOwed(id: giftToDelete.id)
                         }
                     })
                 #if os(macOS)
@@ -89,43 +89,47 @@ struct GiftsAndOwedView: View {
         }
     }
 
-    // MARK: - Summary Cards
+    // MARK: - Summary Cards - Using Component Library
 
     private var summaryCardsView: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 20) {
-                GiftSummaryCard(
-                    title: "Received",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalReceived)) ?? "$0",
-                    subtitle: "Available now",
+        StatsGridView(
+            stats: [
+                StatItem(
                     icon: "checkmark.circle.fill",
-                    color: .green)
-
-                GiftSummaryCard(
-                    title: "Pending",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalPending)) ?? "$0",
-                    subtitle: "Expected",
+                    label: "Received",
+                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalReceived)) ?? "$0",
+                    color: AppColors.Budget.income
+                ),
+                StatItem(
                     icon: "clock.fill",
-                    color: .orange)
-
-                GiftSummaryCard(
-                    title: "Total Budget Addition",
-                    value: NumberFormatter.currency
-                        .string(from: NSNumber(value: budgetStore.totalBudgetAddition)) ?? "$0",
-                    subtitle: "Total expansion",
+                    label: "Pending",
+                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalPending)) ?? "$0",
+                    color: AppColors.Budget.pending
+                ),
+                StatItem(
                     icon: "plus.circle.fill",
-                    color: .blue)
-            }
-        }
+                    label: "Total Budget Addition",
+                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalBudgetAddition)) ?? "$0",
+                    color: AppColors.Budget.allocated
+                )
+            ],
+            columns: 3
+        )
     }
 
-    // MARK: - Empty State
+    // MARK: - Empty State - Using Component Library
 
     private var emptyStateView: some View {
-        ContentUnavailableView(
-            "No Gifts or Money Owed",
-            systemImage: "gift.circle",
-            description: Text("Track gifts received and money owed that expand your wedding budget"))
+        UnifiedEmptyStateView(
+            config: .custom(
+                icon: "gift.circle",
+                title: "No Gifts or Money Owed",
+                message: "Track gifts received and money owed that expand your wedding budget",
+                actionTitle: "Add Item",
+                onAction: { showingAddGift = true }
+            )
+        )
+        .padding()
     }
 
     // MARK: - Items List
@@ -140,7 +144,7 @@ struct GiftsAndOwedView: View {
                     },
                     onDelete: { gift in
                         Task {
-                            await budgetStore.deleteGiftOrOwed(id: gift.id)
+                            await budgetStore.gifts.deleteGiftOrOwed(id: gift.id)
                         }
                     })
             }
@@ -151,48 +155,7 @@ struct GiftsAndOwedView: View {
 
 // MARK: - Supporting Views
 
-struct GiftSummaryCard: View {
-    let title: String
-    let value: String
-    let subtitle: String
-    let icon: String
-    let color: Color
-
-    var body: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .font(.title2)
-                Spacer()
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.bold)
-                    .foregroundColor(.primary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .padding()
-        .background(Color(NSColor.controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(color.opacity(0.3), lineWidth: 1))
-    }
-}
+// Note: GiftSummaryCard replaced with StatsGridView from component library
 
 struct GiftOrOwedRowView: View {
     let giftOrOwed: GiftOrOwed

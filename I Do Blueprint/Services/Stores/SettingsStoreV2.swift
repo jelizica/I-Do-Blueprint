@@ -5,6 +5,7 @@
 //  New architecture version of settings management using repository pattern
 //
 
+import Auth
 import Combine
 import Dependencies
 import Foundation
@@ -17,11 +18,11 @@ class SettingsStoreV2: ObservableObject {
     @Published private(set) var customVendorCategories: [CustomVendorCategory] = []
 
     @Published var isLoading = false
+    @Published private(set) var hasLoaded = false
     @Published var error: SettingsError?
     @Published var successMessage: String?
     @Published var savingSections: Set<String> = []
     @Published var hasUnsavedChanges = false
-    @Published var hasLoaded = false
 
     private let repository: any SettingsRepositoryProtocol
 
@@ -29,9 +30,19 @@ class SettingsStoreV2: ObservableObject {
         self.repository = repository ?? LiveSettingsRepository()
     }
 
+    // MARK: - Helper Properties
+
+    var coupleId: UUID? {
+        SupabaseManager.shared.currentUser?.id
+    }
+
     // MARK: - Load Settings
 
     func loadSettings() async {
+        guard !hasLoaded else {
+            return
+        }
+        
         AppLogger.ui.info("SettingsStoreV2.loadSettings: Starting to load settings")
         isLoading = true
         error = nil
@@ -150,6 +161,9 @@ class SettingsStoreV2: ObservableObject {
             try await repository.updateCashFlowSettings(localSettings.cashFlow)
             checkUnsavedChanges()
             successMessage = "Budget settings updated"
+            
+            // Notify other parts of the app that settings have changed
+            NotificationCenter.default.post(name: .settingsDidChange, object: nil)
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.budget = originalBudget
             settings.cashFlow = originalCashFlow
@@ -433,11 +447,17 @@ class SettingsStoreV2: ObservableObject {
         do {
             let created = try await repository.createVendorCategory(category)
             customVendorCategories.append(created)
-            successMessage = "Category created"
+            showSuccess("Category created successfully")
         } catch let error as URLError where error.code == .notConnectedToInternet {
             self.error = .networkUnavailable
+            await handleError(error, operation: "create vendor category") { [weak self] in
+                await self?.createVendorCategory(category)
+            }
         } catch {
             self.error = .categoryCreateFailed(underlying: error)
+            await handleError(error, operation: "create vendor category") { [weak self] in
+                await self?.createVendorCategory(category)
+            }
         }
     }
 
@@ -449,13 +469,19 @@ class SettingsStoreV2: ObservableObject {
         do {
             let updated = try await repository.updateVendorCategory(category)
             customVendorCategories[index] = updated
-            successMessage = "Category updated"
+            showSuccess("Category updated successfully")
         } catch let error as URLError where error.code == .notConnectedToInternet {
             customVendorCategories[index] = original
             self.error = .networkUnavailable
+            await handleError(error, operation: "update vendor category") { [weak self] in
+                await self?.updateVendorCategory(category)
+            }
         } catch {
             customVendorCategories[index] = original
             self.error = .categoryUpdateFailed(underlying: error)
+            await handleError(error, operation: "update vendor category") { [weak self] in
+                await self?.updateVendorCategory(category)
+            }
         }
     }
 
@@ -465,13 +491,19 @@ class SettingsStoreV2: ObservableObject {
 
         do {
             try await repository.deleteVendorCategory(id: category.id)
-            successMessage = "Category deleted"
+            showSuccess("Category deleted successfully")
         } catch let error as URLError where error.code == .notConnectedToInternet {
             customVendorCategories.insert(removed, at: index)
             self.error = .networkUnavailable
+            await handleError(error, operation: "delete vendor category") { [weak self] in
+                await self?.deleteVendorCategory(category)
+            }
         } catch {
             customVendorCategories.insert(removed, at: index)
             self.error = .categoryDeleteFailed(underlying: error)
+            await handleError(error, operation: "delete vendor category") { [weak self] in
+                await self?.deleteVendorCategory(category)
+            }
         }
     }
 

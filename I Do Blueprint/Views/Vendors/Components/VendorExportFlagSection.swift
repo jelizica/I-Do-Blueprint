@@ -17,17 +17,17 @@ struct VendorExportFlagSection: View {
             SectionHeaderV2(
                 title: "Export Settings",
                 icon: "square.and.arrow.up.circle.fill",
-                color: .blue
+                color: AppColors.Vendor.contacted
             )
 
             HStack(spacing: Spacing.lg) {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title)
-                    .foregroundColor(vendor.includeInExport ? .green : .gray.opacity(0.3))
+                    .foregroundColor(vendor.includeInExport ? AppColors.Vendor.booked : AppColors.Vendor.notContacted.opacity(0.3))
                     .frame(width: 48, height: 48)
                     .background(
                         Circle()
-                            .fill((vendor.includeInExport ? Color.green : Color.gray).opacity(0.15))
+                            .fill((vendor.includeInExport ? AppColors.Vendor.booked : AppColors.Vendor.notContacted).opacity(0.15))
                     )
 
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -72,7 +72,7 @@ struct VendorExportFlagSection: View {
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .strokeBorder(
-                        vendor.includeInExport ? Color.green.opacity(0.3) : AppColors.border,
+                        vendor.includeInExport ? AppColors.Vendor.booked.opacity(0.3) : AppColors.border,
                         lineWidth: vendor.includeInExport ? 2 : 1
                     )
             )
@@ -81,7 +81,7 @@ struct VendorExportFlagSection: View {
             HStack(spacing: Spacing.xs) {
                 Image(systemName: "info.circle")
                     .font(.caption)
-                    .foregroundColor(.blue)
+                    .foregroundColor(AppColors.Vendor.contacted)
 
                 Text("Use the Export button in the vendor list to create CSV, PDF, or Google Sheets contact lists")
                     .font(Typography.caption)

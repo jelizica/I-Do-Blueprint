@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TasksView: View {
-    @StateObject private var viewModel = TasksViewModel()
+    @EnvironmentObject private var store: TaskStoreV2
     @State private var showingTaskModal = false
     @State private var selectedTask: WeddingTask?
     @State private var showingFilters = false
@@ -16,7 +16,7 @@ struct TasksView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if viewModel.isLoading, viewModel.tasks.isEmpty {
+                if store.isLoading, store.tasks.isEmpty {
                     loadingView
                 } else {
                     kanbanBoardView
@@ -30,10 +30,10 @@ struct TasksView: View {
                             Image(systemName: "line.3.horizontal.decrease.circle")
                         }
 
-                        Button(action: { Task { await viewModel.refresh() } }) {
+                        Button(action: { Task { await store.refreshTasks() } }) {
                             Image(systemName: "arrow.clockwise")
                         }
-                        .disabled(viewModel.isLoading)
+                        .disabled(store.isLoading)
 
                         Button(action: { showingTaskModal = true }) {
                             Image(systemName: "plus")
@@ -46,9 +46,20 @@ struct TasksView: View {
                     task: selectedTask,
                     onSave: { taskData in
                         if let task = selectedTask {
-                            await viewModel.updateTask(task.id, data: taskData)
+                            var updatedTask = task
+                            updatedTask.taskName = taskData.taskName
+                            updatedTask.description = taskData.description
+                            updatedTask.priority = taskData.priority
+                            updatedTask.status = taskData.status
+                            updatedTask.dueDate = Self.parseDate(taskData.dueDate)
+                            updatedTask.startDate = Self.parseDate(taskData.startDate)
+                            updatedTask.assignedTo = taskData.assignedTo
+                            updatedTask.notes = taskData.notes
+                            updatedTask.estimatedHours = taskData.estimatedHours
+                            updatedTask.costEstimate = taskData.costEstimate
+                            await store.updateTask(updatedTask)
                         } else {
-                            await viewModel.createTask(taskData)
+                            await store.createTask(taskData)
                         }
                         selectedTask = nil
                     },
@@ -57,31 +68,19 @@ struct TasksView: View {
                     })
             }
             .sheet(isPresented: $showingFilters) {
-                TaskFiltersView(viewModel: viewModel)
+                TaskFiltersView(store: store)
             }
             .task {
-                await viewModel.load()
+                await store.loadTasks()
             }
         }
     }
 
-    // MARK: - Loading View
+    // MARK: - Loading View - Using Component Library
 
     private var loadingView: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 16) {
-                ForEach(0..<3, id: \.self) { _ in
-                    VStack(spacing: Spacing.md) {
-                        ForEach(0..<4, id: \.self) { _ in
-                            TaskCardSkeleton()
-                        }
-                    }
-                    .frame(width: 320)
-                }
-            }
-            .padding()
-        }
-        .frame(maxHeight: .infinity)
+        LoadingView(message: "Loading tasks...")
+            .frame(maxHeight: .infinity)
     }
 
     // MARK: - Kanban Board View
@@ -92,13 +91,13 @@ struct TasksView: View {
                 ForEach(TaskStatus.allCases, id: \.self) { status in
                     KanbanColumn(
                         status: status,
-                        tasks: viewModel.tasks(for: status),
+                        tasks: store.tasks(for: status),
                         onTaskTap: { task in
                             selectedTask = task
                             showingTaskModal = true
                         },
                         onTaskMove: { task, newStatus in
-                            await viewModel.moveTask(task, to: newStatus)
+                            await store.moveTask(task, to: newStatus)
                         })
                         .frame(width: 320)
                 }
@@ -106,6 +105,14 @@ struct TasksView: View {
             .padding()
         }
         .frame(maxHeight: .infinity)
+    }
+
+    // MARK: - Date Parsing
+
+    private static func parseDate(_ dateString: String?) -> Date? {
+        guard let dateString = dateString, !dateString.isEmpty else { return nil }
+        let formatter = ISO8601DateFormatter()
+        return formatter.date(from: dateString)
     }
 }
 
@@ -203,17 +210,18 @@ struct KanbanColumn: View {
     }
 
     private var emptyState: some View {
-        VStack(spacing: 12) {
-            Image(systemName: statusConfig.icon)
-                .font(.system(size: 40))
-                .foregroundColor(statusConfig.color.opacity(0.3))
-
-            Text("No tasks")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
+        // Using Component Library - UnifiedEmptyStateView
+        UnifiedEmptyStateView(
+            config: .custom(
+                icon: statusConfig.icon,
+                title: "No \(status.displayName) Tasks",
+                message: "Tasks in this status will appear here",
+                actionTitle: nil,
+                onAction: nil
+            )
+        )
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .padding(.vertical, 32)
     }
 }
 

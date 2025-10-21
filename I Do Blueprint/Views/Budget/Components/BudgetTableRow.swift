@@ -29,7 +29,7 @@ struct BudgetTableRow: View {
     }
 
     private var remainingColor: Color {
-        remaining >= 0 ? .green : .red
+        remaining >= 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget
     }
 
     var body: some View {
@@ -165,7 +165,7 @@ struct BudgetTableRow: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "creditcard.fill")
                                     .font(.caption)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(AppColors.Budget.allocated)
                                     .frame(width: 20)
 
                                 Text(expense.title)
@@ -183,13 +183,13 @@ struct BudgetTableRow: View {
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.caption)
-                                        .foregroundColor(.red.opacity(0.7))
+                                        .foregroundColor(AppColors.Budget.overBudget.opacity(0.7))
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
-                            .background(Color.blue.opacity(0.05))
+                            .background(AppColors.Budget.allocated.opacity(0.05))
                             .cornerRadius(6)
                         }
 
@@ -197,7 +197,7 @@ struct BudgetTableRow: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "gift.fill")
                                     .font(.caption)
-                                    .foregroundColor(.green)
+                                    .foregroundColor(AppColors.Budget.income)
                                     .frame(width: 20)
 
                                 Text(gift.title)
@@ -215,13 +215,13 @@ struct BudgetTableRow: View {
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.caption)
-                                        .foregroundColor(.red.opacity(0.7))
+                                        .foregroundColor(AppColors.Budget.overBudget.opacity(0.7))
                                 }
                                 .buttonStyle(.plain)
                             }
                             .padding(.horizontal, 16)
                             .padding(.vertical, 6)
-                            .background(Color.green.opacity(0.05))
+                            .background(AppColors.Budget.income.opacity(0.05))
                             .cornerRadius(6)
                         }
                     }

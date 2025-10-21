@@ -36,7 +36,7 @@ struct AnimatedBudgetPieChart: View {
                         angle: .value("Amount", category.allocatedAmount),
                         innerRadius: .ratio(0.618),
                         angularInset: 1.5)
-                        .foregroundStyle(Color(hex: category.color) ?? .blue)
+                        .foregroundStyle(Color(hex: category.color) ?? AppColors.Budget.allocated)
                         .opacity(selectedCategory == nil || selectedCategory == category.categoryName ? 1.0 : 0.5)
                 }
                 .chartAngleSelection(value: $selectedCategory)
@@ -53,7 +53,7 @@ struct AnimatedBudgetPieChart: View {
                                 Text(formatCurrency(selectedCategoryData.allocatedAmount))
                                     .font(.title2)
                                     .fontWeight(.bold)
-                                    .foregroundColor(Color(hex: selectedCategoryData.color) ?? .blue)
+                                    .foregroundColor(Color(hex: selectedCategoryData.color) ?? AppColors.Budget.allocated)
                             }
                             .position(center)
                         }
@@ -99,18 +99,18 @@ struct AnimatedCashFlowChart: View {
                     LineMark(
                         x: .value("Month", data.month),
                         y: .value("Amount", data.amount))
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(AppColors.Budget.allocated)
                         .interpolationMethod(.catmullRom)
 
                     AreaMark(
                         x: .value("Month", data.month),
                         y: .value("Amount", data.amount))
-                        .foregroundStyle(.blue.opacity(0.3))
+                        .foregroundStyle(AppColors.Budget.allocated.opacity(0.3))
                         .interpolationMethod(.catmullRom)
 
                     if let selectedMonth = selectedMonth, data.month == selectedMonth {
                         RuleMark(x: .value("Selected", selectedMonth))
-                            .foregroundStyle(.blue.opacity(0.3))
+                            .foregroundStyle(AppColors.Budget.allocated.opacity(0.3))
                             .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
                             .annotation(position: .top, spacing: 0) {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -120,7 +120,7 @@ struct AnimatedCashFlowChart: View {
                                     Text(formatCurrency(data.amount))
                                         .font(.title3)
                                         .fontWeight(.bold)
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(AppColors.Budget.allocated)
                                 }
                                 .padding(8)
                                 .background(.background)
@@ -179,19 +179,19 @@ struct CategoryComparisonBarChart: View {
                         BarMark(
                             x: .value("Category", category.categoryName),
                             y: .value("Spent", category.spentAmount))
-                            .foregroundStyle(spentPercentage(category) > 1.0 ? .red : .green)
+                            .foregroundStyle(spentPercentage(category) > 1.0 ? AppColors.Budget.overBudget : AppColors.Budget.underBudget)
                             .opacity(selectedCategory == nil || selectedCategory == category.categoryName ? 1.0 : 0.5)
 
                         // Add budget line marker
                         RuleMark(
                             y: .value("Budget", category.allocatedAmount))
-                            .foregroundStyle(.blue.opacity(0.3))
+                            .foregroundStyle(AppColors.Budget.allocated.opacity(0.3))
                             .lineStyle(StrokeStyle(lineWidth: 1, dash: [5, 3]))
                             .annotation(position: .trailing, alignment: .leading) {
                                 if category == categories.first {
                                     Text("Budget")
                                         .font(.caption2)
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(AppColors.Budget.allocated)
                                 }
                             }
                     }
@@ -220,7 +220,7 @@ struct CategoryComparisonBarChart: View {
                                     .font(.headline)
                                 Text("Spent: \(formatCurrency(selectedCategoryData.spentAmount))")
                                     .font(.caption)
-                                    .foregroundColor(spentPercentage(selectedCategoryData) > 1.0 ? .red : .green)
+                                    .foregroundColor(spentPercentage(selectedCategoryData) > 1.0 ? AppColors.Budget.overBudget : AppColors.Budget.underBudget)
                                 Text("Budget: \(formatCurrency(selectedCategoryData.allocatedAmount))")
                                     .font(.caption)
                                     .foregroundColor(.secondary)

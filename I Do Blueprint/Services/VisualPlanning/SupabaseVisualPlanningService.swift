@@ -12,24 +12,61 @@ import SwiftUI
 
 @MainActor
 class SupabaseVisualPlanningService: ObservableObject {
-    private let supabase: SupabaseClient
-
+    private let supabase: SupabaseClient?
+    
     @Published var isLoading = false
     @Published var lastSyncDate: Date?
     @Published var syncErrors: [SupabaseError] = []
+    @Published var configurationError: ConfigurationError?
     private let logger = AppLogger.api
 
     init() {
-        // Read from Config.plist like SupabaseManager does
-        guard let configPath = Bundle.main.path(forResource: "Config", ofType: "plist"),
-              let config = NSDictionary(contentsOfFile: configPath),
-              let supabaseURLString = config["SUPABASE_URL"] as? String,
-              let supabaseAnonKey = config["SUPABASE_ANON_KEY"] as? String,
-              let supabaseURL = URL(string: supabaseURLString) else {
-            fatalError("Could not load Supabase configuration from Config.plist")
+        // Try to initialize, but don't crash on failure
+        do {
+            self.supabase = try Self.createSupabaseClient()
+            self.configurationError = nil
+        } catch let error as ConfigurationError {
+            logger.error("Configuration error during SupabaseVisualPlanningService initialization", error: error)
+            self.supabase = nil
+            self.configurationError = error
+        } catch {
+            logger.error("Unexpected error during SupabaseVisualPlanningService initialization", error: error)
+            self.supabase = nil
+            self.configurationError = .configFileUnreadable
+        }
+    }
+    
+    // MARK: - Client Creation (Throwing)
+    
+    private static func createSupabaseClient() throws -> SupabaseClient {
+        let logger = AppLogger.api
+        
+        guard let configPath = Bundle.main.path(forResource: "Config", ofType: "plist") else {
+            logger.error("Config.plist file not found in bundle")
+            throw ConfigurationError.configFileNotFound
         }
 
-        supabase = SupabaseClient(
+        guard let config = NSDictionary(contentsOfFile: configPath) else {
+            logger.error("Could not read Config.plist contents")
+            throw ConfigurationError.configFileUnreadable
+        }
+
+        guard let supabaseURLString = config["SUPABASE_URL"] as? String else {
+            logger.error("SUPABASE_URL not found or not a string")
+            throw ConfigurationError.missingSupabaseURL
+        }
+
+        guard let supabaseAnonKey = config["SUPABASE_ANON_KEY"] as? String else {
+            logger.error("SUPABASE_ANON_KEY not found or not a string")
+            throw ConfigurationError.missingSupabaseAnonKey
+        }
+
+        guard let supabaseURL = URL(string: supabaseURLString) else {
+            logger.error("Invalid URL format")
+            throw ConfigurationError.invalidURLFormat(supabaseURLString)
+        }
+
+        return SupabaseClient(
             supabaseURL: supabaseURL,
             supabaseKey: supabaseAnonKey,
             options: SupabaseClientOptions(
@@ -42,6 +79,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     // MARK: - Mood Board Operations
 
     func saveMoodBoard(_ moodBoard: MoodBoard) async throws {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -83,6 +124,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     func fetchMoodBoards(for tenantId: String) async throws -> [MoodBoard] {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -106,6 +151,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     func deleteMoodBoard(id: UUID) async throws {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -129,6 +178,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     // MARK: - Color Palette Operations
 
     func saveColorPalette(_ palette: ColorPalette) async throws {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -143,6 +196,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     func fetchColorPalettes(for tenantId: String) async throws -> [ColorPalette] {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -158,6 +215,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     func deleteColorPalette(id: UUID) async throws {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -173,6 +234,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     // MARK: - Seating Chart Operations
 
     func saveSeatingChart(_ chart: SeatingChart) async throws {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -204,6 +269,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     func fetchSeatingCharts(for tenantId: String) async throws -> [SeatingChart] {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -232,6 +301,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     // MARK: - Style Preferences Operations
 
     func saveStylePreferences(_ preferences: StylePreferences) async throws {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -246,6 +319,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     func fetchStylePreferences(for tenantId: String) async throws -> StylePreferences? {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         isLoading = true
         defer { isLoading = false }
 
@@ -263,8 +340,14 @@ class SupabaseVisualPlanningService: ObservableObject {
     // MARK: - Real-time Sync
 
     func setupRealtimeSync(for _: String) {
-        // TODO: Set up real-time subscriptions for collaborative editing
-        // Real-time functionality disabled for now due to API changes
+        // Real-time collaboration: Requires Supabase Realtime setup
+        // Future implementation:
+        // 1. Subscribe to changes on mood_boards, color_palettes, seating_charts tables
+        // 2. Listen for INSERT, UPDATE, DELETE events
+        // 3. Update local state when remote changes detected
+        // 4. Implement conflict resolution for simultaneous edits
+        // 5. Show presence indicators for active collaborators
+        // Note: Real-time functionality currently disabled due to API changes
         // Task {
         //     let moodBoardChannel = await supabase.channel("mood-boards-\(tenantId)")
         //     // Configure real-time subscriptions here
@@ -289,6 +372,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     // MARK: - Helper Methods
 
     private func fetchElements(for moodBoardId: String) async throws -> [VisualElement] {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         let response: [VisualElementDTO] = try await supabase
             .from("visual_elements")
             .select("*")
@@ -300,6 +387,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     private func fetchTables(for chartId: String) async throws -> [Table] {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         let response: [TableDTO] = try await supabase
             .from("seating_tables")
             .select("*")
@@ -311,6 +402,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     private func fetchSeatAssignments(for chartId: String) async throws -> [SeatingAssignment] {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         let response: [SeatAssignmentDTO] = try await supabase
             .from("seat_assignments")
             .select("*")
@@ -322,6 +417,10 @@ class SupabaseVisualPlanningService: ObservableObject {
     }
 
     func fetchSeatingGuests(for tenantId: String) async throws -> [SeatingGuest] {
+        guard let supabase = supabase else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         // Fetch from guest_list table
         struct GuestListDTO: Codable {
             let id: String

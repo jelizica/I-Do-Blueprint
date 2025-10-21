@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct TimelineFiltersView: View {
-    @ObservedObject var viewModel: TimelineViewModel
+    @ObservedObject var store: TimelineStoreV2
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -16,7 +16,7 @@ struct TimelineFiltersView: View {
             Form {
                 // Item Type Filter
                 Section("Item Type") {
-                    Picker("Type", selection: $viewModel.selectedType) {
+                    Picker("Type", selection: $store.filterType) {
                         Text("All Types").tag(TimelineItemType?.none)
                         ForEach(TimelineItemType.allCases, id: \.self) { type in
                             HStack {
@@ -31,13 +31,13 @@ struct TimelineFiltersView: View {
 
                 // Completion Filter
                 Section("Status") {
-                    Toggle("Show Completed Only", isOn: $viewModel.showCompletedOnly)
+                    Toggle("Show Completed", isOn: $store.showCompleted)
                 }
 
                 // Actions
                 Section {
                     Button("Clear All Filters") {
-                        viewModel.clearFilters()
+                        store.clearFilters()
                     }
                     .foregroundColor(.blue)
                 }
@@ -50,8 +50,6 @@ struct TimelineFiltersView: View {
                     }
                 }
             }
-            .onChange(of: viewModel.selectedType) { _, _ in viewModel.applyFilters() }
-            .onChange(of: viewModel.showCompletedOnly) { _, _ in viewModel.applyFilters() }
         }
         .frame(width: 400, height: 400)
     }
@@ -63,6 +61,7 @@ struct TimelineFiltersView: View {
         case .vendorEvent: "person.2.fill"
         case .payment: "dollarsign.circle.fill"
         case .reminder: "bell.fill"
+        case .ceremony: "heart.fill"
         case .other: "circle.fill"
         }
     }
@@ -71,5 +70,5 @@ struct TimelineFiltersView: View {
 // MARK: - Preview
 
 #Preview {
-    TimelineFiltersView(viewModel: TimelineViewModel())
+    TimelineFiltersView(store: TimelineStoreV2())
 }

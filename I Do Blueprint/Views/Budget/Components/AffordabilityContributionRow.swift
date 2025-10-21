@@ -10,7 +10,7 @@ struct AffordabilityContributionRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     Image(systemName: "gift.fill")
-                        .foregroundStyle(contribution.contributionType == .gift ? .blue : .green)
+                        .foregroundStyle(contribution.contributionType == .gift ? AppColors.Budget.allocated : AppColors.Budget.income)
                         .font(.system(size: 12))
                     Text(contribution.contributorName)
                         .font(.system(size: 14, weight: .semibold))
@@ -19,9 +19,9 @@ struct AffordabilityContributionRow: View {
                         .font(.system(size: 10, weight: .medium))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
-                        .background(contribution.contributionType == .gift ? Color.blue.opacity(0.1) : Color.green.opacity(0.1))
+                        .background(contribution.contributionType == .gift ? AppColors.Budget.allocated.opacity(0.1) : AppColors.Budget.income.opacity(0.1))
                         .clipShape(Capsule())
-                        .foregroundStyle(contribution.contributionType == .gift ? .blue : .green)
+                        .foregroundStyle(contribution.contributionType == .gift ? AppColors.Budget.allocated : AppColors.Budget.income)
                 }
 
                 Text(contribution.contributionDate, style: .date)
@@ -53,7 +53,7 @@ struct AffordabilityContributionRow: View {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .font(.system(size: 12))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(AppColors.Budget.overBudget)
                 }
                 .buttonStyle(.borderless)
                 .help("Delete contribution")

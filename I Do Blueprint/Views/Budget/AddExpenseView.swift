@@ -60,7 +60,7 @@ struct AddExpenseView: View {
                         ForEach(categories, id: \.id) { category in
                             HStack {
                                 Circle()
-                                    .fill(Color(hex: category.color) ?? .blue)
+                                    .fill(Color(hex: category.color) ?? AppColors.Budget.allocated)
                                     .frame(width: 12, height: 12)
                                 Text(category.categoryName)
                             }
@@ -160,7 +160,7 @@ struct AddExpenseView: View {
                                     Spacer()
                                     Text(NumberFormatter.currency
                                         .string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(AppColors.Budget.allocated)
                                 }
 
                                 HStack {
@@ -176,17 +176,17 @@ struct AddExpenseView: View {
                                     Spacer()
                                     let newTotal = category.spentAmount + amount
                                     Text(NumberFormatter.currency.string(from: NSNumber(value: newTotal)) ?? "$0")
-                                        .foregroundColor(newTotal > category.allocatedAmount ? .red : .green)
+                                        .foregroundColor(newTotal > category.allocatedAmount ? AppColors.Budget.overBudget : AppColors.Budget.underBudget)
                                         .fontWeight(.semibold)
                                 }
 
                                 if category.spentAmount + amount > category.allocatedAmount {
                                     HStack {
                                         Image(systemName: "exclamationmark.triangle.fill")
-                                            .foregroundColor(.red)
+                                            .foregroundColor(AppColors.Budget.overBudget)
                                         Text("This expense will put the category over budget")
                                             .font(.caption)
-                                            .foregroundColor(.red)
+                                            .foregroundColor(AppColors.Budget.overBudget)
                                         Spacer()
                                     }
                                 }
@@ -291,8 +291,8 @@ struct TagView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(Color.blue.opacity(0.1))
-        .foregroundColor(.blue)
+        .background(AppColors.Budget.allocated.opacity(0.1))
+        .foregroundColor(AppColors.Budget.allocated)
         .clipShape(Capsule())
     }
 }

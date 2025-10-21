@@ -9,16 +9,24 @@ import Foundation
 import Supabase
 
 class TasksAPI {
-    private let supabase: SupabaseClient
+    private let supabase: SupabaseClient?
 
-    init(supabase: SupabaseClient = SupabaseManager.shared.client) {
+    init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
+    }
+
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     // MARK: - Fetch Tasks
 
     func fetchTasks() async throws -> [WeddingTask] {
-        let response: [WeddingTask] = try await supabase
+        let client = try getClient()
+        let response: [WeddingTask] = try await client
             .from("wedding_tasks")
             .select()
             .order("created_at", ascending: false)
@@ -29,7 +37,8 @@ class TasksAPI {
     }
 
     func fetchTaskById(_ id: UUID) async throws -> WeddingTask {
-        let response: WeddingTask = try await supabase
+        let client = try getClient()
+        let response: WeddingTask = try await client
             .from("wedding_tasks")
             .select()
             .eq("id", value: id.uuidString)
@@ -43,7 +52,8 @@ class TasksAPI {
     // MARK: - Create Task
 
     func createTask(_ taskData: TaskInsertData) async throws -> WeddingTask {
-        let response: WeddingTask = try await supabase
+        let client = try getClient()
+        let response: WeddingTask = try await client
             .from("wedding_tasks")
             .insert(taskData)
             .select()
@@ -57,7 +67,8 @@ class TasksAPI {
     // MARK: - Update Task
 
     func updateTask(_ id: UUID, data: TaskInsertData) async throws -> WeddingTask {
-        let response: WeddingTask = try await supabase
+        let client = try getClient()
+        let response: WeddingTask = try await client
             .from("wedding_tasks")
             .update(data)
             .eq("id", value: id.uuidString)
@@ -70,7 +81,8 @@ class TasksAPI {
     }
 
     func updateTaskStatus(_ id: UUID, status: TaskStatus) async throws -> WeddingTask {
-        let response: WeddingTask = try await supabase
+        let client = try getClient()
+        let response: WeddingTask = try await client
             .from("wedding_tasks")
             .update(["status": status.rawValue])
             .eq("id", value: id.uuidString)
@@ -85,7 +97,8 @@ class TasksAPI {
     // MARK: - Delete Task
 
     func deleteTask(_ id: UUID) async throws {
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("wedding_tasks")
             .delete()
             .eq("id", value: id.uuidString)
@@ -95,7 +108,8 @@ class TasksAPI {
     // MARK: - Subtasks
 
     func fetchSubtasks(taskId: UUID) async throws -> [Subtask] {
-        let response: [Subtask] = try await supabase
+        let client = try getClient()
+        let response: [Subtask] = try await client
             .from("task_subtasks")
             .select()
             .eq("task_id", value: taskId.uuidString)
@@ -107,6 +121,8 @@ class TasksAPI {
     }
 
     func createSubtask(taskId: UUID, data: SubtaskInsertData) async throws -> Subtask {
+        let client = try getClient()
+        
         // Create a subtask insert struct
         struct SubtaskInsert: Encodable {
             let taskId: String
@@ -131,7 +147,7 @@ class TasksAPI {
             assignedTo: data.assignedTo,
             notes: data.notes)
 
-        let response: Subtask = try await supabase
+        let response: Subtask = try await client
             .from("task_subtasks")
             .insert(insertData)
             .select()
@@ -143,6 +159,8 @@ class TasksAPI {
     }
 
     func updateSubtask(_ id: UUID, data: SubtaskInsertData) async throws -> Subtask {
+        let client = try getClient()
+        
         // Create a subtask update struct
         struct SubtaskUpdate: Encodable {
             let subtaskName: String
@@ -164,7 +182,7 @@ class TasksAPI {
             assignedTo: data.assignedTo,
             notes: data.notes)
 
-        let response: Subtask = try await supabase
+        let response: Subtask = try await client
             .from("task_subtasks")
             .update(updateData)
             .eq("id", value: id.uuidString)
@@ -177,7 +195,8 @@ class TasksAPI {
     }
 
     func deleteSubtask(_ id: UUID) async throws {
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("task_subtasks")
             .delete()
             .eq("id", value: id.uuidString)

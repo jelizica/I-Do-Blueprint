@@ -15,7 +15,7 @@ struct VendorFinancialSection: View {
             SectionHeaderV2(
                 title: "Financial",
                 icon: "dollarsign.circle.fill",
-                color: .green
+                color: AppColors.Vendor.booked
             )
 
             VStack(spacing: Spacing.sm) {
@@ -24,7 +24,7 @@ struct VendorFinancialSection: View {
                         icon: "banknote.fill",
                         title: "Quoted Amount",
                         value: "$\(Int(quotedAmount))",
-                        color: .green
+                        color: AppColors.Vendor.booked
                     )
                 }
 
@@ -33,7 +33,7 @@ struct VendorFinancialSection: View {
                         icon: "chart.pie.fill",
                         title: "Budget Category",
                         value: budgetCategory,
-                        color: .orange
+                        color: AppColors.Vendor.pending
                     )
                 }
             }

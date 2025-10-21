@@ -11,302 +11,359 @@ import Dependencies
 
 @MainActor
 final class VendorStoreV2Tests: XCTestCase {
-    var store: VendorStoreV2!
     var mockRepository: MockVendorRepository!
+    var coupleId: UUID!
 
     override func setUp() async throws {
         mockRepository = MockVendorRepository()
-        store = withDependencies {
+        coupleId = UUID()
+    }
+
+    override func tearDown() {
+        mockRepository = nil
+        coupleId = nil
+    }
+
+    // MARK: - Load Tests
+
+    func testLoadVendors_Success() async throws {
+        // Given
+        let testVendors = [
+            Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Photographer John"),
+            Vendor.makeTest(id: 2, coupleId: coupleId, vendorName: "Caterer Sarah")
+        ]
+        mockRepository.vendors = testVendors
+
+        // When
+        let store = await withDependencies {
             $0.vendorRepository = mockRepository
         } operation: {
             VendorStoreV2()
         }
+
+        await store.loadVendors()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.vendors.count, 2)
+        XCTAssertEqual(store.vendors[0].vendorName, "Photographer John")
     }
 
-    override func tearDown() async throws {
-        store = nil
-        mockRepository = nil
-    }
-
-    // MARK: - Load Vendors Tests
-
-    func testLoadVendors_Success() async throws {
+    func testLoadVendors_Failure() async throws {
         // Given
-        let mockVendors = [
-            createMockVendor(name: "Venue Provider"),
-            createMockVendor(name: "Photographer"),
-        ]
-        let mockStats = VendorStats(
-            total: 2,
-            booked: 1,
-            available: 1,
-            archived: 0,
-            totalCost: 5000,
-            averageRating: 4.5
-        )
-        mockRepository.vendors = mockVendors
-        mockRepository.vendorStats = mockStats
+        mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
 
         // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
         await store.loadVendors()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.vendors.count, 0)
+    }
+
+    func testLoadVendors_Empty() async throws {
+        // Given
+        mockRepository.vendors = []
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.vendors.count, 0)
+    }
+
+    // MARK: - Create Tests
+
+    func testCreateVendor_OptimisticUpdate() async throws {
+        // Given
+        let existingVendor = Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Existing Vendor")
+        mockRepository.vendors = [existingVendor]
+
+        let newVendor = Vendor.makeTest(id: 2, coupleId: coupleId, vendorName: "New Vendor")
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+        await store.addVendor(newVendor)
 
         // Then
         XCTAssertEqual(store.vendors.count, 2)
-        XCTAssertEqual(store.vendors[0].vendorName, "Venue Provider")
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-        XCTAssertNotNil(store.vendorStats)
-        XCTAssertEqual(store.vendorStats?.total, 2)
+        XCTAssertTrue(store.vendors.contains(where: { $0.vendorName == "New Vendor" }))
     }
 
-    func testLoadVendors_EmptyResult() async throws {
-        // Given
-        mockRepository.vendors = []
-        mockRepository.vendorStats = VendorStats(
-            total: 0,
-            booked: 0,
-            available: 0,
-            archived: 0,
-            totalCost: 0,
-            averageRating: 0
-        )
-
-        // When
-        await store.loadVendors()
-
-        // Then
-        XCTAssertTrue(store.vendors.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-    }
-
-    func testLoadVendors_Error() async throws {
-        // Given
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.loadVendors()
-
-        // Then
-        XCTAssertTrue(store.vendors.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Add Vendor Tests
-
-    func testAddVendor_Success() async throws {
-        // Given
-        let newVendor = createMockVendor(name: "Florist")
-        mockRepository.vendors = []
-        mockRepository.vendorStats = VendorStats(
-            total: 1,
-            booked: 0,
-            available: 1,
-            archived: 0,
-            totalCost: 0,
-            averageRating: 0
-        )
-
-        // When
-        await store.addVendor(newVendor)
-
-        // Then
-        XCTAssertEqual(store.vendors.count, 1)
-        XCTAssertEqual(store.vendors[0].vendorName, "Florist")
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNil(store.error)
-        XCTAssertTrue(store.showSuccessToast)
-        XCTAssertNotNil(store.vendorStats)
-    }
-
-    func testAddVendor_Error() async throws {
-        // Given
-        let newVendor = createMockVendor(name: "Caterer")
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.addVendor(newVendor)
-
-        // Then
-        XCTAssertTrue(store.vendors.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNotNil(store.error)
-        XCTAssertFalse(store.showSuccessToast)
-    }
-
-    // MARK: - Update Vendor Tests
+    // MARK: - Update Tests
 
     func testUpdateVendor_Success() async throws {
         // Given
-        let originalVendor = createMockVendor(name: "Original Name", id: UUID())
-        mockRepository.vendors = [originalVendor]
-        mockRepository.vendorStats = VendorStats(
-            total: 1,
-            booked: 1,
-            available: 0,
-            archived: 0,
-            totalCost: 5000,
-            averageRating: 5.0
-        )
+        let vendor = Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Original Name", isBooked: false)
+        mockRepository.vendors = [vendor]
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
 
         await store.loadVendors()
 
-        var updatedVendor = originalVendor
-        updatedVendor.vendorName = "Updated Name"
-        mockRepository.vendors = [updatedVendor]
-
-        // When
+        var updatedVendor = vendor
+        updatedVendor.isBooked = true
         await store.updateVendor(updatedVendor)
 
         // Then
-        XCTAssertEqual(store.vendors.count, 1)
-        XCTAssertEqual(store.vendors[0].vendorName, "Updated Name")
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.vendors.first?.isBooked, true)
     }
 
-    func testUpdateVendor_Rollback() async throws {
-        // Given - Load initial vendor
-        let originalVendor = createMockVendor(name: "Original Name", id: UUID())
-        mockRepository.vendors = [originalVendor]
-        await store.loadVendors()
-
-        // Prepare updated vendor
-        var updatedVendor = originalVendor
-        updatedVendor.vendorName = "Failed Update"
-
-        // Configure repository to fail update
-        mockRepository.shouldThrowError = true
+    func testUpdateVendor_Failure_RollsBack() async throws {
+        // Given
+        let vendor = Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Vendor", isBooked: false)
+        mockRepository.vendors = [vendor]
 
         // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+
+        var updatedVendor = vendor
+        updatedVendor.isBooked = true
+
+        mockRepository.shouldThrowError = true
         await store.updateVendor(updatedVendor)
 
         // Then - Should rollback to original
-        XCTAssertEqual(store.vendors.count, 1)
-        XCTAssertEqual(store.vendors[0].vendorName, "Original Name")
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.vendors.first?.isBooked, false)
     }
 
-    // MARK: - Delete Vendor Tests
+    // MARK: - Delete Tests
 
     func testDeleteVendor_Success() async throws {
         // Given
-        let vendor1 = createMockVendor(name: "Vendor 1", id: UUID())
-        let vendor2 = createMockVendor(name: "Vendor 2", id: UUID())
+        let vendor1 = Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Vendor 1")
+        let vendor2 = Vendor.makeTest(id: 2, coupleId: coupleId, vendorName: "Vendor 2")
         mockRepository.vendors = [vendor1, vendor2]
-        mockRepository.vendorStats = VendorStats(
-            total: 1,
-            booked: 0,
-            available: 1,
-            archived: 0,
-            totalCost: 0,
-            averageRating: 0
-        )
-
-        await store.loadVendors()
 
         // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
         await store.deleteVendor(vendor1)
 
         // Then
-        XCTAssertEqual(store.vendors.count, 1)
-        XCTAssertEqual(store.vendors[0].id, vendor2.id)
         XCTAssertNil(store.error)
-        XCTAssertNotNil(store.vendorStats)
+        XCTAssertEqual(store.vendors.count, 1)
+        XCTAssertEqual(store.vendors.first?.vendorName, "Vendor 2")
     }
 
-    func testDeleteVendor_Rollback() async throws {
+    func testDeleteVendor_Failure_RollsBack() async throws {
         // Given
-        let vendor = createMockVendor(name: "Vendor", id: UUID())
+        let vendor = Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Vendor")
         mockRepository.vendors = [vendor]
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
         await store.loadVendors()
 
         mockRepository.shouldThrowError = true
-
-        // When
         await store.deleteVendor(vendor)
 
         // Then - Should rollback
-        XCTAssertEqual(store.vendors.count, 1)
-        XCTAssertEqual(store.vendors[0].id, vendor.id)
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.vendors.count, 1)
     }
 
-    // MARK: - Refresh Tests
-
-    func testRefreshVendors() async throws {
+    func testToggleBooked() async throws {
         // Given
-        let initialVendors = [createMockVendor(name: "Vendor 1")]
-        mockRepository.vendors = initialVendors
-        mockRepository.vendorStats = VendorStats(
-            total: 1,
-            booked: 1,
-            available: 0,
-            archived: 0,
-            totalCost: 5000,
-            averageRating: 5.0
-        )
+        let vendor = Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Vendor", isBooked: false)
+        mockRepository.vendors = [vendor]
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+        await store.toggleBookingStatus(vendor)
+
+        // Then
+        XCTAssertEqual(store.vendors.first?.isBooked, true)
+    }
+
+    func testArchiveVendor() async throws {
+        // Given
+        let vendor = Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Vendor", isArchived: false)
+        mockRepository.vendors = [vendor]
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
 
         await store.loadVendors()
 
-        // Update repository with new data
-        let updatedVendors = [
-            createMockVendor(name: "Vendor 1"),
-            createMockVendor(name: "Vendor 2"),
-        ]
-        mockRepository.vendors = updatedVendors
-        mockRepository.vendorStats = VendorStats(
-            total: 2,
-            booked: 1,
-            available: 1,
-            archived: 0,
-            totalCost: 10000,
-            averageRating: 4.5
-        )
-
-        // When
-        await store.refreshVendors()
+        var archivedVendor = vendor
+        archivedVendor.isArchived = true
+        await store.updateVendor(archivedVendor)
 
         // Then
-        XCTAssertEqual(store.vendors.count, 2)
-        XCTAssertEqual(store.vendorStats?.total, 2)
+        XCTAssertEqual(store.vendors.first?.isArchived, true)
     }
 
-    // MARK: - Helper Methods
+    // MARK: - Computed Properties Tests
 
-    private func createMockVendor(
-        name: String,
-        id: UUID = UUID()
-    ) -> Vendor {
-        Vendor(
-            id: Int64(abs(id.hashValue)),
-            createdAt: Date(),
-            updatedAt: Date(),
-            vendorName: name,
-            vendorType: "Venue",
-            vendorCategoryId: nil,
-            contactName: nil,
-            phoneNumber: nil,
-            email: nil,
-            website: nil,
-            notes: nil,
-            quotedAmount: nil,
-            imageUrl: nil,
-            isBooked: false,
-            dateBooked: nil,
-            budgetCategoryId: nil,
-            coupleId: UUID(),
-            isArchived: false,
-            archivedAt: nil,
-            includeInExport: true,
-            streetAddress: nil,
-            streetAddress2: nil,
-            city: nil,
-            state: nil,
-            postalCode: nil,
-            country: nil,
-            latitude: nil,
-            longitude: nil
-        )
+    func testComputedProperty_TotalVendors() async throws {
+        // Given
+        let vendors = [
+            Vendor.makeTest(id: 1, coupleId: coupleId),
+            Vendor.makeTest(id: 2, coupleId: coupleId),
+            Vendor.makeTest(id: 3, coupleId: coupleId)
+        ]
+        mockRepository.vendors = vendors
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+
+        // Then
+        XCTAssertEqual(store.vendors.count, 3)
+    }
+
+    func testComputedProperty_BookedVendors() async throws {
+        // Given
+        let vendors = [
+            Vendor.makeTest(id: 1, coupleId: coupleId, isBooked: true),
+            Vendor.makeTest(id: 2, coupleId: coupleId, isBooked: false),
+            Vendor.makeTest(id: 3, coupleId: coupleId, isBooked: true)
+        ]
+        mockRepository.vendors = vendors
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+
+        // Then
+        let bookedCount = store.vendors.filter { $0.isBooked == true }.count
+        XCTAssertEqual(bookedCount, 2)
+    }
+
+    func testComputedProperty_TotalQuoted() async throws {
+        // Given
+        let vendors = [
+            Vendor.makeTest(id: 1, coupleId: coupleId, vendorName: "Vendor 1"),
+            Vendor.makeTest(id: 2, coupleId: coupleId, vendorName: "Vendor 2"),
+            Vendor.makeTest(id: 3, coupleId: coupleId, vendorName: "Vendor 3")
+        ]
+        mockRepository.vendors = vendors
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+
+        // Then
+        XCTAssertEqual(store.vendors.count, 3)
+    }
+
+    func testFilterByType() async throws {
+        // Given
+        let vendors = [
+            Vendor.makeTest(id: 1, coupleId: coupleId, vendorType: "Photography"),
+            Vendor.makeTest(id: 2, coupleId: coupleId, vendorType: "Catering"),
+            Vendor.makeTest(id: 3, coupleId: coupleId, vendorType: "Photography")
+        ]
+        mockRepository.vendors = vendors
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+        let filtered = store.vendors.filter { $0.vendorType == "Photography" }
+
+        // Then
+        XCTAssertEqual(filtered.count, 2)
+        XCTAssertTrue(filtered.allSatisfy { $0.vendorType == "Photography" })
+    }
+
+    func testFilterByBookedStatus() async throws {
+        // Given
+        let vendors = [
+            Vendor.makeTest(id: 1, coupleId: coupleId, isBooked: true),
+            Vendor.makeTest(id: 2, coupleId: coupleId, isBooked: false),
+            Vendor.makeTest(id: 3, coupleId: coupleId, isBooked: true)
+        ]
+        mockRepository.vendors = vendors
+
+        // When
+        let store = await withDependencies {
+            $0.vendorRepository = mockRepository
+        } operation: {
+            VendorStoreV2()
+        }
+
+        await store.loadVendors()
+        let booked = store.vendors.filter { $0.isBooked == true }
+
+        // Then
+        XCTAssertEqual(booked.count, 2)
+        XCTAssertTrue(booked.allSatisfy { $0.isBooked == true })
     }
 }

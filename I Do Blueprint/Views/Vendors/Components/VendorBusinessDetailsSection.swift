@@ -32,7 +32,7 @@ struct VendorBusinessDetailsSection: View {
                         icon: "tag.fill",
                         title: "Service Type",
                         value: vendorType,
-                        color: .blue
+                        color: AppColors.Vendor.contacted
                     )
                 }
 

@@ -40,14 +40,36 @@ struct BudgetOverviewItemsSection: View {
             } else {
                 switch viewMode {
                 case .cards:
-                    BudgetItemsGrid(
-                        filteredBudgetItems: filteredBudgetItems,
-                        onEditExpense: onEditExpense,
-                        onRemoveExpense: onRemoveExpense,
-                        onEditGift: onEditGift,
-                        onRemoveGift: onRemoveGift,
-                        onAddExpense: onAddExpense,
-                        onAddGift: onAddGift)
+                    LazyVGrid(
+                        columns: [
+                            GridItem(.adaptive(minimum: 280, maximum: 380), spacing: 16)
+                        ],
+                        spacing: 16
+                    ) {
+                        ForEach(filteredBudgetItems) { item in
+                            CircularProgressBudgetCard(
+                                item: item,
+                                onEditExpense: { _, expenseId in
+                                    onEditExpense(item.id, expenseId)
+                                },
+                                onRemoveExpense: { _, expenseId in
+                                    Task {
+                                        await onRemoveExpense(item.id, expenseId)
+                                    }
+                                },
+                                onEditGift: { _, giftId in
+                                    onEditGift(item.id, giftId)
+                                },
+                                onRemoveGift: { _ in
+                                    Task {
+                                        await onRemoveGift(item.id)
+                                    }
+                                },
+                                onAddExpense: { _ in onAddExpense(item.id) },
+                                onAddGift: { _ in onAddGift(item.id) }
+                            )
+                        }
+                    }
                 case .table:
                     VStack(spacing: 0) {
                         // Table header

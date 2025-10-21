@@ -87,8 +87,7 @@ struct SeatingChartView: View {
         .onChange(of: selectedChart) { oldValue, newValue in
             // When editor is dismissed (selectedChart becomes nil), reload charts from database
             if oldValue != nil && newValue == nil {
-                logger.debug("Editor dismissed, reloading charts from database...")
-                Task {
+                                Task {
                     do {
                         try await visualPlanningStore.loadSeatingCharts()
                         logger.info("Charts reloaded successfully")

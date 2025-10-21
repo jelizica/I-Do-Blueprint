@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct BudgetCalculatorView: View {
-    @StateObject private var viewModel = BudgetCalculatorViewModel()
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
     @EnvironmentObject var settingsStore: SettingsStoreV2
 
     var body: some View {
@@ -9,22 +9,22 @@ struct BudgetCalculatorView: View {
             // Scenario Selector Header
             BudgetCalculatorHeader(
                 selectedScenarioId: Binding(
-                    get: { viewModel.selectedScenario?.id },
+                    get: { budgetStore.selectedScenario?.id },
                     set: { _ in }
                 ),
-                scenarios: viewModel.scenarios,
+                scenarios: budgetStore.scenarios,
                 onScenarioChange: { scenario in
-                    viewModel.selectScenario(scenario)
+                    budgetStore.selectScenario(scenario)
                     Task {
-                        await viewModel.loadContributions()
+                        await budgetStore.loadContributions()
                     }
                 },
                 onAddScenario: {
-                    viewModel.showAddScenarioSheet = true
+                    budgetStore.showAddScenarioSheet = true
                 },
                 onDeleteScenario: {
-                    if let scenario = viewModel.selectedScenario {
-                        Task { await viewModel.deleteScenario(scenario) }
+                    if let scenario = budgetStore.selectedScenario {
+                        Task { await budgetStore.deleteScenario(scenario) }
                     }
                 }
             )
@@ -36,42 +36,43 @@ struct BudgetCalculatorView: View {
                     // Left Side - Budget Inputs
                     VStack(alignment: .leading, spacing: 24) {
                         BudgetInputsSection(
-                            calculationStartDate: $viewModel.editedCalculationStartDate,
-                            partner1Monthly: $viewModel.editedPartner1Monthly,
-                            partner2Monthly: $viewModel.editedPartner2Monthly,
-                            hasUnsavedChanges: viewModel.hasUnsavedChanges,
-                            weddingDate: viewModel.editedWeddingDate,
+                            calculationStartDate: $budgetStore.editedCalculationStartDate,
+                            partner1Monthly: $budgetStore.editedPartner1Monthly,
+                            partner2Monthly: $budgetStore.editedPartner2Monthly,
+                            hasUnsavedChanges: budgetStore.hasUnsavedChanges,
+                            weddingDate: budgetStore.editedWeddingDate,
                             partner1Name: partner1Name,
                             partner2Name: partner2Name,
                             onFieldChanged: {
-                                viewModel.markFieldChanged()
+                                budgetStore.markFieldChanged()
                             },
                             onSave: {
-                                Task { await viewModel.saveChanges() }
+                                Task { await budgetStore.saveChanges() }
                             }
                         )
 
                         GiftsContributionsSection(
-                            totalGifts: viewModel.totalGifts,
-                            totalExternal: viewModel.totalExternal,
-                            contributions: viewModel.contributions,
+                            totalGifts: budgetStore.totalGifts,
+                            totalExternal: budgetStore.totalExternal,
+                            contributions: budgetStore.contributions,
                             onAddContribution: {
-                                viewModel.showAddContributionSheet = true
+                                budgetStore.showAddContributionSheet = true
                             },
                             onLinkGifts: {
                                 Task {
-                                    await viewModel.loadAvailableGifts()
-                                    viewModel.showLinkGiftsSheet = true
+                                    await budgetStore.loadAvailableGifts()
+                                    budgetStore.showLinkGiftsSheet = true
                                 }
                             },
                             onEditContribution: { contribution in
                                 Task {
-                                    await viewModel.startEditingGift(contributionId: contribution.id)
+                                    await budgetStore.startEditingGift(contributionId: contribution.id)
+                                    budgetStore.showEditGiftSheet = true
                                 }
                             },
                             onDeleteContribution: { contribution in
                                 Task {
-                                    await viewModel.deleteContribution(contribution)
+                                    await budgetStore.deleteContribution(contribution)
                                 }
                             }
                         )
@@ -81,11 +82,11 @@ struct BudgetCalculatorView: View {
                     // Right Side - Affordability Results
                     VStack(alignment: .leading, spacing: 24) {
                         AffordabilityResultsSection(
-                            totalAffordableBudget: viewModel.totalAffordableBudget,
-                            alreadyPaid: viewModel.alreadyPaid,
-                            projectedSavings: viewModel.projectedSavings,
-                            monthsLeft: viewModel.monthsLeft,
-                            progressPercentage: viewModel.progressPercentage
+                            totalAffordableBudget: budgetStore.totalAffordableBudget,
+                            alreadyPaid: budgetStore.alreadyPaid,
+                            projectedSavings: budgetStore.projectedSavings,
+                            monthsLeft: budgetStore.monthsLeft,
+                            progressPercentage: budgetStore.progressPercentage
                         )
                     }
                     .frame(maxWidth: .infinity)
@@ -95,7 +96,7 @@ struct BudgetCalculatorView: View {
         }
         .task {
             // Load scenarios first
-            await viewModel.loadScenarios()
+            await budgetStore.loadScenarios()
         }
         .onChange(of: settingsStore.hasLoaded) { _, loaded in
             // When settings finish loading, set the wedding date
@@ -105,7 +106,7 @@ struct BudgetCalculatorView: View {
 
                 if !weddingDateFromSettings.isEmpty {
                     AppLogger.ui.info("BudgetCalculatorView: Setting wedding date to: '\(weddingDateFromSettings)'")
-                    viewModel.setWeddingDate(weddingDateFromSettings)
+                    budgetStore.setWeddingDate(weddingDateFromSettings)
                 } else {
                     AppLogger.ui.warning("BudgetCalculatorView: Wedding date is empty")
                 }
@@ -115,7 +116,7 @@ struct BudgetCalculatorView: View {
             // Only update if the date is not empty
             if !newDate.isEmpty {
                 AppLogger.ui.info("BudgetCalculatorView: Wedding date changed to: '\(newDate)'")
-                viewModel.setWeddingDate(newDate)
+                budgetStore.setWeddingDate(newDate)
             }
         }
         .onAppear {
@@ -124,54 +125,54 @@ struct BudgetCalculatorView: View {
                 let weddingDateFromSettings = settingsStore.settings.global.weddingDate
                 if !weddingDateFromSettings.isEmpty {
                     AppLogger.ui.info("BudgetCalculatorView.onAppear: Setting wedding date to: '\(weddingDateFromSettings)'")
-                    viewModel.setWeddingDate(weddingDateFromSettings)
+                    budgetStore.setWeddingDate(weddingDateFromSettings)
                 }
             }
         }
-        .sheet(isPresented: $viewModel.showAddScenarioSheet) {
+        .sheet(isPresented: $budgetStore.showAddScenarioSheet) {
             BudgetCalculatorAddScenarioSheet(onSave: { name in
                 Task {
-                    await viewModel.createScenario(name: name)
-                    viewModel.showAddScenarioSheet = false
+                    await budgetStore.createScenario(name: name)
+                    budgetStore.showAddScenarioSheet = false
                 }
             })
         }
-        .sheet(isPresented: $viewModel.showAddContributionSheet) {
+        .sheet(isPresented: $budgetStore.showAddContributionSheet) {
             BudgetCalculatorAddContributionSheet(onSave: { name, amount, type, date in
                 Task {
-                    await viewModel.addContribution(
+                    await budgetStore.addContribution(
                         name: name,
                         amount: amount,
                         type: type,
                         date: date
                     )
-                    viewModel.showAddContributionSheet = false
+                    budgetStore.showAddContributionSheet = false
                 }
             })
         }
-        .sheet(isPresented: $viewModel.showLinkGiftsSheet) {
+        .sheet(isPresented: $budgetStore.showLinkGiftsSheet) {
             LinkGiftsSheet(
-                availableGifts: viewModel.availableGifts,
+                availableGifts: budgetStore.availableGifts,
                 onLink: { giftIds in
                     Task {
-                        await viewModel.linkGiftsToScenario(giftIds: giftIds)
-                        viewModel.showLinkGiftsSheet = false
+                        await budgetStore.linkGifts(giftIds: giftIds)
+                        budgetStore.showLinkGiftsSheet = false
                     }
                 }
             )
         }
-        .sheet(isPresented: $viewModel.showEditGiftSheet) {
-            if let gift = viewModel.editingGift {
+        .sheet(isPresented: $budgetStore.showEditGiftSheet) {
+            if let gift = budgetStore.editingGift {
                 EditGiftSheet(
                     gift: gift,
                     onSave: { updatedGift in
                         Task {
-                            await viewModel.updateGift(updatedGift)
+                            await budgetStore.updateGift(updatedGift)
                         }
                     },
                     onCancel: {
-                        viewModel.showEditGiftSheet = false
-                        viewModel.editingGift = nil
+                        budgetStore.showEditGiftSheet = false
+                        budgetStore.editingGift = nil
                     }
                 )
             }
@@ -193,5 +194,5 @@ struct BudgetCalculatorView: View {
 
 #Preview {
     BudgetCalculatorView()
-        .environmentObject(SettingsViewModel())
+        .environmentObject(SettingsStoreV2())
 }

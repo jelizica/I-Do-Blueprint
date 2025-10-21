@@ -216,8 +216,7 @@ struct SeatingChartEditorViewV2: View {
                 if editableChart.guests.isEmpty {
                     // This would typically call a store method to load guests
                     // For now, we'll just note that guests should be loaded
-                    logger.debug("Loading guests for seating chart...")
-                }
+                                    }
             }
         }
     }
@@ -227,13 +226,10 @@ struct SeatingChartEditorViewV2: View {
     private func saveChart() {
         Task {
             do {
-                logger.debug("Starting save for chart: \(editableChart.chartName), ID: \(editableChart.id)")
-                logger.debug("Tables: \(editableChart.tables.count), Assignments: \(editableChart.seatingAssignments.count), Guests: \(editableChart.guests.count)")
-
+                                
                 // Log table details
                 for (index, table) in editableChart.tables.enumerated() {
-                    logger.debug("Table \(index + 1): ID=\(table.id), Number=\(table.tableNumber), Shape=\(table.tableShape), Capacity=\(table.capacity), Position=(\(table.position.x), \(table.position.y)), Rotation=\(table.rotation)")
-                }
+                                    }
 
                 try await visualPlanningStore.updateSeatingChart(editableChart)
 

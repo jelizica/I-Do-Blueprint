@@ -49,12 +49,20 @@ class AnalyticsService: ObservableObject {
 
     init() {
         supabaseService = SupabaseVisualPlanningService()
-        startPeriodicUpdates()
+        
+        // Only start periodic updates if feature flag allows
+        if PerformanceFeatureFlags.enablePeriodicAnalytics {
+            startPeriodicUpdates()
+        }
     }
 
     init(supabaseService: SupabaseVisualPlanningService) {
         self.supabaseService = supabaseService
-        startPeriodicUpdates()
+        
+        // Only start periodic updates if feature flag allows
+        if PerformanceFeatureFlags.enablePeriodicAnalytics {
+            startPeriodicUpdates()
+        }
     }
 
     // MARK: - Dashboard Data Collection
@@ -137,7 +145,11 @@ class AnalyticsService: ObservableObject {
         colorPalettes: [ColorPalette],
         seatingCharts: [SeatingChart]) -> OverviewMetrics {
         let totalElements = moodBoards.reduce(into: 0) { $0 += $1.elements.count }
-        let totalExports = 0 // TODO: Track exports separately
+        
+        // Export tracking: Requires database schema addition
+        // Future: Add export_count field to mood_boards, color_palettes, and seating_charts tables
+        // Then sum: moodBoards.reduce(0) { $0 + ($1.exportCount ?? 0) } + ...
+        let totalExports = 0
 
         let recentActivity = calculateRecentActivity(
             moodBoards: moodBoards,
@@ -340,8 +352,8 @@ class AnalyticsService: ObservableObject {
         guard !colors.isEmpty else { return .monochromatic }
 
         let hues = colors.map { color -> Double in
-            // Extract hue from Color (simplified implementation)
-            return 0.0 // TODO: Implement proper HSB extraction
+            // Extract hue from Color using HSB color space
+            return extractHue(from: color)
         }
 
         let hueDifferences = zip(hues, hues.dropFirst()).map { abs($0.0 - $0.1) }
@@ -355,6 +367,47 @@ class AnalyticsService: ObservableObject {
         case 90 ..< 150: return .triadic
         default: return .tetradic
         }
+    }
+    
+    /// Extract hue value from Color in degrees (0-360)
+    private func extractHue(from color: Color) -> Double {
+        // Convert SwiftUI Color to NSColor to access RGB components
+        let nsColor = NSColor(color)
+        
+        // Convert to RGB color space
+        guard let rgbColor = nsColor.usingColorSpace(.deviceRGB) else {
+            return 0.0
+        }
+        
+        let r = rgbColor.redComponent
+        let g = rgbColor.greenComponent
+        let b = rgbColor.blueComponent
+        
+        let maxComponent = max(r, g, b)
+        let minComponent = min(r, g, b)
+        let delta = maxComponent - minComponent
+        
+        // If no saturation, hue is undefined (return 0)
+        guard delta > 0.0001 else {
+            return 0.0
+        }
+        
+        var hue: Double = 0.0
+        
+        if maxComponent == r {
+            hue = 60.0 * (((g - b) / delta).truncatingRemainder(dividingBy: 6.0))
+        } else if maxComponent == g {
+            hue = 60.0 * (((b - r) / delta) + 2.0)
+        } else {
+            hue = 60.0 * (((r - g) / delta) + 4.0)
+        }
+        
+        // Normalize to 0-360 range
+        if hue < 0 {
+            hue += 360.0
+        }
+        
+        return hue
     }
 
     private func analyzeSeasonalColorTrends(colorPalettes: [ColorPalette]) -> [WeddingSeason: [ColorFrequency]] {
@@ -381,8 +434,15 @@ class AnalyticsService: ObservableObject {
     }
 
     private func calculatePaletteUsageStats(colorPalettes: [ColorPalette]) -> PaletteUsageStats {
-        let totalUsage = 0 // TODO: Track palette usage separately
-        let favoriteCount = 0 // ColorPalette no longer has isFavorite property
+        // Palette usage tracking: Requires database schema addition
+        // Future: Add usage_count field to color_palettes table
+        // Track when palettes are applied to mood boards or used in designs
+        let totalUsage = 0
+        
+        // Favorite tracking: Requires database schema addition
+        // Future: Add is_favorite field to color_palettes table
+        let favoriteCount = 0
+        
         let avgUsage = 0.0
 
         let mostUsedPalette = colorPalettes.first
@@ -480,22 +540,36 @@ class AnalyticsService: ObservableObject {
         moodBoards: [MoodBoard],
         colorPalettes: [ColorPalette],
         seatingCharts: [SeatingChart]) -> FeatureUsage {
-        FeatureUsage(
+        // Export usage tracking: Requires database schema addition
+        // Future: Track export events in separate exports table with timestamps
+        // Then count: SELECT COUNT(*) FROM exports WHERE tenant_id = ?
+        let exportUsage = 0.0
+        
+        return FeatureUsage(
             moodBoardUsage: Double(moodBoards.count),
             colorPaletteUsage: Double(colorPalettes.count),
             seatingChartUsage: Double(seatingCharts.count),
             templateUsage: Double(moodBoards.filter(\.isTemplate).count),
-            exportUsage: 0.0 // TODO: Track export usage separately
+            exportUsage: exportUsage
         )
     }
 
     private func analyzeExportPatterns(seatingCharts: [SeatingChart]) -> ExportPatterns {
-        let totalExports = 0 // TODO: Track exports separately
+        // Export patterns tracking: Requires database schema addition
+        // Future implementation:
+        // 1. Create exports table: (id, tenant_id, item_id, item_type, format, exported_at)
+        // 2. Track exports when user exports mood boards, palettes, or charts
+        // 3. Query: SELECT COUNT(*) FROM exports WHERE item_type = 'seating_chart'
+        // 4. Calculate: SELECT item_id, COUNT(*) as count FROM exports GROUP BY item_id
+        let totalExports = 0
         let chartsWithExports = 0
+        let avgExports = totalExports > 0 && seatingCharts.count > 0 
+            ? Double(totalExports) / Double(seatingCharts.count) 
+            : 0.0
 
         return ExportPatterns(
             totalExports: totalExports,
-            averageExportsPerChart: 0.0,
+            averageExportsPerChart: avgExports,
             mostExportedChart: seatingCharts.first?.chartName)
     }
 
@@ -584,6 +658,12 @@ class AnalyticsService: ObservableObject {
     }
 
     private func startPeriodicUpdates() {
+        // Only start if feature flag allows (disabled by default to save memory)
+        guard PerformanceFeatureFlags.enablePeriodicAnalytics else {
+            logger.debug("Periodic analytics updates disabled via feature flag")
+            return
+        }
+        
         analyticsTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             // Auto-refresh every 5 minutes
             Task { @MainActor in

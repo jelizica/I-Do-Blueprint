@@ -2,7 +2,7 @@ import AppKit
 import SwiftUI
 
 struct BudgetOverviewView: View {
-    @StateObject private var budgetStore = BudgetStoreV2()
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
     @State private var selectedCategory: BudgetCategory?
     @State private var showingAddCategory = false
     @State private var showingAddExpense = false
@@ -58,14 +58,20 @@ struct BudgetOverviewView: View {
 
                 Divider()
 
-                // Categories list
+                // Categories list - Using Component Library
                 if filteredAndSortedCategories.isEmpty {
-                    ContentUnavailableView(
-                        "No Budget Categories",
-                        systemImage: "dollarsign.circle",
-                        description: Text(searchText
-                            .isEmpty ? "Add your first budget category to get started" :
-                            "Try adjusting your search or filters"))
+                    UnifiedEmptyStateView(
+                        config: searchText.isEmpty ?
+                            .custom(
+                                icon: "dollarsign.circle",
+                                title: "No Budget Categories",
+                                message: "Add your first budget category to get started",
+                                actionTitle: "Add Category",
+                                onAction: { showingAddCategory = true }
+                            ) :
+                            .searchResults(query: searchText)
+                    )
+                    .padding()
                 } else {
                     List(filteredAndSortedCategories, selection: $selectedCategory) { category in
                         NavigationLink(value: category) {
@@ -123,7 +129,7 @@ struct BudgetOverviewView: View {
                     }
                 }
                 #if os(macOS)
-                .frame(minWidth: 600, maxWidth: 700, minHeight: 500, maxHeight: 650)
+                .frame(minWidth: 700, idealWidth: 750, maxWidth: 800, minHeight: 650, idealHeight: 750, maxHeight: 850)
                 #endif
             }
         } detail: {
@@ -152,29 +158,35 @@ struct BudgetOverviewView: View {
                     })
                     .id(category.id)
             } else {
-                VStack(spacing: 20) {
-                    Image(systemName: "dollarsign.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundColor(.blue)
-
-                    Text("Select a budget category")
-                        .font(.title2)
-                        .foregroundColor(.secondary)
-
-                    Text("Choose a category from the sidebar to view details and manage expenses")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                        .multilineTextAlignment(.center)
-                }
+                // Using Component Library Empty State
+                UnifiedEmptyStateView(
+                    config: .custom(
+                        icon: "dollarsign.circle.fill",
+                        title: "Select a budget category",
+                        message: "Choose a category from the sidebar to view details and manage expenses",
+                        actionTitle: nil,
+                        onAction: nil
+                    )
+                )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .task {
             await budgetStore.loadBudgetData()
         }
-        .alert("Error", isPresented: .constant(budgetStore.error != nil)) {
+        .alert("Error", isPresented: Binding(
+            get: { budgetStore.error != nil },
+            set: { if !$0 { /* Error is read-only, dismiss by retrying */ } }
+        )) {
             Button("OK") {
-                budgetStore.error = nil
+                // Error will be cleared on next successful load
+            }
+            if budgetStore.error != nil {
+                Button("Retry") {
+                    Task {
+                        await budgetStore.retryLoad()
+                    }
+                }
             }
         } message: {
             if let error = budgetStore.error {
@@ -207,7 +219,7 @@ struct BudgetOverviewView: View {
                 Text("Sort")
                 Image(systemName: "arrow.up.arrow.down")
             }
-            .foregroundColor(.blue)
+            .foregroundColor(AppColors.Budget.allocated)
         }
     }
 }
@@ -220,30 +232,31 @@ struct BudgetSummaryHeaderView: View {
 
     var body: some View {
         VStack(spacing: 16) {
-            // Main budget overview
-            HStack(spacing: 20) {
-                OverviewSummaryCard(
-                    title: "Total Budget",
-                    value: NumberFormatter.currency
-                        .string(from: NSNumber(value: budgetStore.actualTotalBudget)) ?? "$0",
-                    subtitle: nil,
-                    color: .blue,
-                    icon: "dollarsign.circle.fill")
-
-                OverviewSummaryCard(
-                    title: "Total Spent",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalSpent)) ?? "$0",
-                    subtitle: String(format: "%.1f%% of budget", budgetStore.percentageSpent),
-                    color: budgetStore.isOverBudget ? .red : .green,
-                    icon: "creditcard.fill")
-
-                OverviewSummaryCard(
-                    title: "Remaining",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
-                    subtitle: budgetStore.isOverBudget ? "Over budget" : "Available",
-                    color: budgetStore.isOverBudget ? .red : .orange,
-                    icon: "banknote.fill")
-            }
+            // Main budget overview - Using Component Library
+            StatsGridView(
+                stats: [
+                    StatItem(
+                        icon: "dollarsign.circle.fill",
+                        label: "Total Budget",
+                        value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.actualTotalBudget)) ?? "$0",
+                        color: AppColors.Budget.allocated
+                    ),
+                    StatItem(
+                        icon: "creditcard.fill",
+                        label: "Total Spent",
+                        value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalSpent)) ?? "$0",
+                        color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.underBudget,
+                        trend: .neutral
+                    ),
+                    StatItem(
+                        icon: "banknote.fill",
+                        label: "Remaining",
+                        value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
+                        color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.pending
+                    )
+                ],
+                columns: 3
+            )
 
             // Progress bar
             VStack(alignment: .leading, spacing: 8) {
@@ -256,114 +269,48 @@ struct BudgetSummaryHeaderView: View {
                         .foregroundColor(.secondary)
                 }
 
-                ProgressView(value: min(budgetStore.percentageSpent / 100, 1.0))
-                    .progressViewStyle(LinearProgressViewStyle(tint: budgetStore.isOverBudget ? .red : .blue))
-                    .scaleEffect(x: 1, y: 2, anchor: .center)
+                ProgressBar(
+                    value: min(budgetStore.percentageSpent / 100, 1.0),
+                    color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.allocated,
+                    height: 8
+                )
             }
             .padding(.top, 8)
 
-            // Quick stats
+            // Quick stats - Using Component Library
             HStack(spacing: 30) {
-                QuickStatView(
+                CompactSummaryCard(
                     title: "Categories",
                     value: "\(stats.totalCategories)",
                     subtitle: "\(stats.categoriesOverBudget) over budget",
                     icon: "folder.fill",
-                    color: stats.categoriesOverBudget > 0 ? .red : .blue)
+                    color: stats.categoriesOverBudget > 0 ? AppColors.Budget.overBudget : AppColors.Budget.allocated
+                )
 
-                QuickStatView(
+                CompactSummaryCard(
                     title: "Expenses",
                     value: "\(stats.totalExpenses)",
                     subtitle: "\(stats.expensesPending) pending",
                     icon: "doc.text.fill",
-                    color: stats.expensesOverdue > 0 ? .red : .green)
+                    color: stats.expensesOverdue > 0 ? AppColors.Budget.overBudget : AppColors.Budget.income
+                )
 
                 if stats.expensesOverdue > 0 {
-                    QuickStatView(
+                    CompactSummaryCard(
                         title: "Overdue",
                         value: "\(stats.expensesOverdue)",
                         subtitle: "Need attention",
                         icon: "exclamationmark.triangle.fill",
-                        color: .red)
+                        color: AppColors.Budget.overBudget
+                    )
                 }
             }
         }
     }
 }
 
-struct OverviewSummaryCard: View {
-    let title: String
-    let value: String
-    let subtitle: String?
-    let color: Color
-    let icon: String
-
-    var body: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                    .font(.title2)
-
-                Spacer()
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                    .foregroundColor(color)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                if let subtitle {
-                    Text(subtitle)
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-            }
-        }
-        .padding()
-        .background(color.opacity(0.1))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .frame(minWidth: 140)
-    }
-}
-
-struct QuickStatView: View {
-    let title: String
-    let value: String
-    let subtitle: String
-    let icon: String
-    let color: Color
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.subheadline)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-
-                Text(value)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
-}
+// Note: OverviewSummaryCard replaced with StatsGridView from component library
+// Note: QuickStatView replaced with CompactSummaryCard from component library
 
 struct BudgetCategoryRowView: View {
     let category: BudgetCategory
@@ -377,7 +324,7 @@ struct BudgetCategoryRowView: View {
         HStack(spacing: 12) {
             // Category color indicator
             Circle()
-                .fill(Color(hex: category.color) ?? .blue)
+                .fill(Color(hex: category.color) ?? AppColors.Budget.allocated)
                 .frame(width: 12, height: 12)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -393,7 +340,7 @@ struct BudgetCategoryRowView: View {
                             .string(from: NSNumber(value: enhancedCategory.projectedSpending)) ?? "$0")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(enhancedCategory.isOverBudget ? .red : .primary)
+                            .foregroundColor(enhancedCategory.isOverBudget ? AppColors.Budget.overBudget : .primary)
 
                         Text(
                             "of \(NumberFormatter.currency.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")")
@@ -403,9 +350,11 @@ struct BudgetCategoryRowView: View {
                 }
 
                 // Progress bar
-                ProgressView(value: min(enhancedCategory.projectedPercentageSpent / 100, 1.0))
-                    .progressViewStyle(LinearProgressViewStyle(tint: enhancedCategory.isOverBudget ? .red : .blue))
-                    .scaleEffect(x: 1, y: 1.5, anchor: .center)
+                ProgressBar(
+                    value: min(enhancedCategory.projectedPercentageSpent / 100, 1.0),
+                    color: enhancedCategory.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.allocated,
+                    height: 6
+                )
 
                 HStack {
                     // Priority badge
@@ -424,8 +373,8 @@ struct BudgetCategoryRowView: View {
                             .fontWeight(.medium)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.green.opacity(0.2))
-                            .foregroundColor(.green)
+                            .background(AppColors.Budget.income.opacity(0.2))
+                            .foregroundColor(AppColors.Budget.income)
                             .clipShape(Capsule())
                     }
 
@@ -447,9 +396,9 @@ struct BudgetCategoryRowView: View {
 
     private func priorityColor(_ priority: BudgetPriority) -> Color {
         switch priority {
-        case .high: .red
-        case .medium: .orange
-        case .low: .blue
+        case .high: AppColors.Budget.overBudget
+        case .medium: AppColors.Budget.pending
+        case .low: AppColors.Budget.allocated
         }
     }
 }

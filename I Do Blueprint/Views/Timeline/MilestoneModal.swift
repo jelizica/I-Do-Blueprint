@@ -13,7 +13,7 @@ struct MilestoneModal: View {
     let onCancel: () -> Void
 
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var settingsViewModel: SettingsViewModel
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
     @State private var milestoneName = ""
     @State private var description = ""
     @State private var milestoneDate = Date()
@@ -191,7 +191,7 @@ struct MilestoneModal: View {
         isSaving = true
 
         // Get couple ID from settings
-        guard let coupleId = settingsViewModel.coupleId else {
+        guard let coupleId = settingsStore.coupleId else {
             logger.warning("No couple ID available - user not authenticated")
             isSaving = false
             return

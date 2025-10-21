@@ -1,0 +1,190 @@
+================================================================================
+I DO BLUEPRINT - CODEBASE ANALYSIS QUICK REFERENCE
+================================================================================
+Analysis Date: October 19, 2025
+Risk Level: MEDIUM-HIGH (🟡)
+
+================================================================================
+CRITICAL ISSUES (Fix Immediately)
+================================================================================
+
+1. ERROR HANDLING INCOMPLETE
+   - Location: All *StoreV2.swift files
+   - Issue: handleError() and showSuccess() called but implementation incomplete
+   - Impact: No user feedback when operations fail
+   - Files affected: VendorStoreV2, GuestStoreV2, TaskStoreV2, NotesStoreV2, etc.
+
+2. PLACEHOLDER MODALS IN DASHBOARD  
+   - Location: DashboardViewV2.swift (Lines 69-80)
+   - Issue: 4 sheet modals show "Text("Modal")" placeholder
+   - Impact: Quick action buttons non-functional
+   - Files affected: DashboardViewV2.swift
+
+3. ZERO ACCESSIBILITY SUPPORT
+   - Location: ALL views
+   - Issue: No .accessibilityLabel(), .accessibilityHint(), VoiceOver support
+   - Impact: Completely inaccessible to blind/low-vision users
+   - Compliance: Violates WCAG standards
+
+4. DEBUG PRINT STATEMENTS IN PRODUCTION
+   - Location: DashboardViewV2.swift, AppStores.swift
+   - Issue: print() calls visible in logs instead of AppLogger
+   - Impact: Poor professionalism, performance impact, debugging noise
+   - Examples: print("🔵 [Dashboard] Starting to load...")
+
+================================================================================
+IMPORTANT ISSUES (Fix Before Release)
+================================================================================
+
+5. MEMORY LEAK IN APPSTORES
+   - Location: AppStores.swift (Lines 203-225)
+   - Issue: Timer.scheduledTimer never invalidated, creates retain cycle
+   - Impact: Memory slowly leaks as timer fires every 5 seconds
+   - Affected: Memory monitoring in DEBUG builds
+
+6. FACADE PATTERN ANTI-PATTERN
+   - Location: BudgetStoreV2.swift (Lines 164-310)
+   - Issue: 60+ delegation methods passing through to composed stores
+   - Impact: God object pattern, SRP violation, maintenance nightmare
+   - Size: 147 lines of unnecessary code
+
+7. REPOSITORY DEPENDENCY INJECTION INCONSISTENT
+   - Location: SettingsStoreV2.swift, DependencyValues.swift
+   - Issue: SettingsStoreV2 creates own repository instead of injecting
+   - Impact: Breaks singleton pattern, creates duplicate DB connections
+
+8. NO INPUT VALIDATION
+   - Location: Guest/Vendor/Task creation views
+   - Issue: No validation for email, phone, prices, required fields
+   - Impact: Invalid data accepted and stored
+
+9. DASHBOARD PERFORMANCE BOTTLENECK
+   - Location: DashboardViewV2.swift (Lines 101-132)
+   - Issue: Loads all 8 data sets in parallel, waits for slowest
+   - Impact: Blank screen until all requests complete (could be 5-10s)
+   - Problem: No progressive rendering of partial data
+
+10. FORCE UNWRAPPING IN APPSTORES
+    - Location: AppStores.swift (Lines 36, 44, 52, etc.)
+    - Issue: Forced unwrap after null check (unnecessary)
+    - Impact: Potential crash if initialization fails
+    - Fix: Use nil-coalescing operator or guard
+
+================================================================================
+CODE QUALITY ISSUES
+================================================================================
+
+11. DUPLICATE CODE PATTERNS (500+ lines)
+    - Issue: All 9 StoreV2 classes have identical patterns
+    - Solution: Extract into BaseStoreV2<T> generic class
+    - Files: VendorStoreV2, GuestStoreV2, TaskStoreV2, DocumentStoreV2, etc.
+
+12. NO LOADING/ERROR STATES
+    - Issue: Views don't show loading indicators or error messages
+    - Impact: User confusion, can't retry failed operations
+    - Files: DashboardViewV2, multiple list views
+
+13. INCONSISTENT NAVIGATION PATTERNS
+    - Issue: AppCoordinator uses NavigationSplitView, but BudgetMainView uses HStack
+    - Impact: Inconsistent user experience
+
+================================================================================
+SECURITY ISSUES
+================================================================================
+
+14. REPOSITORY CACHE NEEDS REVIEW
+    - Issue: Cache invalidation strategy unclear
+    - Risk: Possible stale data serving
+    - Location: LiveBudgetRepository.swift
+
+15. MISSING NETWORK SECURITY CONFIG
+    - Issue: No HTTPS enforcement policy in Info.plist
+    - Fix: Add NSAppTransportSecurity with exception domains
+
+16. ✓ GOOD: URLValidator properly implemented
+    - Good controls for SSRF, protocol attacks, private IPs
+    - Proper port allowlisting
+
+================================================================================
+PERFORMANCE ISSUES
+================================================================================
+
+17. N+1 QUERY PATTERN
+    - Issue: Vendors and stats fetched in 2 separate calls
+    - Better: Fetch together in single API call
+    - Files: VendorStoreV2, GuestStoreV2, TaskStoreV2
+
+18. EXPENSIVE METRICS RECOMPUTED EVERY RENDER
+    - Issue: Dashboard filters 1000+ tasks on every view update
+    - O(n) operations per render × multiple metrics = bottleneck
+    - Solution: Cache computed metrics
+
+================================================================================
+MISSING FEATURES
+================================================================================
+
+19. NO LOADING INDICATORS (multiple screens)
+20. NO ERROR RECOVERY/RETRY MECHANISMS
+21. NO PAGINATION (loads all data at once)
+22. NO REAL-TIME SYNC
+23. NO UNDO/REDO
+24. NO PUSH NOTIFICATIONS
+25. LIMITED SEARCH/FILTERING
+26. NO OFFLINE SYNC STRATEGY
+
+================================================================================
+FILES REQUIRING IMMEDIATE ATTENTION
+================================================================================
+
+CRITICAL:
+  - DashboardViewV2.swift (placeholders, prints, no error states)
+  - StoreErrorHandling.swift (implementation incomplete)
+  - All *StoreV2.swift files (error handling, validation)
+
+HIGH PRIORITY:
+  - AppStores.swift (memory leak, force unwrapping)
+  - BudgetStoreV2.swift (facade pattern, 147 lines to remove)
+  - SettingsStoreV2.swift (DI inconsistency)
+
+MEDIUM PRIORITY:
+  - All View files (accessibility missing)
+  - LiveBudgetRepository.swift (cache validation)
+  - GuestStoreV2, VendorStoreV2, TaskStoreV2 (duplicate patterns)
+
+================================================================================
+QUICK WINS (High impact, Low effort)
+================================================================================
+
+1. Replace all print() with AppLogger (15 minutes)
+2. Fix force unwrapping in AppStores (5 minutes)
+3. Add placeholder content to Dashboard modals (30 minutes)
+4. Convert AppStores Timer to async/await (20 minutes)
+5. Remove facade pattern delegation from BudgetStoreV2 (30 minutes)
+
+Total time for quick wins: ~2 hours
+
+================================================================================
+ARCHITECTURAL PATTERNS TO ADOPT
+================================================================================
+
+1. Use BaseStoreV2<T> generic for common store patterns
+2. Implement proper DI for all dependencies
+3. Use AppLogger consistently instead of print()
+4. Add loading/error/empty states to all async operations
+5. Implement input validation layer for all user input
+6. Add accessibility labels to all interactive elements
+7. Use progressive data loading in Dashboard
+8. Cache computed metrics to avoid O(n) recomputation
+
+================================================================================
+TESTING NEEDS
+================================================================================
+
+- Unit tests for error paths (high priority)
+- UI tests with VoiceOver enabled (accessibility)
+- Performance tests for Dashboard load time
+- Input validation tests
+- Memory leak detection tests
+- API integration tests
+
+================================================================================

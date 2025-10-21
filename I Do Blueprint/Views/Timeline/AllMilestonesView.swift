@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AllMilestonesView: View {
-    @ObservedObject var viewModel: TimelineViewModel
+    @ObservedObject var store: TimelineStoreV2
     let onSelectMilestone: (Milestone) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -55,26 +55,11 @@ struct AllMilestonesView: View {
 
     private var controlsSection: some View {
         VStack(spacing: 12) {
-            // Search bar
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                TextField("Search milestones...", text: $searchQuery)
-                    .textFieldStyle(.plain)
-
-                if !searchQuery.isEmpty {
-                    Button(action: { searchQuery = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(NSColor.controlBackgroundColor)))
+            // Search bar - Using Component Library
+            SearchBar(
+                text: $searchQuery,
+                placeholder: "Search milestones..."
+            )
 
             // Filter and sort controls
             HStack(spacing: 12) {
@@ -126,7 +111,7 @@ struct AllMilestonesView: View {
                             },
                             onToggleCompletion: {
                                 Task {
-                                    await viewModel.toggleMilestoneCompletion(milestone)
+                                    await store.toggleMilestoneCompletion(milestone)
                                 }
                             })
                     }
@@ -139,27 +124,19 @@ struct AllMilestonesView: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "star.circle")
-                .font(.system(size: 60))
-                .foregroundColor(.secondary)
-
+        Group {
             if !searchQuery.isEmpty {
-                Text("No milestones match your search")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-
-                Button("Clear Search") {
-                    searchQuery = ""
-                }
-                .buttonStyle(.borderedProminent)
+                UnifiedEmptyStateView(config: .searchResults(query: searchQuery))
             } else {
-                Text("No Milestones")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-
-                Text("Add milestones to track important dates")
-                    .foregroundColor(.secondary)
+                UnifiedEmptyStateView(
+                    config: .custom(
+                        icon: "star.circle",
+                        title: "No Milestones",
+                        message: "Add milestones to track important dates in your wedding planning journey.",
+                        actionTitle: nil,
+                        onAction: nil
+                    )
+                )
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -168,7 +145,7 @@ struct AllMilestonesView: View {
     // MARK: - Computed Properties
 
     private var filteredAndSortedMilestones: [Milestone] {
-        var milestones = viewModel.milestones
+        var milestones = store.milestones
 
         // Apply search filter
         if !searchQuery.isEmpty {
@@ -385,6 +362,6 @@ private func formatDate(_ date: Date) -> String {
 
 #Preview {
     AllMilestonesView(
-        viewModel: TimelineViewModel(),
+        store: TimelineStoreV2(),
         onSelectMilestone: { _ in })
 }

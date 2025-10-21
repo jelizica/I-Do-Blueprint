@@ -15,7 +15,7 @@ struct ContributionRowView: View {
     var body: some View {
         HStack {
             Image(systemName: contribution.contributionType == .gift ? "gift.fill" : "dollarsign.circle.fill")
-                .foregroundStyle(contribution.contributionType == .gift ? .green : .blue)
+                .foregroundStyle(contribution.contributionType == .gift ? AppColors.Budget.income : AppColors.Budget.allocated)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(contribution.contributorName)
@@ -37,13 +37,13 @@ struct ContributionRowView: View {
 
             Button(action: onEdit) {
                 Image(systemName: "pencil")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(AppColors.Budget.allocated)
             }
             .buttonStyle(.plain)
 
             Button(action: onDelete) {
                 Image(systemName: "trash")
-                    .foregroundStyle(.red)
+                    .foregroundStyle(AppColors.Budget.overBudget)
             }
             .buttonStyle(.plain)
         }

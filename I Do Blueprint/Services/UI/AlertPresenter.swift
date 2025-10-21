@@ -178,6 +178,61 @@ class AlertPresenter: ObservableObject, AlertPresenterProtocol {
             buttons: ["OK"]
         )
     }
+    
+    /// Show an error with optional retry action
+    func showError(
+        title: String = "Error",
+        message: String,
+        retryAction: (() async -> Void)? = nil
+    ) async {
+        let buttons: [String]
+        if retryAction != nil {
+            buttons = ["Retry", "Cancel"]
+        } else {
+            buttons = ["OK"]
+        }
+        
+        let result = await showAlert(
+            title: title,
+            message: message,
+            style: .critical,
+            buttons: buttons
+        )
+        
+        if result == "Retry", let retry = retryAction {
+            await retry()
+        }
+    }
+    
+    /// Show a network error with automatic retry
+    func showNetworkError(
+        operation: String,
+        retry: @escaping () async -> Void
+    ) async {
+        await showError(
+            title: "Network Error",
+            message: "Unable to \(operation). Please check your internet connection.",
+            retryAction: retry
+        )
+    }
+    
+    /// Show a user-facing error with optional retry
+    func showUserFacingError(
+        _ error: UserFacingError,
+        retryAction: (() async -> Void)? = nil
+    ) async {
+        let title = error.isRetryable ? "Temporary Error" : "Error"
+        let message = [
+            error.errorDescription,
+            error.recoverySuggestion
+        ].compactMap { $0 }.joined(separator: "\n\n")
+        
+        if error.isRetryable, let retry = retryAction {
+            await showError(title: title, message: message, retryAction: retry)
+        } else {
+            _ = await showAlert(title: title, message: message, style: .critical, buttons: ["OK"])
+        }
+    }
 
     /// Present a success alert asynchronously
     func showSuccess(
@@ -271,7 +326,18 @@ class AlertPresenter: ObservableObject, AlertPresenterProtocol {
             let window = NSApplication.shared.keyWindow ?? NSApplication.shared.windows.first
 
             Task { @MainActor in
-                alert.beginSheetModal(for: window!) { _ in
+                guard let window = window else {
+                    // No window available, run operation without progress UI
+                    do {
+                        try await operation()
+                        showSuccessToast("Operation completed")
+                    } catch {
+                        await showError(message: "Operation failed", error: error)
+                    }
+                    return
+                }
+                
+                alert.beginSheetModal(for: window) { _ in
                     // Modal dismissed
                 }
             }

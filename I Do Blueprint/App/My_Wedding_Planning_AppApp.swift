@@ -2,14 +2,37 @@ import SwiftUI
 
 @main
 struct My_Wedding_Planning_AppApp: App {
-    @StateObject private var settingsStore = SettingsStoreV2()
+    @StateObject private var authContext = AuthContext.shared
+    @StateObject private var appStores = AppStores.shared
     @StateObject private var supabaseManager = SupabaseManager.shared
     @State private var credentialsCheckFailed = false
+    
+    // MARK: - Initialization
+    
+    init() {
+        // Initialize Sentry as early as possible
+        SentryService.shared.configure()
+    }
 
     var body: some Scene {
         WindowGroup {
             Group {
-                if credentialsCheckFailed {
+                // Check for configuration errors first (highest priority)
+                if let configError = supabaseManager.configurationError {
+                    ConfigurationErrorView(
+                        error: configError,
+                        onRetry: {
+                            // Restart app (requires user to relaunch)
+                            NSApplication.shared.terminate(nil)
+                        },
+                        onContactSupport: {
+                            // Open support email
+                            if let url = URL(string: "mailto:support@idoblueprint.com?subject=Configuration%20Error&body=Error:%20\(configError.errorDescription ?? "Unknown")") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                    )
+                } else if credentialsCheckFailed {
                     // Show actionable credentials missing error
                     CredentialsErrorView(onRetry: {
                         Task {
@@ -20,10 +43,15 @@ struct My_Wedding_Planning_AppApp: App {
                 } else {
                     // Use centralized RootFlowView for auth/tenant branching
                     RootFlowView()
-                        .environmentObject(settingsStore)
+                        .environmentObject(authContext)
+                        .environmentObject(appStores)
+                        .environmentObject(appStores.settings)
+                        .onAppear {
+                            authContext.refresh()
+                        }
                 }
             }
-            .preferredColorScheme(settingsStore.settings.theme.darkMode ? .dark : .light)
+            .preferredColorScheme(appStores.settings.settings.theme.darkMode ? .dark : .light)
             .task {
                 // Preflight check for Google OAuth credentials
                 await performPreflightChecks()

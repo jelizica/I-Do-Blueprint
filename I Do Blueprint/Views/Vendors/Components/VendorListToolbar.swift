@@ -72,6 +72,7 @@ struct VendorListToolbar: ToolbarContent {
             } label: {
                 Label("Add Vendor", systemImage: "plus.circle.fill")
             }
+            .keyboardShortcut("n", modifiers: .command)
             .buttonStyle(.borderedProminent)
             .accessibilityLabel("Add New Vendor")
             .accessibilityHint("Opens form to add a new vendor")

@@ -60,10 +60,10 @@ private struct MembershipResponse: Codable {
 
 /// Production implementation of CoupleRepositoryProtocol
 actor LiveCoupleRepository: CoupleRepositoryProtocol {
-    private let supabase: SupabaseClient
+    private let supabase: SupabaseClient?
     private let cache: RepositoryCache
 
-    init(supabase: SupabaseClient) {
+    init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
         cache = RepositoryCache()
     }
@@ -72,6 +72,13 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
     init() {
         supabase = SupabaseManager.shared.client
         cache = RepositoryCache()
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     func fetchCouplesForUser(userId: UUID) async throws -> [CoupleMembership] {
@@ -82,13 +89,15 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
             return cached
         }
 
+        let client = try getClient()
+
         // Query memberships joined with couple_profiles
         // Note: We need to manually decode since Supabase nested joins don't map directly to flat models
         do {
             AppLogger.repository.info("Querying memberships for user \(userId)")
 
             // Try to decode with detailed error logging
-            let response: [MembershipResponse] = try await supabase
+            let response: [MembershipResponse] = try await client
                 .from("memberships")
                 .select("""
                     id,

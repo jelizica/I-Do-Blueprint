@@ -60,6 +60,7 @@ struct BudgetOverviewDashboardViewV2: View {
                 overviewContent
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             Task {
                 await loadInitialData()
@@ -161,7 +162,7 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private var overviewContent: some View {
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 24) {
                 // Summary cards
                 summaryCardsSection
@@ -169,8 +170,11 @@ struct BudgetOverviewDashboardViewV2: View {
                 // Budget items grid
                 budgetItemsSection
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var summaryCardsSection: some View {
@@ -246,8 +250,7 @@ struct BudgetOverviewDashboardViewV2: View {
 
     private func loadBudgetItems() async {
         budgetItems = await budgetStore.loadBudgetDevelopmentItemsWithSpentAmounts(scenarioId: selectedScenarioId)
-        logger.debug("Loaded \(budgetItems.count) budget items with actual spent amounts from expense_budget_allocations")
-    }
+            }
 
     // MARK: - Search and Filtering
 
@@ -296,6 +299,9 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private func handleScenarioChange(_ scenarioId: String) async {
+        // Guard against feedback loops
+        guard selectedScenarioId != scenarioId else { return }
+        
         selectedScenarioId = scenarioId
         activeFilters = []
         searchQuery = ""
@@ -306,8 +312,7 @@ struct BudgetOverviewDashboardViewV2: View {
     // MARK: - Event Handlers
 
     private func handleEditExpense(expenseId: String, itemId: String) {
-        logger.debug("HandleEditExpense called - expenseId: \(expenseId), itemId: \(itemId)")
-        guard let item = budgetItems.first(where: { $0.id == itemId }) else {
+                guard let item = budgetItems.first(where: { $0.id == itemId }) else {
             logger.warning("Could not find budget item with ID: \(itemId)")
             return
         }
@@ -327,8 +332,7 @@ struct BudgetOverviewDashboardViewV2: View {
             return
         }
 
-        logger.debug("Unlinking expense \(expenseId) from item \(itemId)")
-
+        
         do {
             try await budgetStore.unlinkExpense(expenseId: expenseId, budgetItemId: itemId)
             logger.info("Expense unlinked successfully")
@@ -339,8 +343,7 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private func handleEditGift(giftId _: String, itemId _: String) {
-        logger.debug("Gift editing not yet implemented")
-    }
+            }
 
     private func handleUnlinkGift(itemId: String) async {
         guard currentScenario != nil else {
@@ -348,8 +351,7 @@ struct BudgetOverviewDashboardViewV2: View {
             return
         }
 
-        logger.debug("Unlinking gift from item \(itemId)")
-
+        
         do {
             try await budgetStore.unlinkGift(budgetItemId: itemId)
             logger.info("Gift unlinked successfully")

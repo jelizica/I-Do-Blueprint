@@ -15,7 +15,7 @@ struct VendorContactSection: View {
             SectionHeaderV2(
                 title: "Contact",
                 icon: "envelope.circle.fill",
-                color: .blue
+                color: AppColors.Vendor.contacted
             )
 
             VStack(spacing: Spacing.sm) {
@@ -33,7 +33,7 @@ struct VendorContactSection: View {
                         icon: "envelope.fill",
                         label: "Email",
                         value: email,
-                        color: .blue
+                        color: AppColors.Vendor.contacted
                     )
                 }
 
@@ -42,7 +42,7 @@ struct VendorContactSection: View {
                         icon: "phone.fill",
                         label: "Phone",
                         value: phone,
-                        color: .green
+                        color: AppColors.Vendor.booked
                     )
                 }
 

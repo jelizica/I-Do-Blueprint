@@ -11,7 +11,7 @@ import Supabase
 import SwiftUI
 
 struct GuestListViewV2: View {
-    @StateObject private var guestStore = GuestStoreV2()
+    @EnvironmentObject private var guestStore: GuestStoreV2
     @EnvironmentObject var settingsStore: SettingsStoreV2
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
@@ -22,70 +22,7 @@ struct GuestListViewV2: View {
 
     var body: some View {
         NavigationStack {
-            HStack(spacing: 0) {
-                // Left panel - Guest list with enhanced design
-                VStack(spacing: 0) {
-                    // Modern Stats Section
-                    if let stats = guestStore.guestStats {
-                        ModernStatsView(stats: stats)
-                            .padding(Spacing.md)
-                    }
-
-                    Divider()
-
-                    // Enhanced Search and Filters
-                    ModernSearchBar(
-                        searchText: $searchText,
-                        selectedStatus: $selectedStatus,
-                        selectedInvitedBy: $selectedInvitedBy,
-                        groupByStatus: $groupByStatus
-                    )
-                    .padding(.horizontal, Spacing.md)
-                    .padding(.vertical, Spacing.sm)
-
-                    Divider()
-
-                    // Guest List with grouping option
-                    if groupByStatus {
-                        GroupedGuestListView(
-                            guests: guestStore.filteredGuests,
-                            isLoading: guestStore.isLoading,
-                            selectedGuest: $selectedGuest,
-                            onRefresh: {
-                                await guestStore.loadGuestData()
-                            }
-                        )
-                    } else {
-                        ModernGuestListView(
-                            guests: guestStore.filteredGuests,
-                            totalCount: guestStore.guests.count,
-                            isLoading: guestStore.isLoading,
-                            isSearching: !searchText.isEmpty,
-                            onClearSearch: { searchText = "" },
-                            selectedGuest: $selectedGuest,
-                            onRefresh: {
-                                await guestStore.loadGuestData()
-                            }
-                        )
-                    }
-                }
-                .frame(width: 480)
-                .background(AppColors.background)
-
-                Divider()
-
-                // Right panel - Enhanced Detail view
-                if let selectedGuestId = selectedGuest?.id,
-                   let guest = guestStore.guests.first(where: { $0.id == selectedGuestId }) {
-                    GuestDetailViewV2(guest: guest, guestStore: guestStore)
-                        .environmentObject(settingsStore)
-                        .id(guest.id)
-                } else if selectedGuest != nil {
-                    EmptyDetailView()
-                } else {
-                    EmptyDetailView()
-                }
-            }
+            mainContent
             .navigationTitle("Wedding Guests")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
@@ -94,6 +31,7 @@ struct GuestListViewV2: View {
                     } label: {
                         Label("Add Guest", systemImage: "plus.circle.fill")
                     }
+                    .keyboardShortcut("n", modifiers: .command)
                     .buttonStyle(.borderedProminent)
                 }
             }
@@ -145,9 +83,17 @@ struct GuestListViewV2: View {
                     selectedInvitedBy: selectedInvitedBy
                 )
             }
-            .alert("Error", isPresented: .constant(guestStore.error != nil)) {
-                Button("OK") {
-                    guestStore.error = nil
+            .alert("Error", isPresented: Binding(
+                get: { guestStore.error != nil },
+                set: { _ in }
+            )) {
+                Button("OK") {}
+                if guestStore.error != nil {
+                    Button("Retry") {
+                        Task {
+                            await guestStore.retryLoad()
+                        }
+                    }
                 }
             } message: {
                 if let error = guestStore.error {
@@ -157,6 +103,89 @@ struct GuestListViewV2: View {
         }
     }
 
+    // MARK: - Subviews
+    
+    private var mainContent: some View {
+        GeometryReader { geometry in
+            HStack(spacing: 0) {
+                leftPanel(geometry: geometry)
+                Divider()
+                rightPanel
+            }
+        }
+    }
+    
+    private func leftPanel(geometry: GeometryProxy) -> some View {
+        VStack(spacing: 0) {
+            if let stats = guestStore.guestStats {
+                ModernStatsView(stats: stats)
+                    .padding(Spacing.md)
+            }
+            
+            Divider()
+            
+            ModernSearchBar(
+                searchText: $searchText,
+                selectedStatus: $selectedStatus,
+                selectedInvitedBy: $selectedInvitedBy,
+                groupByStatus: $groupByStatus,
+                filteredCount: guestStore.filteredGuests.count,
+                totalCount: guestStore.guests.count
+            )
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            
+            Divider()
+            
+            guestListView
+        }
+        .frame(
+            minWidth: ResponsiveLayout.minListPanelWidth,
+            maxWidth: ResponsiveLayout.listPanelWidth(for: geometry)
+        )
+        .background(AppColors.background)
+    }
+    
+    private var guestListView: some View {
+        Group {
+            if groupByStatus {
+                GroupedGuestListView(
+                    guests: guestStore.filteredGuests,
+                    isLoading: guestStore.isLoading,
+                    selectedGuest: $selectedGuest,
+                    onRefresh: {
+                        await guestStore.loadGuestData()
+                    }
+                )
+            } else {
+                ModernGuestListView(
+                    guests: guestStore.filteredGuests,
+                    totalCount: guestStore.guests.count,
+                    isLoading: guestStore.isLoading,
+                    isSearching: !searchText.isEmpty,
+                    onClearSearch: { searchText = "" },
+                    selectedGuest: $selectedGuest,
+                    onRefresh: {
+                        await guestStore.loadGuestData()
+                    }
+                )
+            }
+        }
+    }
+    
+    private var rightPanel: some View {
+        Group {
+            if let selectedGuestId = selectedGuest?.id,
+               let guest = guestStore.guests.first(where: { $0.id == selectedGuestId }) {
+                GuestDetailViewV2(guest: guest, guestStore: guestStore)
+                    .environmentObject(settingsStore)
+                    .id(guest.id)
+            } else {
+                EmptyDetailView()
+            }
+        }
+    }
+    
     @MainActor
     private func addGuest(_ guest: Guest) async {
         await guestStore.addGuest(guest)

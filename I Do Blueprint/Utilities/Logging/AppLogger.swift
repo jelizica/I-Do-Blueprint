@@ -19,6 +19,7 @@ enum LogCategory: String {
     case analytics = "Analytics"
     case network = "Network"
     case database = "Database"
+    case cache = "Cache"
     case general = "General"
 }
 
@@ -190,5 +191,6 @@ extension AppLogger {
     static let analytics = AppLogger(category: .analytics)
     static let network = AppLogger(category: .network)
     static let database = AppLogger(category: .database)
+    static let cache = AppLogger(category: .cache)
     static let general = AppLogger(category: .general)
 }

@@ -26,6 +26,8 @@ struct TimelineItemRow: View {
             ("dollarsign.circle.fill", .green)
         case .reminder:
             ("bell.fill", .red)
+        case .ceremony:
+            ("heart.fill", .pink)
         case .other:
             ("circle.fill", .gray)
         }

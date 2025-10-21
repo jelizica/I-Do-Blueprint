@@ -247,14 +247,10 @@ struct VisualPlanningSearchView: View {
                     count: searchService.searchResults.moodBoards.count) {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
                         ForEach(searchService.searchResults.moodBoards.prefix(6)) { moodBoard in
-                            // TODO: Implement MoodBoardSearchResultCard
-                            VStack {
-                                Text(moodBoard.boardName)
-                                    .font(.headline)
+                            MoodBoardSearchResultCard(moodBoard: moodBoard) {
+                                // Handle selection - navigate to mood board detail
+                                AppLogger.ui.info("Selected mood board: \(moodBoard.boardName)")
                             }
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(8)
                         }
                     }
 
@@ -274,14 +270,10 @@ struct VisualPlanningSearchView: View {
                     count: searchService.searchResults.colorPalettes.count) {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
                         ForEach(Array(searchService.searchResults.colorPalettes.prefix(4))) { palette in
-                            // TODO: Implement ColorPaletteSearchResultCard
-                            VStack {
-                                Text(palette.name)
-                                    .font(.headline)
+                            ColorPaletteSearchResultCard(palette: palette) {
+                                // Handle selection - navigate to color palette detail
+                                AppLogger.ui.info("Selected color palette: \(palette.name)")
                             }
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(8)
                         }
                     }
 
@@ -301,14 +293,10 @@ struct VisualPlanningSearchView: View {
                     count: searchService.searchResults.seatingCharts.count) {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
                         ForEach(searchService.searchResults.seatingCharts.prefix(4)) { chart in
-                            // TODO: Implement SeatingChartSearchResultCard
-                            VStack {
-                                Text(chart.chartName)
-                                    .font(.headline)
+                            SeatingChartSearchResultCard(chart: chart) {
+                                // Handle selection - navigate to seating chart detail
+                                AppLogger.ui.info("Selected seating chart: \(chart.chartName)")
                             }
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(8)
                         }
                     }
 
@@ -327,14 +315,9 @@ struct VisualPlanningSearchView: View {
     private var moodBoardResultsView: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 16) {
             ForEach(searchService.searchResults.moodBoards) { moodBoard in
-                // TODO: Implement MoodBoardSearchResultCard
-                VStack {
-                    Text(moodBoard.boardName)
-                        .font(.headline)
+                MoodBoardSearchResultCard(moodBoard: moodBoard) {
+                    AppLogger.ui.info("Selected mood board: \(moodBoard.boardName)")
                 }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
             }
         }
     }
@@ -342,14 +325,9 @@ struct VisualPlanningSearchView: View {
     private var colorPaletteResultsView: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
             ForEach(searchService.searchResults.colorPalettes) { palette in
-                // TODO: Implement ColorPaletteSearchResultCard
-                VStack {
-                    Text(palette.name)
-                        .font(.headline)
+                ColorPaletteSearchResultCard(palette: palette) {
+                    AppLogger.ui.info("Selected color palette: \(palette.name)")
                 }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
             }
         }
     }
@@ -357,14 +335,9 @@ struct VisualPlanningSearchView: View {
     private var seatingChartResultsView: some View {
         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 16) {
             ForEach(searchService.searchResults.seatingCharts) { chart in
-                // TODO: Implement SeatingChartSearchResultCard
-                VStack {
-                    Text(chart.chartName)
-                        .font(.headline)
+                SeatingChartSearchResultCard(chart: chart) {
+                    AppLogger.ui.info("Selected seating chart: \(chart.chartName)")
                 }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
             }
         }
     }

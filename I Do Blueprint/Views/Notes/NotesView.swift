@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct NotesView: View {
-    @StateObject private var viewModel = NotesStoreV2()
+    @EnvironmentObject private var viewModel: NotesStoreV2
     @State private var showingNoteModal = false
     @State private var selectedNote: Note?
     @State private var showGrouped = true
@@ -139,29 +139,10 @@ struct NotesView: View {
     // MARK: - Empty State
 
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Image(systemName: "note.text")
-                .font(.system(size: 60))
-                .foregroundColor(.blue)
-
-            Text("No Notes Yet")
-                .font(.title2)
-                .fontWeight(.bold)
-
-            Text("Create your first note to start organizing your wedding planning thoughts.")
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-                .padding(.horizontal)
-
-            Button(action: {
-                selectedNote = nil
-                showingNoteModal = true
-            }) {
-                Label("Create Note", systemImage: "plus")
-            }
-            .buttonStyle(.borderedProminent)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        UnifiedEmptyStateView(config: .notes(onAdd: {
+            selectedNote = nil
+            showingNoteModal = true
+        }))
     }
 
     // MARK: - Toolbar

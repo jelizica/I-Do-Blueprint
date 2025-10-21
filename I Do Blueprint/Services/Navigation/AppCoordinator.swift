@@ -18,25 +18,19 @@ class AppCoordinator: ObservableObject {
     @Published var activeSheet: Sheet?
     @Published var activeFullScreenCover: FullScreenCover?
 
-    // MARK: - Shared Store Instances
+    // MARK: - Shared Store Instances (from AppStores singleton)
 
-    let vendorStore: VendorStoreV2
-    let guestStore: GuestStoreV2
-    let taskStore: TaskStoreV2
-    let notesStore: NotesStoreV2
+    let appStores: AppStores
+    
+    var vendorStore: VendorStoreV2 { appStores.vendor }
+    var guestStore: GuestStoreV2 { appStores.guest }
+    var taskStore: TaskStoreV2 { appStores.task }
+    var notesStore: NotesStoreV2 { appStores.notes }
 
     // MARK: - Initialization
 
-    init(
-        vendorStore: VendorStoreV2? = nil,
-        guestStore: GuestStoreV2? = nil,
-        taskStore: TaskStoreV2? = nil,
-        notesStore: NotesStoreV2? = nil
-    ) {
-        self.vendorStore = vendorStore ?? VendorStoreV2()
-        self.guestStore = guestStore ?? GuestStoreV2()
-        self.taskStore = taskStore ?? TaskStoreV2()
-        self.notesStore = notesStore ?? NotesStoreV2()
+    init(appStores: AppStores = .shared) {
+        self.appStores = appStores
     }
 
     // MARK: - Tab Definition

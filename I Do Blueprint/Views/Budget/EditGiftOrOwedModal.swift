@@ -276,7 +276,7 @@ struct EditGiftOrOwedModal: View {
                 }) {
                     HStack {
                         Image(systemName: editedGift.status == .received ? "checkmark.circle.fill" : "circle")
-                            .foregroundColor(editedGift.status == .received ? .green : .secondary)
+                            .foregroundColor(editedGift.status == .received ? AppColors.Budget.income : .secondary)
                             .font(.title2)
 
                         Text(editedGift.status == .received ? "Mark as Pending" : "Mark as Received")
@@ -290,7 +290,7 @@ struct EditGiftOrOwedModal: View {
                 if editedGift.status == .received {
                     Text("✓ Item received")
                         .font(.caption)
-                        .foregroundColor(.green)
+                        .foregroundColor(AppColors.Budget.income)
                 }
             }
         }
@@ -305,7 +305,7 @@ struct EditGiftOrOwedModal: View {
                 showingDeleteAlert = true
             }
             .buttonStyle(.bordered)
-            .foregroundColor(.red)
+            .foregroundColor(AppColors.Budget.overBudget)
             .frame(maxWidth: .infinity)
         }
     }

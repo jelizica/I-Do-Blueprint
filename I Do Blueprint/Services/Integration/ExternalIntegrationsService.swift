@@ -20,13 +20,7 @@ class ExternalIntegrationsService: ObservableObject {
     private let urlSession = URLSession.shared
     private let performanceService = PerformanceOptimizationService.shared
     private let logger = AppLogger.general
-
-    // API Keys - these would be stored securely in production
-    private enum APIKeys {
-        static let unsplash = ProcessInfo.processInfo.environment["UNSPLASH_API_KEY"] ?? ""
-        static let pinterest = ProcessInfo.processInfo.environment["PINTEREST_API_KEY"] ?? ""
-        static let vendor = ProcessInfo.processInfo.environment["VENDOR_API_KEY"] ?? ""
-    }
+    private let apiKeyManager = SecureAPIKeyManager.shared
 
     init() {
         initializeConnections()
@@ -66,16 +60,30 @@ class ExternalIntegrationsService: ObservableObject {
         }
     }
 
+    // MARK: - API Key Access (Secure)
+    
+    private func getUnsplashAPIKey() -> String? {
+        return apiKeyManager.getAPIKey(for: .unsplash)
+    }
+    
+    private func getPinterestAPIKey() -> String? {
+        return apiKeyManager.getAPIKey(for: .pinterest)
+    }
+    
+    private func getVendorAPIKey() -> String? {
+        return apiKeyManager.getAPIKey(for: .vendor)
+    }
+
     // MARK: - Unsplash Integration
 
     private func connectToUnsplash() async throws {
-        guard !APIKeys.unsplash.isEmpty else {
-            throw IntegrationError.missingAPIKey("Unsplash")
+        guard let apiKey = getUnsplashAPIKey() else {
+            throw IntegrationError.apiKeyNotConfigured(service: "Unsplash")
         }
 
         let testURL = URL(string: "https://api.unsplash.com/me")!
         var request = URLRequest(url: testURL)
-        request.setValue("Client-ID \(APIKeys.unsplash)", forHTTPHeaderField: "Authorization")
+        request.setValue("Client-ID \(apiKey)", forHTTPHeaderField: "Authorization")
 
         let (_, response) = try await urlSession.data(for: request)
 
@@ -86,6 +94,10 @@ class ExternalIntegrationsService: ObservableObject {
     }
 
     func searchUnsplashImages(query: String, orientation: ImageOrientation = .any) async throws -> [InspirationImage] {
+        guard let apiKey = getUnsplashAPIKey() else {
+            throw IntegrationError.apiKeyNotConfigured(service: "Unsplash")
+        }
+        
         guard connectionStatus[.unsplash] == .connected else {
             throw IntegrationError.notConnected("Unsplash")
         }
@@ -98,7 +110,7 @@ class ExternalIntegrationsService: ObservableObject {
         ]
 
         var request = URLRequest(url: urlComponents.url!)
-        request.setValue("Client-ID \(APIKeys.unsplash)", forHTTPHeaderField: "Authorization")
+        request.setValue("Client-ID \(apiKey)", forHTTPHeaderField: "Authorization")
 
         let (data, _) = try await urlSession.data(for: request)
         let response = try JSONDecoder().decode(UnsplashSearchResponse.self, from: data)
@@ -135,8 +147,8 @@ class ExternalIntegrationsService: ObservableObject {
     // MARK: - Pinterest Integration
 
     private func connectToPinterest() async throws {
-        guard !APIKeys.pinterest.isEmpty else {
-            throw IntegrationError.missingAPIKey("Pinterest")
+        guard let _ = getPinterestAPIKey() else {
+            throw IntegrationError.apiKeyNotConfigured(service: "Pinterest")
         }
 
         // Pinterest OAuth flow would be implemented here
@@ -145,6 +157,10 @@ class ExternalIntegrationsService: ObservableObject {
     }
 
     func searchPinterestBoards(query: String) async throws -> [PinterestBoard] {
+        guard let _ = getPinterestAPIKey() else {
+            throw IntegrationError.apiKeyNotConfigured(service: "Pinterest")
+        }
+        
         guard connectionStatus[.pinterest] == .connected else {
             throw IntegrationError.notConnected("Pinterest")
         }
@@ -400,7 +416,7 @@ enum ConnectionStatus: Equatable {
 }
 
 enum IntegrationError: LocalizedError {
-    case missingAPIKey(String)
+    case apiKeyNotConfigured(service: String)
     case notConnected(String)
     case connectionFailed(String)
     case invalidURL
@@ -408,8 +424,8 @@ enum IntegrationError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .missingAPIKey(let service):
-            "Missing API key for \(service)"
+        case .apiKeyNotConfigured(let service):
+            "\(service) API key not configured. Please add your API key in Settings → API Keys."
         case .notConnected(let service):
             "Not connected to \(service)"
         case .connectionFailed(let reason):

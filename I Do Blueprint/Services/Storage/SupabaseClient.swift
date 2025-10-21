@@ -30,10 +30,11 @@ struct AnyEncodable: Encodable {
 class SupabaseManager: ObservableObject {
     static let shared = SupabaseManager()
 
-    let client: SupabaseClient
-
+    let client: SupabaseClient?
+    
     @Published var isAuthenticated = false
     @Published var currentUser: User?
+    @Published var configurationError: ConfigurationError?
 
     private let logger = AppLogger.api
 
@@ -42,11 +43,42 @@ class SupabaseManager: ObservableObject {
     private var activeChannels: [RealtimeChannelV2] = []
 
     private init() {
+        // Try to initialize, but don't crash on failure
+        do {
+            self.client = try Self.createSupabaseClient()
+            self.configurationError = nil
+            
+            Task {
+                // First check auth state, then setup listener to avoid race conditions
+                await checkAuthState()
+                await setupAuthListener()
+                
+                // Test basic network connectivity after initialization
+                // Note: supabaseURL is internal, so we skip this test
+                // if let url = client?.supabaseURL {
+                //     await testNetworkConnectivity(url: url)
+                // }
+            }
+        } catch let error as ConfigurationError {
+            logger.error("Configuration error during initialization", error: error)
+            self.client = nil
+            self.configurationError = error
+        } catch {
+            logger.error("Unexpected error during initialization", error: error)
+            self.client = nil
+            self.configurationError = .configFileUnreadable
+        }
+    }
+    
+    // MARK: - Client Creation (Throwing)
+    
+    private static func createSupabaseClient() throws -> SupabaseClient {
+        let logger = AppLogger.api
         logger.debug("Looking for Config.plist...")
 
         guard let configPath = Bundle.main.path(forResource: "Config", ofType: "plist") else {
             logger.error("Config.plist file not found in bundle")
-            fatalError("Config.plist file not found in bundle")
+            throw ConfigurationError.configFileNotFound
         }
 
         #if DEBUG
@@ -55,7 +87,7 @@ class SupabaseManager: ObservableObject {
 
         guard let config = NSDictionary(contentsOfFile: configPath) else {
             logger.error("Could not read Config.plist contents")
-            fatalError("Could not read Config.plist contents")
+            throw ConfigurationError.configFileUnreadable
         }
 
         #if DEBUG
@@ -64,18 +96,20 @@ class SupabaseManager: ObservableObject {
 
         guard let supabaseURLString = config["SUPABASE_URL"] as? String else {
             logger.error("SUPABASE_URL not found or not a string")
-            fatalError("SUPABASE_URL not found in Config.plist")
+            throw ConfigurationError.missingSupabaseURL
         }
 
         guard let supabaseAnonKey = config["SUPABASE_ANON_KEY"] as? String else {
             logger.error("SUPABASE_ANON_KEY not found or not a string")
-            fatalError("SUPABASE_ANON_KEY not found in Config.plist")
+            throw ConfigurationError.missingSupabaseAnonKey
         }
 
-        // SECURITY: Fail if service-role key is present in the bundle
+        // SECURITY: Check if service-role key is present in the bundle
         if let _ = config["SUPABASE_SERVICE_ROLE_KEY"] as? String {
             logger.error("CRITICAL SECURITY VIOLATION: Service-role key found in app bundle")
-            fatalError("Service-role key must not be included in the app bundle. This is a critical security vulnerability.")
+            throw ConfigurationError.securityViolation(
+                "Service-role key must not be included in the app bundle"
+            )
         }
 
         #if DEBUG
@@ -85,7 +119,7 @@ class SupabaseManager: ObservableObject {
 
         guard let supabaseURL = URL(string: supabaseURLString) else {
             logger.error("Invalid URL format")
-            fatalError("Invalid Supabase URL format")
+            throw ConfigurationError.invalidURLFormat(supabaseURLString)
         }
 
         #if DEBUG
@@ -93,7 +127,7 @@ class SupabaseManager: ObservableObject {
         #endif
         logger.debug("Initializing Supabase client...")
 
-        client = SupabaseClient(
+        return SupabaseClient(
             supabaseURL: supabaseURL,
             supabaseKey: supabaseAnonKey,
             options: SupabaseClientOptions(
@@ -101,49 +135,89 @@ class SupabaseManager: ObservableObject {
                 auth: .init(flowType: .pkce),
                 global: .init(
                     headers: ["x-client-info": "wedding-app-macos/1.0.0"])))
-
-        Task {
-            // First check auth state, then setup listener to avoid race conditions
-            await checkAuthState()
-            await setupAuthListener()
-
-            // Test basic network connectivity after initialization
-            await testNetworkConnectivity(url: supabaseURL)
+    }
+    
+    // MARK: - Safe Client Access
+    
+    var safeClient: SupabaseClient? {
+        if let error = configurationError {
+            logger.error("Cannot access Supabase client due to configuration error", error: error)
+            return nil
         }
+        return client
     }
 
     @MainActor
     private func setupAuthListener() async {
+        guard let client = client else { return }
+        
         for await authState in client.auth.authStateChanges {
             let session = authState.session
 
             if let session {
                 isAuthenticated = true
                 currentUser = session.user
+                
+                // Set Sentry user context on login
+                SentryService.shared.setUser(
+                    userId: session.user.id.uuidString,
+                    email: session.user.email,
+                    username: session.user.email
+                )
+                
+                logger.info("User authenticated and Sentry context set")
             } else {
                 isAuthenticated = false
                 currentUser = nil
+                
+                // Clear Sentry user context on logout
+                SentryService.shared.clearUser()
+                
                 // Clean up channels when user signs out
                 await cleanupChannels()
+                
+                logger.info("User signed out and Sentry context cleared")
             }
         }
     }
 
     @MainActor
     private func checkAuthState() async {
+        guard let client = client else {
+            isAuthenticated = false
+            currentUser = nil
+            return
+        }
+        
         do {
             let session = try await client.auth.session
             isAuthenticated = true
             currentUser = session.user
+            
+            // Set Sentry user context if already logged in
+            SentryService.shared.setUser(
+                userId: session.user.id.uuidString,
+                email: session.user.email,
+                username: session.user.email
+            )
+            
+            logger.info("Existing session found, Sentry context set")
         } catch {
             isAuthenticated = false
             currentUser = nil
+            
+            // Clear Sentry user context if no session
+            SentryService.shared.clearUser()
         }
     }
 
     // MARK: - Authentication Methods
 
     func signIn(email: String, password: String) async throws {
+        guard let client = client else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         do {
             try await client.auth.signIn(email: email, password: password)
             logger.infoWithRedactedEmail("auth_login_success for", email: email)
@@ -154,6 +228,10 @@ class SupabaseManager: ObservableObject {
     }
 
     func signUp(email: String, password: String) async throws {
+        guard let client = client else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         do {
             try await client.auth.signUp(email: email, password: password)
             logger.infoWithRedactedEmail("auth_signup_success for", email: email)
@@ -164,6 +242,10 @@ class SupabaseManager: ObservableObject {
     }
 
     func signOut() async throws {
+        guard let client = client else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         do {
             // Clean up all tracked channels
             await cleanupChannels()
@@ -173,7 +255,7 @@ class SupabaseManager: ObservableObject {
 
             // Clear all repository caches
             do {
-                await RepositoryCache.clearAll()
+                await RepositoryCache.shared.clearAll()
                 logger.info("Cleared all repository caches")
             } catch {
                 logger.warning("Failed to clear repository caches: \(error.localizedDescription)")
@@ -200,7 +282,9 @@ class SupabaseManager: ObservableObject {
         // Clear the registry
         activeChannels.removeAll()
         // Remove all channels from the client
-        await client.realtimeV2.removeAllChannels()
+        if let client = client {
+            await client.realtimeV2.removeAllChannels()
+        }
         logger.debug("All realtime channels cleaned up")
     }
 
@@ -211,6 +295,10 @@ class SupabaseManager: ObservableObject {
     }
 
     func resetPassword(email: String) async throws {
+        guard let client = client else {
+            throw configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        
         do {
             try await client.auth.resetPasswordForEmail(email)
             logger.infoWithRedactedEmail("auth_password_reset_requested for", email: email)
@@ -224,7 +312,12 @@ class SupabaseManager: ObservableObject {
 // MARK: - Real-time Subscriptions
 
 extension SupabaseManager {
-    func subscribeToGuestChanges() -> RealtimeChannelV2 {
+    func subscribeToGuestChanges() -> RealtimeChannelV2? {
+        guard let client = client else {
+            logger.error("Cannot subscribe to guest changes: client not initialized")
+            return nil
+        }
+        
         let channel = client.realtimeV2.channel("guest_changes")
 
         Task { @MainActor in
@@ -240,7 +333,12 @@ extension SupabaseManager {
         return channel
     }
 
-    func subscribeToVendorChanges() -> RealtimeChannelV2 {
+    func subscribeToVendorChanges() -> RealtimeChannelV2? {
+        guard let client = client else {
+            logger.error("Cannot subscribe to vendor changes: client not initialized")
+            return nil
+        }
+        
         let channel = client.realtimeV2.channel("vendor_changes")
 
         Task { @MainActor in
@@ -277,6 +375,21 @@ extension SupabaseManager {
                 logger.error("Description: \(urlError.localizedDescription)")
             }
         }
+    }
+}
+
+// MARK: - Auth Context Extensions
+
+extension SupabaseManager {
+    var currentUserId: UUID? {
+        guard let client = client,
+              let user = client.auth.currentUser else { return nil }
+        return UUID(uuidString: user.id.uuidString)
+    }
+    
+    var currentUserEmail: String? {
+        guard let client = client else { return nil }
+        return client.auth.currentUser?.email
     }
 }
 

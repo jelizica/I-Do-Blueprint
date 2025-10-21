@@ -63,7 +63,8 @@ struct CredentialsErrorView: View {
                 #if DEBUG
                 // Demo mode button (DEBUG only)
                 Button(action: {
-                    // TODO: Implement demo mode bypass
+                    // Demo mode: Future feature for testing without authentication
+                    // Would allow users to explore app features with sample data
                     AppLogger.auth.warning("Demo mode not yet implemented")
                 }) {
                     HStack {

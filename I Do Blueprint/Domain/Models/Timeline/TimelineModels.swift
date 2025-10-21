@@ -63,6 +63,7 @@ enum TimelineItemType: String, Codable, CaseIterable {
     case vendorEvent = "vendor_event"
     case payment
     case reminder
+    case ceremony
     case other
 
     var displayName: String {
@@ -72,6 +73,7 @@ enum TimelineItemType: String, Codable, CaseIterable {
         case .vendorEvent: "Vendor Event"
         case .payment: "Payment"
         case .reminder: "Reminder"
+        case .ceremony: "Ceremony"
         case .other: "Other"
         }
     }
@@ -83,6 +85,7 @@ enum TimelineItemType: String, Codable, CaseIterable {
         case .vendorEvent: "person.2.fill"
         case .payment: "creditcard.fill"
         case .reminder: "bell.fill"
+        case .ceremony: "heart.fill"
         case .other: "circle.fill"
         }
     }
@@ -94,6 +97,7 @@ enum TimelineItemType: String, Codable, CaseIterable {
         case .vendorEvent: "#10B981" // green
         case .payment: "#3B82F6" // blue
         case .reminder: "#F97316" // orange
+        case .ceremony: "#EC4899" // pink
         case .other: "#6B7280" // gray
         }
     }

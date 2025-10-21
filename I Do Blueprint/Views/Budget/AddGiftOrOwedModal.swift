@@ -17,10 +17,13 @@ struct AddGiftOrOwedModal: View {
     @State private var hasReceivedDate = false
 
     private var isFormValid: Bool {
-        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            !amount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
-            Double(amount) != nil &&
-            Double(amount)! > 0
+        guard !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              !amount.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+              case .success(let amountValue) = InputValidator.validateAmount(amount),
+              amountValue > 0 else {
+            return false
+        }
+        return true
     }
 
     var body: some View {

@@ -13,99 +13,142 @@ import SwiftUI
 /// New architecture version using repositories and dependency injection
 @MainActor
 class GuestStoreV2: ObservableObject {
-    @Published private(set) var guests: [Guest] = []
+    @Published var loadingState: LoadingState<[Guest]> = .idle
     @Published private(set) var guestStats: GuestStats?
     @Published private(set) var filteredGuests: [Guest] = []
 
-    @Published var isLoading = false
-    @Published var error: GuestError?
     @Published var showSuccessToast = false
     @Published var successMessage = ""
 
     @Dependency(\.guestRepository) var repository
+    
+    // MARK: - Computed Properties for Backward Compatibility
+    
+    var guests: [Guest] {
+        loadingState.data ?? []
+    }
+    
+    var isLoading: Bool {
+        loadingState.isLoading
+    }
+    
+    var error: GuestError? {
+        if case .error(let err) = loadingState {
+            return err as? GuestError ?? .fetchFailed(underlying: err)
+        }
+        return nil
+    }
 
     // MARK: - Public Interface
 
     func loadGuestData() async {
-        isLoading = true
-        error = nil
+        // Only load if idle or error state
+        guard loadingState.isIdle || loadingState.hasError else {
+            return
+        }
+        
+        loadingState = .loading
 
         do {
-            // Fetch guests and stats concurrently for better performance
             async let guestsResult = repository.fetchGuests()
             async let statsResult = repository.fetchGuestStats()
 
-            guests = try await guestsResult
+            let fetchedGuests = try await guestsResult
             guestStats = try await statsResult
-            filteredGuests = guests
+            filteredGuests = fetchedGuests
+            
+            loadingState = .loaded(fetchedGuests)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(GuestError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func addGuest(_ guest: Guest) async {
-        isLoading = true
-        error = nil
-
         do {
             let created = try await repository.createGuest(guest)
-            guests.append(created)
-            filteredGuests = guests
+            
+            // Update loaded state with new guest
+            if case .loaded(var currentGuests) = loadingState {
+                currentGuests.append(created)
+                loadingState = .loaded(currentGuests)
+                filteredGuests = currentGuests
+            }
 
             // Recalculate stats to include new guest
             guestStats = try await repository.fetchGuestStats()
 
-            // Show success toast
+            // Show success feedback
             HapticFeedback.itemAdded()
-            successMessage = "Guest added successfully!"
-            showSuccessToast = true
+            showSuccess("Guest added successfully")
         } catch {
-            self.error = .createFailed(underlying: error)
+            loadingState = .error(GuestError.createFailed(underlying: error))
+            await handleError(error, operation: "add guest") { [weak self] in
+                await self?.addGuest(guest)
+            }
         }
-
-        isLoading = false
     }
 
     func updateGuest(_ guest: Guest) async {
         // Optimistic UI update - show changes immediately before server confirms
-        if let index = guests.firstIndex(where: { $0.id == guest.id }) {
-            let original = guests[index]
-            guests[index] = guest
+        guard case .loaded(var currentGuests) = loadingState,
+              let index = currentGuests.firstIndex(where: { $0.id == guest.id }) else {
+            return
+        }
+        
+        let original = currentGuests[index]
+        currentGuests[index] = guest
+        loadingState = .loaded(currentGuests)
 
-            // Keep filtered list in sync with main list
-            if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                filteredGuests[filteredIndex] = guest
+        // Keep filtered list in sync with main list
+        if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
+            filteredGuests[filteredIndex] = guest
+        }
+
+        do {
+            // Persist to backend and get confirmed data
+            let updated = try await repository.updateGuest(guest)
+            
+            if case .loaded(var guests) = loadingState,
+               let idx = guests.firstIndex(where: { $0.id == guest.id }) {
+                guests[idx] = updated
+                loadingState = .loaded(guests)
             }
 
-            do {
-                // Persist to backend and get confirmed data
-                let updated = try await repository.updateGuest(guest)
-                guests[index] = updated
+            // Update filtered list with server-confirmed data
+            if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
+                filteredGuests[filteredIndex] = updated
+            }
 
-                // Update filtered list with server-confirmed data
-                if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                    filteredGuests[filteredIndex] = updated
-                }
-
-                // Recalculate guest statistics after update
-                guestStats = try await repository.fetchGuestStats()
-            } catch {
-                // Revert optimistic update if server request fails
-                guests[index] = original
-                if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                    filteredGuests[filteredIndex] = original
-                }
-                self.error = .updateFailed(underlying: error)
+            // Recalculate guest statistics after update
+            guestStats = try await repository.fetchGuestStats()
+            
+            showSuccess("Guest updated successfully")
+        } catch {
+            // Revert optimistic update if server request fails
+            if case .loaded(var guests) = loadingState,
+               let idx = guests.firstIndex(where: { $0.id == guest.id }) {
+                guests[idx] = original
+                loadingState = .loaded(guests)
+            }
+            if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
+                filteredGuests[filteredIndex] = original
+            }
+            loadingState = .error(GuestError.updateFailed(underlying: error))
+            await handleError(error, operation: "update guest") { [weak self] in
+                await self?.updateGuest(guest)
             }
         }
     }
 
     func deleteGuest(id: UUID) async {
         // Optimistic delete - remove from UI immediately
-        guard let index = guests.firstIndex(where: { $0.id == id }) else { return }
-        let removed = guests.remove(at: index)
+        guard case .loaded(var currentGuests) = loadingState,
+              let index = currentGuests.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        
+        let removed = currentGuests.remove(at: index)
+        loadingState = .loaded(currentGuests)
 
         // Keep filtered list in sync
         if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == id }) {
@@ -118,11 +161,19 @@ class GuestStoreV2: ObservableObject {
 
             // Recalculate statistics without deleted guest
             guestStats = try await repository.fetchGuestStats()
+            
+            showSuccess("Guest deleted successfully")
         } catch {
             // Restore guest if deletion fails
-            guests.insert(removed, at: index)
-            filteredGuests = guests
-            self.error = .deleteFailed(underlying: error)
+            if case .loaded(var guests) = loadingState {
+                guests.insert(removed, at: index)
+                loadingState = .loaded(guests)
+                filteredGuests = guests
+            }
+            loadingState = .error(GuestError.deleteFailed(underlying: error))
+            await handleError(error, operation: "delete guest") { [weak self] in
+                await self?.deleteGuest(id: id)
+            }
         }
     }
 
@@ -130,7 +181,7 @@ class GuestStoreV2: ObservableObject {
         do {
             filteredGuests = try await repository.searchGuests(query: query)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(GuestError.fetchFailed(underlying: error))
         }
     }
 
@@ -138,7 +189,7 @@ class GuestStoreV2: ObservableObject {
         searchText: String,
         selectedStatus: RSVPStatus?,
         selectedInvitedBy: InvitedBy?) {
-        var filtered = guests
+        var filtered = loadingState.data ?? []
 
         // Search across name, email, and phone fields
         if !searchText.isEmpty {
@@ -174,5 +225,11 @@ class GuestStoreV2: ObservableObject {
 
     var pendingGuests: Int {
         guests.filter { $0.rsvpStatus == .pending || $0.rsvpStatus == .invited }.count
+    }
+    
+    // MARK: - Retry Helper
+    
+    func retryLoad() async {
+        await loadGuestData()
     }
 }

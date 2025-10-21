@@ -16,13 +16,28 @@ import SwiftUI
 class NotesStoreV2: ObservableObject {
     @Dependency(\.notesRepository) var repository
 
-    @Published var notes: [Note] = []
-    @Published var isLoading = false
-    @Published var error: NotesError?
+    @Published var loadingState: LoadingState<[Note]> = .idle
 
     // Filtering and search
     @Published var searchText = ""
     @Published var selectedType: NoteRelatedType?
+    
+    // MARK: - Computed Properties for Backward Compatibility
+    
+    var notes: [Note] {
+        loadingState.data ?? []
+    }
+    
+    var isLoading: Bool {
+        loadingState.isLoading
+    }
+    
+    var error: NotesError? {
+        if case .error(let err) = loadingState {
+            return err as? NotesError ?? .fetchFailed(underlying: err)
+        }
+        return nil
+    }
 
     var filteredNotes: [Note] {
         var result = notes
@@ -46,51 +61,47 @@ class NotesStoreV2: ObservableObject {
     // MARK: - Load Notes
 
     func loadNotes() async {
-        isLoading = true
-        error = nil
+        guard loadingState.isIdle || loadingState.hasError else { return }
+        
+        loadingState = .loading
 
         do {
-            notes = try await repository.fetchNotes()
+            let fetchedNotes = try await repository.fetchNotes()
+            loadingState = .loaded(fetchedNotes)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(NotesError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func loadNoteById(_ id: UUID) async -> Note? {
         do {
             return try await repository.fetchNoteById(id)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(NotesError.fetchFailed(underlying: error))
             return nil
         }
     }
 
     func loadNotesByType(_ type: NoteRelatedType) async {
-        isLoading = true
-        error = nil
+        loadingState = .loading
 
         do {
-            notes = try await repository.fetchNotesByType(type)
+            let fetchedNotes = try await repository.fetchNotesByType(type)
+            loadingState = .loaded(fetchedNotes)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(NotesError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func loadNotesByRelatedEntity(type: NoteRelatedType, relatedId: String) async {
-        isLoading = true
-        error = nil
+        loadingState = .loading
 
         do {
-            notes = try await repository.fetchNotesByRelatedEntity(type: type, relatedId: relatedId)
+            let fetchedNotes = try await repository.fetchNotesByRelatedEntity(type: type, relatedId: relatedId)
+            loadingState = .loaded(fetchedNotes)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(NotesError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     // MARK: - Create Note (with optimistic update)
@@ -110,29 +121,45 @@ class NotesStoreV2: ObservableObject {
             updatedAt: now,
             relatedEntity: nil)
 
-        notes.insert(optimisticNote, at: 0)
+        if case .loaded(var currentNotes) = loadingState {
+            currentNotes.insert(optimisticNote, at: 0)
+            loadingState = .loaded(currentNotes)
+        }
 
         do {
             let createdNote = try await repository.createNote(data)
 
             // Replace optimistic note with real one
-            if let index = notes.firstIndex(where: { $0.id == tempId }) {
+            if case .loaded(var notes) = loadingState,
+               let index = notes.firstIndex(where: { $0.id == tempId }) {
                 notes[index] = createdNote
+                loadingState = .loaded(notes)
             }
+            
+            showSuccess("Note created successfully")
         } catch {
             // Rollback optimistic update
-            notes.removeAll { $0.id == tempId }
-            self.error = .createFailed(underlying: error)
+            if case .loaded(var notes) = loadingState {
+                notes.removeAll { $0.id == tempId }
+                loadingState = .loaded(notes)
+            }
+            loadingState = .error(NotesError.createFailed(underlying: error))
+            await handleError(error, operation: "create note") { [weak self] in
+                await self?.createNote(data)
+            }
         }
     }
 
     // MARK: - Update Note (with optimistic update)
 
     func updateNote(_ note: Note, data: NoteInsertData) async {
-        guard let index = notes.firstIndex(where: { $0.id == note.id }) else { return }
+        guard case .loaded(var currentNotes) = loadingState,
+              let index = currentNotes.firstIndex(where: { $0.id == note.id }) else {
+            return
+        }
 
         // Store original for rollback
-        let originalNote = notes[index]
+        let originalNote = currentNotes[index]
 
         // Optimistic update
         var updatedNote = note
@@ -142,36 +169,62 @@ class NotesStoreV2: ObservableObject {
         updatedNote.relatedId = data.relatedId
         updatedNote.updatedAt = Date()
 
-        notes[index] = updatedNote
+        currentNotes[index] = updatedNote
+        loadingState = .loaded(currentNotes)
 
         do {
             let serverNote = try await repository.updateNote(id: note.id, data: data)
-            notes[index] = serverNote
+            
+            if case .loaded(var notes) = loadingState,
+               let idx = notes.firstIndex(where: { $0.id == note.id }) {
+                notes[idx] = serverNote
+                loadingState = .loaded(notes)
+            }
+            
+            showSuccess("Note updated successfully")
         } catch {
             // Rollback on error
-            notes[index] = originalNote
-            self.error = .updateFailed(underlying: error)
+            if case .loaded(var notes) = loadingState,
+               let idx = notes.firstIndex(where: { $0.id == note.id }) {
+                notes[idx] = originalNote
+                loadingState = .loaded(notes)
+            }
+            loadingState = .error(NotesError.updateFailed(underlying: error))
+            await handleError(error, operation: "update note") { [weak self] in
+                await self?.updateNote(note, data: data)
+            }
         }
     }
 
     // MARK: - Delete Note (with optimistic update)
 
     func deleteNote(_ note: Note) async {
-        guard let index = notes.firstIndex(where: { $0.id == note.id }) else { return }
+        guard case .loaded(var currentNotes) = loadingState,
+              let index = currentNotes.firstIndex(where: { $0.id == note.id }) else {
+            return
+        }
 
         // Store for rollback
-        let deletedNote = notes[index]
+        let deletedNote = currentNotes[index]
         let deletedIndex = index
 
         // Optimistic delete
-        notes.remove(at: index)
+        currentNotes.remove(at: index)
+        loadingState = .loaded(currentNotes)
 
         do {
             try await repository.deleteNote(id: note.id)
+            showSuccess("Note deleted successfully")
         } catch {
             // Rollback on error
-            notes.insert(deletedNote, at: deletedIndex)
-            self.error = .deleteFailed(underlying: error)
+            if case .loaded(var notes) = loadingState {
+                notes.insert(deletedNote, at: deletedIndex)
+                loadingState = .loaded(notes)
+            }
+            loadingState = .error(NotesError.deleteFailed(underlying: error))
+            await handleError(error, operation: "delete note") { [weak self] in
+                await self?.deleteNote(note)
+            }
         }
     }
 
@@ -183,16 +236,14 @@ class NotesStoreV2: ObservableObject {
             return
         }
 
-        isLoading = true
-        error = nil
+        loadingState = .loading
 
         do {
-            notes = try await repository.searchNotes(query: query)
+            let fetchedNotes = try await repository.searchNotes(query: query)
+            loadingState = .loaded(fetchedNotes)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(NotesError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     // MARK: - Filtering and Grouping (Client-side)
@@ -277,5 +328,11 @@ class NotesStoreV2: ObservableObject {
     func searchNotes() async {
         // Use searchText property
         await searchNotes(query: searchText)
+    }
+    
+    // MARK: - Retry Helper
+    
+    func retryLoad() async {
+        await loadNotes()
     }
 }

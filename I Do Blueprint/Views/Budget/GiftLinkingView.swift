@@ -1,4 +1,6 @@
 import SwiftUI
+import Supabase
+import Dependencies
 
 struct GiftLinkingView: View {
     @Binding var isPresented: Bool
@@ -7,11 +9,12 @@ struct GiftLinkingView: View {
     let onSuccess: () -> Void
 
     @EnvironmentObject var budgetStore: BudgetStoreV2
+    @Dependency(\.budgetRepository) var budgetRepository
 
     // State for gifts
-    @State private var gifts: [Gift] = []
-    @State private var filteredGifts: [Gift] = []
-    @State private var selectedGift: Gift?
+    @State private var gifts: [GiftOrOwed] = []
+    @State private var filteredGifts: [GiftOrOwed] = []
+    @State private var selectedGift: GiftOrOwed?
     @State private var linkedGiftIds: Set<UUID> = []
 
     // Search and filter state
@@ -24,7 +27,7 @@ struct GiftLinkingView: View {
     @State private var isSubmitting = false
     @State private var errorMessage: String?
 
-    private var availableGifts: [Gift] {
+    private var availableGifts: [GiftOrOwed] {
         filteredGifts.filter { !linkedGiftIds.contains($0.id) }
     }
 
@@ -85,8 +88,7 @@ struct GiftLinkingView: View {
             .navigationTitle("Link Gift to \(budgetItem.itemName)")
         }
         .onAppear {
-            logger.debug("GiftLinkingView appeared - budgetItem: \(budgetItem.itemName), ID: \(budgetItem.id), activeScenario: \(activeScenario?.scenarioName ?? "nil")")
-            Task {
+                        Task {
                 await loadGifts()
             }
         }
@@ -136,13 +138,13 @@ struct GiftLinkingView: View {
     private func errorView(_ error: String) -> some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.red)
+                .foregroundStyle(AppColors.Budget.overBudget)
             Text(error)
                 .font(.caption)
-                .foregroundStyle(.red)
+                .foregroundStyle(AppColors.Budget.overBudget)
         }
         .padding()
-        .background(Color.red.opacity(0.1))
+        .background(AppColors.Budget.overBudget.opacity(0.1))
         .cornerRadius(6)
         .padding(.horizontal)
     }
@@ -211,7 +213,7 @@ struct GiftLinkingView: View {
             .font(.caption)
         }
         .padding()
-        .background(Color.blue.opacity(0.1))
+        .background(AppColors.Budget.allocated.opacity(0.1))
         .cornerRadius(8)
     }
 
@@ -270,14 +272,14 @@ struct GiftLinkingView: View {
                             .fontWeight(.medium)
                         Spacer()
                         Text(formatCurrency(gift.amount))
-                            .foregroundStyle(.green)
+                            .foregroundStyle(AppColors.Budget.income)
                     }
 
                     HStack {
                         Text("Gift Type:")
                             .fontWeight(.medium)
                         Spacer()
-                        Text(gift.type.replacingOccurrences(of: "_", with: " ").capitalized)
+                        Text(gift.type.displayName)
                     }
 
                     Divider()
@@ -287,7 +289,7 @@ struct GiftLinkingView: View {
                             .fontWeight(.semibold)
                         Spacer()
                         Text("-\(formatCurrency(min(gift.amount, budgetItem.budgeted)))")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(AppColors.Budget.income)
                             .fontWeight(.semibold)
                     }
                 }
@@ -334,14 +336,28 @@ struct GiftLinkingView: View {
         errorMessage = nil
 
         do {
-            logger.debug("Loading gifts from Supabase")
-            gifts = try await SupabaseManager.shared.fetchGifts()
+                        gifts = try await budgetRepository.fetchGiftsAndOwed()
             logger.info("Loaded \(gifts.count) gifts")
 
             // Get linked gift IDs from all budget items in the scenario to exclude them
-            if activeScenario != nil {
-                // TODO: Fetch linked gift IDs from scenario - for now, we'll use an empty set
-                linkedGiftIds = Set<UUID>()
+            if let scenario = activeScenario {
+                do {
+                    // Fetch all budget items for this scenario
+                    let budgetItems = try await budgetRepository.fetchBudgetDevelopmentItems(scenarioId: scenario.id)
+                    
+                    // Extract linked gift IDs
+                    linkedGiftIds = Set(budgetItems.compactMap { item -> UUID? in
+                        guard let giftIdString = item.linkedGiftOwedId else {
+                            return nil
+                        }
+                        return UUID(uuidString: giftIdString)
+                    })
+                    
+                                    } catch {
+                    logger.error("Failed to fetch linked gift IDs", error: error)
+                    // Continue with empty set on error
+                    linkedGiftIds = Set<UUID>()
+                }
             }
 
             applyFilters()
@@ -358,12 +374,12 @@ struct GiftLinkingView: View {
 
         // Apply type filter
         if typeFilter != "all" {
-            filtered = filtered.filter { $0.type == typeFilter }
+            filtered = filtered.filter { $0.type.rawValue == typeFilter }
         }
 
         // Apply status filter
         if statusFilter != "all" {
-            filtered = filtered.filter { $0.status == statusFilter }
+            filtered = filtered.filter { $0.status.rawValue == statusFilter }
         }
 
         // Apply search filter
@@ -379,21 +395,19 @@ struct GiftLinkingView: View {
     }
 
     private func linkGift() {
-        logger.debug("LinkGift called")
-        guard let scenario = activeScenario,
+                guard let scenario = activeScenario,
               let gift = selectedGift else {
             logger.warning("Guard failed - scenario or gift missing")
             return
         }
 
-        logger.debug("Starting gift linking process - gift: \(gift.id), budgetItem: \(budgetItem.id)")
-        isSubmitting = true
+                isSubmitting = true
         errorMessage = nil
 
         Task {
             do {
-                try await SupabaseManager.shared.linkGiftToBudgetItem(
-                    giftId: gift.id.uuidString,
+                try await budgetRepository.linkGiftToBudgetItem(
+                    giftId: gift.id,
                     budgetItemId: budgetItem.id)
                 logger.info("Successfully linked gift to budget item")
 
@@ -422,7 +436,7 @@ struct GiftLinkingView: View {
 // MARK: - Supporting Views
 
 struct GiftSelectionRowView: View {
-    let gift: Gift
+    let gift: GiftOrOwed
     let isSelected: Bool
     let onSelect: () -> Void
 
@@ -443,13 +457,13 @@ struct GiftSelectionRowView: View {
                     }
 
                     HStack(spacing: 8) {
-                        Label(gift.type.replacingOccurrences(of: "_", with: " ").capitalized, systemImage: "tag.fill")
+                        Label(gift.type.displayName, systemImage: gift.type.iconName)
                             .font(.caption2)
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(AppColors.Budget.allocated)
 
-                        Label(gift.status.capitalized, systemImage: statusIcon(for: gift.status))
+                        Label(gift.status.displayName, systemImage: statusIcon(for: gift.status))
                             .font(.caption2)
-                            .foregroundStyle(statusColor(for: gift.status))
+                            .foregroundStyle(gift.status.color)
 
                         if let person = gift.fromPerson {
                             Label(person, systemImage: "person.fill")
@@ -465,7 +479,7 @@ struct GiftSelectionRowView: View {
                     Text(formatCurrency(gift.amount))
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundStyle(.green)
+                        .foregroundStyle(AppColors.Budget.income)
 
                     if let date = gift.receivedDate ?? gift.expectedDate {
                         Text(formatDate(date))
@@ -475,34 +489,21 @@ struct GiftSelectionRowView: View {
                 }
             }
             .padding()
-            .background(isSelected ? Color.blue.opacity(0.1) : Color(NSColor.controlBackgroundColor))
+            .background(isSelected ? AppColors.Budget.allocated.opacity(0.1) : Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color.clear, lineWidth: 2))
+                    .stroke(isSelected ? AppColors.Budget.allocated : Color.clear, lineWidth: 2))
         }
         .buttonStyle(.plain)
     }
 
-    private func statusIcon(for status: String) -> String {
+    private func statusIcon(for status: GiftOrOwed.GiftOrOwedStatus) -> String {
         switch status {
-        case "received", "confirmed":
+        case .received, .confirmed:
             "checkmark.circle.fill"
-        case "pending":
+        case .pending:
             "clock.fill"
-        default:
-            "questionmark.circle.fill"
-        }
-    }
-
-    private func statusColor(for status: String) -> Color {
-        switch status {
-        case "received", "confirmed":
-            .green
-        case "pending":
-            .orange
-        default:
-            .secondary
         }
     }
 

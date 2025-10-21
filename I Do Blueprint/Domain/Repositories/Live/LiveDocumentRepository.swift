@@ -10,14 +10,32 @@ import Supabase
 
 /// Supabase implementation of document repository
 actor LiveDocumentRepository: DocumentRepositoryProtocol {
-    private let client = SupabaseManager.shared.client
-    private let supabase = SupabaseManager.shared
+    private let client: SupabaseClient?
+    private let supabase: SupabaseManager
+    
+    init(client: SupabaseClient? = nil) {
+        self.client = client
+        self.supabase = SupabaseManager.shared
+    }
+    
+    init() {
+        self.client = SupabaseManager.shared.client
+        self.supabase = SupabaseManager.shared
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let client = client else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return client
+    }
 
     // MARK: - Document Operations
 
     func fetchDocuments() async throws -> [Document] {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .select()
                 .order("uploaded_at", ascending: false)
@@ -27,8 +45,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func fetchDocuments(type: DocumentType) async throws -> [Document] {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .select()
                 .eq("document_type", value: type.rawValue)
@@ -39,8 +58,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func fetchDocuments(bucket: DocumentBucket) async throws -> [Document] {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .select()
                 .eq("bucket_name", value: bucket.rawValue)
@@ -51,8 +71,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func fetchDocuments(vendorId: Int) async throws -> [Document] {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .select()
                 .eq("vendor_id", value: vendorId)
@@ -63,8 +84,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func fetchDocument(id: UUID) async throws -> Document? {
+        let client = try getClient()
         let documents: [Document] = try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .select()
                 .eq("id", value: id)
@@ -76,8 +98,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func createDocument(_ insertData: DocumentInsertData) async throws -> Document {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .insert(insertData)
                 .select()
@@ -88,8 +111,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func updateDocument(_ document: Document) async throws -> Document {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .update(document)
                 .eq("id", value: document.id)
@@ -101,6 +125,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func deleteDocument(id: UUID) async throws {
+        let client = try getClient()
         // First get the document to know the storage path
         guard let document = try await fetchDocument(id: id) else {
             throw DocumentError.notFound(id: id)
@@ -108,14 +133,14 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
 
         // Delete from storage (30s timeout for storage operations)
         try await RepositoryNetwork.withRetry(timeout: 30) {
-            try await self.client.storage
+            try await client.storage
                 .from(document.bucketName)
                 .remove(paths: [document.storagePath])
         }
 
         // Delete database record
         try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .delete()
                 .eq("id", value: id)
@@ -124,9 +149,10 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func batchDeleteDocuments(ids: [UUID]) async throws {
+        let client = try getClient()
         // Fetch all documents to get storage paths
         let documents = try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .select()
                 .in("id", values: ids)
@@ -141,7 +167,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         for (bucketName, bucketDocuments) in documentsByBucket {
             let paths = bucketDocuments.map(\.storagePath)
             try await RepositoryNetwork.withRetry(timeout: 30) {
-                try await self.client.storage
+                try await client.storage
                     .from(bucketName)
                     .remove(paths: paths)
             }
@@ -149,7 +175,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
 
         // Delete database records
         try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .delete()
                 .in("id", values: ids)
@@ -158,8 +184,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func updateDocumentTags(id: UUID, tags: [String]) async throws -> Document {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .update(["tags": tags])
                 .eq("id", value: id)
@@ -171,8 +198,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
 
     func updateDocumentType(id: UUID, type: DocumentType) async throws -> Document {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .update(["document_type": type.rawValue])
                 .eq("id", value: id)
@@ -186,8 +214,9 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     // MARK: - Search Operations
 
     func searchDocuments(query: String) async throws -> [Document] {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await self.client.database
+            try await client.database
                 .from("documents")
                 .select()
                 .ilike("original_filename", pattern: "%\(query)%")
@@ -209,6 +238,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         fileData: Data,
         metadata: FileUploadMetadata,
         coupleId: UUID) async throws -> Document {
+        let client = try getClient()
         // Generate unique storage path
         let timestamp = Int(Date().timeIntervalSince1970)
         let sanitizedFilename = metadata.fileName.replacingOccurrences(of: " ", with: "_")
@@ -216,7 +246,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
 
         // Upload to storage (30s timeout for storage operations)
         try await RepositoryNetwork.withRetry(timeout: 30) {
-            try await self.client.storage
+            try await client.storage
                 .from(metadata.bucket.rawValue)
                 .upload(
                     path: storagePath,
@@ -225,6 +255,10 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                         cacheControl: "3600",
                         contentType: metadata.mimeType))
         }
+
+        // Get user email from auth context
+        let authContext = await AuthContext.shared
+        let userEmail = try await authContext.requireUserEmail()
 
         // Create document record
         let insertData = DocumentInsertData(
@@ -238,21 +272,23 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
             vendorId: metadata.vendorId,
             expenseId: metadata.expenseId,
             tags: metadata.tags,
-            uploadedBy: "user" // TODO: Get from auth context
+            uploadedBy: userEmail
         )
 
         return try await createDocument(insertData)
     }
 
     func downloadDocument(document: Document) async throws -> Data {
+        let client = try getClient()
         return try await RepositoryNetwork.withRetry(timeout: 30) {
-            try await self.client.storage
+            try await client.storage
                 .from(document.bucketName)
                 .download(path: document.storagePath)
         }
     }
 
     func getPublicURL(for document: Document) async throws -> URL {
+        let client = try getClient()
         return try client.storage
             .from(document.bucketName)
             .getPublicURL(path: document.storagePath)

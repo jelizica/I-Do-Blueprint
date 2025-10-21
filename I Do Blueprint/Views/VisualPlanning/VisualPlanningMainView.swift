@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct VisualPlanningMainView: View {
-    @StateObject private var visualPlanningStore = VisualPlanningStoreV2()
+    @EnvironmentObject private var visualPlanningStore: VisualPlanningStoreV2
     @State private var selectedTab: VisualPlanningTab = .moodBoards
 
     var body: some View {

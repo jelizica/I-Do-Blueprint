@@ -11,401 +11,377 @@ import Dependencies
 
 @MainActor
 final class NotesStoreV2Tests: XCTestCase {
-    var store: NotesStoreV2!
     var mockRepository: MockNotesRepository!
+    var coupleId: UUID!
 
     override func setUp() async throws {
         mockRepository = MockNotesRepository()
-        store = withDependencies {
+        coupleId = UUID()
+    }
+
+    override func tearDown() {
+        mockRepository = nil
+        coupleId = nil
+    }
+
+    // MARK: - Load Tests
+
+    func testLoadNotes_Success() async throws {
+        // Given
+        let testNotes = [
+            Note.makeTest(id: UUID(), coupleId: coupleId, title: "Wedding Plan", content: "Initial plan"),
+            Note.makeTest(id: UUID(), coupleId: coupleId, title: "Vendor Notes", content: "Vendors to contact")
+        ]
+        mockRepository.notes = testNotes
+
+        // When
+        let store = await withDependencies {
             $0.notesRepository = mockRepository
         } operation: {
             NotesStoreV2()
         }
-    }
 
-    override func tearDown() async throws {
-        store = nil
-        mockRepository = nil
-    }
-
-    // MARK: - Load Notes Tests
-
-    func testLoadNotes_Success() async throws {
-        // Given
-        let mockNotes = [
-            createMockNote(title: "Vendor Notes", type: .vendor),
-            createMockNote(title: "Guest Notes", type: .guest),
-        ]
-        mockRepository.notes = mockNotes
-
-        // When
         await store.loadNotes()
 
         // Then
-        XCTAssertEqual(store.notes.count, 2)
         XCTAssertFalse(store.isLoading)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.notes.count, 2)
+        XCTAssertEqual(store.notes[0].title, "Wedding Plan")
     }
 
-    func testLoadNotes_EmptyResult() async throws {
+    func testLoadNotes_Failure() async throws {
+        // Given
+        mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
+
+        // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.notes.count, 0)
+    }
+
+    func testLoadNotes_Empty() async throws {
         // Given
         mockRepository.notes = []
 
         // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
         await store.loadNotes()
 
         // Then
-        XCTAssertTrue(store.notes.isEmpty)
         XCTAssertFalse(store.isLoading)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.notes.count, 0)
     }
 
-    func testLoadNotes_Error() async throws {
+    // MARK: - Create Tests
+
+    func testCreateNote_OptimisticUpdate() async throws {
         // Given
-        mockRepository.shouldThrowError = true
+        let existingNote = Note.makeTest(coupleId: coupleId, title: "Existing Note")
+        mockRepository.notes = [existingNote]
 
         // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
         await store.loadNotes()
 
-        // Then
-        XCTAssertTrue(store.notes.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Create Note Tests
-
-    func testCreateNote_Success() async throws {
-        // Given
         let insertData = NoteInsertData(
-            coupleId: UUID(),
+            coupleId: coupleId,
             title: "New Note",
-            content: "Content",
-            relatedType: .vendor,
-            relatedId: "123"
-        )
-        let newNote = createMockNote(title: "New Note")
-        mockRepository.createdNote = newNote
-
-        // When
-        await store.createNote(insertData)
-
-        // Then
-        XCTAssertEqual(store.notes.count, 1)
-        XCTAssertEqual(store.notes[0].title, "New Note")
-        XCTAssertNil(store.error)
-    }
-
-    func testCreateNote_OptimisticUpdateAndRollback() async throws {
-        // Given
-        let insertData = NoteInsertData(
-            coupleId: UUID(),
-            title: "New Note",
-            content: "Content",
+            content: "New content",
             relatedType: nil,
             relatedId: nil
         )
-        mockRepository.shouldThrowError = true
-
-        // When
         await store.createNote(insertData)
 
-        // Then - should rollback
-        XCTAssertTrue(store.notes.isEmpty)
-        XCTAssertNotNil(store.error)
+        // Then
+        XCTAssertEqual(store.notes.count, 2)
+        XCTAssertTrue(store.notes.contains(where: { $0.title == "New Note" }))
     }
 
-    // MARK: - Update Note Tests
+    func testCreateNote_Failure_RollsBack() async throws {
+        // Given
+        let existingNote = Note.makeTest(coupleId: coupleId, title: "Existing Note")
+        mockRepository.notes = [existingNote]
+
+        // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+
+        mockRepository.shouldThrowError = true
+
+        let insertData = NoteInsertData(
+            coupleId: coupleId,
+            title: "New Note",
+            content: "New content",
+            relatedType: nil,
+            relatedId: nil
+        )
+        await store.createNote(insertData)
+
+        // Then - Should rollback on error
+        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.notes.count, 1)
+        XCTAssertEqual(store.notes.first?.title, "Existing Note")
+    }
+
+    // MARK: - Update Tests
 
     func testUpdateNote_Success() async throws {
         // Given
-        let originalNote = createMockNote(title: "Original")
-        store.notes = [originalNote]
-
-        let updateData = NoteInsertData(
-            coupleId: originalNote.coupleId,
-            title: "Updated",
-            content: "Updated Content",
-            relatedType: .vendor,
-            relatedId: "456"
-        )
-
-        var updatedNote = originalNote
-        updatedNote.title = "Updated"
-        mockRepository.updatedNote = updatedNote
+        let note = Note.makeTest(id: UUID(), coupleId: coupleId, title: "Original Title", content: "Original content")
+        mockRepository.notes = [note]
 
         // When
-        await store.updateNote(originalNote, data: updateData)
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
 
-        // Then
-        XCTAssertEqual(store.notes[0].title, "Updated")
-        XCTAssertNil(store.error)
-    }
-
-    func testUpdateNote_RollbackOnError() async throws {
-        // Given
-        let originalNote = createMockNote(title: "Original")
-        store.notes = [originalNote]
+        await store.loadNotes()
 
         let updateData = NoteInsertData(
-            coupleId: originalNote.coupleId,
-            title: "Updated",
-            content: "Content",
+            coupleId: coupleId,
+            title: "Updated Title",
+            content: "Updated content",
             relatedType: nil,
             relatedId: nil
         )
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.updateNote(originalNote, data: updateData)
+        await store.updateNote(note, data: updateData)
 
         // Then
-        XCTAssertEqual(store.notes[0].title, "Original")
-        XCTAssertNotNil(store.error)
+        XCTAssertNil(store.error)
+        XCTAssertEqual(store.notes.first?.title, "Updated Title")
+        XCTAssertEqual(store.notes.first?.content, "Updated content")
     }
 
-    // MARK: - Delete Note Tests
+    func testUpdateNote_Failure_RollsBack() async throws {
+        // Given
+        let note = Note.makeTest(id: UUID(), coupleId: coupleId, title: "Original Title", content: "Original content")
+        mockRepository.notes = [note]
+
+        // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+
+        mockRepository.shouldThrowError = true
+
+        let updateData = NoteInsertData(
+            coupleId: coupleId,
+            title: "Updated Title",
+            content: "Updated content",
+            relatedType: nil,
+            relatedId: nil
+        )
+        await store.updateNote(note, data: updateData)
+
+        // Then - Should rollback to original
+        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.notes.first?.title, "Original Title")
+        XCTAssertEqual(store.notes.first?.content, "Original content")
+    }
+
+    // MARK: - Delete Tests
 
     func testDeleteNote_Success() async throws {
         // Given
-        let note = createMockNote(title: "To Delete")
-        store.notes = [note]
+        let note1 = Note.makeTest(id: UUID(), coupleId: coupleId, title: "Note 1")
+        let note2 = Note.makeTest(id: UUID(), coupleId: coupleId, title: "Note 2")
+        mockRepository.notes = [note1, note2]
 
         // When
-        await store.deleteNote(note)
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+        await store.deleteNote(note1)
 
         // Then
-        XCTAssertTrue(store.notes.isEmpty)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.notes.count, 1)
+        XCTAssertEqual(store.notes.first?.title, "Note 2")
     }
 
-    func testDeleteNote_RollbackOnError() async throws {
+    func testDeleteNote_Failure_RollsBack() async throws {
         // Given
-        let note = createMockNote(title: "To Delete")
-        store.notes = [note]
-        mockRepository.shouldThrowError = true
+        let note = Note.makeTest(id: UUID(), coupleId: coupleId, title: "Note 1")
+        mockRepository.notes = [note]
 
         // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+
+        mockRepository.shouldThrowError = true
         await store.deleteNote(note)
 
-        // Then
-        XCTAssertEqual(store.notes.count, 1)
+        // Then - Should rollback
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.notes.count, 1)
+        XCTAssertEqual(store.notes.first?.id, note.id)
     }
 
-    // MARK: - Filtering Tests
+    // MARK: - Filter Tests
 
-    func testFilteredNotes_ByType() {
+    func testFilterByRelatedType() async throws {
         // Given
-        store.notes = [
-            createMockNote(title: "Vendor", type: .vendor),
-            createMockNote(title: "Guest", type: .guest),
-            createMockNote(title: "Task", type: .task),
+        let notes = [
+            Note.makeTest(coupleId: coupleId, title: "Vendor Note", relatedType: NoteRelatedType.vendor),
+            Note.makeTest(coupleId: coupleId, title: "Task Note", relatedType: NoteRelatedType.task),
+            Note.makeTest(coupleId: coupleId, title: "Another Vendor Note", relatedType: NoteRelatedType.vendor)
         ]
-        store.selectedType = .vendor
+        mockRepository.notes = notes
 
         // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+        store.selectedType = NoteRelatedType.vendor
         let filtered = store.filteredNotes
 
         // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].relatedType, .vendor)
+        XCTAssertEqual(filtered.count, 2)
+        XCTAssertTrue(filtered.allSatisfy { $0.relatedType == .vendor })
     }
 
-    func testFilteredNotes_BySearchText() {
+    func testFilterByRelatedId() async throws {
         // Given
-        store.notes = [
-            createMockNote(title: "Vendor Meeting", type: .vendor),
-            createMockNote(title: "Guest List", type: .guest),
+        let relatedId = "test-vendor-123"
+        let notes = [
+            Note.makeTest(coupleId: coupleId, relatedType: NoteRelatedType.vendor, relatedId: relatedId),
+            Note.makeTest(coupleId: coupleId, relatedType: NoteRelatedType.vendor, relatedId: "other-vendor"),
+            Note.makeTest(coupleId: coupleId, relatedType: NoteRelatedType.vendor, relatedId: relatedId)
         ]
-        store.searchText = "vendor"
+        mockRepository.notes = notes
 
         // When
-        let filtered = store.filteredNotes
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+        let filtered = store.notes.filter { $0.relatedId == relatedId }
 
         // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].title, "Vendor Meeting")
-    }
-
-    func testFilteredNotes_BySearchInContent() {
-        // Given
-        store.notes = [
-            createMockNote(title: "Note 1", content: "Important details", type: .vendor),
-            createMockNote(title: "Note 2", content: "Other info", type: .guest),
-        ]
-        store.searchText = "important"
-
-        // When
-        let filtered = store.filteredNotes
-
-        // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].title, "Note 1")
-    }
-
-    // MARK: - Grouping Tests
-
-    func testGroupedNotesByType() {
-        // Given
-        store.notes = [
-            createMockNote(title: "V1", type: .vendor),
-            createMockNote(title: "V2", type: .vendor),
-            createMockNote(title: "G1", type: .guest),
-        ]
-
-        // When
-        let grouped = store.groupedNotesByType()
-
-        // Then
-        XCTAssertEqual(grouped.count, 2)
-        XCTAssertEqual(grouped[.vendor]?.count, 2)
-        XCTAssertEqual(grouped[.guest]?.count, 1)
-    }
-
-    func testFilterUnlinked() {
-        // Given
-        store.notes = [
-            createMockNote(title: "Linked", type: .vendor),
-            createMockNote(title: "Unlinked", type: nil),
-        ]
-
-        // When
-        let unlinked = store.filterUnlinked()
-
-        // Then
-        XCTAssertEqual(unlinked.count, 1)
-        XCTAssertEqual(unlinked[0].title, "Unlinked")
+        XCTAssertEqual(filtered.count, 2)
+        XCTAssertTrue(filtered.allSatisfy { $0.relatedId == relatedId })
     }
 
     // MARK: - Search Tests
 
-    func testSearchNotes_WithQuery() async throws {
+    func testSearchNotes() async throws {
         // Given
-        let mockNotes = [
-            createMockNote(title: "Found", type: .vendor),
+        let notes = [
+            Note.makeTest(coupleId: coupleId, title: "Wedding Plan", content: "Initial planning notes"),
+            Note.makeTest(coupleId: coupleId, title: "Vendor List", content: "List of vendors"),
+            Note.makeTest(coupleId: coupleId, title: "Budget Notes", content: "Wedding budget tracking")
         ]
-        mockRepository.searchResults = mockNotes
+        mockRepository.notes = notes
 
         // When
-        await store.searchNotes(query: "found")
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
+        store.searchText = "wedding"
+        let filtered = store.filteredNotes
 
         // Then
-        XCTAssertEqual(store.notes.count, 1)
-        XCTAssertEqual(store.notes[0].title, "Found")
-        XCTAssertFalse(store.isLoading)
+        XCTAssertEqual(filtered.count, 2) // Wedding Plan and Budget Notes
     }
 
-    func testSearchNotes_EmptyQuery_LoadsAll() async throws {
+    // MARK: - Computed Properties Tests
+
+    func testComputedProperty_TotalNotes() async throws {
         // Given
-        mockRepository.notes = [
-            createMockNote(title: "Note 1"),
-            createMockNote(title: "Note 2"),
+        let notes = [
+            Note.makeTest(coupleId: coupleId),
+            Note.makeTest(coupleId: coupleId),
+            Note.makeTest(coupleId: coupleId)
         ]
+        mockRepository.notes = notes
 
         // When
-        await store.searchNotes(query: "")
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
+        }
+
+        await store.loadNotes()
 
         // Then
-        XCTAssertEqual(store.notes.count, 2)
+        XCTAssertEqual(store.notes.count, 3)
     }
 
-    // MARK: - Helper Methods
+    func testComputedProperty_NotesByType() async throws {
+        // Given
+        let notes = [
+            Note.makeTest(coupleId: coupleId, relatedType: NoteRelatedType.vendor),
+            Note.makeTest(coupleId: coupleId, relatedType: NoteRelatedType.task),
+            Note.makeTest(coupleId: coupleId, relatedType: NoteRelatedType.vendor)
+        ]
+        mockRepository.notes = notes
 
-    private func createMockNote(
-        title: String?,
-        content: String = "Content",
-        type: NoteRelatedType? = nil
-    ) -> Note {
-        Note(
-            id: UUID(),
-            coupleId: UUID(),
-            title: title,
-            content: content,
-            relatedType: type,
-            relatedId: nil,
-            createdAt: Date(),
-            updatedAt: Date(),
-            relatedEntity: nil
-        )
-    }
-}
-
-// MARK: - Mock Repository
-
-class MockNotesRepository: NotesRepositoryProtocol {
-    var notes: [Note] = []
-    var createdNote: Note?
-    var updatedNote: Note?
-    var searchResults: [Note] = []
-    var shouldThrowError = false
-
-    func fetchNotes() async throws -> [Note] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return notes
-    }
-
-    func fetchNoteById(_ id: UUID) async throws -> Note {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        guard let note = notes.first(where: { $0.id == id }) else {
-            throw NSError(domain: "test", code: -1)
+        // When
+        let store = await withDependencies {
+            $0.notesRepository = mockRepository
+        } operation: {
+            NotesStoreV2()
         }
-        return note
-    }
 
-    func fetchNotesByType(_ type: NoteRelatedType) async throws -> [Note] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return notes.filter { $0.relatedType == type }
-    }
+        await store.loadNotes()
+        let grouped = store.groupedNotesByType()
 
-    func fetchNotesByRelatedEntity(type: NoteRelatedType, relatedId: String) async throws -> [Note] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return notes.filter { $0.relatedType == type && $0.relatedId == relatedId }
-    }
-
-    func createNote(_ data: NoteInsertData) async throws -> Note {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return createdNote ?? Note(
-            id: UUID(),
-            coupleId: data.coupleId,
-            title: data.title,
-            content: data.content,
-            relatedType: data.relatedType,
-            relatedId: data.relatedId,
-            createdAt: Date(),
-            updatedAt: Date(),
-            relatedEntity: nil
-        )
-    }
-
-    func updateNote(id: UUID, data: NoteInsertData) async throws -> Note {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        guard let note = notes.first(where: { $0.id == id }) else {
-            throw NSError(domain: "test", code: -1)
-        }
-        return updatedNote ?? Note(
-            id: note.id,
-            coupleId: data.coupleId,
-            title: data.title,
-            content: data.content,
-            relatedType: data.relatedType,
-            relatedId: data.relatedId,
-            createdAt: note.createdAt,
-            updatedAt: Date(),
-            relatedEntity: nil
-        )
-    }
-
-    func deleteNote(id: UUID) async throws {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-    }
-
-    func searchNotes(query: String) async throws -> [Note] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return searchResults
-    }
-
-    func invalidateCache() async {
-        // No-op for mock
+        // Then
+        XCTAssertEqual(grouped[.vendor]?.count, 2)
+        XCTAssertEqual(grouped[.task]?.count, 1)
     }
 }

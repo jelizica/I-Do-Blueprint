@@ -30,7 +30,7 @@ struct GuestsSummaryCard: View {
                         Text("\(metrics.rsvpYes)")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.green)
+                            .foregroundColor(AppColors.Guest.confirmed)
                     }
 
                     Spacer()
@@ -42,7 +42,7 @@ struct GuestsSummaryCard: View {
                         Text("\(metrics.rsvpPending)")
                             .font(.title2)
                             .fontWeight(.bold)
-                            .foregroundColor(.orange)
+                            .foregroundColor(AppColors.Guest.pending)
                     }
                 }
                 .padding(12)
@@ -136,11 +136,13 @@ struct DashboardBudgetSummaryCard: View {
             isHovered: $isHovered,
             hasAlert: metrics.overBudgetCategories > 0) {
             VStack(spacing: 12) {
-                CircleProgressView(
-                    progress: min(metrics.percentageUsed / 100, 1.0),
+                CircularProgress(
+                    value: min(metrics.percentageUsed / 100, 1.0),
+                    color: metrics.percentageUsed >= 90 ? .red : metrics.percentageUsed >= 75 ? .orange : .green,
                     lineWidth: 12,
-                    color: metrics.percentageUsed >= 90 ? .red : metrics.percentageUsed >= 75 ? .orange : .green)
-                    .frame(width: 100, height: 100)
+                    size: 100,
+                    showPercentage: true
+                )
 
                 VStack(spacing: 8) {
                     HStack {

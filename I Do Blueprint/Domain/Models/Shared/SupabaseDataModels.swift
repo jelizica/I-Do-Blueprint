@@ -559,11 +559,83 @@ struct GuestDTO: Codable {
     let created_at: String
     let updated_at: String
 
-    func toGuest() -> Guest {
-        // Note: Guest struct uses Codable's default initializer and doesn't have a custom init
-        // This function would need Guest to implement a custom initializer with proper parameters
-        // For now, returning a minimal Guest with required fields set
-        fatalError("Guest DTO conversion not fully implemented - Guest struct needs custom initializer")
+    /// Converts GuestDTO to Guest model
+    /// - Throws: ConversionError if required fields are invalid
+    /// - Returns: Guest model instance
+    func toGuest() throws -> Guest {
+        // Validate UUID format
+        guard let guestId = UUID(uuidString: id) else {
+            throw ConversionError.invalidUUID(id)
+        }
+        
+        guard let coupleId = UUID(uuidString: tenant_id) else {
+            throw ConversionError.invalidUUID(tenant_id)
+        }
+        
+        // Parse dates
+        let formatter = ISO8601DateFormatter()
+        let createdDate = formatter.date(from: created_at) ?? Date()
+        let updatedDate = formatter.date(from: updated_at) ?? Date()
+        
+        // Parse RSVP status
+        let rsvpStatus = RSVPStatus(rawValue: rsvp_status) ?? .pending
+        
+        // Parse table assignment
+        let tableNumber: Int? = table_assignment.flatMap { Int($0) }
+        
+        // Create Guest instance with all required fields
+        return Guest(
+            id: guestId,
+            createdAt: createdDate,
+            updatedAt: updatedDate,
+            firstName: first_name,
+            lastName: last_name,
+            email: email,
+            phone: phone,
+            guestGroupId: nil,
+            relationshipToCouple: nil,
+            invitedBy: nil,
+            rsvpStatus: rsvpStatus,
+            rsvpDate: nil,
+            plusOneAllowed: plus_one_name != nil,
+            plusOneName: plus_one_name,
+            plusOneAttending: false,
+            attendingCeremony: true,
+            attendingReception: true,
+            attendingOtherEvents: nil,
+            dietaryRestrictions: dietary_restrictions,
+            accessibilityNeeds: nil,
+            tableAssignment: tableNumber,
+            seatNumber: nil,
+            preferredContactMethod: nil,
+            addressLine1: nil,
+            addressLine2: nil,
+            city: nil,
+            state: nil,
+            zipCode: nil,
+            country: nil,
+            invitationNumber: nil,
+            isWeddingParty: false,
+            weddingPartyRole: nil,
+            preparationNotes: nil,
+            coupleId: coupleId,
+            mealOption: nil,
+            giftReceived: false,
+            notes: nil,
+            hairDone: false,
+            makeupDone: false
+        )
+    }
+    
+    /// Converts GuestDTO to Guest model, returning nil on failure
+    /// - Returns: Guest model instance or nil if conversion fails
+    func toGuestOrNil() -> Guest? {
+        do {
+            return try toGuest()
+        } catch {
+            AppLogger.database.error("Failed to convert GuestDTO to Guest", error: error)
+            return nil
+        }
     }
 }
 
@@ -578,29 +650,5 @@ extension Color {
         return String(format: "#%02X%02X%02X", r, g, b)
     }
 
-    // Note: hexString is defined in StylePreferences.swift Color extension
-
-    static func fromHex(_ hex: String) -> Color {
-        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
-        var int: UInt64 = 0
-        Scanner(string: hex).scanHexInt64(&int)
-        let a, r, g, b: UInt64
-        switch hex.count {
-        case 3: // RGB (12-bit)
-            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
-        case 6: // RGB (24-bit)
-            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
-        case 8: // ARGB (32-bit)
-            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
-        default:
-            (a, r, g, b) = (255, 0, 0, 0)
-        }
-
-        return Color(
-            .sRGB,
-            red: Double(r) / 255,
-            green: Double(g) / 255,
-            blue: Double(b) / 255,
-            opacity: Double(a) / 255)
-    }
+    // Note: hexString and fromHex are defined in AccessibilityAudit.swift Color extension
 }

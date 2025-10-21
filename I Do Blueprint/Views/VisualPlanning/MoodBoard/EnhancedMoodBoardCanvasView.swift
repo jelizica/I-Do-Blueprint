@@ -46,6 +46,22 @@ struct EnhancedMoodBoardCanvasView: View {
                     },
                     onContextMenu: { position in
                         showContextMenu(at: position, for: element)
+                    },
+                    onDuplicate: {
+                        selectedElementId = element.id
+                        duplicateElement()
+                    },
+                    onDelete: {
+                        selectedElementId = element.id
+                        deleteElement()
+                    },
+                    onBringToFront: {
+                        selectedElementId = element.id
+                        bringToFront()
+                    },
+                    onSendToBack: {
+                        selectedElementId = element.id
+                        sendToBack()
                     })
             })
         .contextMenu {
@@ -299,6 +315,10 @@ struct EnhancedMoodBoardElementView: View {
     let onElementChanged: (VisualElement) -> Void
     let onSelectionChanged: (UUID?) -> Void
     let onContextMenu: (CGPoint) -> Void
+    let onDuplicate: () -> Void
+    let onDelete: () -> Void
+    let onBringToFront: () -> Void
+    let onSendToBack: () -> Void
 
     @State private var dragOffset: CGSize = .zero
     @State private var isDragging = false
@@ -348,11 +368,11 @@ struct EnhancedMoodBoardElementView: View {
             }
         }
         .contextMenu {
-            Button("Duplicate", action: { /* TODO: */ })
-            Button("Delete", action: { /* TODO: */ })
+            Button("Duplicate", action: onDuplicate)
+            Button("Delete", role: .destructive, action: onDelete)
             Divider()
-            Button("Bring to Front", action: { /* TODO: */ })
-            Button("Send to Back", action: { /* TODO: */ })
+            Button("Bring to Front", action: onBringToFront)
+            Button("Send to Back", action: onSendToBack)
         }
     }
 

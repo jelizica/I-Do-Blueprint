@@ -4,19 +4,23 @@ import Supabase
 /// Production implementation of BudgetRepositoryProtocol
 /// Uses Supabase client for all data operations with automatic caching
 actor LiveBudgetRepository: BudgetRepositoryProtocol {
-    private let supabase: SupabaseClient
-    private let cache: RepositoryCache
+    private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
 
-    init(supabase: SupabaseClient) {
+    init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
-        cache = RepositoryCache()
     }
 
     // Convenience initializer using SupabaseManager singleton
     init() {
         supabase = SupabaseManager.shared.client
-        cache = RepositoryCache()
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     // MARK: - Budget Summary
@@ -24,19 +28,20 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchBudgetSummary() async throws -> BudgetSummary? {
         let cacheKey = "budget_summary"
 
-        // Check cache first (5 min TTL)
-        if let cached: BudgetSummary = await cache.get(cacheKey, maxAge: 300) {
-            logger.debug("Cache hit: budget_summary")
+        // ✅ Check cache first (5 min TTL)
+        if let cached: BudgetSummary = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
+            logger.info("Cache hit: budget summary")
             return cached
         }
 
-        logger.debug("Fetching budget summary from Supabase...")
+        logger.info("Cache miss: fetching budget summary from database")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             // Fetch from Supabase with retry and timeout
             let response: [BudgetSummary] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("budget_settings")
                     .select()
                     .order("created_at", ascending: false)
@@ -46,19 +51,26 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Budget summary fetched successfully in \(String(format: "%.2f", duration))s")
+            
+            // ✅ Record performance
+            await PerformanceMonitor.shared.recordOperation("fetchBudgetSummary", duration: duration)
+            
+            logger.info("Fetched budget summary in \(String(format: "%.2f", duration))s")
 
             let summary = response.first
 
-            // Cache the result
+            // ✅ Cache the result
             if let summary {
-                await cache.set(cacheKey, value: summary)
-                logger.debug("Cached budget summary")
+                await RepositoryCache.shared.set(cacheKey, value: summary, ttl: 300)
             }
 
             return summary
         } catch {
             let duration = Date().timeIntervalSince(startTime)
+            
+            // ✅ Record failed operation
+            await PerformanceMonitor.shared.recordOperation("fetchBudgetSummary", duration: duration)
+            
             logger.error("Budget summary fetch failed after \(String(format: "%.2f", duration))s", error: error)
             throw error
         }
@@ -70,17 +82,16 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         let cacheKey = "budget_categories"
 
         // Check cache first (1 min TTL for fresher data)
-        if let cached: [BudgetCategory] = await cache.get(cacheKey, maxAge: 60) {
-            logger.debug("Cache hit: budget_categories (\(cached.count) items)")
+        if let cached: [BudgetCategory] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
 
-        logger.debug("Fetching budget categories from Supabase...")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let categories: [BudgetCategory] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("budget_categories")
                     .select()
                     .order("priority_level", ascending: true)
@@ -89,10 +100,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(categories.count) categories in \(String(format: "%.2f", duration))s")
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow category fetch: \(String(format: "%.2f", duration))s for \(categories.count) items")
+            }
 
-            await cache.set(cacheKey, value: categories)
-            logger.debug("Cached \(categories.count) budget categories")
+            await RepositoryCache.shared.set(cacheKey, value: categories)
 
             return categories
         } catch {
@@ -103,12 +117,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func createCategory(_ category: BudgetCategory) async throws -> BudgetCategory {
-        logger.debug("Creating budget category: \(category.categoryName)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let created: BudgetCategory = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("budget_categories")
                     .insert(category)
                     .select()
@@ -118,12 +132,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created category in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Created category: \(created.categoryName)")
 
             // Invalidate cache
-            await cache.remove("budget_categories")
-            await cache.remove("budget_summary")
-            logger.info("Created category and invalidated cache")
+            await RepositoryCache.shared.remove("budget_categories")
+            await RepositoryCache.shared.remove("budget_summary")
 
             return created
         } catch {
@@ -134,7 +149,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func updateCategory(_ category: BudgetCategory) async throws -> BudgetCategory {
-        logger.debug("Updating budget category: \(category.categoryName)")
+        let client = try getClient()
         let startTime = Date()
 
         var updated = category
@@ -142,7 +157,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
 
         do {
             let result: BudgetCategory = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("budget_categories")
                     .update(updated)
                     .eq("id", value: category.id)
@@ -153,12 +168,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated category in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Updated category: \(result.categoryName)")
 
             // Invalidate cache
-            await cache.remove("budget_categories")
-            await cache.remove("budget_summary")
-            logger.info("Updated category and invalidated cache")
+            await RepositoryCache.shared.remove("budget_categories")
+            await RepositoryCache.shared.remove("budget_summary")
 
             return result
         } catch {
@@ -169,12 +185,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func deleteCategory(id: UUID) async throws {
-        logger.debug("Deleting budget category: \(id)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             _ = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("budget_categories")
                     .delete()
                     .eq("id", value: id)
@@ -182,12 +198,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted category in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Deleted category: \(id)")
 
             // Invalidate cache
-            await cache.remove("budget_categories")
-            await cache.remove("budget_summary")
-            logger.info("Deleted category and invalidated cache")
+            await RepositoryCache.shared.remove("budget_categories")
+            await RepositoryCache.shared.remove("budget_summary")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Category deletion failed after \(String(format: "%.2f", duration))s", error: error)
@@ -201,29 +218,97 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         let cacheKey = "expenses"
 
         // Check cache first (30 sec TTL for very fresh data)
-        if let cached: [Expense] = await cache.get(cacheKey, maxAge: 30) {
-            logger.debug("Cache hit: expenses (\(cached.count) items)")
+        if let cached: [Expense] = await RepositoryCache.shared.get(cacheKey, maxAge: 30) {
             return cached
         }
 
-        logger.debug("Fetching expenses from Supabase...")
+        let client = try getClient()
         let startTime = Date()
 
         do {
+            // Fetch expenses without join first
             let expenses: [Expense] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("expenses")
                     .select()
                     .order("created_at", ascending: false)
                     .execute()
                     .value
             }
+            
+            // Get unique vendor IDs
+            let vendorIds = expenses.compactMap { $0.vendorId }
+            
+            // If there are vendor IDs, fetch vendor names in a separate query
+            if !vendorIds.isEmpty {
+                struct VendorBasic: Codable {
+                    let id: Int64
+                    let vendorName: String
+                    
+                    enum CodingKeys: String, CodingKey {
+                        case id
+                        case vendorName = "vendor_name"
+                    }
+                }
+                
+                let vendors: [VendorBasic] = try await RepositoryNetwork.withRetry {
+                    try await client
+                        .from("vendor_information")
+                        .select("id, vendor_name")
+                        .in("id", values: vendorIds.map { String($0) })
+                        .execute()
+                        .value
+                }
+                
+                // Create a lookup dictionary
+                let vendorDict = Dictionary(uniqueKeysWithValues: vendors.map { ($0.id, $0.vendorName) })
+                
+                // Map expenses with vendor names
+                let expensesWithVendors = expenses.map { expense in
+                    Expense(
+                        id: expense.id,
+                        coupleId: expense.coupleId,
+                        budgetCategoryId: expense.budgetCategoryId,
+                        vendorId: expense.vendorId,
+                        vendorName: expense.vendorId.flatMap { vendorDict[$0] },
+                        expenseName: expense.expenseName,
+                        amount: expense.amount,
+                        expenseDate: expense.expenseDate,
+                        paymentMethod: expense.paymentMethod,
+                        paymentStatus: expense.paymentStatus,
+                        receiptUrl: expense.receiptUrl,
+                        invoiceNumber: expense.invoiceNumber,
+                        notes: expense.notes,
+                        approvalStatus: expense.approvalStatus,
+                        approvedBy: expense.approvedBy,
+                        approvedAt: expense.approvedAt,
+                        invoiceDocumentUrl: expense.invoiceDocumentUrl,
+                        isTestData: expense.isTestData,
+                        createdAt: expense.createdAt,
+                        updatedAt: expense.updatedAt
+                    )
+                }
+                
+                let duration = Date().timeIntervalSince(startTime)
+                
+                // Only log if slow
+                if duration > 1.0 {
+                    logger.info("Slow expense fetch: \(String(format: "%.2f", duration))s for \(expensesWithVendors.count) items")
+                }
+                
+                await RepositoryCache.shared.set(cacheKey, value: expensesWithVendors)
+                
+                return expensesWithVendors
+            }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(expenses.count) expenses in \(String(format: "%.2f", duration))s")
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow expense fetch: \(String(format: "%.2f", duration))s for \(expenses.count) items")
+            }
 
-            await cache.set(cacheKey, value: expenses)
-            logger.debug("Cached \(expenses.count) expenses")
+            await RepositoryCache.shared.set(cacheKey, value: expenses)
 
             return expenses
         } catch {
@@ -234,12 +319,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func createExpense(_ expense: Expense) async throws -> Expense {
-        logger.debug("Creating expense: \(expense.expenseName)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let created: Expense = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("expenses")
                     .insert(expense)
                     .select()
@@ -249,12 +334,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created expense in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Created expense: \(created.expenseName)")
 
             // Invalidate cache
-            await cache.remove("expenses")
-            await cache.remove("budget_summary")
-            logger.info("Created expense and invalidated cache")
+            await RepositoryCache.shared.remove("expenses")
+            await RepositoryCache.shared.remove("budget_summary")
 
             return created
         } catch {
@@ -265,7 +351,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func updateExpense(_ expense: Expense) async throws -> Expense {
-        logger.debug("Updating expense: \(expense.expenseName)")
+        let client = try getClient()
         let startTime = Date()
 
         var updated = expense
@@ -273,7 +359,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
 
         do {
             let result: Expense = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("expenses")
                     .update(updated)
                     .eq("id", value: expense.id)
@@ -284,12 +370,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated expense in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Updated expense: \(result.expenseName)")
 
             // Invalidate cache
-            await cache.remove("expenses")
-            await cache.remove("budget_summary")
-            logger.info("Updated expense and invalidated cache")
+            await RepositoryCache.shared.remove("expenses")
+            await RepositoryCache.shared.remove("budget_summary")
 
             return result
         } catch {
@@ -300,12 +387,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func deleteExpense(id: UUID) async throws {
-        logger.debug("Deleting expense: \(id)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("expenses")
                     .delete()
                     .eq("id", value: id)
@@ -313,12 +400,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted expense in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Deleted expense: \(id)")
 
             // Invalidate cache
-            await cache.remove("expenses")
-            await cache.remove("budget_summary")
-            logger.info("Deleted expense and invalidated cache")
+            await RepositoryCache.shared.remove("expenses")
+            await RepositoryCache.shared.remove("budget_summary")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Expense deletion failed after \(String(format: "%.2f", duration))s", error: error)
@@ -331,18 +419,17 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchPaymentSchedules() async throws -> [PaymentSchedule] {
         let cacheKey = "payment_schedules"
 
-        if let cached: [PaymentSchedule] = await cache.get(cacheKey, maxAge: 60) {
-            logger.debug("Cache hit: payment_schedules (\(cached.count) items)")
+        if let cached: [PaymentSchedule] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
 
-        logger.debug("Fetching payment schedules from Supabase...")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let schedules: [PaymentSchedule] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("paymentPlans")
+                try await client
+                    .from("payment_plans")
                     .select()
                     .order("payment_date", ascending: true)
                     .execute()
@@ -350,10 +437,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(schedules.count) payment schedules in \(String(format: "%.2f", duration))s")
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow payment schedules fetch: \(String(format: "%.2f", duration))s for \(schedules.count) items")
+            }
 
-            await cache.set(cacheKey, value: schedules)
-            logger.debug("Cached \(schedules.count) payment schedules")
+            await RepositoryCache.shared.set(cacheKey, value: schedules)
 
             return schedules
         } catch {
@@ -364,14 +454,96 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func createPaymentSchedule(_ schedule: PaymentSchedule) async throws -> PaymentSchedule {
-        logger.debug("Creating payment schedule for vendor: \(schedule.vendor)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
+            // Create a codable struct for insertion that excludes the id field
+            struct PaymentScheduleInsert: Codable {
+                let coupleId: UUID
+                let vendor: String?
+                let paymentDate: Date
+                let paymentAmount: Double
+                let notes: String?
+                let vendorType: String?
+                let paid: Bool
+                let paymentType: String?
+                let customAmount: Double?
+                let billingFrequency: String?
+                let autoRenew: Bool
+                let startDate: Date?
+                let reminderEnabled: Bool
+                let reminderDaysBefore: Int?
+                let priorityLevel: String?
+                let expenseId: UUID?
+                let vendorId: Int64?
+                let isDeposit: Bool
+                let isRetainer: Bool
+                let paymentOrder: Int?
+                let totalPaymentCount: Int?
+                let paymentPlanType: String?
+                let createdAt: Date
+                let updatedAt: Date?
+                
+                enum CodingKeys: String, CodingKey {
+                    case coupleId = "couple_id"
+                    case vendor
+                    case paymentDate = "payment_date"
+                    case paymentAmount = "payment_amount"
+                    case notes
+                    case vendorType = "vendor_type"
+                    case paid
+                    case paymentType = "payment_type"
+                    case customAmount = "custom_amount"
+                    case billingFrequency = "billing_frequency"
+                    case autoRenew = "auto_renew"
+                    case startDate = "start_date"
+                    case reminderEnabled = "reminder_enabled"
+                    case reminderDaysBefore = "reminder_days_before"
+                    case priorityLevel = "priority_level"
+                    case expenseId = "expense_id"
+                    case vendorId = "vendor_id"
+                    case isDeposit = "is_deposit"
+                    case isRetainer = "is_retainer"
+                    case paymentOrder = "payment_order"
+                    case totalPaymentCount = "total_payment_count"
+                    case paymentPlanType = "payment_plan_type"
+                    case createdAt = "created_at"
+                    case updatedAt = "updated_at"
+                }
+            }
+            
+            let insertData = PaymentScheduleInsert(
+                coupleId: schedule.coupleId,
+                vendor: schedule.vendor,
+                paymentDate: schedule.paymentDate,
+                paymentAmount: schedule.paymentAmount,
+                notes: schedule.notes,
+                vendorType: schedule.vendorType,
+                paid: schedule.paid,
+                paymentType: schedule.paymentType,
+                customAmount: schedule.customAmount,
+                billingFrequency: schedule.billingFrequency,
+                autoRenew: schedule.autoRenew,
+                startDate: schedule.startDate,
+                reminderEnabled: schedule.reminderEnabled,
+                reminderDaysBefore: schedule.reminderDaysBefore,
+                priorityLevel: schedule.priorityLevel,
+                expenseId: schedule.expenseId,
+                vendorId: schedule.vendorId,
+                isDeposit: schedule.isDeposit,
+                isRetainer: schedule.isRetainer,
+                paymentOrder: schedule.paymentOrder,
+                totalPaymentCount: schedule.totalPaymentCount,
+                paymentPlanType: schedule.paymentPlanType,
+                createdAt: schedule.createdAt,
+                updatedAt: schedule.updatedAt
+            )
+            
             let created: PaymentSchedule = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("paymentPlans")
-                    .insert(schedule)
+                try await client
+                    .from("payment_plans")
+                    .insert(insertData)
                     .select()
                     .single()
                     .execute()
@@ -379,10 +551,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created payment schedule in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Created payment schedule for vendor: \(created.vendor)")
 
-            await cache.remove("payment_schedules")
-            logger.info("Created payment schedule and invalidated cache")
+            await RepositoryCache.shared.remove("payment_schedules")
 
             return created
         } catch {
@@ -393,7 +566,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func updatePaymentSchedule(_ schedule: PaymentSchedule) async throws -> PaymentSchedule {
-        logger.debug("Updating payment schedule: \(schedule.id)")
+        let client = try getClient()
         let startTime = Date()
 
         var updated = schedule
@@ -401,8 +574,8 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
 
         do {
             let result: PaymentSchedule = try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("paymentPlans")
+                try await client
+                    .from("payment_plans")
                     .update(updated)
                     .eq("id", value: String(schedule.id))
                     .select()
@@ -412,10 +585,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated payment schedule in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Updated payment schedule: \(result.id)")
 
-            await cache.remove("payment_schedules")
-            logger.info("Updated payment schedule and invalidated cache")
+            await RepositoryCache.shared.remove("payment_schedules")
 
             return result
         } catch {
@@ -426,23 +600,24 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func deletePaymentSchedule(id: Int64) async throws {
-        logger.debug("Deleting payment schedule: \(id)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.supabase
-                    .from("paymentPlans")
+                try await client
+                    .from("payment_plans")
                     .delete()
                     .eq("id", value: String(id))
                     .execute()
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted payment schedule in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Deleted payment schedule: \(id)")
 
-            await cache.remove("payment_schedules")
-            logger.info("Deleted payment schedule and invalidated cache")
+            await RepositoryCache.shared.remove("payment_schedules")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Payment schedule deletion failed after \(String(format: "%.2f", duration))s", error: error)
@@ -455,24 +630,405 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchGiftsAndOwed() async throws -> [GiftOrOwed] {
         let cacheKey = "gifts_and_owed"
 
-        if let cached: [GiftOrOwed] = await cache.get(cacheKey, maxAge: 60) {
-            logger.debug("Cache hit: gifts_and_owed (\(cached.count) items)")
+        if let cached: [GiftOrOwed] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
 
-        logger.debug("Fetching gifts and owed from Supabase...")
+        let client = try getClient()
+        let startTime = Date()
 
-        let items: [GiftOrOwed] = try await supabase
-            .from("gifts_and_owed")
-            .select()
-            .order("created_at", ascending: false)
-            .execute()
-            .value
+        do {
+            let items: [GiftOrOwed] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gifts_and_owed")
+                    .select()
+                    .order("created_at", ascending: false)
+                    .execute()
+                    .value
+            }
 
-        await cache.set(cacheKey, value: items)
-        logger.debug("Cached \(items.count) gifts/owed items")
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow gifts/owed fetch: \(String(format: "%.2f", duration))s for \(items.count) items")
+            }
 
-        return items
+            await RepositoryCache.shared.set(cacheKey, value: items)
+
+            return items
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gifts/owed fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+
+    func createGiftOrOwed(_ gift: GiftOrOwed) async throws -> GiftOrOwed {
+        let client = try getClient()
+        let startTime = Date()
+
+        do {
+            let created: GiftOrOwed = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gifts_and_owed")
+                    .insert(gift)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Created gift/owed: \(created.title)")
+
+            // Invalidate cache
+            await RepositoryCache.shared.remove("gifts_and_owed")
+            if let scenarioId = gift.scenarioId {
+                await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+            }
+
+            return created
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift/owed creation failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+
+    func updateGiftOrOwed(_ gift: GiftOrOwed) async throws -> GiftOrOwed {
+        let client = try getClient()
+        let startTime = Date()
+
+        // Create updated gift object with new timestamp
+        var updated = gift
+        updated.updatedAt = Date()
+
+        do {
+            let result: GiftOrOwed = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gifts_and_owed")
+                    .update(updated)
+                    .eq("id", value: gift.id)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Updated gift/owed: \(result.title)")
+
+            // Invalidate cache
+            await RepositoryCache.shared.remove("gifts_and_owed")
+            if let scenarioId = gift.scenarioId {
+                await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+            }
+
+            return result
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift/owed update failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+
+    func deleteGiftOrOwed(id: UUID) async throws {
+        let client = try getClient()
+        let startTime = Date()
+
+        do {
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gifts_and_owed")
+                    .delete()
+                    .eq("id", value: id)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Deleted gift/owed: \(id)")
+
+            // Invalidate cache
+            await RepositoryCache.shared.remove("gifts_and_owed")
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift/owed deletion failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    // MARK: - Gift Received Operations
+    
+    func fetchGiftsReceived() async throws -> [GiftReceived] {
+        let cacheKey = "gifts_received"
+        
+        if let cached: [GiftReceived] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            return cached
+        }
+        
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let gifts: [GiftReceived] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gift_received")
+                    .select()
+                    .order("date_received", ascending: false)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow gifts received fetch: \(String(format: "%.2f", duration))s for \(gifts.count) items")
+            }
+            
+            await RepositoryCache.shared.set(cacheKey, value: gifts)
+            
+            return gifts
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gifts received fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func createGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let created: GiftReceived = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gift_received")
+                    .insert(gift)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Created gift received from: \(created.fromPerson)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("gifts_received")
+            
+            return created
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift received creation failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func updateGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
+        let client = try getClient()
+        let startTime = Date()
+        
+        // Create updated gift object with new timestamp
+        var updated = gift
+        updated.updatedAt = Date()
+        
+        do {
+            let result: GiftReceived = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gift_received")
+                    .update(updated)
+                    .eq("id", value: gift.id)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Updated gift received from: \(result.fromPerson)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("gifts_received")
+            
+            return result
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift received update failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func deleteGiftReceived(id: UUID) async throws {
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("gift_received")
+                    .delete()
+                    .eq("id", value: id)
+                    .execute()
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Deleted gift received: \(id)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("gifts_received")
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift received deletion failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    // MARK: - Money Owed Operations
+    
+    func fetchMoneyOwed() async throws -> [MoneyOwed] {
+        let cacheKey = "money_owed"
+        
+        if let cached: [MoneyOwed] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            return cached
+        }
+        
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let items: [MoneyOwed] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("money_owed")
+                    .select()
+                    .order("is_paid", ascending: true)
+                    .order("due_date", ascending: true, nullsFirst: false)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow money owed fetch: \(String(format: "%.2f", duration))s for \(items.count) items")
+            }
+            
+            await RepositoryCache.shared.set(cacheKey, value: items)
+            
+            return items
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Money owed fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func createMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let created: MoneyOwed = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("money_owed")
+                    .insert(money)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Created money owed to: \(created.toPerson)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("money_owed")
+            
+            return created
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Money owed creation failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func updateMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
+        let client = try getClient()
+        let startTime = Date()
+        
+        // Create updated money object with new timestamp
+        var updated = money
+        updated.updatedAt = Date()
+        
+        do {
+            let result: MoneyOwed = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("money_owed")
+                    .update(updated)
+                    .eq("id", value: money.id)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Updated money owed to: \(result.toPerson)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("money_owed")
+            
+            return result
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Money owed update failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func deleteMoneyOwed(id: UUID) async throws {
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("money_owed")
+                    .delete()
+                    .eq("id", value: id)
+                    .execute()
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Deleted money owed: \(id)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("money_owed")
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Money owed deletion failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
     }
 
     // MARK: - Affordability Scenarios
@@ -480,17 +1036,16 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchAffordabilityScenarios() async throws -> [AffordabilityScenario] {
         let cacheKey = "affordability_scenarios"
 
-        if let cached: [AffordabilityScenario] = await cache.get(cacheKey, maxAge: 300) {
-            logger.debug("Cache hit: affordability_scenarios (\(cached.count) items)")
+        if let cached: [AffordabilityScenario] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
             return cached
         }
 
-        logger.debug("Fetching affordability scenarios from Supabase...")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let scenarios: [AffordabilityScenario] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("affordability_scenarios")
                     .select()
                     .order("created_at", ascending: false)
@@ -499,10 +1054,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(scenarios.count) affordability scenarios in \(String(format: "%.2f", duration))s")
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow affordability scenarios fetch: \(String(format: "%.2f", duration))s for \(scenarios.count) items")
+            }
 
-            await cache.set(cacheKey, value: scenarios)
-            logger.debug("Cached \(scenarios.count) affordability scenarios")
+            await RepositoryCache.shared.set(cacheKey, value: scenarios)
 
             return scenarios
         } catch {
@@ -513,12 +1071,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func saveAffordabilityScenario(_ scenario: AffordabilityScenario) async throws -> AffordabilityScenario {
-        logger.debug("Saving affordability scenario: \(scenario.scenarioName)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let saved: AffordabilityScenario = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("affordability_scenarios")
                     .upsert(scenario)
                     .select()
@@ -528,9 +1086,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Saved affordability scenario in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Saved affordability scenario: \(saved.scenarioName)")
 
-            await cache.remove("affordability_scenarios")
+            await RepositoryCache.shared.remove("affordability_scenarios")
 
             return saved
         } catch {
@@ -541,12 +1101,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func deleteAffordabilityScenario(id: UUID) async throws {
-        logger.debug("Deleting affordability scenario: \(id)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("affordability_scenarios")
                     .delete()
                     .eq("id", value: id)
@@ -554,9 +1114,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted affordability scenario in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Deleted affordability scenario: \(id)")
 
-            await cache.remove("affordability_scenarios")
+            await RepositoryCache.shared.remove("affordability_scenarios")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Affordability scenario deletion failed after \(String(format: "%.2f", duration))s", error: error)
@@ -569,25 +1131,33 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchAffordabilityContributions(scenarioId: UUID) async throws -> [ContributionItem] {
         let cacheKey = "affordability_contributions_\(scenarioId)"
 
-        if let cached: [ContributionItem] = await cache.get(cacheKey, maxAge: 300) {
+        if let cached: [ContributionItem] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
+            #if DEBUG
             logger.debug("Cache hit: affordability_contributions for scenario \(scenarioId) - \(cached.count) items")
+            #endif
             return cached
         }
 
+        let client = try getClient()
+
+        #if DEBUG
         logger.debug("Fetching affordability contributions for scenario \(scenarioId)...")
         logger.debug("Cache miss - fetching fresh data from database")
+        #endif
 
         // Fetch direct contributions from affordability_gifts_contributions
         let directContributions: [ContributionItem]
         do {
-            directContributions = try await supabase
+            directContributions = try await client
                 .from("affordability_gifts_contributions")
                 .select()
                 .eq("scenario_id", value: scenarioId)
                 .order("contribution_date", ascending: false)
                 .execute()
                 .value
+            #if DEBUG
             logger.debug("Fetched \(directContributions.count) direct contributions")
+            #endif
         } catch {
             logger.error("Error fetching direct contributions", error: error)
             throw error
@@ -596,22 +1166,26 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         // Fetch linked gifts from gifts_and_owed
         let linkedGifts: [GiftOrOwed]
         do {
-            linkedGifts = try await supabase
+            linkedGifts = try await client
                 .from("gifts_and_owed")
                 .select()
                 .eq("scenario_id", value: scenarioId)
                 .execute()
                 .value
+            #if DEBUG
             logger.debug("Fetched \(linkedGifts.count) linked gifts")
             for gift in linkedGifts {
                 logger.debug("Gift ID: \(gift.id), Title: \(gift.title), From: \(gift.fromPerson ?? "N/A")")
             }
+            #endif
         } catch {
             logger.error("Error fetching linked gifts", error: error)
             throw error
         }
 
+        #if DEBUG
         logger.debug("Found \(directContributions.count) direct contributions and \(linkedGifts.count) linked gifts")
+        #endif
 
         // Convert linked gifts to ContributionItems
         let giftContributions = linkedGifts.map { gift in
@@ -632,16 +1206,17 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         // Combine both sources
         let contributions = directContributions + giftContributions
 
-        await cache.set(cacheKey, value: contributions)
+        await RepositoryCache.shared.set(cacheKey, value: contributions)
+        #if DEBUG
         logger.debug("Cached \(contributions.count) contributions")
+        #endif
 
         return contributions
     }
 
     func saveAffordabilityContribution(_ contribution: ContributionItem) async throws -> ContributionItem {
-        logger.debug("Saving contribution: \(contribution.contributorName)")
-
-        let saved: ContributionItem = try await supabase
+        let client = try getClient()
+        let saved: ContributionItem = try await client
             .from("affordability_gifts_contributions")
             .upsert(contribution)
             .select()
@@ -649,45 +1224,48 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             .execute()
             .value
 
-        await cache.remove("affordability_contributions_\(contribution.scenarioId)")
-        logger.info("Saved contribution")
+        await RepositoryCache.shared.remove("affordability_contributions_\(contribution.scenarioId)")
+        
+        // Log important mutation
+        logger.info("Saved contribution from: \(saved.contributorName)")
 
         return saved
     }
 
     func deleteAffordabilityContribution(id: UUID, scenarioId: UUID) async throws {
-        logger.debug("Deleting contribution: \(id)")
-
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("affordability_gifts_contributions")
             .delete()
             .eq("id", value: id)
             .execute()
 
-        await cache.remove("affordability_contributions_\(scenarioId)")
-        logger.info("Deleted contribution")
+        await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+        
+        // Log important mutation
+        logger.info("Deleted contribution: \(id)")
     }
 
     func linkGiftsToScenario(giftIds: [UUID], scenarioId: UUID) async throws {
-        logger.debug("Linking \(giftIds.count) gifts to scenario \(scenarioId)")
-
+        let client = try getClient()
         for giftId in giftIds {
-            try await supabase
+            try await client
                 .from("gifts_and_owed")
                 .update(["scenario_id": scenarioId])
                 .eq("id", value: giftId)
                 .execute()
         }
 
-        await cache.remove("gifts_and_owed")
-        await cache.remove("affordability_contributions_\(scenarioId)")
-        logger.info("Linked gifts to scenario and invalidated caches")
+        await RepositoryCache.shared.remove("gifts_and_owed")
+        await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+        
+        // Log important mutation
+        logger.info("Linked \(giftIds.count) gifts to scenario \(scenarioId)")
     }
 
     func unlinkGiftFromScenario(giftId: UUID, scenarioId: UUID) async throws {
-        logger.debug("Unlinking gift from scenario")
-
-        let response = try await supabase
+        let client = try getClient()
+        let response = try await client
             .from("gifts_and_owed")
             .update(["scenario_id": AnyJSON.null])
             .eq("id", value: giftId.uuidString.lowercased())
@@ -700,49 +1278,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         if affectedRows == 0 {
             logger.warning("No rows updated - gift may not exist or already unlinked")
         } else {
-            logger.repositorySuccess("Unlink gift from scenario", affectedRows: affectedRows)
+            // Log important mutation
+            logger.info("Unlinked gift \(giftId) from scenario \(scenarioId)")
         }
 
-        await cache.remove("gifts_and_owed")
-        await cache.remove("affordability_contributions_\(scenarioId)")
-    }
-
-    func updateGiftOrOwed(_ gift: GiftOrOwed) async throws -> GiftOrOwed {
-        logger.debug("Updating gift/owed: \(gift.id)")
-
-        // Create updated gift object for encoding
-        let updated = GiftOrOwed(
-            id: gift.id,
-            coupleId: gift.coupleId,
-            title: gift.title,
-            amount: gift.amount,
-            type: gift.type,
-            description: gift.description,
-            fromPerson: gift.fromPerson,
-            expectedDate: gift.expectedDate,
-            receivedDate: gift.receivedDate,
-            status: gift.status,
-            scenarioId: gift.scenarioId,
-            createdAt: gift.createdAt,
-            updatedAt: Date()
-        )
-
-        let response: GiftOrOwed = try await supabase
-            .from("gifts_and_owed")
-            .update(updated)
-            .eq("id", value: gift.id)
-            .select()
-            .single()
-            .execute()
-            .value
-
-        await cache.remove("gifts_and_owed")
-        if let scenarioId = gift.scenarioId {
-            await cache.remove("affordability_contributions_\(scenarioId)")
-        }
-        logger.info("Updated gift/owed and invalidated caches")
-
-        return response
+        await RepositoryCache.shared.remove("gifts_and_owed")
+        await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
     }
 
     // MARK: - Budget Development
@@ -750,22 +1291,19 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchBudgetDevelopmentScenarios() async throws -> [SavedScenario] {
         let cacheKey = "budget_dev_scenarios"
 
-        if let cached: [SavedScenario] = await cache.get(cacheKey, maxAge: 300) {
-            logger.debug("Cache hit: budget_dev_scenarios (\(cached.count) items)")
+        if let cached: [SavedScenario] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
             return cached
         }
 
-        logger.debug("Fetching budget development scenarios from Supabase...")
-
-        let scenarios: [SavedScenario] = try await supabase
+        let client = try getClient()
+        let scenarios: [SavedScenario] = try await client
             .from("budget_development_scenarios")
             .select()
             .order("created_at", ascending: false)
             .execute()
             .value
 
-        await cache.set(cacheKey, value: scenarios)
-        logger.debug("Cached \(scenarios.count) budget development scenarios")
+        await RepositoryCache.shared.set(cacheKey, value: scenarios)
 
         return scenarios
     }
@@ -773,14 +1311,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchBudgetDevelopmentItems(scenarioId: String?) async throws -> [BudgetItem] {
         let cacheKey = scenarioId.map { "budget_dev_items_\($0)" } ?? "budget_dev_items_all"
 
-        if let cached: [BudgetItem] = await cache.get(cacheKey, maxAge: 60) {
-            logger.debug("Cache hit: budget_dev_items (\(cached.count) items)")
+        if let cached: [BudgetItem] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
 
-        logger.debug("Fetching budget development items from Supabase...")
-
-        var query = supabase.from("budget_development_items").select()
+        let client = try getClient()
+        var query = client.from("budget_development_items").select()
 
         if let scenarioId {
             query = query.eq("scenario_id", value: scenarioId)
@@ -791,8 +1327,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             .execute()
             .value
 
-        await cache.set(cacheKey, value: items)
-        logger.debug("Cached \(items.count) budget development items")
+        await RepositoryCache.shared.set(cacheKey, value: items)
 
         return items
     }
@@ -800,17 +1335,25 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchBudgetDevelopmentItemsWithSpentAmounts(scenarioId: String) async throws -> [BudgetOverviewItem] {
         let cacheKey = "budget_overview_items_\(scenarioId)"
 
-        if let cached: [BudgetOverviewItem] = await cache.get(cacheKey, maxAge: 60) {
+        if let cached: [BudgetOverviewItem] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            #if DEBUG
             logger.debug("Cache hit: budget_overview_items (\(cached.count) items)")
+            #endif
             return cached
         }
 
+        let client = try getClient()
+
+        #if DEBUG
         logger.debug("Fetching budget overview items with spent amounts from Supabase...")
         logger.debug("Using scenario ID: \(scenarioId)")
+        #endif
 
         // Fetch budget items for the scenario
         let items = try await fetchBudgetDevelopmentItems(scenarioId: scenarioId)
+        #if DEBUG
         logger.debug("Fetched \(items.count) budget items for scenario")
+        #endif
 
         // Fetch all expense allocations for this scenario
         struct ExpenseAllocation: Codable {
@@ -839,7 +1382,9 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
         }
 
+        #if DEBUG
         logger.debug("Querying expense_budget_allocations for scenario_id: \(scenarioId)")
+        #endif
 
         // Fetch allocations without the join first (workaround for Supabase Swift client inner join issue)
         struct SimpleAllocation: Codable {
@@ -857,27 +1402,33 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         }
 
         // Try filtering using column-based syntax instead of eq()
-        let query = supabase
+        let query = client
             .from("expense_budget_allocations")
             .select("id, expense_id, budget_item_id, allocated_amount")
 
         // Apply filter - try both approaches
+        #if DEBUG
         logger.debug("Building query with scenario_id filter: \(scenarioId)")
+        #endif
         let simpleAllocations: [SimpleAllocation] = try await query
             .eq("scenario_id", value: scenarioId)
             .execute()
             .value
 
+        #if DEBUG
         logger.debug("Fetched \(simpleAllocations.count) allocations for scenario")
 
         // Debug: Log first few allocations with their amounts
         for allocation in simpleAllocations.prefix(3) {
             logger.debug("  Allocation \(allocation.id): amount=\(allocation.allocatedAmount)")
         }
+        #endif
 
         // If no allocations, return early
         guard !simpleAllocations.isEmpty else {
+            #if DEBUG
             logger.debug("No allocations found for scenario \(scenarioId)")
+            #endif
             let overviewItems = items.map { item in
                 BudgetOverviewItem(
                     id: item.id,
@@ -891,7 +1442,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
                     gifts: []
                 )
             }
-            await cache.set(cacheKey, value: overviewItems)
+            await RepositoryCache.shared.set(cacheKey, value: overviewItems)
             return overviewItems
         }
 
@@ -908,14 +1459,16 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
         }
 
-        let expenses: [ExpenseBasic] = try await supabase
+        let expenses: [ExpenseBasic] = try await client
             .from("expenses")
             .select("id, expense_name")
             .in("id", values: expenseIds.map { $0.uuidString })
             .execute()
             .value
 
+        #if DEBUG
         logger.debug("Fetched \(expenses.count) expenses for allocations")
+        #endif
 
         // Map expenses by ID for quick lookup
         let expenseDict = Dictionary(uniqueKeysWithValues: expenses.map { ($0.id, $0.expenseName) })
@@ -939,7 +1492,9 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             )
         }
 
+        #if DEBUG
         logger.debug("Combined \(allocations.count) expense allocations with expense details")
+        #endif
 
         // Group allocations by budget item ID (normalized to lowercase for consistent lookup)
         var allocationsByItem: [String: [ExpenseAllocation]] = [:]
@@ -948,7 +1503,38 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             allocationsByItem[itemId, default: []].append(allocation)
         }
 
-        // Map budget items to overview items with expense data
+        // Fetch all linked gifts in one query for efficiency
+        let linkedGiftIds = items.compactMap { $0.linkedGiftOwedId }
+        var giftsById: [String: (id: UUID, title: String, amount: Double)] = [:]
+        
+        if !linkedGiftIds.isEmpty {
+            struct GiftBasic: Codable {
+                let id: UUID
+                let title: String
+                let amount: Double
+            }
+            
+            do {
+                let gifts: [GiftBasic] = try await client
+                    .from("gifts_and_owed")
+                    .select("id, title, amount")
+                    .in("id", values: linkedGiftIds)
+                    .execute()
+                    .value
+                
+                giftsById = Dictionary(uniqueKeysWithValues: gifts.map { 
+                    ($0.id.uuidString.lowercased(), (id: $0.id, title: $0.title, amount: $0.amount))
+                })
+                
+                #if DEBUG
+                logger.debug("Fetched \(gifts.count) linked gifts for budget items")
+                #endif
+            } catch {
+                logger.warning("Failed to fetch linked gifts: \(error)")
+            }
+        }
+        
+        // Map budget items to overview items with expense and gift data
         let overviewItems: [BudgetOverviewItem] = items.map { item in
             let itemAllocations = allocationsByItem[item.id.lowercased()] ?? []
 
@@ -962,7 +1548,22 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
 
             let totalSpent = itemAllocations.reduce(0.0) { $0 + $1.allocatedAmount }
 
-            // TODO: Fetch and apply gifts to calculate effectiveSpent
+            // Get linked gift if present
+            var giftLinks: [GiftLink] = []
+            var totalGiftAmount = 0.0
+            
+            if let linkedGiftId = item.linkedGiftOwedId,
+               let gift = giftsById[linkedGiftId.lowercased()] {
+                giftLinks.append(GiftLink(
+                    id: gift.id.uuidString,
+                    title: gift.title,
+                    amount: gift.amount
+                ))
+                totalGiftAmount = gift.amount
+            }
+            
+            // Calculate effective spent (spent minus gifts)
+            let effectiveSpent = max(0, totalSpent - totalGiftAmount)
 
             return BudgetOverviewItem(
                 id: item.id,
@@ -971,13 +1572,14 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
                 subcategory: item.subcategory ?? "",
                 budgeted: item.vendorEstimateWithTax,
                 spent: totalSpent,
-                effectiveSpent: totalSpent, // For now, same as spent until gifts are implemented
+                effectiveSpent: effectiveSpent,
                 expenses: expenseLinks,
-                gifts: [] // TODO: Fetch linked gifts
+                gifts: giftLinks
             )
         }
 
-        await cache.set(cacheKey, value: overviewItems)
+        await RepositoryCache.shared.set(cacheKey, value: overviewItems)
+        #if DEBUG
         logger.debug("Cached \(overviewItems.count) budget overview items with \(allocations.count) total expense links")
 
         // Debug: Log items with non-zero spent amounts
@@ -986,14 +1588,14 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         for item in itemsWithExpenses.prefix(3) {
             logger.debug("  - \(item.itemName): spent=\(item.spent), expenses=\(item.expenses.count)")
         }
+        #endif
 
         return overviewItems
     }
 
     func createBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
-        logger.debug("Creating budget development scenario: \(scenario.scenarioName)")
-
-        let created: SavedScenario = try await supabase
+        let client = try getClient()
+        let created: SavedScenario = try await client
             .from("budget_development_scenarios")
             .insert(scenario)
             .select()
@@ -1001,16 +1603,17 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             .execute()
             .value
 
-        await cache.remove("budget_dev_scenarios")
-        logger.info("Created budget development scenario and invalidated cache")
+        await RepositoryCache.shared.remove("budget_dev_scenarios")
+        
+        // Log important mutation
+        logger.info("Created budget development scenario: \(created.scenarioName)")
 
         return created
     }
 
     func updateBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
-        logger.debug("Updating budget development scenario: \(scenario.id)")
-
-        let result: SavedScenario = try await supabase
+        let client = try getClient()
+        let result: SavedScenario = try await client
             .from("budget_development_scenarios")
             .update(scenario)
             .eq("id", value: scenario.id)
@@ -1019,16 +1622,17 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             .execute()
             .value
 
-        await cache.remove("budget_dev_scenarios")
-        logger.info("Updated budget development scenario and invalidated cache")
+        await RepositoryCache.shared.remove("budget_dev_scenarios")
+        
+        // Log important mutation
+        logger.info("Updated budget development scenario: \(result.scenarioName)")
 
         return result
     }
 
     func createBudgetDevelopmentItem(_ item: BudgetItem) async throws -> BudgetItem {
-        logger.debug("Creating budget development item: \(item.itemName)")
-
-        let created: BudgetItem = try await supabase
+        let client = try getClient()
+        let created: BudgetItem = try await client
             .from("budget_development_items")
             .insert(item)
             .select()
@@ -1037,18 +1641,19 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             .value
 
         if let scenarioId = item.scenarioId {
-            await cache.remove("budget_dev_items_\(scenarioId)")
+            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
         }
-        await cache.remove("budget_dev_items_all")
-        logger.info("Created budget development item and invalidated cache")
+        await RepositoryCache.shared.remove("budget_dev_items_all")
+        
+        // Log important mutation
+        logger.info("Created budget development item: \(created.itemName)")
 
         return created
     }
 
     func updateBudgetDevelopmentItem(_ item: BudgetItem) async throws -> BudgetItem {
-        logger.debug("Updating budget development item: \(item.id)")
-
-        let result: BudgetItem = try await supabase
+        let client = try getClient()
+        let result: BudgetItem = try await client
             .from("budget_development_items")
             .update(item)
             .eq("id", value: item.id)
@@ -1058,26 +1663,29 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             .value
 
         if let scenarioId = item.scenarioId {
-            await cache.remove("budget_dev_items_\(scenarioId)")
+            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
         }
-        await cache.remove("budget_dev_items_all")
-        logger.info("Updated budget development item and invalidated cache")
+        await RepositoryCache.shared.remove("budget_dev_items_all")
+        
+        // Log important mutation
+        logger.info("Updated budget development item: \(result.itemName)")
 
         return result
     }
 
     func deleteBudgetDevelopmentItem(id: String) async throws {
-        logger.debug("Deleting budget development item: \(id)")
-
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("budget_development_items")
             .delete()
             .eq("id", value: id)
             .execute()
 
         // Invalidate all item caches since we don't know which scenario
-        await cache.remove("budget_dev_items_all")
-        logger.info("Deleted budget development item and invalidated cache")
+        await RepositoryCache.shared.remove("budget_dev_items_all")
+        
+        // Log important mutation
+        logger.info("Deleted budget development item: \(id)")
     }
 
     // MARK: - Tax Rates
@@ -1085,17 +1693,16 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchTaxRates() async throws -> [TaxInfo] {
         let cacheKey = "tax_rates"
 
-        if let cached: [TaxInfo] = await cache.get(cacheKey, maxAge: 3600) {
-            logger.debug("Cache hit: tax_rates (\(cached.count) items)")
+        if let cached: [TaxInfo] = await RepositoryCache.shared.get(cacheKey, maxAge: 3600) {
             return cached
         }
 
-        logger.debug("Fetching tax rates from Supabase...")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let rates: [TaxInfo] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("tax_rates")
                     .select()
                     .order("region", ascending: true)
@@ -1104,10 +1711,13 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(rates.count) tax rates in \(String(format: "%.2f", duration))s")
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow tax rates fetch: \(String(format: "%.2f", duration))s for \(rates.count) items")
+            }
 
-            await cache.set(cacheKey, value: rates)
-            logger.debug("Cached \(rates.count) tax rates")
+            await RepositoryCache.shared.set(cacheKey, value: rates)
 
             return rates
         } catch {
@@ -1118,12 +1728,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func createTaxRate(_ taxInfo: TaxInfo) async throws -> TaxInfo {
-        logger.debug("Creating tax rate for region: \(taxInfo.region)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let created: TaxInfo = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("tax_rates")
                     .insert(taxInfo)
                     .select()
@@ -1133,9 +1743,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created tax rate in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Created tax rate for region: \(created.region)")
 
-            await cache.remove("tax_rates")
+            await RepositoryCache.shared.remove("tax_rates")
 
             return created
         } catch {
@@ -1146,12 +1758,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func updateTaxRate(_ taxInfo: TaxInfo) async throws -> TaxInfo {
-        logger.debug("Updating tax rate: \(taxInfo.id)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let result: TaxInfo = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("tax_rates")
                     .update(taxInfo)
                     .eq("id", value: String(taxInfo.id))
@@ -1162,9 +1774,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated tax rate in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Updated tax rate for region: \(result.region)")
 
-            await cache.remove("tax_rates")
+            await RepositoryCache.shared.remove("tax_rates")
 
             return result
         } catch {
@@ -1175,12 +1789,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     }
 
     func deleteTaxRate(id: Int64) async throws {
-        logger.debug("Deleting tax rate: \(id)")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("tax_rates")
                     .delete()
                     .eq("id", value: String(id))
@@ -1188,9 +1802,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted tax rate in \(String(format: "%.2f", duration))s")
+            
+            // Log important mutation
+            logger.info("Deleted tax rate: \(id)")
 
-            await cache.remove("tax_rates")
+            await RepositoryCache.shared.remove("tax_rates")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Tax rate deletion failed after \(String(format: "%.2f", duration))s", error: error)
@@ -1203,17 +1819,16 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchWeddingEvents() async throws -> [WeddingEvent] {
         let cacheKey = "wedding_events"
 
-        if let cached: [WeddingEvent] = await cache.get(cacheKey, maxAge: 300) {
-            logger.debug("Cache hit: wedding_events (\(cached.count) items)")
+        if let cached: [WeddingEvent] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
             return cached
         }
 
-        logger.debug("Fetching wedding events from Supabase...")
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let events: [WeddingEvent] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("wedding_events")
                     .select()
                     .order("event_date", ascending: true)
@@ -1222,15 +1837,115 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Fetched \(events.count) wedding events in \(String(format: "%.2f", duration))s")
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow wedding events fetch: \(String(format: "%.2f", duration))s for \(events.count) items")
+            }
 
-            await cache.set(cacheKey, value: events)
-            logger.debug("Cached \(events.count) wedding events")
+            await RepositoryCache.shared.set(cacheKey, value: events)
 
             return events
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Wedding events fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    // MARK: - Expense Allocations
+    
+    func fetchExpenseAllocations(scenarioId: String, budgetItemId: String) async throws -> [ExpenseAllocation] {
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let allocations: [ExpenseAllocation] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("expense_budget_allocations")
+                    .select()
+                    .eq("scenario_id", value: scenarioId)
+                    .eq("budget_item_id", value: budgetItemId)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow expense allocations fetch: \(String(format: "%.2f", duration))s for \(allocations.count) items")
+            }
+            
+            return allocations
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Expense allocations fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation {
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let created: ExpenseAllocation = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("expense_budget_allocations")
+                    .insert(allocation)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Created expense allocation: \(created.expenseId) -> \(created.budgetItemId)")
+            
+            // Invalidate related caches
+            await RepositoryCache.shared.remove("expenses")
+            await RepositoryCache.shared.remove("budget_development_items_\(allocation.scenarioId)")
+            
+            return created
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Expense allocation creation failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .update(["linked_gift_owed_id": giftId.uuidString])
+                    .eq("id", value: budgetItemId)
+                    .execute()
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Linked gift \(giftId) to budget item \(budgetItemId)")
+            
+            // Invalidate related caches
+            await RepositoryCache.shared.remove("gifts_and_owed")
+            // Invalidate budget development items cache for all scenarios
+            // (we don't know which scenario this item belongs to)
+            let stats = await RepositoryCache.shared.stats()
+            for key in stats.keys where key.hasPrefix("budget_development_items_") {
+                await RepositoryCache.shared.remove(key)
+            }
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift linking failed after \(String(format: "%.2f", duration))s", error: error)
             throw error
         }
     }

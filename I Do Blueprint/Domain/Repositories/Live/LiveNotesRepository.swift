@@ -11,10 +11,10 @@ import Supabase
 // MARK: - Live Notes Repository
 
 class LiveNotesRepository: NotesRepositoryProtocol {
-    private let supabase: SupabaseClient
+    private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
 
-    init(supabase: SupabaseClient) {
+    init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
     }
 
@@ -22,15 +22,23 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     init() {
         supabase = SupabaseManager.shared.client
     }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
+    }
 
     // MARK: - Fetch Operations
 
     func fetchNotes() async throws -> [Note] {
+        let client = try getClient()
         let startTime = Date()
 
         do {
             let notes: [Note] = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .select()
                     .order("updated_at", ascending: false)
@@ -50,7 +58,8 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     }
 
     func fetchNoteById(_ id: UUID) async throws -> Note {
-        try await supabase
+        let client = try getClient()
+        return try await client
             .from("notes")
             .select()
             .eq("id", value: id.uuidString)
@@ -60,7 +69,8 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     }
 
     func fetchNotesByType(_ type: NoteRelatedType) async throws -> [Note] {
-        try await supabase
+        let client = try getClient()
+        return try await client
             .from("notes")
             .select()
             .eq("related_type", value: type.rawValue)
@@ -70,7 +80,8 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     }
 
     func fetchNotesByRelatedEntity(type: NoteRelatedType, relatedId: String) async throws -> [Note] {
-        try await supabase
+        let client = try getClient()
+        return try await client
             .from("notes")
             .select()
             .eq("related_type", value: type.rawValue)
@@ -83,6 +94,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     // MARK: - Create, Update, Delete
 
     func createNote(_ data: NoteInsertData) async throws -> Note {
+        let client = try getClient()
         let startTime = Date()
 
         struct NoteInsert: Encodable {
@@ -110,7 +122,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
 
         do {
             let note: Note = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("notes")
                     .insert(insertData)
                     .select()
@@ -131,6 +143,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     }
 
     func updateNote(id: UUID, data: NoteInsertData) async throws -> Note {
+        let client = try getClient()
         struct NoteUpdate: Encodable {
             let title: String?
             let content: String
@@ -151,7 +164,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
             relatedType: data.relatedType?.rawValue,
             relatedId: data.relatedId)
 
-        return try await supabase
+        return try await client
             .from("notes")
             .update(updateData)
             .eq("id", value: id.uuidString)
@@ -162,7 +175,8 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     }
 
     func deleteNote(id: UUID) async throws {
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("notes")
             .delete()
             .eq("id", value: id.uuidString)
@@ -172,7 +186,8 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     // MARK: - Search
 
     func searchNotes(query: String) async throws -> [Note] {
-        try await supabase
+        let client = try getClient()
+        return try await client
             .from("notes")
             .select()
             .or("title.ilike.%\(query)%,content.ilike.%\(query)%")

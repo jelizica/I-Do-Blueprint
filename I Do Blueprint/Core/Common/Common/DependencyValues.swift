@@ -1,67 +1,83 @@
 import Dependencies
 import Foundation
 
+// MARK: - Singleton Repository Instances
+
+/// Singleton container for live repository instances
+/// Prevents creating new instances on every dependency access
+private enum LiveRepositories {
+    static let budget: any BudgetRepositoryProtocol = LiveBudgetRepository()
+    static let guest: any GuestRepositoryProtocol = LiveGuestRepository()
+    static let vendor: any VendorRepositoryProtocol = LiveVendorRepository()
+    static let document: any DocumentRepositoryProtocol = LiveDocumentRepository()
+    static let task: any TaskRepositoryProtocol = LiveTaskRepository()
+    static let timeline: any TimelineRepositoryProtocol = LiveTimelineRepository()
+    static let visualPlanning: any VisualPlanningRepositoryProtocol = LiveVisualPlanningRepository()
+    static let settings: any SettingsRepositoryProtocol = LiveSettingsRepository()
+    static let notes: any NotesRepositoryProtocol = LiveNotesRepository()
+}
+
 // MARK: - Dependency Keys
 
 /// Dependency key for BudgetRepository
 private enum BudgetRepositoryKey: DependencyKey {
-    static let liveValue: any BudgetRepositoryProtocol = LiveBudgetRepository()
+    static let liveValue: any BudgetRepositoryProtocol = LiveRepositories.budget
     static let testValue: any BudgetRepositoryProtocol = MockBudgetRepository()
     static let previewValue: any BudgetRepositoryProtocol = MockBudgetRepository()
 }
 
 /// Dependency key for GuestRepository
 private enum GuestRepositoryKey: DependencyKey {
-    static let liveValue: any GuestRepositoryProtocol = LiveGuestRepository()
+    static let liveValue: any GuestRepositoryProtocol = LiveRepositories.guest
     static let testValue: any GuestRepositoryProtocol = MockGuestRepository()
     static let previewValue: any GuestRepositoryProtocol = MockGuestRepository()
 }
 
 /// Dependency key for VendorRepository
 private enum VendorRepositoryKey: DependencyKey {
-    static let liveValue: any VendorRepositoryProtocol = LiveVendorRepository()
+    static let liveValue: any VendorRepositoryProtocol = LiveRepositories.vendor
     static let testValue: any VendorRepositoryProtocol = MockVendorRepository()
     static let previewValue: any VendorRepositoryProtocol = MockVendorRepository()
 }
 
 /// Dependency key for DocumentRepository
 private enum DocumentRepositoryKey: DependencyKey {
-    static let liveValue: any DocumentRepositoryProtocol = LiveDocumentRepository()
+    static let liveValue: any DocumentRepositoryProtocol = LiveRepositories.document
     static let testValue: any DocumentRepositoryProtocol = MockDocumentRepository()
     static let previewValue: any DocumentRepositoryProtocol = MockDocumentRepository()
 }
 
 /// Dependency key for TaskRepository
 private enum TaskRepositoryKey: DependencyKey {
-    static let liveValue: any TaskRepositoryProtocol = LiveTaskRepository()
+    static let liveValue: any TaskRepositoryProtocol = LiveRepositories.task
     static let testValue: any TaskRepositoryProtocol = MockTaskRepository()
     static let previewValue: any TaskRepositoryProtocol = MockTaskRepository()
 }
 
 /// Dependency key for TimelineRepository
 private enum TimelineRepositoryKey: DependencyKey {
-    static let liveValue: any TimelineRepositoryProtocol = LiveTimelineRepository()
+    static let liveValue: any TimelineRepositoryProtocol = LiveRepositories.timeline
     static let testValue: any TimelineRepositoryProtocol = MockTimelineRepository()
     static let previewValue: any TimelineRepositoryProtocol = MockTimelineRepository()
 }
 
 /// Dependency key for VisualPlanningRepository
 private enum VisualPlanningRepositoryKey: DependencyKey {
-    static let liveValue: any VisualPlanningRepositoryProtocol = LiveVisualPlanningRepository()
+    static let liveValue: any VisualPlanningRepositoryProtocol = LiveRepositories.visualPlanning
     static let testValue: any VisualPlanningRepositoryProtocol = MockVisualPlanningRepository()
     static let previewValue: any VisualPlanningRepositoryProtocol = MockVisualPlanningRepository()
 }
 
 /// Dependency key for SettingsRepository
 private enum SettingsRepositoryKey: DependencyKey {
-    static let liveValue: any SettingsRepositoryProtocol = LiveSettingsRepository()
+    static let liveValue: any SettingsRepositoryProtocol = LiveRepositories.settings
     static let testValue: any SettingsRepositoryProtocol = MockSettingsRepository()
     static let previewValue: any SettingsRepositoryProtocol = MockSettingsRepository()
 }
 
 /// Dependency key for NotesRepository
 private enum NotesRepositoryKey: DependencyKey {
-    static let liveValue: any NotesRepositoryProtocol = LiveNotesRepository()
+    static let liveValue: any NotesRepositoryProtocol = LiveRepositories.notes
     static let testValue: any NotesRepositoryProtocol = MockNotesRepository()
     static let previewValue: any NotesRepositoryProtocol = MockNotesRepository()
 }

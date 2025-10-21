@@ -9,12 +9,24 @@ import Foundation
 import Supabase
 
 actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
-    private let client = SupabaseManager.shared.client
+    private let client: SupabaseClient?
     private let logger = AppLogger.api
+    
+    init(client: SupabaseClient? = SupabaseManager.shared.client) {
+        self.client = client
+    }
+    
+    private func getClient() throws -> SupabaseClient {
+        guard let client = client else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return client
+    }
 
     // MARK: - Mood Boards
 
     func fetchMoodBoards() async throws -> [MoodBoard] {
+        let client = try getClient()
         return try await client
             .from("mood_boards")
             .select("*, elements:visual_elements(*)")
@@ -24,6 +36,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func fetchMoodBoard(id: UUID) async throws -> MoodBoard? {
+        let client = try getClient()
         let boards: [MoodBoard] = try await client
             .from("mood_boards")
             .select("*, elements:visual_elements(*)")
@@ -35,6 +48,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func createMoodBoard(_ moodBoard: MoodBoard) async throws -> MoodBoard {
+        let client = try getClient()
         return try await client
             .from("mood_boards")
             .insert(moodBoard)
@@ -45,6 +59,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func updateMoodBoard(_ moodBoard: MoodBoard) async throws -> MoodBoard {
+        let client = try getClient()
         return try await client
             .from("mood_boards")
             .update(moodBoard)
@@ -56,6 +71,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func deleteMoodBoard(id: UUID) async throws {
+        let client = try getClient()
         try await client
             .from("mood_boards")
             .delete()
@@ -66,6 +82,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     // MARK: - Color Palettes
 
     func fetchColorPalettes() async throws -> [ColorPalette] {
+        let client = try getClient()
         return try await client
             .from("color_palettes")
             .select()
@@ -75,6 +92,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func fetchColorPalette(id: UUID) async throws -> ColorPalette? {
+        let client = try getClient()
         let palettes: [ColorPalette] = try await client
             .from("color_palettes")
             .select()
@@ -86,6 +104,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func createColorPalette(_ palette: ColorPalette) async throws -> ColorPalette {
+        let client = try getClient()
         return try await client
             .from("color_palettes")
             .insert(palette)
@@ -96,6 +115,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func updateColorPalette(_ palette: ColorPalette) async throws -> ColorPalette {
+        let client = try getClient()
         return try await client
             .from("color_palettes")
             .update(palette)
@@ -107,6 +127,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func deleteColorPalette(id: UUID) async throws {
+        let client = try getClient()
         try await client
             .from("color_palettes")
             .delete()
@@ -117,6 +138,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     // MARK: - Seating Charts
 
     func fetchSeatingCharts() async throws -> [SeatingChart] {
+        let client = try getClient()
         return try await client
             .from("seating_charts")
             .select()
@@ -126,6 +148,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func fetchSeatingChart(id: UUID) async throws -> SeatingChart? {
+        let client = try getClient()
         let charts: [SeatingChart] = try await client
             .from("seating_charts")
             .select()
@@ -137,6 +160,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func createSeatingChart(_ chart: SeatingChart) async throws -> SeatingChart {
+        let client = try getClient()
         return try await client
             .from("seating_charts")
             .insert(chart)
@@ -147,13 +171,8 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func updateSeatingChart(_ chart: SeatingChart) async throws -> SeatingChart {
-        logger.debug("[REPO] updateSeatingChart called")
-        logger.debug("[REPO] Chart ID: \(chart.id)")
-        logger.debug("[REPO] Number of tables to save: \(chart.tables.count)")
-        logger.debug("[REPO] Number of assignments to save: \(chart.seatingAssignments.count)")
-
+        let client = try getClient()
         // Save the base chart
-        logger.debug("[REPO] Saving base chart to seating_charts table...")
         let updated: SeatingChart = try await client
             .from("seating_charts")
             .update(chart)
@@ -162,84 +181,65 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             .single()
             .execute()
             .value
-        logger.debug("[REPO] Base chart saved successfully")
 
         // Delete existing tables first to avoid duplicate key constraint
-        logger.debug("[REPO] Deleting existing tables for chart...")
         try await client
             .from("seating_tables")
             .delete()
             .eq("seating_chart_id", value: chart.id)
             .execute()
-        logger.debug("[REPO] Existing tables deleted")
 
         // Save tables to seating_tables
-        logger.debug("[REPO] Saving \(chart.tables.count) tables to seating_tables...")
-        for (index, table) in chart.tables.enumerated() {
+        for table in chart.tables {
             do {
                 let tableData = TableDTO(from: table, chartId: chart.id, coupleId: chart.tenantId)
-                logger.debug("[REPO] Saving table \(index + 1): ID=\(table.id), Number=\(table.tableNumber)")
-                logger.debug("[REPO] TableDTO for table \(index + 1): id=\(tableData.id), couple_id=\(tableData.couple_id)")
-
-                let response = try await client
+                try await client
                     .from("seating_tables")
                     .upsert(tableData)
                     .execute()
-
-                logger.debug("[REPO] Table \(index + 1) saved successfully - Response status: \(response.response.statusCode)")
             } catch {
-                logger.error("[REPO] ERROR saving table \(index + 1)", error: error)
-                logger.error("[REPO] Error details: \(String(describing: error))")
+                logger.error("Error saving table \(table.tableNumber) for chart \(chart.id)", error: error)
                 throw error
             }
         }
-        logger.debug("[REPO] All tables saved successfully")
 
         // Delete existing assignments first to avoid conflicts
-        logger.debug("[REPO] Deleting existing seat assignments for chart...")
         try await client
             .from("seat_assignments")
             .delete()
             .eq("seating_chart_id", value: chart.id)
             .execute()
-        logger.debug("[REPO] Existing assignments deleted")
 
         // Save assignments to seat_assignments
-        logger.debug("[REPO] Saving \(chart.seatingAssignments.count) assignments to seat_assignments...")
-        for (index, assignment) in chart.seatingAssignments.enumerated() {
+        for assignment in chart.seatingAssignments {
             do {
                 let assignmentData = SeatAssignmentDTO(from: assignment, coupleId: chart.tenantId)
-                logger.debug("[REPO] Saving assignment \(index + 1): Guest=\(assignment.guestId), Table=\(assignment.tableId)")
                 try await client
                     .from("seat_assignments")
                     .upsert(assignmentData)
                     .execute()
-                logger.debug("[REPO] Assignment \(index + 1) saved successfully")
             } catch {
-                logger.error("[REPO] ERROR saving assignment \(index + 1)", error: error)
+                logger.error("Error saving seat assignment for guest \(assignment.guestId)", error: error)
                 throw error
             }
         }
-        logger.debug("[REPO] All assignments saved successfully")
 
         // Reload tables and assignments to return complete chart
-        logger.debug("[REPO] Reloading tables from database...")
         var completeChart = updated
         completeChart.tables = try await fetchTables(for: chart.id)
-        logger.debug("[REPO] Loaded \(completeChart.tables.count) tables")
-
-        logger.debug("[REPO] Reloading assignments from database...")
         completeChart.seatingAssignments = try await fetchSeatAssignments(for: chart.id)
-        logger.debug("[REPO] Loaded \(completeChart.seatingAssignments.count) assignments")
 
         // Keep the guests from the original chart
         completeChart.guests = chart.guests
 
-        logger.info("[REPO] updateSeatingChart completed successfully")
+        // Log important mutation
+        logger.info("Updated seating chart: \(chart.id) with \(chart.tables.count) tables and \(chart.seatingAssignments.count) assignments")
+        
         return completeChart
     }
 
     func deleteSeatingChart(id: UUID) async throws {
+        let client = try getClient()
         // Delete related data first (cascading delete via foreign keys should handle this, but being explicit)
         try await client
             .from("seat_assignments")
@@ -263,6 +263,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     // MARK: - Seating Chart Details (Tables, Assignments, Guests)
 
     func fetchSeatingGuests(for tenantId: String) async throws -> [SeatingGuest] {
+        let client = try getClient()
         // Fetch from guest_list table
         struct GuestListDTO: Codable {
             let id: String
@@ -313,6 +314,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func fetchTables(for chartId: UUID) async throws -> [Table] {
+        let client = try getClient()
         let response: [TableDTO] = try await client
             .from("seating_tables")
             .select()
@@ -324,6 +326,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func fetchSeatAssignments(for chartId: UUID) async throws -> [SeatingAssignment] {
+        let client = try getClient()
         let response: [SeatAssignmentDTO] = try await client
             .from("seat_assignments")
             .select()

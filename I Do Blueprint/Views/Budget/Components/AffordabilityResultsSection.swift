@@ -40,7 +40,7 @@ struct AffordabilityResultsSection: View {
             .padding(.vertical, 32)
             .background(
                 LinearGradient(
-                    colors: [Color.purple.opacity(0.1), Color.blue.opacity(0.05)],
+                    colors: [Color.purple.opacity(0.1), AppColors.Budget.allocated.opacity(0.05)],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
@@ -53,7 +53,7 @@ struct AffordabilityResultsSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark.circle")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(AppColors.Budget.income)
                         Text("Already Paid")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -69,7 +69,7 @@ struct AffordabilityResultsSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
                         Image(systemName: "chart.line.uptrend.xyaxis")
-                            .foregroundStyle(.blue)
+                            .foregroundStyle(AppColors.Budget.allocated)
                         Text("Projected Savings")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -88,7 +88,7 @@ struct AffordabilityResultsSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 6) {
                         Image(systemName: "clock")
-                            .foregroundStyle(.orange)
+                            .foregroundStyle(AppColors.Budget.pending)
                         Text("Months Left")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -115,7 +115,7 @@ struct AffordabilityResultsSection: View {
             // Informational Note
             HStack(spacing: 12) {
                 Image(systemName: "info.circle")
-                    .foregroundStyle(.blue)
+                    .foregroundStyle(AppColors.Budget.allocated)
 
                 Text("This calculation includes payments already made, projected monthly savings, and additional contributions from gifts and external sources.")
                     .font(.caption)
@@ -123,7 +123,7 @@ struct AffordabilityResultsSection: View {
                     .lineLimit(3)
             }
             .padding(16)
-            .background(Color.blue.opacity(0.05))
+            .background(AppColors.Budget.allocated.opacity(0.05))
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }

@@ -13,12 +13,10 @@ import SwiftUI
 /// New architecture version using repositories and dependency injection
 @MainActor
 class DocumentStoreV2: ObservableObject {
-    @Published private(set) var documents: [Document] = []
+    @Published var loadingState: LoadingState<[Document]> = .idle
     @Published var selectedDocument: Document?
 
-    @Published var isLoading = false
     @Published var isRefreshing = false
-    @Published var error: DocumentError?
     @Published var isUploading = false
     @Published var uploadProgress: Double = 0
 
@@ -44,8 +42,23 @@ class DocumentStoreV2: ObservableObject {
     @Dependency(\.documentRepository) var repository
     @Dependency(\.vendorRepository) var vendorRepository
     @Dependency(\.budgetRepository) var budgetRepository
-
-    // MARK: - Computed Properties
+    
+    // MARK: - Computed Properties for Backward Compatibility
+    
+    var documents: [Document] {
+        loadingState.data ?? []
+    }
+    
+    var isLoading: Bool {
+        loadingState.isLoading
+    }
+    
+    var error: DocumentError? {
+        if case .error(let err) = loadingState {
+            return err as? DocumentError ?? .fetchFailed(underlying: err)
+        }
+        return nil
+    }
 
     var searchText: String {
         get { searchQuery }
@@ -71,55 +84,49 @@ class DocumentStoreV2: ObservableObject {
     // MARK: - Public Interface
 
     func loadDocuments() async {
-        isLoading = true
-        error = nil
+        guard loadingState.isIdle || loadingState.hasError else { return }
+        
+        loadingState = .loading
 
         do {
-            documents = try await repository.fetchDocuments()
+            let fetchedDocuments = try await repository.fetchDocuments()
+            loadingState = .loaded(fetchedDocuments)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(DocumentError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func loadDocuments(type: DocumentType) async {
-        isLoading = true
-        error = nil
+        loadingState = .loading
 
         do {
-            documents = try await repository.fetchDocuments(type: type)
+            let fetchedDocuments = try await repository.fetchDocuments(type: type)
+            loadingState = .loaded(fetchedDocuments)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(DocumentError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func loadDocuments(bucket: DocumentBucket) async {
-        isLoading = true
-        error = nil
+        loadingState = .loading
 
         do {
-            documents = try await repository.fetchDocuments(bucket: bucket)
+            let fetchedDocuments = try await repository.fetchDocuments(bucket: bucket)
+            loadingState = .loaded(fetchedDocuments)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(DocumentError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func loadDocuments(vendorId: Int) async {
-        isLoading = true
-        error = nil
+        loadingState = .loading
 
         do {
-            documents = try await repository.fetchDocuments(vendorId: vendorId)
+            let fetchedDocuments = try await repository.fetchDocuments(vendorId: vendorId)
+            loadingState = .loaded(fetchedDocuments)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(DocumentError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func refreshDocuments() async {
@@ -132,17 +139,25 @@ class DocumentStoreV2: ObservableObject {
         coupleId: UUID) async {
         isUploading = true
         uploadProgress = 0
-        error = nil
 
         do {
             let document = try await repository.uploadDocument(
                 fileData: fileData,
                 metadata: metadata,
                 coupleId: coupleId)
-            documents.insert(document, at: 0)
+            
+            if case .loaded(var currentDocuments) = loadingState {
+                currentDocuments.insert(document, at: 0)
+                loadingState = .loaded(currentDocuments)
+            }
+            
             uploadProgress = 1.0
+            showSuccess("Document uploaded successfully")
         } catch {
-            self.error = .uploadFailed(underlying: error)
+            loadingState = .error(DocumentError.uploadFailed(underlying: error))
+            await handleError(error, operation: "upload document") { [weak self] in
+                await self?.uploadDocument(fileData: fileData, metadata: metadata, coupleId: coupleId)
+            }
         }
 
         isUploading = false
@@ -150,17 +165,35 @@ class DocumentStoreV2: ObservableObject {
 
     func updateDocument(_ document: Document) async {
         // Optimistic update
-        if let index = documents.firstIndex(where: { $0.id == document.id }) {
-            let original = documents[index]
-            documents[index] = document
+        guard case .loaded(var currentDocuments) = loadingState,
+              let index = currentDocuments.firstIndex(where: { $0.id == document.id }) else {
+            return
+        }
+        
+        let original = currentDocuments[index]
+        currentDocuments[index] = document
+        loadingState = .loaded(currentDocuments)
 
-            do {
-                let updated = try await repository.updateDocument(document)
-                documents[index] = updated
-            } catch {
-                // Rollback on error
-                documents[index] = original
-                self.error = .updateFailed(underlying: error)
+        do {
+            let updated = try await repository.updateDocument(document)
+            
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == document.id }) {
+                docs[idx] = updated
+                loadingState = .loaded(docs)
+            }
+            
+            showSuccess("Document updated successfully")
+        } catch {
+            // Rollback on error
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == document.id }) {
+                docs[idx] = original
+                loadingState = .loaded(docs)
+            }
+            loadingState = .error(DocumentError.updateFailed(underlying: error))
+            await handleError(error, operation: "update document") { [weak self] in
+                await self?.updateDocument(document)
             }
         }
     }
@@ -173,8 +206,12 @@ class DocumentStoreV2: ObservableObject {
         expenseId: UUID?,
         tags: [String]) async {
         // Find the document
-        guard let index = documents.firstIndex(where: { $0.id == id }) else { return }
-        let original = documents[index]
+        guard case .loaded(var currentDocuments) = loadingState,
+              let index = currentDocuments.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        
+        let original = currentDocuments[index]
 
         // Create updated document
         var updated = original
@@ -186,102 +223,153 @@ class DocumentStoreV2: ObservableObject {
         updated.updatedAt = Date()
 
         // Optimistic update
-        documents[index] = updated
+        currentDocuments[index] = updated
+        loadingState = .loaded(currentDocuments)
 
         do {
             let result = try await repository.updateDocument(updated)
-            documents[index] = result
+            
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == id }) {
+                docs[idx] = result
+                loadingState = .loaded(docs)
+            }
         } catch {
             // Rollback on error
-            documents[index] = original
-            self.error = .updateFailed(underlying: error)
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == id }) {
+                docs[idx] = original
+                loadingState = .loaded(docs)
+            }
+            loadingState = .error(DocumentError.updateFailed(underlying: error))
         }
     }
 
     func updateDocumentTags(id: UUID, tags: [String]) async {
         // Optimistic update
-        guard let index = documents.firstIndex(where: { $0.id == id }) else { return }
-        let original = documents[index]
+        guard case .loaded(var currentDocuments) = loadingState,
+              let index = currentDocuments.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        
+        let original = currentDocuments[index]
         var updated = original
         updated.tags = tags
         updated.updatedAt = Date()
-        documents[index] = updated
+        currentDocuments[index] = updated
+        loadingState = .loaded(currentDocuments)
 
         do {
             let result = try await repository.updateDocumentTags(id: id, tags: tags)
-            documents[index] = result
+            
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == id }) {
+                docs[idx] = result
+                loadingState = .loaded(docs)
+            }
         } catch {
             // Rollback on error
-            documents[index] = original
-            self.error = .updateFailed(underlying: error)
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == id }) {
+                docs[idx] = original
+                loadingState = .loaded(docs)
+            }
+            loadingState = .error(DocumentError.updateFailed(underlying: error))
         }
     }
 
     func updateDocumentType(id: UUID, type: DocumentType) async {
         // Optimistic update
-        guard let index = documents.firstIndex(where: { $0.id == id }) else { return }
-        let original = documents[index]
+        guard case .loaded(var currentDocuments) = loadingState,
+              let index = currentDocuments.firstIndex(where: { $0.id == id }) else {
+            return
+        }
+        
+        let original = currentDocuments[index]
         var updated = original
         updated.documentType = type
         updated.updatedAt = Date()
-        documents[index] = updated
+        currentDocuments[index] = updated
+        loadingState = .loaded(currentDocuments)
 
         do {
             let result = try await repository.updateDocumentType(id: id, type: type)
-            documents[index] = result
+            
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == id }) {
+                docs[idx] = result
+                loadingState = .loaded(docs)
+            }
         } catch {
             // Rollback on error
-            documents[index] = original
-            self.error = .updateFailed(underlying: error)
+            if case .loaded(var docs) = loadingState,
+               let idx = docs.firstIndex(where: { $0.id == id }) {
+                docs[idx] = original
+                loadingState = .loaded(docs)
+            }
+            loadingState = .error(DocumentError.updateFailed(underlying: error))
         }
     }
 
     func deleteDocument(_ document: Document) async {
         // Optimistic delete
-        guard let index = documents.firstIndex(where: { $0.id == document.id }) else { return }
-        let removed = documents.remove(at: index)
+        guard case .loaded(var currentDocuments) = loadingState,
+              let index = currentDocuments.firstIndex(where: { $0.id == document.id }) else {
+            return
+        }
+        
+        let removed = currentDocuments.remove(at: index)
+        loadingState = .loaded(currentDocuments)
 
         do {
             try await repository.deleteDocument(id: document.id)
+            showSuccess("Document deleted successfully")
         } catch {
             // Rollback on error
-            documents.insert(removed, at: index)
-            self.error = .deleteFailed(underlying: error)
+            if case .loaded(var docs) = loadingState {
+                docs.insert(removed, at: index)
+                loadingState = .loaded(docs)
+            }
+            loadingState = .error(DocumentError.deleteFailed(underlying: error))
+            await handleError(error, operation: "delete document") { [weak self] in
+                await self?.deleteDocument(document)
+            }
         }
     }
 
     func batchDeleteDocuments(ids: [UUID]) async {
         // Optimistic batch delete
-        let originalDocuments = documents
-        documents.removeAll { ids.contains($0.id) }
+        guard case .loaded(var currentDocuments) = loadingState else { return }
+        
+        let originalDocuments = currentDocuments
+        currentDocuments.removeAll { ids.contains($0.id) }
+        loadingState = .loaded(currentDocuments)
 
         do {
             try await repository.batchDeleteDocuments(ids: ids)
         } catch {
             // Rollback on error
-            documents = originalDocuments
-            self.error = .deleteFailed(underlying: error)
+            loadingState = .loaded(originalDocuments)
+            loadingState = .error(DocumentError.deleteFailed(underlying: error))
         }
     }
 
     func searchDocuments(query: String) async {
-        isLoading = true
-        error = nil
+        loadingState = .loading
 
         do {
-            documents = try await repository.searchDocuments(query: query)
+            let fetchedDocuments = try await repository.searchDocuments(query: query)
+            loadingState = .loaded(fetchedDocuments)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(DocumentError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func downloadDocument(_ document: Document) async -> Data? {
         do {
             return try await repository.downloadDocument(document: document)
         } catch {
-            self.error = .downloadFailed(underlying: error)
+            loadingState = .error(DocumentError.downloadFailed(underlying: error))
             return nil
         }
     }
@@ -290,9 +378,15 @@ class DocumentStoreV2: ObservableObject {
         do {
             return try await repository.getPublicURL(for: document)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(DocumentError.fetchFailed(underlying: error))
             return nil
         }
+    }
+    
+    // MARK: - Retry Helper
+    
+    func retryLoad() async {
+        await loadDocuments()
     }
 
     // MARK: - Computed Properties
@@ -419,7 +513,7 @@ class DocumentStoreV2: ObservableObject {
             availableVendors = vendors.map { (id: Int($0.id), name: $0.vendorName) }
             availableExpenses = expenses.map { (id: $0.id, description: $0.expenseName) }
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(DocumentError.fetchFailed(underlying: error))
         }
     }
 
@@ -449,16 +543,20 @@ class DocumentStoreV2: ObservableObject {
 
     func batchUpdateType(_ type: DocumentType) async {
         let idsToUpdate = Array(selectedDocumentIds)
-        guard !idsToUpdate.isEmpty else { return }
+        guard !idsToUpdate.isEmpty,
+              case .loaded(var currentDocuments) = loadingState else {
+            return
+        }
 
         // Optimistic update
-        let originalDocuments = documents
+        let originalDocuments = currentDocuments
         for id in idsToUpdate {
-            if let index = documents.firstIndex(where: { $0.id == id }) {
-                documents[index].documentType = type
-                documents[index].updatedAt = Date()
+            if let index = currentDocuments.firstIndex(where: { $0.id == id }) {
+                currentDocuments[index].documentType = type
+                currentDocuments[index].updatedAt = Date()
             }
         }
+        loadingState = .loaded(currentDocuments)
 
         do {
             // Update documents with bounded concurrency (max 5 concurrent operations)
@@ -499,8 +597,8 @@ class DocumentStoreV2: ObservableObject {
             }
         } catch {
             // Rollback on error
-            documents = originalDocuments
-            self.error = .updateFailed(underlying: error)
+            loadingState = .loaded(originalDocuments)
+            loadingState = .error(DocumentError.updateFailed(underlying: error))
         }
     }
 
@@ -620,29 +718,50 @@ class DocumentStoreV2: ObservableObject {
         metadata: FileUploadMetadata,
         coupleId: UUID,
         uploadedBy: String) async throws -> Document {
-        guard let fileData = try? Data(contentsOf: metadata.localURL) else {
+        // Read file data safely using URLSession (even for file URLs)
+        let fileData: Data
+        do {
+            fileData = try await withCheckedThrowingContinuation { continuation in
+                URLSession.shared.dataTask(with: metadata.localURL) { data, _, error in
+                    if let error = error {
+                        continuation.resume(throwing: error)
+                    } else if let data = data {
+                        continuation.resume(returning: data)
+                    } else {
+                        continuation.resume(throwing: NSError(
+                            domain: "DocumentStoreV2",
+                            code: -1,
+                            userInfo: [NSLocalizedDescriptionKey: "Failed to read file data"]))
+                    }
+                }.resume()
+            }
+        } catch {
             throw NSError(
                 domain: "DocumentStoreV2",
                 code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Failed to read file data"])
+                userInfo: [NSLocalizedDescriptionKey: "Failed to read file data: \(error.localizedDescription)"])
         }
 
         isUploading = true
         uploadProgress = 0
-        error = nil
 
         do {
             let document = try await repository.uploadDocument(
                 fileData: fileData,
                 metadata: metadata,
                 coupleId: coupleId)
-            documents.insert(document, at: 0)
+            
+            if case .loaded(var currentDocuments) = loadingState {
+                currentDocuments.insert(document, at: 0)
+                loadingState = .loaded(currentDocuments)
+            }
+            
             uploadProgress = 1.0
             isUploading = false
             return document
         } catch {
             isUploading = false
-            self.error = .uploadFailed(underlying: error)
+            loadingState = .error(DocumentError.uploadFailed(underlying: error))
             throw error
         }
     }

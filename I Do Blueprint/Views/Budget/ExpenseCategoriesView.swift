@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ExpenseCategoriesView: View {
-    @StateObject private var budgetStore = BudgetStoreV2()
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
     @State private var showingAddCategory = false
     @State private var editingCategory: BudgetCategory?
     @State private var searchText = ""
@@ -210,11 +210,11 @@ struct CategoryRowView: View {
 
     private var statusColor: Color {
         if utilizationPercentage > 100 {
-            .red
+            AppColors.Budget.overBudget
         } else if utilizationPercentage > 80 {
-            .orange
+            AppColors.Budget.pending
         } else {
-            .green
+            AppColors.Budget.underBudget
         }
     }
 
@@ -222,7 +222,7 @@ struct CategoryRowView: View {
         HStack(spacing: 12) {
             // Category color indicator
             Circle()
-                .fill(Color(hex: category.color) ?? .blue)
+                .fill(Color(hex: category.color) ?? AppColors.Budget.allocated)
                 .frame(width: 12, height: 12)
 
             // Category details
@@ -353,12 +353,12 @@ struct AddCategoryView: View {
     @State private var categoryName = ""
     @State private var description = ""
     @State private var allocatedAmount = ""
-    @State private var selectedColor = Color.blue
+    @State private var selectedColor = AppColors.Budget.allocated
     @State private var typicalPercentage = ""
     @State private var parentCategory: BudgetCategory?
 
     private let predefinedColors: [Color] = [
-        .blue, .green, .red, .orange, .purple, .pink,
+        AppColors.Budget.allocated, AppColors.Budget.income, AppColors.Budget.expense, AppColors.Budget.pending, .purple, .pink,
         .yellow, .cyan, .mint, .indigo, .brown, .gray
     ]
 
@@ -478,12 +478,12 @@ struct EditCategoryView: View {
         _categoryName = State(initialValue: category.categoryName)
         _description = State(initialValue: category.description ?? "")
         _allocatedAmount = State(initialValue: String(category.allocatedAmount))
-        _selectedColor = State(initialValue: .blue)
+        _selectedColor = State(initialValue: AppColors.Budget.allocated)
         _typicalPercentage = State(initialValue: String(category.typicalPercentage ?? 0.0))
     }
 
     private let predefinedColors: [Color] = [
-        .blue, .green, .red, .orange, .purple, .pink,
+        AppColors.Budget.allocated, AppColors.Budget.income, AppColors.Budget.expense, AppColors.Budget.pending, .purple, .pink,
         .yellow, .cyan, .mint, .indigo, .brown, .gray
     ]
 

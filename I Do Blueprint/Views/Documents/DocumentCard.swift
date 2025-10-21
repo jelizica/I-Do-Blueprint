@@ -190,7 +190,13 @@ struct DocumentCard: View {
             Button(action: {
                 // Open document
                 if let url = try? getPublicURL() {
-                    NSWorkspace.shared.open(url)
+                    // ✅ Validate URL before opening
+                    do {
+                        try URLValidator.validate(url)
+                        NSWorkspace.shared.open(url)
+                    } catch {
+                        logger.error("Rejected unsafe document URL", error: error)
+                    }
                 }
             }) {
                 Label("View", systemImage: "eye")
@@ -377,7 +383,14 @@ struct DocumentListRow: View {
                 HStack(spacing: 8) {
                     Button(action: {
                         if let url = try? getPublicURL() {
-                            NSWorkspace.shared.open(url)
+                            // ✅ Validate URL before opening
+                            do {
+                                try URLValidator.validate(url)
+                                NSWorkspace.shared.open(url)
+                            } catch {
+                                // Log error silently in list view
+                                print("Rejected unsafe URL: \(url.absoluteString)")
+                            }
                         }
                     }) {
                         Image(systemName: "eye")

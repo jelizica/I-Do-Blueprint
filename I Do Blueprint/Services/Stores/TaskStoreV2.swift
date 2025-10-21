@@ -12,37 +12,55 @@ import SwiftUI
 
 @MainActor
 class TaskStoreV2: ObservableObject {
-    @Published private(set) var tasks: [WeddingTask] = []
+    @Published var loadingState: LoadingState<[WeddingTask]> = .idle
     @Published private(set) var taskStats: TaskStats?
     @Published var selectedTask: WeddingTask?
 
-    @Published var isLoading = false
-    @Published var error: TaskError?
+    @Published var successMessage: String?
 
     // Filters
     @Published var filterStatus: TaskStatus?
     @Published var filterPriority: WeddingTaskPriority?
     @Published var searchQuery = ""
+    @Published var sortOption: TaskSortOption = .dueDate
 
     @Dependency(\.taskRepository) var repository
+    
+    // MARK: - Computed Properties for Backward Compatibility
+    
+    var tasks: [WeddingTask] {
+        loadingState.data ?? []
+    }
+    
+    var isLoading: Bool {
+        loadingState.isLoading
+    }
+    
+    var error: TaskError? {
+        if case .error(let err) = loadingState {
+            return err as? TaskError ?? .fetchFailed(underlying: err)
+        }
+        return nil
+    }
 
     // MARK: - Task Operations
 
     func loadTasks() async {
-        isLoading = true
-        error = nil
+        guard loadingState.isIdle || loadingState.hasError else { return }
+        
+        loadingState = .loading
 
         do {
             async let tasksResult = repository.fetchTasks()
             async let statsResult = repository.fetchTaskStats()
 
-            tasks = try await tasksResult
+            let fetchedTasks = try await tasksResult
             taskStats = try await statsResult
+            
+            loadingState = .loaded(fetchedTasks)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(TaskError.fetchFailed(underlying: error))
         }
-
-        isLoading = false
     }
 
     func refreshTasks() async {
@@ -50,50 +68,90 @@ class TaskStoreV2: ObservableObject {
     }
 
     func createTask(_ insertData: TaskInsertData) async {
-        isLoading = true
-        error = nil
-
-        do {
-            let task = try await repository.createTask(insertData)
-            tasks.append(task)
-            taskStats = try await repository.fetchTaskStats()
-        } catch {
-            self.error = .createFailed(underlying: error)
-        }
-
-        isLoading = false
+    successMessage = nil
+    
+    do {
+    let task = try await repository.createTask(insertData)
+    
+    if case .loaded(var currentTasks) = loadingState {
+    currentTasks.append(task)
+    loadingState = .loaded(currentTasks)
+    }
+    
+    taskStats = try await repository.fetchTaskStats()
+    showSuccess("Task created successfully")
+    } catch {
+    loadingState = .error(TaskError.createFailed(underlying: error))
+    await handleError(error, operation: "create task") { [weak self] in
+    await self?.createTask(insertData)
+    }
+    }
     }
 
     func updateTask(_ task: WeddingTask) async {
-        // Optimistic update
-        if let index = tasks.firstIndex(where: { $0.id == task.id }) {
-            let original = tasks[index]
-            tasks[index] = task
+        successMessage = nil
 
-            do {
-                let updated = try await repository.updateTask(task)
-                tasks[index] = updated
-                taskStats = try await repository.fetchTaskStats()
-            } catch {
-                // Rollback on error
-                tasks[index] = original
-                self.error = .updateFailed(underlying: error)
+        // Optimistic update
+        guard case .loaded(var currentTasks) = loadingState,
+              let index = currentTasks.firstIndex(where: { $0.id == task.id }) else {
+            return
+        }
+        
+        let original = currentTasks[index]
+        currentTasks[index] = task
+        loadingState = .loaded(currentTasks)
+
+        do {
+            let updated = try await repository.updateTask(task)
+            
+            if case .loaded(var tasks) = loadingState,
+               let idx = tasks.firstIndex(where: { $0.id == task.id }) {
+                tasks[idx] = updated
+                loadingState = .loaded(tasks)
+            }
+            
+            taskStats = try await repository.fetchTaskStats()
+            showSuccess("Task updated successfully")
+        } catch {
+            // Rollback on error
+            if case .loaded(var tasks) = loadingState,
+               let idx = tasks.firstIndex(where: { $0.id == task.id }) {
+                tasks[idx] = original
+                loadingState = .loaded(tasks)
+            }
+            loadingState = .error(TaskError.updateFailed(underlying: error))
+            await handleError(error, operation: "update task") { [weak self] in
+                await self?.updateTask(task)
             }
         }
     }
 
     func deleteTask(_ task: WeddingTask) async {
+        successMessage = nil
+
         // Optimistic delete
-        guard let index = tasks.firstIndex(where: { $0.id == task.id }) else { return }
-        let removed = tasks.remove(at: index)
+        guard case .loaded(var currentTasks) = loadingState,
+              let index = currentTasks.firstIndex(where: { $0.id == task.id }) else {
+            return
+        }
+        
+        let removed = currentTasks.remove(at: index)
+        loadingState = .loaded(currentTasks)
 
         do {
             try await repository.deleteTask(id: task.id)
             taskStats = try await repository.fetchTaskStats()
+            showSuccess("Task deleted successfully")
         } catch {
             // Rollback on error
-            tasks.insert(removed, at: index)
-            self.error = .deleteFailed(underlying: error)
+            if case .loaded(var tasks) = loadingState {
+                tasks.insert(removed, at: index)
+                loadingState = .loaded(tasks)
+            }
+            loadingState = .error(TaskError.deleteFailed(underlying: error))
+            await handleError(error, operation: "delete task") { [weak self] in
+                await self?.deleteTask(task)
+            }
         }
     }
 
@@ -110,7 +168,7 @@ class TaskStoreV2: ObservableObject {
         do {
             return try await repository.fetchSubtasks(taskId: taskId)
         } catch {
-            self.error = .fetchFailed(underlying: error)
+            loadingState = .error(TaskError.fetchFailed(underlying: error))
             return []
         }
     }
@@ -120,16 +178,18 @@ class TaskStoreV2: ObservableObject {
             let subtask = try await repository.createSubtask(taskId: taskId, insertData: insertData)
 
             // Update task's subtasks in local state
-            if let index = tasks.firstIndex(where: { $0.id == taskId }) {
-                var task = tasks[index]
+            if case .loaded(var currentTasks) = loadingState,
+               let index = currentTasks.firstIndex(where: { $0.id == taskId }) {
+                var task = currentTasks[index]
                 if task.subtasks == nil {
                     task.subtasks = []
                 }
                 task.subtasks?.append(subtask)
-                tasks[index] = task
+                currentTasks[index] = task
+                loadingState = .loaded(currentTasks)
             }
         } catch {
-            self.error = .createFailed(underlying: error)
+            loadingState = .error(TaskError.createFailed(underlying: error))
         }
     }
 
@@ -138,12 +198,14 @@ class TaskStoreV2: ObservableObject {
             let updated = try await repository.updateSubtask(subtask)
 
             // Update in local state
-            if let taskIndex = tasks.firstIndex(where: { $0.id == subtask.taskId }),
-               let subtaskIndex = tasks[taskIndex].subtasks?.firstIndex(where: { $0.id == subtask.id }) {
-                tasks[taskIndex].subtasks?[subtaskIndex] = updated
+            if case .loaded(var currentTasks) = loadingState,
+               let taskIndex = currentTasks.firstIndex(where: { $0.id == subtask.taskId }),
+               let subtaskIndex = currentTasks[taskIndex].subtasks?.firstIndex(where: { $0.id == subtask.id }) {
+                currentTasks[taskIndex].subtasks?[subtaskIndex] = updated
+                loadingState = .loaded(currentTasks)
             }
         } catch {
-            self.error = .updateFailed(underlying: error)
+            loadingState = .error(TaskError.updateFailed(underlying: error))
         }
     }
 
@@ -152,11 +214,13 @@ class TaskStoreV2: ObservableObject {
             try await repository.deleteSubtask(id: subtask.id)
 
             // Remove from local state
-            if let taskIndex = tasks.firstIndex(where: { $0.id == subtask.taskId }) {
-                tasks[taskIndex].subtasks?.removeAll { $0.id == subtask.id }
+            if case .loaded(var currentTasks) = loadingState,
+               let taskIndex = currentTasks.firstIndex(where: { $0.id == subtask.taskId }) {
+                currentTasks[taskIndex].subtasks?.removeAll { $0.id == subtask.id }
+                loadingState = .loaded(currentTasks)
             }
         } catch {
-            self.error = .deleteFailed(underlying: error)
+            loadingState = .error(TaskError.deleteFailed(underlying: error))
         }
     }
 
@@ -183,13 +247,57 @@ class TaskStoreV2: ObservableObject {
             filtered = filtered.filter { $0.priority == priority }
         }
 
-        return filtered.sorted { task1, task2 in
-            // Sort by due date, then priority
-            if let date1 = task1.dueDate, let date2 = task2.dueDate {
+        // Apply sort
+        return sortTasks(filtered, by: sortOption)
+    }
+
+    private func sortTasks(_ tasks: [WeddingTask], by option: TaskSortOption) -> [WeddingTask] {
+        switch option {
+        case .dueDate:
+            tasks.sorted { task1, task2 in
+                guard let date1 = task1.dueDate else { return false }
+                guard let date2 = task2.dueDate else { return true }
                 return date1 < date2
             }
-            return task1.priority.sortOrder < task2.priority.sortOrder
+        case .priority:
+            tasks.sorted { $0.priority.sortOrder < $1.priority.sortOrder }
+        case .createdDate:
+            tasks.sorted { $0.createdAt > $1.createdAt }
+        case .taskName:
+            tasks.sorted { $0.taskName < $1.taskName }
         }
+    }
+
+    func clearFilters() {
+        filterStatus = nil
+        filterPriority = nil
+        searchQuery = ""
+        sortOption = .dueDate
+    }
+
+    func tasks(for status: TaskStatus) -> [WeddingTask] {
+        filteredTasks.filter { $0.status == status }
+    }
+
+    func moveTask(_ task: WeddingTask, to newStatus: TaskStatus) async {
+        var updated = task
+        updated.status = newStatus
+        updated.updatedAt = Date()
+        await updateTask(updated)
+    }
+
+    func clearError() {
+        if loadingState.hasError {
+            loadingState = .idle
+        }
+    }
+    
+    func retryLoad() async {
+        await loadTasks()
+    }
+
+    func clearSuccessMessage() {
+        successMessage = nil
     }
 
     var overdueTasks: [WeddingTask] {
@@ -215,5 +323,27 @@ class TaskStoreV2: ObservableObject {
 
     var stats: TaskStats {
         taskStats ?? TaskStats(total: 0, notStarted: 0, inProgress: 0, completed: 0, overdue: 0)
+    }
+}
+
+// MARK: - Task Sort Option
+
+enum TaskSortOption: String, CaseIterable {
+    case dueDate = "Due Date"
+    case priority = "Priority"
+    case createdDate = "Created Date"
+    case taskName = "Task Name"
+}
+
+// MARK: - Priority Sort Order
+
+extension WeddingTaskPriority {
+    var sortOrder: Int {
+        switch self {
+        case .urgent: 0
+        case .high: 1
+        case .medium: 2
+        case .low: 3
+        }
     }
 }

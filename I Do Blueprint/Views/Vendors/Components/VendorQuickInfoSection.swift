@@ -16,7 +16,7 @@ struct VendorQuickInfoSection: View {
             SectionHeaderV2(
                 title: "Quick Info",
                 icon: "info.circle.fill",
-                color: .blue
+                color: AppColors.Vendor.contacted
             )
 
             LazyVGrid(
@@ -40,7 +40,7 @@ struct VendorQuickInfoSection: View {
                         icon: "dollarsign.circle.fill",
                         title: "Quoted Amount",
                         value: "$\(Int(quotedAmount))",
-                        color: .green
+                        color: AppColors.Vendor.booked
                     )
                 }
 
@@ -48,7 +48,7 @@ struct VendorQuickInfoSection: View {
                     icon: vendor.isBooked == true ? "checkmark.seal.fill" : "clock.badge.fill",
                     title: "Status",
                     value: vendor.statusDisplayName,
-                    color: vendor.isBooked == true ? .green : .orange
+                    color: vendor.isBooked == true ? AppColors.Vendor.booked : AppColors.Vendor.pending
                 )
 
                 if let dateBooked = vendor.dateBooked, vendor.isBooked == true {
@@ -56,7 +56,7 @@ struct VendorQuickInfoSection: View {
                         icon: "calendar.badge.checkmark",
                         title: "Booked On",
                         value: dateBooked.formatted(date: .abbreviated, time: .omitted),
-                        color: .blue
+                        color: AppColors.Vendor.contacted
                     )
                 }
 
@@ -65,7 +65,7 @@ struct VendorQuickInfoSection: View {
                         icon: "doc.text.fill",
                         title: "Contract",
                         value: contractStatus.displayName,
-                        color: .blue
+                        color: AppColors.Vendor.contract
                     )
                 }
             }

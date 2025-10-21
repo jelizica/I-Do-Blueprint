@@ -11,7 +11,7 @@ import Dependencies
 import Combine
 
 struct VendorListViewV2: View {
-    @StateObject private var vendorStore = VendorStoreV2()
+    @EnvironmentObject private var vendorStore: VendorStoreV2
     @StateObject private var exportHandler = VendorExportHandler()
     @Dependency(\.alertPresenter) var alertPresenter
     @State private var searchText = ""
@@ -28,58 +28,64 @@ struct VendorListViewV2: View {
 
     var body: some View {
         NavigationStack {
-            HStack(spacing: 0) {
-                // Left panel - Vendor list with enhanced design
-                VStack(spacing: 0) {
-                    // Modern Stats Section
-                    ModernVendorStatsView(stats: vendorStore.stats)
-                        .padding(Spacing.md)
-                        .accessibilityElement(children: .contain)
-                        .accessibilityLabel("Vendor statistics")
+            GeometryReader { geometry in
+                HStack(spacing: 0) {
+                    // Left panel - Vendor list with enhanced design
+                    VStack(spacing: 0) {
+                        // Modern Stats Section
+                        ModernVendorStatsView(stats: vendorStore.stats)
+                            .padding(Spacing.md)
+                            .accessibilityElement(children: .contain)
+                            .accessibilityLabel("Vendor statistics")
 
-                    Divider()
+                        Divider()
 
-                    // Enhanced Search and Filters
-                    ModernVendorSearchBar(
-                        searchText: $searchText,
-                        selectedFilter: $selectedFilter,
-                        selectedCategory: $selectedCategory,
-                        groupByStatus: $groupByStatus
-                    )
-                    .padding(.horizontal, Spacing.md)
-                    .padding(.vertical, Spacing.sm)
-
-                    Divider()
-
-                    // Vendor List with grouping option
-                    if groupByStatus {
-                        GroupedVendorListView(
-                            vendors: filteredVendors,
-                            totalCount: vendorStore.vendors.filter { !$0.isArchived }.count,
-                            isLoading: vendorStore.isLoading,
-                            isSearching: !searchText.isEmpty,
-                            onClearSearch: { searchText = "" },
-                            selectedVendorId: $selectedVendorId,
-                            onRefresh: {
-                                await vendorStore.loadVendors()
-                            }
+                        // Enhanced Search and Filters
+                        ModernVendorSearchBar(
+                            searchText: $searchText,
+                            selectedFilter: $selectedFilter,
+                            selectedCategory: $selectedCategory,
+                            groupByStatus: $groupByStatus,
+                            filteredCount: filteredVendors.count,
+                            totalCount: vendorStore.vendors.filter { !$0.isArchived }.count
                         )
-                    } else {
-                        ModernVendorListView(
-                            vendors: filteredVendors,
-                            totalCount: vendorStore.vendors.filter { !$0.isArchived }.count,
-                            isLoading: vendorStore.isLoading,
-                            isSearching: !searchText.isEmpty,
-                            onClearSearch: { searchText = "" },
-                            selectedVendorId: $selectedVendorId,
-                            onRefresh: {
-                                await vendorStore.loadVendors()
-                            }
-                        )
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm)
+
+                        Divider()
+
+                        // Vendor List with grouping option
+                        if groupByStatus {
+                            GroupedVendorListView(
+                                vendors: filteredVendors,
+                                totalCount: vendorStore.vendors.filter { !$0.isArchived }.count,
+                                isLoading: vendorStore.isLoading,
+                                isSearching: !searchText.isEmpty,
+                                onClearSearch: { searchText = "" },
+                                selectedVendorId: $selectedVendorId,
+                                onRefresh: {
+                                    await vendorStore.loadVendors()
+                                }
+                            )
+                        } else {
+                            ModernVendorListView(
+                                vendors: filteredVendors,
+                                totalCount: vendorStore.vendors.filter { !$0.isArchived }.count,
+                                isLoading: vendorStore.isLoading,
+                                isSearching: !searchText.isEmpty,
+                                onClearSearch: { searchText = "" },
+                                selectedVendorId: $selectedVendorId,
+                                onRefresh: {
+                                    await vendorStore.loadVendors()
+                                }
+                            )
+                        }
                     }
-                }
-                .frame(width: 480)
-                .background(AppColors.background)
+                    .frame(
+                        minWidth: ResponsiveLayout.minListPanelWidth,
+                        maxWidth: ResponsiveLayout.listPanelWidth(for: geometry)
+                    )
+                    .background(AppColors.background)
 
                 Divider()
 
@@ -97,6 +103,7 @@ struct VendorListViewV2: View {
                     EmptyVendorDetailView()
                 }
             }
+            }
             .navigationTitle("Wedding Vendors")
             .accessibilityAddTraits(.isHeader)
             .toolbar {
@@ -110,8 +117,12 @@ struct VendorListViewV2: View {
                 )
             }
             .sheet(isPresented: $showingAddVendor) {
-                Text("Add Vendor Form")
-                    .frame(minWidth: 500, maxWidth: 600, minHeight: 500, maxHeight: 650)
+                AddVendorView { newVendor in
+                    Task {
+                        await vendorStore.addVendor(newVendor)
+                    }
+                }
+                .frame(minWidth: 700, idealWidth: 750, maxWidth: 800, minHeight: 600, idealHeight: 700, maxHeight: 800)
             }
             .task {
                 await vendorStore.loadVendors()
@@ -136,16 +147,16 @@ struct VendorListViewV2: View {
     /// Monitor VendorStore for errors and success messages, presenting them via AlertPresenter
     private func monitorVendorStoreAlerts() async {
         await withTaskGroup(of: Void.self) { group in
-            // Monitor for errors
+            // Monitor for errors via loadingState
             group.addTask { @MainActor in
-                for await error in self.vendorStore.$error.values {
-                    guard let error = error else { continue }
-                    await self.alertPresenter.showError(
-                        title: "Vendor Error",
-                        message: error.errorDescription ?? "An unknown error occurred",
-                        error: error
-                    )
-                    self.vendorStore.error = nil
+                for await state in self.vendorStore.$loadingState.values {
+                    if case .error(let error) = state {
+                        await self.alertPresenter.showError(
+                            title: "Vendor Error",
+                            message: error.localizedDescription,
+                            error: error
+                        )
+                    }
                 }
             }
 

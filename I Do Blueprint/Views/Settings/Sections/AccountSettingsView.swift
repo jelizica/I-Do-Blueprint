@@ -164,7 +164,7 @@ struct AccountSettingsView: View {
                 logger.info("Session cleared")
 
                 // 3. Clear all repository caches
-                await RepositoryCache.clearAll()
+                await RepositoryCache.shared.clearAll()
                 logger.info("Repository caches cleared")
 
                 // 4. Reset AppCoordinator stores (handled by AppCoordinator observation of auth state)

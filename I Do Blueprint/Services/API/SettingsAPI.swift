@@ -9,11 +9,18 @@ import Foundation
 import Supabase
 
 class SettingsAPI {
-    private let supabase: SupabaseClient
+    private let supabase: SupabaseClient?
     private let logger = AppLogger.api
 
-    init(supabase: SupabaseClient = SupabaseManager.shared.client) {
+    init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
+    }
+
+    private func getClient() throws -> SupabaseClient {
+        guard let supabase = supabase else {
+            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+        }
+        return supabase
     }
 
     // MARK: - Settings CRUD
@@ -24,12 +31,12 @@ class SettingsAPI {
             let settings: CoupleSettings
         }
 
-        logger.debug("Fetching settings")
         let startTime = Date()
 
         do {
+            let client = try getClient()
             let response: SettingsRow = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("couple_settings")
                     .select("settings")
                     .limit(1)
@@ -61,8 +68,9 @@ class SettingsAPI {
         let startTime = Date()
 
         do {
+            let client = try getClient()
             // Get current authenticated user ID to use in WHERE clause
-            let session = try await supabase.auth.session
+            let session = try await client.auth.session
             let userId = session.user.id
             logger.debug("User ID: \(userId)")
 
@@ -78,7 +86,7 @@ class SettingsAPI {
             }
 
             let response: SettingsRow = try await RepositoryNetwork.withRetry {
-                try await self.supabase
+                try await client
                     .from("couple_settings")
                     .update(SettingsUpdate(settings: mergedSettings))
                     .eq("couple_id", value: userId.uuidString)
@@ -272,7 +280,8 @@ class SettingsAPI {
 
     /// Fetch all custom vendor categories
     func fetchCustomVendorCategories() async throws -> [CustomVendorCategory] {
-        try await supabase
+        let client = try getClient()
+        return try await client
             .from("vendor_custom_categories")
             .select()
             .order("name", ascending: true)
@@ -296,7 +305,8 @@ class SettingsAPI {
             description: description,
             typical_budget_percentage: typicalBudgetPercentage)
 
-        return try await supabase
+        let client = try getClient()
+        return try await client
             .from("vendor_custom_categories")
             .insert(request)
             .select()
@@ -322,7 +332,8 @@ class SettingsAPI {
             description: description,
             typical_budget_percentage: typicalBudgetPercentage)
 
-        return try await supabase
+        let client = try getClient()
+        return try await client
             .from("vendor_custom_categories")
             .update(request)
             .eq("id", value: id)
@@ -334,7 +345,8 @@ class SettingsAPI {
 
     /// Delete a custom vendor category
     func deleteCustomVendorCategory(id: String) async throws {
-        try await supabase
+        let client = try getClient()
+        try await client
             .from("vendor_custom_categories")
             .delete()
             .eq("id", value: id)
@@ -348,8 +360,9 @@ class SettingsAPI {
             let vendor_name: String
         }
 
-        return try await supabase
-            .from("vendorInformation")
+        let client = try getClient()
+        return try await client
+            .from("vendor_information")
             .select("id, vendor_name")
             .eq("vendor_category_id", value: categoryId)
             .limit(5)
@@ -369,7 +382,8 @@ class SettingsAPI {
             let contacts: PhoneFormatSection?
         }
 
-        let response: FormatResponse = try await supabase
+        let client = try getClient()
+        let response: FormatResponse = try await client
             .rpc("format_phone_numbers")
             .execute()
             .value
@@ -390,7 +404,8 @@ class SettingsAPI {
             "keep_categories": keepCategories
         ]
 
-        try await supabase
+        let client = try getClient()
+        try await client
             .rpc("reset_user_data", params: params)
             .execute()
     }

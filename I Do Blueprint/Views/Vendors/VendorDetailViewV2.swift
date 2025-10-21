@@ -91,7 +91,7 @@ struct VendorDetailViewV2: View {
 
         // Call action
         if let phoneNumber = vendor.phoneNumber {
-            actions.append(QuickAction(icon: "phone.fill", title: "Call", color: .green) {
+            actions.append(QuickAction(icon: "phone.fill", title: "Call", color: AppColors.Vendor.booked) {
                 if let url = URL(string: "tel:\(phoneNumber.filter { !$0.isWhitespace && $0 != "-" && $0 != "(" && $0 != ")" })") {
                     NSWorkspace.shared.open(url)
                 }
@@ -100,7 +100,7 @@ struct VendorDetailViewV2: View {
 
         // Email action
         if let email = vendor.email {
-            actions.append(QuickAction(icon: "envelope.fill", title: "Email", color: .blue) {
+            actions.append(QuickAction(icon: "envelope.fill", title: "Email", color: AppColors.Vendor.contacted) {
                 if let url = URL(string: "mailto:\(email)") {
                     NSWorkspace.shared.open(url)
                 }
@@ -109,7 +109,7 @@ struct VendorDetailViewV2: View {
 
         // Website action
         if let website = vendor.website, let url = URL(string: website) {
-            actions.append(QuickAction(icon: "globe", title: "Website", color: .orange) {
+            actions.append(QuickAction(icon: "globe", title: "Website", color: AppColors.Vendor.pending) {
                 NSWorkspace.shared.open(url)
             })
         }

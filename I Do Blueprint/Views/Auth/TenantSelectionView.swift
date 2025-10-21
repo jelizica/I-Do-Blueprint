@@ -15,6 +15,7 @@ struct TenantSelectionView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var couples: [CoupleMembership] = []
+    @State private var showingCoupleCreation = false
 
     private let coupleRepository = LiveCoupleRepository()
 
@@ -146,6 +147,13 @@ struct TenantSelectionView: View {
         }
         .frame(width: 500, height: 400)
         .padding()
+        .sheet(isPresented: $showingCoupleCreation) {
+            CoupleCreationView(onComplete: {
+                Task {
+                    await loadCouples()
+                }
+            })
+        }
         .task {
             await loadCouples()
         }
@@ -157,12 +165,29 @@ struct TenantSelectionView: View {
 
         do {
             // Get current user ID from Supabase auth
-            let session = try await SupabaseManager.shared.client.auth.session
+            guard let client = SupabaseManager.shared.client else {
+                await MainActor.run {
+                    errorMessage = "Configuration error: Unable to connect to database. Please check your settings."
+                    isLoading = false
+                }
+                return
+            }
+            
+            let session = try await client.auth.session
             let userId = session.user.id
+            
+            print("🔍 [TenantSelection] Loading couples for user: \(userId)")
 
             couples = try await coupleRepository.fetchCouplesForUser(userId: userId)
+            
+            print("🔍 [TenantSelection] Found \(couples.count) couples:")
+            for couple in couples {
+                print("   - \(couple.displayName) (ID: \(couple.coupleId))")
+            }
+            
             isLoading = false
         } catch {
+            print("❌ [TenantSelection] Error loading couples: \(error)")
             errorMessage = "Failed to load couples: \(error.localizedDescription)"
             isLoading = false
         }
@@ -171,9 +196,13 @@ struct TenantSelectionView: View {
     private func selectCouple(_ couple: CoupleMembership) {
         isLoading = true
         errorMessage = nil
+        
+        print("🔍 [TenantSelection] User selected couple: \(couple.displayName) (ID: \(couple.coupleId))")
 
         Task {
             await sessionManager.setTenantId(couple.coupleId)
+            
+            print("✅ [TenantSelection] Tenant ID set to: \(couple.coupleId)")
 
             await MainActor.run {
                 isLoading = false
@@ -183,17 +212,7 @@ struct TenantSelectionView: View {
     }
 
     private func createNewCouple() {
-        isLoading = true
-        errorMessage = nil
-
-        Task {
-            // TODO: Implement couple creation workflow
-            // This should navigate to a couple profile creation form
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "Couple creation is not yet implemented"
-            }
-        }
+        showingCoupleCreation = true
     }
 }
 

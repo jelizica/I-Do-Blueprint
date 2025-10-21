@@ -118,7 +118,7 @@ struct PaymentsSummaryCard: View {
             unpaidAmount: 13000,
             overdueAmount: 3000,
             recentPayments: []))
-        .environmentObject(SettingsViewModel())
+        .environmentObject(SettingsStoreV2())
         .padding()
         .frame(width: 400)
 }

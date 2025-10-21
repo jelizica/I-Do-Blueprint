@@ -31,7 +31,7 @@ struct DashboardGridLayout: View {
                     value: "\(budgetMetrics.percentageUsed)%",
                     subtitle: "Budget Spent",
                     detail: "$\(Int(budgetMetrics.spent)) of $\(Int(budgetMetrics.totalBudget))",
-                    backgroundColor: DashboardColors.budgetCard,
+                    backgroundColor: AppColors.Dashboard.budgetCard,
                     foregroundColor: .black)
                 .accessibilityLabel("Budget Summary")
                 .accessibilityValue("Spent \(budgetMetrics.percentageUsed)% of total budget")
@@ -45,7 +45,7 @@ struct DashboardGridLayout: View {
                     value: String(format: "%.1f%%", rsvpRate),
                     subtitle: "RSVP Response Rate",
                     detail: "\(guestMetrics.rsvpYes) attending",
-                    backgroundColor: DashboardColors.rsvpCard,
+                    backgroundColor: AppColors.Dashboard.rsvpCard,
                     foregroundColor: .white)
                 .accessibilityLabel("RSVP Response Rate")
                 .accessibilityValue("\(Int(rsvpRate))% of guests have responded")
@@ -61,26 +61,22 @@ struct DashboardGridLayout: View {
             VStack(spacing: 4) {
                 // Vendors - Small
                 if let vendorMetrics = summary?.vendors {
-                    CompactStatCard(
+                    CompactSummaryCard(
+                        title: "Vendors Booked",
                         value: "\(vendorMetrics.totalVendors)",
-                        label: "Vendors Booked",
                         icon: "briefcase.fill",
-                        backgroundColor: DashboardColors.vendorCard,
-                        foregroundColor: .white)
-                    .accessibilityLabel("Vendors Booked")
-                    .accessibilityValue("\(vendorMetrics.totalVendors) vendors")
+                        color: AppColors.Dashboard.vendorCard
+                    )
                 }
 
                 // Guests - Small
                 if let guestMetrics = summary?.guests {
-                    CompactStatCard(
+                    CompactSummaryCard(
+                        title: "Total Guests",
                         value: "\(guestMetrics.totalGuests)",
-                        label: "Total Guests",
                         icon: "person.3.fill",
-                        backgroundColor: DashboardColors.guestCard,
-                        foregroundColor: .white)
-                    .accessibilityLabel("Total Guests")
-                    .accessibilityValue("\(guestMetrics.totalGuests) guests invited")
+                        color: AppColors.Dashboard.guestCard
+                    )
                 }
             }
 
@@ -89,7 +85,7 @@ struct DashboardGridLayout: View {
                 LargeCountdownCard(
                     daysRemaining: daysUntilWedding,
                     weddingDate: weddingDate,
-                    backgroundColor: DashboardColors.countdownCard,
+                    backgroundColor: AppColors.Dashboard.countdownCard,
                     foregroundColor: .white)
                 .accessibilityLabel("Wedding Countdown")
                 .accessibilityValue("\(daysUntilWedding) days until wedding")
@@ -108,7 +104,7 @@ struct DashboardGridLayout: View {
                     totalBudget: budgetMetrics.totalBudget,
                     spent: budgetMetrics.spent,
                     remaining: budgetMetrics.remaining,
-                    backgroundColor: DashboardColors.budgetVisualizationCard,
+                    backgroundColor: AppColors.Dashboard.budgetVisualizationCard,
                     foregroundColor: .black)
                 .accessibilityLabel("Budget Breakdown")
                 .accessibilityValue("Spent $\(Int(budgetMetrics.spent)), remaining $\(Int(budgetMetrics.remaining))")
@@ -118,14 +114,12 @@ struct DashboardGridLayout: View {
             if let taskMetrics = summary?.tasks {
                 let completionRate = taskMetrics.total > 0 ?
                     Double(taskMetrics.completed) / Double(taskMetrics.total) * 100 : 0
-                ProgressCard(
+                DashboardProgressCard(
                     value: "\(taskMetrics.completed)/\(taskMetrics.total)",
                     percentage: completionRate,
                     label: "Tasks Complete",
-                    backgroundColor: DashboardColors.taskProgressCard,
+                    backgroundColor: AppColors.Dashboard.taskProgressCard,
                     foregroundColor: .white)
-                .accessibilityLabel("Task Progress")
-                .accessibilityValue("\(taskMetrics.completed) of \(taskMetrics.total) tasks completed")
             }
         }
         .frame(height: 240)

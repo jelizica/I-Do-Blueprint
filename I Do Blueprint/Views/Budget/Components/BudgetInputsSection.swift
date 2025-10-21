@@ -49,7 +49,7 @@ struct BudgetInputsSection: View {
                     } else {
                         Text("Set in Settings")
                             .font(.caption)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(AppColors.Budget.overBudget)
                     }
                 }
 

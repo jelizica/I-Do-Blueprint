@@ -64,4 +64,16 @@ enum SettingsError: LocalizedError {
             return nil
         }
     }
+
+    /// Indicates whether this error is transient and can be retried
+    var isRetryable: Bool {
+        switch self {
+        case .fetchFailed, .updateFailed, .categoryCreateFailed, .categoryUpdateFailed, .categoryDeleteFailed:
+            return true
+        case .networkUnavailable:
+            return true
+        case .notFound, .validationFailed, .unauthorized:
+            return false
+        }
+    }
 }

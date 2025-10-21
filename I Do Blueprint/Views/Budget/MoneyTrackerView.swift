@@ -38,33 +38,55 @@ struct MoneyTrackerView: View {
     private var summaryCardsSection: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 16) {
-                SummaryCard(
-                    title: "Net Flow",
-                    value: netFlow,
-                    change: monthlyChange,
-                    color: netFlow >= 0 ? .green : .red,
-                    icon: "arrow.up.arrow.down")
+                // Using Component Library - StatsCardView
+                StatsCardView(
+                    stat: StatItem(
+                        icon: "arrow.up.arrow.down",
+                        label: "Net Flow",
+                        value: String(format: "$%.0f", abs(netFlow)),
+                        color: netFlow >= 0 ? AppColors.Budget.income : AppColors.Budget.expense,
+                        trend: monthlyChange.map { change in
+                            change >= 0 ? .up(String(format: "+%.1f%%", change)) : .down(String(format: "%.1f%%", change))
+                        }
+                    )
+                )
+                .frame(width: 140)
 
-                SummaryCard(
-                    title: "Received",
-                    value: totalReceived,
-                    change: receivedChange,
-                    color: .green,
-                    icon: "arrow.down.circle.fill")
+                StatsCardView(
+                    stat: StatItem(
+                        icon: "arrow.down.circle.fill",
+                        label: "Received",
+                        value: String(format: "$%.0f", totalReceived),
+                        color: AppColors.Budget.income,
+                        trend: receivedChange.map { change in
+                            change >= 0 ? .up(String(format: "+%.1f%%", change)) : .down(String(format: "%.1f%%", change))
+                        }
+                    )
+                )
+                .frame(width: 140)
 
-                SummaryCard(
-                    title: "Owed",
-                    value: totalOwed,
-                    change: owedChange,
-                    color: .red,
-                    icon: "arrow.up.circle.fill")
+                StatsCardView(
+                    stat: StatItem(
+                        icon: "arrow.up.circle.fill",
+                        label: "Owed",
+                        value: String(format: "$%.0f", totalOwed),
+                        color: AppColors.Budget.expense,
+                        trend: owedChange.map { change in
+                            change >= 0 ? .up(String(format: "+%.1f%%", change)) : .down(String(format: "%.1f%%", change))
+                        }
+                    )
+                )
+                .frame(width: 140)
 
-                SummaryCard(
-                    title: "Pending",
-                    value: pendingAmount,
-                    change: nil,
-                    color: .orange,
-                    icon: "clock.fill")
+                StatsCardView(
+                    stat: StatItem(
+                        icon: "clock.fill",
+                        label: "Pending",
+                        value: String(format: "$%.0f", pendingAmount),
+                        color: AppColors.Budget.pending
+                    )
+                )
+                .frame(width: 140)
             }
             .padding(.horizontal)
         }
@@ -112,13 +134,13 @@ struct MoneyTrackerView: View {
                     BarMark(
                         x: .value("Month", data.month, unit: .month),
                         y: .value("Received", data.received))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(AppColors.Budget.income)
                         .opacity(0.8)
 
                     BarMark(
                         x: .value("Month", data.month, unit: .month),
                         y: .value("Owed", -data.owed))
-                        .foregroundStyle(.red)
+                        .foregroundStyle(AppColors.Budget.expense)
                         .opacity(0.8)
                 }
             }
@@ -159,10 +181,26 @@ struct MoneyTrackerView: View {
             }
             .padding()
 
-            LazyVStack(spacing: 0) {
-                ForEach(filteredTransactions, id: \.id) { transaction in
-                    TransactionRowView(transaction: transaction)
-                        .environmentObject(budgetStore)
+            if filteredTransactions.isEmpty {
+                // Using Component Library - UnifiedEmptyStateView
+                UnifiedEmptyStateView(
+                    config: searchText.isEmpty && selectedFilter == .all ?
+                        .custom(
+                            icon: "dollarsign.circle",
+                            title: "No Transactions",
+                            message: "Money received and owed will appear here",
+                            actionTitle: nil,
+                            onAction: nil
+                        ) :
+                        .searchResults(query: searchText.isEmpty ? selectedFilter.rawValue : searchText)
+                )
+                .padding()
+            } else {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredTransactions, id: \.id) { transaction in
+                        TransactionRowView(transaction: transaction)
+                            .environmentObject(budgetStore)
+                    }
                 }
             }
         }
@@ -212,7 +250,10 @@ struct MoneyTrackerView: View {
                 .reduce(0) { $0 + $1.amount }
 
             let owed = budgetStore.moneyOwed
-                .filter { $0.dueDate != nil && calendar.isDate($0.dueDate!, equalTo: month, toGranularity: .month) }
+                .filter { item in
+                    guard let dueDate = item.dueDate else { return false }
+                    return calendar.isDate(dueDate, equalTo: month, toGranularity: .month)
+                }
                 .reduce(0) { $0 + $1.amount }
 
             return MonthlyFlowData(month: month, received: received, owed: owed)
@@ -268,7 +309,13 @@ struct MoneyTrackerView: View {
 
         // Add money owed
         for owed in budgetStore.moneyOwed {
-            let isOverdue = owed.dueDate != nil && owed.dueDate! < Date() && !owed.isPaid
+            let isOverdue: Bool
+            if let dueDate = owed.dueDate {
+                isOverdue = dueDate < Date() && !owed.isPaid
+            } else {
+                isOverdue = false
+            }
+            
             transactions.append(MoneyTransaction(
                 id: owed.id.uuidString,
                 type: .owed,
@@ -285,41 +332,7 @@ struct MoneyTrackerView: View {
     }
 }
 
-struct SummaryCard: View {
-    let title: String
-    let value: Double
-    let change: Double?
-    let color: Color
-    let icon: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundColor(color)
-                Spacer()
-                if let change {
-                    Text("\(change >= 0 ? "+" : "")\(change, specifier: "%.1f")%")
-                        .font(.caption)
-                        .foregroundColor(change >= 0 ? .green : .red)
-                }
-            }
-
-            Text(title)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            Text("$\(abs(value), specifier: "%.0f")")
-                .font(.title3)
-                .fontWeight(.semibold)
-                .foregroundColor(color)
-        }
-        .padding()
-        .frame(width: 140, height: 100)
-        .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(12)
-    }
-}
+// Note: MoneyTrackerSummaryCard replaced with StatsCardView from component library
 
 struct TransactionRowView: View {
     let transaction: MoneyTransaction
@@ -329,7 +342,7 @@ struct TransactionRowView: View {
         HStack(spacing: 12) {
             // Type indicator
             Circle()
-                .fill(transaction.type == .received ? Color.green : Color.red)
+                .fill(transaction.type == .received ? AppColors.Budget.income : AppColors.Budget.expense)
                 .frame(width: 12, height: 12)
 
             VStack(alignment: .leading, spacing: 2) {
@@ -342,7 +355,7 @@ struct TransactionRowView: View {
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.red)
+                            .background(AppColors.Budget.overBudget)
                             .foregroundColor(.white)
                             .cornerRadius(4)
                     }
@@ -352,7 +365,7 @@ struct TransactionRowView: View {
                             .font(.caption2)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.orange)
+                            .background(AppColors.Budget.pending)
                             .foregroundColor(.white)
                             .cornerRadius(4)
                     }
@@ -372,11 +385,11 @@ struct TransactionRowView: View {
             VStack(alignment: .trailing, spacing: 2) {
                 Text("\(transaction.type == .received ? "+" : "-")$\(transaction.amount, specifier: "%.0f")")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(transaction.type == .received ? .green : .red)
+                    .foregroundColor(transaction.type == .received ? AppColors.Budget.income : AppColors.Budget.expense)
 
                 Text(transaction.status.rawValue)
                     .font(.caption2)
-                    .foregroundColor(transaction.status == .complete ? .green : .orange)
+                    .foregroundColor(transaction.status == .complete ? AppColors.Budget.income : AppColors.Budget.pending)
             }
         }
         .padding()

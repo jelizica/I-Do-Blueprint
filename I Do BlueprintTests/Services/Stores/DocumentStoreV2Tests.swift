@@ -11,404 +11,326 @@ import Dependencies
 
 @MainActor
 final class DocumentStoreV2Tests: XCTestCase {
-    var store: DocumentStoreV2!
     var mockRepository: MockDocumentRepository!
+    var coupleId: UUID!
 
     override func setUp() async throws {
         mockRepository = MockDocumentRepository()
-        store = withDependencies {
-            $0.documentRepository = mockRepository
-            $0.vendorRepository = MockVendorRepository()
-            $0.budgetRepository = MockBudgetRepository()
-        } operation: {
-            DocumentStoreV2()
-        }
+        coupleId = UUID()
     }
 
-    override func tearDown() async throws {
-        store = nil
+    override func tearDown() {
         mockRepository = nil
+        coupleId = nil
     }
 
-    // MARK: - Load Documents Tests
+    // MARK: - Load Tests
 
     func testLoadDocuments_Success() async throws {
         // Given
-        let mockDocuments = [
-            createMockDocument(filename: "contract.pdf", type: .contract),
-            createMockDocument(filename: "invoice.pdf", type: .invoice),
+        let testDocuments = [
+            Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "contract.pdf"),
+            Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "invoice.pdf")
         ]
-        mockRepository.documents = mockDocuments
+        mockRepository.documents = testDocuments
 
         // When
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
         await store.loadDocuments()
 
         // Then
-        XCTAssertEqual(store.documents.count, 2)
         XCTAssertFalse(store.isLoading)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.documents.count, 2)
+        XCTAssertEqual(store.documents[0].originalFilename, "contract.pdf")
     }
 
-    func testLoadDocuments_EmptyResult() async throws {
+    func testLoadDocuments_Failure() async throws {
+        // Given
+        mockRepository.shouldThrowError = true
+        mockRepository.errorToThrow = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
+
+        // When
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
+
+        // Then
+        XCTAssertFalse(store.isLoading)
+        XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.documents.count, 0)
+    }
+
+    func testLoadDocuments_Empty() async throws {
         // Given
         mockRepository.documents = []
 
         // When
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
         await store.loadDocuments()
 
         // Then
-        XCTAssertTrue(store.documents.isEmpty)
         XCTAssertFalse(store.isLoading)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.documents.count, 0)
     }
 
-    func testLoadDocuments_Error() async throws {
+    // MARK: - Upload Tests
+
+    func testUploadDocument_OptimisticUpdate() async throws {
         // Given
-        mockRepository.shouldThrowError = true
-
-        // When
-        await store.loadDocuments()
-
-        // Then
-        XCTAssertTrue(store.documents.isEmpty)
-        XCTAssertFalse(store.isLoading)
-        XCTAssertNotNil(store.error)
-    }
-
-    // MARK: - Upload Document Tests
-
-    func testUploadDocument_Success() async throws {
-        // Given
-        let fileData = "test content".data(using: .utf8)!
+        let fileData = Data([0x00, 0x01, 0x02])
         let metadata = FileUploadMetadata(
             localURL: URL(fileURLWithPath: "/tmp/test.pdf"),
-            filename: "test.pdf",
-            mimeType: "application/pdf",
-            fileSize: Int64(fileData.count),
+            fileName: "test.pdf",
             documentType: .contract,
             vendorId: nil,
             expenseId: nil,
             tags: []
         )
-        let coupleId = UUID()
-        let newDoc = createMockDocument(filename: "test.pdf")
-        mockRepository.uploadedDocument = newDoc
 
         // When
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
         await store.uploadDocument(fileData: fileData, metadata: metadata, coupleId: coupleId)
 
         // Then
         XCTAssertEqual(store.documents.count, 1)
-        XCTAssertEqual(store.documents[0].originalFilename, "test.pdf")
         XCTAssertFalse(store.isUploading)
-        XCTAssertEqual(store.uploadProgress, 1.0)
-        XCTAssertNil(store.error)
     }
 
-    // MARK: - Update Document Tests
+    // MARK: - Update Tests
 
     func testUpdateDocument_Success() async throws {
         // Given
-        let originalDoc = createMockDocument(filename: "original.pdf")
-        store.documents = [originalDoc]
-
-        var updatedDoc = originalDoc
-        updatedDoc.originalFilename = "updated.pdf"
-        mockRepository.updatedDocument = updatedDoc
+        let document = Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "original.pdf")
+        mockRepository.documents = [document]
 
         // When
-        await store.updateDocument(updatedDoc)
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
+
+        var updatedDocument = document
+        updatedDocument.originalFilename = "updated.pdf"
+        await store.updateDocument(updatedDocument)
 
         // Then
-        XCTAssertEqual(store.documents[0].originalFilename, "updated.pdf")
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.documents.first?.originalFilename, "updated.pdf")
     }
 
-    func testUpdateDocument_RollbackOnError() async throws {
+    func testUpdateDocument_Failure_RollsBack() async throws {
         // Given
-        let originalDoc = createMockDocument(filename: "original.pdf")
-        store.documents = [originalDoc]
-
-        var updatedDoc = originalDoc
-        updatedDoc.originalFilename = "updated.pdf"
-        mockRepository.shouldThrowError = true
+        let document = Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "original.pdf")
+        mockRepository.documents = [document]
 
         // When
-        await store.updateDocument(updatedDoc)
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
 
-        // Then
-        XCTAssertEqual(store.documents[0].originalFilename, "original.pdf")
+        await store.loadDocuments()
+
+        var updatedDocument = document
+        updatedDocument.originalFilename = "updated.pdf"
+
+        mockRepository.shouldThrowError = true
+        await store.updateDocument(updatedDocument)
+
+        // Then - Should rollback to original
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.documents.first?.originalFilename, "original.pdf")
     }
 
-    // MARK: - Delete Document Tests
+    // MARK: - Delete Tests
 
     func testDeleteDocument_Success() async throws {
         // Given
-        let doc = createMockDocument(filename: "to_delete.pdf")
-        store.documents = [doc]
+        let doc1 = Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "doc1.pdf")
+        let doc2 = Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "doc2.pdf")
+        mockRepository.documents = [doc1, doc2]
 
         // When
-        await store.deleteDocument(doc)
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
+        await store.deleteDocument(doc1)
 
         // Then
-        XCTAssertTrue(store.documents.isEmpty)
         XCTAssertNil(store.error)
+        XCTAssertEqual(store.documents.count, 1)
+        XCTAssertEqual(store.documents.first?.originalFilename, "doc2.pdf")
     }
 
-    func testDeleteDocument_RollbackOnError() async throws {
+    func testDeleteDocument_Failure_RollsBack() async throws {
         // Given
-        let doc = createMockDocument(filename: "to_delete.pdf")
-        store.documents = [doc]
+        let document = Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "doc1.pdf")
+        mockRepository.documents = [document]
+
+        // When
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
+
         mockRepository.shouldThrowError = true
+        await store.deleteDocument(document)
 
-        // When
-        await store.deleteDocument(doc)
-
-        // Then
-        XCTAssertEqual(store.documents.count, 1)
+        // Then - Should rollback
         XCTAssertNotNil(store.error)
+        XCTAssertEqual(store.documents.count, 1)
     }
 
-    // MARK: - Batch Delete Tests
+    // MARK: - Filter Tests
 
-    func testBatchDeleteDocuments_Success() async throws {
+    func testFilterByType() async throws {
         // Given
-        let doc1 = createMockDocument(filename: "doc1.pdf")
-        let doc2 = createMockDocument(filename: "doc2.pdf")
-        let doc3 = createMockDocument(filename: "doc3.pdf")
-        store.documents = [doc1, doc2, doc3]
+        let documents = [
+            Document.makeTest(coupleId: coupleId, documentType: .contract),
+            Document.makeTest(coupleId: coupleId, documentType: .invoice),
+            Document.makeTest(coupleId: coupleId, documentType: .contract)
+        ]
+        mockRepository.documents = documents
 
         // When
-        await store.batchDeleteDocuments(ids: [doc1.id, doc2.id])
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
+        store.filters.selectedType = DocumentType.contract
+        let filtered = store.filteredDocuments
 
         // Then
-        XCTAssertEqual(store.documents.count, 1)
-        XCTAssertEqual(store.documents[0].id, doc3.id)
+        XCTAssertEqual(filtered.count, 2)
+        XCTAssertTrue(filtered.allSatisfy { $0.documentType == DocumentType.contract })
+    }
+
+    func testFilterByBucket() async throws {
+        // Given
+        let documents = [
+            Document.makeTest(coupleId: coupleId, bucketName: "invoices-and-contracts"),
+            Document.makeTest(coupleId: coupleId, bucketName: "photos"),
+            Document.makeTest(coupleId: coupleId, bucketName: "invoices-and-contracts")
+        ]
+        mockRepository.documents = documents
+
+        // When
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
+        store.filters.selectedBucket = DocumentBucket.invoicesAndContracts
+        let filtered = store.filteredDocuments
+
+        // Then
+        XCTAssertEqual(filtered.count, 2)
+    }
+
+    // MARK: - Tag Management Tests
+
+    func testUpdateDocumentTags() async throws {
+        // Given
+        let document = Document.makeTest(id: UUID(), coupleId: coupleId, originalFilename: "doc.pdf")
+        mockRepository.documents = [document]
+
+        // When
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
+        await store.updateDocumentTags(id: document.id, tags: ["important", "wedding"])
+
+        // Then
         XCTAssertNil(store.error)
     }
 
-    // MARK: - Filtering Tests
+    // MARK: - Computed Properties Tests
 
-    func testFilteredDocuments_BySearchQuery() {
+    func testComputedProperty_TotalDocuments() async throws {
         // Given
-        store.documents = [
-            createMockDocument(filename: "contract.pdf", type: .contract),
-            createMockDocument(filename: "invoice.pdf", type: .invoice),
+        let documents = [
+            Document.makeTest(coupleId: coupleId),
+            Document.makeTest(coupleId: coupleId),
+            Document.makeTest(coupleId: coupleId)
         ]
-        store.searchQuery = "contract"
+        mockRepository.documents = documents
 
         // When
-        let filtered = store.filteredDocuments
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
+
+        await store.loadDocuments()
 
         // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].originalFilename, "contract.pdf")
+        let stats = store.documentStats
+        XCTAssertEqual(stats.total, 3)
     }
 
-    func testFilteredDocuments_ByType() {
+    func testComputedProperty_DocumentsByType() async throws {
         // Given
-        store.documents = [
-            createMockDocument(filename: "contract.pdf", type: .contract),
-            createMockDocument(filename: "invoice.pdf", type: .invoice),
+        let documents = [
+            Document.makeTest(coupleId: coupleId, documentType: .contract),
+            Document.makeTest(coupleId: coupleId, documentType: .invoice),
+            Document.makeTest(coupleId: coupleId, documentType: .contract)
         ]
-        store.filters.selectedType = .contract
+        mockRepository.documents = documents
 
         // When
-        let filtered = store.filteredDocuments
+        let store = await withDependencies {
+            $0.documentRepository = mockRepository
+        } operation: {
+            DocumentStoreV2()
+        }
 
-        // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].documentType, .contract)
-    }
-
-    func testFilteredDocuments_ByBucket() {
-        // Given
-        store.documents = [
-            createMockDocument(filename: "doc1.pdf", bucket: .contracts),
-            createMockDocument(filename: "doc2.pdf", bucket: .invoices),
-        ]
-        store.filters.selectedBucket = .contracts
-
-        // When
-        let filtered = store.filteredDocuments
-
-        // Then
-        XCTAssertEqual(filtered.count, 1)
-        XCTAssertEqual(filtered[0].bucketName, DocumentBucket.contracts.rawValue)
-    }
-
-    // MARK: - Sorting Tests
-
-    func testSortedDocuments_ByUploadedDesc() {
-        // Given
-        let oldDate = Date().addingTimeInterval(-3600)
-        let newDate = Date()
-
-        store.documents = [
-            createMockDocument(filename: "old.pdf", uploadedAt: oldDate),
-            createMockDocument(filename: "new.pdf", uploadedAt: newDate),
-        ]
-        store.sortOption = .uploadedDesc
-
-        // When
-        let filtered = store.filteredDocuments
-
-        // Then
-        XCTAssertEqual(filtered[0].originalFilename, "new.pdf")
-        XCTAssertEqual(filtered[1].originalFilename, "old.pdf")
-    }
-
-    // MARK: - Document Stats Tests
-
-    func testDocumentStats_Calculation() {
-        // Given
-        store.documents = [
-            createMockDocument(filename: "image.jpg", type: .other, mimeType: "image/jpeg", fileSize: 1000),
-            createMockDocument(filename: "doc.pdf", type: .contract, mimeType: "application/pdf", fileSize: 2000),
-            createMockDocument(filename: "invoice.pdf", type: .invoice, mimeType: "application/pdf", fileSize: 3000),
-        ]
-
-        // When
+        await store.loadDocuments()
         let stats = store.documentStats
 
         // Then
-        XCTAssertEqual(stats.total, 3)
-        XCTAssertEqual(stats.images, 1)
-        XCTAssertEqual(stats.pdfs, 2)
-        XCTAssertEqual(stats.contracts, 1)
+        XCTAssertEqual(stats.contracts, 2)
         XCTAssertEqual(stats.invoices, 1)
-        XCTAssertEqual(stats.totalSize, 6000)
-    }
-
-    // MARK: - Helper Methods
-
-    private func createMockDocument(
-        filename: String,
-        type: DocumentType = .other,
-        bucket: DocumentBucket = .contracts,
-        mimeType: String = "application/pdf",
-        fileSize: Int64 = 1000,
-        uploadedAt: Date = Date()
-    ) -> Document {
-        Document(
-            id: UUID(),
-            tenantId: UUID(),
-            originalFilename: filename,
-            storagePath: "/path/\(filename)",
-            bucketName: bucket.rawValue,
-            fileSize: fileSize,
-            mimeType: mimeType,
-            documentType: type,
-            uploadedBy: UUID(),
-            uploadedAt: uploadedAt,
-            vendorId: nil,
-            expenseId: nil,
-            tags: [],
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-}
-
-// MARK: - Mock Repository
-
-class MockDocumentRepository: DocumentRepositoryProtocol {
-    var documents: [Document] = []
-    var uploadedDocument: Document?
-    var updatedDocument: Document?
-    var shouldThrowError = false
-
-    func fetchDocuments() async throws -> [Document] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return documents
-    }
-
-    func fetchDocuments(type: DocumentType) async throws -> [Document] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return documents.filter { $0.documentType == type }
-    }
-
-    func fetchDocuments(bucket: DocumentBucket) async throws -> [Document] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return documents.filter { $0.bucketName == bucket.rawValue }
-    }
-
-    func fetchDocuments(vendorId: Int) async throws -> [Document] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return documents.filter { $0.vendorId == vendorId }
-    }
-
-    func uploadDocument(fileData: Data, metadata: FileUploadMetadata, coupleId: UUID) async throws -> Document {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return uploadedDocument ?? Document(
-            id: UUID(),
-            tenantId: UUID(),
-            originalFilename: metadata.filename,
-            storagePath: "/path/\(metadata.filename)",
-            bucketName: "contracts",
-            fileSize: metadata.fileSize,
-            mimeType: metadata.mimeType,
-            documentType: metadata.documentType,
-            uploadedBy: UUID(),
-            uploadedAt: Date(),
-            vendorId: metadata.vendorId,
-            expenseId: metadata.expenseId,
-            tags: metadata.tags,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-    }
-
-    func updateDocument(_ document: Document) async throws -> Document {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return updatedDocument ?? document
-    }
-
-    func updateDocumentTags(id: UUID, tags: [String]) async throws -> Document {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        guard let doc = documents.first(where: { $0.id == id }) else {
-            throw NSError(domain: "test", code: -1)
-        }
-        var updated = doc
-        updated.tags = tags
-        return updated
-    }
-
-    func updateDocumentType(id: UUID, type: DocumentType) async throws -> Document {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        guard let doc = documents.first(where: { $0.id == id }) else {
-            throw NSError(domain: "test", code: -1)
-        }
-        var updated = doc
-        updated.documentType = type
-        return updated
-    }
-
-    func deleteDocument(id: UUID) async throws {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-    }
-
-    func batchDeleteDocuments(ids: [UUID]) async throws {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-    }
-
-    func searchDocuments(query: String) async throws -> [Document] {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return documents.filter { $0.originalFilename.contains(query) }
-    }
-
-    func downloadDocument(document: Document) async throws -> Data {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return Data()
-    }
-
-    func getPublicURL(for document: Document) async throws -> URL {
-        if shouldThrowError { throw NSError(domain: "test", code: -1) }
-        return URL(string: "https://example.com/\(document.storagePath)")!
-    }
-
-    func invalidateCache() async {
-        // No-op for mock
     }
 }

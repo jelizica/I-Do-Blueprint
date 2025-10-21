@@ -127,7 +127,7 @@ struct ModernVendorCard: View {
     }
 
     private var statusColor: Color {
-        vendor.isBooked == true ? AppColors.success : AppColors.warning
+        vendor.isBooked == true ? AppColors.Vendor.booked : AppColors.Vendor.pending
     }
 
     private var accessibilityValueText: String {

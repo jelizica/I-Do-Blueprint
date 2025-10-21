@@ -1,9 +1,12 @@
 import SwiftUI
+import Dependencies
 
 struct AddVendorView: View {
     let onSave: (Vendor) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Dependency(\.vendorRepository) var repository
+    
     @State private var vendorName = ""
     @State private var vendorType = ""
     @State private var budgetCategoryName = ""
@@ -11,39 +14,20 @@ struct AddVendorView: View {
     @State private var phoneNumber = ""
     @State private var email = ""
     @State private var website = ""
-    @State private var address = ""
+    @State private var streetAddress = ""
+    @State private var streetAddress2 = ""
+    @State private var city = ""
+    @State private var state = ""
+    @State private var postalCode = ""
+    @State private var country = "US"
     @State private var quotedAmount = ""
     @State private var notes = ""
     @State private var businessDescription = ""
-    @State private var selectedVendorType = VendorType.other
-
-    enum VendorType: String, CaseIterable {
-        case venue = "Venue"
-        case caterer = "Caterer"
-        case photographer = "Photographer"
-        case florist = "Florist"
-        case musician = "Musician"
-        case transportation = "Transportation"
-        case baker = "Baker"
-        case decorator = "Decorator"
-        case officiant = "Officiant"
-        case other = "Other"
-
-        var budgetCategory: String {
-            switch self {
-            case .venue: "Venue"
-            case .caterer: "Catering"
-            case .photographer: "Photography"
-            case .florist: "Flowers & Decorations"
-            case .musician: "Entertainment"
-            case .transportation: "Transportation"
-            case .baker: "Cake & Desserts"
-            case .decorator: "Decorations"
-            case .officiant: "Ceremony"
-            case .other: "Other"
-            }
-        }
-    }
+    @State private var selectedVendorType: VendorType?
+    @State private var vendorTypes: [VendorType] = []
+    @State private var isLoadingTypes = false
+    @State private var isSaving = false
+    @State private var errorMessage: String?
 
     private var isFormValid: Bool {
         !vendorName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -51,50 +35,220 @@ struct AddVendorView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section("Basic Information") {
-                    TextField("Vendor Name", text: $vendorName)
-
-                    Picker("Vendor Type", selection: $selectedVendorType) {
-                        ForEach(VendorType.allCases, id: \.self) { type in
-                            Text(type.rawValue).tag(type)
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Two-column layout for better space utilization
+                    HStack(alignment: .top, spacing: 20) {
+                        // Left Column
+                        VStack(spacing: 16) {
+                            // Basic Information
+                            GroupBox(label: Text("Basic Information").font(.headline)) {
+                                VStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Vendor Name *")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextField("Enter vendor name", text: $vendorName)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Vendor Type")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        
+                                        if isLoadingTypes {
+                                            HStack {
+                                                ProgressView()
+                                                    .scaleEffect(0.7)
+                                                Text("Loading types...")
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .padding(.vertical, 4)
+                                        } else if vendorTypes.isEmpty {
+                                            Text("No vendor types available")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                                .padding(.vertical, 4)
+                                        } else {
+                                            Picker("", selection: $selectedVendorType) {
+                                                Text("Select type...").tag(nil as VendorType?)
+                                                ForEach(vendorTypes) { type in
+                                                    Text(type.vendorType).tag(type as VendorType?)
+                                                }
+                                            }
+                                            .labelsHidden()
+                                            .onChange(of: selectedVendorType) { _, newValue in
+                                                if let newValue = newValue {
+                                                    vendorType = newValue.vendorType
+                                                    budgetCategoryName = newValue.vendorType
+                                                }
+                                            }
+                                        }
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Contact Person")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextField("Enter contact name", text: $contactName)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            
+                            // Contact Information
+                            GroupBox(label: Text("Contact Information").font(.headline)) {
+                                VStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Phone Number")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextField("(555) 123-4567", text: $phoneNumber)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Email")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextField("email@example.com", text: $email)
+                                            .textContentType(.emailAddress)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Website")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextField("https://example.com", text: $website)
+                                            .textContentType(.URL)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            
+                            // Financial
+                            GroupBox(label: Text("Financial").font(.headline)) {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Quoted Amount")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    HStack {
+                                        Text("$")
+                                            .foregroundColor(.secondary)
+                                        TextField("0.00", text: $quotedAmount)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                        }
+                        
+                        // Right Column
+                        VStack(spacing: 16) {
+                            // Address
+                            GroupBox(label: Text("Address").font(.headline)) {
+                                VStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Street Address")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextField("123 Main St", text: $streetAddress)
+                                            .textContentType(.streetAddressLine1)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Street Address 2 (Optional)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextField("Apt, Suite, etc.", text: $streetAddress2)
+                                            .textContentType(.streetAddressLine2)
+                                            .textFieldStyle(.roundedBorder)
+                                    }
+                                    
+                                    HStack(spacing: 12) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("City")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            TextField("City", text: $city)
+                                                .textContentType(.addressCity)
+                                                .textFieldStyle(.roundedBorder)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("State")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            TextField("ST", text: $state)
+                                                .textContentType(.addressState)
+                                                .textFieldStyle(.roundedBorder)
+                                                .frame(width: 60)
+                                        }
+                                    }
+                                    
+                                    HStack(spacing: 12) {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Postal Code")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            TextField("12345", text: $postalCode)
+                                                .textContentType(.postalCode)
+                                                .textFieldStyle(.roundedBorder)
+                                                .frame(width: 100)
+                                        }
+                                        
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text("Country")
+                                                .font(.caption)
+                                                .foregroundColor(.secondary)
+                                            TextField("US", text: $country)
+                                                .textContentType(.countryName)
+                                                .textFieldStyle(.roundedBorder)
+                                        }
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            
+                            // Additional Details
+                            GroupBox(label: Text("Additional Details").font(.headline)) {
+                                VStack(spacing: 12) {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Business Description")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextEditor(text: $businessDescription)
+                                            .frame(height: 60)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                            )
+                                    }
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Notes")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        TextEditor(text: $notes)
+                                            .frame(height: 60)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 4)
+                                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                            )
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
                         }
                     }
-                    .onChange(of: selectedVendorType) { _, newValue in
-                        vendorType = newValue.rawValue
-                        budgetCategoryName = newValue.budgetCategory
-                    }
-
-                    TextField("Contact Person", text: $contactName)
-                }
-
-                Section("Contact Information") {
-                    TextField("Phone Number", text: $phoneNumber)
-
-                    TextField("Email", text: $email)
-
-                    TextField("Website", text: $website)
-
-                    TextField("Address", text: $address, axis: .vertical)
-                        .lineLimit(2 ... 4)
-                }
-
-                Section("Financial") {
-                    TextField("Quoted Amount", text: $quotedAmount)
-                        .overlay(alignment: .leading) {
-                            Text("$")
-                                .foregroundColor(.secondary)
-                                .padding(.leading, 8)
-                        }
-                        .padding(.leading, 16)
-                }
-
-                Section("Additional Details") {
-                    TextField("Business Description", text: $businessDescription, axis: .vertical)
-                        .lineLimit(3 ... 6)
-
-                    TextField("Notes", text: $notes, axis: .vertical)
-                        .lineLimit(3 ... 6)
+                    .padding()
                 }
             }
             .navigationTitle("Add Vendor")
@@ -107,21 +261,62 @@ struct AddVendorView: View {
 
                 ToolbarItem(placement: .primaryAction) {
                     Button("Save") {
-                        saveVendor()
+                        Task {
+                            await saveVendor()
+                        }
                     }
                     .fontWeight(.semibold)
-                    .disabled(!isFormValid)
+                    .disabled(!isFormValid || isSaving)
                 }
             }
         }
-        .onAppear {
-            // Set default values
-            vendorType = selectedVendorType.rawValue
-            budgetCategoryName = selectedVendorType.budgetCategory
+        .task {
+            await loadVendorTypes()
+        }
+        .alert("Error Saving Vendor", isPresented: .constant(errorMessage != nil)) {
+            Button("OK") {
+                errorMessage = nil
+            }
+        } message: {
+            if let errorMessage = errorMessage {
+                Text(errorMessage)
+            }
+        }
+        .overlay {
+            if isSaving {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                    
+                    ProgressView("Saving vendor...")
+                        .padding()
+                        .background(Color(NSColor.windowBackgroundColor))
+                        .cornerRadius(12)
+                        .shadow(radius: 10)
+                }
+            }
         }
     }
 
-    private func saveVendor() {
+    private func saveVendor() async {
+        // Validate required fields
+        guard !vendorName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Vendor name is required"
+            return
+        }
+        
+        // Get current couple ID from session
+        guard let coupleId = await MainActor.run(body: {
+            SessionManager.shared.getTenantId()
+        }) else {
+            errorMessage = "No couple selected. Please select your wedding couple to continue."
+            return
+        }
+        
+        isSaving = true
+        errorMessage = nil
+        
+        // Create vendor with proper field mapping
         let newVendor = Vendor(
             id: 0, // Database will auto-generate
             createdAt: Date(),
@@ -134,17 +329,46 @@ struct AddVendorView: View {
             email: email.isEmpty ? nil : email,
             website: website.isEmpty ? nil : website,
             notes: notes.isEmpty ? nil : notes,
-            quotedAmount: Double(quotedAmount),
+            quotedAmount: quotedAmount.isEmpty ? nil : Double(quotedAmount),
             imageUrl: nil,
             isBooked: false,
+            dateBooked: nil,
             budgetCategoryId: nil, // Would need to be looked up from budget categories
-            coupleId: UUID(), // This should come from current user/couple context
+            coupleId: coupleId,
             isArchived: false,
             archivedAt: nil,
-            includeInExport: false) // New vendors default to not included in export
+            includeInExport: false,
+            streetAddress: streetAddress.isEmpty ? nil : streetAddress,
+            streetAddress2: streetAddress2.isEmpty ? nil : streetAddress2,
+            city: city.isEmpty ? nil : city,
+            state: state.isEmpty ? nil : state,
+            postalCode: postalCode.isEmpty ? nil : postalCode,
+            country: country.isEmpty ? nil : country,
+            latitude: nil,
+            longitude: nil
+        )
 
         onSave(newVendor)
+        
+        isSaving = false
         dismiss()
+    }
+    
+    private func loadVendorTypes() async {
+        isLoadingTypes = true
+        do {
+            vendorTypes = try await repository.fetchVendorTypes()
+            // Set first type as default if available
+            if let firstType = vendorTypes.first {
+                selectedVendorType = firstType
+                vendorType = firstType.vendorType
+                budgetCategoryName = firstType.vendorType
+            }
+        } catch {
+            errorMessage = "Failed to load vendor types: \(error.localizedDescription)"
+            AppLogger.repository.error("Failed to load vendor types", error: error)
+        }
+        isLoadingTypes = false
     }
 }
 
