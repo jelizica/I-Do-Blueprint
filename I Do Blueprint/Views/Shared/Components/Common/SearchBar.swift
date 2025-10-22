@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Standard search bar with clear button
 struct SearchBar: View {
+    private let logger = AppLogger.ui
     @Binding var text: String
     let placeholder: String
     let onSubmit: (() -> Void)?
@@ -145,7 +146,7 @@ struct CompactSearchBar: View {
             text: .constant(""),
             placeholder: "Search vendors...",
             onSubmit: {
-                print("Search submitted")
+                // TODO: Implement action - print("Search submitted")
             }
         )
     }

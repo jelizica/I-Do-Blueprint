@@ -31,14 +31,35 @@ struct VisualPlanningSearchView: View {
         }
         .navigationTitle("Search Visual Planning")
         .sheet(isPresented: $showingFilters) {
-            // TODO: Implement SearchFiltersView
-            Text("Filters coming soon")
-                .padding()
+            SearchFiltersView(
+                filters: $searchService.activeFilters,
+                onApply: {
+                    Task {
+                        await searchService.performSearch()
+                    }
+                    showingFilters = false
+                },
+                onDismiss: {
+                    showingFilters = false
+                }
+            )
         }
         .sheet(isPresented: $showingSavedSearches) {
-            // TODO: Implement SavedSearchesView
-            Text("Saved searches coming soon")
-                .padding()
+            SavedSearchesView(
+                savedSearches: $searchService.savedSearches,
+                onSelect: { search in
+                    searchService.loadSavedSearch(search)
+                    showingSavedSearches = false
+                },
+                onDelete: { search in
+                    if let index = searchService.savedSearches.firstIndex(where: { $0.id == search.id }) {
+                        searchService.deleteSavedSearch(at: index)
+                    }
+                },
+                onDismiss: {
+                    showingSavedSearches = false
+                }
+            )
         }
     }
 
@@ -344,15 +365,14 @@ struct VisualPlanningSearchView: View {
 
     private var stylePreferencesResultsView: some View {
         VStack(spacing: 16) {
-            ForEach(searchService.searchResults.stylePreferences, id: \.tenantId) { _ in
-                // TODO: Implement StylePreferencesSearchResultCard
-                VStack {
-                    Text("Style Preferences")
-                        .font(.headline)
-                }
-                .padding()
-                .background(Color.gray.opacity(0.1))
-                .cornerRadius(8)
+            ForEach(searchService.searchResults.stylePreferences, id: \.tenantId) { preferences in
+                StylePreferencesSearchResultCard(
+                    stylePreferences: preferences,
+                    onTap: {
+                        AppLogger.ui.info("Selected style preferences")
+                        // Navigate to style preferences view
+                    }
+                )
             }
         }
     }

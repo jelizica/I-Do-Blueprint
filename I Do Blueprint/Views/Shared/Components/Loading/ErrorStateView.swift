@@ -9,6 +9,7 @@ import SwiftUI
 
 /// View displaying error state with retry option
 struct ErrorStateView: View {
+    private let logger = AppLogger.ui
     let error: Error
     let onRetry: (() -> Void)?
     
@@ -146,7 +147,7 @@ struct ErrorBannerView: View {
             userInfo: [NSLocalizedDescriptionKey: "Failed to load data. Please check your internet connection and try again."]
         ),
         onRetry: {
-            print("Retry tapped")
+            // TODO: Implement action - print("Retry tapped")
         }
     )
 }
@@ -165,7 +166,7 @@ struct ErrorBannerView: View {
     InlineErrorView(
         message: "Failed to save changes",
         onRetry: {
-            print("Retry tapped")
+            // TODO: Implement action - print("Retry tapped")
         }
     )
     .padding()
@@ -176,7 +177,7 @@ struct ErrorBannerView: View {
         ErrorBannerView(
             message: "Unable to sync data. Check your connection.",
             onDismiss: {
-                print("Dismissed")
+                // TODO: Implement action - print("Dismissed")
             }
         )
         .padding()

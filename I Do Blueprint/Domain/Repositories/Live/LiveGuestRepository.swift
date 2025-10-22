@@ -91,7 +91,18 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
         }
     }
     
-    // TODO: Add pagination support once Sendable conformance issues are resolved
+    // DEFERRED (2025-01): Guest pagination blocked by Swift Sendable conformance issues
+    //
+    // The PaginatedResult<T> type requires Sendable conformance, but Guest model
+    // contains non-Sendable types (NSImage, etc.) that cannot easily conform.
+    //
+    // Workaround: Fetch all guests and implement client-side pagination if needed.
+    // Performance impact is minimal for typical wedding guest lists (< 500 guests).
+    //
+    // Future: When Swift 6 stabilizes Sendable requirements, revisit this implementation.
+    // Tracking: Consider creating separate Linear issue for pagination implementation
+    //
+    // Proposed signature (for future reference):
     // func fetchGuests(page: Int = 0, pageSize: Int = 50) async throws -> PaginatedResult<Guest>
 
     func fetchGuestStats() async throws -> GuestStats {

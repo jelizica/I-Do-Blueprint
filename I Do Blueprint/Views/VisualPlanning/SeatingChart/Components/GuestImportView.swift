@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct GuestImportView: View {
+    private let logger = AppLogger.ui
     @Binding var isPresented: Bool
     let availableGuests: [SeatingGuest]
     let onImport: ([SeatingGuest]) -> Void
@@ -386,7 +387,7 @@ struct GuestImportRow: View {
             SeatingGuest(firstName: "Robert", lastName: "Wilson", relationship: .coworker, group: "Work Friends")
         ],
         onImport: { guests in
-            print("Importing \(guests.count) guests")
+            // TODO: Implement action - print("Importing \(guests.count) guests")
         }
     )
 }

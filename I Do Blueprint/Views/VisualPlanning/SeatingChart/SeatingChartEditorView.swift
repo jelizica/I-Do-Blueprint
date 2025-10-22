@@ -113,14 +113,69 @@ struct SeatingChartEditorView: View {
                     })
             }
         }
-        // TODO: Implement ObstacleEditorSheet for editing venue obstacles
-        // .sheet(isPresented: $showingObstacleEditor) { ... }
+        .sheet(isPresented: $showingObstacleEditor) {
+            if let obstacle = editingObstacle,
+               let index = editableChart.venueConfiguration.obstacles.firstIndex(where: { $0.id == obstacle.id }) {
+                ObstacleEditorSheet(
+                    obstacle: Binding(
+                        get: { editableChart.venueConfiguration.obstacles[index] },
+                        set: { editableChart.venueConfiguration.obstacles[index] = $0 }
+                    ),
+                    onSave: { updatedObstacle in
+                        editableChart.venueConfiguration.obstacles[index] = updatedObstacle
+                        showingObstacleEditor = false
+                        editingObstacle = nil
+                    },
+                    onDismiss: {
+                        showingObstacleEditor = false
+                        editingObstacle = nil
+                    })
+            }
+        }
         
-        // TODO: Implement AssignmentEditorSheet for editing seating assignments
-        // .sheet(isPresented: $showingAssignmentEditor) { ... }
-        
-        // TODO: Implement TableSelectorSheet for selecting tables when assigning guests
-        // .sheet(isPresented: $showingTableSelector) { ... }
+        .sheet(isPresented: $showingAssignmentEditor) {
+            if let assignment = editingAssignment,
+               let index = editableChart.seatingAssignments.firstIndex(where: { $0.id == assignment.id }) {
+                AssignmentEditorSheet(
+                    assignment: Binding(
+                        get: { editableChart.seatingAssignments[index] },
+                        set: { editableChart.seatingAssignments[index] = $0 }
+                    ),
+                    guests: editableChart.guests,
+                    tables: editableChart.tables,
+                    assignments: editableChart.seatingAssignments,
+                    onSave: { updatedAssignment in
+                        editableChart.seatingAssignments[index] = updatedAssignment
+                        showingAssignmentEditor = false
+                        editingAssignment = nil
+                    },
+                    onDismiss: {
+                        showingAssignmentEditor = false
+                        editingAssignment = nil
+                    })
+            }
+        }
+        .sheet(isPresented: $showingTableSelector) {
+            if let guest = guestToAssign {
+                TableSelectorSheet(
+                    guest: guest,
+                    tables: editableChart.tables,
+                    assignments: editableChart.seatingAssignments,
+                    onSelectTable: { selectedTable in
+                        let newAssignment = SeatingAssignment(
+                            guestId: guest.id,
+                            tableId: selectedTable.id
+                        )
+                        editableChart.seatingAssignments.append(newAssignment)
+                        showingTableSelector = false
+                        guestToAssign = nil
+                    },
+                    onDismiss: {
+                        showingTableSelector = false
+                        guestToAssign = nil
+                    })
+            }
+        }
     }
 
     // MARK: - Helper Methods

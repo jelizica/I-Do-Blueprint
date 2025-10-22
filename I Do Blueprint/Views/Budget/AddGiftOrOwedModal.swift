@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AddGiftOrOwedModal: View {
+    private let logger = AppLogger.ui
     let onSave: (GiftOrOwed) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -250,6 +251,6 @@ struct AddGiftOrOwedModal: View {
 
 #Preview {
     AddGiftOrOwedModal { giftOrOwed in
-        print("Saved: \(giftOrOwed)")
+        // TODO: Implement action - print("Saved: \(giftOrOwed)")
     }
 }

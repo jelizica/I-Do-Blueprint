@@ -79,6 +79,131 @@ enum StyleCategory: String, CaseIterable, Codable, Hashable {
     var iconName: String {
         icon
     }
+    
+    /// Suggested color palette for this wedding style
+    var suggestedColors: [Color] {
+        switch self {
+        case .classic:
+            return [
+                Color(red: 1.0, green: 1.0, blue: 1.0),      // White
+                Color(red: 0.96, green: 0.96, blue: 0.86),   // Beige
+                Color(red: 0.75, green: 0.75, blue: 0.75),   // Silver
+                Color(red: 1.0, green: 0.84, blue: 0.0)      // Gold
+            ]
+        case .rustic:
+            return [
+                Color(red: 0.55, green: 0.27, blue: 0.07),   // Brown
+                Color(red: 0.96, green: 0.64, blue: 0.38),   // Sandy Brown
+                Color(red: 0.87, green: 0.72, blue: 0.53),   // Burlywood
+                Color(red: 0.33, green: 0.42, blue: 0.18)    // Dark Olive Green
+            ]
+        case .modern:
+            return [
+                Color(red: 0.0, green: 0.0, blue: 0.0),      // Black
+                Color(red: 1.0, green: 1.0, blue: 1.0),      // White
+                Color(red: 0.5, green: 0.5, blue: 0.5),      // Gray
+                Color(red: 1.0, green: 0.42, blue: 0.42)     // Coral
+            ]
+        case .bohemian:
+            return [
+                Color(red: 0.90, green: 0.72, blue: 0.61),   // Peach
+                Color(red: 0.62, green: 0.51, blue: 0.54),   // Mauve
+                Color(red: 0.29, green: 0.34, blue: 0.35),   // Slate
+                Color(red: 0.96, green: 0.91, blue: 0.76)    // Cream
+            ]
+        case .vintage:
+            return [
+                Color(red: 1.0, green: 0.71, blue: 0.76),    // Light Pink
+                Color(red: 0.90, green: 0.90, blue: 0.98),   // Lavender
+                Color(red: 0.94, green: 0.90, blue: 0.55),   // Khaki
+                Color(red: 0.87, green: 0.63, blue: 0.87)    // Plum
+            ]
+        case .beach, .beachCoastal:
+            return [
+                Color(red: 0.53, green: 0.81, blue: 0.92),   // Sky Blue
+                Color(red: 0.94, green: 0.90, blue: 0.55),   // Khaki
+                Color(red: 1.0, green: 1.0, blue: 1.0),      // White
+                Color(red: 1.0, green: 0.89, blue: 0.71)     // Moccasin
+            ]
+        case .garden:
+            return [
+                Color(red: 0.56, green: 0.93, blue: 0.56),   // Light Green
+                Color(red: 1.0, green: 0.71, blue: 0.76),    // Light Pink
+                Color(red: 1.0, green: 0.98, blue: 0.80),    // Lemon Chiffon
+                Color(red: 0.88, green: 1.0, blue: 1.0)      // Light Cyan
+            ]
+        case .glamorous:
+            return [
+                Color(red: 1.0, green: 0.84, blue: 0.0),     // Gold
+                Color(red: 0.0, green: 0.0, blue: 0.0),      // Black
+                Color(red: 1.0, green: 1.0, blue: 1.0),      // White
+                Color(red: 0.75, green: 0.75, blue: 0.75)    // Silver
+            ]
+        case .romantic:
+            return [
+                Color(red: 1.0, green: 0.75, blue: 0.80),    // Pink
+                Color(red: 0.96, green: 0.96, blue: 0.86),   // Cream
+                Color(red: 0.93, green: 0.51, blue: 0.93),   // Violet
+                Color(red: 1.0, green: 0.84, blue: 0.0)      // Gold
+            ]
+        case .minimalist:
+            return [
+                Color(red: 1.0, green: 1.0, blue: 1.0),      // White
+                Color(red: 0.0, green: 0.0, blue: 0.0),      // Black
+                Color(red: 0.9, green: 0.9, blue: 0.9),      // Light Gray
+                Color(red: 0.3, green: 0.3, blue: 0.3)       // Dark Gray
+            ]
+        case .industrial:
+            return [
+                Color(red: 0.3, green: 0.3, blue: 0.3),      // Charcoal
+                Color(red: 0.5, green: 0.5, blue: 0.5),      // Gray
+                Color(red: 0.7, green: 0.4, blue: 0.2),      // Copper
+                Color(red: 0.2, green: 0.2, blue: 0.2)       // Dark Gray
+            ]
+        case .mountain:
+            return [
+                Color(red: 0.4, green: 0.5, blue: 0.4),      // Forest Green
+                Color(red: 0.55, green: 0.47, blue: 0.37),   // Brown
+                Color(red: 0.9, green: 0.9, blue: 0.9),      // Snow White
+                Color(red: 0.4, green: 0.5, blue: 0.6)       // Slate Blue
+            ]
+        case .urban:
+            return [
+                Color(red: 0.2, green: 0.2, blue: 0.2),      // Dark Gray
+                Color(red: 0.9, green: 0.9, blue: 0.9),      // Light Gray
+                Color(red: 0.0, green: 0.5, blue: 0.8),      // Blue
+                Color(red: 1.0, green: 0.5, blue: 0.0)       // Orange
+            ]
+        case .destination:
+            return [
+                Color(red: 0.0, green: 0.7, blue: 0.9),      // Tropical Blue
+                Color(red: 1.0, green: 0.8, blue: 0.0),      // Sunshine Yellow
+                Color(red: 1.0, green: 0.4, blue: 0.4),      // Coral
+                Color(red: 0.2, green: 0.8, blue: 0.6)       // Turquoise
+            ]
+        case .cultural:
+            return [
+                Color(red: 0.8, green: 0.2, blue: 0.2),      // Red
+                Color(red: 1.0, green: 0.84, blue: 0.0),     // Gold
+                Color(red: 0.4, green: 0.2, blue: 0.6),      // Purple
+                Color(red: 0.0, green: 0.5, blue: 0.3)       // Green
+            ]
+        case .seasonal:
+            return [
+                Color(red: 0.8, green: 0.4, blue: 0.2),      // Autumn Orange
+                Color(red: 0.6, green: 0.2, blue: 0.2),      // Burgundy
+                Color(red: 0.9, green: 0.7, blue: 0.3),      // Golden Yellow
+                Color(red: 0.3, green: 0.5, blue: 0.3)       // Evergreen
+            ]
+        case .custom:
+            return [
+                Color(red: 0.5, green: 0.5, blue: 0.8),      // Periwinkle
+                Color(red: 0.8, green: 0.6, blue: 0.8),      // Lavender
+                Color(red: 0.6, green: 0.8, blue: 0.8),      // Aqua
+                Color(red: 0.9, green: 0.8, blue: 0.6)       // Champagne
+            ]
+        }
+    }
 }
 
 // MARK: - Color Harmony Type

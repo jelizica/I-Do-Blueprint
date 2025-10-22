@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ConfigurationErrorView: View {
+    private let logger = AppLogger.ui
     let error: ConfigurationError
     let onRetry: () -> Void
     let onContactSupport: () -> Void
@@ -131,31 +132,31 @@ struct ConfigurationErrorView: View {
 #Preview("Config File Not Found") {
     ConfigurationErrorView(
         error: .configFileNotFound,
-        onRetry: { print("Retry tapped") },
-        onContactSupport: { print("Contact support tapped") }
+        onRetry: { },
+        onContactSupport: { }
     )
 }
 
 #Preview("Missing Supabase URL") {
     ConfigurationErrorView(
         error: .missingSupabaseURL,
-        onRetry: { print("Retry tapped") },
-        onContactSupport: { print("Contact support tapped") }
+        onRetry: { },
+        onContactSupport: { }
     )
 }
 
 #Preview("Invalid URL Format") {
     ConfigurationErrorView(
         error: .invalidURLFormat("not-a-valid-url"),
-        onRetry: { print("Retry tapped") },
-        onContactSupport: { print("Contact support tapped") }
+        onRetry: { },
+        onContactSupport: { }
     )
 }
 
 #Preview("Security Violation") {
     ConfigurationErrorView(
         error: .securityViolation("Service-role key found in bundle"),
-        onRetry: { print("Retry tapped") },
-        onContactSupport: { print("Contact support tapped") }
+        onRetry: { },
+        onContactSupport: { }
     )
 }

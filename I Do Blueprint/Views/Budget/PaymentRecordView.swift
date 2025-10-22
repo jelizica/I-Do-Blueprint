@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct PaymentRecordView: View {
+    private let logger = AppLogger.ui
     let expense: Expense
     let onSave: (Expense) -> Void
 
@@ -232,6 +233,6 @@ private func formatDate(_ date: Date) -> String {
             isTestData: false,
             createdAt: Date(),
             updatedAt: nil)) { expense in
-        print("Updated expense: \(expense.expenseName)")
+        // TODO: Implement action - print("Updated expense: \(expense.expenseName)")
     }
 }

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct DashboardQuickActionButton: View {
+    private let logger = AppLogger.ui
     let icon: String
     let title: String
     let color: Color
@@ -74,28 +75,28 @@ struct DashboardQuickActionButton: View {
             icon: "plus.circle.fill",
             title: "Add Task",
             color: .blue) {
-            print("Add Task")
+            // TODO: Implement action - print("Add Task")
         }
 
         DashboardQuickActionButton(
             icon: "note.text.badge.plus",
             title: "New Note",
             color: .green) {
-            print("New Note")
+            // TODO: Implement action - print("New Note")
         }
 
         DashboardQuickActionButton(
             icon: "calendar.badge.plus",
             title: "Add Event",
             color: .orange) {
-            print("Add Event")
+            // TODO: Implement action - print("Add Event")
         }
 
         DashboardQuickActionButton(
             icon: "person.crop.circle.badge.plus",
             title: "Add Guest",
             color: .purple) {
-            print("Add Guest")
+            // TODO: Implement action - print("Add Guest")
         }
     }
     .padding()

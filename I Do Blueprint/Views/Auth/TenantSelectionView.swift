@@ -10,6 +10,7 @@ import Auth
 import Supabase
 
 struct TenantSelectionView: View {
+    private let logger = AppLogger.auth
     @StateObject private var sessionManager = SessionManager.shared
     @StateObject private var supabaseManager = SupabaseManager.shared
     @State private var isLoading = false
@@ -176,18 +177,18 @@ struct TenantSelectionView: View {
             let session = try await client.auth.session
             let userId = session.user.id
             
-            print("🔍 [TenantSelection] Loading couples for user: \(userId)")
+            logger.debug("Loading couples for user: \(userId)")
 
             couples = try await coupleRepository.fetchCouplesForUser(userId: userId)
             
-            print("🔍 [TenantSelection] Found \(couples.count) couples:")
+            logger.debug("Found \(couples.count) couples")
             for couple in couples {
-                print("   - \(couple.displayName) (ID: \(couple.coupleId))")
+                logger.debug("Couple: \(couple.displayName) (ID: \(couple.coupleId))")
             }
             
             isLoading = false
         } catch {
-            print("❌ [TenantSelection] Error loading couples: \(error)")
+            logger.error("Error loading couples: \(error)")
             errorMessage = "Failed to load couples: \(error.localizedDescription)"
             isLoading = false
         }
@@ -197,12 +198,12 @@ struct TenantSelectionView: View {
         isLoading = true
         errorMessage = nil
         
-        print("🔍 [TenantSelection] User selected couple: \(couple.displayName) (ID: \(couple.coupleId))")
+        logger.info("User selected couple: \(couple.displayName) (ID: \(couple.coupleId))")
 
         Task {
             await sessionManager.setTenantId(couple.coupleId)
             
-            print("✅ [TenantSelection] Tenant ID set to: \(couple.coupleId)")
+            logger.info("Tenant ID set to: \(couple.coupleId)")
 
             await MainActor.run {
                 isLoading = false

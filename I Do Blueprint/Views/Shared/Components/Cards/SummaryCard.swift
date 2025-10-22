@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Summary card for displaying aggregated data with multiple metrics
 struct SummaryCard: View {
+    private let logger = AppLogger.ui
     let title: String
     let items: [SummaryItem]
     let action: (() -> Void)?
@@ -184,7 +185,7 @@ struct CompactSummaryCard: View {
             SummaryItem(label: "Declined", value: "5", icon: "xmark.circle.fill", color: Color.red)
         ],
         action: {
-            print("View details tapped")
+            // TODO: Implement action - print("View details tapped")
         }
     )
     .padding()

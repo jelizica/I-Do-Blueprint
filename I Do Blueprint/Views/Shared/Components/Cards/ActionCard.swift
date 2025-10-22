@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Action card for prominent call-to-action buttons
 struct ActionCard: View {
+    private let logger = AppLogger.ui
     let icon: String
     let title: String
     let description: String
@@ -183,7 +184,7 @@ struct CompactActionCard: View {
             buttonTitle: "Browse Vendors",
             color: .purple,
             action: {
-                print("Browse vendors tapped")
+                // TODO: Implement action - print("Browse vendors tapped")
             }
         )
     }

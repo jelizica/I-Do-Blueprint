@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AddExpenseView: View {
+    private let logger = AppLogger.ui
     let categories: [BudgetCategory]
     let preselectedCategory: BudgetCategory?
     let onSave: (Expense) -> Void
@@ -318,6 +319,6 @@ struct TagView: View {
                 createdAt: Date(),
                 updatedAt: nil)
         ]) { expense in
-            print("Saved expense: \(expense.expenseName)")
+            // TODO: Implement action - print("Saved expense: \(expense.expenseName)")
         }
 }

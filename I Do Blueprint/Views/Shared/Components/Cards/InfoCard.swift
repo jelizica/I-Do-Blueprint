@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Informational card for displaying key details with icon, title, and content
 struct InfoCard: View {
+    private let logger = AppLogger.ui
     let icon: String
     let title: String
     let content: String
@@ -93,7 +94,7 @@ struct InfoCard: View {
             content: "Grand Ballroom, Downtown Hotel",
             color: .purple,
             action: {
-                print("Venue tapped")
+                // TODO: Implement action - print("Venue tapped")
             }
         )
         

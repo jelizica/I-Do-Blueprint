@@ -426,21 +426,20 @@ actor ExportGenerator {
         pages.append(mainPage)
 
         // Additional pages for detailed descriptions if requested
-        // TODO: Implement MoodBoardDetailsView
-        // if template.features.contains(.descriptions) && !moodBoard.elements.isEmpty {
-        //     let detailsView = MoodBoardDetailsView(
-        //         moodBoard: moodBoard,
-        //         branding: branding
-        //     )
-        //
-        //     let detailsRenderer = ImageRenderer(content: detailsView)
-        //     detailsRenderer.scale = 2.0
-        //
-        //     if let detailsImage = detailsRenderer.nsImage,
-        //        let detailsPage = PDFPage(image: detailsImage) {
-        //         pages.append(detailsPage)
-        //     }
-        // }
+        if template.features.contains(.descriptions) && !moodBoard.elements.isEmpty {
+            let detailsView = MoodBoardDetailsView(
+                moodBoard: moodBoard,
+                branding: branding
+            )
+            
+            let detailsRenderer = ImageRenderer(content: detailsView)
+            detailsRenderer.scale = 2.0
+            
+            if let detailsImage = detailsRenderer.nsImage,
+               let detailsPage = PDFPage(image: detailsImage) {
+                pages.append(detailsPage)
+            }
+        }
 
         return pages
     }

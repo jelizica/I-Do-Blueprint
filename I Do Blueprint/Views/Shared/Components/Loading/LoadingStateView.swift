@@ -52,6 +52,7 @@ enum LoadingState<T> {
 
 /// View that handles different loading states with appropriate UI
 struct LoadingStateView<Content: View, Data>: View {
+    private let logger = AppLogger.ui
     let state: LoadingState<Data>
     let content: (Data) -> Content
     let onRetry: (() -> Void)?
@@ -185,7 +186,7 @@ struct InlineLoadingView: View {
             }
         },
         onRetry: {
-            print("Retry tapped")
+            // TODO: Implement action - print("Retry tapped")
         }
     )
 }

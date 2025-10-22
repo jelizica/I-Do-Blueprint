@@ -41,6 +41,8 @@ actor RepositoryCache {
     
     static let shared = RepositoryCache()
     
+    private let logger = AppLogger.cache
+    
     // MARK: - Private Properties
     
     /// Cache entry containing data and expiration time
@@ -117,7 +119,7 @@ actor RepositoryCache {
             cache[key] = CacheEntry(data: data, expiresAt: expiresAt)
         } catch {
             // Silently fail - caching is optional
-            print("⚠️ Failed to cache value for key '\(key)': \(error)")
+            logger.warning("Failed to cache value for key '\(key)': \(error.localizedDescription)")
         }
     }
     

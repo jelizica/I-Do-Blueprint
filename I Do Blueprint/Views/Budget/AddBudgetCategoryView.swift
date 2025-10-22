@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct AddBudgetCategoryView: View {
+    private let logger = AppLogger.ui
     let onSave: (BudgetCategory) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -310,6 +311,6 @@ struct TemplateCardView: View {
 
 #Preview {
     AddBudgetCategoryView { category in
-        print("Saved category: \(category.categoryName)")
+        // TODO: Implement action - print("Saved category: \(category.categoryName)")
     }
 }

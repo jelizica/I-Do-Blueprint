@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ColorPaletteSearchResultCard: View {
+    private let logger = AppLogger.ui
     let palette: ColorPalette
     let onSelect: () -> Void
     
@@ -171,7 +172,7 @@ struct ColorPaletteSearchResultCard: View {
     )
     
     ColorPaletteSearchResultCard(palette: samplePalette) {
-        print("Selected palette")
+        // TODO: Implement action - print("Selected palette")
     }
     .frame(width: 280, height: 240)
     .padding()

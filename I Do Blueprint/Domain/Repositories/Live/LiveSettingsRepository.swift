@@ -10,6 +10,7 @@ import Supabase
 
 actor LiveSettingsRepository: SettingsRepositoryProtocol {
     private let supabase: SupabaseClient?
+    private let logger = AppLogger.repository
 
     init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
@@ -25,7 +26,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     // MARK: - Settings CRUD
 
     func fetchSettings() async throws -> CoupleSettings {
-        print("🔵 [SettingsRepo] Starting fetchSettings query...")
+        logger.debug("Starting fetchSettings query...")
         
         struct SettingsRow: Decodable {
             let settings: CoupleSettings
@@ -38,7 +39,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             let session = try await client.auth.session
             let userId = session.user.id
             
-            print("🔵 [SettingsRepo] Fetching settings for couple_id: \(userId.uuidString)")
+            logger.debug("Fetching settings for couple_id: \(userId.uuidString)")
             
             let response: SettingsRow = try await client
                 .from("couple_settings")
@@ -49,10 +50,10 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 .execute()
                 .value
             
-            print("✅ [SettingsRepo] Query completed successfully")
+            logger.info("Query completed successfully")
             return response.settings
         } catch {
-            print("❌ [SettingsRepo] Query failed: \(error)")
+            logger.error("Query failed: \(error)")
             throw error
         }
     }
@@ -67,7 +68,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         let session = try await client.auth.session
         let userId = session.user.id
 
-        print("🔵 [SettingsRepo] updateSettings - User ID: \(userId.uuidString)")
+        logger.debug("updateSettings - User ID: \(userId.uuidString)")
 
         // Fetch current settings
         let currentSettings = try await fetchSettings()
@@ -75,14 +76,14 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         // Deep merge partial settings into current settings
         let mergedSettings = deepMerge(current: currentSettings, updates: partialSettings)
         
-        print("🔵 [SettingsRepo] updateSettings - Merged settings tax rates: \(mergedSettings.budget.taxRates.count)")
+        logger.debug("updateSettings - Merged settings tax rates: \(mergedSettings.budget.taxRates.count)")
 
         struct SettingsUpdate: Encodable {
             let settings: CoupleSettings
         }
 
         do {
-            print("🔵 [SettingsRepo] updateSettings - Attempting to update database...")
+            logger.debug("updateSettings - Attempting to update database...")
             
             // Update the settings
             let response: [SettingsRow] = try await client
@@ -93,18 +94,18 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 .execute()
                 .value
 
-            print("🔵 [SettingsRepo] updateSettings - Update returned \(response.count) rows")
+            logger.debug("updateSettings - Update returned \(response.count) rows")
             
             guard let firstResult = response.first else {
-                print("❌ [SettingsRepo] updateSettings - No rows returned from update")
+                logger.error("updateSettings - No rows returned from update")
                 throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "No settings row found for user"])
             }
 
-            print("✅ [SettingsRepo] updateSettings - Database updated successfully")
-            print("🔵 [SettingsRepo] updateSettings - Response tax rates: \(firstResult.settings.budget.taxRates.count)")
+            logger.info("updateSettings - Database updated successfully")
+            logger.debug("updateSettings - Response tax rates: \(firstResult.settings.budget.taxRates.count)")
             return firstResult.settings
         } catch {
-            print("❌ [SettingsRepo] updateSettings - Database update failed: \(error)")
+            logger.error("updateSettings - Database update failed: \(error)")
             throw error
         }
     }
@@ -122,32 +123,32 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     }
 
     func updateBudgetSettings(_ settings: BudgetSettings) async throws {
-        print("🔵 [SettingsRepo] updateBudgetSettings called")
-        print("🔵 [SettingsRepo] Tax rates count: \(settings.taxRates.count)")
+        logger.debug("updateBudgetSettings called")
+        logger.debug("Tax rates count: \(settings.taxRates.count)")
         
         // Convert BudgetSettings to dictionary for proper merging
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
         let data = try encoder.encode(settings)
         
-        print("🔵 [SettingsRepo] Encoded data: \(String(data: data, encoding: .utf8) ?? "nil")")
+        logger.debug("Encoded budget settings data")
         
         guard let budgetDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            print("❌ [SettingsRepo] Failed to convert to dictionary")
+            logger.error("Failed to convert to dictionary")
             throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert BudgetSettings to dictionary"])
         }
         
-        print("🔵 [SettingsRepo] Budget dict keys: \(budgetDict.keys)")
+        logger.debug("Budget dict keys: \(budgetDict.keys.joined(separator: ", "))")
         if let taxRates = budgetDict["tax_rates"] as? [[String: Any]] {
-            print("🔵 [SettingsRepo] Tax rates in dict: \(taxRates.count)")
+            logger.debug("Tax rates in dict: \(taxRates.count)")
         } else {
-            print("❌ [SettingsRepo] No tax_rates in dict or wrong type")
+            logger.warning("No tax_rates in dict or wrong type")
         }
         
         let payload: [String: Any] = ["budget": budgetDict]
         _ = try await updateSettings(payload)
         
-        print("✅ [SettingsRepo] Budget settings updated successfully")
+        logger.info("Budget settings updated successfully")
     }
 
     func updateCashFlowSettings(_ settings: CashFlowSettings) async throws {
@@ -401,9 +402,9 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     }
 
     private func mergeBudgetSettings(current: BudgetSettings, updates: [String: Any]) -> BudgetSettings {
-        print("🔵 [SettingsRepo] mergeBudgetSettings called")
-        print("🔵 [SettingsRepo] Current tax rates: \(current.taxRates.count)")
-        print("🔵 [SettingsRepo] Updates keys: \(updates.keys)")
+        logger.debug("mergeBudgetSettings called")
+        logger.debug("Current tax rates: \(current.taxRates.count)")
+        logger.debug("Updates keys: \(updates.keys.joined(separator: ", "))")
         
         var merged = current
         if let totalBudget = updates["total_budget"] as? Double { merged.totalBudget = totalBudget }
@@ -420,22 +421,22 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         
         // Handle tax_rates array
         if let taxRatesArray = updates["tax_rates"] as? [[String: Any]] {
-            print("🔵 [SettingsRepo] Found tax_rates array with \(taxRatesArray.count) items")
+            logger.debug("Found tax_rates array with \(taxRatesArray.count) items")
             merged.taxRates = taxRatesArray.compactMap { taxRateDict in
-                print("🔵 [SettingsRepo] Processing tax rate: \(taxRateDict)")
+                logger.debug("Processing tax rate: \(taxRateDict.keys.joined(separator: ", "))")
                 guard let id = taxRateDict["id"] as? String,
                       let name = taxRateDict["name"] as? String,
                       let rate = taxRateDict["rate"] as? Double else {
-                    print("❌ [SettingsRepo] Failed to parse tax rate")
+                    logger.warning("Failed to parse tax rate from dict")
                     return nil
                 }
                 let isDefault = taxRateDict["is_default"] as? Bool ?? false
-                print("✅ [SettingsRepo] Parsed tax rate: \(name) - \(rate)%")
+                logger.info("Parsed tax rate: \(name) - \(rate)%")
                 return SettingsTaxRate(id: id, name: name, rate: rate, isDefault: isDefault)
             }
-            print("🔵 [SettingsRepo] Merged tax rates: \(merged.taxRates.count)")
+            logger.debug("Merged tax rates: \(merged.taxRates.count)")
         } else {
-            print("❌ [SettingsRepo] No tax_rates found in updates or wrong type")
+            logger.warning("No tax_rates found in updates or wrong type")
         }
         
         return merged

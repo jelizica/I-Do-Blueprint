@@ -2,6 +2,7 @@ import SwiftUI
 import Dependencies
 
 struct AddVendorView: View {
+    private let logger = AppLogger.ui
     let onSave: (Vendor) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -374,6 +375,6 @@ struct AddVendorView: View {
 
 #Preview {
     AddVendorView { vendor in
-        print("Saved vendor: \(vendor.vendorName)")
+        // TODO: Implement action - print("Saved vendor: \(vendor.vendorName)")
     }
 }

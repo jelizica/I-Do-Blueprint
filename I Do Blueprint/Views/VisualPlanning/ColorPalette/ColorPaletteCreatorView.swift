@@ -28,6 +28,9 @@ struct ColorPaletteCreatorView: View {
     @State private var isExtracting = false
     @State private var extractedColors: [ExtractedColor] = []
     @StateObject private var colorExtractionService = ColorExtractionService()
+    
+    // Mood board import states
+    @State private var showingMoodBoardImport = false
 
     private let logger = AppLogger.ui
 
@@ -112,7 +115,7 @@ struct ColorPaletteCreatorView: View {
                         canLoadFromMoodBoard: !visualPlanningStore.moodBoards.isEmpty,
                         onReset: resetPalette,
                         onLoadFromMoodBoard: {
-                            // TODO: Implement loading colors from existing mood boards
+                            showingMoodBoardImport = true
                         })
                         .padding(.top, 16)
                 }
@@ -135,6 +138,17 @@ struct ColorPaletteCreatorView: View {
         .frame(width: 900, height: 700)
         .onAppear {
             initializeDefaultPalette()
+        }
+        .sheet(isPresented: $showingMoodBoardImport) {
+            MoodBoardColorImportSheet(
+                moodBoards: visualPlanningStore.moodBoards,
+                onImport: { colors in
+                    importColorsFromMoodBoard(colors)
+                    showingMoodBoardImport = false
+                },
+                onDismiss: {
+                    showingMoodBoardImport = false
+                })
         }
     }
 
@@ -379,6 +393,22 @@ struct ColorPaletteCreatorView: View {
         case .harmony: "dial.high"
         case .refinement: "slider.horizontal.3"
         case .preview: "eye"
+        }
+    }
+    
+    private func importColorsFromMoodBoard(_ colors: [Color]) {
+        // Add imported colors to palette
+        for color in colors {
+            if !selectedPaletteColors.contains(where: { $0.color.hexString == color.hexString }) {
+                selectedPaletteColors.append(PaletteColor(color: color, role: .accent))
+            }
+        }
+        
+        logger.info("Imported \(colors.count) colors from mood board")
+        
+        // Move to preview step to show imported colors
+        if !selectedPaletteColors.isEmpty {
+            currentStep = .preview
         }
     }
 }

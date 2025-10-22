@@ -27,10 +27,12 @@ final class AppStores: ObservableObject {
     private var _visualPlanning: VisualPlanningStoreV2?
     private var _settings: SettingsStoreV2?
     
+    private let logger = AppLogger.general
+    
     // Lazy accessors - create on first access
     var budget: BudgetStoreV2 {
         if _budget == nil {
-            print("🔵 Creating BudgetStoreV2")
+            logger.debug("Creating BudgetStoreV2")
             _budget = BudgetStoreV2()
         }
         return _budget!
@@ -38,7 +40,7 @@ final class AppStores: ObservableObject {
     
     var guest: GuestStoreV2 {
         if _guest == nil {
-            print("🔵 Creating GuestStoreV2")
+            logger.debug("Creating GuestStoreV2")
             _guest = GuestStoreV2()
         }
         return _guest!
@@ -46,7 +48,7 @@ final class AppStores: ObservableObject {
     
     var vendor: VendorStoreV2 {
         if _vendor == nil {
-            print("🔵 Creating VendorStoreV2")
+            logger.debug("Creating VendorStoreV2")
             _vendor = VendorStoreV2()
         }
         return _vendor!
@@ -54,7 +56,7 @@ final class AppStores: ObservableObject {
     
     var document: DocumentStoreV2 {
         if _document == nil {
-            print("🔵 Creating DocumentStoreV2")
+            logger.debug("Creating DocumentStoreV2")
             _document = DocumentStoreV2()
         }
         return _document!
@@ -62,7 +64,7 @@ final class AppStores: ObservableObject {
     
     var task: TaskStoreV2 {
         if _task == nil {
-            print("🔵 Creating TaskStoreV2")
+            logger.debug("Creating TaskStoreV2")
             _task = TaskStoreV2()
         }
         return _task!
@@ -70,7 +72,7 @@ final class AppStores: ObservableObject {
     
     var timeline: TimelineStoreV2 {
         if _timeline == nil {
-            print("🔵 Creating TimelineStoreV2")
+            logger.debug("Creating TimelineStoreV2")
             _timeline = TimelineStoreV2()
         }
         return _timeline!
@@ -78,7 +80,7 @@ final class AppStores: ObservableObject {
     
     var notes: NotesStoreV2 {
         if _notes == nil {
-            print("🔵 Creating NotesStoreV2")
+            logger.debug("Creating NotesStoreV2")
             _notes = NotesStoreV2()
         }
         return _notes!
@@ -86,7 +88,7 @@ final class AppStores: ObservableObject {
     
     var visualPlanning: VisualPlanningStoreV2 {
         if _visualPlanning == nil {
-            print("🔵 Creating VisualPlanningStoreV2")
+            logger.debug("Creating VisualPlanningStoreV2")
             _visualPlanning = VisualPlanningStoreV2()
         }
         return _visualPlanning!
@@ -94,13 +96,11 @@ final class AppStores: ObservableObject {
     
     var settings: SettingsStoreV2 {
         if _settings == nil {
-            print("🔵 Creating SettingsStoreV2")
+            logger.debug("Creating SettingsStoreV2")
             _settings = SettingsStoreV2()
         }
         return _settings!
     }
-    
-    private let logger = AppLogger.general
     
     private init() {
         logger.info("🏪 AppStores singleton initialized")

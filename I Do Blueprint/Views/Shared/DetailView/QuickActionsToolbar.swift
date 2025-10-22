@@ -2,6 +2,7 @@ import SwiftUI
 
 /// A reusable quick actions toolbar for detail views
 struct QuickActionsToolbar: View {
+    private let logger = AppLogger.ui
     let actions: [QuickAction]
 
     var body: some View {
@@ -74,16 +75,16 @@ private struct DetailQuickActionButton: View {
 #Preview {
     QuickActionsToolbar(actions: [
         QuickAction(icon: "phone.fill", title: "Call", color: .green) {
-            print("Call action")
+            // TODO: Implement action - print("Call action")
         },
         QuickAction(icon: "envelope.fill", title: "Email", color: .blue) {
-            print("Email action")
+            // TODO: Implement action - print("Email action")
         },
         QuickAction(icon: "calendar", title: "Schedule", color: .orange) {
-            print("Schedule action")
+            // TODO: Implement action - print("Schedule action")
         },
         QuickAction(icon: "square.and.arrow.up", title: "Share", color: .purple) {
-            print("Share action")
+            // TODO: Implement action - print("Share action")
         }
     ])
     .padding()

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct SeatingChartSearchResultCard: View {
+    private let logger = AppLogger.ui
     let chart: SeatingChart
     let onSelect: () -> Void
     
@@ -269,7 +270,7 @@ struct SeatingChartSearchResultCard: View {
     )
     
     SeatingChartSearchResultCard(chart: sampleChart) {
-        print("Selected chart")
+        // TODO: Implement action - print("Selected chart")
     }
     .frame(width: 280, height: 380)
     .padding()

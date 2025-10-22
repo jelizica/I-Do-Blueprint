@@ -14,6 +14,7 @@ struct StylePreferencesView: View {
     @State private var showingStyleGuide = false
     @State private var showingColorAnalysis = false
     @State private var hasUnsavedChanges = false
+    @State private var showingColorPicker = false
 
     init() {
         _stylePreferences = State(initialValue: StylePreferences())
@@ -46,6 +47,15 @@ struct StylePreferencesView: View {
             ColorAnalysisView(
                 moodBoards: visualPlanningStore.moodBoards,
                 colorPalettes: visualPlanningStore.colorPalettes)
+        }
+        .sheet(isPresented: $showingColorPicker) {
+            PrimaryColorPickerSheet(
+                colors: $stylePreferences.primaryColors,
+                maxColors: 4,
+                onDismiss: {
+                    showingColorPicker = false
+                    markUnsavedChanges()
+                })
         }
     }
 
@@ -534,7 +544,7 @@ struct StylePreferencesView: View {
     }
 
     private func choosePrimaryColors() {
-        // TODO: Implement color picker interface
+        showingColorPicker = true
     }
 
     // Placeholder sections - these would be fully implemented

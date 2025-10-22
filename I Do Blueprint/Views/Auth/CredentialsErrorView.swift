@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CredentialsErrorView: View {
+    private let logger = AppLogger.auth
     let onRetry: () -> Void
 
     var body: some View {
@@ -88,6 +89,6 @@ struct CredentialsErrorView: View {
 
 #Preview {
     CredentialsErrorView(onRetry: {
-        print("Retry tapped")
+        // TODO: Implement action - print("Retry tapped")
     })
 }

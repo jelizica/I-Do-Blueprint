@@ -40,6 +40,8 @@ actor PerformanceMonitor {
     
     static let shared = PerformanceMonitor()
     
+    private let logger = AppLogger.analytics
+    
     // MARK: - Configuration
     
     /// Threshold for slow operation warnings (in seconds)
@@ -91,7 +93,7 @@ actor PerformanceMonitor {
                 slowOperations.removeFirst(slowOperations.count - 50)
             }
             
-            print("⚠️ Slow operation detected: \(operation) took \(String(format: "%.2f", duration))s")
+            logger.warning("Slow operation detected: \(operation) took \(String(format: "%.2f", duration))s")
         }
     }
     

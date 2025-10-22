@@ -248,19 +248,19 @@ struct StyleCategoryCard: View {
                         .lineLimit(3)
                 }
 
-                // TODO: Add color palette preview when StyleCategory has colorPalette property
-                // HStack(spacing: 4) {
-                //     ForEach(style.colorPalette.prefix(4), id: \.self) { color in
-                //         Circle()
-                //             .fill(color)
-                //             .frame(width: 12, height: 12)
-                //             .overlay(
-                //                 Circle()
-                //                     .stroke(isSelected ? Color.white.opacity(0.3) : Color.black.opacity(0.1),
-                //                     lineWidth: 1)
-                //             )
-                //     }
-                // }
+                // Color palette preview
+                HStack(spacing: 4) {
+                    ForEach(style.suggestedColors.prefix(4), id: \.self) { color in
+                        Circle()
+                            .fill(color)
+                            .frame(width: 12, height: 12)
+                            .overlay(
+                                Circle()
+                                    .stroke(isSelected ? Color.white.opacity(0.3) : Color.black.opacity(0.1),
+                                    lineWidth: 1)
+                            )
+                    }
+                }
             }
             .padding()
             .frame(maxWidth: .infinity, minHeight: 160)

@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PreviewStepView: View {
+    private let logger = AppLogger.ui
     @Binding var state: MoodBoardGeneratorState
     let onGenerate: () -> Void
 
@@ -430,7 +431,7 @@ struct ChecklistItem: View {
     }()
 
     return PreviewStepView(state: $sampleState) {
-        print("Generate mood board")
+        // TODO: Implement action - print("Generate mood board")
     }
     .frame(width: 900, height: 700)
 }

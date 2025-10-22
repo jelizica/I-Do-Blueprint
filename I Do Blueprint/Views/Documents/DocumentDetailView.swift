@@ -24,6 +24,8 @@ struct DocumentDetailView: View {
     @State private var isLoadingEntities = false
     @State private var isSaving = false
     @State private var showingDeleteConfirmation = false
+    @State private var showingURLError = false
+    @State private var urlErrorMessage = ""
 
     private let logger = AppLogger.ui
 
@@ -93,6 +95,11 @@ struct DocumentDetailView: View {
             }
         }
         .frame(width: 900, height: 600)
+        .alert("Invalid Document URL", isPresented: $showingURLError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(urlErrorMessage)
+        }
     }
 
     // MARK: - File Preview
@@ -128,9 +135,14 @@ struct DocumentDetailView: View {
                             try URLValidator.validate(url)
                             NSWorkspace.shared.open(url)
                         } catch {
+                            urlErrorMessage = error.localizedDescription
+                            showingURLError = true
                             logger.error("Rejected unsafe document URL", error: error)
-                            // TODO: Show alert to user about invalid URL
                         }
+                    } else {
+                        urlErrorMessage = "Document URL is missing or invalid"
+                        showingURLError = true
+                        logger.error("Failed to get document URL")
                     }
                 }
                 .buttonStyle(.bordered)

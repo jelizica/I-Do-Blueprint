@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct DashboardViewV2: View {
+    private let logger = AppLogger.ui
     // Use singleton stores from AppStores to prevent memory explosion
     @EnvironmentObject private var appStores: AppStores
     
@@ -101,7 +102,7 @@ struct DashboardViewV2: View {
     private func loadDashboardData() async {
         // Prevent duplicate loads
         guard !hasLoaded else {
-            print("✅ [Dashboard] Already loaded, skipping")
+            logger.info("Already loaded, skipping")
             return
         }
         
@@ -109,7 +110,7 @@ struct DashboardViewV2: View {
         isLoading = true
         defer { isLoading = false }
         
-        print("🔵 [Dashboard] Starting to load all data...")
+        logger.debug("Starting to load all data...")
 
         // Load data from all stores in parallel
         async let budgetLoad = budgetStore.loadBudgetData()
@@ -124,12 +125,12 @@ struct DashboardViewV2: View {
         // Wait for all to complete
         _ = await (budgetLoad, vendorsLoad, guestsLoad, tasksLoad, settingsLoad, timelineLoad, notesLoad, documentsLoad)
 
-        print("✅ [Dashboard] All data loaded, building summary...")
+        logger.info("All data loaded, building summary...")
         
         // Build dashboard summary from store data
         buildDashboardSummary()
         
-        print("✅ [Dashboard] Summary built successfully")
+        logger.info("Summary built successfully")
     }
 
     private func refresh() {

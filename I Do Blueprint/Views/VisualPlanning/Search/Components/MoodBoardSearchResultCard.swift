@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct MoodBoardSearchResultCard: View {
+    private let logger = AppLogger.ui
     let moodBoard: MoodBoard
     let onSelect: () -> Void
     
@@ -282,7 +283,7 @@ struct MoodBoardSearchResultCard: View {
     )
     
     MoodBoardSearchResultCard(moodBoard: sampleMoodBoard) {
-        print("Selected mood board")
+        // TODO: Implement action - print("Selected mood board")
     }
     .frame(width: 280, height: 340)
     .padding()
