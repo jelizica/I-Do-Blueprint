@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Sentry
 
 /// Error tracking and analytics for monitoring error patterns and trends
 actor ErrorTracker {
@@ -106,6 +107,54 @@ actor ErrorTracker {
 
         // Log the error
         logger.info("Error tracked: \(errorType) in \(operation) (attempt \(attemptNumber), outcome: \(outcome.rawValue))")
+
+        // Send to Sentry for remote monitoring
+        await sendToSentry(event: event, error: error)
+    }
+
+    /// Send error event to Sentry for prevention monitoring
+    private func sendToSentry(event: ErrorEvent, error: Error) async {
+        await MainActor.run {
+            var sentryContext: [String: Any] = [
+                "operation": event.operation,
+                "attempt_number": event.attemptNumber,
+                "is_retryable": event.isRetryable,
+                "was_retried": event.wasRetried,
+                "outcome": event.finalOutcome.rawValue,
+                "error_type": event.errorType
+            ]
+
+            // Add custom context
+            for (key, value) in event.contextInfo {
+                sentryContext[key] = value
+            }
+
+            // Determine Sentry level based on outcome
+            let sentryLevel: SentryLevel = switch event.finalOutcome {
+            case .resolved: .info
+            case .cached: .warning
+            case .failed: .error
+            }
+
+            // Add breadcrumb for error pattern tracking
+            SentryService.shared.addBreadcrumb(
+                message: "Error in \(event.operation)",
+                category: "error_pattern",
+                level: sentryLevel,
+                data: [
+                    "error_type": event.errorType,
+                    "retryable": event.isRetryable,
+                    "attempt": event.attemptNumber
+                ]
+            )
+
+            // Capture error to Sentry
+            SentryService.shared.captureError(
+                error,
+                context: sentryContext,
+                level: sentryLevel
+            )
+        }
     }
 
     /// Track a successful retry
