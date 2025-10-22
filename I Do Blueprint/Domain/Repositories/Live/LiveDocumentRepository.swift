@@ -241,7 +241,26 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         let client = try getClient()
         // Generate unique storage path
         let timestamp = Int(Date().timeIntervalSince1970)
-        let sanitizedFilename = metadata.fileName.replacingOccurrences(of: " ", with: "_")
+        
+        // Sanitize filename: replace spaces and remove/replace invalid characters
+        // Supabase Storage doesn't allow: [ ] { } < > # % " ' ` ^ | \ and some others
+        var sanitizedFilename = metadata.fileName
+            .replacingOccurrences(of: " ", with: "_")
+            .replacingOccurrences(of: "[", with: "(")
+            .replacingOccurrences(of: "]", with: ")")
+            .replacingOccurrences(of: "{", with: "(")
+            .replacingOccurrences(of: "}", with: ")")
+            .replacingOccurrences(of: "#", with: "-")
+            .replacingOccurrences(of: "%", with: "-")
+            .replacingOccurrences(of: "\"", with: "")
+            .replacingOccurrences(of: "'", with: "")
+            .replacingOccurrences(of: "`", with: "")
+            .replacingOccurrences(of: "^", with: "")
+            .replacingOccurrences(of: "|", with: "-")
+            .replacingOccurrences(of: "\\", with: "-")
+            .replacingOccurrences(of: "<", with: "")
+            .replacingOccurrences(of: ">", with: "")
+        
         let storagePath = "\(coupleId)/\(timestamp)_\(sanitizedFilename)"
 
         // Upload to storage (30s timeout for storage operations)

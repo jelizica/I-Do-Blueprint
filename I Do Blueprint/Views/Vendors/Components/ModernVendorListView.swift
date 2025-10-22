@@ -16,6 +16,8 @@ struct ModernVendorListView: View {
     let onClearSearch: () -> Void
     @Binding var selectedVendorId: Int64?
     let onRefresh: () async -> Void
+    var onEdit: ((Vendor) -> Void)? = nil
+    var onDelete: ((Vendor) -> Void)? = nil
 
     var body: some View {
         ZStack {
@@ -57,7 +59,9 @@ struct ModernVendorListView: View {
                                 } label: {
                                     ModernVendorCard(
                                         vendor: vendor,
-                                        isSelected: selectedVendorId == vendor.id
+                                        isSelected: selectedVendorId == vendor.id,
+                                        onEdit: onEdit != nil ? { onEdit?(vendor) } : nil,
+                                        onDelete: onDelete != nil ? { onDelete?(vendor) } : nil
                                     )
                                 }
                                 .buttonStyle(.plain)

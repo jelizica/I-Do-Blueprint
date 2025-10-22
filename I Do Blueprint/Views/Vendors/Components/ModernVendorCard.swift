@@ -11,7 +11,10 @@ import SwiftUI
 struct ModernVendorCard: View {
     let vendor: Vendor
     let isSelected: Bool
+    var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
     @State private var isHovering = false
+    @State private var showingDeleteAlert = false
 
     var body: some View {
         HStack(spacing: Spacing.lg) {
@@ -119,6 +122,32 @@ struct ModernVendorCard: View {
             isHovering = hovering
         }
         .contentShape(Rectangle())
+        .contextMenu {
+            if let onEdit = onEdit {
+                Button {
+                    onEdit()
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                }
+            }
+            
+            if onDelete != nil {
+                Divider()
+                Button(role: .destructive) {
+                    showingDeleteAlert = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            }
+        }
+        .alert("Delete Vendor", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                onDelete?()
+            }
+        } message: {
+            Text("Are you sure you want to delete \(vendor.vendorName)? This action cannot be undone.")
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(vendor.vendorName), \(vendor.vendorType ?? "vendor")")
         .accessibilityHint("Double tap to view details")

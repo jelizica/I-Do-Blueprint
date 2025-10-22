@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import Dependencies
 
 struct VendorDetailViewV2: View {
     let vendor: Vendor
@@ -14,13 +15,35 @@ struct VendorDetailViewV2: View {
     var onExportToggle: ((Bool) async -> Void)? = nil
     @State private var showingEditSheet = false
     @State private var selectedTab = 0
+    
+    // Financial data
+    @State private var expenses: [Expense] = []
+    @State private var payments: [PaymentSchedule] = []
+    @State private var isLoadingFinancials = false
+    @State private var financialLoadError: Error?
+    
+    // Documents data
+    @State private var documents: [Document] = []
+    @State private var isLoadingDocuments = false
+    @State private var documentLoadError: Error?
+    
+    @Dependency(\.budgetRepository) var budgetRepository
+    @Dependency(\.documentRepository) var documentRepository
 
     var body: some View {
         VStack(spacing: 0) {
-            // Hero Header Section with Edit Button
-            VendorHeroHeaderView(vendor: vendor, onEdit: {
-                showingEditSheet = true
-            })
+            // Hero Header Section with Edit and Delete Buttons
+            VendorHeroHeaderView(
+                vendor: vendor,
+                onEdit: {
+                    showingEditSheet = true
+                },
+                onDelete: {
+                    Task {
+                        await vendorStore.deleteVendor(vendor)
+                    }
+                }
+            )
 
             // Tabbed Content
             TabbedDetailView(
@@ -54,6 +77,45 @@ struct VendorDetailViewV2: View {
                 // Reload will happen automatically through the store
             }
         }
+        .task {
+            await loadFinancialData()
+            await loadDocuments()
+        }
+    }
+    
+    // MARK: - Data Loading
+    
+    private func loadDocuments() async {
+        isLoadingDocuments = true
+        documentLoadError = nil
+        
+        do {
+            documents = try await documentRepository.fetchDocuments(vendorId: Int(vendor.id))
+        } catch {
+            documentLoadError = error
+            print("Error loading documents for vendor \(vendor.id): \(error)")
+        }
+        
+        isLoadingDocuments = false
+    }
+    
+    private func loadFinancialData() async {
+        isLoadingFinancials = true
+        financialLoadError = nil
+        
+        do {
+            async let expensesTask = budgetRepository.fetchExpensesByVendor(vendorId: vendor.id)
+            async let paymentsTask = budgetRepository.fetchPaymentSchedulesByVendor(vendorId: vendor.id)
+            
+            expenses = try await expensesTask
+            payments = try await paymentsTask
+        } catch {
+            financialLoadError = error
+            // Log error but don't show to user - just show empty state
+            print("Error loading financial data for vendor \(vendor.id): \(error)")
+        }
+        
+        isLoadingFinancials = false
     }
 
     // MARK: - Tab Content
@@ -124,10 +186,73 @@ struct VendorDetailViewV2: View {
 
     private var financialTab: some View {
         VStack(spacing: Spacing.xxxl) {
-            // Financial Info
-            if hasFinancialInfo {
-                VendorFinancialSection(vendor: vendor)
+            if isLoadingFinancials {
+                // Loading State
+                VStack(spacing: Spacing.md) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    
+                    Text("Loading financial data...")
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if hasAnyFinancialInfo {
+                // Quoted Amount Section
+                if let quotedAmount = vendor.quotedAmount {
+                    VStack(alignment: .leading, spacing: Spacing.md) {
+                        SectionHeaderV2(
+                            title: "Quoted Amount",
+                            icon: "banknote.fill",
+                            color: AppColors.Vendor.booked
+                        )
+                        
+                        HStack {
+                            VStack(alignment: .leading, spacing: Spacing.xs) {
+                                Text("Total Quote")
+                                    .font(Typography.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                                
+                                Text(quotedAmount.formatted(.currency(code: "USD")))
+                                    .font(.system(size: 28, weight: .bold))
+                                    .foregroundColor(AppColors.primary)
+                            }
+                            
+                            Spacer()
+                            
+                            if let budgetCategory = vendor.budgetCategoryName {
+                                VStack(alignment: .trailing, spacing: Spacing.xs) {
+                                    Text("Category")
+                                        .font(Typography.caption)
+                                        .foregroundColor(AppColors.textSecondary)
+                                    
+                                    Text(budgetCategory)
+                                        .font(.system(size: 15))
+                                        .foregroundColor(AppColors.textPrimary)
+                                }
+                            }
+                        }
+                        .padding(Spacing.lg)
+                        .background(AppColors.cardBackground)
+                        .cornerRadius(CornerRadius.md)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .stroke(AppColors.primary.opacity(0.2), lineWidth: 1)
+                        )
+                    }
+                }
+                
+                // Expenses Section
+                if !expenses.isEmpty {
+                    VendorExpensesSection(expenses: expenses, payments: payments)
+                }
+                
+                // Payments Section
+                if !payments.isEmpty {
+                    VendorPaymentsSection(payments: payments)
+                }
             } else {
+                // Empty State
                 VStack(spacing: Spacing.lg) {
                     Image(systemName: "dollarsign.circle")
                         .font(.system(size: 48))
@@ -137,10 +262,11 @@ struct VendorDetailViewV2: View {
                         .font(.headline)
                         .foregroundColor(.secondary)
 
-                    Text("Add quoted amount and payment details in the vendor settings.")
+                    Text("Add quoted amount, expenses, or payment schedules to track financial details for this vendor.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
+                        .padding(.horizontal, Spacing.xl)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(Spacing.xxxl)
@@ -149,22 +275,42 @@ struct VendorDetailViewV2: View {
     }
 
     private var documentsTab: some View {
-        VStack(spacing: Spacing.lg) {
-            Image(systemName: "doc.text")
-                .font(.system(size: 48))
-                .foregroundColor(.secondary)
+        VStack(spacing: Spacing.xxxl) {
+            if isLoadingDocuments {
+                // Loading State
+                VStack(spacing: Spacing.md) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    
+                    Text("Loading documents...")
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if !documents.isEmpty {
+                // Documents List
+                VendorDocumentsSection(documents: documents)
+            } else {
+                // Empty State
+                VStack(spacing: Spacing.lg) {
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 48))
+                        .foregroundColor(.secondary)
 
-            Text("Documents")
-                .font(.headline)
-                .foregroundColor(.secondary)
+                    Text("No Documents")
+                        .font(.headline)
+                        .foregroundColor(.secondary)
 
-            Text("Document management for vendors coming soon.")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .multilineTextAlignment(.center)
+                    Text("Documents linked to this vendor will appear here. Upload documents from the Documents page and link them to this vendor.")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, Spacing.xl)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(Spacing.xxxl)
+            }
         }
-        .frame(maxWidth: .infinity)
-        .padding(Spacing.xxxl)
     }
 
     private var notesTab: some View {
@@ -200,6 +346,10 @@ struct VendorDetailViewV2: View {
 
     private var hasFinancialInfo: Bool {
         vendor.quotedAmount != nil
+    }
+    
+    private var hasAnyFinancialInfo: Bool {
+        vendor.quotedAmount != nil || !expenses.isEmpty || !payments.isEmpty
     }
 }
 

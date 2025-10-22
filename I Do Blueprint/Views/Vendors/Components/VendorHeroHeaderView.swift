@@ -10,6 +10,8 @@ import SwiftUI
 struct VendorHeroHeaderView: View {
     let vendor: Vendor
     var onEdit: (() -> Void)? = nil
+    var onDelete: (() -> Void)? = nil
+    @State private var showingDeleteAlert = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -105,20 +107,44 @@ struct VendorHeroHeaderView: View {
             .padding(.bottom, Spacing.xxl)
         }
         .overlay(alignment: .topTrailing) {
-            if let onEdit = onEdit {
-                Button(action: onEdit) {
-                    Image(systemName: "pencil.circle.fill")
-                        .font(.title)
-                        .foregroundStyle(.white)
-                        .background(
-                            Circle()
-                                .fill(Color.blue)
-                                .frame(width: 36, height: 36)
-                        )
+            HStack(spacing: Spacing.sm) {
+                if onDelete != nil {
+                    Button(action: { showingDeleteAlert = true }) {
+                        Image(systemName: "trash.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.white)
+                            .background(
+                                Circle()
+                                    .fill(Color.red)
+                                    .frame(width: 36, height: 36)
+                            )
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                .padding()
+                
+                if let onEdit = onEdit {
+                    Button(action: onEdit) {
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.title)
+                            .foregroundStyle(.white)
+                            .background(
+                                Circle()
+                                    .fill(Color.blue)
+                                    .frame(width: 36, height: 36)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .padding()
+        }
+        .alert("Delete Vendor", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                onDelete?()
+            }
+        } message: {
+            Text("Are you sure you want to delete \(vendor.vendorName)? This action cannot be undone.")
         }
     }
 

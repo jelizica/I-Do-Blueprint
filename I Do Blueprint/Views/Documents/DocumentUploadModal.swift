@@ -241,17 +241,19 @@ struct DocumentUploadModal: View {
             Text("Document Type")
                 .font(.headline)
 
-            Picker("Type", selection: file.documentType) {
+            Picker("Select document type", selection: file.documentType) {
                 ForEach(DocumentType.allCases, id: \.self) { type in
-                    HStack {
-                        Image(systemName: type.iconName)
-                        Text(type.displayName)
-                    }
-                    .tag(type)
+                    Label(type.displayName, systemImage: type.iconName)
+                        .tag(type)
                 }
             }
-            .pickerStyle(.segmented)
+            .pickerStyle(.menu)
+            .labelsHidden()
         }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(NSColor.controlBackgroundColor)))
     }
 
     // MARK: - Bucket Section

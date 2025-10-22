@@ -20,6 +20,8 @@ struct VendorListViewV2: View {
     @State private var showingAddVendor = false
     @State private var selectedVendorId: Int64?
     @State private var groupByStatus = true
+    @State private var showingEditSheet = false
+    @State private var vendorToEdit: Vendor?
 
     private var selectedVendor: Vendor? {
         guard let id = selectedVendorId else { return nil }
@@ -65,6 +67,15 @@ struct VendorListViewV2: View {
                                 selectedVendorId: $selectedVendorId,
                                 onRefresh: {
                                     await vendorStore.loadVendors()
+                                },
+                                onEdit: { vendor in
+                                    vendorToEdit = vendor
+                                    showingEditSheet = true
+                                },
+                                onDelete: { vendor in
+                                    Task {
+                                        await vendorStore.deleteVendor(vendor)
+                                    }
                                 }
                             )
                         } else {
@@ -77,6 +88,15 @@ struct VendorListViewV2: View {
                                 selectedVendorId: $selectedVendorId,
                                 onRefresh: {
                                     await vendorStore.loadVendors()
+                                },
+                                onEdit: { vendor in
+                                    vendorToEdit = vendor
+                                    showingEditSheet = true
+                                },
+                                onDelete: { vendor in
+                                    Task {
+                                        await vendorStore.deleteVendor(vendor)
+                                    }
                                 }
                             )
                         }
@@ -123,6 +143,14 @@ struct VendorListViewV2: View {
                     }
                 }
                 .frame(minWidth: 700, idealWidth: 750, maxWidth: 800, minHeight: 600, idealHeight: 700, maxHeight: 800)
+            }
+            .sheet(isPresented: $showingEditSheet) {
+                if let vendor = vendorToEdit {
+                    EditVendorSheetV2(vendor: vendor, vendorStore: vendorStore) { _ in
+                        // Reload will happen automatically through the store
+                    }
+                    .frame(minWidth: 700, idealWidth: 750, maxWidth: 800, minHeight: 600, idealHeight: 700, maxHeight: 800)
+                }
             }
             .task {
                 await vendorStore.loadVendors()

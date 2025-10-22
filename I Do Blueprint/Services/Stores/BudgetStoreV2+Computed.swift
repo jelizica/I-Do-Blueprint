@@ -237,9 +237,24 @@ extension BudgetStoreV2 {
         expenses.reduce(0) { $0 + $1.amount }
     }
     
-    /// Paid expenses amount
+    /// Paid expenses amount - calculated from actual paid payments
     var paidExpensesAmount: Double {
-        expenses.filter { $0.paymentStatus == .paid }.reduce(0) { $0 + $1.amount }
+        // Calculate from actual payments linked to expenses
+        var totalPaid: Double = 0
+        
+        for expense in expenses {
+            // Get all payments for this expense
+            let expensePayments = paymentSchedules.filter { $0.expenseId == expense.id }
+            
+            // Sum up paid payments
+            let paidForExpense = expensePayments
+                .filter { $0.paid }
+                .reduce(0) { $0 + $1.paymentAmount }
+            
+            totalPaid += paidForExpense
+        }
+        
+        return totalPaid
     }
     
     /// Pending expenses amount

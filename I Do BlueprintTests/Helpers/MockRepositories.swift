@@ -135,6 +135,11 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         expenses.removeAll(where: { $0.id == id })
     }
+    
+    func fetchExpensesByVendor(vendorId: Int64) async throws -> [Expense] {
+        if shouldThrowError { throw errorToThrow }
+        return expenses.filter { $0.vendorId == vendorId }
+    }
 
     func createPaymentSchedule(_ schedule: PaymentSchedule) async throws -> PaymentSchedule {
         if shouldThrowError { throw errorToThrow }
@@ -153,6 +158,11 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
     func deletePaymentSchedule(id: Int64) async throws {
         if shouldThrowError { throw errorToThrow }
         paymentSchedules.removeAll(where: { $0.id == id })
+    }
+    
+    func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
+        if shouldThrowError { throw errorToThrow }
+        return paymentSchedules.filter { $0.vendorId == vendorId }
     }
 
     func fetchBudgetDevelopmentScenarios() async throws -> [SavedScenario] {

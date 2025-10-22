@@ -21,10 +21,20 @@ class AuthContext: ObservableObject {
     
     private let sessionManager = SessionManager.shared
     private let supabaseManager = SupabaseManager.shared
+    private var cancellables = Set<AnyCancellable>()
     
     private init() {
         // Initialize from session
         refresh()
+        
+        // Observe authentication state changes
+        supabaseManager.$isAuthenticated
+            .sink { [weak self] _ in
+                Task { @MainActor in
+                    self?.refresh()
+                }
+            }
+            .store(in: &cancellables)
     }
     
     /// Refresh auth context from session

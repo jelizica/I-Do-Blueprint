@@ -102,6 +102,12 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         expenses.removeAll { $0.id == id }
     }
+    
+    func fetchExpensesByVendor(vendorId: Int64) async throws -> [Expense] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return expenses.filter { $0.vendorId == vendorId }
+    }
 
     // MARK: - Payment Schedules
 
@@ -131,6 +137,12 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         paymentSchedules.removeAll { $0.id == id }
+    }
+    
+    func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return paymentSchedules.filter { $0.vendorId == vendorId }
     }
 
     // MARK: - Gifts and Owed

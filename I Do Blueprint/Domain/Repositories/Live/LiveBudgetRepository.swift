@@ -413,6 +413,45 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             throw error
         }
     }
+    
+    func fetchExpensesByVendor(vendorId: Int64) async throws -> [Expense] {
+        let cacheKey = "expenses_vendor_\(vendorId)"
+        
+        // Check cache first (30 sec TTL for very fresh data)
+        if let cached: [Expense] = await RepositoryCache.shared.get(cacheKey, maxAge: 30) {
+            return cached
+        }
+        
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let expenses: [Expense] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("expenses")
+                    .select()
+                    .eq("vendor_id", value: String(vendorId))
+                    .order("expense_date", ascending: false)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow vendor expenses fetch: \(String(format: "%.2f", duration))s for \(expenses.count) items")
+            }
+            
+            await RepositoryCache.shared.set(cacheKey, value: expenses)
+            
+            return expenses
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Vendor expenses fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
 
     // MARK: - Payment Schedules
 
@@ -621,6 +660,44 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Payment schedule deletion failed after \(String(format: "%.2f", duration))s", error: error)
+            throw error
+        }
+    }
+    
+    func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
+        let cacheKey = "payment_schedules_vendor_\(vendorId)"
+        
+        if let cached: [PaymentSchedule] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            return cached
+        }
+        
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let schedules: [PaymentSchedule] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("payment_plans")
+                    .select()
+                    .eq("vendor_id", value: String(vendorId))
+                    .order("payment_date", ascending: true)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Only log if slow
+            if duration > 1.0 {
+                logger.info("Slow vendor payment schedules fetch: \(String(format: "%.2f", duration))s for \(schedules.count) items")
+            }
+            
+            await RepositoryCache.shared.set(cacheKey, value: schedules)
+            
+            return schedules
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Vendor payment schedules fetch failed after \(String(format: "%.2f", duration))s", error: error)
             throw error
         }
     }

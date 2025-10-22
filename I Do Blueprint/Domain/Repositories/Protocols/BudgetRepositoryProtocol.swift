@@ -93,6 +93,12 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Throws: Repository errors if deletion fails or expense not found
     func deleteExpense(id: UUID) async throws
     
+    /// Fetches expenses for a specific vendor
+    /// - Parameter vendorId: The ID of the vendor
+    /// - Returns: Array of expenses linked to the vendor
+    /// - Throws: Repository errors if fetch fails
+    func fetchExpensesByVendor(vendorId: Int64) async throws -> [Expense]
+    
     // MARK: - Payment Schedule Operations
     
     /// Fetches all payment schedules for the current couple
@@ -116,6 +122,12 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Parameter id: The ID of the schedule to delete
     /// - Throws: Repository errors if deletion fails or schedule not found
     func deletePaymentSchedule(id: Int64) async throws
+    
+    /// Fetches payment schedules for a specific vendor
+    /// - Parameter vendorId: The ID of the vendor
+    /// - Returns: Array of payment schedules linked to the vendor
+    /// - Throws: Repository errors if fetch fails
+    func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule]
     
     // MARK: - Gifts and Money Owed Operations
     

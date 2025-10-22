@@ -718,24 +718,23 @@ class DocumentStoreV2: ObservableObject {
         metadata: FileUploadMetadata,
         coupleId: UUID,
         uploadedBy: String) async throws -> Document {
-        // Read file data safely using URLSession (even for file URLs)
+        // Start accessing security-scoped resource
+        let didStartAccessing = metadata.localURL.startAccessingSecurityScopedResource()
+        
+        defer {
+            // Always stop accessing when done
+            if didStartAccessing {
+                metadata.localURL.stopAccessingSecurityScopedResource()
+            }
+        }
+        
+        // Read file data directly from the file system
         let fileData: Data
         do {
-            fileData = try await withCheckedThrowingContinuation { continuation in
-                URLSession.shared.dataTask(with: metadata.localURL) { data, _, error in
-                    if let error = error {
-                        continuation.resume(throwing: error)
-                    } else if let data = data {
-                        continuation.resume(returning: data)
-                    } else {
-                        continuation.resume(throwing: NSError(
-                            domain: "DocumentStoreV2",
-                            code: -1,
-                            userInfo: [NSLocalizedDescriptionKey: "Failed to read file data"]))
-                    }
-                }.resume()
-            }
+            fileData = try Data(contentsOf: metadata.localURL)
+            AppLogger.ui.info("Successfully read file data: \(metadata.fileName), size: \(fileData.count) bytes")
         } catch {
+            AppLogger.ui.error("Failed to read file data from: \(metadata.localURL.path)", error: error)
             throw NSError(
                 domain: "DocumentStoreV2",
                 code: -1,
@@ -758,10 +757,12 @@ class DocumentStoreV2: ObservableObject {
             
             uploadProgress = 1.0
             isUploading = false
+            AppLogger.ui.info("Document uploaded successfully: \(document.originalFilename)")
             return document
         } catch {
             isUploading = false
             loadingState = .error(DocumentError.uploadFailed(underlying: error))
+            AppLogger.ui.error("Failed to upload document", error: error)
             throw error
         }
     }
