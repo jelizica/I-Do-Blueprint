@@ -182,4 +182,50 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Array of vendor types sorted alphabetically
     /// - Throws: Repository errors if fetch fails
     func fetchVendorTypes() async throws -> [VendorType]
+    
+    // MARK: - Bulk Import Operations
+    
+    /// Imports multiple vendors from CSV data in a single batch operation
+    ///
+    /// Performs a batch insert of vendor records with the following features:
+    /// - Single database transaction for atomicity
+    /// - Automatic `couple_id` assignment from current session
+    /// - Duplicate detection by vendor name and email
+    /// - Cache invalidation after successful import
+    /// - Performance monitoring and analytics tracking
+    /// - Network retry with exponential backoff
+    ///
+    /// ## Duplicate Handling
+    /// Vendors are considered duplicates if they match on:
+    /// - Vendor name (case-insensitive)
+    /// - Email address (if provided, case-insensitive)
+    ///
+    /// Duplicate vendors are skipped and not imported.
+    ///
+    /// ## Transaction Behavior
+    /// The import is atomic - either all vendors are imported successfully,
+    /// or none are imported if any error occurs.
+    ///
+    /// ## Performance Considerations
+    /// - Uses batch insert for optimal performance
+    /// - Invalidates vendor cache after successful import
+    /// - Tracks import duration for monitoring
+    ///
+    /// - Parameter vendors: Array of vendor import data to insert
+    /// - Returns: Array of created vendors with server-assigned IDs and timestamps
+    /// - Throws: Repository errors if:
+    ///   - Import fails (network, database, validation)
+    ///   - Tenant context is missing
+    ///   - Transaction rollback occurs
+    ///
+    /// ## Usage Example
+    /// ```swift
+    /// let importData = [
+    ///     VendorImportData(vendorName: "Acme Catering", ...),
+    ///     VendorImportData(vendorName: "Elegant Flowers", ...)
+    /// ]
+    /// let imported = try await repository.importVendors(importData)
+    /// print("Imported \(imported.count) vendors")
+    /// ```
+    func importVendors(_ vendors: [VendorImportData]) async throws -> [Vendor]
 }

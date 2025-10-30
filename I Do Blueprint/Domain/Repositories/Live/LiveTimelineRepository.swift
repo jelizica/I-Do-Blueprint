@@ -37,8 +37,8 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
                         *,
                         task:wedding_tasks(*),
                         milestone:wedding_milestones(*),
-                        vendor:vendors(id, vendor_name),
-                        payment:payment_schedules(*)
+                        vendor:vendor_information(id, vendor_name),
+                        payment:payment_plans(*)
                     """)
                     .order("item_date", ascending: true)
                     .execute()
@@ -70,8 +70,8 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
                         *,
                         task:wedding_tasks(*),
                         milestone:wedding_milestones(*),
-                        vendor:vendors(id, vendor_name),
-                        payment:payment_schedules(*)
+                        vendor:vendor_information(id, vendor_name),
+                        payment:payment_plans(*)
                     """)
                     .eq("id", value: id)
                     .limit(1)
@@ -92,10 +92,10 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func createTimelineItem(_ insertData: TimelineItemInsertData) async throws -> TimelineItem {
-        let client = try getClient()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let startTime = Date()
+
             let item: TimelineItem = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("timeline_items")
@@ -107,23 +107,21 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created timeline item in \(duration)s")
+            logger.info("Created timeline item: \(insertData.title)")
             AnalyticsService.trackNetwork(operation: "createTimelineItem", outcome: .success, duration: duration)
 
             return item
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to create timeline item after \(duration)s", error: error)
-            AnalyticsService.trackNetwork(operation: "createTimelineItem", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to create timeline item", error: error)
+            throw TimelineError.createFailed(underlying: error)
         }
     }
 
     func updateTimelineItem(_ item: TimelineItem) async throws -> TimelineItem {
-        let client = try getClient()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let startTime = Date()
+
             let updated: TimelineItem = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("timeline_items")
@@ -136,23 +134,21 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated timeline item in \(duration)s")
+            logger.info("Updated timeline item: \(item.title)")
             AnalyticsService.trackNetwork(operation: "updateTimelineItem", outcome: .success, duration: duration)
 
             return updated
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to update timeline item after \(duration)s", error: error)
-            AnalyticsService.trackNetwork(operation: "updateTimelineItem", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to update timeline item", error: error)
+            throw TimelineError.updateFailed(underlying: error)
         }
     }
 
     func deleteTimelineItem(id: UUID) async throws {
-        let client = try getClient()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let startTime = Date()
+
             try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("timeline_items")
@@ -162,13 +158,11 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted timeline item in \(duration)s")
+            logger.info("Deleted timeline item: \(id)")
             AnalyticsService.trackNetwork(operation: "deleteTimelineItem", outcome: .success, duration: duration)
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to delete timeline item after \(duration)s", error: error)
-            AnalyticsService.trackNetwork(operation: "deleteTimelineItem", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to delete timeline item", error: error)
+            throw TimelineError.deleteFailed(underlying: error)
         }
     }
 
@@ -183,7 +177,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
                 try await client.database
                     .from("wedding_milestones")
                     .select()
-                    .order("milestone_date", ascending: true)
+                    .order("target_date", ascending: true)
                     .execute()
                     .value
             }
@@ -229,10 +223,10 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     }
 
     func createMilestone(_ insertData: MilestoneInsertData) async throws -> Milestone {
-        let client = try getClient()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let startTime = Date()
+
             let milestone: Milestone = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_milestones")
@@ -244,23 +238,21 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created milestone in \(duration)s")
+            logger.info("Created milestone: \(insertData.milestoneName)")
             AnalyticsService.trackNetwork(operation: "createMilestone", outcome: .success, duration: duration)
 
             return milestone
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to create milestone after \(duration)s", error: error)
-            AnalyticsService.trackNetwork(operation: "createMilestone", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to create milestone", error: error)
+            throw TimelineError.createFailed(underlying: error)
         }
     }
 
     func updateMilestone(_ milestone: Milestone) async throws -> Milestone {
-        let client = try getClient()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let startTime = Date()
+
             let updated: Milestone = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_milestones")
@@ -273,23 +265,21 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated milestone in \(duration)s")
+            logger.info("Updated milestone: \(milestone.milestoneName)")
             AnalyticsService.trackNetwork(operation: "updateMilestone", outcome: .success, duration: duration)
 
             return updated
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to update milestone after \(duration)s", error: error)
-            AnalyticsService.trackNetwork(operation: "updateMilestone", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to update milestone", error: error)
+            throw TimelineError.updateFailed(underlying: error)
         }
     }
 
     func deleteMilestone(id: UUID) async throws {
-        let client = try getClient()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let startTime = Date()
+
             try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_milestones")
@@ -299,13 +289,11 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Deleted milestone in \(duration)s")
+            logger.info("Deleted milestone: \(id)")
             AnalyticsService.trackNetwork(operation: "deleteMilestone", outcome: .success, duration: duration)
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Failed to delete milestone after \(duration)s", error: error)
-            AnalyticsService.trackNetwork(operation: "deleteMilestone", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to delete milestone", error: error)
+            throw TimelineError.deleteFailed(underlying: error)
         }
     }
 }

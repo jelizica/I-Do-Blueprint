@@ -17,8 +17,58 @@ struct TenantSelectionView: View {
     @State private var errorMessage: String?
     @State private var couples: [CoupleMembership] = []
     @State private var showingCoupleCreation = false
+    
+    // Phase 3.3: Search & Filter
+    @State private var searchText = ""
+    @State private var sortOption: SortOption = .recent
+    
+    enum SortOption: String, CaseIterable {
+        case recent = "Recent"
+        case name = "Name"
+        case date = "Wedding Date"
+    }
 
     private let coupleRepository = LiveCoupleRepository()
+    
+    // Phase 3.3: Filtered and sorted couples
+    private var filteredCouples: [CoupleMembership] {
+        var result = couples
+        
+        // Apply search filter
+        if !searchText.isEmpty {
+            result = result.filter { couple in
+                couple.displayName.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        
+        // Apply sort
+        switch sortOption {
+        case .recent:
+            // Sort by recent first (if in recent list), then by name
+            result.sort { couple1, couple2 in
+                let isRecent1 = sessionManager.recentCouples.contains { $0.id == couple1.coupleId }
+                let isRecent2 = sessionManager.recentCouples.contains { $0.id == couple2.coupleId }
+                
+                if isRecent1 && !isRecent2 {
+                    return true
+                } else if !isRecent1 && isRecent2 {
+                    return false
+                } else {
+                    return couple1.displayName < couple2.displayName
+                }
+            }
+        case .name:
+            result.sort { $0.displayName < $1.displayName }
+        case .date:
+            result.sort { couple1, couple2 in
+                guard let date1 = couple1.weddingDate else { return false }
+                guard let date2 = couple2.weddingDate else { return true }
+                return date1 < date2
+            }
+        }
+        
+        return result
+    }
 
     var body: some View {
         VStack(spacing: 24) {
@@ -94,32 +144,161 @@ struct TenantSelectionView: View {
                 }
                 .padding(.horizontal, 40)
             } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        ForEach(couples) { couple in
-                            Button(action: {
-                                selectCouple(couple)
-                            }) {
+                VStack(spacing: 12) {
+                    // Phase 3.3: Search and Sort Controls
+                    if couples.count > 3 {
+                        VStack(spacing: 8) {
+                            // Search bar
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.secondary)
+                                TextField("Search weddings...", text: $searchText)
+                                    .textFieldStyle(.plain)
+                                
+                                if !searchText.isEmpty {
+                                    Button(action: {
+                                        searchText = ""
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+                            .padding(8)
+                            .background(Color.gray.opacity(0.1))
+                            .cornerRadius(8)
+                            
+                            // Sort options
+                            HStack(spacing: 8) {
+                                Text("Sort by:")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                
+                                ForEach(SortOption.allCases, id: \.self) { option in
+                                    Button(action: {
+                                        sortOption = option
+                                    }) {
+                                        Text(option.rawValue)
+                                            .font(.caption)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .background(sortOption == option ? Color.blue : Color.gray.opacity(0.1))
+                                            .foregroundColor(sortOption == option ? .white : .primary)
+                                            .cornerRadius(6)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                
+                                Spacer()
+                            }
+                        }
+                        .padding(.horizontal, 40)
+                    }
+                    
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Phase 3.2: Recently Viewed Section
+                            if !sessionManager.recentCouples.isEmpty && searchText.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
                                 HStack {
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(couple.displayName)
-                                            .font(.headline)
-                                        if let weddingDate = couple.weddingDate {
-                                            Text(weddingDate, style: .date)
-                                                .font(.caption)
+                                    Image(systemName: "clock.fill")
+                                        .foregroundColor(.blue)
+                                    Text("Recently Viewed")
+                                        .font(.headline)
+                                        .foregroundColor(.primary)
+                                }
+                                .padding(.horizontal, 4)
+                                
+                                ForEach(sessionManager.recentCouples) { recent in
+                                    Button(action: {
+                                        selectRecentCouple(recent)
+                                    }) {
+                                        HStack {
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(recent.displayName)
+                                                    .font(.headline)
+                                                if let weddingDate = recent.weddingDate {
+                                                    Text(weddingDate, style: .date)
+                                                        .font(.caption)
+                                                        .foregroundColor(.secondary)
+                                                }
+                                            }
+                                            Spacer()
+                                            Image(systemName: "chevron.right")
                                                 .foregroundColor(.secondary)
                                         }
+                                        .padding()
+                                        .background(Color.blue.opacity(0.1))
+                                        .cornerRadius(12)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .stroke(Color.blue.opacity(0.3), lineWidth: 1)
+                                        )
                                     }
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.secondary)
+                                    .buttonStyle(.plain)
+                                    .disabled(isLoading)
                                 }
-                                .padding()
-                                .background(Color.gray.opacity(0.1))
-                                .cornerRadius(12)
                             }
-                            .buttonStyle(.plain)
-                            .disabled(isLoading)
+                            
+                            Divider()
+                                    .padding(.vertical, 8)
+                            }
+                        }
+                        
+                        // All Couples Section
+                        if !sessionManager.recentCouples.isEmpty && searchText.isEmpty {
+                            HStack {
+                                Image(systemName: "heart.fill")
+                                    .foregroundColor(.pink)
+                                Text("All Weddings")
+                                    .font(.headline)
+                                    .foregroundColor(.primary)
+                            }
+                            .padding(.horizontal, 4)
+                        }
+                        
+                        // Phase 3.3: Use filtered and sorted couples
+                        if filteredCouples.isEmpty && !searchText.isEmpty {
+                            // No search results
+                            VStack(spacing: 12) {
+                                Image(systemName: "magnifyingglass")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.secondary)
+                                Text("No weddings found")
+                                    .font(.headline)
+                                    .foregroundColor(.secondary)
+                                Text("Try a different search term")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                            .padding(.vertical, 40)
+                        } else {
+                            ForEach(filteredCouples) { couple in
+                                Button(action: {
+                                    selectCouple(couple)
+                                }) {
+                                    HStack {
+                                        VStack(alignment: .leading, spacing: 4) {
+                                            Text(couple.displayName)
+                                                .font(.headline)
+                                            if let weddingDate = couple.weddingDate {
+                                                Text(weddingDate, style: .date)
+                                                    .font(.caption)
+                                                    .foregroundColor(.secondary)
+                                            }
+                                        }
+                                        Spacer()
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding()
+                                    .background(Color.gray.opacity(0.1))
+                                    .cornerRadius(12)
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(isLoading)
+                            }
                         }
 
                         Button(action: {
@@ -154,6 +333,13 @@ struct TenantSelectionView: View {
                     await loadCouples()
                 }
             })
+        }
+        .overlay {
+            // Phase 3.1: Show loading overlay during tenant switch
+            if sessionManager.isSwitchingTenant,
+               let coupleName = sessionManager.switchingToCoupleName {
+                TenantSwitchLoadingView(coupleName: coupleName)
+            }
         }
         .task {
             await loadCouples()
@@ -195,20 +381,37 @@ struct TenantSelectionView: View {
     }
 
     private func selectCouple(_ couple: CoupleMembership) {
-        isLoading = true
         errorMessage = nil
         
         logger.info("User selected couple: \(couple.displayName) (ID: \(couple.coupleId))")
 
         Task {
-            await sessionManager.setTenantId(couple.coupleId)
+            // Pass couple name and wedding date for visual feedback (Phase 3.1) and recent tracking (Phase 3.2)
+            await sessionManager.setTenantId(
+                couple.coupleId, 
+                coupleName: couple.displayName,
+                weddingDate: couple.weddingDate
+            )
             
             logger.info("Tenant ID set to: \(couple.coupleId)")
 
-            await MainActor.run {
-                isLoading = false
-                // View will automatically hide when tenantId is set (via ContentView observation)
-            }
+            // View will automatically hide when tenantId is set (via RootFlowView observation)
+        }
+    }
+    
+    private func selectRecentCouple(_ recent: RecentCouple) {
+        errorMessage = nil
+        
+        logger.info("User selected recent couple: \(recent.displayName) (ID: \(recent.id))")
+
+        Task {
+            await sessionManager.setTenantId(
+                recent.id,
+                coupleName: recent.displayName,
+                weddingDate: recent.weddingDate
+            )
+            
+            logger.info("Tenant ID set to: \(recent.id)")
         }
     }
 

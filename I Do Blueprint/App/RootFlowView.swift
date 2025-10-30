@@ -14,9 +14,16 @@ struct RootFlowView: View {
     @EnvironmentObject private var appStores: AppStores
     @StateObject private var supabaseManager = SupabaseManager.shared
     
-    // Create coordinator with shared stores
-    @StateObject private var coordinator: AppCoordinator = AppCoordinator(appStores: .shared)
+    // Use shared coordinator instance
+    @StateObject private var coordinator: AppCoordinator = AppCoordinator.shared
     @StateObject private var sessionManager = SessionManager.shared
+    
+    // Directly observe onboarding store for completion changes
+    @ObservedObject private var onboardingStore = AppStores.shared.onboarding
+    
+    @State private var needsOnboarding: Bool? = nil
+    @State private var isCheckingOnboarding = false
+    @State private var currentTenantId: UUID? = nil
 
     var body: some View {
         Group {
@@ -26,22 +33,98 @@ struct RootFlowView: View {
             } else if sessionManager.getTenantId() == nil {
                 // Authenticated but no tenant: Show tenant selection
                 TenantSelectionView()
+            } else if isCheckingOnboarding {
+                // Checking onboarding status
+                LoadingView(message: "Loading...")
+            } else if needsOnboarding == true {
+                // Authenticated with tenant but needs onboarding
+                OnboardingContainerView()
+                    .environmentObject(appStores)
+                    .onChange(of: onboardingStore.isCompleted) { _, isCompleted in
+                        if isCompleted {
+                            AppLogger.ui.info("RootFlowView: Onboarding completed, transitioning to main app")
+                            needsOnboarding = false
+                            
+                            // Load all stores after onboarding completes
+                            Task {
+                                AppLogger.ui.info("RootFlowView: Loading stores after onboarding completion")
+                                await appStores.guest.loadGuestData()
+                                await appStores.vendor.loadVendors()
+                                await appStores.task.loadTasks()
+                                await appStores.budget.loadBudgetData()
+                                AppLogger.ui.info("RootFlowView: All stores loaded successfully")
+                            }
+                        }
+                    }
             } else {
-                // Authenticated with tenant: Show main app
+                // Authenticated with tenant and onboarding complete: Show main app
                 MainAppView()
                     .environmentObject(appStores)
                     .environmentObject(settingsStore)
                     .environmentObject(coordinator)
             }
         }
-        .task {
-            // Load settings once authenticated with tenant
-            if supabaseManager.isAuthenticated && sessionManager.getTenantId() != nil {
-                AppLogger.ui.info("RootFlowView: Loading settings for authenticated user with tenant")
-                if !settingsStore.hasLoaded {
-                    await settingsStore.loadSettings()
+        .task(id: sessionManager.getTenantId()) {
+            // Check onboarding status once authenticated with tenant
+            // Re-runs when tenant changes (new wedding created)
+            if supabaseManager.isAuthenticated, let tenantId = sessionManager.getTenantId() {
+                // Detect tenant change
+                if currentTenantId != tenantId {
+                    AppLogger.ui.info("RootFlowView: Tenant changed to \(tenantId.uuidString)")
+                    currentTenantId = tenantId
+                    needsOnboarding = nil // Reset to trigger re-check
+                    
+                    // Reset onboarding store for new tenant
+                    appStores.onboarding.resetForNewTenant()
+                }
+                
+                await checkOnboardingStatus()
+                
+                // Load settings after onboarding check
+                if needsOnboarding == false {
+                    AppLogger.ui.info("RootFlowView: Loading settings for authenticated user with tenant")
+                    // Force reload settings for new tenant
+                    await settingsStore.loadSettings(force: true)
                 }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .tenantDidChange)) { notification in
+            // Handle tenant change notification
+            if let userInfo = notification.userInfo,
+               let previousId = userInfo["previousId"] as? String,
+               let newId = userInfo["newId"] as? String {
+                AppLogger.ui.info("RootFlowView: Received tenant change notification from \(previousId) to \(newId)")
+                
+                // Reset onboarding check
+                needsOnboarding = nil
+                
+                // Force reload settings for new tenant
+                Task {
+                    await settingsStore.loadSettings(force: true)
+                    AppLogger.ui.info("RootFlowView: Settings reloaded for new tenant")
+                }
+            }
+        }
+    }
+    
+    /// Checks if user needs to complete onboarding
+    private func checkOnboardingStatus() async {
+        guard !isCheckingOnboarding else { return }
+        
+        isCheckingOnboarding = true
+        defer { isCheckingOnboarding = false }
+        
+        AppLogger.ui.info("RootFlowView: Checking onboarding status")
+        
+        let completed = await appStores.onboarding.checkIfCompleted()
+        needsOnboarding = !completed
+        
+        if completed {
+            AppLogger.ui.info("RootFlowView: Onboarding already completed")
+        } else {
+            AppLogger.ui.info("RootFlowView: Onboarding required")
+            // Load existing progress if any
+            await appStores.onboarding.loadProgress()
         }
     }
 }

@@ -180,4 +180,11 @@ class PaymentScheduleStore: ObservableObject {
     func deletePaymentSchedule(id: Int64) async {
         await deletePayment(id: id)
     }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        paymentSchedules = []
+    }
 }

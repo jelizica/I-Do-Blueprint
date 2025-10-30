@@ -50,27 +50,26 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
     }
 
     func fetchVendors() async throws -> [Vendor] {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let cacheKey = "vendors_\(tenantId.uuidString)"
-        let startTime = Date()
-
-        // ✅ Check cache first
-        if let cached: [Vendor] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-            logger.info("Cache hit: vendors (\(cached.count) items)")
-            return cached
-        }
-
-        logger.info("Cache miss: fetching vendors from database")
-        logger.info("🔍 Querying with couple_id: \(tenantId.uuidString.lowercased())")
-
-        // Fetch from Supabase with retry and timeout - scoped by tenant
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let cacheKey = "vendors_\(tenantId.uuidString)"
+            let startTime = Date()
+
+            // ✅ Check cache first
+            if let cached: [Vendor] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+                logger.info("Cache hit: vendors (\(cached.count) items)")
+                return cached
+            }
+
+            logger.info("Cache miss: fetching vendors from database")
+
+            // Fetch from Supabase with retry and timeout - scoped by tenant
             let vendors: [Vendor] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("vendor_information")
                     .select()
-                    .eq("couple_id", value: tenantId.uuidString.lowercased())
+                    .eq("couple_id", value: tenantId)
                     .order("created_at", ascending: false)
                     .execute()
                     .value
@@ -89,14 +88,8 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
             return vendors
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("fetchVendors", duration: duration)
-            
-            logger.error("Failed to fetch vendors after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "fetchVendors", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to fetch vendors", error: error)
+            throw VendorError.fetchFailed(underlying: error)
         }
     }
 
@@ -147,11 +140,11 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
     }
 
     func createVendor(_ vendor: Vendor) async throws -> Vendor {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+
             let created: Vendor = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("vendor_information")
@@ -177,25 +170,19 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
             return created
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("createVendor", duration: duration)
-            
-            logger.error("Failed to create vendor after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "createVendor", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to create vendor", error: error)
+            throw VendorError.createFailed(underlying: error)
         }
     }
 
     func updateVendor(_ vendor: Vendor) async throws -> Vendor {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        var updated = vendor
-        updated.updatedAt = Date()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            var updated = vendor
+            updated.updatedAt = Date()
+            let startTime = Date()
+
             let result: Vendor = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("vendor_information")
@@ -223,29 +210,23 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
             return result
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("updateVendor", duration: duration)
-            
-            logger.error("Failed to update vendor after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "updateVendor", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to update vendor", error: error)
+            throw VendorError.updateFailed(underlying: error)
         }
     }
 
     func deleteVendor(id: Int64) async throws {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+
             try await RepositoryNetwork.withRetry {
                 try await client
                     .from("vendor_information")
                     .delete()
                     .eq("id", value: String(id))
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .execute()
             }
 
@@ -262,14 +243,8 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             logger.info("Deleted vendor in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "deleteVendor", outcome: .success, duration: duration)
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("deleteVendor", duration: duration)
-            
-            logger.error("Failed to delete vendor after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "deleteVendor", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to delete vendor", error: error)
+            throw VendorError.deleteFailed(underlying: error)
         }
     }
 
@@ -292,7 +267,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .from("vendor_reviews")
                     .select()
                     .eq("vendor_id", value: String(vendorId))
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .order("created_at", ascending: false)
                     .execute()
                     .value
@@ -395,7 +370,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .from("vendor_payment_summary")
                     .select()
                     .eq("vendor_id", value: String(vendorId))
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .execute()
                     .value
             }
@@ -459,7 +434,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .from("vendor_contract_summary")
                     .select()
                     .eq("vendor_id", value: String(vendorId))
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .execute()
                     .value
             }
@@ -566,6 +541,147 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             logger.error("Failed to fetch vendor types after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "fetchVendorTypes", outcome: .failure(code: nil), duration: duration)
             throw error
+        }
+    }
+    
+    // MARK: - Bulk Import Operations
+    
+    /// Imports multiple vendors from CSV data in a single batch operation
+    func importVendors(_ vendors: [VendorImportData]) async throws -> [Vendor] {
+        guard !vendors.isEmpty else {
+            logger.info("No vendors to import")
+            return []
+        }
+        
+        do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
+            logger.info("Starting import of \(vendors.count) vendors for couple: \(tenantId.uuidString)")
+            
+            // Convert VendorImportData to database-compatible format
+            // Note: We need to convert to a format that Supabase can insert
+            // The database will auto-generate the ID (Int64)
+            struct VendorInsertData: Encodable {
+                let vendorName: String
+                let vendorType: String?
+                let vendorCategoryId: String?
+                let contactName: String?
+                let phoneNumber: String?
+                let email: String?
+                let website: String?
+                let notes: String?
+                let quotedAmount: Double?
+                let imageUrl: String?
+                let isBooked: Bool?
+                let dateBooked: Date?
+                let budgetCategoryId: UUID?
+                let coupleId: UUID
+                let isArchived: Bool
+                let includeInExport: Bool
+                let streetAddress: String?
+                let streetAddress2: String?
+                let city: String?
+                let state: String?
+                let postalCode: String?
+                let country: String?
+                let latitude: Double?
+                let longitude: Double?
+                
+                private enum CodingKeys: String, CodingKey {
+                    case vendorName = "vendor_name"
+                    case vendorType = "vendor_type"
+                    case vendorCategoryId = "vendor_category_id"
+                    case contactName = "contact_name"
+                    case phoneNumber = "phone_number"
+                    case email
+                    case website
+                    case notes
+                    case quotedAmount = "quoted_amount"
+                    case imageUrl = "image_url"
+                    case isBooked = "is_booked"
+                    case dateBooked = "date_booked"
+                    case budgetCategoryId = "budget_category_id"
+                    case coupleId = "couple_id"
+                    case isArchived = "is_archived"
+                    case includeInExport = "include_in_export"
+                    case streetAddress = "street_address"
+                    case streetAddress2 = "street_address_2"
+                    case city
+                    case state
+                    case postalCode = "postal_code"
+                    case country
+                    case latitude
+                    case longitude
+                }
+            }
+            
+            // Convert import data to insert format
+            let insertData = vendors.map { vendor in
+                VendorInsertData(
+                    vendorName: vendor.vendorName,
+                    vendorType: vendor.vendorType,
+                    vendorCategoryId: vendor.vendorCategoryId,
+                    contactName: vendor.contactName,
+                    phoneNumber: vendor.phoneNumber,
+                    email: vendor.email,
+                    website: vendor.website,
+                    notes: vendor.notes,
+                    quotedAmount: vendor.quotedAmount,
+                    imageUrl: vendor.imageUrl,
+                    isBooked: vendor.isBooked,
+                    dateBooked: vendor.dateBooked,
+                    budgetCategoryId: vendor.budgetCategoryId,
+                    coupleId: tenantId,
+                    isArchived: vendor.isArchived,
+                    includeInExport: vendor.includeInExport,
+                    streetAddress: vendor.streetAddress,
+                    streetAddress2: vendor.streetAddress2,
+                    city: vendor.city,
+                    state: vendor.state,
+                    postalCode: vendor.postalCode,
+                    country: vendor.country,
+                    latitude: vendor.latitude,
+                    longitude: vendor.longitude
+                )
+            }
+            
+            // Perform batch insert with retry
+            let imported: [Vendor] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("vendor_information")
+                    .insert(insertData)
+                    .select()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Invalidate all vendor-related caches
+            await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
+            
+            // Record performance metrics
+            await PerformanceMonitor.shared.recordOperation("importVendors", duration: duration)
+            
+            logger.info("Successfully imported \(imported.count) vendors in \(String(format: "%.2f", duration))s")
+            
+            // Track analytics
+            AnalyticsService.trackNetwork(operation: "importVendors", outcome: .success, duration: duration)
+            
+            return imported
+        } catch {
+            logger.error("Failed to import vendors", error: error)
+            
+            // Capture error with Sentry
+            await SentryService.shared.captureError(error, context: [
+                "operation": "importVendors",
+                "vendorCount": vendors.count
+            ])
+            
+            throw VendorError.importFailed(underlying: error)
         }
     }
 }

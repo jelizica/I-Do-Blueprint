@@ -70,7 +70,7 @@ struct BudgetAnalyticsView: View {
             }
         }
         .task {
-            await budgetStore.loadBudgetData()
+            await budgetStore.loadBudgetData(force: true)
         }
     }
 }

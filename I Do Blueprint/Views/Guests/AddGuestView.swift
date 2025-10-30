@@ -418,6 +418,6 @@ struct AddGuestView: View {
 
 #Preview {
     AddGuestView { guest in
-        print("Saving guest: \(guest.fullName)")
+        // Guest saved via callback
     }
 }

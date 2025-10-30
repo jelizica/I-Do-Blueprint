@@ -25,6 +25,7 @@ class SettingsStoreV2: ObservableObject {
     @Published var hasUnsavedChanges = false
 
     private let repository: any SettingsRepositoryProtocol
+    private var loadTask: Task<Void, Never>?
 
     init(repository: (any SettingsRepositoryProtocol)? = nil) {
         self.repository = repository ?? LiveSettingsRepository()
@@ -38,42 +39,72 @@ class SettingsStoreV2: ObservableObject {
 
     // MARK: - Load Settings
 
-    func loadSettings() async {
-        guard !hasLoaded else {
+    func loadSettings(force: Bool = false) async {
+        // Allow reloading if forced or if not already loaded
+        guard force || !hasLoaded else {
+            AppLogger.ui.debug("SettingsStoreV2.loadSettings: Already loaded, skipping")
             return
         }
         
-        AppLogger.ui.info("SettingsStoreV2.loadSettings: Starting to load settings")
-        isLoading = true
-        error = nil
+        // Cancel any previous load task
+        loadTask?.cancel()
+        
+        // Create new load task
+        loadTask = Task { @MainActor in
+            AppLogger.ui.info("SettingsStoreV2.loadSettings: Starting to load settings (force: \(force))")
+            isLoading = true
+            error = nil
 
-        do {
-            async let settingsResult = repository.fetchSettings()
-            async let categoriesResult = repository.fetchCustomVendorCategories()
+            do {
+                // Check for cancellation before expensive operations
+                try Task.checkCancellation()
+                
+                async let settingsResult = repository.fetchSettings()
+                async let categoriesResult = repository.fetchCustomVendorCategories()
 
-            settings = try await settingsResult
-            localSettings = settings
-            customVendorCategories = try await categoriesResult
-            hasUnsavedChanges = false
-            hasLoaded = true
+                let fetchedSettings = try await settingsResult
+                let fetchedCategories = try await categoriesResult
+                
+                // Check again before updating state
+                try Task.checkCancellation()
+                
+                settings = fetchedSettings
+                localSettings = fetchedSettings
+                customVendorCategories = fetchedCategories
+                hasUnsavedChanges = false
+                hasLoaded = true
+                error = nil  // Clear any previous errors on successful load
 
-            AppLogger.ui.info("SettingsStoreV2.loadSettings: Settings loaded successfully")
-            AppLogger.ui.info("SettingsStoreV2: Wedding date from loaded settings: '\(settings.global.weddingDate)'")
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            self.error = .networkUnavailable
-            settings = .default
-            AppLogger.ui.error("SettingsStoreV2.loadSettings: Network unavailable")
-        } catch {
-            self.error = .fetchFailed(underlying: error)
-            settings = .default
-            AppLogger.ui.error("SettingsStoreV2.loadSettings: Failed to fetch settings: \(error)")
+                AppLogger.ui.info("SettingsStoreV2.loadSettings: Settings loaded successfully")
+                AppLogger.ui.info("SettingsStoreV2: Wedding date from loaded settings: '\(settings.global.weddingDate)'")
+                AppLogger.ui.info("SettingsStoreV2: Custom meal options loaded: \(settings.guests.customMealOptions)")
+            } catch is CancellationError {
+                // Don't treat cancellation as error - it's expected during navigation
+                AppLogger.ui.debug("SettingsStoreV2.loadSettings: Load cancelled (expected during navigation)")
+                // Don't update error state or hasLoaded for cancellations
+            } catch let error as URLError where error.code == .cancelled {
+                // URLError cancellation - also expected
+                AppLogger.ui.debug("SettingsStoreV2.loadSettings: Load cancelled (URLError)")
+            } catch let error as URLError where error.code == .notConnectedToInternet {
+                self.error = .networkUnavailable
+                settings = .default
+                hasLoaded = false  // Don't mark as loaded on error
+                AppLogger.ui.error("SettingsStoreV2.loadSettings: Network unavailable")
+            } catch {
+                self.error = .fetchFailed(underlying: error)
+                settings = .default
+                hasLoaded = false  // Don't mark as loaded on error
+                AppLogger.ui.error("SettingsStoreV2.loadSettings: Failed to fetch settings: \(error)")
+            }
+
+            isLoading = false
         }
-
-        isLoading = false
+        
+        await loadTask?.value
     }
 
     func refreshSettings() async {
-        await loadSettings()
+        await loadSettings(force: true)
     }
 
     // MARK: - Update Individual Sections
@@ -540,8 +571,13 @@ class SettingsStoreV2: ObservableObject {
     func deleteCustomCategory(id: String) async throws {
         guard let category = customVendorCategories.first(where: { $0.id == id }) else { return }
         await deleteVendorCategory(category)
-        if error != nil {
-            throw error!
+        if let error = error {
+            AppLogger.ui.error("Failed to delete custom category", error: error)
+            SentryService.shared.captureError(error, context: [
+                "operation": "deleteCustomCategory",
+                "categoryId": id
+            ])
+            throw error
         }
     }
 
@@ -559,6 +595,42 @@ class SettingsStoreV2: ObservableObject {
 
     func formatPhoneNumbers() async throws -> PhoneFormatResult {
         try await repository.formatPhoneNumbers()
+    }
+    
+    // MARK: - Account Deletion
+    
+    /// Delete the entire user account and all associated data
+    ///
+    /// This is a destructive operation that:
+    /// 1. Deletes all wedding planning data
+    /// 2. Deletes couple profile and memberships
+    /// 3. Deletes settings and onboarding progress
+    /// 4. Signs the user out
+    /// 5. Clears all local caches
+    ///
+    /// - Warning: This is irreversible. All data will be permanently deleted.
+    /// - Throws: SettingsError.accountDeletionFailed if deletion fails
+    func deleteAccount() async throws {
+        AppLogger.ui.info("SettingsStoreV2: Starting account deletion")
+        
+        do {
+            try await repository.deleteAccount()
+            AppLogger.ui.info("SettingsStoreV2: Account deletion completed")
+            
+            // Track deletion event for audit trail
+            SentryService.shared.trackAction(
+                "account_deleted",
+                category: "account",
+                metadata: ["timestamp": Date().ISO8601Format()]
+            )
+            
+        } catch {
+            AppLogger.ui.error("SettingsStoreV2: Account deletion failed", error: error)
+            SentryService.shared.captureError(error, context: [
+                "operation": "deleteAccount"
+            ])
+            throw error
+        }
     }
 
     // MARK: - Convenience Methods

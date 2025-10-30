@@ -22,6 +22,7 @@ struct VendorListViewV2: View {
     @State private var groupByStatus = true
     @State private var showingEditSheet = false
     @State private var vendorToEdit: Vendor?
+    @State private var showingImport = false
 
     private var selectedVendor: Vendor? {
         guard let id = selectedVendorId else { return nil }
@@ -133,8 +134,14 @@ struct VendorListViewV2: View {
                     onExport: { format in
                         await exportHandler.exportVendors(vendorStore.vendors, format: format)
                     },
+                    onImport: { showingImport = true },
                     onAdd: { showingAddVendor = true }
                 )
+            }
+            .sheet(isPresented: $showingImport) {
+                VendorCSVImportView()
+                    .environmentObject(vendorStore)
+                    .frame(minWidth: 800, idealWidth: 900, maxWidth: 1000, minHeight: 600, idealHeight: 700, maxHeight: 800)
             }
             .sheet(isPresented: $showingAddVendor) {
                 AddVendorView { newVendor in
@@ -154,6 +161,11 @@ struct VendorListViewV2: View {
             }
             .task {
                 await vendorStore.loadVendors()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .tenantDidChange)) { _ in
+                Task {
+                    await vendorStore.loadVendors()
+                }
             }
             .task {
                 await monitorVendorStoreAlerts()

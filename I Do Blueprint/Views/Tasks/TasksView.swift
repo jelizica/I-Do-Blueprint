@@ -73,6 +73,11 @@ struct TasksView: View {
             .task {
                 await store.loadTasks()
             }
+            .onReceive(NotificationCenter.default.publisher(for: .tenantDidChange)) { _ in
+                Task {
+                    await store.loadTasks()
+                }
+            }
         }
     }
 

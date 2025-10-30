@@ -463,4 +463,13 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         giftsAndOwed.removeAll()
         expenseAllocations.removeAll()
     }
+    
+    // MARK: - Primary Budget Scenario
+    
+    var primaryBudgetScenario: BudgetDevelopmentScenario?
+    
+    func fetchPrimaryBudgetScenario() async throws -> BudgetDevelopmentScenario? {
+        if shouldThrowError { throw errorToThrow }
+        return primaryBudgetScenario
+    }
 }

@@ -13,6 +13,7 @@ enum SettingsError: LocalizedError {
     case categoryCreateFailed(underlying: Error)
     case categoryUpdateFailed(underlying: Error)
     case categoryDeleteFailed(underlying: Error)
+    case accountDeletionFailed(underlying: Error)
     case notFound
     case validationFailed(reason: String)
     case networkUnavailable
@@ -34,6 +35,9 @@ enum SettingsError: LocalizedError {
 
         case .categoryDeleteFailed:
             return "Couldn't delete the vendor category. Please try again."
+
+        case .accountDeletionFailed:
+            return "Failed to delete your account. Please try again or contact support."
 
         case .notFound:
             return "Settings not found. Please refresh and try again."
@@ -57,7 +61,7 @@ enum SettingsError: LocalizedError {
         case .unauthorized:
             return "Please sign in again or contact support."
 
-        case .fetchFailed, .updateFailed, .categoryCreateFailed, .categoryUpdateFailed, .categoryDeleteFailed:
+        case .fetchFailed, .updateFailed, .categoryCreateFailed, .categoryUpdateFailed, .categoryDeleteFailed, .accountDeletionFailed:
             return "If the problem persists, please contact support."
 
         default:
@@ -68,7 +72,7 @@ enum SettingsError: LocalizedError {
     /// Indicates whether this error is transient and can be retried
     var isRetryable: Bool {
         switch self {
-        case .fetchFailed, .updateFailed, .categoryCreateFailed, .categoryUpdateFailed, .categoryDeleteFailed:
+        case .fetchFailed, .updateFailed, .categoryCreateFailed, .categoryUpdateFailed, .categoryDeleteFailed, .accountDeletionFailed:
             return true
         case .networkUnavailable:
             return true

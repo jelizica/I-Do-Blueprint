@@ -31,7 +31,7 @@ struct MoodBoard: Identifiable, Codable, Hashable {
         case id
         case createdAt = "created_at"
         case updatedAt = "updated_at"
-        case tenantId = "tenant_id"
+        case tenantId = "couple_id"
         case boardName = "board_name"
         case boardDescription = "board_description"
         case styleCategory = "style_category"

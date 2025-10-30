@@ -60,11 +60,10 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .select("""
                         *,
                         subtasks:wedding_subtasks(*),
-                        milestone:wedding_milestones(*),
-                        vendor:vendors(id, vendor_name),
+                        vendor:vendor_information(id, vendor_name),
                         budget_category:budget_categories(id, category_name, parent_category_id)
                     """)
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .order("due_date", ascending: true)
                     .execute()
                     .value
@@ -113,12 +112,11 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .select("""
                         *,
                         subtasks:wedding_subtasks(*),
-                        milestone:wedding_milestones(*),
-                        vendor:vendors(id, vendor_name),
+                        vendor:vendor_information(id, vendor_name),
                         budget_category:budget_categories(id, category_name, parent_category_id)
                     """)
                     .eq("id", value: id)
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .limit(1)
                     .execute()
                     .value
@@ -141,11 +139,11 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
     }
 
     func createTask(_ insertData: TaskInsertData) async throws -> WeddingTask {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-        
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
             let task: WeddingTask = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_tasks")
@@ -165,34 +163,28 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("createTask", duration: duration)
             
-            logger.info("Created task in \(String(format: "%.2f", duration))s")
+            logger.info("Created task: \(insertData.taskName)")
             AnalyticsService.trackNetwork(operation: "createTask", outcome: .success, duration: duration)
             
             return task
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("createTask", duration: duration)
-            
-            logger.error("Failed to create task after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "createTask", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to create task", error: error)
+            throw TaskError.createFailed(underlying: error)
         }
     }
 
     func updateTask(_ task: WeddingTask) async throws -> WeddingTask {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-        
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
             let updated: WeddingTask = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_tasks")
                     .update(task)
                     .eq("id", value: task.id)
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .select()
                     .single()
                     .execute()
@@ -209,34 +201,28 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("updateTask", duration: duration)
             
-            logger.info("Updated task in \(String(format: "%.2f", duration))s")
+            logger.info("Updated task: \(task.taskName)")
             AnalyticsService.trackNetwork(operation: "updateTask", outcome: .success, duration: duration)
             
             return updated
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("updateTask", duration: duration)
-            
-            logger.error("Failed to update task after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "updateTask", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to update task", error: error)
+            throw TaskError.updateFailed(underlying: error)
         }
     }
 
     func deleteTask(id: UUID) async throws {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-        
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
             try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_tasks")
                     .delete()
                     .eq("id", value: id)
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .execute()
             }
             
@@ -250,17 +236,11 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("deleteTask", duration: duration)
             
-            logger.info("Deleted task in \(String(format: "%.2f", duration))s")
+            logger.info("Deleted task: \(id)")
             AnalyticsService.trackNetwork(operation: "deleteTask", outcome: .success, duration: duration)
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("deleteTask", duration: duration)
-            
-            logger.error("Failed to delete task after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "deleteTask", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to delete task", error: error)
+            throw TaskError.deleteFailed(underlying: error)
         }
     }
 
@@ -305,27 +285,27 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
     }
 
     func createSubtask(taskId: UUID, insertData: SubtaskInsertData) async throws -> Subtask {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-        
-        struct SubtaskInsert: Encodable {
-            let task_id: UUID
-            let subtask_name: String
-            let status: TaskStatus
-            let assigned_to: [String]
-            let notes: String?
-
-            init(taskId: UUID, data: SubtaskInsertData) {
-                task_id = taskId
-                subtask_name = data.subtaskName
-                status = data.status
-                assigned_to = data.assignedTo
-                notes = data.notes
-            }
-        }
-
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
+            struct SubtaskInsert: Encodable {
+                let task_id: UUID
+                let subtask_name: String
+                let status: TaskStatus
+                let assigned_to: [String]
+                let notes: String?
+
+                init(taskId: UUID, data: SubtaskInsertData) {
+                    task_id = taskId
+                    subtask_name = data.subtaskName
+                    status = data.status
+                    assigned_to = data.assignedTo
+                    notes = data.notes
+                }
+            }
+
             let insert = SubtaskInsert(taskId: taskId, data: insertData)
             let subtask: Subtask = try await RepositoryNetwork.withRetry {
                 try await client.database
@@ -346,26 +326,21 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("createSubtask", duration: duration)
             
-            logger.info("Created subtask in \(String(format: "%.2f", duration))s")
+            logger.info("Created subtask: \(insertData.subtaskName)")
             
             return subtask
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("createSubtask", duration: duration)
-            
-            logger.error("Failed to create subtask after \(String(format: "%.2f", duration))s", error: error)
-            throw error
+            logger.error("Failed to create subtask", error: error)
+            throw TaskError.createFailed(underlying: error)
         }
     }
 
     func updateSubtask(_ subtask: Subtask) async throws -> Subtask {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-        
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
             let updated: Subtask = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_subtasks")
@@ -386,26 +361,21 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("updateSubtask", duration: duration)
             
-            logger.info("Updated subtask in \(String(format: "%.2f", duration))s")
+            logger.info("Updated subtask: \(subtask.subtaskName)")
             
             return updated
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("updateSubtask", duration: duration)
-            
-            logger.error("Failed to update subtask after \(String(format: "%.2f", duration))s", error: error)
-            throw error
+            logger.error("Failed to update subtask", error: error)
+            throw TaskError.updateFailed(underlying: error)
         }
     }
 
     func deleteSubtask(id: UUID) async throws {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-        
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
             // Fetch the subtask first to get the taskId for cache invalidation
             let subtasks: [Subtask] = try await client.database
                 .from("wedding_subtasks")
@@ -434,15 +404,10 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("deleteSubtask", duration: duration)
             
-            logger.info("Deleted subtask in \(String(format: "%.2f", duration))s")
+            logger.info("Deleted subtask: \(id)")
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("deleteSubtask", duration: duration)
-            
-            logger.error("Failed to delete subtask after \(String(format: "%.2f", duration))s", error: error)
-            throw error
+            logger.error("Failed to delete subtask", error: error)
+            throw TaskError.deleteFailed(underlying: error)
         }
     }
 

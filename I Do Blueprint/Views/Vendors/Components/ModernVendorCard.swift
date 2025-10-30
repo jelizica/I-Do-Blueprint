@@ -15,10 +15,11 @@ struct ModernVendorCard: View {
     var onDelete: (() -> Void)? = nil
     @State private var isHovering = false
     @State private var showingDeleteAlert = false
+    @State private var loadedImage: NSImage?
 
     var body: some View {
         HStack(spacing: Spacing.lg) {
-            // Avatar
+            // Avatar with logo or initials
             ZStack {
                 Circle()
                     .fill(
@@ -33,10 +34,18 @@ struct ModernVendorCard: View {
                     )
                     .frame(width: 48, height: 48)
 
-                Text(vendor.initials)
-                    .font(Typography.heading)
-                    .fontWeight(.semibold)
-                    .foregroundColor(statusColor)
+                if let image = loadedImage {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 48, height: 48)
+                        .clipShape(Circle())
+                } else {
+                    Text(vendor.initials)
+                        .font(Typography.heading)
+                        .fontWeight(.semibold)
+                        .foregroundColor(statusColor)
+                }
             }
 
             // Vendor Info
@@ -153,6 +162,9 @@ struct ModernVendorCard: View {
         .accessibilityHint("Double tap to view details")
         .accessibilityValue(accessibilityValueText)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+        .task(id: vendor.imageUrl) {
+            await loadVendorImage()
+        }
     }
 
     private var statusColor: Color {
@@ -169,5 +181,27 @@ struct ModernVendorCard: View {
             parts.append("Contact: \(contactName)")
         }
         return parts.joined(separator: ", ")
+    }
+    
+    /// Load vendor image asynchronously from URL
+    private func loadVendorImage() async {
+        guard let imageUrl = vendor.imageUrl,
+              let url = URL(string: imageUrl) else {
+            loadedImage = nil
+            return
+        }
+        
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            if let nsImage = NSImage(data: data) {
+                await MainActor.run {
+                    loadedImage = nsImage
+                }
+            }
+        } catch {
+            await MainActor.run {
+                loadedImage = nil
+            }
+        }
     }
 }

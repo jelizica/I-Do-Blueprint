@@ -13,33 +13,46 @@ import Security
 class SecureAPIKeyManager: ObservableObject {
     static let shared = SecureAPIKeyManager()
     
-    private let keychainService = "com.jelizica.weddingplanning.apikeys"
+    private let keychainService = "Jelizica.I-Do-Blueprint.apikeys"
     private let logger = AppLogger.auth
     
     // Published state for UI
     @Published var hasUnsplashKey = false
     @Published var hasPinterestKey = false
     @Published var hasVendorKey = false
-    
+    @Published var hasResendKey = false
+
     // API Key identifiers
     enum APIKeyType: String, CaseIterable {
         case unsplash = "unsplash-api-key"
         case pinterest = "pinterest-api-key"
         case vendor = "vendor-api-key"
-        
+        case resend = "resend-api-key"
+
         var displayName: String {
             switch self {
             case .unsplash: return "Unsplash"
             case .pinterest: return "Pinterest"
             case .vendor: return "Vendor API"
+            case .resend: return "Resend Email"
             }
         }
-        
+
         var helpURL: String {
             switch self {
             case .unsplash: return "https://unsplash.com/developers"
             case .pinterest: return "https://developers.pinterest.com"
             case .vendor: return "https://example.com/vendor-api" // Update with actual URL
+            case .resend: return "https://resend.com/api-keys"
+            }
+        }
+
+        var description: String {
+            switch self {
+            case .unsplash: return "For searching wedding inspiration images"
+            case .pinterest: return "For discovering wedding ideas and themes"
+            case .vendor: return "For vendor directory integration"
+            case .resend: return "For sending collaboration invitation emails"
             }
         }
     }
@@ -54,6 +67,7 @@ class SecureAPIKeyManager: ObservableObject {
         hasUnsplashKey = hasKey(for: .unsplash)
         hasPinterestKey = hasKey(for: .pinterest)
         hasVendorKey = hasKey(for: .vendor)
+        hasResendKey = hasKey(for: .resend)
     }
     
     private func hasKey(for type: APIKeyType) -> Bool {
@@ -155,6 +169,8 @@ class SecureAPIKeyManager: ObservableObject {
             return try await validatePinterestKey(key)
         case .vendor:
             return try await validateVendorKey(key)
+        case .resend:
+            return try await validateResendKey(key)
         }
     }
     
@@ -208,14 +224,61 @@ class SecureAPIKeyManager: ObservableObject {
         // Vendor API validation would go here
         // For now, just check if key is not empty and has reasonable length
         let isValid = key.count >= 20
-        
+
         if isValid {
             logger.info("Vendor API key format validated")
         } else {
             logger.warning("Vendor API key format validation failed")
         }
-        
+
         return isValid
+    }
+
+    private func validateResendKey(_ key: String) async throws -> Bool {
+        // Validate Resend API key by making a test API call
+        guard key.starts(with: "re_") else {
+            logger.warning("Resend API key format validation failed - must start with 're_'")
+            return false
+        }
+
+        guard let url = URL(string: "https://api.resend.com/emails") else {
+            throw APIKeyError.invalidURL
+        }
+
+        // Make a test request to verify the key (this will fail but confirms auth works)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(key)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.timeoutInterval = 10
+
+        // Minimal invalid payload to test auth
+        let testPayload = #"{"from":"test@test.com","to":["test@test.com"],"subject":"test","html":"test"}"#
+        request.httpBody = testPayload.data(using: .utf8)
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+
+            guard let httpResponse = response as? HTTPURLResponse else {
+                throw APIKeyError.invalidResponse
+            }
+
+            // 400 = bad request but auth worked
+            // 401 = unauthorized (bad key)
+            // 422 = validation error but auth worked
+            let isValid = httpResponse.statusCode != 401
+
+            if isValid {
+                logger.info("Resend API key validated successfully")
+            } else {
+                logger.warning("Resend API key validation failed - unauthorized")
+            }
+
+            return isValid
+        } catch {
+            logger.error("Resend API key validation error", error: error)
+            throw APIKeyError.validationFailed(underlying: error)
+        }
     }
 }
 

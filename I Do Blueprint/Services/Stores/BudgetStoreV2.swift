@@ -43,6 +43,9 @@ class BudgetStoreV2: ObservableObject {
     @Published var cashFlowInsights: [CashFlowInsight] = []
     @Published var recentActivities: [BudgetActivity] = []
     
+    /// Primary budget development scenario (cached)
+    @Published private(set) var primaryScenario: BudgetDevelopmentScenario?
+    
     // MARK: - Dependencies
     
     @Dependency(\.budgetRepository) var repository
@@ -51,6 +54,9 @@ class BudgetStoreV2: ObservableObject {
     // MARK: - Combine Subscriptions
     
     private var cancellables = Set<AnyCancellable>()
+    
+    // Task tracking for cancellation handling
+    private var loadTask: Task<Void, Never>?
     
     // MARK: - Initialization
     
@@ -111,56 +117,77 @@ class BudgetStoreV2: ObservableObject {
     
     /// Load all budget data in parallel
     func loadBudgetData(force: Bool = false) async {
-        guard loadingState.isIdle || loadingState.hasError || force else {
-            return
-        }
+        // Cancel any previous load task
+        loadTask?.cancel()
         
-        loadingState = .loading
-        
-        do {
-            async let summary = repository.fetchBudgetSummary()
-            async let categories = repository.fetchCategories()
-            async let expenses = repository.fetchExpenses()
-            
-            let summaryResult = try await summary
-            let categoriesResult = try await categories
-            let expensesResult = try await expenses
-            
-            // Create budget data structure
-            let budgetData = BudgetData(
-                summary: summaryResult,
-                categories: categoriesResult,
-                expenses: expensesResult
-            )
-            
-            loadingState = .loaded(budgetData)
-            
-            // Load data into composed stores
-            await payments.loadPaymentSchedules()
-            await gifts.loadGiftsData()
-            
-            do {
-                savedScenarios = try await repository.fetchBudgetDevelopmentScenarios()
-                weddingEvents = try await repository.fetchWeddingEvents()
-            } catch {
-                logger.error("Failed to load additional data", error: error)
+        // Create new load task
+        loadTask = Task { @MainActor in
+            guard loadingState.isIdle || loadingState.hasError || force else {
+                return
             }
             
-            #if DEBUG
-            logger.warning("Placeholder data being used: categoryBenchmarks, cashFlowData, incomeItems, expenseItems, cashFlowInsights, recentActivities")
-            #endif
-            categoryBenchmarks = []
-            cashFlowData = []
-            incomeItems = []
-            expenseItems = []
-            cashFlowInsights = []
-            recentActivities = []
+            loadingState = .loading
             
-            logger.info("Loaded budget data: \(categoriesResult.count) categories, \(expensesResult.count) expenses")
-        } catch {
-            loadingState = .error(BudgetError.fetchFailed(underlying: error))
-            logger.error("Error loading budget data", error: error)
+            do {
+                try Task.checkCancellation()
+                
+                async let summary = repository.fetchBudgetSummary()
+                async let categories = repository.fetchCategories()
+                async let expenses = repository.fetchExpenses()
+                
+                let summaryResult = try await summary
+                let categoriesResult = try await categories
+                let expensesResult = try await expenses
+                
+                try Task.checkCancellation()
+                
+                // Create budget data structure
+                let budgetData = BudgetData(
+                    summary: summaryResult,
+                    categories: categoriesResult,
+                    expenses: expensesResult
+                )
+                
+                loadingState = .loaded(budgetData)
+                
+                // Load data into composed stores
+                await payments.loadPaymentSchedules()
+                await gifts.loadGiftsData()
+                
+                // Load primary budget scenario
+                await loadPrimaryScenario()
+                
+                do {
+                    savedScenarios = try await repository.fetchBudgetDevelopmentScenarios()
+                    weddingEvents = try await repository.fetchWeddingEvents()
+                } catch {
+                    logger.error("Failed to load additional data", error: error)
+                }
+                
+                #if DEBUG
+                logger.warning("Placeholder data being used: categoryBenchmarks, cashFlowData, incomeItems, expenseItems, cashFlowInsights, recentActivities")
+                #endif
+                categoryBenchmarks = []
+                cashFlowData = []
+                incomeItems = []
+                expenseItems = []
+                cashFlowInsights = []
+                recentActivities = []
+                
+                logger.info("Loaded budget data: \(categoriesResult.count) categories, \(expensesResult.count) expenses")
+            } catch is CancellationError {
+                AppLogger.ui.debug("BudgetStoreV2.loadBudgetData: Load cancelled (expected during tenant switch)")
+                loadingState = .idle
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("BudgetStoreV2.loadBudgetData: Load cancelled (URLError)")
+                loadingState = .idle
+            } catch {
+                loadingState = .error(BudgetError.fetchFailed(underlying: error))
+                logger.error("Error loading budget data", error: error)
+            }
         }
+        
+        await loadTask?.value
     }
     
     /// Load budget summary
@@ -369,5 +396,44 @@ class BudgetStoreV2: ObservableObject {
     /// Load payment schedules - delegates to PaymentScheduleStore
     func loadPaymentSchedules() async {
         await payments.loadPaymentSchedules()
+    }
+    
+    // MARK: - Primary Budget Scenario
+    
+    /// Load the primary budget development scenario
+    func loadPrimaryScenario() async {
+        do {
+            primaryScenario = try await repository.fetchPrimaryBudgetScenario()
+            if let scenario = primaryScenario {
+                logger.info("Loaded primary scenario: \(scenario.scenarioName) ($\(scenario.totalWithTax))")
+            } else {
+                logger.info("No primary scenario found")
+            }
+        } catch {
+            logger.error("Failed to load primary scenario", error: error)
+            SentryService.shared.captureError(error, context: ["operation": "loadPrimaryScenario"])
+        }
+    }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        loadingState = .idle
+        categoryBenchmarks = []
+        savedScenarios = []
+        taxRates = []
+        weddingEvents = []
+        cashFlowData = []
+        incomeItems = []
+        expenseItems = []
+        cashFlowInsights = []
+        recentActivities = []
+        primaryScenario = nil
+        
+        // Reset composed stores
+        payments.resetLoadedState()
+        gifts.resetLoadedState()
+        affordability.resetLoadedState()
     }
 }

@@ -62,6 +62,7 @@ struct BudgetOverviewDashboardViewV2: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
+            logger.info("Budget Overview: View appeared, current tenant: \(SessionManager.shared.getTenantId()?.uuidString ?? "none")")
             Task {
                 await loadInitialData()
                 setupRealTimeSync()
@@ -70,6 +71,57 @@ struct BudgetOverviewDashboardViewV2: View {
         .onDisappear {
             refreshTimer?.invalidate()
             searchTimer?.invalidate()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .tenantDidChange)) { notification in
+            // Extract new tenant ID from notification
+            guard let newTenantIdString = notification.userInfo?["newId"] as? String,
+                  let newTenantId = UUID(uuidString: newTenantIdString) else {
+                logger.error("Tenant change notification missing tenant ID")
+                return
+            }
+            
+            logger.info("Budget Overview: Received tenant change to \(newTenantIdString)")
+            
+            // Reset state when tenant changes
+            selectedScenarioId = ""
+            budgetItems = []
+            filteredBudgetItems = []
+            allScenarios = []
+            primaryScenario = nil
+            currentScenario = nil
+            searchQuery = ""
+            debouncedSearchQuery = ""
+            activeFilters = []
+            
+            // Reload data for new tenant with validation
+            Task {
+                // Add small delay to ensure cache invalidation completes
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+                
+                await loadInitialData()
+                
+                // Verify we loaded the correct tenant's data
+                guard let currentTenantId = SessionManager.shared.getTenantId(),
+                      currentTenantId == newTenantId else {
+                    logger.error("Budget Overview: Loaded data for wrong tenant! Expected \(newTenantIdString), retrying...")
+                    
+                    // Retry with longer delay
+                    try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
+                    await loadInitialData()
+                    
+                    // Final validation
+                    guard let finalTenantId = SessionManager.shared.getTenantId(),
+                          finalTenantId == newTenantId else {
+                        logger.error("Budget Overview: Still loading wrong tenant data after retry!")
+                        return
+                    }
+                    
+                    logger.info("Budget Overview: Successfully loaded correct tenant data after retry")
+                    return
+                }
+                
+                logger.info("Budget Overview: Successfully loaded data for tenant \(newTenantIdString)")
+            }
         }
         .onChange(of: searchQuery) {
             setupSearchDebounce()
@@ -219,7 +271,7 @@ struct BudgetOverviewDashboardViewV2: View {
         error = nil
 
         do {
-            await budgetStore.loadBudgetData()
+            await budgetStore.loadBudgetData(force: true)  // Force reload to ensure fresh data
             await fetchScenarios()
             await refreshData()
         } catch {
@@ -327,19 +379,23 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private func handleUnlinkExpense(expenseId: String, itemId: String) async {
-        guard currentScenario != nil else {
-            logger.warning("Cannot unlink expense: Current scenario not available")
-            return
-        }
-
-        
-        do {
-            try await budgetStore.unlinkExpense(expenseId: expenseId, budgetItemId: itemId)
-            logger.info("Expense unlinked successfully")
-            await refreshData()
-        } catch {
-            logger.error("Error unlinking expense", error: error)
-        }
+    guard currentScenario != nil else {
+    logger.warning("Cannot unlink expense: Current scenario not available")
+    return
+    }
+    
+    
+    do {
+    try await budgetStore.unlinkExpense(expenseId: expenseId, budgetItemId: itemId)
+    logger.info("Expense unlinked successfully")
+    
+    // Delay to ensure database transaction commits and cache invalidation completes
+    try? await Task.sleep(nanoseconds: 250_000_000) // 0.25 seconds
+    
+    await refreshData()
+    } catch {
+    logger.error("Error unlinking expense", error: error)
+    }
     }
 
     private func handleEditGift(giftId _: String, itemId _: String) {

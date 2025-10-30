@@ -503,4 +503,20 @@ class AffordabilityStore: ObservableObject {
     func markFieldChanged() {
         // Changes are tracked automatically via hasUnsavedChanges computed property
     }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        scenarios = []
+        contributions = []
+        selectedScenarioId = nil
+        availableGifts = []
+        editingGift = nil
+        editedWeddingDate = nil
+        editedCalculationStartDate = nil
+        editedPartner1Monthly = 0
+        editedPartner2Monthly = 0
+        paymentSchedulesProvider = { [] }
+    }
 }
