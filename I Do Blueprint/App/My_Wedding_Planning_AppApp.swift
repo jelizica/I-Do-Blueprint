@@ -2,16 +2,18 @@ import SwiftUI
 
 @main
 struct My_Wedding_Planning_AppApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var authContext = AuthContext.shared
     @StateObject private var appStores = AppStores.shared
     @StateObject private var supabaseManager = SupabaseManager.shared
     @State private var credentialsCheckFailed = false
-    
+
     // MARK: - Initialization
-    
+
     init() {
         // Initialize Sentry as early as possible
-        SentryService.shared.configure()
+        // TEMPORARILY DISABLED
+        // SentryService.shared.configure()
     }
 
     var body: some Scene {

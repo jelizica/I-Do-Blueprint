@@ -372,6 +372,13 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
         if shouldThrowError { throw errorToThrow }
     }
+    
+    var primaryBudgetScenario: BudgetDevelopmentScenario?
+    
+    func fetchPrimaryBudgetScenario() async throws -> BudgetDevelopmentScenario? {
+        if shouldThrowError { throw errorToThrow }
+        return primaryBudgetScenario
+    }
 }
 
 // MARK: - Mock Task Repository
@@ -1012,5 +1019,262 @@ class MockVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             return []
         }
         return chart.seatingAssignments
+    }
+}
+
+// MARK: - Mock Collaboration Repository
+
+class MockCollaborationRepository: CollaborationRepositoryProtocol {
+    var collaborators: [Collaborator] = []
+    var roles: [CollaborationRole] = []
+    var currentUserCollaborator: Collaborator?
+    var currentUserRole: RoleName?
+    var permissions: [String: Bool] = [:]
+    var shouldThrowError = false
+    var errorToThrow: CollaborationError = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
+    
+    func fetchCollaborators() async throws -> [Collaborator] {
+        if shouldThrowError { throw errorToThrow }
+        return collaborators
+    }
+    
+    func fetchRoles() async throws -> [CollaborationRole] {
+        if shouldThrowError { throw errorToThrow }
+        return roles
+    }
+    
+    func fetchCollaborator(id: UUID) async throws -> Collaborator {
+        if shouldThrowError { throw errorToThrow }
+        guard let collaborator = collaborators.first(where: { $0.id == id }) else {
+            throw CollaborationError.notFound(id: id)
+        }
+        return collaborator
+    }
+    
+    func fetchCurrentUserCollaborator() async throws -> Collaborator? {
+        if shouldThrowError { throw errorToThrow }
+        return currentUserCollaborator
+    }
+    
+    func inviteCollaborator(email: String, roleId: UUID, displayName: String?) async throws -> Collaborator {
+        if shouldThrowError { throw errorToThrow }
+        let collaborator = Collaborator.makeTest(email: email, displayName: displayName, status: .pending)
+        collaborators.append(collaborator)
+        return collaborator
+    }
+    
+    func acceptInvitation(id: UUID) async throws -> Collaborator {
+        if shouldThrowError { throw errorToThrow }
+        guard let index = collaborators.firstIndex(where: { $0.id == id }) else {
+            throw CollaborationError.notFound(id: id)
+        }
+        var collaborator = collaborators[index]
+        collaborator.status = .active
+        collaborator.acceptedAt = Date()
+        collaborators[index] = collaborator
+        return collaborator
+    }
+    
+    func updateCollaboratorRole(id: UUID, roleId: UUID) async throws -> Collaborator {
+        if shouldThrowError { throw errorToThrow }
+        guard let index = collaborators.firstIndex(where: { $0.id == id }) else {
+            throw CollaborationError.notFound(id: id)
+        }
+        var collaborator = collaborators[index]
+        collaborator.roleId = roleId
+        collaborators[index] = collaborator
+        return collaborator
+    }
+    
+    func removeCollaborator(id: UUID) async throws {
+        if shouldThrowError { throw errorToThrow }
+        collaborators.removeAll(where: { $0.id == id })
+    }
+    
+    func hasPermission(_ permission: String) async throws -> Bool {
+        if shouldThrowError { throw errorToThrow }
+        return permissions[permission] ?? false
+    }
+    
+    func getCurrentUserRole() async throws -> RoleName? {
+        if shouldThrowError { throw errorToThrow }
+        return currentUserRole
+    }
+    
+    func fetchInvitationByToken(_ token: String) async throws -> InvitationDetails {
+        if shouldThrowError { throw errorToThrow }
+        throw CollaborationError.invitationNotFound
+    }
+    
+    func createOwnerCollaborator(
+        coupleId: UUID,
+        userId: UUID,
+        email: String,
+        displayName: String?
+    ) async throws -> Collaborator {
+        if shouldThrowError { throw errorToThrow }
+        
+        // Check if already exists (idempotency)
+        if let existing = collaborators.first(where: { $0.coupleId == coupleId && $0.userId == userId }) {
+            return existing
+        }
+        
+        // Create owner collaborator
+        let ownerRole = roles.first(where: { $0.roleName == .owner })
+        let collaborator = Collaborator.makeTest(
+            coupleId: coupleId,
+            userId: userId,
+            roleId: ownerRole?.id ?? UUID(),
+            invitedBy: userId,
+            acceptedAt: Date(),
+            status: .active,
+            email: email,
+            displayName: displayName
+        )
+        collaborators.append(collaborator)
+        return collaborator
+    }
+}
+
+// MARK: - Mock Presence Repository
+
+class MockPresenceRepository: PresenceRepositoryProtocol {
+    var presenceRecords: [Presence] = []
+    var shouldThrowError = false
+    var errorToThrow: PresenceError = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
+    
+    func fetchActivePresence() async throws -> [Presence] {
+        if shouldThrowError { throw errorToThrow }
+        return presenceRecords.filter { !$0.isStale }
+    }
+    
+    func trackPresence(
+        status: PresenceStatus,
+        currentView: String?,
+        currentResourceType: String?,
+        currentResourceId: UUID?
+    ) async throws -> Presence {
+        if shouldThrowError { throw errorToThrow }
+        let presence = Presence.makeTest(status: status, currentView: currentView)
+        presenceRecords.append(presence)
+        return presence
+    }
+    
+    func updateEditingState(
+        isEditing: Bool,
+        resourceType: String?,
+        resourceId: UUID?
+    ) async throws -> Presence {
+        if shouldThrowError { throw errorToThrow }
+        guard let index = presenceRecords.firstIndex(where: { !$0.isStale }) else {
+            throw PresenceError.notFound
+        }
+        var presence = presenceRecords[index]
+        presence.isEditing = isEditing
+        presence.editingResourceType = resourceType
+        presence.editingResourceId = resourceId
+        presenceRecords[index] = presence
+        return presence
+    }
+    
+    func sendHeartbeat() async throws -> Presence {
+        if shouldThrowError { throw errorToThrow }
+        guard let index = presenceRecords.firstIndex(where: { !$0.isStale }) else {
+            throw PresenceError.notFound
+        }
+        var presence = presenceRecords[index]
+        presence.lastHeartbeat = Date()
+        presenceRecords[index] = presence
+        return presence
+    }
+    
+    func stopTracking() async throws {
+        if shouldThrowError { throw errorToThrow }
+        if let index = presenceRecords.firstIndex(where: { !$0.isStale }) {
+            var presence = presenceRecords[index]
+            presence.status = .offline
+            presenceRecords[index] = presence
+        }
+    }
+    
+    func cleanupStalePresence() async throws {
+        if shouldThrowError { throw errorToThrow }
+        presenceRecords.removeAll(where: { $0.isStale })
+    }
+}
+
+// MARK: - Mock Activity Feed Repository
+
+class MockActivityFeedRepository: ActivityFeedRepositoryProtocol {
+    var activities: [ActivityEvent] = []
+    var shouldThrowError = false
+    var errorToThrow: ActivityFeedError = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
+    
+    func fetchActivities(limit: Int, offset: Int) async throws -> [ActivityEvent] {
+        if shouldThrowError { throw errorToThrow }
+        let start = min(offset, activities.count)
+        let end = min(offset + limit, activities.count)
+        return Array(activities[start..<end])
+    }
+    
+    func fetchActivities(actionType: ActionType, limit: Int) async throws -> [ActivityEvent] {
+        if shouldThrowError { throw errorToThrow }
+        return activities.filter { $0.actionType == actionType }.prefix(limit).map { $0 }
+    }
+    
+    func fetchActivities(resourceType: ResourceType, limit: Int) async throws -> [ActivityEvent] {
+        if shouldThrowError { throw errorToThrow }
+        return activities.filter { $0.resourceType == resourceType }.prefix(limit).map { $0 }
+    }
+    
+    func fetchActivities(actorId: UUID, limit: Int) async throws -> [ActivityEvent] {
+        if shouldThrowError { throw errorToThrow }
+        return activities.filter { $0.actorId == actorId }.prefix(limit).map { $0 }
+    }
+    
+    func fetchUnreadCount() async throws -> Int {
+        if shouldThrowError { throw errorToThrow }
+        return activities.filter { !$0.isRead }.count
+    }
+    
+    func markAsRead(id: UUID) async throws -> ActivityEvent {
+        if shouldThrowError { throw errorToThrow }
+        guard let index = activities.firstIndex(where: { $0.id == id }) else {
+            throw ActivityFeedError.fetchFailed(underlying: NSError(domain: "Test", code: -1))
+        }
+        var activity = activities[index]
+        activity.isRead = true
+        activities[index] = activity
+        return activity
+    }
+    
+    func markAllAsRead() async throws -> Int {
+        if shouldThrowError { throw errorToThrow }
+        let unreadCount = activities.filter { !$0.isRead }.count
+        for index in activities.indices {
+            activities[index].isRead = true
+        }
+        return unreadCount
+    }
+    
+    func fetchActivityStats() async throws -> ActivityStats {
+        if shouldThrowError { throw errorToThrow }
+        var activitiesByAction: [ActionType: Int] = [:]
+        var activitiesByResource: [ResourceType: Int] = [:]
+        
+        for activity in activities {
+            activitiesByAction[activity.actionType, default: 0] += 1
+            activitiesByResource[activity.resourceType, default: 0] += 1
+        }
+        
+        let oneDayAgo = Date().addingTimeInterval(-86400)
+        let recentCount = activities.filter { $0.createdAt > oneDayAgo }.count
+        
+        return ActivityStats(
+            totalActivities: activities.count,
+            activitiesByAction: activitiesByAction,
+            activitiesByResource: activitiesByResource,
+            recentActivityCount: recentCount
+        )
     }
 }

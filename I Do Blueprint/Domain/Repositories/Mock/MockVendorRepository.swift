@@ -140,6 +140,58 @@ class MockVendorRepository: VendorRepositoryProtocol, @unchecked Sendable {
         if shouldThrowError { throw errorToThrow }
         return vendorTypes
     }
+    
+    // MARK: - Bulk Import Operations
+    
+    var importVendorsCalled = false
+    var importedVendors: [Vendor] = []
+    
+    func importVendors(_ vendors: [VendorImportData]) async throws -> [Vendor] {
+        importVendorsCalled = true
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        // Convert VendorImportData to Vendor objects with mock IDs
+        let now = Date()
+        let imported = vendors.enumerated().map { index, importData in
+            Vendor(
+                id: Int64(self.vendors.count + index + 1), // Generate mock ID
+                createdAt: now,
+                updatedAt: now,
+                vendorName: importData.vendorName,
+                vendorType: importData.vendorType,
+                vendorCategoryId: importData.vendorCategoryId,
+                contactName: importData.contactName,
+                phoneNumber: importData.phoneNumber,
+                email: importData.email,
+                website: importData.website,
+                notes: importData.notes,
+                quotedAmount: importData.quotedAmount,
+                imageUrl: importData.imageUrl,
+                isBooked: importData.isBooked,
+                dateBooked: importData.dateBooked,
+                budgetCategoryId: importData.budgetCategoryId,
+                coupleId: importData.coupleId,
+                isArchived: importData.isArchived,
+                archivedAt: nil,
+                includeInExport: importData.includeInExport,
+                streetAddress: importData.streetAddress,
+                streetAddress2: importData.streetAddress2,
+                city: importData.city,
+                state: importData.state,
+                postalCode: importData.postalCode,
+                country: importData.country,
+                latitude: importData.latitude,
+                longitude: importData.longitude
+            )
+        }
+        
+        // Add to vendors array
+        self.vendors.append(contentsOf: imported)
+        self.importedVendors = imported
+        
+        return imported
+    }
 
     // MARK: - Testing Utilities
 

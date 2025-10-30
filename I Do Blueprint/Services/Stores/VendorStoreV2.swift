@@ -21,6 +21,12 @@ class VendorStoreV2: ObservableObject {
 
     @Dependency(\.vendorRepository) var repository
     
+    // Task tracking for cancellation handling
+    private var loadTask: Task<Void, Never>?
+    private var addTask: Task<Void, Never>?
+    private var updateTask: Task<Void, Never>?
+    private var deleteTask: Task<Void, Never>?
+    
     // MARK: - Computed Properties for Backward Compatibility
     
     var vendors: [Vendor] {
@@ -41,28 +47,47 @@ class VendorStoreV2: ObservableObject {
     // MARK: - Public Interface
 
     func loadVendors() async {
-        guard loadingState.isIdle || loadingState.hasError else { return }
+        // Cancel any previous load task
+        loadTask?.cancel()
         
-        loadingState = .loading
-        let startTime = Date()
-
-        do {
-            async let vendorsResult = repository.fetchVendors()
-            async let statsResult = repository.fetchVendorStats()
-
-            // Parallel fetch
-            let fetchedVendors = try await vendorsResult
-            vendorStats = try await statsResult
+        // Create new load task
+        loadTask = Task { @MainActor in
+            guard loadingState.isIdle || loadingState.hasError else { return }
             
-            loadingState = .loaded(fetchedVendors)
+            loadingState = .loading
+            let startTime = Date()
 
-            let duration = Date().timeIntervalSince(startTime)
-            AppLogger.repository.debug("Loaded vendors in \(duration)s")
-        } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            AppLogger.repository.error("Failed to load vendors after \(duration)s", error: error)
-            loadingState = .error(VendorError.fetchFailed(underlying: error))
+            do {
+                try Task.checkCancellation()
+                
+                async let vendorsResult = repository.fetchVendors()
+                async let statsResult = repository.fetchVendorStats()
+
+                // Parallel fetch
+                let fetchedVendors = try await vendorsResult
+                let fetchedStats = try await statsResult
+                
+                try Task.checkCancellation()
+                
+                vendorStats = fetchedStats
+                loadingState = .loaded(fetchedVendors)
+
+                let duration = Date().timeIntervalSince(startTime)
+                AppLogger.repository.debug("Loaded vendors in \(duration)s")
+            } catch is CancellationError {
+                AppLogger.ui.debug("VendorStoreV2.loadVendors: Load cancelled (expected during tenant switch)")
+                loadingState = .idle
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("VendorStoreV2.loadVendors: Load cancelled (URLError)")
+                loadingState = .idle
+            } catch {
+                let duration = Date().timeIntervalSince(startTime)
+                AppLogger.repository.error("Failed to load vendors after \(duration)s", error: error)
+                loadingState = .error(VendorError.fetchFailed(underlying: error))
+            }
         }
+        
+        await loadTask?.value
     }
 
     func refreshVendors() async {
@@ -70,37 +95,58 @@ class VendorStoreV2: ObservableObject {
     }
 
     func addVendor(_ vendor: Vendor) async {
-    let startTime = Date()
-    
-    do {
-    let created = try await repository.createVendor(vendor)
-    
-    // Update loaded state with new vendor
-    if case .loaded(var currentVendors) = loadingState {
-    currentVendors.append(created)
-    loadingState = .loaded(currentVendors)
-    }
-    
-    // Refresh stats
-    vendorStats = try await repository.fetchVendorStats()
-    
-    let duration = Date().timeIntervalSince(startTime)
-    AppLogger.repository.info("Added vendor '\(vendor.vendorName)' in \(duration)s")
-    
-    // Show success feedback
-    HapticFeedback.itemAdded()
-    showSuccess("Vendor added successfully")
-    } catch {
-    let duration = Date().timeIntervalSince(startTime)
-    AppLogger.repository.error("Failed to add vendor after \(duration)s", error: error)
-    loadingState = .error(VendorError.createFailed(underlying: error))
-    await handleError(error, operation: "add vendor") { [weak self] in
-    await self?.addVendor(vendor)
-    }
-    }
+        // Add breadcrumb for debugging
+        addOperationBreadcrumb(
+            "addVendor",
+            category: "vendor",
+            data: ["vendorName": vendor.vendorName]
+        )
+        
+        let startTime = Date()
+        
+        do {
+            let created = try await repository.createVendor(vendor)
+            
+            // Update loaded state with new vendor
+            if case .loaded(var currentVendors) = loadingState {
+                currentVendors.append(created)
+                loadingState = .loaded(currentVendors)
+            }
+            
+            // Refresh stats
+            vendorStats = try await repository.fetchVendorStats()
+            
+            let duration = Date().timeIntervalSince(startTime)
+            AppLogger.repository.info("Added vendor '\(vendor.vendorName)' in \(duration)s")
+            
+            // Show success feedback
+            HapticFeedback.itemAdded()
+            showSuccess("Vendor added successfully")
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            AppLogger.repository.error("Failed to add vendor after \(duration)s", error: error)
+            loadingState = .error(VendorError.createFailed(underlying: error))
+            await handleError(
+                error,
+                operation: "add vendor",
+                context: ["vendorName": vendor.vendorName]
+            ) { [weak self] in
+                await self?.addVendor(vendor)
+            }
+        }
     }
 
     func updateVendor(_ vendor: Vendor) async {
+        // Add breadcrumb for debugging
+        addOperationBreadcrumb(
+            "updateVendor",
+            category: "vendor",
+            data: [
+                "vendorId": String(vendor.id),
+                "vendorName": vendor.vendorName
+            ]
+        )
+        
         // Optimistic update
         guard case .loaded(var currentVendors) = loadingState,
               let index = currentVendors.firstIndex(where: { $0.id == vendor.id }) else {
@@ -138,13 +184,30 @@ class VendorStoreV2: ObservableObject {
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to update vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.updateFailed(underlying: error))
-            await handleError(error, operation: "update vendor") { [weak self] in
+            await handleError(
+                error,
+                operation: "update vendor",
+                context: [
+                    "vendorId": String(vendor.id),
+                    "vendorName": vendor.vendorName
+                ]
+            ) { [weak self] in
                 await self?.updateVendor(vendor)
             }
         }
     }
 
     func deleteVendor(_ vendor: Vendor) async {
+        // Add breadcrumb for debugging
+        addOperationBreadcrumb(
+            "deleteVendor",
+            category: "vendor",
+            data: [
+                "vendorId": String(vendor.id),
+                "vendorName": vendor.vendorName
+            ]
+        )
+        
         // Optimistic delete
         guard case .loaded(var currentVendors) = loadingState,
               let index = currentVendors.firstIndex(where: { $0.id == vendor.id }) else {
@@ -174,7 +237,14 @@ class VendorStoreV2: ObservableObject {
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to delete vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.deleteFailed(underlying: error))
-            await handleError(error, operation: "delete vendor") { [weak self] in
+            await handleError(
+                error,
+                operation: "delete vendor",
+                context: [
+                    "vendorId": String(vendor.id),
+                    "vendorName": vendor.vendorName
+                ]
+            ) { [weak self] in
                 await self?.deleteVendor(vendor)
             }
         }
@@ -224,10 +294,11 @@ class VendorStoreV2: ObservableObject {
         }
     }
     
-    private func handleError(_ error: Error, operation: String, retry: @escaping () async -> Void) async {
-        AppLogger.repository.error("Error during \(operation)", error: error)
-        
-        // For now, just log the error
-        // In the future, could implement retry logic or show user-facing error messages
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        loadingState = .idle
+        vendorStats = nil
     }
 }

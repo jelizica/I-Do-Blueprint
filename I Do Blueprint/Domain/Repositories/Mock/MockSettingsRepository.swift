@@ -27,6 +27,7 @@ class MockSettingsRepository: SettingsRepositoryProtocol {
     var createVendorCategoryCalled = false
     var updateVendorCategoryCalled = false
     var deleteVendorCategoryCalled = false
+    var deleteAccountCalled = false
 
     // Delay simulation
     var delay: TimeInterval = 0
@@ -223,6 +224,17 @@ class MockSettingsRepository: SettingsRepositoryProtocol {
             customVendorCategories = []
         }
     }
+    
+    // MARK: - Account Deletion
+    
+    func deleteAccount() async throws {
+        deleteAccountCalled = true
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        // Mock: Reset all data to simulate account deletion
+        coupleSettings = .default
+        customVendorCategories = []
+    }
 
     // MARK: - Testing Utilities
 
@@ -237,6 +249,7 @@ class MockSettingsRepository: SettingsRepositoryProtocol {
         createVendorCategoryCalled = false
         updateVendorCategoryCalled = false
         deleteVendorCategoryCalled = false
+        deleteAccountCalled = false
     }
 
     /// Reset all data to defaults

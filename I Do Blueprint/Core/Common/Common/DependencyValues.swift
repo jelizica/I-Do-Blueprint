@@ -15,6 +15,7 @@ private enum LiveRepositories {
     static let visualPlanning: any VisualPlanningRepositoryProtocol = LiveVisualPlanningRepository()
     static let settings: any SettingsRepositoryProtocol = LiveSettingsRepository()
     static let notes: any NotesRepositoryProtocol = LiveNotesRepository()
+    static let onboarding: any OnboardingRepositoryProtocol = LiveOnboardingRepository()
 }
 
 // MARK: - Dependency Keys
@@ -80,6 +81,13 @@ private enum NotesRepositoryKey: DependencyKey {
     static let liveValue: any NotesRepositoryProtocol = LiveRepositories.notes
     static let testValue: any NotesRepositoryProtocol = MockNotesRepository()
     static let previewValue: any NotesRepositoryProtocol = MockNotesRepository()
+}
+
+/// Dependency key for OnboardingRepository
+private enum OnboardingRepositoryKey: DependencyKey {
+    static let liveValue: any OnboardingRepositoryProtocol = LiveRepositories.onboarding
+    static let testValue: any OnboardingRepositoryProtocol = MockOnboardingRepository()
+    static let previewValue: any OnboardingRepositoryProtocol = MockOnboardingRepository()
 }
 
 /// Dependency key for AlertPresenter
@@ -176,6 +184,15 @@ extension DependencyValues {
     var notesRepository: any NotesRepositoryProtocol {
         get { self[NotesRepositoryKey.self] }
         set { self[NotesRepositoryKey.self] = newValue }
+    }
+
+    /// Access the onboarding repository dependency
+    /// - In production: Returns LiveOnboardingRepository with Supabase
+    /// - In tests: Returns MockOnboardingRepository with in-memory storage
+    /// - In previews: Returns MockOnboardingRepository with sample data
+    var onboardingRepository: any OnboardingRepositoryProtocol {
+        get { self[OnboardingRepositoryKey.self] }
+        set { self[OnboardingRepositoryKey.self] = newValue }
     }
 
     /// Access the alert presenter dependency

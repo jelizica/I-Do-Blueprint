@@ -43,6 +43,9 @@ class DocumentStoreV2: ObservableObject {
     @Dependency(\.vendorRepository) var vendorRepository
     @Dependency(\.budgetRepository) var budgetRepository
     
+    // Task tracking for cancellation handling
+    private var loadTask: Task<Void, Never>?
+    
     // MARK: - Computed Properties for Backward Compatibility
     
     var documents: [Document] {
@@ -84,16 +87,35 @@ class DocumentStoreV2: ObservableObject {
     // MARK: - Public Interface
 
     func loadDocuments() async {
-        guard loadingState.isIdle || loadingState.hasError else { return }
+        // Cancel any previous load task
+        loadTask?.cancel()
         
-        loadingState = .loading
+        // Create new load task
+        loadTask = Task { @MainActor in
+            guard loadingState.isIdle || loadingState.hasError else { return }
+            
+            loadingState = .loading
 
-        do {
-            let fetchedDocuments = try await repository.fetchDocuments()
-            loadingState = .loaded(fetchedDocuments)
-        } catch {
-            loadingState = .error(DocumentError.fetchFailed(underlying: error))
+            do {
+                try Task.checkCancellation()
+                
+                let fetchedDocuments = try await repository.fetchDocuments()
+                
+                try Task.checkCancellation()
+                
+                loadingState = .loaded(fetchedDocuments)
+            } catch is CancellationError {
+                AppLogger.ui.debug("DocumentStoreV2.loadDocuments: Load cancelled (expected during tenant switch)")
+                loadingState = .idle
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("DocumentStoreV2.loadDocuments: Load cancelled (URLError)")
+                loadingState = .idle
+            } catch {
+                loadingState = .error(DocumentError.fetchFailed(underlying: error))
+            }
         }
+        
+        await loadTask?.value
     }
 
     func loadDocuments(type: DocumentType) async {
@@ -770,5 +792,12 @@ class DocumentStoreV2: ObservableObject {
     func deleteDocument(_ id: UUID) async {
         guard let document = documents.first(where: { $0.id == id }) else { return }
         await deleteDocument(document)
+    }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        loadingState = .idle
     }
 }

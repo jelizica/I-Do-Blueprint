@@ -12,6 +12,7 @@ struct VendorListToolbar: ToolbarContent {
     let exportableCount: Int
     let isExporting: Bool
     let onExport: (VendorExportFormat) async -> Void
+    let onImport: () -> Void
     let onAdd: () -> Void
 
     var body: some ToolbarContent {
@@ -63,6 +64,20 @@ struct VendorListToolbar: ToolbarContent {
                         .frame(width: 20, height: 20)
                         .accessibilityLabel("Exporting vendors")
                 }
+                
+                // Import button
+                Button {
+                    onImport()
+                } label: {
+                    HStack {
+                        Image(systemName: "square.and.arrow.down")
+                        Text("Import")
+                    }
+                }
+                .buttonStyle(.bordered)
+                .help("Import vendors from CSV file")
+                .accessibilityLabel("Import Vendors")
+                .accessibilityHint("Opens CSV import dialog")
             }
         }
 

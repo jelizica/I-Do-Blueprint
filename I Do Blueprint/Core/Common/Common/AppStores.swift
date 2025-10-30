@@ -26,6 +26,8 @@ final class AppStores: ObservableObject {
     private var _notes: NotesStoreV2?
     private var _visualPlanning: VisualPlanningStoreV2?
     private var _settings: SettingsStoreV2?
+    private var _onboarding: OnboardingStoreV2?
+    private var _collaboration: CollaborationStoreV2?
     
     private let logger = AppLogger.general
     
@@ -102,6 +104,22 @@ final class AppStores: ObservableObject {
         return _settings!
     }
     
+    var onboarding: OnboardingStoreV2 {
+        if _onboarding == nil {
+            logger.debug("Creating OnboardingStoreV2")
+            _onboarding = OnboardingStoreV2()
+        }
+        return _onboarding!
+    }
+    
+    var collaboration: CollaborationStoreV2 {
+        if _collaboration == nil {
+            logger.debug("Creating CollaborationStoreV2")
+            _collaboration = CollaborationStoreV2()
+        }
+        return _collaboration!
+    }
+    
     private init() {
         logger.info("🏪 AppStores singleton initialized")
         
@@ -130,6 +148,49 @@ final class AppStores: ObservableObject {
     
     // MARK: - Memory Management
     
+    /// Reset all store loaded states (for logout/tenant switch)
+    func resetAllStores() {
+        logger.info("Resetting all store loaded states for logout/tenant switch")
+        
+        // Reset loaded states for all stores
+        if let settings = _settings {
+            settings.resetLoadedState()
+        }
+        if let budget = _budget {
+            budget.resetLoadedState()
+        }
+        if let guest = _guest {
+            guest.resetLoadedState()
+        }
+        if let vendor = _vendor {
+            vendor.resetLoadedState()
+        }
+        if let document = _document {
+            document.resetLoadedState()
+        }
+        if let task = _task {
+            task.resetLoadedState()
+        }
+        if let timeline = _timeline {
+            timeline.resetLoadedState()
+        }
+        if let notes = _notes {
+            notes.resetLoadedState()
+        }
+        if let visualPlanning = _visualPlanning {
+            visualPlanning.resetLoadedState()
+        }
+        if let onboarding = _onboarding {
+            onboarding.resetForNewTenant()
+        }
+        if let collaboration = _collaboration {
+            // Reset collaboration store state
+            collaboration.loadingState = .idle
+        }
+        
+        logger.info("All stores reset for logout/tenant switch")
+    }
+    
     /// Clear all store data and release stores (for logout)
     func clearAll() async {
         logger.info("Clearing all store data and releasing stores")
@@ -146,6 +207,7 @@ final class AppStores: ObservableObject {
         _timeline = nil
         _notes = nil
         _visualPlanning = nil
+        _collaboration = nil
         // Keep settings store as it's needed for app configuration
         
         logger.info("All stores cleared (settings retained)")
@@ -163,6 +225,8 @@ final class AppStores: ObservableObject {
         if _notes != nil { loaded.append("Notes") }
         if _visualPlanning != nil { loaded.append("VisualPlanning") }
         if _settings != nil { loaded.append("Settings") }
+        if _onboarding != nil { loaded.append("Onboarding") }
+        if _collaboration != nil { loaded.append("Collaboration") }
         return loaded
     }
     
@@ -271,5 +335,13 @@ extension EnvironmentValues {
     
     var visualPlanningStore: VisualPlanningStoreV2 {
         appStores.visualPlanning
+    }
+    
+    var onboardingStore: OnboardingStoreV2 {
+        appStores.onboarding
+    }
+    
+    var collaborationStore: CollaborationStoreV2 {
+        appStores.collaboration
     }
 }

@@ -102,8 +102,42 @@ struct GlobalSettingsView: View {
                 }
 
                 SettingsRow(label: "Wedding Date") {
-                    TextField("YYYY-MM-DD", text: $viewModel.localSettings.global.weddingDate)
-                        .frame(maxWidth: 200)
+                    HStack(spacing: 12) {
+                        if viewModel.localSettings.global.isWeddingDateTBD {
+                            Text("TBD (To Be Determined)")
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else {
+                            DatePicker(
+                                "Wedding Date",
+                                selection: Binding(
+                                    get: {
+                                        // Parse weddingDate string (YYYY-MM-DD) to Date
+                                        let dateString = viewModel.localSettings.global.weddingDate
+                                        if dateString.isEmpty {
+                                            return Date()
+                                        }
+                                        let formatter = DateFormatter()
+                                        formatter.dateFormat = "yyyy-MM-dd"
+                                        return formatter.date(from: dateString) ?? Date()
+                                    },
+                                    set: { newDate in
+                                        // Format Date to string (YYYY-MM-DD)
+                                        let formatter = DateFormatter()
+                                        formatter.dateFormat = "yyyy-MM-dd"
+                                        viewModel.localSettings.global.weddingDate = formatter.string(from: newDate)
+                                    }
+                                ),
+                                displayedComponents: .date
+                            )
+                            .labelsHidden()
+                            .frame(maxWidth: 200)
+                        }
+                        
+                        Toggle("TBD", isOn: $viewModel.localSettings.global.isWeddingDateTBD)
+                            .toggleStyle(.checkbox)
+                            .help("Check if wedding date is to be determined")
+                    }
                 }
 
                 SettingsRow(label: "Timezone") {

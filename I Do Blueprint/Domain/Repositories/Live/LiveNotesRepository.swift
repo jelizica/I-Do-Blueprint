@@ -13,6 +13,7 @@ import Supabase
 class LiveNotesRepository: NotesRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
+    private let sessionManager = SessionManager.shared
 
     init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
@@ -29,11 +30,18 @@ class LiveNotesRepository: NotesRepositoryProtocol {
         }
         return supabase
     }
+    
+    private func getTenantId() async throws -> UUID {
+        try await MainActor.run {
+            try sessionManager.requireTenantId()
+        }
+    }
 
     // MARK: - Fetch Operations
 
     func fetchNotes() async throws -> [Note] {
         let client = try getClient()
+        let tenantId = try await getTenantId()
         let startTime = Date()
 
         do {
@@ -41,6 +49,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
                 try await client
                     .from("notes")
                     .select()
+                    .eq("couple_id", value: tenantId)  // Explicit filter by couple_id
                     .order("updated_at", ascending: false)
                     .execute()
                     .value
@@ -94,33 +103,33 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     // MARK: - Create, Update, Delete
 
     func createNote(_ data: NoteInsertData) async throws -> Note {
-        let client = try getClient()
-        let startTime = Date()
-
-        struct NoteInsert: Encodable {
-            let coupleId: String
-            let title: String?
-            let content: String
-            let relatedType: String?
-            let relatedId: String?
-
-            enum CodingKeys: String, CodingKey {
-                case coupleId = "couple_id"
-                case title
-                case content
-                case relatedType = "related_type"
-                case relatedId = "related_id"
-            }
-        }
-
-        let insertData = NoteInsert(
-            coupleId: data.coupleId.uuidString,
-            title: data.title,
-            content: data.content,
-            relatedType: data.relatedType?.rawValue,
-            relatedId: data.relatedId)
-
         do {
+            let client = try getClient()
+            let startTime = Date()
+
+            struct NoteInsert: Encodable {
+                let coupleId: String
+                let title: String?
+                let content: String
+                let relatedType: String?
+                let relatedId: String?
+
+                enum CodingKeys: String, CodingKey {
+                    case coupleId = "couple_id"
+                    case title
+                    case content
+                    case relatedType = "related_type"
+                    case relatedId = "related_id"
+                }
+            }
+
+            let insertData = NoteInsert(
+                coupleId: data.coupleId.uuidString,
+                title: data.title,
+                content: data.content,
+                relatedType: data.relatedType?.rawValue,
+                relatedId: data.relatedId)
+
             let note: Note = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("notes")
@@ -132,55 +141,80 @@ class LiveNotesRepository: NotesRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Created note in \(String(format: "%.2f", duration))s")
+            logger.info("Created note: \(data.title ?? "Untitled")")
 
             return note
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            logger.error("Note creation failed after \(String(format: "%.2f", duration))s", error: error)
-            throw error
+            logger.error("Failed to create note", error: error)
+            throw NotesError.createFailed(underlying: error)
         }
     }
 
     func updateNote(id: UUID, data: NoteInsertData) async throws -> Note {
-        let client = try getClient()
-        struct NoteUpdate: Encodable {
-            let title: String?
-            let content: String
-            let relatedType: String?
-            let relatedId: String?
+        do {
+            let client = try getClient()
+            let startTime = Date()
+            
+            struct NoteUpdate: Encodable {
+                let title: String?
+                let content: String
+                let relatedType: String?
+                let relatedId: String?
 
-            enum CodingKeys: String, CodingKey {
-                case title
-                case content
-                case relatedType = "related_type"
-                case relatedId = "related_id"
+                enum CodingKeys: String, CodingKey {
+                    case title
+                    case content
+                    case relatedType = "related_type"
+                    case relatedId = "related_id"
+                }
             }
+
+            let updateData = NoteUpdate(
+                title: data.title,
+                content: data.content,
+                relatedType: data.relatedType?.rawValue,
+                relatedId: data.relatedId)
+
+            let note: Note = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("notes")
+                    .update(updateData)
+                    .eq("id", value: id.uuidString)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Updated note: \(data.title ?? "Untitled")")
+            
+            return note
+        } catch {
+            logger.error("Failed to update note", error: error)
+            throw NotesError.updateFailed(underlying: error)
         }
-
-        let updateData = NoteUpdate(
-            title: data.title,
-            content: data.content,
-            relatedType: data.relatedType?.rawValue,
-            relatedId: data.relatedId)
-
-        return try await client
-            .from("notes")
-            .update(updateData)
-            .eq("id", value: id.uuidString)
-            .select()
-            .single()
-            .execute()
-            .value
     }
 
     func deleteNote(id: UUID) async throws {
-        let client = try getClient()
-        try await client
-            .from("notes")
-            .delete()
-            .eq("id", value: id.uuidString)
-            .execute()
+        do {
+            let client = try getClient()
+            let startTime = Date()
+            
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("notes")
+                    .delete()
+                    .eq("id", value: id.uuidString)
+                    .execute()
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Deleted note: \(id)")
+        } catch {
+            logger.error("Failed to delete note", error: error)
+            throw NotesError.deleteFailed(underlying: error)
+        }
     }
 
     // MARK: - Search

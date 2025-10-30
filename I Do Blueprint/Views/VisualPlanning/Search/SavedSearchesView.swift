@@ -223,14 +223,19 @@ struct SavedSearchesView: View {
                 return lhs.createdAt > rhs.createdAt
             case .lastUsed:
                 // Sort by last used, with never-used searches at the end
-                if lhs.lastUsed == nil && rhs.lastUsed == nil {
+                switch (lhs.lastUsed, rhs.lastUsed) {
+                case (nil, nil):
+                    // Both never used - sort by creation date
                     return lhs.createdAt > rhs.createdAt
-                } else if lhs.lastUsed == nil {
+                case (nil, _):
+                    // lhs never used - put it after rhs
                     return false
-                } else if rhs.lastUsed == nil {
+                case (_, nil):
+                    // rhs never used - put lhs before it
                     return true
-                } else {
-                    return lhs.lastUsed! > rhs.lastUsed!
+                case let (lhsDate?, rhsDate?):
+                    // Both have been used - sort by most recent
+                    return lhsDate > rhsDate
                 }
             }
         }

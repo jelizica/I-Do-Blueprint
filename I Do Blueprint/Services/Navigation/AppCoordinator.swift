@@ -12,6 +12,10 @@ import AppKit
 
 @MainActor
 class AppCoordinator: ObservableObject {
+    // MARK: - Singleton
+
+    static let shared = AppCoordinator()
+
     // MARK: - Navigation State
 
     @Published var selectedTab: AppTab = .dashboard
@@ -21,7 +25,7 @@ class AppCoordinator: ObservableObject {
     // MARK: - Shared Store Instances (from AppStores singleton)
 
     let appStores: AppStores
-    
+
     var vendorStore: VendorStoreV2 { appStores.vendor }
     var guestStore: GuestStoreV2 { appStores.guest }
     var taskStore: TaskStoreV2 { appStores.task }
@@ -29,7 +33,7 @@ class AppCoordinator: ObservableObject {
 
     // MARK: - Initialization
 
-    init(appStores: AppStores = .shared) {
+    private init(appStores: AppStores = .shared) {
         self.appStores = appStores
     }
 
@@ -42,6 +46,7 @@ class AppCoordinator: ObservableObject {
         case budget
         case visualPlanning
         case timeline
+        case collaboration
         case notes
         case documents
         case settings
@@ -54,6 +59,7 @@ class AppCoordinator: ObservableObject {
             case .budget: return "Budget"
             case .visualPlanning: return "Visual Planning"
             case .timeline: return "Timeline"
+            case .collaboration: return "Collaboration"
             case .notes: return "Notes"
             case .documents: return "Documents"
             case .settings: return "Settings"
@@ -68,6 +74,7 @@ class AppCoordinator: ObservableObject {
             case .budget: return "dollarsign.circle.fill"
             case .visualPlanning: return "paintpalette.fill"
             case .timeline: return "calendar"
+            case .collaboration: return "person.2.fill"
             case .notes: return "note.text"
             case .documents: return "doc.fill"
             case .settings: return "gearshape.fill"
@@ -78,17 +85,19 @@ class AppCoordinator: ObservableObject {
         var view: some View {
             switch self {
             case .dashboard:
-                DashboardViewV2()
+                DashboardViewV4()
             case .guests:
-                GuestListViewV2()
+                GuestManagementViewV4()
             case .vendors:
-                VendorListViewV2()
+                VendorManagementViewV3()
             case .budget:
                 BudgetMainView()
             case .visualPlanning:
                 VisualPlanningMainView()
             case .timeline:
                 TimelineViewV2()
+            case .collaboration:
+                CollaborationMainView()
             case .notes:
                 NotesView()
             case .documents:
@@ -109,6 +118,7 @@ class AppCoordinator: ObservableObject {
         case addTask
         case editTask(WeddingTask)
         case addNote
+        case acceptInvitation(String)  // Token parameter
 
         var id: String {
             switch self {
@@ -119,6 +129,7 @@ class AppCoordinator: ObservableObject {
             case .addTask: return "addTask"
             case .editTask(let task): return "editTask-\(task.id)"
             case .addNote: return "addNote"
+            case .acceptInvitation(let token): return "acceptInvitation-\(token)"
             }
         }
 
@@ -132,13 +143,15 @@ class AppCoordinator: ObservableObject {
             case .addGuest:
                 AddGuestView { _ in }
             case .editGuest(let guest):
-                EditGuestSheetV2(guest: guest, guestStore: coordinator.guestStore, onSave: { _ in })
+                GuestDetailViewV4(guestId: guest.id, guestStore: coordinator.guestStore)
             case .addTask:
                 TaskModal(task: nil, onSave: { _ in }, onCancel: {})
             case .editTask(let task):
                 TaskModal(task: task, onSave: { _ in }, onCancel: {})
             case .addNote:
                 NoteModal(note: nil, onSave: { _ in }, onCancel: {})
+            case .acceptInvitation(let token):
+                AcceptInvitationView(token: token, coordinator: coordinator)
             }
         }
     }
@@ -227,5 +240,22 @@ class AppCoordinator: ObservableObject {
             style: .informational,
             buttons: ["OK"]
         )
+    }
+
+    // MARK: - Deep Link Handling
+
+    /// Handle collaboration invitation deep links
+    /// - Parameter token: The invitation token from the deep link
+    func handleInvitationDeepLink(token: String) {
+        let logger = AppLogger.auth
+        logger.info("Handling invitation deep link with token")
+
+        // Navigate to collaboration tab
+        selectedTab = .collaboration
+
+        // Present invitation acceptance sheet
+        present(.acceptInvitation(token))
+
+        logger.debug("Presented AcceptInvitationView for token")
     }
 }

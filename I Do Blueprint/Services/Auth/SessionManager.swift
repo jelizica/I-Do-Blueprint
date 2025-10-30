@@ -57,6 +57,15 @@ class SessionManager: ObservableObject {
     static let shared = SessionManager()
 
     @Published private(set) var currentTenantId: UUID?
+    
+    // MARK: - Tenant Switching State (Phase 3.1)
+    @Published private(set) var isSwitchingTenant = false
+    @Published private(set) var switchingToCoupleName: String?
+    
+    // MARK: - Recently Viewed Couples (Phase 3.2)
+    @Published private(set) var recentCouples: [RecentCouple] = []
+    private let maxRecentCouples = 5
+    private let recentCouplesKey = "recentCouples"
 
     private let keychainService = "com.jelizica.weddingplanning.session"
     private let tenantIdAccount = "tenant-id"
@@ -64,29 +73,78 @@ class SessionManager: ObservableObject {
     private let logger = AppLogger.auth
 
     private init() {
-        loadSession()
+        // IMPORTANT: Do NOT access Keychain during init() to avoid sandbox crashes
+        // Defer session loading until first access via lazy initialization
+        Task { @MainActor in
+            loadSession()
+            loadRecentCouples()
+        }
     }
 
     // MARK: - Session Management
 
-    func setTenantId(_ tenantId: UUID) {
-        let tenantChanged = currentTenantId != tenantId
+    /// Sets the tenant ID with optional couple name for visual feedback
+    /// - Parameters:
+    ///   - tenantId: The UUID of the couple/tenant to switch to
+    ///   - coupleName: Optional couple name for loading overlay (Phase 3.1) and recent tracking (Phase 3.2)
+    ///   - weddingDate: Optional wedding date for recent tracking (Phase 3.2)
+    func setTenantId(_ tenantId: UUID, coupleName: String? = nil, weddingDate: Date? = nil) async {
+        let previousTenantId = currentTenantId
+        let tenantChanged = previousTenantId != nil && previousTenantId != tenantId
+        
+        // Set switching state for visual feedback (Phase 3.1)
+        if let coupleName = coupleName {
+            isSwitchingTenant = true
+            switchingToCoupleName = coupleName
+            logger.debug("Starting tenant switch to: \(coupleName)")
+        }
+        
         currentTenantId = tenantId
         saveTenantIdToKeychain(tenantId)
 
-        // Clear repository caches when tenant changes
+        // Clear repository caches and reset ALL stores when tenant changes
         if tenantChanged {
-            Task {
-                do {
-                    await RepositoryCache.shared.clearAll()
-                    logger.info("Cleared repository caches on tenant change")
-                } catch {
-                    logger.warning("Failed to clear repository caches on tenant change: \(error.localizedDescription)")
-                }
+            logger.info("Tenant changed from \(previousTenantId!.uuidString) to \(tenantId.uuidString)")
+            
+            // Clear repository caches
+            await RepositoryCache.shared.clearAll()
+            logger.info("Cleared repository caches on tenant change")
+            
+            // Reset ALL stores so they reload data for the new tenant
+            AppStores.shared.resetAllStores()
+            logger.info("Reset all store loaded states for new tenant")
+            
+            // Post notification for any observers
+            await MainActor.run {
+                NotificationCenter.default.post(
+                    name: .tenantDidChange,
+                    object: nil,
+                    userInfo: [
+                        "previousId": previousTenantId!.uuidString,
+                        "newId": tenantId.uuidString
+                    ]
+                )
             }
+            logger.info("Posted tenant change notification")
+        } else if previousTenantId == nil {
+            logger.info("Initial tenant selection: \(tenantId.uuidString)")
         }
 
         logger.info("Session tenant ID set: \(tenantId.uuidString)")
+        
+        // Update recent couples list (Phase 3.2)
+        if let coupleName = coupleName {
+            updateRecentCouples(id: tenantId, name: coupleName, weddingDate: weddingDate)
+        }
+        
+        // Clear switching state (Phase 3.1)
+        if coupleName != nil {
+            // Small delay to ensure UI updates are visible
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            isSwitchingTenant = false
+            switchingToCoupleName = nil
+            logger.debug("Tenant switch complete")
+        }
     }
 
     func getTenantId() -> UUID? {
@@ -208,5 +266,71 @@ class SessionManager: ObservableObject {
         } else if status == errSecSuccess {
             logger.debug("Keychain item deleted for account: \(account)")
         }
+    }
+    
+    // MARK: - Recently Viewed Couples (Phase 3.2)
+    
+    /// Updates the recent couples list with a newly accessed couple
+    /// - Parameters:
+    ///   - id: The couple's UUID
+    ///   - name: The couple's display name
+    ///   - weddingDate: Optional wedding date
+    func updateRecentCouples(id: UUID, name: String, weddingDate: Date?) {
+        // Remove if already exists (to update position)
+        recentCouples.removeAll { $0.id == id }
+        
+        // Add to front of list
+        let recent = RecentCouple(
+            id: id,
+            displayName: name,
+            weddingDate: weddingDate,
+            lastAccessedAt: Date()
+        )
+        recentCouples.insert(recent, at: 0)
+        
+        // Keep only last N couples
+        if recentCouples.count > maxRecentCouples {
+            recentCouples = Array(recentCouples.prefix(maxRecentCouples))
+        }
+        
+        // Persist to UserDefaults
+        saveRecentCouples()
+        
+        logger.debug("Updated recent couples: \(name) added to top of list (\(recentCouples.count) total)")
+    }
+    
+    /// Loads recent couples from UserDefaults
+    private func loadRecentCouples() {
+        guard let data = UserDefaults.standard.data(forKey: recentCouplesKey) else {
+            logger.debug("No recent couples found in UserDefaults")
+            return
+        }
+        
+        do {
+            let decoded = try JSONDecoder().decode([RecentCouple].self, from: data)
+            recentCouples = decoded
+            logger.info("Loaded \(recentCouples.count) recent couples from UserDefaults")
+        } catch {
+            logger.error("Failed to decode recent couples: \(error.localizedDescription)")
+            recentCouples = []
+        }
+    }
+    
+    /// Saves recent couples to UserDefaults
+    private func saveRecentCouples() {
+        do {
+            let encoded = try JSONEncoder().encode(recentCouples)
+            UserDefaults.standard.set(encoded, forKey: recentCouplesKey)
+            logger.debug("Saved \(recentCouples.count) recent couples to UserDefaults")
+        } catch {
+            logger.error("Failed to encode recent couples: \(error.localizedDescription)")
+        }
+    }
+    
+    /// Clears all recent couples
+    func clearRecentCouples() {
+        recentCouples = []
+        UserDefaults.standard.removeObject(forKey: recentCouplesKey)
+        logger.info("Cleared all recent couples")
     }
 }

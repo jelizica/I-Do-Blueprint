@@ -26,6 +26,18 @@ extension BudgetStoreV2 {
     
     /// Load budget development items with spent amounts for a scenario
     func loadBudgetDevelopmentItemsWithSpentAmounts(scenarioId: String) async -> [BudgetOverviewItem] {
+        // Validate scenario ID is not empty
+        guard !scenarioId.isEmpty else {
+            logger.warning("Cannot load budget overview items: scenario ID is empty")
+            return []
+        }
+        
+        // Validate scenario ID is a valid UUID
+        guard UUID(uuidString: scenarioId) != nil else {
+            logger.warning("Cannot load budget overview items: invalid scenario ID format: \(scenarioId)")
+            return []
+        }
+        
         do {
             let items = try await repository.fetchBudgetDevelopmentItemsWithSpentAmounts(scenarioId: scenarioId)
             return items

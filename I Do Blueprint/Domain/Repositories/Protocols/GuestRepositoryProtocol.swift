@@ -124,4 +124,20 @@ protocol GuestRepositoryProtocol: Sendable {
     /// - Returns: Array of matching guests
     /// - Throws: Repository errors if search fails
     func searchGuests(query: String) async throws -> [Guest]
+    
+    // MARK: - Batch Import Operations
+    
+    /// Imports multiple guests in a single batch operation
+    ///
+    /// Performs a batch insert of guest records with proper error handling.
+    /// The `couple_id` is automatically populated from the current session.
+    /// Server will assign IDs and timestamps for each guest.
+    ///
+    /// This method is optimized for importing large numbers of guests (e.g., from CSV).
+    /// It uses a single database transaction for better performance.
+    ///
+    /// - Parameter guests: Array of guests to import
+    /// - Returns: Array of created guests with server-assigned IDs and timestamps
+    /// - Throws: Repository errors if import fails, validation errors, or duplicate emails
+    func importGuests(_ guests: [Guest]) async throws -> [Guest]
 }

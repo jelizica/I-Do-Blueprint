@@ -13,7 +13,8 @@ struct APIKeysSettingsView: View {
     @State private var unsplashKey = ""
     @State private var pinterestKey = ""
     @State private var vendorKey = ""
-    
+    @State private var resendKey = ""
+
     @State private var validationError: String?
     @State private var isValidating = false
     @State private var validatingType: SecureAPIKeyManager.APIKeyType?
@@ -39,6 +40,21 @@ struct APIKeysSettingsView: View {
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
+
+                    HStack(spacing: Spacing.xs) {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundColor(AppColors.primary)
+                            .font(.caption)
+                        Text("Note: Email invitations work out-of-the-box using a shared service. Only add a Resend API key if you need custom email domain support.")
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textSecondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.top, Spacing.xs)
+                    .padding(.horizontal, Spacing.xs)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.primary.opacity(0.05))
+                    .cornerRadius(CornerRadius.sm)
                 }
                 .padding(.vertical, Spacing.xs)
             }
@@ -66,6 +82,14 @@ struct APIKeysSettingsView: View {
                 isConfigured: apiKeyManager.hasVendorKey,
                 keyBinding: $vendorKey,
                 description: "Connect with vendor marketplaces and services"
+            )
+
+            // Resend Email API Key (Optional)
+            apiKeySection(
+                type: .resend,
+                isConfigured: apiKeyManager.hasResendKey,
+                keyBinding: $resendKey,
+                description: "Optional: The app uses a shared email service for invitations. Add your own Resend API key only if you want to use your custom email domain."
             )
         }
         .formStyle(.grouped)
@@ -266,8 +290,10 @@ struct APIKeysSettingsView: View {
                     pinterestKey = ""
                 case .vendor:
                     vendorKey = ""
+                case .resend:
+                    resendKey = ""
                 }
-                
+
                 successMessage = "\(type.displayName) API key saved successfully!"
                 showSuccessAlert = true
             }

@@ -26,6 +26,12 @@ class TaskStoreV2: ObservableObject {
 
     @Dependency(\.taskRepository) var repository
     
+    // Task tracking for cancellation handling
+    private var loadTask: Task<Void, Never>?
+    private var createTask: Task<Void, Never>?
+    private var updateTask: Task<Void, Never>?
+    private var deleteTask: Task<Void, Never>?
+    
     // MARK: - Computed Properties for Backward Compatibility
     
     var tasks: [WeddingTask] {
@@ -46,21 +52,40 @@ class TaskStoreV2: ObservableObject {
     // MARK: - Task Operations
 
     func loadTasks() async {
-        guard loadingState.isIdle || loadingState.hasError else { return }
+        // Cancel any previous load task
+        loadTask?.cancel()
         
-        loadingState = .loading
-
-        do {
-            async let tasksResult = repository.fetchTasks()
-            async let statsResult = repository.fetchTaskStats()
-
-            let fetchedTasks = try await tasksResult
-            taskStats = try await statsResult
+        // Create new load task
+        loadTask = Task { @MainActor in
+            guard loadingState.isIdle || loadingState.hasError else { return }
             
-            loadingState = .loaded(fetchedTasks)
-        } catch {
-            loadingState = .error(TaskError.fetchFailed(underlying: error))
+            loadingState = .loading
+
+            do {
+                try Task.checkCancellation()
+                
+                async let tasksResult = repository.fetchTasks()
+                async let statsResult = repository.fetchTaskStats()
+
+                let fetchedTasks = try await tasksResult
+                let fetchedStats = try await statsResult
+                
+                try Task.checkCancellation()
+                
+                taskStats = fetchedStats
+                loadingState = .loaded(fetchedTasks)
+            } catch is CancellationError {
+                AppLogger.ui.debug("TaskStoreV2.loadTasks: Load cancelled (expected during tenant switch)")
+                loadingState = .idle
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("TaskStoreV2.loadTasks: Load cancelled (URLError)")
+                loadingState = .idle
+            } catch {
+                loadingState = .error(TaskError.fetchFailed(underlying: error))
+            }
         }
+        
+        await loadTask?.value
     }
 
     func refreshTasks() async {
@@ -323,6 +348,14 @@ class TaskStoreV2: ObservableObject {
 
     var stats: TaskStats {
         taskStats ?? TaskStats(total: 0, notStarted: 0, inProgress: 0, completed: 0, overdue: 0)
+    }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        loadingState = .idle
+        taskStats = nil
     }
 }
 

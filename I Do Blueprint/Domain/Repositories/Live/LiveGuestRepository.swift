@@ -42,26 +42,26 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
     }
 
     func fetchGuests() async throws -> [Guest] {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let cacheKey = "guests_\(tenantId.uuidString)"
-        let startTime = Date()
-
-        // ✅ Check cache first
-        if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-            logger.info("Cache hit: guests (\(cached.count) items)")
-            return cached
-        }
-
-        logger.info("Cache miss: fetching guests from database")
-
-        // Fetch from Supabase with retry and timeout - scoped by tenant
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let cacheKey = "guests_\(tenantId.uuidString)"
+            let startTime = Date()
+
+            // ✅ Check cache first
+            if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+                logger.info("Cache hit: guests (\(cached.count) items)")
+                return cached
+            }
+
+            logger.info("Cache miss: fetching guests from database")
+
+            // Fetch from Supabase with retry and timeout - scoped by tenant
             let guests: [Guest] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("guest_list")
                     .select()
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .order("created_at", ascending: false)
                     .execute()
                     .value
@@ -80,14 +80,8 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
 
             return guests
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("fetchGuests", duration: duration)
-            
-            logger.error("Failed to fetch guests after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "fetchGuests", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to fetch guests", error: error)
+            throw GuestError.fetchFailed(underlying: error)
         }
     }
     
@@ -156,11 +150,11 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
     }
 
     func createGuest(_ guest: Guest) async throws -> Guest {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+
             let created: Guest = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("guest_list")
@@ -185,31 +179,25 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
 
             return created
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("createGuest", duration: duration)
-            
-            logger.error("Failed to create guest after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "createGuest", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to create guest", error: error)
+            throw GuestError.createFailed(underlying: error)
         }
     }
 
     func updateGuest(_ guest: Guest) async throws -> Guest {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        var updated = guest
-        updated.updatedAt = Date()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            var updated = guest
+            updated.updatedAt = Date()
+            let startTime = Date()
+
             let result: Guest = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("guest_list")
                     .update(updated)
                     .eq("id", value: guest.id)
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .select()
                     .single()
                     .execute()
@@ -230,29 +218,23 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
 
             return result
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("updateGuest", duration: duration)
-            
-            logger.error("Failed to update guest after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "updateGuest", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to update guest", error: error)
+            throw GuestError.updateFailed(underlying: error)
         }
     }
 
     func deleteGuest(id: UUID) async throws {
-        let client = try getClient()
-        let tenantId = try await getTenantId()
-        let startTime = Date()
-
         do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+
             try await RepositoryNetwork.withRetry {
                 try await client
                     .from("guest_list")
                     .delete()
                     .eq("id", value: id)
-                    .eq("couple_id", value: tenantId.uuidString)
+                    .eq("couple_id", value: tenantId)
                     .execute()
             }
 
@@ -268,14 +250,8 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             logger.info("Deleted guest in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "deleteGuest", outcome: .success, duration: duration)
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("deleteGuest", duration: duration)
-            
-            logger.error("Failed to delete guest after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "deleteGuest", outcome: .failure(code: nil), duration: duration)
-            throw error
+            logger.error("Failed to delete guest", error: error)
+            throw GuestError.deleteFailed(underlying: error)
         }
     }
 
@@ -292,6 +268,96 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             guest.fullName.localizedCaseInsensitiveContains(query) ||
                 guest.email?.localizedCaseInsensitiveContains(query) == true ||
                 guest.phone?.contains(query) == true
+        }
+    }
+    
+    func importGuests(_ guests: [Guest]) async throws -> [Guest] {
+        guard !guests.isEmpty else {
+            logger.info("No guests to import")
+            return []
+        }
+        
+        do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
+            logger.info("Importing \(guests.count) guests...")
+            
+            // Ensure all guests have the correct couple_id
+            var guestsToImport = guests
+            for index in guestsToImport.indices {
+                var guest = guestsToImport[index]
+                guest = Guest(
+                    id: guest.id,
+                    createdAt: guest.createdAt,
+                    updatedAt: guest.updatedAt,
+                    firstName: guest.firstName,
+                    lastName: guest.lastName,
+                    email: guest.email,
+                    phone: guest.phone,
+                    guestGroupId: guest.guestGroupId,
+                    relationshipToCouple: guest.relationshipToCouple,
+                    invitedBy: guest.invitedBy,
+                    rsvpStatus: guest.rsvpStatus,
+                    rsvpDate: guest.rsvpDate,
+                    plusOneAllowed: guest.plusOneAllowed,
+                    plusOneName: guest.plusOneName,
+                    plusOneAttending: guest.plusOneAttending,
+                    attendingCeremony: guest.attendingCeremony,
+                    attendingReception: guest.attendingReception,
+                    attendingOtherEvents: guest.attendingOtherEvents,
+                    dietaryRestrictions: guest.dietaryRestrictions,
+                    accessibilityNeeds: guest.accessibilityNeeds,
+                    tableAssignment: guest.tableAssignment,
+                    seatNumber: guest.seatNumber,
+                    preferredContactMethod: guest.preferredContactMethod,
+                    addressLine1: guest.addressLine1,
+                    addressLine2: guest.addressLine2,
+                    city: guest.city,
+                    state: guest.state,
+                    zipCode: guest.zipCode,
+                    country: guest.country,
+                    invitationNumber: guest.invitationNumber,
+                    isWeddingParty: guest.isWeddingParty,
+                    weddingPartyRole: guest.weddingPartyRole,
+                    preparationNotes: guest.preparationNotes,
+                    coupleId: tenantId, // ✅ Ensure correct tenant ID
+                    mealOption: guest.mealOption,
+                    giftReceived: guest.giftReceived,
+                    notes: guest.notes,
+                    hairDone: guest.hairDone,
+                    makeupDone: guest.makeupDone
+                )
+                guestsToImport[index] = guest
+            }
+            
+            // Batch insert with retry
+            let imported: [Guest] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("guest_list")
+                    .insert(guestsToImport)
+                    .select()
+                    .execute()
+                    .value
+            }
+            
+            // ✅ Invalidate tenant-scoped cache
+            await RepositoryCache.shared.remove("guests_\(tenantId.uuidString)")
+            await RepositoryCache.shared.remove("guest_stats_\(tenantId.uuidString)")
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // ✅ Record performance
+            await PerformanceMonitor.shared.recordOperation("importGuests", duration: duration)
+            
+            logger.info("Imported \(imported.count) guests in \(String(format: "%.2f", duration))s")
+            AnalyticsService.trackNetwork(operation: "importGuests", outcome: .success, duration: duration)
+            
+            return imported
+        } catch {
+            logger.error("Failed to import guests", error: error)
+            throw GuestError.createFailed(underlying: error)
         }
     }
 }

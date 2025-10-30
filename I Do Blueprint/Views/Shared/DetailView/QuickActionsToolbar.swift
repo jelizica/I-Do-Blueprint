@@ -75,16 +75,16 @@ private struct DetailQuickActionButton: View {
 #Preview {
     QuickActionsToolbar(actions: [
         QuickAction(icon: "phone.fill", title: "Call", color: .green) {
-            // TODO: Implement action - print("Call action")
+            // Preview action
         },
         QuickAction(icon: "envelope.fill", title: "Email", color: .blue) {
-            // TODO: Implement action - print("Email action")
+            // Preview action
         },
         QuickAction(icon: "calendar", title: "Schedule", color: .orange) {
-            // TODO: Implement action - print("Schedule action")
+            // Preview action
         },
         QuickAction(icon: "square.and.arrow.up", title: "Share", color: .purple) {
-            // TODO: Implement action - print("Share action")
+            // Preview action
         }
     ])
     .padding()
