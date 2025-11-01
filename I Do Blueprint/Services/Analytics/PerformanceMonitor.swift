@@ -36,6 +36,28 @@ import Foundation
 /// ```
 actor PerformanceMonitor {
     
+    // MARK: - Types
+    
+    struct PerfEvent: Sendable, Identifiable, Codable {
+        let id: UUID = UUID()
+        let operation: String
+        let duration: TimeInterval
+        let mainThread: TimeInterval?
+        let timestamp: Date
+    }
+    
+    struct PerfStats: Sendable, Codable, Identifiable {
+        var id: String { operation }
+        let operation: String
+        let count: Int
+        let samples: Int
+        let average: TimeInterval
+        let median: TimeInterval
+        let min: TimeInterval
+        let max: TimeInterval
+        let p95: TimeInterval
+    }
+    
     // MARK: - Singleton
     
     static let shared = PerformanceMonitor()
@@ -43,6 +65,17 @@ actor PerformanceMonitor {
     private let logger = AppLogger.analytics
     
     // MARK: - Configuration
+    
+    /// Enable verbose breadcrumbs/logs when performance monitoring is enabled via PerformanceFeatureFlags
+    private var verboseEnabled: Bool {
+        PerformanceFeatureFlags.enablePerformanceMonitoring
+    }
+    
+    // MARK: - Storage
+    
+    /// Recent events buffer (for diagnostics UI)
+    private var recentEvents: [PerfEvent] = []
+    private let maxRecentEvents = 500
     
     /// Threshold for slow operation warnings (in seconds)
     private let slowOperationThreshold: TimeInterval = 1.0
@@ -63,12 +96,21 @@ actor PerformanceMonitor {
     
     // MARK: - Public Interface
     
-    /// Records an operation duration
+    /// Records an operation duration (total time only)
     ///
     /// - Parameters:
     ///   - operation: The name of the operation (e.g., "fetchGuests")
     ///   - duration: The duration in seconds
-    func recordOperation(_ operation: String, duration: TimeInterval) {
+    func recordOperation(_ operation: String, duration: TimeInterval) async {
+        await recordOperation(operation, duration: duration, mainThread: nil)
+    }
+
+    /// Records an operation duration including optional main-thread time
+    /// - Parameters:
+    ///   - operation: Name (e.g., "guest.fetchGuests")
+    ///   - duration: Total duration (s)
+    ///   - mainThread: Optional time spent on main-thread (s)
+    func recordOperation(_ operation: String, duration: TimeInterval, mainThread: TimeInterval?) async {
         // Record timing
         var times = operationTimes[operation, default: []]
         times.append(duration)
@@ -94,6 +136,36 @@ actor PerformanceMonitor {
             }
             
             logger.warning("Slow operation detected: \(operation) took \(String(format: "%.2f", duration))s")
+        }
+        
+        // Optional Sentry breadcrumb for visibility when enabled
+        if verboseEnabled {
+            var data: [String: Any] = [
+                "operation": operation,
+                "duration_ms": Int(duration * 1000)
+            ]
+            if let mainThread {
+                data["main_thread_ms"] = Int(mainThread * 1000)
+            }
+            await MainActor.run {
+                SentryService.shared.addBreadcrumb(
+                    message: "perf_operation",
+                    category: "performance",
+                    data: data
+                )
+            }
+        }
+        
+        // Record recent event for diagnostics
+        let event = PerfEvent(
+            operation: operation,
+            duration: duration,
+            mainThread: mainThread,
+            timestamp: Date()
+        )
+        recentEvents.append(event)
+        if recentEvents.count > maxRecentEvents {
+            recentEvents.removeFirst(recentEvents.count - maxRecentEvents)
         }
     }
     
@@ -179,6 +251,50 @@ actor PerformanceMonitor {
         operationCounts.removeAll()
     }
     
+    /// Convenience to measure an async block and record total duration
+    func measureAsync<T>(name: String, block: () async throws -> T) async rethrows -> T {
+        let start = Date()
+        do {
+            let result = try await block()
+            let duration = Date().timeIntervalSince(start)
+            await recordOperation(name, duration: duration)
+            return result
+        } catch {
+            let duration = Date().timeIntervalSince(start)
+            await recordOperation(name, duration: duration)
+            throw error
+        }
+    }
+
+    /// Snapshot of recent events (most recent last)
+    func getRecentEvents(limit: Int? = nil) -> [PerfEvent] {
+        if let limit, limit > 0 { return Array(recentEvents.suffix(limit)) }
+        return recentEvents
+    }
+
+    /// Available operations keys (alphabetical)
+    func operationsList() -> [String] {
+        Array(operationTimes.keys).sorted()
+    }
+
+    /// Typed statistics for all operations
+    func statisticsSnapshot() -> [PerfStats] {
+        let ops = operationsList()
+        return ops.compactMap { op in
+            guard let stats = statistics(for: op) else { return nil }
+            return PerfStats(
+                operation: op,
+                count: stats["count"] as? Int ?? 0,
+                samples: stats["samples"] as? Int ?? 0,
+                average: stats["average"] as? TimeInterval ?? 0,
+                median: stats["median"] as? TimeInterval ?? 0,
+                min: stats["min"] as? TimeInterval ?? 0,
+                max: stats["max"] as? TimeInterval ?? 0,
+                p95: stats["p95"] as? TimeInterval ?? 0
+            )
+        }
+    }
+
     /// Generates a performance report
     ///
     /// - Returns: A formatted string with performance statistics

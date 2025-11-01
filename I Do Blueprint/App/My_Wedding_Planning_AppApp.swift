@@ -7,6 +7,7 @@ struct My_Wedding_Planning_AppApp: App {
     @StateObject private var appStores = AppStores.shared
     @StateObject private var supabaseManager = SupabaseManager.shared
     @State private var credentialsCheckFailed = false
+    @State private var externalConfigError: ConfigurationError? = nil
 
     // MARK: - Initialization
 
@@ -20,7 +21,7 @@ struct My_Wedding_Planning_AppApp: App {
         WindowGroup {
             Group {
                 // Check for configuration errors first (highest priority)
-                if let configError = supabaseManager.configurationError {
+                if let configError = supabaseManager.configurationError ?? externalConfigError {
                     ConfigurationErrorView(
                         error: configError,
                         onRetry: {
@@ -70,10 +71,45 @@ struct My_Wedding_Planning_AppApp: App {
 
     @MainActor
     private func performPreflightChecks() async {
+        // 1) Google OAuth preflight
         let googleAuthManager = GoogleAuthManager()
         if googleAuthManager.authError != nil {
             credentialsCheckFailed = true
             AppLogger.auth.error("Preflight check failed: Google OAuth credentials not configured")
+        } else {
+            credentialsCheckFailed = false
+        }
+
+        // 2) Config validation (Supabase + Sentry)
+        let summary = ConfigValidator.validateAll()
+
+        // For Supabase: SupabaseManager will surface blocking errors itself. No-op here unless we want to proactively show.
+        // For Sentry: show ConfigurationErrorView if missing/invalid
+        if let blocking = ConfigValidator.blockingErrorForUI(summary: summary) {
+            // Only intercept Sentry-related errors here to avoid racing with Supabase initialization
+            switch blocking {
+            case .missingSentryDSN, .invalidSentryDSN:
+                externalConfigError = blocking
+            default:
+                // Defer to SupabaseManager for other errors
+                externalConfigError = nil
+            }
+        } else {
+            externalConfigError = nil
+        }
+
+        // 3) Initialize Sentry if DSN looks valid
+        if summary.sentryDSNPresent && summary.sentryDSNValid {
+            SentryService.shared.configure()
+            SentryService.shared.addBreadcrumb(
+                message: "Config preflight passed",
+                category: "app",
+                data: [
+                    "supabase_url_present": summary.supabaseURLPresent ? "true" : "false",
+                    "anon_key_present": summary.supabaseAnonKeyPresent ? "true" : "false",
+                    "sentry_dsn_present": "true"
+                ]
+            )
         }
     }
 }

@@ -10,6 +10,7 @@ import SwiftUI
 struct AcceptInvitationView: View {
     let token: String
     let coordinator: AppCoordinator
+    let details: InvitationDetails?
 
     @StateObject private var collaborationStore = CollaborationStoreV2()
     @StateObject private var authContext = AuthContext.shared
@@ -39,8 +40,16 @@ struct AcceptInvitationView: View {
         }
         .frame(width: 500, height: 400)
         .padding(Spacing.xxxl)
+        .onAppear {
+            if let preloaded = details {
+                self.invitationDetails = preloaded
+                self.isLoading = false
+            }
+        }
         .task(id: token) {
-            await loadInvitation()
+            if details == nil {
+                await loadInvitation()
+            }
         }
     }
 
@@ -348,6 +357,7 @@ struct AcceptInvitationView: View {
 #Preview {
     AcceptInvitationView(
         token: "sample-token",
-        coordinator: AppCoordinator.shared
+        coordinator: AppCoordinator.shared,
+        details: nil
     )
 }

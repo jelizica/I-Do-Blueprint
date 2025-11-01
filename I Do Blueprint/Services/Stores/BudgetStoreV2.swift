@@ -122,26 +122,41 @@ class BudgetStoreV2: ObservableObject {
         
         // Create new load task
         loadTask = Task { @MainActor in
+            let totalStart = Date()
+            var mainThreadAccumulated: TimeInterval = 0
+
             guard loadingState.isIdle || loadingState.hasError || force else {
                 return
             }
             
-            loadingState = .loading
+            // mark main-thread: set loading
+            do {
+                let t0 = Date()
+                loadingState = .loading
+                mainThreadAccumulated += Date().timeIntervalSince(t0)
+            }
             
             do {
                 try Task.checkCancellation()
                 
-                async let summary = repository.fetchBudgetSummary()
-                async let categories = repository.fetchCategories()
-                async let expenses = repository.fetchExpenses()
+                // Measure sub-operations
+                let sumStart = Date(); async let summary = repository.fetchBudgetSummary()
+                let catStart = Date(); async let categories = repository.fetchCategories()
+                let expStart = Date(); async let expenses = repository.fetchExpenses()
                 
                 let summaryResult = try await summary
                 let categoriesResult = try await categories
                 let expensesResult = try await expenses
                 
+                // Record sub-ops
+                await PerformanceMonitor.shared.recordOperation("budget.fetchSummary", duration: Date().timeIntervalSince(sumStart))
+                await PerformanceMonitor.shared.recordOperation("budget.fetchCategories", duration: Date().timeIntervalSince(catStart))
+                await PerformanceMonitor.shared.recordOperation("budget.fetchExpenses", duration: Date().timeIntervalSince(expStart))
+                
                 try Task.checkCancellation()
                 
                 // Create budget data structure
+                let t1 = Date()
                 let budgetData = BudgetData(
                     summary: summaryResult,
                     categories: categoriesResult,
@@ -149,17 +164,22 @@ class BudgetStoreV2: ObservableObject {
                 )
                 
                 loadingState = .loaded(budgetData)
+                mainThreadAccumulated += Date().timeIntervalSince(t1)
                 
-                // Load data into composed stores
+                // Load data into composed stores (async work not counted toward main-thread)
                 await payments.loadPaymentSchedules()
                 await gifts.loadGiftsData()
                 
-                // Load primary budget scenario
+                // Load primary budget scenario (may touch main-thread briefly)
+                let t2 = Date()
                 await loadPrimaryScenario()
+                mainThreadAccumulated += Date().timeIntervalSince(t2)
                 
                 do {
+                    let devStart = Date()
                     savedScenarios = try await repository.fetchBudgetDevelopmentScenarios()
                     weddingEvents = try await repository.fetchWeddingEvents()
+                    await PerformanceMonitor.shared.recordOperation("budget.fetchDevData", duration: Date().timeIntervalSince(devStart))
                 } catch {
                     logger.error("Failed to load additional data", error: error)
                 }
@@ -167,24 +187,32 @@ class BudgetStoreV2: ObservableObject {
                 #if DEBUG
                 logger.warning("Placeholder data being used: categoryBenchmarks, cashFlowData, incomeItems, expenseItems, cashFlowInsights, recentActivities")
                 #endif
+                let t3 = Date()
                 categoryBenchmarks = []
                 cashFlowData = []
                 incomeItems = []
                 expenseItems = []
                 cashFlowInsights = []
                 recentActivities = []
+                mainThreadAccumulated += Date().timeIntervalSince(t3)
                 
                 logger.info("Loaded budget data: \(categoriesResult.count) categories, \(expensesResult.count) expenses")
             } catch is CancellationError {
                 AppLogger.ui.debug("BudgetStoreV2.loadBudgetData: Load cancelled (expected during tenant switch)")
-                loadingState = .idle
+                let tCancel = Date(); loadingState = .idle; mainThreadAccumulated += Date().timeIntervalSince(tCancel)
             } catch let error as URLError where error.code == .cancelled {
                 AppLogger.ui.debug("BudgetStoreV2.loadBudgetData: Load cancelled (URLError)")
-                loadingState = .idle
+                let tCancel = Date(); loadingState = .idle; mainThreadAccumulated += Date().timeIntervalSince(tCancel)
             } catch {
-                loadingState = .error(BudgetError.fetchFailed(underlying: error))
+                let tErr = Date(); loadingState = .error(BudgetError.fetchFailed(underlying: error)); mainThreadAccumulated += Date().timeIntervalSince(tErr)
                 logger.error("Error loading budget data", error: error)
             }
+
+            await PerformanceMonitor.shared.recordOperation(
+                "budget.loadBudgetData",
+                duration: Date().timeIntervalSince(totalStart),
+                mainThread: mainThreadAccumulated
+            )
         }
         
         await loadTask?.value

@@ -565,9 +565,16 @@ struct AccessibleHeading: ViewModifier {
     let level: Int
 
     func body(content: Content) -> some View {
-        content
+        // Clamp level to 1...3 and map to accessibility heading level
+        let clamped = max(1, min(level, 3))
+        let headingLevel: AccessibilityHeadingLevel = (clamped == 1) ? .h1 : (clamped == 2 ? .h2 : .h3)
+        // Higher priority announces earlier
+        let sortPriority: Double = (clamped == 1) ? 100 : (clamped == 2 ? 80 : 60)
+
+        return content
             .accessibilityAddTraits(.isHeader)
-            .accessibilityHeading(.h1)
+            .accessibilityHeading(headingLevel)
+            .accessibilitySortPriority(sortPriority)
     }
 }
 
@@ -582,6 +589,30 @@ extension Color {
     func blended(with color: Color, fraction: Double) -> Color {
         return self.opacity(1.0 - fraction)
     }
+}
+
+// MARK: - Gradients
+
+enum AppGradients {
+    /// App-wide background gradient used on the dashboard background
+    static let appBackground = LinearGradient(
+        colors: [
+            Color.fromHex("F8F9FA"),
+            Color.fromHex("E9ECEF")
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    /// Dashboard header gradient: light purple → eucalyptus green
+    static let dashboardHeader = LinearGradient(
+        colors: [
+            Color.fromHex("EAE2FF"), // light purple
+            Color.fromHex("5A9070")  // eucalyptus green (from AppColors.Dashboard.eventAction)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 }
 
 // MARK: - View Extensions
