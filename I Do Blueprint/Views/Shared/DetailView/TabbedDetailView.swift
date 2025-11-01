@@ -73,9 +73,9 @@ private struct DetailTabButton: View {
                 if let badge = tab.badge, badge > 0 {
                     Text("\(badge)")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .foregroundColor(AppColors.textPrimary)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(AppColors.primary)
                         .clipShape(Capsule())
                 }
@@ -120,7 +120,7 @@ private struct DetailTabButton: View {
                     VStack {
                         Text("Tab \(index) Content")
                             .font(.title)
-                            .padding(100)
+                            .padding(Spacing.huge)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }

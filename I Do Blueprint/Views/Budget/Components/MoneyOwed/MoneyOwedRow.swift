@@ -23,7 +23,7 @@ struct OwedRowView: View {
                     .frame(width: 40, height: 40)
 
                 Text(owed.priority.abbreviation)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .font(.system(size: 12, weight: .bold))
             }
 
@@ -35,20 +35,20 @@ struct OwedRowView: View {
                     if isOverdue {
                         Text("OVERDUE")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.overBudget)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(4)
                     }
 
                     if owed.isPaid {
                         Text("PAID")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.income)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(4)
                     }
                 }
@@ -155,10 +155,10 @@ struct OwedDetailView: View {
                             Text(owed.isPaid ? "Paid" : "Mark as Paid")
                         }
                         .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm)
                         .background(owed.isPaid ? AppColors.Budget.income : AppColors.Budget.pending)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .cornerRadius(8)
                     }
                 }

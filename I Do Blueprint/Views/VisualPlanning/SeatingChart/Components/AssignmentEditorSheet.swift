@@ -625,7 +625,7 @@ private struct TableSelectionRow: View {
                                 .fontWeight(.semibold)
                                 .foregroundColor(AppColors.error)
                                 .padding(.horizontal, Spacing.xs)
-                                .padding(.vertical, 2)
+                                .padding(.vertical, Spacing.xxs)
                                 .background(
                                     Capsule()
                                         .fill(AppColors.errorLight)

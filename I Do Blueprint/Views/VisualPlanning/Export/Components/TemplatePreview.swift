@@ -71,8 +71,8 @@ struct TemplatePreviewView: View {
                 .font(.caption)
                 .foregroundColor(branding.textColor.opacity(0.7))
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
         .background(branding.primaryColor.opacity(0.1))
     }
 
@@ -90,7 +90,7 @@ struct TemplatePreviewView: View {
                 comprehensivePreview
             }
         }
-        .padding(20)
+        .padding(Spacing.xl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -112,8 +112,8 @@ struct TemplatePreviewView: View {
                             .foregroundColor(branding.textColor.opacity(0.6))
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.sm)
                 .background(branding.primaryColor.opacity(0.05))
             } else {
                 EmptyView()
@@ -149,7 +149,7 @@ struct TemplatePreviewView: View {
             HStack(spacing: 8) {
                 ForEach(0 ..< 3, id: \.self) { _ in
                     Rectangle()
-                        .fill(Color.gray.opacity(0.3))
+                        .fill(AppColors.textSecondary.opacity(0.3))
                         .aspectRatio(1, contentMode: .fit)
                 }
             }
@@ -208,7 +208,7 @@ struct TemplatePreviewView: View {
             // Chart preview
             ZStack {
                 Rectangle()
-                    .fill(Color.gray.opacity(0.1))
+                    .fill(AppColors.textSecondary.opacity(0.1))
                     .frame(height: 80)
 
                 ForEach(0 ..< 6, id: \.self) { index in

@@ -108,7 +108,7 @@ struct InsightCard: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(AppColors.textPrimary)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -164,7 +164,7 @@ struct PerformanceMetricCard: View {
             }
         }
         .padding()
-        .background(Color.white)
+        .background(AppColors.textPrimary)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -189,7 +189,7 @@ struct EmptyInsightsView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity)
     }
 }

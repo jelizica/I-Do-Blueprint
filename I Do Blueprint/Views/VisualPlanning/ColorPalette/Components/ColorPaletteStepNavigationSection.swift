@@ -35,7 +35,7 @@ struct ColorPaletteStepNavigationSection: View {
                             .font(.caption)
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, Spacing.xs)
                 .onTapGesture {
                     if step.rawValue <= currentStep.rawValue {
                         currentStep = step

@@ -162,7 +162,7 @@ struct CashFlowSection: View {
                         .fontWeight(.medium)
                         .foregroundColor(isIncome ? AppColors.Budget.income : AppColors.Budget.expense)
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, Spacing.xs)
             }
         }
         .padding()

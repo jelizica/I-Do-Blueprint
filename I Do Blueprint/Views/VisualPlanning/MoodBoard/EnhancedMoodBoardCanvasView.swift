@@ -389,10 +389,10 @@ struct EnhancedMoodBoardElementView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
             } else {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(AppColors.textSecondary.opacity(0.3))
                     .overlay(
                         Image(systemName: "photo")
-                            .foregroundColor(.gray))
+                            .foregroundColor(AppColors.textSecondary))
             }
 
         case .color:
@@ -400,18 +400,18 @@ struct EnhancedMoodBoardElementView: View {
                 .fill(element.elementData.color ?? .gray)
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
 
         case .text:
             ZStack {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.white.opacity(0.8))
+                    .fill(AppColors.textPrimary.opacity(0.8))
 
                 Text(element.elementData.text ?? "Text")
                     .font(.system(size: max(10, element.size.height * 0.3)))
-                    .foregroundColor(.black)
+                    .foregroundColor(AppColors.textPrimary)
                     .multilineTextAlignment(.center)
-                    .padding(4)
+                    .padding(Spacing.xs)
             }
 
         case .inspiration:
@@ -424,7 +424,7 @@ struct EnhancedMoodBoardElementView: View {
                     .font(.caption)
                     .multilineTextAlignment(.center)
             }
-            .padding(8)
+            .padding(Spacing.sm)
             .background(Color.orange.opacity(0.1))
             .cornerRadius(8)
         }

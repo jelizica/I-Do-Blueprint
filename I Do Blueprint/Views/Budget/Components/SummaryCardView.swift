@@ -53,7 +53,7 @@ struct SummaryCardView: View {
                     .minimumScaleFactor(0.8)
             }
         }
-        .padding(20)
+        .padding(Spacing.xl)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 16)

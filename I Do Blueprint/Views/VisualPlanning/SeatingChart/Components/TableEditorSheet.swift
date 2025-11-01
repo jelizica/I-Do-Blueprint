@@ -173,16 +173,16 @@ struct TableEditorSheet: View {
                                     }
                                 }
                             }
-                            .padding(16)
+                            .padding(Spacing.lg)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(Color(NSColor.controlBackgroundColor))
                                     .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.gray.opacity(0.15), lineWidth: 1))
+                                    .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
                         }
-                        .padding(16)
+                        .padding(Spacing.lg)
                     }
                 }
                 .frame(width: 320)
@@ -198,12 +198,12 @@ struct TableEditorSheet: View {
                         TextField("Search guests...", text: $searchText)
                             .textFieldStyle(.plain)
                     }
-                    .padding(12)
+                    .padding(Spacing.md)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color(NSColor.controlBackgroundColor)))
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.top, Spacing.lg)
 
                     // Assigned guests card
                     VStack(alignment: .leading, spacing: 12) {
@@ -221,7 +221,7 @@ struct TableEditorSheet: View {
                                     .foregroundColor(.secondary)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 40)
+                            .padding(.vertical, Spacing.huge)
                         } else {
                             ScrollView {
                                 LazyVStack(spacing: 8) {
@@ -236,20 +236,20 @@ struct TableEditorSheet: View {
                                         }
                                     }
                                 }
-                                .padding(.horizontal, 8)
+                                .padding(.horizontal, Spacing.sm)
                             }
                             .frame(maxHeight: 200)
                         }
                     }
-                    .padding(16)
+                    .padding(Spacing.lg)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color(NSColor.controlBackgroundColor))
                             .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.15), lineWidth: 1))
-                    .padding(.horizontal, 16)
+                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                    .padding(.horizontal, Spacing.lg)
 
                     // Available guests card
                     VStack(alignment: .leading, spacing: 12) {
@@ -278,19 +278,19 @@ struct TableEditorSheet: View {
                                         })
                                 }
                             }
-                            .padding(.horizontal, 8)
+                            .padding(.horizontal, Spacing.sm)
                         }
                     }
-                    .padding(16)
+                    .padding(Spacing.lg)
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color(NSColor.controlBackgroundColor))
                             .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.gray.opacity(0.15), lineWidth: 1))
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.bottom, Spacing.lg)
 
                     Spacer()
                 }

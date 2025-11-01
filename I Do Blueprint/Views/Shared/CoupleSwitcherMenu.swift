@@ -56,8 +56,8 @@ struct CoupleSwitcherMenu: View {
                             Text(couple.role)
                                 .font(Typography.caption)
                                 .foregroundColor(AppColors.textSecondary)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, Spacing.xxs)
                                 .background(AppColors.primary.opacity(0.1))
                                 .cornerRadius(4)
                         }

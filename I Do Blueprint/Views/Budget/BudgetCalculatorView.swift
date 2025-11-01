@@ -91,7 +91,7 @@ struct BudgetCalculatorView: View {
                     }
                     .frame(maxWidth: .infinity)
                 }
-                .padding(24)
+                .padding(Spacing.xxl)
             }
         }
         .task {

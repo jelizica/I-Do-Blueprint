@@ -125,7 +125,7 @@ struct ActivityListContent: View {
                     )
                     
                     Divider()
-                        .padding(.leading, 60)
+                        .padding(.leading, Spacing.huge)
                 }
                 
                 // Load more button

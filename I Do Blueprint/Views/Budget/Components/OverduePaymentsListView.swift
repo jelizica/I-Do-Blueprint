@@ -50,7 +50,7 @@ struct OverduePaymentsListView: View {
                                 .fontWeight(.medium)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, Spacing.xs)
                 }
             }
             .navigationTitle("Overdue Payments")

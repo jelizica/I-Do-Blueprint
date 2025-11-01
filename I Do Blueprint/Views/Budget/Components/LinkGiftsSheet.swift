@@ -32,7 +32,7 @@ struct LinkGiftsSheet: View {
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
                 }
-                .padding(40)
+                .padding(Spacing.huge)
             } else {
                 ScrollView {
                     VStack(spacing: 8) {
@@ -72,7 +72,7 @@ struct LinkGiftsSheet: View {
                                 ))
                                 .labelsHidden()
                             }
-                            .padding(12)
+                            .padding(Spacing.md)
                             .background(selectedGiftIds.contains(gift.id) ? Color.blue.opacity(0.1) : Color(NSColor.controlBackgroundColor))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
@@ -94,7 +94,7 @@ struct LinkGiftsSheet: View {
                 .disabled(selectedGiftIds.isEmpty)
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .frame(width: 500)
     }
 

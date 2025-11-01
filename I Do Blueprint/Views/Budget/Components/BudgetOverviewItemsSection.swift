@@ -29,8 +29,8 @@ struct BudgetOverviewItemsSection: View {
                 Text("\(filteredBudgetItems.count) items")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xs)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(8)
             }

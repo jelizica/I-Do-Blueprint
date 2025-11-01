@@ -52,7 +52,7 @@ struct LinksSettingsView: View {
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(40)
+                        .padding(Spacing.huge)
                     } else {
                         ScrollView {
                             VStack(spacing: 12) {
@@ -186,7 +186,7 @@ struct LinkRow: View {
 
             Divider()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }
 

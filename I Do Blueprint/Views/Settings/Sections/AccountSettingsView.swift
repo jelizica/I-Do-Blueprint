@@ -29,7 +29,7 @@ struct AccountSettingsView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            .padding(.bottom, 8)
+            .padding(.bottom, Spacing.sm)
 
             Divider()
 
@@ -82,11 +82,11 @@ struct AccountSettingsView: View {
                             Spacer()
                             HStack(spacing: 6) {
                                 Circle()
-                                    .fill(Color.gray)
+                                    .fill(AppColors.textSecondary)
                                     .frame(width: 8, height: 8)
                                 Text("Not Signed In")
                                     .font(.subheadline)
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(AppColors.textSecondary)
                             }
                         }
                     }
@@ -110,8 +110,8 @@ struct AccountSettingsView: View {
                                     .font(.caption)
                                     .foregroundColor(.red)
                             }
-                            .padding(.vertical, 8)
-                            .padding(.horizontal, 12)
+                            .padding(.vertical, Spacing.sm)
+                            .padding(.horizontal, Spacing.md)
                             .background(Color.red.opacity(0.1))
                             .cornerRadius(8)
                         }

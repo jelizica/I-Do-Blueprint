@@ -139,7 +139,7 @@ struct VendorListView: View {
                                     .buttonStyle(PlainButtonStyle())
                                 }
                             }
-                            .padding(12)
+                            .padding(Spacing.md)
                         }
                         .background(Color(NSColor.windowBackgroundColor))
                     }
@@ -234,7 +234,7 @@ struct VendorRowView: View {
                     .aspectRatio(contentMode: .fill)
             } placeholder: {
                 Rectangle()
-                    .fill(Color.gray.opacity(0.15))
+                    .fill(AppColors.textSecondary.opacity(0.15))
                     .overlay(
                         Image(systemName: "person.fill")
                             .foregroundColor(.gray.opacity(0.5))
@@ -290,7 +290,7 @@ struct VendorRowView: View {
                 .font(.caption)
                 .fontWeight(.semibold)
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -301,7 +301,7 @@ struct VendorRowView: View {
                     y: isHovering ? 4 : 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
+                .stroke(AppColors.textSecondary.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
         .scaleEffect(isHovering ? 1.01 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in
@@ -319,8 +319,8 @@ struct StatusBadge: View {
         Text(text)
             .font(.caption2)
             .fontWeight(.medium)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xxs)
             .background(color.opacity(0.2))
             .foregroundColor(color)
             .clipShape(Capsule())
@@ -354,7 +354,7 @@ struct VendorStatCard: View {
                 .textCase(.uppercase)
                 .tracking(0.5)
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)

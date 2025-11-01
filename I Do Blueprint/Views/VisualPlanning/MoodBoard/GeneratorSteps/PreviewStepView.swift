@@ -146,8 +146,8 @@ struct PreviewStepView: View {
                             ForEach(state.tags, id: \.self) { tag in
                                 Text(tag)
                                     .font(.caption)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, Spacing.xxs)
                                     .background(Color.blue.opacity(0.1))
                                     .foregroundColor(.blue)
                                     .cornerRadius(4)
@@ -228,9 +228,9 @@ struct PreviewStepView: View {
                         Text("Create Mood Board")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(canGenerate ? Color.blue : Color.gray)
-                    .foregroundColor(.white)
+                    .padding(.vertical, Spacing.md)
+                    .background(canGenerate ? Color.blue : AppColors.textSecondary)
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(10)
                 }
                 .disabled(!canGenerate)
@@ -363,7 +363,7 @@ struct ColorSwatch: View {
             .frame(width: size, height: size)
             .overlay(
                 Circle()
-                    .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
     }
 }
 

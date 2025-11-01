@@ -36,7 +36,7 @@ struct SearchField: View {
                 .accessibilityHint("Clears the current search text")
             }
         }
-        .padding(8)
+        .padding(Spacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -106,8 +106,8 @@ struct SharedFilterChip: View {
         Button(action: action) {
             Text(title)
                 .font(.subheadline)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
         }
         .buttonStyle(.plain)
         .background(

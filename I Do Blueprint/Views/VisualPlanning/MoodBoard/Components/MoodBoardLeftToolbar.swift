@@ -38,7 +38,7 @@ struct MoodBoardLeftToolbar: View {
                                     .font(.caption)
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Spacing.sm)
                             .background(selectedTool == tool ? Color.blue.opacity(0.2) : Color.clear)
                             .foregroundColor(selectedTool == tool ? .blue : .primary)
                             .cornerRadius(6)
@@ -117,8 +117,8 @@ private struct EditorQuickActionButton: View {
 
                 Spacer()
             }
-            .padding(.vertical, 6)
-            .padding(.horizontal, 8)
+            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.sm)
             .background(Color.clear)
             .contentShape(Rectangle())
         }

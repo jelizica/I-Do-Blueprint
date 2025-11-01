@@ -37,7 +37,7 @@ struct AffordabilityResultsSection: View {
                     .foregroundStyle(.primary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 32)
+            .padding(.vertical, Spacing.xxxl)
             .background(
                 LinearGradient(
                     colors: [Color.purple.opacity(0.1), AppColors.Budget.allocated.opacity(0.05)],
@@ -122,7 +122,7 @@ struct AffordabilityResultsSection: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(3)
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .background(AppColors.Budget.allocated.opacity(0.05))
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }

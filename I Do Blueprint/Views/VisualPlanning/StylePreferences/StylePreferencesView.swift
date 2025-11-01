@@ -130,15 +130,15 @@ struct StylePreferencesView: View {
                                 size: 16)
                         }
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.vertical, Spacing.md)
                     .background(selectedSection == section ? Color.blue.opacity(0.1) : Color.clear)
                 }
                 .buttonStyle(.plain)
 
                 if section != PreferencesSection.allCases.last {
                     Divider()
-                        .padding(.leading, 48)
+                        .padding(.leading, Spacing.huge)
                 }
             }
 
@@ -163,7 +163,7 @@ struct StylePreferencesView: View {
                 ProgressView(value: overallProgress)
                     .progressViewStyle(LinearProgressViewStyle(tint: .blue))
             }
-            .padding(16)
+            .padding(Spacing.lg)
         }
         .frame(width: 280)
         .background(Color(NSColor.controlBackgroundColor))
@@ -311,7 +311,7 @@ struct StylePreferencesView: View {
                                             .frame(width: 60, height: 60)
                                             .overlay(
                                                 Circle()
-                                                    .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
 
                                         Text(color.hexString)
                                             .font(.system(.caption2, design: .monospaced))
@@ -377,7 +377,7 @@ struct StylePreferencesView: View {
                                             .foregroundColor(.secondary)
                                     }
                                     .padding()
-                                    .background(Color.gray.opacity(0.05))
+                                    .background(AppColors.textSecondary.opacity(0.05))
                                     .cornerRadius(8)
                                 }
                                 .buttonStyle(.plain)

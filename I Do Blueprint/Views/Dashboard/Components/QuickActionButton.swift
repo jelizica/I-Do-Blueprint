@@ -35,7 +35,7 @@ struct DashboardQuickActionButton: View {
 
                     Image(systemName: icon)
                         .font(.system(size: 26, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                 }
                 .scaleEffect(isHovered ? 1.05 : 1.0)
 
@@ -46,8 +46,8 @@ struct DashboardQuickActionButton: View {
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .padding(.horizontal, 12)
+            .padding(.vertical, Spacing.lg)
+            .padding(.horizontal, Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(Color(NSColor.controlBackgroundColor))
@@ -55,7 +55,7 @@ struct DashboardQuickActionButton: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
-                        isHovered ? color.opacity(0.3) : Color.gray.opacity(0.1),
+                        isHovered ? color.opacity(0.3) : AppColors.textSecondary.opacity(0.1),
                         lineWidth: isHovered ? 2 : 1))
         }
         .buttonStyle(.plain)

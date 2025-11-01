@@ -51,8 +51,8 @@ struct NoteCard: View {
                             .font(.caption2)
                             .fontWeight(.medium)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xs)
                     .background(
                         Capsule()
                             .fill(config.color.opacity(0.15)))
@@ -112,7 +112,7 @@ struct NoteCard: View {
             }
             .foregroundColor(.secondary)
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, minHeight: 180, maxHeight: 180, alignment: .top)
         .background(
             RoundedRectangle(cornerRadius: 12)

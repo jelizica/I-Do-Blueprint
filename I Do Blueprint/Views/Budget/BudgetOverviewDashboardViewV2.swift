@@ -222,8 +222,8 @@ struct BudgetOverviewDashboardViewV2: View {
                 // Budget items grid
                 budgetItemsSection
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
+            .padding(.horizontal, Spacing.xl)
+            .padding(.vertical, Spacing.lg)
             .frame(maxWidth: .infinity)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

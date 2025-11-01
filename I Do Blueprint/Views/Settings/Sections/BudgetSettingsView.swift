@@ -87,7 +87,7 @@ struct BudgetConfigSettingsView: View {
                     GroupBox(label: Text("Budget Notes").font(.headline)) {
                         TextEditor(text: $viewModel.localSettings.budget.notes)
                             .frame(minHeight: 100)
-                            .padding(4)
+                            .padding(Spacing.xs)
                     }
 
                     // Tax Rates
@@ -270,7 +270,7 @@ struct TaxRateRow: View {
             .buttonStyle(.plain)
             .foregroundColor(.red)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
     }
 }
 

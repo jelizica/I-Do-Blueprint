@@ -35,7 +35,7 @@ struct MoodBoardListRowView: View {
                                 .frame(width: 56, height: 76)
                         }
                     }
-                    .padding(2)
+                    .padding(Spacing.xxs)
                 }
             }
 
@@ -98,7 +98,7 @@ struct MoodBoardListRowView: View {
                     y: isHovering ? 4 : 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
+                .stroke(AppColors.textSecondary.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
         .scaleEffect(isHovering ? 1.005 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in

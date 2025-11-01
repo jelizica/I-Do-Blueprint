@@ -280,10 +280,10 @@ struct TaxRateSettingsView: View {
                             /* if taxRate.isDefault {
                                  Text("Default")
                                      .font(.caption)
-                                     .padding(.horizontal, 8)
-                                     .padding(.vertical, 2)
+                                     .padding(.horizontal, Spacing.sm)
+                                     .padding(.vertical, Spacing.xxs)
                                      .background(Color.accentColor)
-                                     .foregroundColor(.white)
+                                     .foregroundColor(AppColors.textPrimary)
                                      .cornerRadius(4)
                              } */
                         }

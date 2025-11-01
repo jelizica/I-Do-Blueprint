@@ -60,7 +60,7 @@ struct DocumentsSettingsView: View {
                     Text("Configure how vendor information is handled across documents and expenses.")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                        .padding(.bottom, 8)
+                        .padding(.bottom, Spacing.sm)
 
                     VStack(alignment: .leading, spacing: 12) {
                         VendorBehaviorToggle(

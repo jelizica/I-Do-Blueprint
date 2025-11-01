@@ -54,10 +54,10 @@ struct ScenarioManagementBar: View {
                     }
                     Text("Save")
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(Color.blue)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(6)
             }
             .disabled(saving)
@@ -90,7 +90,7 @@ struct ScenarioManagementBar: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .padding(6)
+                        .padding(Spacing.sm)
                         .background(Color(NSColor.controlBackgroundColor))
                         .cornerRadius(6)
                 }

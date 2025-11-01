@@ -20,7 +20,7 @@ struct ColorPalettePaletteSwatchesView: View {
                 if selectedPaletteColors.isEmpty {
                     Text("No colors selected yet")
                         .foregroundColor(.secondary)
-                        .padding(.top, 40)
+                        .padding(.top, Spacing.huge)
                 } else {
                     VStack(spacing: 16) {
                         // Large swatches in scrollable horizontal view
@@ -45,7 +45,7 @@ struct ColorPalettePaletteSwatchesView: View {
                                     }
                                 }
                             }
-                            .padding(.horizontal, 20)
+                            .padding(.horizontal, Spacing.xl)
                         }
 
                         // Color strip
@@ -58,11 +58,11 @@ struct ColorPalettePaletteSwatchesView: View {
                         }
                         .cornerRadius(8)
                         .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, Spacing.xl)
                     }
                 }
             }
-            .padding(.vertical, 20)
+            .padding(.vertical, Spacing.xl)
         }
     }
 }

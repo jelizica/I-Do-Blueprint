@@ -79,9 +79,9 @@ struct MoodBoardSearchResultCard: View {
                                 ForEach(moodBoard.tags.prefix(3), id: \.self) { tag in
                                     Text(tag)
                                         .font(.caption2)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color.gray.opacity(0.15))
+                                        .padding(.horizontal, Spacing.sm)
+                                        .padding(.vertical, Spacing.xxs)
+                                        .background(AppColors.textSecondary.opacity(0.15))
                                         .cornerRadius(4)
                                 }
                                 
@@ -99,7 +99,7 @@ struct MoodBoardSearchResultCard: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                .padding(12)
+                .padding(Spacing.md)
             }
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(12)
@@ -107,7 +107,7 @@ struct MoodBoardSearchResultCard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isHovered ? Color.blue : Color.clear, lineWidth: 2)
             )
-            .shadow(color: Color.black.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
+            .shadow(color: AppColors.textPrimary.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
@@ -150,7 +150,7 @@ struct MoodBoardSearchResultCard: View {
             
             // Overlay gradient for better text visibility
             LinearGradient(
-                colors: [Color.black.opacity(0.3), Color.clear],
+                colors: [AppColors.textPrimary.opacity(0.3), Color.clear],
                 startPoint: .bottom,
                 endPoint: .center
             )
@@ -174,11 +174,11 @@ struct MoodBoardSearchResultCard: View {
                             Text("+\(moodBoard.elements.count - 4)")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.white)
-                                .padding(8)
-                                .background(Color.black.opacity(0.6))
+                                .foregroundColor(AppColors.textPrimary)
+                                .padding(Spacing.sm)
+                                .background(AppColors.textPrimary.opacity(0.6))
                                 .cornerRadius(8)
-                                .padding(8)
+                                .padding(Spacing.sm)
                         }
                     }
                 }
@@ -223,7 +223,7 @@ struct MoodBoardSearchResultCard: View {
                     .font(.caption)
                     .lineLimit(2)
                     .frame(width: 60, height: 60)
-                    .background(Color.white.opacity(0.9))
+                    .background(AppColors.textPrimary.opacity(0.9))
                     .cornerRadius(8)
             )
         case .color:
@@ -249,11 +249,11 @@ struct MoodBoardSearchResultCard: View {
     
     private var elementPlaceholder: some View {
         RoundedRectangle(cornerRadius: 8)
-            .fill(Color.gray.opacity(0.3))
+            .fill(AppColors.textSecondary.opacity(0.3))
             .frame(width: 60, height: 60)
             .overlay(
                 Image(systemName: "photo")
-                    .foregroundColor(.gray)
+                    .foregroundColor(AppColors.textSecondary)
             )
     }
     
@@ -268,7 +268,7 @@ struct MoodBoardSearchResultCard: View {
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.gray.opacity(0.1))
+        .background(AppColors.textSecondary.opacity(0.1))
     }
 }
 

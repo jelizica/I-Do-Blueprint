@@ -343,18 +343,65 @@ final class GuestStoreV2Tests: XCTestCase {
             Guest.makeTest(coupleId: coupleId, firstName: "Bob", lastName: "Johnson")
         ]
         mockRepository.guests = guests
-
+        
         // When
         let store = await withDependencies {
             $0.guestRepository = mockRepository
         } operation: {
             GuestStoreV2()
         }
-
+        
         await store.loadGuestData()
         await store.searchGuests(query: "john")
-
+        
         // Then
         XCTAssertEqual(store.filteredGuests.count, 2) // John Doe and Bob Johnson
+    }
+    
+    func testFilterGuests_Combinations() async throws {
+        // Given
+        var g1 = Guest.makeTest(coupleId: coupleId, firstName: "Ava", rsvpStatus: .confirmed)
+        g1.invitedBy = .bride1
+        var g2 = Guest.makeTest(coupleId: coupleId, firstName: "Liam", rsvpStatus: .pending)
+        g2.invitedBy = .bride2
+        var g3 = Guest.makeTest(coupleId: coupleId, firstName: "Mia", rsvpStatus: .declined)
+        g3.invitedBy = .both
+        var g4 = Guest.makeTest(coupleId: coupleId, firstName: "Noah", lastName: "Johnson", rsvpStatus: .invited)
+        g4.invitedBy = .bride1
+        var g5 = Guest.makeTest(coupleId: coupleId, firstName: "Emma", rsvpStatus: .attending)
+        g5.invitedBy = .both
+        mockRepository.guests = [g1, g2, g3, g4, g5]
+        
+        // When
+        let store = await withDependencies {
+            $0.guestRepository = mockRepository
+        } operation: {
+            GuestStoreV2()
+        }
+        await store.loadGuestData()
+        
+        // Baseline: no filters
+        store.filterGuests(searchText: "", selectedStatus: nil, selectedInvitedBy: nil)
+        XCTAssertEqual(store.filteredGuests.count, 5)
+        
+        // RSVP only
+        store.filterGuests(searchText: "", selectedStatus: .confirmed, selectedInvitedBy: nil)
+        XCTAssertEqual(store.filteredGuests.count, 1)
+        XCTAssertEqual(store.filteredGuests.first?.firstName, "Ava")
+        
+        // InvitedBy only
+        store.filterGuests(searchText: "", selectedStatus: nil, selectedInvitedBy: .bride1)
+        XCTAssertEqual(store.filteredGuests.count, 2)
+        XCTAssertTrue(store.filteredGuests.allSatisfy { $0.invitedBy == .bride1 })
+        
+        // Both filters
+        store.filterGuests(searchText: "", selectedStatus: .attending, selectedInvitedBy: .both)
+        XCTAssertEqual(store.filteredGuests.count, 1)
+        XCTAssertEqual(store.filteredGuests.first?.firstName, "Emma")
+        
+        // Search + InvitedBy
+        store.filterGuests(searchText: "john", selectedStatus: nil, selectedInvitedBy: .bride1)
+        XCTAssertEqual(store.filteredGuests.count, 1) // Noah Johnson
+        XCTAssertEqual(store.filteredGuests.first?.firstName, "Noah")
     }
 }

@@ -36,8 +36,8 @@ struct AvailableGuestRow: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(8)
-        .background(Color.gray.opacity(0.05))
+        .padding(Spacing.sm)
+        .background(AppColors.textSecondary.opacity(0.05))
         .cornerRadius(8)
     }
 }

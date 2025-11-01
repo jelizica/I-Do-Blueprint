@@ -71,7 +71,7 @@ struct DocumentDetailView: View {
                     // Danger zone
                     dangerZone
                 }
-                .padding(20)
+                .padding(Spacing.xl)
             }
             .navigationTitle("Document Details")
             .toolbar {
@@ -302,7 +302,7 @@ struct DocumentDetailView: View {
                                 .font(.subheadline)
                             Spacer()
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, Spacing.xs)
 
                         if payment.id != availablePayments.last?.id {
                             Divider()

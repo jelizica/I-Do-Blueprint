@@ -108,7 +108,7 @@ struct GuestImportView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(8)
+            .padding(Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(Color(NSColor.controlBackgroundColor))
@@ -138,15 +138,15 @@ struct GuestImportView: View {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 10))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
                             .fill(filterByGroup != nil ? Color.blue.opacity(0.1) : Color(NSColor.controlBackgroundColor))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(filterByGroup != nil ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+                            .stroke(filterByGroup != nil ? Color.blue : AppColors.textSecondary.opacity(0.3), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -173,15 +173,15 @@ struct GuestImportView: View {
                         Image(systemName: "chevron.down")
                             .font(.system(size: 10))
                     }
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: 6)
                             .fill(filterByRelationship != nil ? Color.blue.opacity(0.1) : Color(NSColor.controlBackgroundColor))
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(filterByRelationship != nil ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+                            .stroke(filterByRelationship != nil ? Color.blue : AppColors.textSecondary.opacity(0.3), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -227,7 +227,7 @@ struct GuestImportView: View {
                 .foregroundColor(.blue)
             }
             .padding(.horizontal)
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
             .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
             
             // Guest list
@@ -248,7 +248,7 @@ struct GuestImportView: View {
                                 .foregroundColor(.secondary)
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 60)
+                        .padding(.vertical, Spacing.huge)
                     } else {
                         ForEach(filteredGuests) { guest in
                             GuestImportRow(
@@ -346,8 +346,8 @@ struct GuestImportRow: View {
                     HStack(spacing: 8) {
                         Text(guest.relationship.displayName)
                             .font(.caption)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(guest.relationship.color.opacity(0.2))
                             .foregroundColor(guest.relationship.color)
                             .cornerRadius(4)
@@ -362,14 +362,14 @@ struct GuestImportRow: View {
                 
                 Spacer()
             }
-            .padding(10)
+            .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isSelected ? Color.blue.opacity(0.05) : Color(NSColor.controlBackgroundColor))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : Color.gray.opacity(0.2), lineWidth: 1)
+                    .stroke(isSelected ? Color.blue : AppColors.textSecondary.opacity(0.2), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

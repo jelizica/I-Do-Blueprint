@@ -178,14 +178,14 @@ struct EditVendorSheetV2: View {
 
                         TextEditor(text: $notes)
                             .frame(minHeight: 100)
-                            .padding(8)
+                            .padding(Spacing.sm)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                                    .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 1)
                             )
                     }
                 }
-                .padding(24)
+                .padding(Spacing.xxl)
             }
 
             Divider()

@@ -157,8 +157,8 @@ struct PaymentManagementView: View {
                         .foregroundColor(.secondary)
                     TextField("Search payments...", text: $searchText)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(Color(NSColor.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
@@ -174,8 +174,8 @@ struct PaymentManagementView: View {
                         Text(selectedFilter.displayName)
                         Image(systemName: "chevron.down")
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(Color(NSColor.controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
@@ -191,8 +191,8 @@ struct PaymentManagementView: View {
                         Text("Sort")
                         Image(systemName: "arrow.up.arrow.down")
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(Color(NSColor.controlBackgroundColor))
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }

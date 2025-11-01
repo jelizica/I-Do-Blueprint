@@ -71,7 +71,7 @@ struct TasksSettingsView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, Spacing.xs)
                         }
                     } else {
                         Text("No custom responsible parties added")

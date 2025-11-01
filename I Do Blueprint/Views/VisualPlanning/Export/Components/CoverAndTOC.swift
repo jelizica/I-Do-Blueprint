@@ -67,7 +67,7 @@ struct CoverPageView: View {
 
             Spacer(minLength: 50)
         }
-        .padding(60)
+        .padding(Spacing.huge)
         .frame(width: 595, height: 842) // A4 size in points
         .background(branding.backgroundColor)
     }
@@ -112,7 +112,7 @@ struct TableOfContentsView: View {
 
             Spacer()
         }
-        .padding(60)
+        .padding(Spacing.huge)
         .frame(width: 595, height: 842)
         .background(branding.backgroundColor)
     }
@@ -140,7 +140,7 @@ struct ContentsItem: View {
                 path.addLine(to: CGPoint(x: 100, y: 10))
             }
             .stroke(style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
-            .foregroundColor(.gray)
+            .foregroundColor(AppColors.textSecondary)
             .frame(height: 20)
 
             Text("\(pageNumber)")

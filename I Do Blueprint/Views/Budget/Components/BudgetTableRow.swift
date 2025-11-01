@@ -145,8 +145,8 @@ struct BudgetTableRow: View {
                     .buttonStyle(.plain)
                     .menuStyle(.borderlessButton)
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.md)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -158,7 +158,7 @@ struct BudgetTableRow: View {
                         .font(.caption2)
                         .fontWeight(.semibold)
                         .foregroundColor(.secondary)
-                        .padding(.horizontal, 48)
+                        .padding(.horizontal, Spacing.huge)
 
                     VStack(spacing: 4) {
                         ForEach(item.expenses, id: \.id) { expense in
@@ -187,8 +187,8 @@ struct BudgetTableRow: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
+                            .padding(.horizontal, Spacing.lg)
+                            .padding(.vertical, Spacing.sm)
                             .background(AppColors.Budget.allocated.opacity(0.05))
                             .cornerRadius(6)
                         }
@@ -219,15 +219,15 @@ struct BudgetTableRow: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
+                            .padding(.horizontal, Spacing.lg)
+                            .padding(.vertical, Spacing.sm)
                             .background(AppColors.Budget.income.opacity(0.05))
                             .cornerRadius(6)
                         }
                     }
-                    .padding(.horizontal, 48)
+                    .padding(.horizontal, Spacing.huge)
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, Spacing.md)
                 .background(Color(NSColor.controlBackgroundColor).opacity(0.3))
             }
         }

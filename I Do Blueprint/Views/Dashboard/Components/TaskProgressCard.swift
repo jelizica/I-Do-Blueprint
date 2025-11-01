@@ -74,13 +74,13 @@ struct TaskProgressCard: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(Color.white.opacity(0.5))
+                    .fill(AppColors.textPrimary.opacity(0.5))
             )
         }
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(Color.white.opacity(0.6))
+                .fill(AppColors.textPrimary.opacity(0.6))
                 .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
         )
     }

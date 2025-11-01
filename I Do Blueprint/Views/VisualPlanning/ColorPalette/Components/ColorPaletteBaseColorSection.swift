@@ -44,7 +44,7 @@ struct ColorPaletteBaseColorSection: View {
                     }
                     .buttonStyle(.bordered)
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, Spacing.sm)
 
                 // Recent colors from mood boards
                 if !visualPlanningStore.moodBoards.isEmpty {
@@ -72,7 +72,7 @@ struct ColorPaletteBaseColorSection: View {
                 // Image extraction section
                 VStack(alignment: .leading, spacing: 10) {
                     Divider()
-                        .padding(.vertical, 4)
+                        .padding(.vertical, Spacing.xs)
 
                     Text("Extract from Image")
                         .font(.subheadline)
@@ -163,7 +163,7 @@ struct ColorPaletteBaseColorSection: View {
                                                             Circle()
                                                                 .stroke(
                                                                     selectedColor.hexString == extractedColor
-                                                                        .hexString ? Color.blue : Color.black
+                                                                        .hexString ? Color.blue : AppColors.textPrimary
                                                                         .opacity(0.1),
                                                                     lineWidth: selectedColor.hexString == extractedColor
                                                                         .hexString ? 2 : 1))
@@ -177,7 +177,7 @@ struct ColorPaletteBaseColorSection: View {
                                                 }
                                             }
                                         }
-                                        .padding(.horizontal, 4)
+                                        .padding(.horizontal, Spacing.xs)
                                     }
 
                                     Button("Apply All to Palette") {
@@ -187,7 +187,7 @@ struct ColorPaletteBaseColorSection: View {
                                     .controlSize(.small)
                                     .frame(maxWidth: .infinity)
                                 }
-                                .padding(8)
+                                .padding(Spacing.sm)
                                 .background(Color.blue.opacity(0.05))
                                 .cornerRadius(6)
                             }
@@ -200,7 +200,7 @@ struct ColorPaletteBaseColorSection: View {
                 }
                 .buttonStyle(.borderedProminent)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, Spacing.xs)
         }
         .sheet(isPresented: $showingColorPicker) {
             ColorPickerSheet(selectedColor: $selectedColor)

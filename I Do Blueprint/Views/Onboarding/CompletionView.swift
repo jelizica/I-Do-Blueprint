@@ -135,7 +135,7 @@ struct CompletionView: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 16, weight: .semibold))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .frame(maxWidth: 400)
                 .padding(.vertical, Spacing.lg)
                 .background(AppColors.primary)

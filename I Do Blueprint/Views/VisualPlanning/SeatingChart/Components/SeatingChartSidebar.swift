@@ -70,7 +70,7 @@ struct SeatingChartSidebar: View {
                 }
             }
         }
-        .padding(12)
+        .padding(Spacing.md)
     }
     
     private func getTabCount(for tab: EditorTab) -> Int? {
@@ -106,14 +106,14 @@ struct SeatingChartSidebar: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .padding(16)
+                .padding(Spacing.lg)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(NSColor.controlBackgroundColor))
                         .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.15), lineWidth: 1))
+                        .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
 
                 // Venue elements card
                 VStack(alignment: .leading, spacing: 12) {
@@ -139,14 +139,14 @@ struct SeatingChartSidebar: View {
                         }
                     }
                 }
-                .padding(16)
+                .padding(Spacing.lg)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(NSColor.controlBackgroundColor))
                         .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.15), lineWidth: 1))
+                        .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
 
                 // Grid settings card
                 VStack(alignment: .leading, spacing: 12) {
@@ -171,14 +171,14 @@ struct SeatingChartSidebar: View {
                         }
                     }
                 }
-                .padding(16)
+                .padding(Spacing.lg)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(NSColor.controlBackgroundColor))
                         .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.gray.opacity(0.15), lineWidth: 1))
+                        .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
             }
             .padding()
         }

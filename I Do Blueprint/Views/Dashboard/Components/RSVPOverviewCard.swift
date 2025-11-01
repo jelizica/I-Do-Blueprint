@@ -106,7 +106,7 @@ struct RSVPOverviewCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(Color.white.opacity(0.6))
+                .fill(AppColors.textPrimary.opacity(0.6))
                 .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
         )
     }

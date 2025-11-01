@@ -109,8 +109,8 @@ struct EditGiftOrOwedModal: View {
 
                     Text(editedGift.status.displayName)
                         .font(.caption)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(editedGift.status.color.opacity(0.2))
                         .foregroundColor(editedGift.status.color)
                         .clipShape(Capsule())

@@ -71,7 +71,7 @@ struct VendorCard: View {
                     
                     Image(systemName: vendorIcon)
                         .font(.system(size: 20))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                 }
                 
                 Spacer()
@@ -111,7 +111,7 @@ struct VendorCard: View {
         .frame(height: 160)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(Color.white.opacity(0.6))
+                .fill(AppColors.textPrimary.opacity(0.6))
                 .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
         )
     }

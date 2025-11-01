@@ -140,11 +140,11 @@ struct ModernSeatingChartSidebar: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(8)
+        .padding(Spacing.sm)
         .background(Color(NSColor.textBackgroundColor))
         .cornerRadius(8)
         .padding(.horizontal)
-        .padding(.bottom, 8)
+        .padding(.bottom, Spacing.sm)
     }
 
     // MARK: - Tab Selector
@@ -166,7 +166,7 @@ struct ModernSeatingChartSidebar: View {
                             .frame(height: 2)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Spacing.sm)
                 }
                 .buttonStyle(.plain)
             }
@@ -223,7 +223,7 @@ struct ModernSeatingChartSidebar: View {
 
                     if expandedTableIds.contains(table.id) {
                         tableGuestsList(for: table)
-                            .padding(.leading, 20)
+                            .padding(.leading, Spacing.xl)
                     }
                 }
             }
@@ -293,7 +293,7 @@ struct ModernSeatingChartSidebar: View {
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 40)
+        .padding(.vertical, Spacing.huge)
     }
 
     private func tableGuestsList(for table: Table) -> some View {
@@ -317,7 +317,7 @@ struct ModernSeatingChartSidebar: View {
                                 .foregroundColor(.secondary)
                         }
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, Spacing.xxs)
                 }
             }
         }
@@ -387,8 +387,8 @@ struct GroupSection<Content: View>: View {
                 Text("\(count)")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xxs)
                     .background(Color.secondary.opacity(0.2))
                     .cornerRadius(4)
 
@@ -431,7 +431,7 @@ struct UnassignedGuestRowV2: View {
                     .foregroundColor(.yellow)
             }
         }
-        .padding(8)
+        .padding(Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(8)
     }
@@ -485,7 +485,7 @@ struct TableRowV2: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(12)
+                .padding(Spacing.md)
                 .background(isSelected ? Color.seatingAccentTeal.opacity(0.1) : Color(NSColor.controlBackgroundColor))
                 .cornerRadius(8)
             }
@@ -542,7 +542,7 @@ struct AssignedGuestRowV2: View {
                     .foregroundColor(.yellow)
             }
         }
-        .padding(8)
+        .padding(Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(8)
     }

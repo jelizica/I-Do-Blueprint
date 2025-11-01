@@ -56,7 +56,7 @@ struct GiftsContributionsSection: View {
                     }
                 }
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .background(Color.blue.opacity(0.05))
             .clipShape(RoundedRectangle(cornerRadius: 8))
 
@@ -68,7 +68,7 @@ struct GiftsContributionsSection: View {
                         Text("Add New")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.bordered)
 
@@ -78,7 +78,7 @@ struct GiftsContributionsSection: View {
                         Text("Link Existing")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 10)
+                    .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.bordered)
             }
@@ -96,7 +96,7 @@ struct GiftsContributionsSection: View {
                 }
             }
         }
-        .padding(20)
+        .padding(Spacing.xl)
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }

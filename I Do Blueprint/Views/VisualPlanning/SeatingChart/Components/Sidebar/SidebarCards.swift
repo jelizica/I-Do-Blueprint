@@ -27,10 +27,10 @@ struct SectionCard<Content: View>: View {
 
             content
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
+                .fill(AppColors.textPrimary)
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
@@ -66,10 +66,10 @@ struct AssignmentProgressCard: View {
                 .font(.seatingCaption)
                 .foregroundColor(.secondary)
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white)
+                .fill(AppColors.textPrimary)
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
@@ -106,7 +106,7 @@ struct StatCard: View {
 
             Spacer()
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(color.opacity(0.1))
@@ -130,7 +130,7 @@ struct ConflictCard: View {
 
             Spacer()
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color.seatingError.opacity(0.1))

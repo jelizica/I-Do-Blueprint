@@ -27,12 +27,12 @@ struct NavigationBarV2: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 50)
                 .fill(Color(NSColor.windowBackgroundColor))
-                .shadow(color: Color.black.opacity(0.1), radius: 10, x: 0, y: 4)
+                .shadow(color: AppColors.textPrimary.opacity(0.1), radius: 10, x: 0, y: 4)
         )
     }
 }
@@ -68,11 +68,11 @@ struct NavigationPill: View {
                 }
             }
             .padding(.horizontal, isSelected ? 16 : 0)
-            .padding(.vertical, 8)
+            .padding(.vertical, Spacing.sm)
             .background(
                 Capsule()
                     .fill(isSelected ? Color(NSColor.controlBackgroundColor) : Color.clear)
-                    .shadow(color: isSelected ? Color.black.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+                    .shadow(color: isSelected ? AppColors.textPrimary.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
             )
             .scaleEffect(isHovered && !isSelected ? 1.05 : 1.0)
         }

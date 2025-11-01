@@ -135,7 +135,7 @@ struct RoleSelectionRow: View {
                         .foregroundColor(AppColors.primary)
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, Spacing.xs)
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .combine)
@@ -154,8 +154,8 @@ struct PermissionBadge: View {
         Text(text)
             .font(.caption2)
             .foregroundColor(color)
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xxs)
             .background(color.opacity(0.1))
             .cornerRadius(4)
     }

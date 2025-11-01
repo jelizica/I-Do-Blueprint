@@ -53,7 +53,7 @@ struct TimelineDetailedView: View {
             .padding(Spacing.xl)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(Color.white.opacity(0.6))
+                    .fill(AppColors.textPrimary.opacity(0.6))
                     .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
             )
         }
@@ -111,7 +111,7 @@ struct DashboardTimelineItemRow: View {
         .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(Color.white.opacity(0.5))
+                .fill(AppColors.textPrimary.opacity(0.5))
                 .overlay(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
                         .stroke(item.completed ? AppColors.success.opacity(0.3) : AppColors.borderLight, lineWidth: 1)

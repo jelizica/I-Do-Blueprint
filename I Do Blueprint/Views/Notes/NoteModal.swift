@@ -213,18 +213,18 @@ struct NoteModal: View {
                         .fill(Color(NSColor.textBackgroundColor)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1))
+                        .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
             } else {
                 TextEditor(text: $content)
                     .font(.body)
                     .frame(minHeight: 250)
-                    .padding(8)
+                    .padding(Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color(NSColor.textBackgroundColor)))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.gray.opacity(0.2), lineWidth: 1))
+                            .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
                     .onChange(of: content) { _, newValue in
                         if newValue.count > characterLimit {
                             content = String(newValue.prefix(characterLimit))
@@ -288,8 +288,8 @@ struct NoteModal: View {
 
             Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
+        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal, Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.controlBackgroundColor).opacity(0.5)))

@@ -20,9 +20,9 @@ struct AffordabilityAddContributionSheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text(contribution == nil ? "Add New Contribution" : "Edit Contribution")
                     .font(.system(size: 28, weight: .bold))
-                    .padding(.horizontal, 32)
-                    .padding(.top, 32)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, Spacing.xxxl)
+                    .padding(.top, Spacing.xxxl)
+                    .padding(.bottom, Spacing.xxl)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -38,7 +38,7 @@ struct AffordabilityAddContributionSheet: View {
 
                             TextField("John Doe", text: $name)
                                 .textFieldStyle(.plain)
-                                .padding(12)
+                                .padding(Spacing.md)
                                 .background(Color(NSColor.controlBackgroundColor))
                                 .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
@@ -57,7 +57,7 @@ struct AffordabilityAddContributionSheet: View {
                                 TextField("0", text: $amount)
                                     .textFieldStyle(.plain)
                             }
-                            .padding(12)
+                            .padding(Spacing.md)
                             .background(Color(NSColor.controlBackgroundColor))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
@@ -79,7 +79,7 @@ struct AffordabilityAddContributionSheet: View {
                                     .datePickerStyle(.compact)
                                     .labelsHidden()
                             }
-                            .padding(12)
+                            .padding(Spacing.md)
                             .background(Color(NSColor.controlBackgroundColor))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
@@ -95,7 +95,7 @@ struct AffordabilityAddContributionSheet: View {
                                 Text("External").tag(ContributionType.external)
                             }
                             .pickerStyle(.menu)
-                            .padding(12)
+                            .padding(Spacing.md)
                             .background(Color(NSColor.controlBackgroundColor))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         }
@@ -111,7 +111,7 @@ struct AffordabilityAddContributionSheet: View {
                         TextEditor(text: $notes)
                             .font(.system(size: 13))
                             .frame(height: 120)
-                            .padding(8)
+                            .padding(Spacing.sm)
                             .background(Color(NSColor.controlBackgroundColor))
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                             .overlay(
@@ -120,16 +120,16 @@ struct AffordabilityAddContributionSheet: View {
                                         Text("Add any notes about this contribution...")
                                             .font(.system(size: 13))
                                             .foregroundStyle(.secondary)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 16)
+                                            .padding(.horizontal, Spacing.md)
+                                            .padding(.vertical, Spacing.lg)
                                             .allowsHitTesting(false)
                                     }
                                 },
                                 alignment: .topLeading)
                     }
                 }
-                .padding(.horizontal, 32)
-                .padding(.bottom, 24)
+                .padding(.horizontal, Spacing.xxxl)
+                .padding(.bottom, Spacing.xxl)
             }
 
             // Footer with buttons
@@ -141,7 +141,7 @@ struct AffordabilityAddContributionSheet: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.primary)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.plain)
                 .background(Color(NSColor.controlBackgroundColor))
@@ -173,7 +173,7 @@ struct AffordabilityAddContributionSheet: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
+                        .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.plain)
                 .background(
@@ -183,8 +183,8 @@ struct AffordabilityAddContributionSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .disabled(name.isEmpty || amount.isEmpty)
             }
-            .padding(.horizontal, 32)
-            .padding(.vertical, 20)
+            .padding(.horizontal, Spacing.xxxl)
+            .padding(.vertical, Spacing.xl)
             .background(Color(NSColor.windowBackgroundColor))
         }
         .frame(width: 700, height: 550)

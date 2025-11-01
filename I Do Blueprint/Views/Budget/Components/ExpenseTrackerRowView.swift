@@ -65,8 +65,8 @@ struct ExpenseTrackerRowView: View {
                 
                 Text(expense.paymentStatus.displayName)
                     .font(.caption)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xxs)
                     .background(expense.paymentStatus == .paid ? AppColors.Budget.income.opacity(0.2) : AppColors.Budget.pending.opacity(0.2))
                     .foregroundColor(expense.paymentStatus == .paid ? AppColors.Budget.income : AppColors.Budget.pending)
                     .cornerRadius(4)

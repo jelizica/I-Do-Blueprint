@@ -66,7 +66,7 @@ struct ConflictBadge: View {
                     .foregroundColor(.secondary)
                     .opacity(isHovering ? 1.0 : 0.5)
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 12)

@@ -187,7 +187,7 @@ struct CategoryIcons {
                 }
             }
             .padding(.horizontal, showLabel ? 8 : 6)
-            .padding(.vertical, 4)
+            .padding(.vertical, Spacing.xs)
             .background(CategoryIcons.color(for: category).opacity(0.1))
             .cornerRadius(8)
         }

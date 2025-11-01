@@ -197,7 +197,7 @@ struct CollaboratorRow: View {
                     .foregroundColor(AppColors.textTertiary)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(collaborator.name), \(role?.roleName.displayName ?? ""), \(isPending ? "pending invitation" : "active")")
     }

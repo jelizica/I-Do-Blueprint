@@ -76,7 +76,7 @@ struct TimelineMilestonesCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(Color.white.opacity(0.6))
+                .fill(AppColors.textPrimary.opacity(0.6))
                 .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
         )
     }
@@ -94,7 +94,7 @@ struct TimelineMilestoneRow: View {
             VStack(spacing: 0) {
                 ZStack {
                     Circle()
-                        .fill(Color.white)
+                        .fill(AppColors.textPrimary)
                         .frame(width: 40, height: 40)
                         .shadow(color: AppColors.shadowLight, radius: 4)
                     
@@ -162,7 +162,7 @@ struct TimelineMilestoneRow: View {
                                 .padding(.vertical, Spacing.xxs)
                                 .background(
                                     RoundedRectangle(cornerRadius: CornerRadius.sm)
-                                        .fill(Color.white.opacity(0.5))
+                                        .fill(AppColors.textPrimary.opacity(0.5))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: CornerRadius.sm)
                                                 .stroke(AppColors.borderLight, lineWidth: 1)

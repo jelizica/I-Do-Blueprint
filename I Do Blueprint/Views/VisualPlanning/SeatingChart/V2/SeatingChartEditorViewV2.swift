@@ -112,9 +112,9 @@ struct SeatingChartEditorViewV2: View {
 
                     Text("V2")
                         .font(.caption.bold())
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .foregroundColor(AppColors.textPrimary)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(Color.seatingAccentTeal)
                         .cornerRadius(4)
                 }

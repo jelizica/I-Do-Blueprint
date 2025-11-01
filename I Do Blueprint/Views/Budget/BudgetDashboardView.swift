@@ -276,7 +276,7 @@ struct RecentActivityDashboard: View {
                                 .foregroundColor(activity.type.color)
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Spacing.sm)
                 }
             }
         }

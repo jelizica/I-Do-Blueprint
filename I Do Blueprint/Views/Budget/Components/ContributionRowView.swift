@@ -47,7 +47,7 @@ struct ContributionRowView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }

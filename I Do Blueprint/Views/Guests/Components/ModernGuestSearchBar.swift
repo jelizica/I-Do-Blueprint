@@ -154,7 +154,7 @@ struct ModernSearchBar: View {
                             Text("\(filteredCount) of \(totalCount) guests")
                                 .font(.caption)
                                 .foregroundColor(AppColors.textSecondary)
-                                .padding(.leading, 4)
+                                .padding(.leading, Spacing.xs)
                         }
 
                         Spacer()

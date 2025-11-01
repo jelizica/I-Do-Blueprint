@@ -27,7 +27,7 @@ struct AdditionalPaymentOptions: View {
                 }
             }
             .padding()
-            .background(Color.gray.opacity(0.1))
+            .background(AppColors.textSecondary.opacity(0.1))
             .cornerRadius(12)
         }
     }

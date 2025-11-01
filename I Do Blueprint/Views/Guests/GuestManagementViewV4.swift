@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import Dependencies
 
 struct GuestManagementViewV4: View {
     @Environment(\.appStores) private var appStores
@@ -16,7 +17,6 @@ struct GuestManagementViewV4: View {
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
-    @State private var showingFilters = false
     @State private var showingImportSheet = false
     
     private var settings: CoupleSettings {
@@ -57,29 +57,6 @@ struct GuestManagementViewV4: View {
         return settings.global.weddingDate
     }
     
-    private var filteredGuests: [Guest] {
-        var guests = guestStore.guests
-        
-        // Apply search filter
-        if !searchText.isEmpty {
-            guests = guests.filter { guest in
-                guest.fullName.localizedCaseInsensitiveContains(searchText) ||
-                guest.email?.localizedCaseInsensitiveContains(searchText) == true
-            }
-        }
-        
-        // Apply status filter
-        if let status = selectedStatus {
-            guests = guests.filter { $0.rsvpStatus == status }
-        }
-        
-        // Apply invited by filter
-        if let invitedBy = selectedInvitedBy {
-            guests = guests.filter { $0.invitedBy == invitedBy }
-        }
-        
-        return guests
-    }
     
     private var totalGuests: Int {
         guestStore.guests.count
@@ -110,15 +87,15 @@ struct GuestManagementViewV4: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.98, green: 0.98, blue: 0.99)
+            AppColors.backgroundSecondary
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Sticky Header Section
                 headerSection
-                    .padding(.horizontal, 40)
-                    .padding(.top, 32)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, Spacing.huge)
+                    .padding(.top, Spacing.xxxl)
+                    .padding(.bottom, Spacing.xxl)
                 
                 // Scrollable Content Section
                 ScrollView {
@@ -132,8 +109,8 @@ struct GuestManagementViewV4: View {
                         // Guest List
                         guestListSection
                     }
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 40)
+                    .padding(.horizontal, Spacing.huge)
+                    .padding(.bottom, Spacing.huge)
                 }
             }
         }
@@ -147,6 +124,47 @@ struct GuestManagementViewV4: View {
                 await guestStore.loadGuestData()
             }
         }
+        .onChange(of: searchText) { newValue in
+            guestStore.filterGuests(
+                searchText: newValue,
+                selectedStatus: selectedStatus,
+                selectedInvitedBy: selectedInvitedBy
+            )
+        }
+        .onChange(of: selectedStatus) { _ in
+            guestStore.filterGuests(
+                searchText: searchText,
+                selectedStatus: selectedStatus,
+                selectedInvitedBy: selectedInvitedBy
+            )
+        }
+        .onChange(of: selectedInvitedBy) { _ in
+            guestStore.filterGuests(
+                searchText: searchText,
+                selectedStatus: selectedStatus,
+                selectedInvitedBy: selectedInvitedBy
+            )
+        }
+        .searchable(text: $searchText, placement: .automatic)
+        .toolbar {
+            ToolbarItemGroup {
+                Picker("RSVP", selection: $selectedStatus) {
+                    Text("Any").tag(RSVPStatus?.none)
+                    ForEach(RSVPStatus.allCases, id: \.self) { status in
+                        Text(status.displayName).tag(RSVPStatus?.some(status))
+                    }
+                }
+                .pickerStyle(.menu)
+
+                Picker("Invited By", selection: $selectedInvitedBy) {
+                    Text("Any").tag(InvitedBy?.none)
+                    ForEach(InvitedBy.allCases, id: \.self) { who in
+                        Text(who.displayName(with: settings)).tag(InvitedBy?.some(who))
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+        }
     }
     
     // MARK: - Header Section
@@ -156,12 +174,12 @@ struct GuestManagementViewV4: View {
             // Title and Description
             VStack(alignment: .leading, spacing: 8) {
                 Text("Guest Management")
-                    .font(.custom("Roboto", size: 30).weight(.bold))
-                    .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                    .font(Typography.displaySmall)
+                    .foregroundColor(AppColors.textPrimary)
                 
                 Text("Manage and track all your guests in one place")
-                    .font(.custom("Roboto", size: 16))
-                    .foregroundColor(Color(red: 0.29, green: 0.33, blue: 0.39))
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textSecondary)
             }
             
             Spacer()
@@ -176,16 +194,16 @@ struct GuestManagementViewV4: View {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 14))
                         Text("Import")
-                            .font(.custom("Roboto", size: 15.45))
+                            .font(Typography.bodyRegular)
                     }
-                    .foregroundColor(Color(red: 0.22, green: 0.25, blue: 0.32))
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(height: 42)
-                    .padding(.horizontal, 16)
-                    .background(.white)
+                    .padding(.horizontal, Spacing.lg)
+                    .background(AppColors.cardBackground)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(red: 0.82, green: 0.84, blue: 0.86), lineWidth: 0.5)
+                            .stroke(AppColors.borderLight, lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -198,16 +216,16 @@ struct GuestManagementViewV4: View {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 14))
                         Text("Export")
-                            .font(.custom("Roboto", size: 16))
+                            .font(Typography.bodyRegular)
                     }
-                    .foregroundColor(Color(red: 0.22, green: 0.25, blue: 0.32))
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(height: 42)
-                    .padding(.horizontal, 16)
-                    .background(.white)
+                    .padding(.horizontal, Spacing.lg)
+                    .background(AppColors.cardBackground)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(red: 0.82, green: 0.84, blue: 0.86), lineWidth: 0.5)
+                            .stroke(AppColors.borderLight, lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -220,12 +238,12 @@ struct GuestManagementViewV4: View {
                         Image(systemName: "plus")
                             .font(.system(size: 14, weight: .semibold))
                         Text("Add Guest")
-                            .font(.custom("Roboto", size: 16))
+                            .font(Typography.bodyRegular)
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(height: 42)
-                    .padding(.horizontal, 20)
-                    .background(Color(red: 0.15, green: 0.39, blue: 0.92))
+                    .padding(.horizontal, Spacing.xl)
+                    .background(AppColors.primary)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -275,138 +293,39 @@ struct GuestManagementViewV4: View {
     // MARK: - Search and Filters Section
     
     private var searchAndFiltersSection: some View {
-        VStack(spacing: Spacing.lg) {
-            HStack(spacing: Spacing.md) {
-                // Search Field
+        // Inline search UI removed in favor of native .searchable & toolbar pickers
+        Group {
+            if selectedStatus != nil || selectedInvitedBy != nil {
                 HStack(spacing: Spacing.sm) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(AppColors.textTertiary)
-                    
-                    TextField("Search guests...", text: $searchText)
-                        .textFieldStyle(.plain)
-                        .font(Typography.bodyRegular)
-                }
-                .padding(Spacing.md)
-                .background(.white)
-                .cornerRadius(CornerRadius.md)
-                .overlay(
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .stroke(AppColors.borderLight, lineWidth: 1)
-                )
-                
-                // Status Filter
-                if let status = selectedStatus {
-                    GuestFilterChip(
-                        title: status.displayName,
-                        onRemove: { selectedStatus = nil }
-                    )
-                }
-                
-                // Invited By Filter
-                if let invitedBy = selectedInvitedBy {
-                    GuestFilterChip(
-                        title: invitedBy.displayName(with: settings),
-                        onRemove: { selectedInvitedBy = nil }
-                    )
-                }
-                
-                Spacer()
-                
-                // More Filters Button
-                Button {
-                    showingFilters.toggle()
-                } label: {
-                    HStack(spacing: Spacing.sm) {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                        Text("More Filters")
-                            .font(Typography.bodyRegular)
+                    if let status = selectedStatus {
+                        GuestFilterChip(
+                            title: status.displayName,
+                            onRemove: { selectedStatus = nil }
+                        )
                     }
-                    .foregroundColor(AppColors.textSecondary)
-                    .padding(.horizontal, Spacing.lg)
-                    .padding(.vertical, Spacing.md)
-                }
-                .buttonStyle(.plain)
-                
-                // Send Invites Button
-                Button {
-                    // Send invites functionality
-                } label: {
-                    HStack(spacing: Spacing.sm) {
-                        Image(systemName: "envelope.fill")
-                        Text("Send Invites")
-                            .font(Typography.bodyRegular)
+                    if let invitedBy = selectedInvitedBy {
+                        GuestFilterChip(
+                            title: invitedBy.displayName(with: settings),
+                            onRemove: { selectedInvitedBy = nil }
+                        )
                     }
-                    .foregroundColor(.white)
-                    .padding(.horizontal, Spacing.lg)
-                    .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
-                    .cornerRadius(CornerRadius.md)
-                }
-                .buttonStyle(.plain)
-            }
-            
-            // Filter Options (when expanded)
-            if showingFilters {
-                filterOptionsView
-            }
-        }
-        .padding(Spacing.lg)
-        .background(.white)
-        .cornerRadius(CornerRadius.lg)
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-    }
-    
-    private var filterOptionsView: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            Text("Filter by Status")
-                .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.sm) {
-                    ForEach(RSVPStatus.allCases, id: \.self) { status in
-                        Button {
-                            selectedStatus = selectedStatus == status ? nil : status
-                        } label: {
-                            Text(status.displayName)
-                                .font(Typography.caption)
-                                .foregroundColor(selectedStatus == status ? .white : AppColors.textSecondary)
-                                .padding(.horizontal, Spacing.md)
-                                .padding(.vertical, Spacing.sm)
-                                .background(selectedStatus == status ? AppColors.primary : AppColors.cardBackground)
-                                .cornerRadius(CornerRadius.pill)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                }
-            }
-            
-            Text("Filter by Invited By")
-                .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
-                .padding(.top, Spacing.sm)
-            
-            HStack(spacing: Spacing.sm) {
-                ForEach(InvitedBy.allCases, id: \.self) { invitedBy in
-                    Button {
-                        selectedInvitedBy = selectedInvitedBy == invitedBy ? nil : invitedBy
-                    } label: {
-                        Text(invitedBy.displayName(with: settings))
-                            .font(Typography.caption)
-                            .foregroundColor(selectedInvitedBy == invitedBy ? .white : AppColors.textSecondary)
-                            .padding(.horizontal, Spacing.md)
-                            .padding(.vertical, Spacing.sm)
-                            .background(selectedInvitedBy == invitedBy ? AppColors.primary : AppColors.cardBackground)
-                            .cornerRadius(CornerRadius.pill)
+                    Spacer()
+                    Button("Clear Filters") {
+                        selectedStatus = nil
+                        selectedInvitedBy = nil
                     }
                     .buttonStyle(.plain)
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textSecondary)
                 }
+                .padding(Spacing.lg)
+                .background(AppColors.cardBackground)
+                .cornerRadius(CornerRadius.lg)
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
             }
         }
-        .padding(Spacing.md)
-        .background(AppColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.md)
     }
+    
     
     // MARK: - Guest List Section
     
@@ -421,7 +340,7 @@ struct GuestManagementViewV4: View {
                         await guestStore.retryLoad()
                     }
                 }
-            } else if filteredGuests.isEmpty {
+            } else if guestStore.filteredGuests.isEmpty {
                 emptyStateView
             } else {
                 LazyVGrid(columns: [
@@ -430,7 +349,7 @@ struct GuestManagementViewV4: View {
                     GridItem(.flexible(), spacing: Spacing.lg),
                     GridItem(.flexible(), spacing: Spacing.lg)
                 ], spacing: Spacing.lg) {
-                    ForEach(filteredGuests, id: \.id) { guest in
+                    ForEach(guestStore.filteredGuests, id: \.id) { guest in
                         GuestCardV4(guest: guest, settings: settings)
                             .onTapGesture {
                                 coordinator.present(.editGuest(guest))
@@ -460,7 +379,7 @@ struct GuestManagementViewV4: View {
             } label: {
                 Text("Add Guest")
                     .font(Typography.heading)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .padding(.horizontal, Spacing.xl)
                     .padding(.vertical, Spacing.md)
                     .background(AppColors.primary)
@@ -470,7 +389,7 @@ struct GuestManagementViewV4: View {
         }
         .frame(maxWidth: .infinity, minHeight: 300)
         .padding(Spacing.xl)
-        .background(.white)
+        .background(AppColors.cardBackground)
         .cornerRadius(CornerRadius.lg)
     }
     
@@ -480,7 +399,7 @@ struct GuestManagementViewV4: View {
         } label: {
             Text("Load More Guests")
                 .font(Typography.bodyRegular)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.md)
                 .background(AppColors.textSecondary)
@@ -534,7 +453,7 @@ private struct GuestManagementStatCard: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.white)
+        .background(AppColors.cardBackground)
         .cornerRadius(CornerRadius.lg)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
@@ -559,12 +478,12 @@ struct GuestCardV4: View {
                             .clipShape(Circle())
                     } else {
                         Circle()
-                            .fill(Color(red: 0.90, green: 0.91, blue: 0.92))
+                            .fill(AppColors.cardBackground)
                             .frame(width: 48, height: 48)
                             .overlay(
                                 Text(guest.firstName.prefix(1) + guest.lastName.prefix(1))
                                     .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(Color(red: 0.60, green: 0.62, blue: 0.65))
+                                    .foregroundColor(AppColors.textSecondary)
                             )
                     }
                 }
@@ -573,41 +492,41 @@ struct GuestCardV4: View {
                 }
                 .accessibilityLabel("Avatar for \(guest.fullName)")
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 24)
-                .padding(.leading, 24)
+                .padding(.top, Spacing.xxl)
+                .padding(.leading, Spacing.xxl)
                 
                 // Status Badge
                 statusBadge
-                    .padding(.top, 24)
-                    .padding(.trailing, 24)
+                    .padding(.top, Spacing.xxl)
+                    .padding(.trailing, Spacing.xxl)
             }
             .frame(height: 72)
             
             // Guest Name
-            Text(guest.fullName)
-                .font(.custom("Roboto", size: 18).weight(.semibold))
-                .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+Text(guest.fullName)
+                .font(Typography.heading)
+                .foregroundColor(AppColors.textPrimary)
                 .lineLimit(1)
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
+                .padding(.horizontal, Spacing.xxl)
+                .padding(.top, Spacing.sm)
             
             // Email
             if let email = guest.email, !email.isEmpty {
-                Text(email)
-                    .font(.custom("Roboto", size: 13.78))
-                    .foregroundColor(Color(red: 0.29, green: 0.33, blue: 0.39))
+            Text(email)
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.textSecondary)
                     .lineLimit(1)
-                    .padding(.horizontal, 24)
-                    .padding(.top, 4)
+                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.top, Spacing.xs)
             }
             
             // Invited By
             if let invitedBy = guest.invitedBy {
                 Text(invitedBy.displayName(with: settings))
-                    .font(.custom("Roboto", size: 12))
-                    .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
-                    .padding(.horizontal, 24)
-                    .padding(.top, 8)
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.top, Spacing.sm)
             }
             
             Spacer()
@@ -615,59 +534,59 @@ struct GuestCardV4: View {
             // Table and Meal Section
             VStack(spacing: 0) {
                 Divider()
-                    .background(Color(red: 0.95, green: 0.96, blue: 0.96))
+                    .background(AppColors.borderLight)
                 
                 HStack {
                     Text("Table")
-                        .font(.custom("Roboto", size: 13.90))
-                        .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()
                     
                     if let table = guest.tableAssignment {
                         Text("\(table)")
-                            .font(.custom("Roboto", size: 13.90))
-                            .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textPrimary)
                     } else {
                         Text("-")
-                            .font(.custom("Roboto", size: 13.90))
-                            .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.xxl)
+                .padding(.vertical, Spacing.sm)
                 
                 Divider()
-                    .background(Color(red: 0.95, green: 0.96, blue: 0.96))
+                    .background(AppColors.borderLight)
                 
                 HStack {
                     Text("Meal Choice")
-                        .font(.custom("Roboto", size: 13.90))
-                        .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()
                     
                     if let mealOption = guest.mealOption, !mealOption.isEmpty {
                         Text(mealOption)
-                            .font(.custom("Roboto", size: 13.90))
-                            .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textPrimary)
                             .lineLimit(1)
                     } else {
                         Text("Not selected")
-                            .font(.custom("Roboto", size: 13.90))
-                            .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textSecondary)
                     }
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.xxl)
+                .padding(.vertical, Spacing.sm)
             }
         }
         .frame(width: 290, height: 243)
-        .background(.white)
+        .background(AppColors.cardBackground)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(red: 0.90, green: 0.91, blue: 0.92), lineWidth: 0.5)
+                .stroke(AppColors.borderLight, lineWidth: 0.5)
         )
         .accessibleListItem(
             label: guest.fullName,
@@ -681,35 +600,35 @@ struct GuestCardV4: View {
             switch guest.rsvpStatus {
             case .confirmed, .attending:
                 Text("Confirmed")
-                    .font(.custom("Roboto", size: 12).weight(.medium))
-                    .foregroundColor(Color(red: 0.09, green: 0.40, blue: 0.20))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color(red: 0.86, green: 0.99, blue: 0.91))
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.success)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.successLight)
                     .cornerRadius(9999)
             case .pending, .invited:
                 Text("Pending")
-                    .font(.custom("Roboto", size: 12).weight(.medium))
-                    .foregroundColor(Color(red: 0.57, green: 0.25, blue: 0.05))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color(red: 1, green: 0.95, blue: 0.78))
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.warning)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.warningLight)
                     .cornerRadius(9999)
             case .declined:
                 Text("Declined")
-                    .font(.custom("Roboto", size: 12).weight(.medium))
-                    .foregroundColor(Color(red: 0.60, green: 0.11, blue: 0.11))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color(red: 1, green: 0.89, blue: 0.89))
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.error)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.errorLight)
                     .cornerRadius(9999)
             default:
                 Text(guest.rsvpStatus.displayName)
-                    .font(.custom("Roboto", size: 12).weight(.medium))
-                    .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color(red: 0.95, green: 0.96, blue: 0.96))
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.cardBackground)
                     .cornerRadius(9999)
             }
         }
@@ -777,7 +696,7 @@ struct ErrorView: View {
             Button(action: retry) {
                 Text("Try Again")
                     .font(Typography.heading)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .padding(.horizontal, Spacing.xl)
                     .padding(.vertical, Spacing.md)
                     .background(AppColors.primary)
@@ -787,14 +706,92 @@ struct ErrorView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 300)
         .padding(Spacing.xl)
-        .background(.white)
+        .background(AppColors.cardBackground)
         .cornerRadius(CornerRadius.lg)
     }
 }
 
-#Preview {
-    GuestManagementViewV4()
-        .environmentObject(AppStores.shared)
-        .environmentObject(SettingsStoreV2())
-        .environmentObject(AppCoordinator.shared)
+#Preview("Light 900x700") {
+    withDependencies {
+        let mock = MockGuestRepository()
+        mock.guests = PreviewData.sampleGuests
+        $0.guestRepository = mock
+    } operation: {
+        GuestManagementViewV4()
+            .environmentObject(AppStores.shared)
+            .environmentObject(SettingsStoreV2())
+            .environmentObject(AppCoordinator.shared)
+            .frame(width: 900, height: 700)
+            .preferredColorScheme(.light)
+    }
+}
+
+#Preview("Dark 1400x900") {
+    withDependencies {
+        let mock = MockGuestRepository()
+        mock.guests = PreviewData.sampleGuests
+        $0.guestRepository = mock
+    } operation: {
+        GuestManagementViewV4()
+            .environmentObject(AppStores.shared)
+            .environmentObject(SettingsStoreV2())
+            .environmentObject(AppCoordinator.shared)
+            .frame(width: 1400, height: 900)
+            .preferredColorScheme(.dark)
+    }
+}
+
+private enum PreviewData {
+    static let coupleId = UUID()
+    static let sampleGuests: [Guest] = [
+        makeGuest(first:"Ava", last:"Johnson", email:"ava@example.com", status:.confirmed, invitedBy:.bride1, table:1, meal:"Chicken"),
+        makeGuest(first:"Liam", last:"Smith", email:"liam@example.com", status:.pending, invitedBy:.bride2, table:2, meal:"Fish"),
+        makeGuest(first:"Mia", last:"Brown", email:"mia@example.com", status:.declined, invitedBy:.both, table:nil, meal:nil),
+        makeGuest(first:"Noah", last:"Davis", email:"noah@example.com", status:.invited, invitedBy:.bride1, table:3, meal:"Veg"),
+        makeGuest(first:"Emma", last:"Wilson", email:"emma@example.com", status:.attending, invitedBy:.both, table:4, meal:"Steak")
+    ]
+
+    private static func makeGuest(first: String, last: String, email: String?, status: RSVPStatus, invitedBy: InvitedBy?, table: Int?, meal: String?) -> Guest {
+        Guest(
+            id: UUID(),
+            createdAt: Date().addingTimeInterval(-86400),
+            updatedAt: Date(),
+            firstName: first,
+            lastName: last,
+            email: email,
+            phone: nil,
+            guestGroupId: nil,
+            relationshipToCouple: nil,
+            invitedBy: invitedBy,
+            rsvpStatus: status,
+            rsvpDate: nil,
+            plusOneAllowed: false,
+            plusOneName: nil,
+            plusOneAttending: false,
+            attendingCeremony: true,
+            attendingReception: true,
+            attendingOtherEvents: nil,
+            dietaryRestrictions: nil,
+            accessibilityNeeds: nil,
+            tableAssignment: table,
+            seatNumber: nil,
+            preferredContactMethod: nil,
+            addressLine1: nil,
+            addressLine2: nil,
+            city: nil,
+            state: nil,
+            zipCode: nil,
+            country: nil,
+            invitationNumber: nil,
+            isWeddingParty: false,
+            weddingPartyRole: nil,
+            preparationNotes: nil,
+            coupleId: coupleId,
+            mealOption: meal,
+            giftReceived: false,
+            notes: nil,
+            hairDone: false,
+            makeupDone: false
+        )
+    }
 }

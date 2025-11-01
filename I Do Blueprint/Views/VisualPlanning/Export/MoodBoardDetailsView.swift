@@ -59,7 +59,7 @@ struct MoodBoardDetailsView: View {
                                     .frame(width: 40, height: 40)
                                     .overlay(
                                         Circle()
-                                            .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                            .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
                                     )
                                 
                                 Text(color.hexString)
@@ -99,8 +99,8 @@ struct MoodBoardDetailsView: View {
                         ForEach(moodBoard.tags, id: \.self) { tag in
                             Text(tag)
                                 .font(.caption)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, Spacing.xs)
                                 .background(
                                     RoundedRectangle(cornerRadius: 4)
                                         .fill(branding.primaryColor.opacity(0.1))
@@ -191,7 +191,7 @@ struct ElementDetailRow: View {
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
     
     @ViewBuilder
@@ -226,7 +226,7 @@ struct ElementDetailRow: View {
                         .frame(width: 12, height: 12)
                         .overlay(
                             Circle()
-                                .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
                         )
                     
                     Text(color.hexString)

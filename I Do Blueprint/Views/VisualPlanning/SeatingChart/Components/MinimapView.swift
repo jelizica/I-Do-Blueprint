@@ -25,7 +25,7 @@ struct MinimapView: View {
 
             // Border
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 1)
 
             // Tables at small scale
             ForEach(tables) { table in
@@ -53,7 +53,7 @@ struct MinimapView: View {
                 Text("OVERVIEW")
                     .font(.system(size: 8, weight: .semibold))
                     .foregroundColor(.secondary)
-                    .padding(.bottom, 4)
+                    .padding(.bottom, Spacing.xs)
             }
         }
         .frame(width: 150, height: 100)

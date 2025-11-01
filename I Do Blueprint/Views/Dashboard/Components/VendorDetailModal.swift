@@ -60,7 +60,7 @@ struct VendorDetailModal: View {
             }
             .background(AppColors.background)
         }
-        .background(Color.white)
+        .background(AppColors.textPrimary)
         .sheet(isPresented: $showingEditSheet) {
             EditVendorSheetV2(vendor: vendor, vendorStore: vendorStore) { _ in
                 // Reload will happen automatically through the store
@@ -126,7 +126,7 @@ struct VendorDetailModal: View {
                 } else {
                     Image(systemName: iconForVendorType(vendor.vendorType ?? ""))
                         .font(.system(size: 24))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                 }
             }
             
@@ -189,7 +189,7 @@ struct VendorDetailModal: View {
             }
         }
         .padding(Spacing.xl)
-        .background(Color.white)
+        .background(AppColors.textPrimary)
     }
     
     // MARK: - Tab Bar
@@ -209,7 +209,7 @@ struct VendorDetailModal: View {
                 selectedTab = 3
             }
         }
-        .background(Color.white)
+        .background(AppColors.textPrimary)
     }
     
     // MARK: - Overview Tab
@@ -699,7 +699,7 @@ private struct ExpenseRow: View {
             }
         }
         .padding(Spacing.sm)
-        .background(Color.white)
+        .background(AppColors.textPrimary)
         .cornerRadius(CornerRadius.sm)
     }
 }
@@ -740,7 +740,7 @@ private struct PaymentRow: View {
             }
         }
         .padding(Spacing.sm)
-        .background(Color.white)
+        .background(AppColors.textPrimary)
         .cornerRadius(CornerRadius.sm)
     }
 }
@@ -771,7 +771,7 @@ private struct DocumentRow: View {
                 .foregroundColor(AppColors.textSecondary)
         }
         .padding(Spacing.sm)
-        .background(Color.white)
+        .background(AppColors.textPrimary)
         .cornerRadius(CornerRadius.sm)
     }
 }
@@ -793,7 +793,7 @@ private struct VendorStatusBadge: View {
             .font(Typography.caption2)
             .foregroundColor(statusColor)
             .padding(.horizontal, Spacing.xs)
-            .padding(.vertical, 2)
+            .padding(.vertical, Spacing.xxs)
             .background(statusColor.opacity(0.1))
             .cornerRadius(CornerRadius.sm)
     }

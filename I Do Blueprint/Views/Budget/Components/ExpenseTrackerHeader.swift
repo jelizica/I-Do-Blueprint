@@ -22,10 +22,10 @@ struct ExpenseTrackerHeader: View {
                         Image(systemName: "plus")
                         Text("Add Expense")
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, Spacing.lg)
+                    .padding(.vertical, Spacing.sm)
                     .background(AppColors.Budget.allocated)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .cornerRadius(8)
                 }
             }

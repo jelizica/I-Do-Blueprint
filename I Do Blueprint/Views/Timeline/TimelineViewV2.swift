@@ -204,7 +204,7 @@ struct TimelineViewV2: View {
                 }
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
@@ -226,7 +226,7 @@ struct TimelineViewV2: View {
                 .font(.title2)
                 .fontWeight(.bold)
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(Color(NSColor.windowBackgroundColor))
         .cornerRadius(8)
     }
@@ -249,7 +249,7 @@ struct TimelineViewV2: View {
                 }
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 2)
@@ -301,13 +301,13 @@ struct HorizontalTimelineGraph: View {
                 ZStack(alignment: .top) {
                     // Timeline axis
                     timelineAxis
-                        .padding(.top, 40)
-                        .padding(.horizontal, 40)
+                        .padding(.top, Spacing.huge)
+                        .padding(.horizontal, Spacing.huge)
                         .offset(y: 0)
 
                     // Event tracks - positioned to connect to the timeline
                     eventTracks
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, Spacing.huge)
                         .offset(y: 60)
                 }
             }
@@ -441,7 +441,7 @@ struct EventNode: View {
             .overlay(
                 Image(systemName: item.itemType.iconName)
                     .font(.system(size: 10))
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
             )
             .overlay(
                 Circle()
@@ -502,7 +502,7 @@ struct EventNode: View {
                             }
                         }
                     }
-                    .padding(12)
+                    .padding(Spacing.md)
                     .frame(width: 220)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(8)
@@ -579,7 +579,7 @@ struct EventCard: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(12)
+        .padding(Spacing.md)
         .frame(width: 180)
         .background(Color(NSColor.windowBackgroundColor))
         .cornerRadius(8)

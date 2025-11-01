@@ -118,8 +118,8 @@ struct BudgetOverviewHeader: View {
                             .foregroundStyle(.secondary)
                         TextField("Search budget items, vendors, categories...", text: $searchQuery)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.sm)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(6)
                     .frame(minWidth: 300)
@@ -139,7 +139,7 @@ struct BudgetOverviewHeader: View {
             }
         }
         .padding(.horizontal)
-        .padding(.vertical, 12)
+        .padding(.vertical, Spacing.md)
         .background(Color(NSColor.controlBackgroundColor))
     }
 }

@@ -85,7 +85,7 @@ class VisualPlanningStore: ObservableObject {
                 boardName: "Modern Minimalist",
                 boardDescription: "Clean lines, neutral tones, contemporary style",
                 styleCategory: .minimalist,
-                backgroundColor: Color.white)
+                backgroundColor: AppColors.textPrimary)
         ]
 
         // Sample style preferences

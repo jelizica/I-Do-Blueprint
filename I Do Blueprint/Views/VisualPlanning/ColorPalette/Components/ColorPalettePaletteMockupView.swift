@@ -20,14 +20,14 @@ struct ColorPalettePaletteMockupView: View {
                 // Wedding invitation mockup
                 if !selectedPaletteColors.isEmpty {
                     WeddingMockupView(colors: selectedPaletteColors.map(\.color))
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, Spacing.xl)
                 } else {
                     Text("Add colors to see wedding mockup")
                         .foregroundColor(.secondary)
-                        .padding(.top, 40)
+                        .padding(.top, Spacing.huge)
                 }
             }
-            .padding(.vertical, 20)
+            .padding(.vertical, Spacing.xl)
         }
     }
 }

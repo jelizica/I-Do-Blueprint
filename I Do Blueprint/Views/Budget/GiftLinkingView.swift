@@ -233,7 +233,7 @@ struct GiftLinkingView: View {
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 40)
+                .padding(.vertical, Spacing.huge)
             } else {
                 ForEach(availableGifts) { gift in
                     GiftSelectionRowView(

@@ -76,8 +76,8 @@ struct ModernSidebarView: View {
                 .textFieldStyle(.plain)
                 .font(.seatingBody)
         }
-        .padding(12)
-        .background(Color.white)
+        .padding(Spacing.md)
+        .background(AppColors.textPrimary)
     }
 
     // MARK: - Tab Selection
@@ -96,7 +96,7 @@ struct ModernSidebarView: View {
                 }
             }
         }
-        .padding(12)
+        .padding(Spacing.md)
     }
 
     private func getTabCount(for tab: EditorTab) -> Int? {

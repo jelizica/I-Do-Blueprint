@@ -187,7 +187,7 @@ struct WeddingEventRow: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
     }
 }
 

@@ -102,8 +102,8 @@ struct PaymentRowView: View {
                         Text("Recurring")
                             .font(.caption2)
                             .foregroundColor(AppColors.Budget.allocated)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.allocated.opacity(0.1))
                             .clipShape(Capsule())
                     }
@@ -113,7 +113,7 @@ struct PaymentRowView: View {
                     .foregroundStyle(.tertiary)
                     .font(.caption)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, Spacing.xs)
         }
         .buttonStyle(.plain)
         .sheet(isPresented: $showingDetails) {

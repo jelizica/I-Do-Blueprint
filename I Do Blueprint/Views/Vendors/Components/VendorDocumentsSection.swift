@@ -66,7 +66,7 @@ struct DocumentRowView: View {
                         .font(Typography.caption)
                         .foregroundColor(documentTypeColor)
                         .padding(.horizontal, Spacing.sm)
-                        .padding(.vertical, 2)
+                        .padding(.vertical, Spacing.xxs)
                         .background(documentTypeColor.opacity(0.1))
                         .cornerRadius(CornerRadius.sm)
                     
@@ -210,7 +210,7 @@ struct DocumentDetailSheet: View {
                                         .font(Typography.caption)
                                         .foregroundColor(AppColors.primary)
                                         .padding(.horizontal, Spacing.sm)
-                                        .padding(.vertical, 4)
+                                        .padding(.vertical, Spacing.xs)
                                         .background(AppColors.primary.opacity(0.1))
                                         .cornerRadius(CornerRadius.sm)
                                     }
@@ -236,7 +236,7 @@ struct DocumentDetailSheet: View {
                             .frame(maxWidth: .infinity)
                             .padding(Spacing.md)
                             .background(AppColors.primary)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(CornerRadius.md)
                         }
                         .buttonStyle(.plain)

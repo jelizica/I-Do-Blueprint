@@ -149,7 +149,7 @@ struct PrimaryColorPickerSheet: View {
                             .frame(width: 40, height: 40)
                             .overlay(
                                 Circle()
-                                    .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .disabled(colors.count >= maxColors)
@@ -280,7 +280,7 @@ struct ColorRow: View {
                 .frame(width: 50, height: 50)
                 .overlay(
                     Circle()
-                        .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
             
             // Color info
             VStack(alignment: .leading, spacing: 4) {
@@ -312,7 +312,7 @@ struct ColorRow: View {
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(AppColors.textSecondary.opacity(0.05))
         .cornerRadius(8)
     }
 }

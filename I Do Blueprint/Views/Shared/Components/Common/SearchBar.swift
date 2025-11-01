@@ -99,7 +99,7 @@ struct CompactSearchBar: View {
                     }
                 }
                 .padding(.horizontal, Spacing.sm)
-                .padding(.vertical, 6)
+                .padding(.vertical, Spacing.sm)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.sm)
                         .fill(AppColors.contentBackground)

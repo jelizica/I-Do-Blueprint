@@ -34,7 +34,7 @@ struct SidebarEmptyStateView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
+        .padding(.vertical, Spacing.xxl)
     }
 }
 

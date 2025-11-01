@@ -159,7 +159,7 @@ struct SeatingChartCreatorView: View {
             // Visual preview
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.gray.opacity(0.1))
+                    .fill(AppColors.textSecondary.opacity(0.1))
                     .frame(width: 200, height: 150)
 
                 RoundedRectangle(cornerRadius: 6)
@@ -400,7 +400,7 @@ struct VenueTemplateCard: View {
             VStack(spacing: 8) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(isSelected ? Color.blue.opacity(0.1) : Color.gray.opacity(0.05))
+                        .fill(isSelected ? Color.blue.opacity(0.1) : AppColors.textSecondary.opacity(0.05))
                         .frame(height: 80)
 
                     Image(systemName: template.icon)

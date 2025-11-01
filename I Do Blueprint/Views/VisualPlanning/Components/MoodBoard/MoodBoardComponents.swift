@@ -20,7 +20,7 @@ struct MoodBoardQuickActionButton: View {
         }) {
             Image(systemName: icon)
                 .font(.body)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
@@ -52,7 +52,7 @@ struct MoodBoardElementPreview: View {
                     .fill(element.elementData.color ?? .gray)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1))
+                            .stroke(AppColors.textPrimary.opacity(0.3), lineWidth: 1))
 
             case .image:
                 // Image preview
@@ -72,7 +72,7 @@ struct MoodBoardElementPreview: View {
                             .font(.caption2)
                             .foregroundColor(.primary)
                             .lineLimit(2)
-                            .padding(4))
+                            .padding(Spacing.xs))
 
             case .inspiration:
                 // Inspiration note preview
@@ -108,14 +108,14 @@ struct MoodBoardFilterChip: View {
                 .font(.subheadline)
                 .fontWeight(isActive ? .semibold : .regular)
                 .foregroundColor(isActive ? .white : .primary)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.sm)
                 .background(
                     Capsule()
                         .fill(isActive ? Color.blue : Color(NSColor.controlBackgroundColor)))
                 .overlay(
                     Capsule()
-                        .stroke(isActive ? Color.clear : Color.gray.opacity(0.3), lineWidth: 1))
+                        .stroke(isActive ? Color.clear : AppColors.textSecondary.opacity(0.3), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -143,7 +143,7 @@ struct EmptyMoodBoardView: View {
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal, Spacing.huge)
             }
 
             Button(action: {
@@ -153,10 +153,10 @@ struct EmptyMoodBoardView: View {
                     Image(systemName: "plus")
                     Text("Create Your First Mood Board")
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.md)
                 .background(Color.blue)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(10)
             }
 

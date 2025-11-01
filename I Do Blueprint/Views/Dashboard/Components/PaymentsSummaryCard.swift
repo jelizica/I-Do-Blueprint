@@ -70,10 +70,10 @@ struct PaymentsSummaryCard: View {
                 }
             }
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.05)))
+                .fill(AppColors.textSecondary.opacity(0.05)))
     }
 
     private var quickStats: some View {

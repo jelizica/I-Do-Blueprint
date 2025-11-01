@@ -133,12 +133,12 @@ struct FilterSheet: View {
                                                         .font(.caption)
                                                 }
                                             }
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
+                                            .padding(.horizontal, Spacing.sm)
+                                            .padding(.vertical, Spacing.xs)
                                             .background(
                                                 Capsule()
                                                     .fill(tempFilters.tags.contains(tag) ? Color.blue
-                                                        .opacity(0.2) : Color.gray.opacity(0.1)))
+                                                        .opacity(0.2) : AppColors.textSecondary.opacity(0.1)))
                                             .foregroundColor(tempFilters.tags.contains(tag) ? .blue : .primary)
                                         }
                                         .buttonStyle(.plain)
@@ -168,8 +168,8 @@ struct FilterSheet: View {
                                             }
                                             .buttonStyle(.plain)
                                         }
-                                        .padding(.horizontal, 8)
-                                        .padding(.vertical, 4)
+                                        .padding(.horizontal, Spacing.sm)
+                                        .padding(.vertical, Spacing.xs)
                                         .background(
                                             Capsule()
                                                 .fill(Color.blue.opacity(0.2)))

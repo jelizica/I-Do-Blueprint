@@ -49,7 +49,7 @@ struct GuestAvatarView: View {
                 if showBorder {
                     Circle()
                         .stroke(
-                            isHovering ? Color.seatingAccentTeal : Color.white,
+                            isHovering ? Color.seatingAccentTeal : AppColors.textPrimary,
                             lineWidth: isHovering ? 3 : 2
                         )
                         .frame(width: size, height: size)
@@ -102,7 +102,7 @@ struct GuestAvatarView: View {
 
             Text(guest.initials)
                 .font(.system(size: size * 0.4, weight: .semibold, design: .rounded))
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
         }
     }
 
@@ -146,8 +146,8 @@ struct GuestDetailsPopover: View {
                         Text(group)
                             .font(.seatingCaption)
                             .foregroundColor(.secondary)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(groupBackgroundColor)
                             .cornerRadius(4)
                     }
@@ -192,7 +192,7 @@ struct GuestDetailsPopover: View {
                 }
             }
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .frame(width: 300)
         .background(Color.seatingCream)
     }

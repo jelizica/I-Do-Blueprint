@@ -89,7 +89,7 @@ struct SuccessAnimationView: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.green)
                 }
-                .padding(32)
+                .padding(Spacing.xxxl)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color(NSColor.controlBackgroundColor))

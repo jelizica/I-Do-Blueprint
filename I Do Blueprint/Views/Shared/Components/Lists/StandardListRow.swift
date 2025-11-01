@@ -77,8 +77,8 @@ struct StandardListRow: View {
                             Text(badge)
                                 .font(Typography.caption2)
                                 .fontWeight(.medium)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, Spacing.xxs)
                                 .background(
                                     Capsule()
                                         .fill((badgeColor ?? .blue).opacity(0.15))

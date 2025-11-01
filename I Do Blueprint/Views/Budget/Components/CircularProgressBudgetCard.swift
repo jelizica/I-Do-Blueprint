@@ -46,8 +46,8 @@ struct CircularProgressBudgetCard: View {
                         .fontWeight(.medium)
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xs)
                 .background(categoryColor.opacity(0.1))
                 .cornerRadius(8)
 
@@ -198,7 +198,7 @@ struct CircularProgressBudgetCard: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(AppColors.textSecondary.opacity(0.2))
                         .frame(height: 6)
 
                     RoundedRectangle(cornerRadius: 4)
@@ -238,8 +238,8 @@ struct CircularProgressBudgetCard: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xs)
                             .background(AppColors.Budget.allocated.opacity(0.1))
                             .cornerRadius(6)
                         }
@@ -264,8 +264,8 @@ struct CircularProgressBudgetCard: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xs)
                             .background(AppColors.Budget.income.opacity(0.1))
                             .cornerRadius(6)
                         }
@@ -274,14 +274,14 @@ struct CircularProgressBudgetCard: View {
             }
             .frame(minHeight: 60)
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .frame(minHeight: 380)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1))
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
+        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 
     private func formatCurrency(_ amount: Double) -> String {

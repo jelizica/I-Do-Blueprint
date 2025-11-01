@@ -38,7 +38,7 @@ struct AcceptInvitationView: View {
             }
         }
         .frame(width: 500, height: 400)
-        .padding(32)
+        .padding(Spacing.xxxl)
         .task(id: token) {
             await loadInvitation()
         }
@@ -169,7 +169,7 @@ struct AcceptInvitationView: View {
                     isWarning: isExpiringSoon(details.invitation.expiresAt)
                 )
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)
 

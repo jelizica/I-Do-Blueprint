@@ -275,7 +275,7 @@ struct BudgetSummaryHeaderView: View {
                     height: 8
                 )
             }
-            .padding(.top, 8)
+            .padding(.top, Spacing.sm)
 
             // Quick stats - Using Component Library
             HStack(spacing: 30) {
@@ -361,8 +361,8 @@ struct BudgetCategoryRowView: View {
                     Text(category.priority.displayName)
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(priorityColor(category.priority).opacity(0.2))
                         .foregroundColor(priorityColor(category.priority))
                         .clipShape(Capsule())
@@ -371,8 +371,8 @@ struct BudgetCategoryRowView: View {
                         Text("Essential")
                             .font(.caption2)
                             .fontWeight(.medium)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.income.opacity(0.2))
                             .foregroundColor(AppColors.Budget.income)
                             .clipShape(Capsule())
@@ -390,7 +390,7 @@ struct BudgetCategoryRowView: View {
                 .foregroundColor(.secondary)
                 .font(.caption)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
         .contentShape(Rectangle())
     }
 

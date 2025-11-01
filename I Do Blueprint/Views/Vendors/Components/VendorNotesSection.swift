@@ -36,8 +36,8 @@ struct VendorNotesSection: View {
                     .strokeBorder(
                         LinearGradient(
                             colors: [
-                                Color.gray.opacity(0.2),
-                                Color.gray.opacity(0.05)
+                                AppColors.textSecondary.opacity(0.2),
+                                AppColors.textSecondary.opacity(0.05)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing

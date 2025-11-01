@@ -24,8 +24,8 @@ struct NotesView: View {
                         TextField("Search notes...", text: $viewModel.searchText)
                             .textFieldStyle(.plain)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
                             .fill(Color(NSColor.controlBackgroundColor)))
@@ -61,8 +61,8 @@ struct NotesView: View {
                     }
                     .menuStyle(.borderlessButton)
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.md)
                 .background(Color(NSColor.windowBackgroundColor))
 
                 Divider()
@@ -216,7 +216,7 @@ struct NotesView: View {
                     Text("General Notes")
                         .font(.title3)
                         .fontWeight(.bold)
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, Spacing.md)
 
                     LazyVGrid(columns: [
                         GridItem(.adaptive(minimum: 300), spacing: 16)
@@ -254,7 +254,7 @@ struct NotesView: View {
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                         }
-                        .padding(.horizontal, 12)
+                        .padding(.horizontal, Spacing.md)
 
                         LazyVGrid(columns: [
                             GridItem(.adaptive(minimum: 300), spacing: 16)

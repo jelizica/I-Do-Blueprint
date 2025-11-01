@@ -17,7 +17,7 @@ struct GiftsAndOwedView: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(.horizontal)
-                .padding(.vertical, 8)
+                .padding(.vertical, Spacing.sm)
                 .frame(maxWidth: .infinity)
                 .background(AppColors.Budget.pending.opacity(0.1))
 
@@ -193,8 +193,8 @@ struct GiftOrOwedRowView: View {
                     HStack {
                         Text(giftOrOwed.type.displayName)
                             .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(Color.secondary.opacity(0.2))
                             .foregroundColor(.secondary)
                             .clipShape(Capsule())
@@ -213,8 +213,8 @@ struct GiftOrOwedRowView: View {
 
                         Text(giftOrOwed.status.displayName)
                             .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(giftOrOwed.status.color.opacity(0.2))
                             .foregroundColor(giftOrOwed.status.color)
                             .clipShape(Capsule())
@@ -243,7 +243,7 @@ struct GiftOrOwedRowView: View {
                     .foregroundColor(.secondary)
                     .font(.caption)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, Spacing.xs)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

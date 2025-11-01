@@ -122,7 +122,7 @@ struct AnimatedCashFlowChart: View {
                                         .fontWeight(.bold)
                                         .foregroundColor(AppColors.Budget.allocated)
                                 }
-                                .padding(8)
+                                .padding(Spacing.sm)
                                 .background(.background)
                                 .cornerRadius(8)
                                 .shadow(radius: 4)
@@ -225,7 +225,7 @@ struct CategoryComparisonBarChart: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-                            .padding(8)
+                            .padding(Spacing.sm)
                             .background(.background)
                             .cornerRadius(8)
                             .shadow(radius: 4)

@@ -92,7 +92,7 @@ struct GuestDetailViewV4: View {
             if let guest = guest {
                 ZStack {
                     // Semi-transparent background overlay
-                    Color.black.opacity(0.5)
+                    AppColors.textPrimary.opacity(0.5)
                         .ignoresSafeArea()
                         .onTapGesture {
                             dismiss()
@@ -143,7 +143,7 @@ struct GuestDetailViewV4: View {
                         actionButtons
                     }
                     .frame(width: 600, height: 700)
-                    .background(.white)
+                    .background(AppColors.cardBackground)
                     .cornerRadius(CornerRadius.lg)
                     .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
                 }
@@ -182,8 +182,8 @@ struct GuestDetailViewV4: View {
             // Gradient Background
             LinearGradient(
                 colors: [
-                    Color(red: 0.94, green: 0.27, blue: 0.27),
-                    Color(red: 0.85, green: 0.15, blue: 0.15)
+                    AppColors.error.opacity(0.9),
+                    AppColors.error
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -198,9 +198,9 @@ struct GuestDetailViewV4: View {
                     } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .frame(width: 32, height: 32)
-                            .background(Color.white.opacity(0.2))
+                            .background(AppColors.textPrimary.opacity(0.2))
                             .clipShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -218,16 +218,16 @@ struct GuestDetailViewV4: View {
                             .clipShape(Circle())
                             .overlay(
                                 Circle()
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                                    .stroke(AppColors.textPrimary.opacity(0.3), lineWidth: 2)
                             )
                     } else {
                         Circle()
-                            .fill(Color.white.opacity(0.2))
+                            .fill(AppColors.textPrimary.opacity(0.2))
                             .frame(width: 80, height: 80)
                             .overlay(
                                 Text(guest.firstName.prefix(1) + guest.lastName.prefix(1))
                                     .font(.system(size: 32, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundColor(AppColors.textPrimary)
                             )
                     }
                 }
@@ -239,12 +239,12 @@ struct GuestDetailViewV4: View {
                 // Name
                 Text(guest.fullName)
                     .font(.system(size: 24, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                 
                 // Relationship
                 Text("\(invitedByText) • \(relationshipText)")
                     .font(.system(size: 14))
-                    .foregroundColor(Color.white.opacity(0.9))
+                    .foregroundColor(AppColors.textPrimary.opacity(0.9))
                 
                 Spacer()
             }
@@ -262,32 +262,32 @@ struct GuestDetailViewV4: View {
         VStack(spacing: Spacing.md) {
             // Email
             if let email = guest.email {
-                GuestDetailContactRow(
-                    icon: "envelope.fill",
-                    iconColor: Color(red: 1, green: 0.89, blue: 0.90),
-                    label: "Email",
-                    value: email
-                )
+                    GuestDetailContactRow(
+                        icon: "envelope.fill",
+                        iconColor: AppColors.errorLight,
+                        label: "Email",
+                        value: email
+                    )
             }
             
             // Phone
             if let phone = guest.phone {
-                GuestDetailContactRow(
-                    icon: "phone.fill",
-                    iconColor: Color(red: 1, green: 0.89, blue: 0.90),
-                    label: "Phone",
-                    value: phone
-                )
+                    GuestDetailContactRow(
+                        icon: "phone.fill",
+                        iconColor: AppColors.errorLight,
+                        label: "Phone",
+                        value: phone
+                    )
             }
             
             // Plus One
             if guest.plusOneAllowed {
-                GuestDetailContactRow(
-                    icon: "person.2.fill",
-                    iconColor: Color(red: 1, green: 0.89, blue: 0.90),
-                    label: "Plus One",
-                    value: guest.plusOneName ?? "Not specified"
-                )
+                    GuestDetailContactRow(
+                        icon: "person.2.fill",
+                        iconColor: AppColors.errorLight,
+                        label: "Plus One",
+                        value: guest.plusOneName ?? "Not specified"
+                    )
             }
         }
         }
@@ -538,7 +538,7 @@ struct GuestDetailViewV4: View {
                     Text("Edit Guest")
                         .font(.system(size: 16, weight: .medium))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.lg)
                 .background(AppColors.primary)
@@ -552,9 +552,9 @@ struct GuestDetailViewV4: View {
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(width: 48, height: 48)
-                    .background(Color(red: 0.94, green: 0.27, blue: 0.27))
+                    .background(AppColors.error)
                     .cornerRadius(CornerRadius.md)
             }
             .buttonStyle(.plain)
@@ -567,11 +567,11 @@ struct GuestDetailViewV4: View {
     private func statusColor(for status: RSVPStatus) -> Color {
         switch status {
         case .confirmed, .attending:
-            return Color(red: 0.13, green: 0.77, blue: 0.37)
+            return AppColors.success
         case .pending, .invited, .maybe:
-            return Color(red: 0.85, green: 0.47, blue: 0.02)
+            return AppColors.warning
         case .declined:
-            return Color(red: 0.94, green: 0.27, blue: 0.27)
+            return AppColors.error
         default:
             return AppColors.textSecondary
         }
@@ -580,11 +580,11 @@ struct GuestDetailViewV4: View {
     private func statusTextColor(for status: RSVPStatus) -> Color {
         switch status {
         case .confirmed, .attending:
-            return Color(red: 0.09, green: 0.64, blue: 0.29)
+            return AppColors.success
         case .pending, .invited, .maybe:
-            return Color(red: 0.60, green: 0.20, blue: 0.07)
+            return AppColors.warning
         case .declined:
-            return Color(red: 0.94, green: 0.27, blue: 0.27)
+            return AppColors.error
         default:
             return AppColors.textSecondary
         }
@@ -634,7 +634,7 @@ private struct GuestDetailContactRow: View {
                 .overlay(
                     Image(systemName: icon)
                         .font(.system(size: 16))
-                        .foregroundColor(Color(red: 0.94, green: 0.27, blue: 0.27))
+                        .foregroundColor(AppColors.error)
                 )
             
             // Label and Value
@@ -658,9 +658,9 @@ private struct DietaryBadge: View {
     
     private var badgeColor: (background: Color, text: Color) {
         // Alternate colors for variety
-        let colors: [(Color, Color)] = [
-            (Color(red: 1, green: 0.93, blue: 0.84), Color(red: 0.60, green: 0.20, blue: 0.07)),
-            (Color(red: 0.86, green: 0.92, blue: 1), Color(red: 0.12, green: 0.25, blue: 0.69))
+let colors: [(Color, Color)] = [
+            (AppColors.warningLight, AppColors.warning),
+            (AppColors.infoLight, AppColors.info)
         ]
         let index = abs(text.hashValue) % colors.count
         return (colors[index].0, colors[index].1)

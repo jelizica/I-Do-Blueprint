@@ -20,8 +20,8 @@ struct AffordabilityGiftImportRow: View {
                     HStack(spacing: 8) {
                         Text(gift.type.displayName)
                             .font(.system(size: 11))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.allocated.opacity(0.1))
                             .foregroundStyle(AppColors.Budget.allocated)
                             .clipShape(Capsule())
@@ -40,7 +40,7 @@ struct AffordabilityGiftImportRow: View {
                     .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.primary)
             }
-            .padding(12)
+            .padding(Spacing.md)
             .background(isSelected ? AppColors.Budget.allocated.opacity(0.05) : Color(NSColor.controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(

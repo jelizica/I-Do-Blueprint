@@ -166,8 +166,8 @@ struct KanbanColumn: View {
 
                 Spacer()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(statusConfig.color.opacity(0.1)))
@@ -177,7 +177,7 @@ struct KanbanColumn: View {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         Rectangle()
-                            .fill(Color.gray.opacity(0.2))
+                            .fill(AppColors.textSecondary.opacity(0.2))
                             .frame(height: 4)
 
                         Rectangle()
@@ -186,7 +186,7 @@ struct KanbanColumn: View {
                     }
                 }
                 .frame(height: 4)
-                .padding(.horizontal, 12)
+                .padding(.horizontal, Spacing.md)
             }
 
             // Task Cards
@@ -200,8 +200,8 @@ struct KanbanColumn: View {
                         }
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.bottom, 12)
+                .padding(.horizontal, Spacing.md)
+                .padding(.bottom, Spacing.md)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -211,7 +211,7 @@ struct KanbanColumn: View {
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isDraggingOver ? statusConfig.color : Color.gray.opacity(0.2), lineWidth: 2))
+                .stroke(isDraggingOver ? statusConfig.color : AppColors.textSecondary.opacity(0.2), lineWidth: 2))
     }
 
     private var emptyState: some View {
@@ -226,7 +226,7 @@ struct KanbanColumn: View {
             )
         )
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
+        .padding(.vertical, Spacing.xxxl)
     }
 }
 

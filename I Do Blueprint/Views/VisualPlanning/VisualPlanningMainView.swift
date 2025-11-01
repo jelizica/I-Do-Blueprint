@@ -92,7 +92,7 @@ struct VisualPlanningMainView: View {
                     }
                     .padding(.horizontal)
                 }
-                .padding(.vertical, 12)
+                .padding(.vertical, Spacing.md)
                 .background(Color(NSColor.controlBackgroundColor))
 
                 Divider()
@@ -220,8 +220,8 @@ struct TabButton: View {
 
                 Spacer()
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Spacing.lg)
+            .padding(.vertical, Spacing.md)
             .frame(minWidth: 180)
             .background(
                 RoundedRectangle(cornerRadius: 12)
@@ -275,7 +275,7 @@ struct InteractiveStatCard: View {
                     .textCase(.uppercase)
                     .tracking(0.5)
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12)
@@ -339,7 +339,7 @@ struct VisualPlanningCard<Content: View>: View {
                         y: isHovering ? 4 : 2))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
+                    .stroke(AppColors.textSecondary.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
             .scaleEffect(isHovering ? 1.01 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovering)
     }
@@ -360,7 +360,7 @@ struct SkeletonLoader: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(Color.gray.opacity(0.3))
+            .fill(AppColors.textSecondary.opacity(0.3))
             .frame(width: width, height: height)
             .modifier(ShimmerModifier())
     }
@@ -370,22 +370,22 @@ struct SkeletonCardLoader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.3))
+                .fill(AppColors.textSecondary.opacity(0.3))
                 .frame(height: 200)
                 .modifier(ShimmerModifier())
 
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color.gray.opacity(0.3))
+                .fill(AppColors.textSecondary.opacity(0.3))
                 .frame(width: 150, height: 16)
                 .modifier(ShimmerModifier())
 
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color.gray.opacity(0.3))
+                .fill(AppColors.textSecondary.opacity(0.3))
                 .frame(width: 200, height: 12)
                 .modifier(ShimmerModifier())
 
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color.gray.opacity(0.3))
+                .fill(AppColors.textSecondary.opacity(0.3))
                 .frame(width: 100, height: 12)
                 .modifier(ShimmerModifier())
         }

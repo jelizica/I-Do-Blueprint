@@ -51,12 +51,12 @@ struct LargeCountdownCard: View {
                     .foregroundColor(foregroundColor.opacity(0.4))
             }
         }
-        .padding(28)
+        .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(backgroundColor)
         .overlay(
             Rectangle()
-                .stroke(Color.black, lineWidth: 3)
+                .stroke(AppColors.textPrimary, lineWidth: 3)
         )
     }
 }

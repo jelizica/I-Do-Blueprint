@@ -72,8 +72,8 @@ struct BudgetExportMenu: View {
                 }
                 Text("Export")
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(6)
         }

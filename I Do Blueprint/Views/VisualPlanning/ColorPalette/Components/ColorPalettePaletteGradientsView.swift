@@ -55,14 +55,14 @@ struct ColorPalettePaletteGradientsView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 20)
+                    .padding(.horizontal, Spacing.xl)
                 } else {
                     Text("Add more colors to see gradient combinations")
                         .foregroundColor(.secondary)
-                        .padding(.top, 40)
+                        .padding(.top, Spacing.huge)
                 }
             }
-            .padding(.vertical, 20)
+            .padding(.vertical, Spacing.xl)
         }
     }
 }

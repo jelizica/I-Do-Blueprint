@@ -53,8 +53,8 @@ struct GuestDetailView: View {
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.sm)
                         .background(
                             Capsule()
                                 .fill(guest.rsvpStatus.color.opacity(0.12)))
@@ -63,7 +63,7 @@ struct GuestDetailView: View {
                         .accessibilityLabel("RSVP status: \(guest.rsvpStatus.displayName)")
                     }
                 }
-                .padding(24)
+                .padding(Spacing.xxl)
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
@@ -91,7 +91,7 @@ struct GuestDetailView: View {
                         }
                     }
                 }
-                .padding(20)
+                .padding(Spacing.xl)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
@@ -136,7 +136,7 @@ struct GuestDetailView: View {
                         }
                     }
                 }
-                .padding(20)
+                .padding(Spacing.xl)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 16)
@@ -173,7 +173,7 @@ struct GuestDetailView: View {
                             }
                         }
                     }
-                    .padding(20)
+                    .padding(Spacing.xl)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
@@ -199,7 +199,7 @@ struct GuestDetailView: View {
                             }
                         }
                     }
-                    .padding(20)
+                    .padding(Spacing.xl)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
@@ -246,7 +246,7 @@ struct GuestDetailView: View {
                             }
                         }
                     }
-                    .padding(20)
+                    .padding(Spacing.xl)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
@@ -283,12 +283,12 @@ struct GuestDetailView: View {
                                         .font(.body)
                                         .foregroundColor(.primary)
                                         .multilineTextAlignment(.leading)
-                                        .padding(.leading, 28)
+                                        .padding(.leading, Spacing.xxxl)
                                 }
                             }
                         }
                     }
-                    .padding(20)
+                    .padding(Spacing.xl)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
@@ -335,7 +335,7 @@ struct GuestDetailView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .padding(20)
+                    .padding(Spacing.xl)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
@@ -343,7 +343,7 @@ struct GuestDetailView: View {
                             .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 3))
                 }
             }
-            .padding(24)
+            .padding(Spacing.xxl)
         }
         .background(Color(NSColor.windowBackgroundColor))
         .navigationTitle("Guest Details")
@@ -463,7 +463,7 @@ struct InfoRow: View {
 
             Spacer()
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, Spacing.xxs)
     }
 }
 

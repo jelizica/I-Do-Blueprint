@@ -22,21 +22,21 @@ struct VendorManagementViewV3: View {
     
     var body: some View {
         ZStack {
-            Color(red: 0.98, green: 0.98, blue: 0.99)
+            AppColors.backgroundSecondary
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {
                 // Header Section
                 headerSection
-                    .padding(.horizontal, 40)
-                    .padding(.top, 32)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, Spacing.huge)
+                    .padding(.top, Spacing.xxxl)
+                    .padding(.bottom, Spacing.xxl)
                 
                 // Content Section
                 ScrollView {
                     vendorGridSection
-                        .padding(.horizontal, 40)
-                        .padding(.bottom, 40)
+                        .padding(.horizontal, Spacing.huge)
+                        .padding(.bottom, Spacing.huge)
                 }
             }
         }
@@ -62,12 +62,12 @@ struct VendorManagementViewV3: View {
             // Title and Description
             VStack(alignment: .leading, spacing: 8) {
                 Text("Vendor Management")
-                    .font(.custom("Roboto", size: 30).weight(.bold))
-                    .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                    .font(Typography.displaySmall)
+                    .foregroundColor(AppColors.textPrimary)
                 
                 Text("Manage and track all your vendors in one place")
-                    .font(.custom("Roboto", size: 16))
-                    .foregroundColor(Color(red: 0.29, green: 0.33, blue: 0.39))
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textSecondary)
             }
             
             Spacer()
@@ -82,16 +82,16 @@ struct VendorManagementViewV3: View {
                         Image(systemName: "square.and.arrow.down")
                             .font(.system(size: 14))
                         Text("Import")
-                            .font(.custom("Roboto", size: 15.45))
+                            .font(Typography.bodyRegular)
                     }
-                    .foregroundColor(Color(red: 0.22, green: 0.25, blue: 0.32))
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(height: 42)
-                    .padding(.horizontal, 16)
-                    .background(.white)
+                    .padding(.horizontal, Spacing.lg)
+                    .background(AppColors.cardBackground)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(red: 0.82, green: 0.84, blue: 0.86), lineWidth: 0.5)
+                            .stroke(AppColors.borderLight, lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -108,16 +108,16 @@ struct VendorManagementViewV3: View {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 14))
                         Text("Export")
-                            .font(.custom("Roboto", size: 16))
+                            .font(Typography.bodyRegular)
                     }
-                    .foregroundColor(Color(red: 0.22, green: 0.25, blue: 0.32))
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(height: 42)
-                    .padding(.horizontal, 16)
-                    .background(.white)
+                    .padding(.horizontal, Spacing.lg)
+                    .background(AppColors.cardBackground)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(red: 0.82, green: 0.84, blue: 0.86), lineWidth: 0.5)
+                            .stroke(AppColors.borderLight, lineWidth: 0.5)
                     )
                 }
                 .buttonStyle(.plain)
@@ -147,12 +147,12 @@ struct VendorManagementViewV3: View {
                         Image(systemName: "plus")
                             .font(.system(size: 14, weight: .semibold))
                         Text("Add Vendor")
-                            .font(.custom("Roboto", size: 16))
+                            .font(Typography.bodyRegular)
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(height: 42)
-                    .padding(.horizontal, 20)
-                    .background(Color(red: 0.15, green: 0.39, blue: 0.92))
+                    .padding(.horizontal, Spacing.xl)
+                    .background(AppColors.primary)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -216,25 +216,25 @@ struct VendorManagementViewV3: View {
         VStack(spacing: 16) {
             Image(systemName: "person.3.fill")
                 .font(.system(size: 48))
-                .foregroundColor(Color(red: 0.82, green: 0.84, blue: 0.86))
+                .foregroundColor(AppColors.textSecondary)
             
             Text("No Vendors Yet")
-                .font(.custom("Roboto", size: 20).weight(.semibold))
-                .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                .font(Typography.heading)
+                .foregroundColor(AppColors.textPrimary)
             
             Text("Add your first vendor to get started")
-                .font(.custom("Roboto", size: 14))
-                .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
+                .font(Typography.bodySmall)
+                .foregroundColor(AppColors.textSecondary)
             
             Button {
                 showingAddVendor = true
             } label: {
                 Text("Add Vendor")
-                    .font(.custom("Roboto", size: 16).weight(.medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color(red: 0.15, green: 0.39, blue: 0.92))
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textPrimary)
+                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.vertical, Spacing.md)
+                    .background(AppColors.primary)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
@@ -246,15 +246,15 @@ struct VendorManagementViewV3: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
-                .foregroundColor(.red)
+                .foregroundColor(AppColors.error)
             
             Text("Error Loading Vendors")
-                .font(.custom("Roboto", size: 20).weight(.semibold))
-                .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                .font(Typography.heading)
+                .foregroundColor(AppColors.textPrimary)
             
             Text(error.localizedDescription)
-                .font(.custom("Roboto", size: 14))
-                .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
+                .font(Typography.bodySmall)
+                .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
             
             Button {
@@ -263,11 +263,11 @@ struct VendorManagementViewV3: View {
                 }
             } label: {
                 Text("Retry")
-                    .font(.custom("Roboto", size: 16).weight(.medium))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 12)
-                    .background(Color(red: 0.15, green: 0.39, blue: 0.92))
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textPrimary)
+                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.vertical, Spacing.md)
+                    .background(AppColors.primary)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
@@ -288,7 +288,7 @@ struct VendorCardV3: View {
             ZStack(alignment: .topTrailing) {
                 // Avatar Circle with logo or default icon
                 Circle()
-                    .fill(Color(red: 0.90, green: 0.91, blue: 0.92))
+                    .fill(AppColors.controlBackground)
                     .frame(width: 48, height: 48)
                     .overlay(
                         Group {
@@ -301,46 +301,46 @@ struct VendorCardV3: View {
                             } else {
                                 Image(systemName: "person.fill")
                                     .font(.system(size: 20))
-                                    .foregroundColor(Color(red: 0.60, green: 0.62, blue: 0.65))
+                                    .foregroundColor(AppColors.textSecondary)
                             }
                         }
                     )
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 24)
-                    .padding(.leading, 24)
+                    .padding(.top, Spacing.xxl)
+                    .padding(.leading, Spacing.xxl)
                 
                 // Status Badge
                 statusBadge
-                    .padding(.top, 24)
-                    .padding(.trailing, 24)
+                    .padding(.top, Spacing.xxl)
+                    .padding(.trailing, Spacing.xxl)
             }
             .frame(height: 72)
             
             // Vendor Name
             Text(vendor.vendorName)
-                .font(.custom("Roboto", size: 18).weight(.semibold))
-                .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                .font(Typography.heading)
+                .foregroundColor(AppColors.textPrimary)
                 .lineLimit(1)
-                .padding(.horizontal, 24)
-                .padding(.top, 8)
+                .padding(.horizontal, Spacing.xxl)
+                .padding(.top, Spacing.sm)
             
             // Contact Email
             if let email = vendor.email, !email.isEmpty {
                 Text(email)
-                    .font(.custom("Roboto", size: 13.78))
-                    .foregroundColor(Color(red: 0.29, green: 0.33, blue: 0.39))
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.textSecondary)
                     .lineLimit(1)
-                    .padding(.horizontal, 24)
-                    .padding(.top, 4)
+                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.top, Spacing.xs)
             }
             
             // Vendor Type
             if let vendorType = vendor.vendorType, !vendorType.isEmpty {
                 Text(vendorType)
-                    .font(.custom("Roboto", size: 12))
-                    .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
-                    .padding(.horizontal, 24)
-                    .padding(.top, 8)
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.textSecondary)
+                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.top, Spacing.sm)
             }
             
             Spacer()
@@ -348,29 +348,29 @@ struct VendorCardV3: View {
             // Quoted Amount Section
             VStack(spacing: 0) {
                 Divider()
-                    .background(Color(red: 0.95, green: 0.96, blue: 0.96))
+                    .background(AppColors.borderLight)
                 
                 HStack {
                     Text("Quoted Amount")
-                        .font(.custom("Roboto", size: 13.90))
-                        .foregroundColor(Color(red: 0.42, green: 0.45, blue: 0.50))
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
                     
                     Spacer()
                     
                     Text(formatCurrency(vendor.quotedAmount ?? 0))
-                        .font(.custom("Roboto", size: 17.70).weight(.bold))
-                        .foregroundColor(Color(red: 0.07, green: 0.09, blue: 0.15))
+                        .font(Typography.numberMedium)
+                        .foregroundColor(AppColors.textPrimary)
                 }
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
+                .padding(.horizontal, Spacing.xxl)
+                .padding(.vertical, Spacing.md)
             }
         }
         .frame(width: 290, height: 243)
-        .background(.white)
+        .background(AppColors.cardBackground)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(red: 0.90, green: 0.91, blue: 0.92), lineWidth: 0.5)
+                .stroke(AppColors.borderLight, lineWidth: 0.5)
         )
         .accessibleListItem(
             label: vendor.vendorName,
@@ -404,23 +404,23 @@ struct VendorCardV3: View {
         }
     }
     
-    private var statusBadge: some View {
+private var statusBadge: some View {
         Group {
             if vendor.isBooked == true {
                 Text("Booked")
-                    .font(.custom("Roboto", size: 12).weight(.medium))
-                    .foregroundColor(Color(red: 0.60, green: 0.11, blue: 0.11))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color(red: 1, green: 0.89, blue: 0.89))
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.error)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.errorLight)
                     .cornerRadius(9999)
             } else {
                 Text("Available")
-                    .font(.custom("Roboto", size: 12).weight(.medium))
-                    .foregroundColor(Color(red: 0.09, green: 0.40, blue: 0.20))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color(red: 0.86, green: 0.99, blue: 0.91))
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.success)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.successLight)
                     .cornerRadius(9999)
             }
         }

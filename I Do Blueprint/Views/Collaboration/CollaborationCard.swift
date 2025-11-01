@@ -105,7 +105,7 @@ struct CollaborationCard: View {
         .padding(Spacing.lg)
         .background(AppColors.cardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 4, x: 0, y: 2)
     }
     
     // MARK: - Role Badge

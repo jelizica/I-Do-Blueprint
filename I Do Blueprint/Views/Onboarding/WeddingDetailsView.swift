@@ -476,9 +476,9 @@ struct WeddingEventCard: View {
                 if event.isMainEvent {
                     Text("Main Event")
                         .font(Typography.caption)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .padding(.horizontal, Spacing.sm)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, Spacing.xs)
                         .background(AppColors.primary)
                         .cornerRadius(4)
                 }

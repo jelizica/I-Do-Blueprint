@@ -101,7 +101,7 @@ struct WeddingCountdownHero: View {
                 .padding(Spacing.xxl)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.lg)
-                        .fill(Color.white.opacity(0.6))
+                        .fill(AppColors.textPrimary.opacity(0.6))
                         .shadow(color: Color.fromHex( "FBCFE8").opacity(0.5), radius: 20, y: 10)
                 )
             }
