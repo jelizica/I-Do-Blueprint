@@ -120,48 +120,34 @@ class SupabaseManager: ObservableObject {
     
     private static func createSupabaseClient() throws -> SupabaseClient {
         let logger = AppLogger.api
-        logger.debug("Looking for Config.plist...")
-
-        guard let configPath = Bundle.main.path(forResource: "Config", ofType: "plist") else {
-            logger.error("Config.plist file not found in bundle")
-            throw ConfigurationError.configFileNotFound
-        }
-
+        
+        // Use AppConfig with plist fallback
+        let supabaseURLString = AppConfig.getSupabaseURL()
+        let supabaseAnonKey = AppConfig.getSupabaseAnonKey()
+        
+        logger.debug("Loading Supabase configuration...")
+        
         #if DEBUG
-        logger.logPrivate("Found Config.plist at: \(configPath)", level: .debug)
+        // Check if we're using hardcoded config or plist fallback
+        let usingHardcodedConfig = (AppConfig.loadFromPlist(key: "SUPABASE_URL") == nil)
+        if usingHardcodedConfig {
+            logger.debug("Using hardcoded AppConfig values")
+        } else {
+            logger.debug("Using Config.plist fallback values")
+        }
+        logger.logPrivate("SUPABASE_URL: \(supabaseURLString)", level: .debug)
+        logger.logPrivate("url present: true, anonKey present: true, serviceKey present: false", level: .debug)
         #endif
-
-        guard let config = NSDictionary(contentsOfFile: configPath) else {
-            logger.error("Could not read Config.plist contents")
-            throw ConfigurationError.configFileUnreadable
-        }
-
-        #if DEBUG
-        logger.logPrivate("Loaded Config.plist with keys: \(config.allKeys)", level: .debug)
-        #endif
-
-        guard let supabaseURLString = config["SUPABASE_URL"] as? String else {
-            logger.error("SUPABASE_URL not found or not a string")
-            throw ConfigurationError.missingSupabaseURL
-        }
-
-        guard let supabaseAnonKey = config["SUPABASE_ANON_KEY"] as? String else {
-            logger.error("SUPABASE_ANON_KEY not found or not a string")
-            throw ConfigurationError.missingSupabaseAnonKey
-        }
-
-        // SECURITY: Check if service-role key is present in the bundle
-        if let _ = config["SUPABASE_SERVICE_ROLE_KEY"] as? String {
-            logger.error("CRITICAL SECURITY VIOLATION: Service-role key found in app bundle")
+        
+        // SECURITY: Check if service-role key is present in the bundle (plist only)
+        if let configPath = Bundle.main.path(forResource: "Config", ofType: "plist"),
+           let config = NSDictionary(contentsOfFile: configPath),
+           let _ = config["SUPABASE_SERVICE_ROLE_KEY"] as? String {
+            logger.error("CRITICAL SECURITY VIOLATION: Service-role key found in Config.plist")
             throw ConfigurationError.securityViolation(
                 "Service-role key must not be included in the app bundle"
             )
         }
-
-        #if DEBUG
-        logger.logPrivate("SUPABASE_URL: \(supabaseURLString)", level: .debug)
-        logger.logPrivate("url present: true, anonKey present: true, serviceKey present: false", level: .debug)
-        #endif
 
         guard let supabaseURL = URL(string: supabaseURLString) else {
             logger.error("Invalid URL format")

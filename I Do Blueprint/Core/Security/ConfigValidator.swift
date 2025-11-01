@@ -26,29 +26,30 @@ enum ConfigValidator {
     }
 
     /// Returns a summary of configuration validation (no secrets exposed)
+    /// Validates AppConfig (hardcoded) with optional plist fallback
     static func validateAll() -> ConfigValidationSummary {
-        let config = loadConfigPlist()
+        // Use AppConfig which includes plist fallback
+        let supabaseURLString = AppConfig.getSupabaseURL()
+        let supabaseAnonKeyString = AppConfig.getSupabaseAnonKey()
+        let sentryDSNString = AppConfig.getSentryDSN()
 
         // SUPABASE_URL
-        let supabaseURLString = config?["SUPABASE_URL"] as? String
-        let supabaseURLPresent = !(supabaseURLString?.isEmpty ?? true)
+        let supabaseURLPresent = !supabaseURLString.isEmpty
         let supabaseURLValid: Bool = {
-            guard let s = supabaseURLString, let url = URL(string: s) else { return false }
+            guard let url = URL(string: supabaseURLString) else { return false }
             // Basic scheme/host check
             return (url.scheme == "http" || url.scheme == "https") && url.host != nil
         }()
 
         // SUPABASE_ANON_KEY (presence only)
-        let supabaseAnonKeyString = config?["SUPABASE_ANON_KEY"] as? String
-        let supabaseAnonKeyPresent = !(supabaseAnonKeyString?.isEmpty ?? true)
+        let supabaseAnonKeyPresent = !supabaseAnonKeyString.isEmpty
 
         // SENTRY_DSN
-        let sentryDSNString = config?["SENTRY_DSN"] as? String
-        let sentryDSNPresent = !(sentryDSNString?.isEmpty ?? true)
+        let sentryDSNPresent = !sentryDSNString.isEmpty
         let sentryDSNValid: Bool = {
-            guard let dsn = sentryDSNString, !dsn.isEmpty else { return false }
+            guard !sentryDSNString.isEmpty else { return false }
             // Very lightweight format validation: must look like a URL with scheme and host
-            return URL(string: dsn)?.host != nil
+            return URL(string: sentryDSNString)?.host != nil
         }()
 
         return ConfigValidationSummary(

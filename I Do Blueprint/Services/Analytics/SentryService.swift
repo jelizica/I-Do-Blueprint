@@ -30,15 +30,16 @@ final class SentryService {
     
     // MARK: - Configuration
     
-    /// Initialize Sentry SDK with configuration from Config.plist
+    /// Initialize Sentry SDK with configuration from AppConfig (with Config.plist fallback)
     func configure() {
         guard !isInitialized else {
             logger.warning("Sentry already initialized")
             return
         }
         
-        guard let dsn = loadDSN() else {
-            logger.error("Sentry DSN not found in Config.plist")
+        let dsn = AppConfig.getSentryDSN()
+        guard !dsn.isEmpty else {
+            logger.error("Sentry DSN not found in AppConfig")
             return
         }
         
@@ -289,16 +290,7 @@ final class SentryService {
     
     // MARK: - Private Helpers
     
-    /// Load Sentry DSN from Config.plist
-    private func loadDSN() -> String? {
-        guard let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
-              let config = NSDictionary(contentsOfFile: path),
-              let dsn = config["SENTRY_DSN"] as? String,
-              !dsn.isEmpty else {
-            return nil
-        }
-        return dsn
-    }
+    // Note: loadDSN() method removed - now using AppConfig.getSentryDSN() directly
     
     /// Enrich event with additional context before sending
     nonisolated private func enrichEvent(_ event: Event) -> Event {
