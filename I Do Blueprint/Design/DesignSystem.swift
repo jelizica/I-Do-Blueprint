@@ -543,13 +543,51 @@ struct AccessibleHeading: ViewModifier {
 // MARK: - Color Extensions
 
 extension Color {
-    /// Blends this color with another color by a given fraction
+    /// Blends this color with another color by linearly interpolating sRGB components.
     /// - Parameters:
     ///   - color: The color to blend with
     ///   - fraction: The fraction of the other color (0.0 to 1.0)
-    /// - Returns: A new blended color
+    /// - Returns: A new blended color in sRGB space
     func blended(with color: Color, fraction: Double) -> Color {
-        return self.opacity(1.0 - fraction)
+        let t = max(0.0, min(1.0, fraction))
+
+        // Resolve to sRGB CGColor for both colors
+        let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
+
+        func componentsSRGB(_ c: Color) -> (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat)? {
+            guard let cg = c.cgColor else { return nil }
+            // Convert to sRGB if needed
+            guard let conv = cg.converted(to: sRGB, intent: .defaultIntent, options: nil) else { return nil }
+            guard let comps = conv.components else { return nil }
+            switch comps.count {
+            case 4: // RGBA
+                return (comps[0], comps[1], comps[2], comps[3])
+            case 2: // Grayscale + A
+                let g = comps[0]
+                return (g, g, g, comps[1])
+            default:
+                return nil
+            }
+        }
+
+        guard let a = componentsSRGB(self), let b = componentsSRGB(color) else {
+            // Fallback to simple opacity interpolation if components cannot be resolved
+            return self.opacity(1.0 - t)
+        }
+
+        // Linear interpolation in sRGB space
+        let r = a.r * (1 - t) + b.r * t
+        let g = a.g * (1 - t) + b.g * t
+        let bComp = a.b * (1 - t) + b.b * t
+        let alpha = a.a * (1 - t) + b.a * t
+
+        // Clamp to valid range and return Color
+        let clamped = { (x: CGFloat) in min(max(x, 0), 1) }
+        return Color(.sRGB,
+                     red: clamped(r),
+                     green: clamped(g),
+                     blue: clamped(bComp),
+                     opacity: clamped(alpha))
     }
 }
 

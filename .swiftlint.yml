@@ -1,0 +1,46 @@
+excluded:
+  - ".build"
+  - "Packages"
+  - "**/.build/**"
+  - "**/checkouts/**"
+  - "**/DerivedData/**"
+
+custom_rules:
+  no_decimal_money:
+    included:
+      - "I Do Blueprint/Views"
+      - "I Do Blueprint/Services"
+      - "I Do Blueprint/Core"
+    name: "Use CurrencyFormatter for money"
+    regex: '(NumberFormatter\(|numberStyle\s*=\s*\.decimal|\$\s*"|"\s*\$)'
+    message: 'Use CurrencyFormatter.format(_:fractionDigits:locale:) for currency display.'
+    severity: warning
+
+  use_environment_values_for_stores:
+    included:
+      - "I Do Blueprint/Views"
+      - "I Do Blueprint/Core"
+    name: "Use EnvironmentValues for stores"
+    regex: '@EnvironmentObject\s+var\s+\w+StoreV2'
+    message: 'Access stores via @Environment(.appStores) or specific helpers (e.g., @Environment(.guestStore)).'
+    severity: warning
+
+  avoid_passing_individual_stores:
+    included:
+      - "I Do Blueprint/Views"
+      - "I Do Blueprint/Core"
+    name: "Avoid passing individual stores via environmentObject"
+    regex: '\\.(?:environmentObject)\(appStores\\.[A-Za-z0-9_]+\)'
+    message: 'Stop passing individual stores; rely on EnvironmentValues helpers instead.'
+    severity: warning
+
+  ban_supabase_database_api:
+    included:
+      - "I Do Blueprint/Domain"
+      - "I Do Blueprint/Services"
+      - "I Do Blueprint/Views"
+      - "I Do Blueprint/Core"
+    name: "Use SupabaseClient.from/rpc instead of .database"
+    regex: '\\b(?:[A-Za-z_][A-Za-z0-9_]*Client|client|supabase)\\.database(\\b|\\.)'
+    message: 'Deprecated: Do not use `.database`. Use `client.from(...)`, `client.rpc(...)`, or `client.schema(...)`.'
+    severity: error

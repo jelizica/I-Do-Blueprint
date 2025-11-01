@@ -55,7 +55,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
                 let updated_at: Date?
             }
             
-            let rows: [SettingsRow] = try await supabase.database
+            let rows: [SettingsRow] = try await supabase
                 .from("couple_settings")
                 .select()
                 .eq("couple_id", value: coupleId)
@@ -138,7 +138,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
                 updated_at: Date().ISO8601Format()
             )
             
-            let rows: [SettingsRow] = try await supabase.database
+            let rows: [SettingsRow] = try await supabase
                 .from("couple_settings")
                 .upsert(upsertPayload, onConflict: "couple_id")
                 .select()
@@ -219,7 +219,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
             
             let payload = UpdatePayload()
             
-            try await supabase.database
+            try await supabase
                 .from("couple_settings")
                 .update(payload)
                 .eq("couple_id", value: coupleId)

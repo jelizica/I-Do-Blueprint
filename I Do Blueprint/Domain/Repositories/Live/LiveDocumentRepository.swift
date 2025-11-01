@@ -43,7 +43,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         let client = try getClient()
         let tenantId = try await getTenantId()
         return try await RepositoryNetwork.withRetry {
-            try await client.database
+            try await client
                 .from("documents")
                 .select()
                 .eq("couple_id", value: tenantId)  // Explicit filter by couple_id
@@ -57,7 +57,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         let client = try getClient()
         let tenantId = try await getTenantId()
         return try await RepositoryNetwork.withRetry {
-            try await client.database
+            try await client
                 .from("documents")
                 .select()
                 .eq("couple_id", value: tenantId)  // Explicit filter by couple_id
@@ -72,7 +72,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         let client = try getClient()
         let tenantId = try await getTenantId()
         return try await RepositoryNetwork.withRetry {
-            try await client.database
+            try await client
                 .from("documents")
                 .select()
                 .eq("couple_id", value: tenantId)  // Explicit filter by couple_id
@@ -87,7 +87,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         let client = try getClient()
         let tenantId = try await getTenantId()
         return try await RepositoryNetwork.withRetry {
-            try await client.database
+            try await client
                 .from("documents")
                 .select()
                 .eq("couple_id", value: tenantId)  // Explicit filter by couple_id
@@ -100,11 +100,13 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
 
     func fetchDocument(id: UUID) async throws -> Document? {
         let client = try getClient()
+        let tenantId = try await getTenantId()
         let documents: [Document] = try await RepositoryNetwork.withRetry {
-            try await client.database
+            try await client
                 .from("documents")
                 .select()
                 .eq("id", value: id)
+                .eq("couple_id", value: tenantId)
                 .limit(1)
                 .execute()
                 .value
@@ -116,7 +118,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         do {
             let client = try getClient()
             let document: Document = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("documents")
                     .insert(insertData)
                     .select()
@@ -133,11 +135,13 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     func updateDocument(_ document: Document) async throws -> Document {
         do {
             let client = try getClient()
+            let tenantId = try await getTenantId()
             let updated: Document = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("documents")
                     .update(document)
                     .eq("id", value: document.id)
+                    .eq("couple_id", value: tenantId)
                     .select()
                     .single()
                     .execute()
@@ -152,7 +156,8 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     func deleteDocument(id: UUID) async throws {
         do {
             let client = try getClient()
-            // First get the document to know the storage path
+            let tenantId = try await getTenantId()
+            // First get the document to know the storage path (already tenant-scoped in fetchDocument)
             guard let document = try await fetchDocument(id: id) else {
                 throw DocumentError.notFound(id: id)
             }
@@ -164,12 +169,13 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                     .remove(paths: [document.storagePath])
             }
 
-            // Delete database record
+            // Delete database record (tenant-scoped)
             try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("documents")
                     .delete()
                     .eq("id", value: id)
+                    .eq("couple_id", value: tenantId)
                     .execute()
             }
         } catch let error as DocumentError {
@@ -182,11 +188,13 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     func batchDeleteDocuments(ids: [UUID]) async throws {
         do {
             let client = try getClient()
-            // Fetch all documents to get storage paths
+            let tenantId = try await getTenantId()
+            // Fetch all documents to get storage paths (tenant-scoped)
             let documents = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("documents")
                     .select()
+                    .eq("couple_id", value: tenantId)
                     .in("id", values: ids)
                     .execute()
                     .value as [Document]
@@ -205,11 +213,12 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                 }
             }
 
-            // Delete database records
+            // Delete database records (tenant-scoped)
             try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("documents")
                     .delete()
+                    .eq("couple_id", value: tenantId)
                     .in("id", values: ids)
                     .execute()
             }
@@ -222,7 +231,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         do {
             let client = try getClient()
             let updated: Document = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("documents")
                     .update(["tags": tags])
                     .eq("id", value: id)
@@ -241,7 +250,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
         do {
             let client = try getClient()
             let updated: Document = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("documents")
                     .update(["document_type": type.rawValue])
                     .eq("id", value: id)
@@ -261,7 +270,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     func searchDocuments(query: String) async throws -> [Document] {
         let client = try getClient()
         return try await RepositoryNetwork.withRetry {
-            try await client.database
+            try await client
                 .from("documents")
                 .select()
                 .ilike("original_filename", pattern: "%\(query)%")

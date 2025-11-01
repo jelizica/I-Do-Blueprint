@@ -476,4 +476,32 @@ final class ColorAccessibilityTests: XCTestCase {
         print("WCAG AAA Passed: \(passedAAA)")
         print("===================================\n")
     }
+
+    // MARK: - Color Blending Tests (JES-184)
+    func testColorBlendedMidpointEqualsAverage() throws {
+        // Given two colors in sRGB
+        let base = Color(nsColor: .systemOrange)
+        let target = Color.black
+        
+        // When blending at 50%
+        let mid = base.blended(with: target, fraction: 0.5)
+        
+        // Then the sRGB components should be the midpoint of the inputs
+        guard let a = NSColor(base).usingColorSpace(.sRGB),
+              let b = NSColor(target).usingColorSpace(.sRGB),
+              let m = NSColor(mid).usingColorSpace(.sRGB) else {
+            XCTFail("Failed to resolve colors to sRGB")
+            return
+        }
+        
+        let avgR = (a.redComponent + b.redComponent) / 2.0
+        let avgG = (a.greenComponent + b.greenComponent) / 2.0
+        let avgB = (a.blueComponent + b.blueComponent) / 2.0
+        let avgA = (a.alphaComponent + b.alphaComponent) / 2.0
+        
+        XCTAssertEqual(m.redComponent, avgR, accuracy: 0.02)
+        XCTAssertEqual(m.greenComponent, avgG, accuracy: 0.02)
+        XCTAssertEqual(m.blueComponent, avgB, accuracy: 0.02)
+        XCTAssertEqual(m.alphaComponent, avgA, accuracy: 0.02)
+    }
 }

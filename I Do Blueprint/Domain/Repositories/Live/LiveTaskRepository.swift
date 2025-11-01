@@ -55,7 +55,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         
         do {
             let tasks: [WeddingTask] = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_tasks")
                     .select("""
                         *,
@@ -107,7 +107,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         
         do {
             let tasks: [WeddingTask] = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_tasks")
                     .select("""
                         *,
@@ -145,7 +145,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let startTime = Date()
             
             let task: WeddingTask = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_tasks")
                     .insert(insertData)
                     .select()
@@ -180,7 +180,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let startTime = Date()
             
             let updated: WeddingTask = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_tasks")
                     .update(task)
                     .eq("id", value: task.id)
@@ -218,7 +218,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let startTime = Date()
             
             try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_tasks")
                     .delete()
                     .eq("id", value: id)
@@ -260,7 +260,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         
         do {
             let subtasks: [Subtask] = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_subtasks")
                     .select()
                     .eq("task_id", value: taskId)
@@ -308,7 +308,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
 
             let insert = SubtaskInsert(taskId: taskId, data: insertData)
             let subtask: Subtask = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_subtasks")
                     .insert(insert)
                     .select()
@@ -342,7 +342,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let startTime = Date()
             
             let updated: Subtask = try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_subtasks")
                     .update(subtask)
                     .eq("id", value: subtask.id)
@@ -377,7 +377,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let startTime = Date()
             
             // Fetch the subtask first to get the taskId for cache invalidation
-            let subtasks: [Subtask] = try await client.database
+            let subtasks: [Subtask] = try await client
                 .from("wedding_subtasks")
                 .select()
                 .eq("id", value: id)
@@ -386,7 +386,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                 .value
             
             try await RepositoryNetwork.withRetry {
-                try await client.database
+                try await client
                     .from("wedding_subtasks")
                     .delete()
                     .eq("id", value: id)

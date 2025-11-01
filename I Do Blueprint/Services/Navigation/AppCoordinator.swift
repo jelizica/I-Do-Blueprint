@@ -198,10 +198,17 @@ class AppCoordinator: ObservableObject {
             title: "Export Successful",
             message: "Your file has been saved successfully.",
             style: .informational,
-            buttons: ["Open File", "OK"]
+            buttons: ["Open File", "Reveal in Finder", "OK"]
         )
         if response == "Open File" {
             NSWorkspace.shared.open(fileURL)
+        } else if response == "Reveal in Finder" {
+            // Reveal the exported file in Finder and select it
+            if #available(macOS 12.0, *) {
+                NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+            } else {
+                NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: "")
+            }
         }
     }
 
