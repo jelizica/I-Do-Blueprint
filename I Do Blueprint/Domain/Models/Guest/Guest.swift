@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftUI
+import AppKit
 
 // RSVP status ordering for consistent sorting across the application
 enum RSVPStatus: String, CaseIterable, Codable {
@@ -239,5 +240,26 @@ struct GuestGroup: Identifiable, Codable, Hashable, Sendable {
         case groupName = "group_name"
         case groupType = "group_type"
         case notes
+    }
+}
+
+// MARK: - Avatar Support
+
+extension Guest {
+    /// Generate a unique avatar identifier for this guest
+    /// Uses guest full name for Multiavatar API compatibility
+    var avatarIdentifier: String {
+        fullName
+    }
+    
+    /// Fetch avatar image for this guest
+    /// - Parameter size: Desired image size (default 100x100)
+    /// - Returns: NSImage of the avatar
+    /// - Throws: AvatarError if fetch fails
+    func fetchAvatar(size: CGSize = CGSize(width: 100, height: 100)) async throws -> NSImage {
+        try await MultiAvatarJSService.shared.fetchAvatar(
+            for: avatarIdentifier,
+            size: size
+        )
     }
 }

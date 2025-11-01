@@ -42,4 +42,19 @@ protocol SettingsRepositoryProtocol: Sendable {
 
     func formatPhoneNumbers() async throws -> PhoneFormatResult
     func resetData(keepBudgetSandbox: Bool, keepAffordability: Bool, keepCategories: Bool) async throws
+    
+    // MARK: - Account Deletion
+    
+    /// Delete the entire user account and all associated data
+    ///
+    /// This is a destructive operation that:
+    /// 1. Deletes all wedding planning data
+    /// 2. Deletes couple profile and memberships
+    /// 3. Deletes settings and onboarding progress
+    /// 4. Deletes the user from Supabase Auth
+    /// 5. Signs the user out
+    ///
+    /// - Warning: This is irreversible. All data will be permanently deleted.
+    /// - Throws: SettingsError.accountDeletionFailed if deletion fails
+    func deleteAccount() async throws
 }

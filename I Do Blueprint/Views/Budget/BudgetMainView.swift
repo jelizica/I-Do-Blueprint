@@ -55,7 +55,7 @@ struct BudgetMainView: View {
         .environmentObject(budgetStore)
         .onAppear {
             Task {
-                await budgetStore.loadBudgetData()
+                await budgetStore.loadBudgetData(force: true)
             }
         }
     }

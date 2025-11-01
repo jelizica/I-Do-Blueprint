@@ -88,7 +88,7 @@ class SupabaseVisualPlanningService: ObservableObject {
 
         logger.debug("SupabaseService: Preparing to save mood board \(moodBoard.id)")
         let moodBoardData = MoodBoardDTO(from: moodBoard)
-        logger.debug("SupabaseService: Created DTO with name: \(moodBoardData.board_name), tenant: \(moodBoardData.tenant_id)")
+        logger.debug("SupabaseService: Created DTO with name: \(moodBoardData.board_name), tenant: \(moodBoardData.couple_id)")
 
         do {
             try await supabase
@@ -134,7 +134,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         let response: [MoodBoardDTO] = try await supabase
             .from("mood_boards")
             .select("*")
-            .eq("tenant_id", value: tenantId)
+            .eq("couple_id", value: tenantId)
             .order("created_at", ascending: false)
             .execute()
             .value
@@ -206,7 +206,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         let response: [ColorPaletteDTO] = try await supabase
             .from("color_palettes")
             .select("*")
-            .eq("tenant_id", value: tenantId)
+            .eq("couple_id", value: tenantId)
             .order("created_at", ascending: false)
             .execute()
             .value
@@ -329,7 +329,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         let response: [StylePreferencesDTO] = try await supabase
             .from("style_preferences")
             .select("*")
-            .eq("tenant_id", value: tenantId)
+            .eq("couple_id", value: tenantId)
             .limit(1)
             .execute()
             .value

@@ -262,4 +262,13 @@ class GiftsStore: ObservableObject {
     func totalGiftsForScenario(_ scenarioId: UUID) -> Double {
         giftsLinkedToScenario(scenarioId).reduce(0) { $0 + $1.amount }
     }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        giftsAndOwed = []
+        giftsReceived = []
+        moneyOwed = []
+    }
 }

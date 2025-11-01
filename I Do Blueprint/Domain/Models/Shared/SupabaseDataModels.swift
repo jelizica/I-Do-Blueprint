@@ -12,7 +12,7 @@ import SwiftUI
 
 struct MoodBoardDTO: Codable {
     let id: String
-    let tenant_id: String
+    let couple_id: String
     let board_name: String
     let board_description: String?
     let style_category: String
@@ -38,7 +38,7 @@ struct MoodBoardDTO: Codable {
 
     init(from moodBoard: MoodBoard) {
         id = moodBoard.id.uuidString
-        tenant_id = moodBoard.tenantId
+        couple_id = moodBoard.tenantId
         board_name = moodBoard.boardName
         board_description = moodBoard.boardDescription
         style_category = moodBoard.styleCategory.rawValue
@@ -66,7 +66,7 @@ struct MoodBoardDTO: Codable {
     func toMoodBoard(with elements: [VisualElement]) -> MoodBoard {
         var moodBoard = MoodBoard(
             id: UUID(uuidString: id) ?? UUID(),
-            tenantId: tenant_id,
+            tenantId: couple_id,
             boardName: board_name,
             boardDescription: board_description,
             styleCategory: StyleCategory(rawValue: style_category) ?? .modern,
@@ -89,7 +89,7 @@ struct MoodBoardDTO: Codable {
 struct VisualElementDTO: Codable {
     let id: String
     let mood_board_id: String
-    let tenant_id: String
+    let couple_id: String
     let element_type: String
     let element_data: ElementDataDTO
     let position_x: Double
@@ -116,7 +116,7 @@ struct VisualElementDTO: Codable {
     init(from element: VisualElement) {
         id = element.id.uuidString
         mood_board_id = element.moodBoardId.uuidString
-        tenant_id = "c507b4c9-7ef4-4b76-a71a-63887984b9ab" // Admin couple ID
+        couple_id = "c507b4c9-7ef4-4b76-a71a-63887984b9ab" // Admin couple ID
         element_type = element.elementType.rawValue
         element_data = ElementDataDTO(from: element.elementData)
         position_x = element.position.x
@@ -258,7 +258,7 @@ struct AnyCodable: Codable {
 
 struct ColorPaletteDTO: Codable {
     let id: String
-    let tenant_id: String
+    let couple_id: String
     let palette_name: String
     let palette_description: String?
     let primary_color: String
@@ -282,7 +282,7 @@ struct ColorPaletteDTO: Codable {
 
     init(from palette: ColorPalette) {
         id = palette.id.uuidString
-        tenant_id = "" // New ColorPalette doesn't have tenantId
+        couple_id = "" // New ColorPalette doesn't have tenantId
         palette_name = palette.name
         palette_description = palette.description
 
@@ -472,7 +472,7 @@ struct SeatAssignmentDTO: Codable {
 
 struct StylePreferencesDTO: Codable {
     let id: String
-    let tenant_id: String
+    let couple_id: String
     let primary_style: String?
     let style_influences: [String]
     let formality_level: String?
@@ -488,7 +488,7 @@ struct StylePreferencesDTO: Codable {
 
     init(from preferences: StylePreferences) {
         id = UUID().uuidString // Generate new ID for upsert
-        tenant_id = preferences.tenantId
+        couple_id = preferences.tenantId
         primary_style = preferences.primaryStyle?.rawValue
         style_influences = preferences.styleInfluences.map(\.rawValue)
         formality_level = preferences.formalityLevel?.rawValue
@@ -515,7 +515,7 @@ struct StylePreferencesDTO: Codable {
     }
 
     func toStylePreferences() -> StylePreferences {
-        var preferences = StylePreferences(tenantId: tenant_id)
+        var preferences = StylePreferences(tenantId: couple_id)
 
         preferences.primaryStyle = primary_style.flatMap { StyleCategory(rawValue: $0) }
         preferences.styleInfluences = style_influences.compactMap { StyleCategory(rawValue: $0) }
@@ -547,7 +547,7 @@ struct StylePreferencesDTO: Codable {
 
 struct GuestDTO: Codable {
     let id: String
-    let tenant_id: String
+    let couple_id: String
     let first_name: String
     let last_name: String
     let email: String?
@@ -568,8 +568,8 @@ struct GuestDTO: Codable {
             throw ConversionError.invalidUUID(id)
         }
         
-        guard let coupleId = UUID(uuidString: tenant_id) else {
-            throw ConversionError.invalidUUID(tenant_id)
+        guard let coupleId = UUID(uuidString: couple_id) else {
+            throw ConversionError.invalidUUID(couple_id)
         }
         
         // Parse dates

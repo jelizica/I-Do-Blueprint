@@ -30,8 +30,8 @@ struct AnyEncodable: Encodable {
 class SupabaseManager: ObservableObject {
     static let shared = SupabaseManager()
 
-    let client: SupabaseClient?
-    
+    private(set) var client: SupabaseClient?
+
     @Published var isAuthenticated = false
     @Published var currentUser: User?
     @Published var configurationError: ConfigurationError?
@@ -42,34 +42,69 @@ class SupabaseManager: ObservableObject {
     @MainActor
     private var activeChannels: [RealtimeChannelV2] = []
 
+    // Track initialization state
+    private var initializationTask: Task<Void, Never>?
+    private var isInitialized = false
+
     private init() {
+        // IMPORTANT: Do NOT access file system during init() to avoid sandbox crashes
+        // Defer client creation until first access via lazy initialization
+        self.client = nil
+        self.configurationError = nil
+
+        // Schedule initialization for next run loop after sandbox is ready
+        initializationTask = Task { @MainActor in
+            await initializeClient()
+            isInitialized = true
+        }
+    }
+
+    @MainActor
+    private func initializeClient() async {
         // Try to initialize, but don't crash on failure
         do {
-            self.client = try Self.createSupabaseClient()
+            let newClient = try Self.createSupabaseClient()
+            self.client = newClient
             self.configurationError = nil
-            
-            Task {
-                // First check auth state, then setup listener to avoid race conditions
-                await checkAuthState()
-                await setupAuthListener()
-                
-                // Test basic network connectivity after initialization
-                // Note: supabaseURL is internal, so we skip this test
-                // if let url = client?.supabaseURL {
-                //     await testNetworkConnectivity(url: url)
-                // }
-            }
+
+            // First check auth state, then setup listener to avoid race conditions
+            await checkAuthState()
+            await setupAuthListener()
+
+            logger.info("Supabase client initialized successfully")
         } catch let error as ConfigurationError {
             logger.error("Configuration error during initialization", error: error)
-            self.client = nil
             self.configurationError = error
         } catch {
             logger.error("Unexpected error during initialization", error: error)
-            self.client = nil
             self.configurationError = .configFileUnreadable
         }
     }
-    
+
+    // MARK: - Client Access with Initialization Wait
+
+    /// Wait for initialization to complete and return the client
+    /// Can be called from any isolation context
+    func waitForClient() async throws -> SupabaseClient {
+        // Wait for initialization task to complete
+        await initializationTask?.value
+
+        // Access properties on MainActor
+        return try await MainActor.run {
+            // Check if initialization failed
+            if let error = self.configurationError {
+                throw error
+            }
+
+            // Return the client
+            guard let client = self.client else {
+                throw ConfigurationError.configFileUnreadable
+            }
+
+            return client
+        }
+    }
+
     // MARK: - Client Creation (Throwing)
     
     private static func createSupabaseClient() throws -> SupabaseClient {
@@ -250,6 +285,16 @@ class SupabaseManager: ObservableObject {
             // Clean up all tracked channels
             await cleanupChannels()
             logger.info("Cleaned up all realtime channels")
+
+            // Clear session manager (tenant ID and keychain)
+            await SessionManager.shared.clearSession()
+            logger.info("Cleared session manager and keychain")
+
+            // Reset all store loaded states
+            await MainActor.run {
+                AppStores.shared.resetAllStores()
+            }
+            logger.info("Reset all store loaded states")
 
             try await client.auth.signOut()
 

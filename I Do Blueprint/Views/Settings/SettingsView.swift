@@ -56,10 +56,14 @@ enum SettingsSection: String, CaseIterable, Identifiable {
 }
 
 struct SettingsView: View {
-    @StateObject private var store = SettingsStoreV2()
+    @Environment(\.appStores) private var appStores
     @State private var selectedSection: SettingsSection = .global
     @State private var showDeveloperSettings = false
     @State private var tapCount = 0
+    
+    private var store: SettingsStoreV2 {
+        appStores.settings
+    }
 
     var body: some View {
         NavigationSplitView {

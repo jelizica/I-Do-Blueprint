@@ -22,6 +22,9 @@ class TimelineStoreV2: ObservableObject {
 
     @Dependency(\.timelineRepository) var repository
     
+    // Task tracking for cancellation handling
+    private var loadTask: Task<Void, Never>?
+    
     // MARK: - Computed Properties for Backward Compatibility
     
     var timelineItems: [TimelineItem] {
@@ -42,21 +45,40 @@ class TimelineStoreV2: ObservableObject {
     // MARK: - Timeline Items
 
     func loadTimelineItems() async {
-        guard loadingState.isIdle || loadingState.hasError else { return }
+        // Cancel any previous load task
+        loadTask?.cancel()
         
-        loadingState = .loading
-
-        do {
-            async let itemsResult = repository.fetchTimelineItems()
-            async let milestonesResult = repository.fetchMilestones()
-
-            let fetchedItems = try await itemsResult
-            milestones = try await milestonesResult
+        // Create new load task
+        loadTask = Task { @MainActor in
+            guard loadingState.isIdle || loadingState.hasError else { return }
             
-            loadingState = .loaded(fetchedItems)
-        } catch {
-            loadingState = .error(TimelineError.fetchFailed(underlying: error))
+            loadingState = .loading
+
+            do {
+                try Task.checkCancellation()
+                
+                async let itemsResult = repository.fetchTimelineItems()
+                async let milestonesResult = repository.fetchMilestones()
+
+                let fetchedItems = try await itemsResult
+                let fetchedMilestones = try await milestonesResult
+                
+                try Task.checkCancellation()
+                
+                milestones = fetchedMilestones
+                loadingState = .loaded(fetchedItems)
+            } catch is CancellationError {
+                AppLogger.ui.debug("TimelineStoreV2.loadTimelineItems: Load cancelled (expected during tenant switch)")
+                loadingState = .idle
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("TimelineStoreV2.loadTimelineItems: Load cancelled (URLError)")
+                loadingState = .idle
+            } catch {
+                loadingState = .error(TimelineError.fetchFailed(underlying: error))
+            }
         }
+        
+        await loadTask?.value
     }
 
     func refreshTimeline() async {
@@ -309,5 +331,13 @@ class TimelineStoreV2: ObservableObject {
     
     func retryLoad() async {
         await loadTimelineItems()
+    }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        loadingState = .idle
+        milestones = []
     }
 }

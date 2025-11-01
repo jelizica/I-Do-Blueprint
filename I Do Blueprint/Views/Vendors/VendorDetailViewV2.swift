@@ -8,13 +8,17 @@
 
 import SwiftUI
 import Dependencies
+import Supabase
 
 struct VendorDetailViewV2: View {
     let vendor: Vendor
     var vendorStore: VendorStoreV2
     var onExportToggle: ((Bool) async -> Void)? = nil
+    @Environment(\.dismiss) private var dismiss
     @State private var showingEditSheet = false
     @State private var selectedTab = 0
+    @State private var currentVendor: Vendor
+    @State private var isSavingLogo = false
     
     // Financial data
     @State private var expenses: [Expense] = []
@@ -29,18 +33,34 @@ struct VendorDetailViewV2: View {
     
     @Dependency(\.budgetRepository) var budgetRepository
     @Dependency(\.documentRepository) var documentRepository
+    
+    init(vendor: Vendor, vendorStore: VendorStoreV2, onExportToggle: ((Bool) async -> Void)? = nil) {
+        self.vendor = vendor
+        self.vendorStore = vendorStore
+        self.onExportToggle = onExportToggle
+        _currentVendor = State(initialValue: vendor)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
-            // Hero Header Section with Edit and Delete Buttons
+            // Hero Header Section with Edit, Delete, Close, and Logo Upload
             VendorHeroHeaderView(
-                vendor: vendor,
+                vendor: currentVendor,
                 onEdit: {
                     showingEditSheet = true
                 },
                 onDelete: {
                     Task {
                         await vendorStore.deleteVendor(vendor)
+                        dismiss()
+                    }
+                },
+                onClose: {
+                    dismiss()
+                },
+                onLogoUpdated: { logoImage in
+                    Task {
+                        await handleLogoUpdate(logoImage)
                     }
                 }
             )
@@ -71,7 +91,7 @@ struct VendorDetailViewV2: View {
             }
         }
         .background(AppColors.background)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: 900, maxHeight: 700)
         .sheet(isPresented: $showingEditSheet) {
             EditVendorSheetV2(vendor: vendor, vendorStore: vendorStore) { _ in
                 // Reload will happen automatically through the store
@@ -80,6 +100,12 @@ struct VendorDetailViewV2: View {
         .task {
             await loadFinancialData()
             await loadDocuments()
+        }
+        .onChange(of: vendorStore.vendors) { _ in
+            // Update currentVendor when the store's vendor list changes
+            if let updatedVendor = vendorStore.vendors.first(where: { $0.id == vendor.id }) {
+                currentVendor = updatedVendor
+            }
         }
     }
     
@@ -93,7 +119,7 @@ struct VendorDetailViewV2: View {
             documents = try await documentRepository.fetchDocuments(vendorId: Int(vendor.id))
         } catch {
             documentLoadError = error
-            print("Error loading documents for vendor \(vendor.id): \(error)")
+            AppLogger.ui.error("Error loading documents for vendor \(vendor.id)", error: error)
         }
         
         isLoadingDocuments = false
@@ -111,8 +137,7 @@ struct VendorDetailViewV2: View {
             payments = try await paymentsTask
         } catch {
             financialLoadError = error
-            // Log error but don't show to user - just show empty state
-            print("Error loading financial data for vendor \(vendor.id): \(error)")
+            AppLogger.ui.error("Error loading financial data for vendor \(vendor.id)", error: error)
         }
         
         isLoadingFinancials = false
@@ -127,7 +152,7 @@ struct VendorDetailViewV2: View {
 
             // Export Flag Toggle Section
             VendorExportFlagSection(
-                vendor: vendor,
+                vendor: currentVendor,
                 onToggle: { newValue in
                     Task {
                         await onExportToggle?(newValue)
@@ -136,15 +161,15 @@ struct VendorDetailViewV2: View {
             )
 
             // Quick Info Cards
-            VendorQuickInfoSection(vendor: vendor, contractInfo: nil)
+            VendorQuickInfoSection(vendor: currentVendor, contractInfo: nil)
 
             // Contact Section
             if hasContactInfo {
-                VendorContactSection(vendor: vendor)
+                VendorContactSection(vendor: currentVendor)
             }
 
             // Business Details
-            VendorBusinessDetailsSection(vendor: vendor, reviewStats: nil)
+            VendorBusinessDetailsSection(vendor: currentVendor, reviewStats: nil)
         }
     }
 
@@ -152,7 +177,7 @@ struct VendorDetailViewV2: View {
         var actions: [QuickAction] = []
 
         // Call action
-        if let phoneNumber = vendor.phoneNumber {
+        if let phoneNumber = currentVendor.phoneNumber {
             actions.append(QuickAction(icon: "phone.fill", title: "Call", color: AppColors.Vendor.booked) {
                 if let url = URL(string: "tel:\(phoneNumber.filter { !$0.isWhitespace && $0 != "-" && $0 != "(" && $0 != ")" })") {
                     NSWorkspace.shared.open(url)
@@ -161,7 +186,7 @@ struct VendorDetailViewV2: View {
         }
 
         // Email action
-        if let email = vendor.email {
+        if let email = currentVendor.email {
             actions.append(QuickAction(icon: "envelope.fill", title: "Email", color: AppColors.Vendor.contacted) {
                 if let url = URL(string: "mailto:\(email)") {
                     NSWorkspace.shared.open(url)
@@ -170,7 +195,7 @@ struct VendorDetailViewV2: View {
         }
 
         // Website action
-        if let website = vendor.website, let url = URL(string: website) {
+        if let website = currentVendor.website, let url = URL(string: website) {
             actions.append(QuickAction(icon: "globe", title: "Website", color: AppColors.Vendor.pending) {
                 NSWorkspace.shared.open(url)
             })
@@ -199,7 +224,7 @@ struct VendorDetailViewV2: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else if hasAnyFinancialInfo {
                 // Quoted Amount Section
-                if let quotedAmount = vendor.quotedAmount {
+                if let quotedAmount = currentVendor.quotedAmount {
                     VStack(alignment: .leading, spacing: Spacing.md) {
                         SectionHeaderV2(
                             title: "Quoted Amount",
@@ -220,7 +245,7 @@ struct VendorDetailViewV2: View {
                             
                             Spacer()
                             
-                            if let budgetCategory = vendor.budgetCategoryName {
+                            if let budgetCategory = currentVendor.budgetCategoryName {
                                 VStack(alignment: .trailing, spacing: Spacing.xs) {
                                     Text("Category")
                                         .font(Typography.caption)
@@ -315,7 +340,7 @@ struct VendorDetailViewV2: View {
 
     private var notesTab: some View {
         VStack(spacing: Spacing.xxxl) {
-            if let notes = vendor.notes, !notes.isEmpty {
+            if let notes = currentVendor.notes, !notes.isEmpty {
                 VendorNotesSection(notes: notes)
             } else {
                 VStack(spacing: Spacing.lg) {
@@ -341,15 +366,126 @@ struct VendorDetailViewV2: View {
     // MARK: - Computed Properties
 
     private var hasContactInfo: Bool {
-        vendor.email != nil || vendor.phoneNumber != nil || vendor.website != nil
+        currentVendor.email != nil || currentVendor.phoneNumber != nil || currentVendor.website != nil
     }
 
     private var hasFinancialInfo: Bool {
-        vendor.quotedAmount != nil
+        currentVendor.quotedAmount != nil
     }
     
     private var hasAnyFinancialInfo: Bool {
-        vendor.quotedAmount != nil || !expenses.isEmpty || !payments.isEmpty
+        currentVendor.quotedAmount != nil || !expenses.isEmpty || !payments.isEmpty
+    }
+    
+    // MARK: - Logo Upload
+    
+    private func handleLogoUpdate(_ logoImage: NSImage?) async {
+        isSavingLogo = true
+        
+        do {
+            // Get Supabase client
+            guard let supabase = SupabaseManager.shared.client else {
+                throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+            }
+            
+            var updatedVendor = currentVendor
+            
+            if let logoImage = logoImage {
+                // Convert NSImage to PNG data
+                guard let tiffData = logoImage.tiffRepresentation,
+                      let bitmapImage = NSBitmapImageRep(data: tiffData),
+                      let imageData = bitmapImage.representation(using: .png, properties: [:]) else {
+                    AppLogger.ui.error("Failed to convert logo image to PNG data")
+                    isSavingLogo = false
+                    return
+                }
+                
+                // Generate unique filename with vendor ID
+                let fileName = "vendor_\(currentVendor.id)_\(UUID().uuidString).png"
+                let filePath = fileName
+                
+                AppLogger.ui.info("Uploading logo to Supabase Storage: \(filePath)")
+                
+                // Upload to Supabase Storage with retry
+                try await RepositoryNetwork.withRetry(timeout: 30) {
+                    try await supabase.storage
+                        .from("vendor-profile-pics")
+                        .upload(
+                            path: filePath,
+                            file: imageData,
+                            options: FileOptions(
+                                cacheControl: "3600",
+                                contentType: "image/png",
+                                upsert: true
+                            )
+                        )
+                }
+                
+                // Get public URL for the uploaded file
+                let publicURL = try supabase.storage
+                    .from("vendor-profile-pics")
+                    .getPublicURL(path: filePath)
+                
+                updatedVendor.imageUrl = publicURL.absoluteString
+                
+                AppLogger.ui.info("Logo uploaded successfully: \(publicURL.absoluteString)")
+            } else {
+                // Remove logo - delete from storage if exists
+                if let imageUrl = currentVendor.imageUrl,
+                   let url = URL(string: imageUrl),
+                   let path = extractStoragePath(from: url) {
+                    do {
+                        try await RepositoryNetwork.withRetry(timeout: 30) {
+                            try await supabase.storage
+                                .from("vendor-profile-pics")
+                                .remove(paths: [path])
+                        }
+                        AppLogger.ui.info("Logo deleted from storage: \(path)")
+                    } catch {
+                        AppLogger.ui.error("Failed to delete logo from storage", error: error)
+                        // Continue anyway to remove the URL from database
+                    }
+                }
+                
+                updatedVendor.imageUrl = nil
+                AppLogger.ui.info("Logo removed for vendor: \(currentVendor.vendorName)")
+            }
+            
+            // Update vendor in the store
+            await vendorStore.updateVendor(updatedVendor)
+            
+            // Wait for store to reload and get the updated vendor from the store
+            // This ensures the database update is reflected
+            if let refreshedVendor = vendorStore.vendors.first(where: { $0.id == currentVendor.id }) {
+                currentVendor = refreshedVendor
+                AppLogger.ui.info("Vendor logo updated successfully, refreshed from store")
+            } else {
+                // Fallback to local update if vendor not found in store yet
+                currentVendor = updatedVendor
+                AppLogger.ui.info("Vendor logo updated successfully, using local state")
+            }
+        } catch {
+            AppLogger.ui.error("Failed to update vendor logo", error: error)
+            SentryService.shared.captureError(error, context: [
+                "operation": "updateVendorLogo",
+                "vendorId": String(currentVendor.id)
+            ])
+        }
+        
+        isSavingLogo = false
+    }
+    
+    /// Extract storage path from Supabase public URL
+    private func extractStoragePath(from url: URL) -> String? {
+        // Example URL: https://project.supabase.co/storage/v1/object/public/vendor-profile-pics/file.png
+        // We need to extract: file.png
+        let pathComponents = url.pathComponents
+        if let publicIndex = pathComponents.firstIndex(of: "public"),
+           publicIndex + 2 < pathComponents.count {
+            let relevantComponents = pathComponents[(publicIndex + 2)...]
+            return relevantComponents.joined(separator: "/")
+        }
+        return nil
     }
 }
 

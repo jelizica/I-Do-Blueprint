@@ -388,8 +388,7 @@ struct DocumentListRow: View {
                                 try URLValidator.validate(url)
                                 NSWorkspace.shared.open(url)
                             } catch {
-                                // Log error silently in list view
-                                print("Rejected unsafe URL: \(url.absoluteString)")
+                                AppLogger.ui.warning("Rejected unsafe URL: \(url.absoluteString)")
                             }
                         }
                     }) {

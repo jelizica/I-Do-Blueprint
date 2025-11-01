@@ -54,6 +54,7 @@ struct CoupleSettings: Codable, Equatable {
 struct GlobalSettings: Codable, Equatable {
     var currency: String
     var weddingDate: String
+    var isWeddingDateTBD: Bool
     var timezone: String
     var partner1FullName: String
     var partner1Nickname: String
@@ -64,6 +65,7 @@ struct GlobalSettings: Codable, Equatable {
     enum CodingKeys: String, CodingKey {
         case currency
         case weddingDate = "wedding_date"
+        case isWeddingDateTBD = "is_wedding_date_tbd"
         case timezone
         case partner1FullName = "partner1_full_name"
         case partner1Nickname = "partner1_nickname"
@@ -76,6 +78,7 @@ struct GlobalSettings: Codable, Equatable {
         GlobalSettings(
             currency: "USD",
             weddingDate: "",
+            isWeddingDateTBD: false,
             timezone: "America/New_York",
             partner1FullName: "Partner 1",
             partner1Nickname: "",

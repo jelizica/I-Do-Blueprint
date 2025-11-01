@@ -107,8 +107,12 @@ class VisualPlanningSearchService: ObservableObject {
             filters.styleCategories.contains(moodBoard.styleCategory)
 
         // Date range filter
-        let matchesDateRange = filters.dateRange == nil ||
-            filters.dateRange!.contains(moodBoard.createdAt)
+        let matchesDateRange: Bool
+        if let dateRange = filters.dateRange {
+            matchesDateRange = dateRange.contains(moodBoard.createdAt)
+        } else {
+            matchesDateRange = true
+        }
 
         // Template filter
         let matchesTemplate = !filters.showTemplatesOnly || moodBoard.isTemplate
@@ -161,8 +165,12 @@ class VisualPlanningSearchService: ObservableObject {
             }
 
         // Date range filter
-        let matchesDateRange = filters.dateRange == nil ||
-            filters.dateRange!.contains(palette.createdAt)
+        let matchesDateRange: Bool
+        if let dateRange = filters.dateRange {
+            matchesDateRange = dateRange.contains(palette.createdAt)
+        } else {
+            matchesDateRange = true
+        }
 
         return matchesText && matchesSeason && matchesPaletteVisibility && matchesFavorites && matchesColor &&
             matchesDateRange
@@ -192,15 +200,23 @@ class VisualPlanningSearchService: ObservableObject {
             filters.venueLayouts.contains(chart.venueLayoutType)
 
         // Guest count range filter
-        let matchesGuestCount = filters.guestCountRange == nil ||
-            filters.guestCountRange!.contains(chart.guests.count)
+        let matchesGuestCount: Bool
+        if let guestCountRange = filters.guestCountRange {
+            matchesGuestCount = guestCountRange.contains(chart.guests.count)
+        } else {
+            matchesGuestCount = true
+        }
 
         // Finalized filter
         let matchesFinalized = !filters.finalizedOnly || chart.isFinalized
 
         // Date range filter
-        let matchesDateRange = filters.dateRange == nil ||
-            filters.dateRange!.contains(chart.createdAt)
+        let matchesDateRange: Bool
+        if let dateRange = filters.dateRange {
+            matchesDateRange = dateRange.contains(chart.createdAt)
+        } else {
+            matchesDateRange = true
+        }
 
         return matchesText && matchesVenueLayout && matchesGuestCount && matchesFinalized && matchesDateRange
     }

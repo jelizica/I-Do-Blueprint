@@ -366,23 +366,39 @@ struct GuestListContentView: View {
 struct GuestRowView: View {
     let guest: Guest
     @State private var isHovering = false
+    @State private var avatarImage: NSImage?
 
     var body: some View {
         HStack(spacing: 16) {
-            // Avatar with gradient
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [guest.rsvpStatus.color.opacity(0.3), guest.rsvpStatus.color.opacity(0.15)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing))
-                .frame(width: 56, height: 56)
-                .overlay(
-                    Text(String(guest.firstName.prefix(1) + guest.lastName.prefix(1)))
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(guest.rsvpStatus.color))
-                .shadow(color: guest.rsvpStatus.color.opacity(0.2), radius: 4, x: 0, y: 2)
+            // Avatar with Multiavatar or gradient fallback
+            Group {
+                if let image = avatarImage {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 56, height: 56)
+                        .clipShape(Circle())
+                        .shadow(color: guest.rsvpStatus.color.opacity(0.2), radius: 4, x: 0, y: 2)
+                } else {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [guest.rsvpStatus.color.opacity(0.3), guest.rsvpStatus.color.opacity(0.15)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing))
+                        .frame(width: 56, height: 56)
+                        .overlay(
+                            Text(String(guest.firstName.prefix(1) + guest.lastName.prefix(1)))
+                                .font(.headline)
+                                .fontWeight(.semibold)
+                                .foregroundColor(guest.rsvpStatus.color))
+                        .shadow(color: guest.rsvpStatus.color.opacity(0.2), radius: 4, x: 0, y: 2)
+                }
+            }
+            .task {
+                await loadAvatar()
+            }
+            .accessibilityLabel("Avatar for \(guest.fullName)")
 
             // Guest Info
             VStack(alignment: .leading, spacing: 6) {
@@ -473,6 +489,23 @@ struct GuestRowView: View {
             isHovering = hovering
         }
         .contentShape(Rectangle())
+        .contentShape(Rectangle())
+    }
+    
+    // MARK: - Avatar Loading
+    
+    private func loadAvatar() async {
+        do {
+            let image = try await guest.fetchAvatar(
+                size: CGSize(width: 112, height: 112) // 2x for retina
+            )
+            await MainActor.run {
+                avatarImage = image
+            }
+        } catch {
+            // Silently fail, keep showing initials
+            // Error already logged by MultiAvatarJSService
+        }
     }
 }
 

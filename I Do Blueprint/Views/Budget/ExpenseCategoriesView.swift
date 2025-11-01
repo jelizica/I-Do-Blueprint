@@ -94,7 +94,7 @@ struct ExpenseCategoriesView: View {
             }
         }
         .task {
-            await budgetStore.loadBudgetData()
+            await budgetStore.loadBudgetData(force: true)
         }
         .sheet(isPresented: $showingAddCategory) {
             AddCategoryView(budgetStore: budgetStore)

@@ -34,12 +34,15 @@ enum LogLevel {
 
 /// Centralized logging facade
 struct AppLogger: Sendable {
-    private let logger: Logger
     private let category: LogCategory
+
+    // Lazy logger creation to avoid Bundle.main access during static initialization
+    private var logger: Logger {
+        Logger(subsystem: Bundle.main.bundleIdentifier ?? "Jelizica.I-Do-Blueprint", category: category.rawValue)
+    }
 
     init(category: LogCategory) {
         self.category = category
-        self.logger = Logger(subsystem: Bundle.main.bundleIdentifier ?? "com.idoblueprint", category: category.rawValue)
     }
 
     // MARK: - Public Logging Methods

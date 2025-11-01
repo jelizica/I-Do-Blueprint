@@ -20,6 +20,7 @@ enum VendorError: LocalizedError {
     case invalidContact(reason: String)
     case categoryNotFound
     case contractUploadFailed(underlying: Error)
+    case importFailed(underlying: Error)
 
     var errorDescription: String? {
         switch self {
@@ -47,6 +48,8 @@ enum VendorError: LocalizedError {
             return "The selected vendor category doesn't exist."
         case .contractUploadFailed:
             return "Couldn't upload the contract. Please try again."
+        case .importFailed:
+            return "Couldn't import vendors from CSV. Please try again."
         }
     }
 
@@ -56,7 +59,7 @@ enum VendorError: LocalizedError {
             return "Check your internet connection and try again."
         case .unauthorized:
             return "Please sign in again or contact support."
-        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed:
+        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed, .importFailed:
             return "If the problem persists, please contact support."
         case .duplicateVendor:
             return "Please use a different vendor name or update the existing vendor."
@@ -74,7 +77,7 @@ enum VendorError: LocalizedError {
     /// Indicates whether this error is transient and can be retried
     var isRetryable: Bool {
         switch self {
-        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed:
+        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed, .importFailed:
             return true
         case .networkUnavailable:
             return true

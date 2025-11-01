@@ -12,11 +12,12 @@ import SwiftUI
 
 struct GuestListViewV2: View {
     @EnvironmentObject private var guestStore: GuestStoreV2
-    @EnvironmentObject var settingsStore: SettingsStoreV2
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
     @State private var showingAddGuest = false
+    @State private var showingImport = false
     @State private var selectedGuest: Guest?
     @State private var groupByStatus = true
 
@@ -25,6 +26,14 @@ struct GuestListViewV2: View {
             mainContent
             .navigationTitle("Wedding Guests")
             .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        showingImport = true
+                    } label: {
+                        Label("Import CSV", systemImage: "square.and.arrow.down")
+                    }
+                }
+                
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAddGuest = true
@@ -40,6 +49,11 @@ struct GuestListViewV2: View {
                     await addGuest(newGuest)
                 }
                 .frame(minWidth: 500, maxWidth: 600, minHeight: 500, maxHeight: 650)
+            }
+            .sheet(isPresented: $showingImport) {
+                GuestCSVImportView()
+                    .environmentObject(guestStore)
+                    .frame(minWidth: 700, maxWidth: 900, minHeight: 600, maxHeight: 800)
             }
             .successToast(isPresented: $guestStore.showSuccessToast, message: guestStore.successMessage)
             .task {
@@ -214,4 +228,6 @@ extension RSVPStatus {
 
 #Preview {
     GuestListViewV2()
+        .environmentObject(GuestStoreV2())
+        .environmentObject(SettingsStoreV2())
 }

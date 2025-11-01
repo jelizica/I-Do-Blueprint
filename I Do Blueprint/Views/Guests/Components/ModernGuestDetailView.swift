@@ -10,6 +10,8 @@ import SwiftUI
 struct ModernGuestDetailView: View {
     let guest: Guest
     @EnvironmentObject var settingsStore: SettingsStoreV2
+    @State private var avatarImage: NSImage?
+    @State private var isLoadingAvatar = false
 
     var body: some View {
         ScrollView {
@@ -17,25 +19,45 @@ struct ModernGuestDetailView: View {
                 // Header
                 VStack(spacing: Spacing.lg) {
                     // Large Avatar
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        guest.rsvpStatus.color.opacity(0.3),
-                                        guest.rsvpStatus.color.opacity(0.1)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+                    Group {
+                        if let image = avatarImage {
+                            Image(nsImage: image)
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                                .frame(width: 96, height: 96)
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(guest.rsvpStatus.color.opacity(0.5), lineWidth: 3)
                                 )
-                            )
-                            .frame(width: 96, height: 96)
+                                .shadow(color: guest.rsvpStatus.color.opacity(0.3), radius: 10)
+                        } else {
+                            // Fallback to initials
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [
+                                                guest.rsvpStatus.color.opacity(0.3),
+                                                guest.rsvpStatus.color.opacity(0.1)
+                                            ],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 96, height: 96)
 
-                        Text(guest.initials)
-                            .font(.system(size: 36, weight: .bold))
-                            .foregroundColor(guest.rsvpStatus.color)
+                                Text(guest.initials)
+                                    .font(.system(size: 36, weight: .bold))
+                                    .foregroundColor(guest.rsvpStatus.color)
+                            }
+                            .shadow(color: guest.rsvpStatus.color.opacity(0.3), radius: 10)
+                        }
                     }
-                    .shadow(color: guest.rsvpStatus.color.opacity(0.3), radius: 10)
+                    .task {
+                        await loadDetailAvatar()
+                    }
+                    .accessibilityLabel("Avatar for \(guest.fullName)")
 
                     VStack(spacing: Spacing.sm) {
                         Text(guest.fullName)
@@ -172,5 +194,21 @@ struct ModernGuestDetailView: View {
         }
         .background(AppColors.background)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    // MARK: - Avatar Loading
+    
+    private func loadDetailAvatar() async {
+        do {
+            let image = try await guest.fetchAvatar(
+                size: CGSize(width: 192, height: 192) // 2x for retina
+            )
+            await MainActor.run {
+                avatarImage = image
+            }
+        } catch {
+            // Silently fail, keep showing initials
+            // Error already logged by MultiAvatarService
+        }
     }
 }

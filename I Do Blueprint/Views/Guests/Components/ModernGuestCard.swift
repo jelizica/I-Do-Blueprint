@@ -11,29 +11,50 @@ struct ModernGuestCard: View {
     let guest: Guest
     let isSelected: Bool
     @State private var isHovering = false
+    @State private var avatarImage: NSImage?
+    @State private var isLoadingAvatar = false
 
     var body: some View {
         HStack(spacing: Spacing.lg) {
             // Avatar
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                guest.rsvpStatus.color.opacity(0.3),
-                                guest.rsvpStatus.color.opacity(0.1)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+            Group {
+                if let image = avatarImage {
+                    Image(nsImage: image)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 48, height: 48)
+                        .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .stroke(guest.rsvpStatus.color.opacity(0.3), lineWidth: 2)
                         )
-                    )
-                    .frame(width: 48, height: 48)
+                } else {
+                    // Fallback to initials
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        guest.rsvpStatus.color.opacity(0.3),
+                                        guest.rsvpStatus.color.opacity(0.1)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 48, height: 48)
 
-                Text(guest.initials)
-                    .font(Typography.heading)
-                    .fontWeight(.semibold)
-                    .foregroundColor(guest.rsvpStatus.color)
+                        Text(guest.initials)
+                            .font(Typography.heading)
+                            .fontWeight(.semibold)
+                            .foregroundColor(guest.rsvpStatus.color)
+                    }
+                }
             }
+            .task {
+                await loadAvatar()
+            }
+            .accessibilityLabel("Avatar for \(guest.fullName)")
 
             // Guest Info
             VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -119,5 +140,21 @@ struct ModernGuestCard: View {
             isHovering = hovering
         }
         .contentShape(Rectangle())
+    }
+    
+    // MARK: - Avatar Loading
+    
+    private func loadAvatar() async {
+        do {
+            let image = try await guest.fetchAvatar(
+                size: CGSize(width: 96, height: 96) // 2x for retina
+            )
+            await MainActor.run {
+                avatarImage = image
+            }
+        } catch {
+            // Silently fail, keep showing initials
+            // Error already logged by MultiAvatarService
+        }
     }
 }

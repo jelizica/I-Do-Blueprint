@@ -124,26 +124,40 @@ extension BudgetStoreV2 {
     
     /// Unlink an expense from a budget item
     func unlinkExpense(expenseId: String, budgetItemId: String) async throws {
-        guard let client = SupabaseManager.shared.client else {
-            throw BudgetError.updateFailed(
-                underlying: SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
-            )
-        }
-        
-        do {
-            // Update the budget item to remove the linked expense
-            _ = try await client
-                .from("budget_development_items")
-                .update(["linked_expense_id": AnyJSON.null])
-                .eq("id", value: budgetItemId)
-                .eq("linked_expense_id", value: expenseId)
-                .execute()
-            
-            logger.info("Expense unlinked successfully")
-        } catch {
-            logger.error("Failed to unlink expense", error: error)
-            throw BudgetError.updateFailed(underlying: error)
-        }
+    guard let client = SupabaseManager.shared.client else {
+    throw BudgetError.updateFailed(
+    underlying: SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+    )
+    }
+    
+    do {
+    // Delete the allocation from expense_budget_allocations table
+    logger.info("Attempting to delete allocation: expense_id=\(expenseId), budget_item_id=\(budgetItemId)")
+    
+    let response = try await client
+    .from("expense_budget_allocations")
+    .delete()
+    .eq("expense_id", value: expenseId)
+    .eq("budget_item_id", value: budgetItemId)
+    .execute()
+    
+    logger.info("Delete response status: \(response.response.statusCode)")
+    logger.info("Expense unlinked from database successfully")
+    
+    // Invalidate related caches SYNCHRONOUSLY to ensure they're cleared before any refresh
+    // Use lowercase UUID to match repository cache keys
+    if let scenarioId = primaryScenario?.id.uuidString.lowercased() {
+    await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
+    await RepositoryCache.shared.remove("budget_development_items_\(scenarioId)")
+    logger.info("Invalidated caches for scenario: \(scenarioId)")
+    }
+    await RepositoryCache.shared.remove("expenses")
+    
+    logger.info("Expense unlink complete - caches invalidated")
+    } catch {
+    logger.error("Failed to unlink expense", error: error)
+    throw BudgetError.updateFailed(underlying: error)
+    }
     }
     
     /// Unlink a gift from a budget item
