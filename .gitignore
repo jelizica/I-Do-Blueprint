@@ -28,3 +28,10 @@ Packages/**/.build/**
 
 # Tooling caches
 .chunkhound/
+
+# App config (do not commit real secrets)
+I Do Blueprint/Config.plist
+.env
+.env.*
+!.env.example
+coverage.json
