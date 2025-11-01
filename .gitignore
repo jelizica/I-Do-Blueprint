@@ -5,3 +5,26 @@
 
 # Google OAuth credentials
 client_secret_*.json
+
+# Build artifacts
+build/
+.build/
+DerivedData/
+*.xcresult
+
+# SPM checkouts and build caches
+Packages/**/.build/**
+**/.build/**
+**/checkouts/**
+
+# App bundles and dSYMs
+*.app/
+*.dSYM/
+
+# OS/editor
+.DS_Store
+*.swp
+*.swo
+
+# Tooling caches
+.chunkhound/
