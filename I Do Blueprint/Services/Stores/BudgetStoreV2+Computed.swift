@@ -140,6 +140,19 @@ extension BudgetStoreV2 {
     
     // MARK: - Budget Calculations
     
+    /// Primary budget development scenario total (from budget_development_scenarios table)
+    /// This represents the planned total budget from the budget development view
+    /// Falls back to actualTotalBudget if no primary scenario exists
+    var primaryScenarioTotal: Double {
+        // Use the loaded primary scenario if available
+        if let scenario = primaryScenario {
+            return scenario.totalWithTax
+        }
+        
+        // Fall back to actualTotalBudget if no primary scenario
+        return actualTotalBudget
+    }
+    
     /// Total amount spent across all expenses
     var totalSpent: Double {
         expenses.reduce(0) { $0 + $1.amount }
@@ -163,10 +176,18 @@ extension BudgetStoreV2 {
         actualTotalBudget - totalSpent
     }
     
-    /// Percentage of budget spent
+    /// Percentage of budget spent (based on expenses vs actual budget)
     var percentageSpent: Double {
         guard actualTotalBudget > 0 else { return 0 }
         return (totalSpent / actualTotalBudget) * 100
+    }
+    
+    /// Percentage of budget paid (based on paid payments vs primary scenario)
+    /// This matches the circular progress calculation
+    var percentagePaid: Double {
+        guard primaryScenarioTotal > 0 else { return 0 }
+        let paid = payments.totalPaid
+        return (paid / primaryScenarioTotal) * 100
     }
     
     /// Percentage of budget allocated

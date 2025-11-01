@@ -17,6 +17,9 @@ class NotesStoreV2: ObservableObject {
     @Dependency(\.notesRepository) var repository
 
     @Published var loadingState: LoadingState<[Note]> = .idle
+    
+    // Task tracking for cancellation handling
+    private var loadTask: Task<Void, Never>?
 
     // Filtering and search
     @Published var searchText = ""
@@ -61,16 +64,35 @@ class NotesStoreV2: ObservableObject {
     // MARK: - Load Notes
 
     func loadNotes() async {
-        guard loadingState.isIdle || loadingState.hasError else { return }
+        // Cancel any previous load task
+        loadTask?.cancel()
         
-        loadingState = .loading
+        // Create new load task
+        loadTask = Task { @MainActor in
+            guard loadingState.isIdle || loadingState.hasError else { return }
+            
+            loadingState = .loading
 
-        do {
-            let fetchedNotes = try await repository.fetchNotes()
-            loadingState = .loaded(fetchedNotes)
-        } catch {
-            loadingState = .error(NotesError.fetchFailed(underlying: error))
+            do {
+                try Task.checkCancellation()
+                
+                let fetchedNotes = try await repository.fetchNotes()
+                
+                try Task.checkCancellation()
+                
+                loadingState = .loaded(fetchedNotes)
+            } catch is CancellationError {
+                AppLogger.ui.debug("NotesStoreV2.loadNotes: Load cancelled (expected during tenant switch)")
+                loadingState = .idle
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("NotesStoreV2.loadNotes: Load cancelled (URLError)")
+                loadingState = .idle
+            } catch {
+                loadingState = .error(NotesError.fetchFailed(underlying: error))
+            }
         }
+        
+        await loadTask?.value
     }
 
     func loadNoteById(_ id: UUID) async -> Note? {
@@ -334,5 +356,12 @@ class NotesStoreV2: ObservableObject {
     
     func retryLoad() async {
         await loadNotes()
+    }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        loadingState = .idle
     }
 }

@@ -1,0 +1,13 @@
+First Name,Last Name,Email,Phone,RSVP Status,Plus One Allowed,Plus One Name,Dietary Restrictions,Address Line 1,City,State,Zip Code,Country,Invited By,Table Assignment,Notes
+Jon,Doe,john.doe@email.com,555-0101,attending,true,Jane Doe,Vegetarian,123 Main St,Springfield,IL,62701,USA,bride1,1,Best friend from college
+Sarah,Smith,sarah.smith@email.com,555-0102,pending,false,,Gluten-free,456 Oak Ave,Chicago,IL,60601,USA,bride2,2,Cousin
+Michael,Johnson,michael.j@email.com,555-0103,attending,true,Emily Johnson,None,789 Pine Rd,Naperville,IL,60540,USA,both,1,Work colleague
+Emily,Williams,emily.w@email.com,555-0104,declined,false,,Vegan,321 Elm St,Peoria,IL,61602,USA,bride1,,"Unable to attend due to prior commitment"
+David,Brown,david.brown@email.com,555-0105,attending,false,,Nut allergy,654 Maple Dr,Rockford,IL,61101,USA,bride2,3,Childhood friend
+Lisa,Davis,lisa.davis@email.com,555-0106,pending,true,,None,987 Cedar Ln,Aurora,IL,60505,USA,bride1,3,College roommate
+Robert,Miller,robert.m@email.com,555-0107,attending,true,Jennifer Miller,Lactose intolerant,147 Birch Way,Joliet,IL,60431,USA,both,2,Family friend
+Jennifer,Wilson,jennifer.w@email.com,555-0108,attending,false,,None,258 Spruce Ct,Elgin,IL,60120,USA,bride2,4,Sister
+James,Moore,james.moore@email.com,555-0109,pending,false,,Pescatarian,369 Willow Pl,Waukegan,IL,60085,USA,bride1,4,Neighbor
+Test, Guest, test@gmail.com,,,,,,,,,,,,,
+Test, Guest-2, test-2@gmail.com,,,,,,,,,,,,,
+Test, Guest-3, test-3@gmail.com,,,,,,,,,,,,,

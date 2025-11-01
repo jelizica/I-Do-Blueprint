@@ -11,6 +11,7 @@ import Supabase
 actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     private let client: SupabaseClient?
     private let logger = AppLogger.api
+    private let sessionManager = SessionManager.shared
     
     init(client: SupabaseClient? = SupabaseManager.shared.client) {
         self.client = client
@@ -22,14 +23,22 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
         }
         return client
     }
+    
+    private func getTenantId() async throws -> UUID {
+        try await MainActor.run {
+            try sessionManager.requireTenantId()
+        }
+    }
 
     // MARK: - Mood Boards
 
     func fetchMoodBoards() async throws -> [MoodBoard] {
         let client = try getClient()
+        let tenantId = try await getTenantId()
         return try await client
             .from("mood_boards")
             .select("*, elements:visual_elements(*)")
+            .eq("couple_id", value: tenantId)  // Explicit filter by couple_id
             .order("updated_at", ascending: false)
             .execute()
             .value
@@ -48,35 +57,58 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func createMoodBoard(_ moodBoard: MoodBoard) async throws -> MoodBoard {
-        let client = try getClient()
-        return try await client
-            .from("mood_boards")
-            .insert(moodBoard)
-            .select()
-            .single()
-            .execute()
-            .value
+        do {
+            let client = try getClient()
+            let board: MoodBoard = try await client
+                .from("mood_boards")
+                .insert(moodBoard)
+                .select()
+                .single()
+                .execute()
+                .value
+            
+            logger.info("Created mood board: \(moodBoard.boardName)")
+            return board
+        } catch {
+            logger.error("Failed to create mood board", error: error)
+            throw VisualPlanningError.createFailed(underlying: error)
+        }
     }
 
     func updateMoodBoard(_ moodBoard: MoodBoard) async throws -> MoodBoard {
-        let client = try getClient()
-        return try await client
-            .from("mood_boards")
-            .update(moodBoard)
-            .eq("id", value: moodBoard.id)
-            .select()
-            .single()
-            .execute()
-            .value
+        do {
+            let client = try getClient()
+            let board: MoodBoard = try await client
+                .from("mood_boards")
+                .update(moodBoard)
+                .eq("id", value: moodBoard.id)
+                .select()
+                .single()
+                .execute()
+                .value
+            
+            logger.info("Updated mood board: \(moodBoard.boardName)")
+            return board
+        } catch {
+            logger.error("Failed to update mood board", error: error)
+            throw VisualPlanningError.updateFailed(underlying: error)
+        }
     }
 
     func deleteMoodBoard(id: UUID) async throws {
-        let client = try getClient()
-        try await client
-            .from("mood_boards")
-            .delete()
-            .eq("id", value: id)
-            .execute()
+        do {
+            let client = try getClient()
+            try await client
+                .from("mood_boards")
+                .delete()
+                .eq("id", value: id)
+                .execute()
+            
+            logger.info("Deleted mood board: \(id)")
+        } catch {
+            logger.error("Failed to delete mood board", error: error)
+            throw VisualPlanningError.deleteFailed(underlying: error)
+        }
     }
 
     // MARK: - Color Palettes
@@ -104,44 +136,69 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func createColorPalette(_ palette: ColorPalette) async throws -> ColorPalette {
-        let client = try getClient()
-        return try await client
-            .from("color_palettes")
-            .insert(palette)
-            .select()
-            .single()
-            .execute()
-            .value
+        do {
+            let client = try getClient()
+            let created: ColorPalette = try await client
+                .from("color_palettes")
+                .insert(palette)
+                .select()
+                .single()
+                .execute()
+                .value
+            
+            logger.info("Created color palette: \(palette.name)")
+            return created
+        } catch {
+            logger.error("Failed to create color palette", error: error)
+            throw VisualPlanningError.createFailed(underlying: error)
+        }
     }
 
     func updateColorPalette(_ palette: ColorPalette) async throws -> ColorPalette {
-        let client = try getClient()
-        return try await client
-            .from("color_palettes")
-            .update(palette)
-            .eq("id", value: palette.id)
-            .select()
-            .single()
-            .execute()
-            .value
+        do {
+            let client = try getClient()
+            let updated: ColorPalette = try await client
+                .from("color_palettes")
+                .update(palette)
+                .eq("id", value: palette.id)
+                .select()
+                .single()
+                .execute()
+                .value
+            
+            logger.info("Updated color palette: \(palette.name)")
+            return updated
+        } catch {
+            logger.error("Failed to update color palette", error: error)
+            throw VisualPlanningError.updateFailed(underlying: error)
+        }
     }
 
     func deleteColorPalette(id: UUID) async throws {
-        let client = try getClient()
-        try await client
-            .from("color_palettes")
-            .delete()
-            .eq("id", value: id)
-            .execute()
+        do {
+            let client = try getClient()
+            try await client
+                .from("color_palettes")
+                .delete()
+                .eq("id", value: id)
+                .execute()
+            
+            logger.info("Deleted color palette: \(id)")
+        } catch {
+            logger.error("Failed to delete color palette", error: error)
+            throw VisualPlanningError.deleteFailed(underlying: error)
+        }
     }
 
     // MARK: - Seating Charts
 
     func fetchSeatingCharts() async throws -> [SeatingChart] {
         let client = try getClient()
+        let tenantId = try await getTenantId()
         return try await client
             .from("seating_charts")
             .select()
+            .eq("couple_id", value: tenantId)  // Explicit filter by couple_id
             .order("updated_at", ascending: false)
             .execute()
             .value
@@ -160,14 +217,22 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func createSeatingChart(_ chart: SeatingChart) async throws -> SeatingChart {
-        let client = try getClient()
-        return try await client
-            .from("seating_charts")
-            .insert(chart)
-            .select()
-            .single()
-            .execute()
-            .value
+        do {
+            let client = try getClient()
+            let created: SeatingChart = try await client
+                .from("seating_charts")
+                .insert(chart)
+                .select()
+                .single()
+                .execute()
+                .value
+            
+            logger.info("Created seating chart: \(chart.chartName)")
+            return created
+        } catch {
+            logger.error("Failed to create seating chart", error: error)
+            throw VisualPlanningError.createFailed(underlying: error)
+        }
     }
 
     func updateSeatingChart(_ chart: SeatingChart) async throws -> SeatingChart {
@@ -239,25 +304,32 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
 
     func deleteSeatingChart(id: UUID) async throws {
-        let client = try getClient()
-        // Delete related data first (cascading delete via foreign keys should handle this, but being explicit)
-        try await client
-            .from("seat_assignments")
-            .delete()
-            .eq("table_id", value: id)
-            .execute()
+        do {
+            let client = try getClient()
+            // Delete related data first (cascading delete via foreign keys should handle this, but being explicit)
+            try await client
+                .from("seat_assignments")
+                .delete()
+                .eq("table_id", value: id)
+                .execute()
 
-        try await client
-            .from("seating_tables")
-            .delete()
-            .eq("seating_chart_id", value: id)
-            .execute()
+            try await client
+                .from("seating_tables")
+                .delete()
+                .eq("seating_chart_id", value: id)
+                .execute()
 
-        try await client
-            .from("seating_charts")
-            .delete()
-            .eq("id", value: id)
-            .execute()
+            try await client
+                .from("seating_charts")
+                .delete()
+                .eq("id", value: id)
+                .execute()
+            
+            logger.info("Deleted seating chart: \(id)")
+        } catch {
+            logger.error("Failed to delete seating chart", error: error)
+            throw VisualPlanningError.deleteFailed(underlying: error)
+        }
     }
 
     // MARK: - Seating Chart Details (Tables, Assignments, Guests)

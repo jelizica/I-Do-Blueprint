@@ -487,7 +487,7 @@ actor ExportGenerator {
 
         // Guest list page if requested
         if template.features.contains(.guestList), !chart.guests.isEmpty {
-            let guestListView = GuestListView()
+            let guestListView = GuestManagementViewV4()
 
             let guestRenderer = ImageRenderer(content: guestListView)
             guestRenderer.scale = 2.0

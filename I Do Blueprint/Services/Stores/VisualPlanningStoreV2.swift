@@ -32,20 +32,41 @@ class VisualPlanningStoreV2: ObservableObject {
     @Published var stylePreferences: StylePreferences?
 
     @Dependency(\.visualPlanningRepository) var repository
+    
+    // Task tracking for cancellation handling
+    private var loadTask: Task<Void, Never>?
 
     // MARK: - Mood Boards
 
     func loadMoodBoards() async {
-        isLoading = true
-        error = nil
+        // Cancel any previous load task
+        loadTask?.cancel()
+        
+        // Create new load task
+        loadTask = Task { @MainActor in
+            isLoading = true
+            error = nil
 
-        do {
-            moodBoards = try await repository.fetchMoodBoards()
-        } catch {
-            self.error = .fetchFailed(underlying: error)
+            do {
+                try Task.checkCancellation()
+                
+                let fetchedBoards = try await repository.fetchMoodBoards()
+                
+                try Task.checkCancellation()
+                
+                moodBoards = fetchedBoards
+            } catch is CancellationError {
+                AppLogger.ui.debug("VisualPlanningStoreV2.loadMoodBoards: Load cancelled (expected during tenant switch)")
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("VisualPlanningStoreV2.loadMoodBoards: Load cancelled (URLError)")
+            } catch {
+                self.error = .fetchFailed(underlying: error)
+            }
+
+            isLoading = false
         }
-
-        isLoading = false
+        
+        await loadTask?.value
     }
 
     func createMoodBoard(_ moodBoard: MoodBoard) async {
@@ -265,5 +286,15 @@ class VisualPlanningStoreV2: ObservableObject {
 
     var activeSeatingChart: SeatingChart? {
         seatingCharts.first(where: \.isActive)
+    }
+    
+    // MARK: - State Management
+    
+    /// Reset loaded state (for logout/tenant switch)
+    func resetLoadedState() {
+        hasLoaded = false
+        moodBoards = []
+        colorPalettes = []
+        seatingCharts = []
     }
 }

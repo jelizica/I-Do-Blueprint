@@ -75,28 +75,28 @@ struct DashboardQuickActionButton: View {
             icon: "plus.circle.fill",
             title: "Add Task",
             color: .blue) {
-            // TODO: Implement action - print("Add Task")
+            // Preview action
         }
 
         DashboardQuickActionButton(
             icon: "note.text.badge.plus",
             title: "New Note",
             color: .green) {
-            // TODO: Implement action - print("New Note")
+            // Preview action
         }
 
         DashboardQuickActionButton(
             icon: "calendar.badge.plus",
             title: "Add Event",
             color: .orange) {
-            // TODO: Implement action - print("Add Event")
+            // Preview action
         }
 
         DashboardQuickActionButton(
             icon: "person.crop.circle.badge.plus",
             title: "Add Guest",
             color: .purple) {
-            // TODO: Implement action - print("Add Guest")
+            // Preview action
         }
     }
     .padding()

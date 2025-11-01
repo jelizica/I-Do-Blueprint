@@ -9,87 +9,115 @@ import Foundation
 import Supabase
 
 actor LiveSettingsRepository: SettingsRepositoryProtocol {
-    private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
 
-    init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
-        self.supabase = supabase
+    init() {
+        // No initialization needed - we'll get the client when needed
     }
     
-    private func getClient() throws -> SupabaseClient {
-        guard let supabase = supabase else {
-            throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
+    private func getClient() async throws -> SupabaseClient {
+        // Access the client directly from MainActor
+        return try await MainActor.run {
+            guard let client = SupabaseManager.shared.client else {
+                throw NSError(domain: "SettingsRepository", code: -1, userInfo: [
+                    NSLocalizedDescriptionKey: "Supabase client not initialized"
+                ])
+            }
+            return client
         }
-        return supabase
     }
 
     // MARK: - Settings CRUD
 
     func fetchSettings() async throws -> CoupleSettings {
-        logger.debug("Starting fetchSettings query...")
+        logger.info("🔍 Starting fetchSettings query...")
         
         struct SettingsRow: Decodable {
+            let id: UUID
+            let couple_id: UUID
             let settings: CoupleSettings
+            let schema_version: Int?
+            let created_at: Date?
+            let updated_at: Date?
         }
 
         do {
-            let client = try getClient()
+            logger.debug("Getting Supabase client...")
+            let client = try await getClient()
+            logger.debug("✅ Got Supabase client")
+
+            // Get tenant ID (couple_id) from SessionManager
+            logger.debug("Getting tenant ID from SessionManager...")
+            guard let tenantId = await SessionManager.shared.getTenantId() else {
+                logger.error("❌ No tenant ID set - user needs to select a couple")
+                throw NSError(domain: "SettingsRepository", code: 401, userInfo: [NSLocalizedDescriptionKey: "No couple selected. Please select a couple to continue."])
+            }
+
+            logger.info("📍 Fetching settings for couple_id: \(tenantId.uuidString)")
             
-            // Get current authenticated user ID
-            let session = try await client.auth.session
-            let userId = session.user.id
-            
-            logger.debug("Fetching settings for couple_id: \(userId.uuidString)")
-            
-            let response: SettingsRow = try await client
+            logger.debug("Building query...")
+            let query = client
                 .from("couple_settings")
-                .select("settings")
-                .eq("couple_id", value: userId.uuidString)
+                .select("*")
+                .eq("couple_id", value: tenantId)
                 .limit(1)
-                .single()
-                .execute()
-                .value
             
-            logger.info("Query completed successfully")
-            return response.settings
+            logger.debug("Executing query...")
+            let rows: [SettingsRow] = try await query.execute().value
+            
+            logger.info("✅ Query executed, got \(rows.count) rows")
+            
+            guard let row = rows.first else {
+                logger.error("❌ No settings found for couple_id: \(tenantId.uuidString)")
+                throw NSError(domain: "SettingsRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "No settings found for this couple"])
+            }
+            
+            logger.info("✅ Settings loaded successfully - wedding date: '\(row.settings.global.weddingDate)'")
+            logger.info("✅ Custom meal options from DB: \(row.settings.guests.customMealOptions)")
+            return row.settings
         } catch {
-            logger.error("Query failed: \(error)")
+            logger.error("❌ Query failed with error: \(error)")
+            logger.error("Error type: \(type(of: error))")
+            logger.error("Error description: \(error.localizedDescription)")
             throw error
         }
     }
 
     func updateSettings(_ partialSettings: [String: Any]) async throws -> CoupleSettings {
-        struct SettingsRow: Decodable {
-            let settings: CoupleSettings
-        }
-
-        let client = try getClient()
-        // Get current authenticated user ID
-        let session = try await client.auth.session
-        let userId = session.user.id
-
-        logger.debug("updateSettings - User ID: \(userId.uuidString)")
-
-        // Fetch current settings
-        let currentSettings = try await fetchSettings()
-
-        // Deep merge partial settings into current settings
-        let mergedSettings = deepMerge(current: currentSettings, updates: partialSettings)
-        
-        logger.debug("updateSettings - Merged settings tax rates: \(mergedSettings.budget.taxRates.count)")
-
-        struct SettingsUpdate: Encodable {
-            let settings: CoupleSettings
-        }
-
         do {
+            struct SettingsRow: Decodable {
+                let settings: CoupleSettings
+            }
+
+            let client = try await getClient()
+            
+            // Get tenant ID (couple_id) from SessionManager
+            guard let tenantId = await SessionManager.shared.getTenantId() else {
+                logger.error("No tenant ID set - user needs to select a couple")
+                throw NSError(domain: "SettingsRepository", code: 401, userInfo: [NSLocalizedDescriptionKey: "No couple selected. Please select a couple to continue."])
+            }
+
+            logger.debug("updateSettings - Couple ID: \(tenantId.uuidString)")
+
+            // Fetch current settings
+            let currentSettings = try await fetchSettings()
+
+            // Deep merge partial settings into current settings
+            let mergedSettings = deepMerge(current: currentSettings, updates: partialSettings)
+            
+            logger.debug("updateSettings - Merged settings tax rates: \(mergedSettings.budget.taxRates.count)")
+
+            struct SettingsUpdate: Encodable {
+                let settings: CoupleSettings
+            }
+
             logger.debug("updateSettings - Attempting to update database...")
             
             // Update the settings
             let response: [SettingsRow] = try await client
                 .from("couple_settings")
                 .update(SettingsUpdate(settings: mergedSettings))
-                .eq("couple_id", value: userId.uuidString)
+                .eq("couple_id", value: tenantId)
                 .select("settings")
                 .execute()
                 .value
@@ -98,15 +126,17 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             
             guard let firstResult = response.first else {
                 logger.error("updateSettings - No rows returned from update")
-                throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "No settings row found for user"])
+                throw SettingsError.updateFailed(underlying: NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "No settings row found for this couple"]))
             }
 
             logger.info("updateSettings - Database updated successfully")
             logger.debug("updateSettings - Response tax rates: \(firstResult.settings.budget.taxRates.count)")
             return firstResult.settings
-        } catch {
-            logger.error("updateSettings - Database update failed: \(error)")
+        } catch let error as SettingsError {
             throw error
+        } catch {
+            logger.error("updateSettings - Database update failed", error: error)
+            throw SettingsError.updateFailed(underlying: error)
         }
     }
 
@@ -189,7 +219,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     // MARK: - Custom Vendor Categories
 
     func fetchCustomVendorCategories() async throws -> [CustomVendorCategory] {
-        let client = try getClient()
+        let client = try await getClient()
         return try await client
             .from("vendor_custom_categories")
             .select()
@@ -210,25 +240,33 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         name: String,
         description: String?,
         typicalBudgetPercentage: String?) async throws -> CustomVendorCategory {
-        struct CreateRequest: Encodable {
-            let name: String
-            let description: String?
-            let typical_budget_percentage: String?
+        do {
+            struct CreateRequest: Encodable {
+                let name: String
+                let description: String?
+                let typical_budget_percentage: String?
+            }
+
+            let request = CreateRequest(
+                name: name,
+                description: description,
+                typical_budget_percentage: typicalBudgetPercentage)
+
+            let client = try await getClient()
+            let category: CustomVendorCategory = try await client
+                .from("vendor_custom_categories")
+                .insert(request)
+                .select()
+                .single()
+                .execute()
+                .value
+            
+            logger.info("Created custom vendor category: \(name)")
+            return category
+        } catch {
+            logger.error("Failed to create custom vendor category", error: error)
+            throw SettingsError.categoryCreateFailed(underlying: error)
         }
-
-        let request = CreateRequest(
-            name: name,
-            description: description,
-            typical_budget_percentage: typicalBudgetPercentage)
-
-        let client = try getClient()
-        return try await client
-            .from("vendor_custom_categories")
-            .insert(request)
-            .select()
-            .single()
-            .execute()
-            .value
     }
 
     func updateVendorCategory(_ category: CustomVendorCategory) async throws -> CustomVendorCategory {
@@ -245,26 +283,34 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         name: String?,
         description: String?,
         typicalBudgetPercentage: String?) async throws -> CustomVendorCategory {
-        struct UpdateRequest: Encodable {
-            let name: String?
-            let description: String?
-            let typical_budget_percentage: String?
+        do {
+            struct UpdateRequest: Encodable {
+                let name: String?
+                let description: String?
+                let typical_budget_percentage: String?
+            }
+
+            let request = UpdateRequest(
+                name: name,
+                description: description,
+                typical_budget_percentage: typicalBudgetPercentage)
+
+            let client = try await getClient()
+            let category: CustomVendorCategory = try await client
+                .from("vendor_custom_categories")
+                .update(request)
+                .eq("id", value: id)
+                .select()
+                .single()
+                .execute()
+                .value
+            
+            logger.info("Updated custom vendor category: \(id)")
+            return category
+        } catch {
+            logger.error("Failed to update custom vendor category", error: error)
+            throw SettingsError.categoryUpdateFailed(underlying: error)
         }
-
-        let request = UpdateRequest(
-            name: name,
-            description: description,
-            typical_budget_percentage: typicalBudgetPercentage)
-
-        let client = try getClient()
-        return try await client
-            .from("vendor_custom_categories")
-            .update(request)
-            .eq("id", value: id)
-            .select()
-            .single()
-            .execute()
-            .value
     }
 
     func deleteVendorCategory(id: String) async throws {
@@ -272,16 +318,23 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     }
 
     func deleteCustomVendorCategory(id: String) async throws {
-        let client = try getClient()
-        try await client
-            .from("vendor_custom_categories")
-            .delete()
-            .eq("id", value: id)
-            .execute()
+        do {
+            let client = try await getClient()
+            try await client
+                .from("vendor_custom_categories")
+                .delete()
+                .eq("id", value: id)
+                .execute()
+            
+            logger.info("Deleted custom vendor category: \(id)")
+        } catch {
+            logger.error("Failed to delete custom vendor category", error: error)
+            throw SettingsError.categoryDeleteFailed(underlying: error)
+        }
     }
 
     func checkVendorsUsingCategory(categoryId: String) async throws -> [VendorUsingCategory] {
-        let client = try getClient()
+        let client = try await getClient()
         return try await client
             .from("vendor_information")
             .select("id, vendor_name")
@@ -300,7 +353,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             let contacts: PhoneFormatSection?
         }
 
-        let client = try getClient()
+        let client = try await getClient()
         let response: FormatResponse = try await client
             .rpc("format_phone_numbers")
             .execute()
@@ -319,10 +372,78 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             "keep_categories": keepCategories
         ]
 
-        let client = try getClient()
+        let client = try await getClient()
         try await client
             .rpc("reset_user_data", params: params)
             .execute()
+    }
+    
+    // MARK: - Account Deletion
+    
+    func deleteAccount() async throws {
+        logger.info("🗑️ Starting complete account deletion process")
+        
+        do {
+            let client = try await getClient()
+            
+            // Get current user ID from SupabaseManager
+            let userId = await MainActor.run {
+                SupabaseManager.shared.currentUser?.id
+            }
+            
+            guard let userId = userId else {
+                logger.error("No user logged in - cannot delete account")
+                throw NSError(
+                    domain: "SettingsRepository",
+                    code: 401,
+                    userInfo: [NSLocalizedDescriptionKey: "No user logged in"]
+                )
+            }
+            
+            logger.info("Deleting account for user: \(userId.uuidString)")
+            
+            // Step 1: Call database function to delete all data
+            logger.debug("Step 1: Calling database function to delete all data")
+            
+            let params: [String: UUID] = ["user_id_to_delete": userId]
+            try await client
+                .rpc("delete_user_account", params: params)
+                .execute()
+            
+            logger.info("✅ Database cleanup completed")
+            
+            // Step 2: Delete the auth user via Edge Function
+            logger.debug("Step 2: Deleting auth user via Edge Function")
+            
+            do {
+                try await deleteAuthUser(userId: userId, client: client)
+                logger.info("✅ Auth user deleted")
+            } catch {
+                // Log the error but don't fail the entire operation
+                // User data is already deleted, so we'll sign them out
+                logger.warning("⚠️ Failed to delete auth user (will sign out anyway): \(error.localizedDescription)")
+            }
+            
+            // Step 3: Sign out
+            try await client.auth.signOut()
+            logger.info("✅ User signed out")
+            
+            // Step 4: Clear local session
+            await MainActor.run {
+                SessionManager.shared.clearSession()
+            }
+            logger.info("✅ Local session cleared")
+            
+            // Step 5: Clear caches
+            await RepositoryCache.shared.clearAll()
+            logger.info("✅ Caches cleared")
+            
+            logger.info("🎉 Account deletion completed successfully")
+            
+        } catch {
+            logger.error("❌ Account deletion failed", error: error)
+            throw SettingsError.accountDeletionFailed(underlying: error)
+        }
     }
 
     // MARK: - Private Helpers
@@ -512,5 +633,92 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
 
     private func mergeLinksSettings(current: LinksSettings, updates _: [String: Any]) -> LinksSettings {
         current
+    }
+    
+    // MARK: - Auth User Deletion
+    
+    /// Delete auth user via Edge Function
+    private func deleteAuthUser(userId: UUID, client: SupabaseClient) async throws {
+        struct DeleteUserRequest: Encodable {
+            let userId: String
+        }
+        
+        struct DeleteUserResponse: Decodable {
+            let success: Bool
+            let message: String?
+            let error: String?
+        }
+        
+        let request = DeleteUserRequest(userId: userId.uuidString)
+        
+        // Get Supabase configuration from Config.plist
+        guard let configPath = Bundle.main.path(forResource: "Config", ofType: "plist"),
+              let config = NSDictionary(contentsOfFile: configPath),
+              let supabaseURLString = config["SUPABASE_URL"] as? String,
+              let anonKey = config["SUPABASE_ANON_KEY"] as? String else {
+            throw NSError(
+                domain: "SettingsRepository",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Supabase configuration not available"]
+            )
+        }
+        
+        // Build the Edge Function URL
+        let functionUrl = "\(supabaseURLString)/functions/v1/delete-auth-user"
+        
+        guard let url = URL(string: functionUrl) else {
+            throw NSError(
+                domain: "SettingsRepository",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid Edge Function URL"]
+            )
+        }
+        
+        // Get the auth token
+        guard let session = try? await client.auth.session else {
+            throw NSError(
+                domain: "SettingsRepository",
+                code: 401,
+                userInfo: [NSLocalizedDescriptionKey: "No active session"]
+            )
+        }
+        
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
+        urlRequest.setValue(anonKey, forHTTPHeaderField: "apikey")
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let encoder = JSONEncoder()
+        urlRequest.httpBody = try encoder.encode(request)
+        
+        let (data, response) = try await URLSession.shared.data(for: urlRequest)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NSError(
+                domain: "SettingsRepository",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid response from Edge Function"]
+            )
+        }
+        
+        if httpResponse.statusCode != 200 {
+            let decoder = JSONDecoder()
+            if let errorResponse = try? decoder.decode(DeleteUserResponse.self, from: data) {
+                throw NSError(
+                    domain: "SettingsRepository",
+                    code: httpResponse.statusCode,
+                    userInfo: [NSLocalizedDescriptionKey: errorResponse.error ?? "Unknown error"]
+                )
+            } else {
+                throw NSError(
+                    domain: "SettingsRepository",
+                    code: httpResponse.statusCode,
+                    userInfo: [NSLocalizedDescriptionKey: "Failed to delete auth user: HTTP \(httpResponse.statusCode)"]
+                )
+            }
+        }
+        
+        logger.debug("Auth user deletion Edge Function returned success")
     }
 }

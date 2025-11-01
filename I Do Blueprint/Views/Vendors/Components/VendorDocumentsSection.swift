@@ -300,14 +300,14 @@ struct DocumentDetailSheet: View {
                                 try data.write(to: url)
                                 NSWorkspace.shared.activateFileViewerSelecting([url])
                             } catch {
-                                print("Error saving file: \(error)")
+                                AppLogger.ui.error("Error saving file", error: error)
                             }
                         }
                         isDownloading = false
                     }
                 }
             } catch {
-                print("Error downloading document: \(error)")
+                AppLogger.ui.error("Error downloading document", error: error)
                 isDownloading = false
             }
         }

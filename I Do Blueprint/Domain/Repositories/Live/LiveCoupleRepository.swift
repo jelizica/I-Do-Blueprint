@@ -91,19 +91,72 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
 
         let client = try getClient()
 
-        // Query memberships joined with couple_profiles
+        // Query collaborators table (new collaboration system) joined with couple_profiles
         // Note: We need to manually decode since Supabase nested joins don't map directly to flat models
         do {
-            AppLogger.repository.info("Querying memberships for user \(userId)")
+            AppLogger.repository.info("Querying collaborators for user \(userId)")
 
-            // Try to decode with detailed error logging
-            let response: [MembershipResponse] = try await client
-                .from("memberships")
+            // Helper struct for decoding collaborators response
+            struct CollaboratorResponse: Codable {
+                let id: UUID
+                let coupleId: UUID
+                let userId: UUID
+                let roleId: UUID
+                let status: String
+                let createdAt: Date
+                let updatedAt: Date
+                let coupleProfiles: CoupleProfileNested
+
+                enum CodingKeys: String, CodingKey {
+                    case id
+                    case coupleId = "couple_id"
+                    case userId = "user_id"
+                    case roleId = "role_id"
+                    case status
+                    case createdAt = "created_at"
+                    case updatedAt = "updated_at"
+                    case coupleProfiles = "couple_profiles"
+                }
+                
+                struct CoupleProfileNested: Codable {
+                    let partner1Name: String
+                    let partner2Name: String?
+                    let weddingDate: Date?
+
+                    enum CodingKeys: String, CodingKey {
+                        case partner1Name = "partner1_name"
+                        case partner2Name = "partner2_name"
+                        case weddingDate = "wedding_date"
+                    }
+
+                    init(from decoder: Decoder) throws {
+                        let container = try decoder.container(keyedBy: CodingKeys.self)
+                        partner1Name = try container.decode(String.self, forKey: .partner1Name)
+                        partner2Name = try container.decodeIfPresent(String.self, forKey: .partner2Name)
+
+                        // Custom date decoding to handle "YYYY-MM-DD" format from Supabase
+                        if let dateString = try container.decodeIfPresent(String.self, forKey: .weddingDate) {
+                            let formatter = DateFormatter()
+                            formatter.dateFormat = "yyyy-MM-dd"
+                            formatter.locale = Locale(identifier: "en_US_POSIX")
+                            formatter.timeZone = TimeZone(secondsFromGMT: 0)
+                            weddingDate = formatter.date(from: dateString)
+                        } else {
+                            weddingDate = nil
+                        }
+                    }
+                }
+            }
+
+            // Query collaborators table
+            let response: [CollaboratorResponse] = try await client
+                .from("collaborators")
                 .select("""
                     id,
                     couple_id,
                     user_id,
-                    role,
+                    role_id,
+                    status,
                     created_at,
                     updated_at,
                     couple_profiles!inner(
@@ -112,25 +165,38 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
                         wedding_date
                     )
                 """)
-                .eq("user_id", value: userId.uuidString)
+                .eq("user_id", value: userId)
+                .eq("status", value: "active")
                 .order("created_at", ascending: false)
                 .execute()
                 .value
 
-            AppLogger.repository.info("Successfully decoded \(response.count) memberships")
+            AppLogger.repository.info("Successfully decoded \(response.count) collaborators")
+
+            // Fetch role names for each collaborator
+            let roleIds = response.map { $0.roleId }
+            let roles: [CollaborationRole] = try await client
+                .from("collaboration_roles")
+                .select()
+                .in("id", values: roleIds)
+                .execute()
+                .value
+
+            // Create role lookup dictionary
+            let roleDict = Dictionary(uniqueKeysWithValues: roles.map { ($0.id, $0.roleName.rawValue) })
 
             // Map to CoupleMembership by flattening the nested couple_profiles
-            let couples = response.map { membership in
+            let couples = response.map { collaborator in
                 CoupleMembership(
-                    id: membership.id,
-                    coupleId: membership.coupleId,
-                    userId: membership.userId,
-                    role: membership.role,
-                    createdAt: membership.createdAt,
-                    updatedAt: membership.updatedAt,
-                    partner1Name: membership.coupleProfiles.partner1Name,
-                    partner2Name: membership.coupleProfiles.partner2Name,
-                    weddingDate: membership.coupleProfiles.weddingDate
+                    id: collaborator.id,
+                    coupleId: collaborator.coupleId,
+                    userId: collaborator.userId,
+                    role: roleDict[collaborator.roleId] ?? "member",
+                    createdAt: collaborator.createdAt,
+                    updatedAt: collaborator.updatedAt,
+                    partner1Name: collaborator.coupleProfiles.partner1Name,
+                    partner2Name: collaborator.coupleProfiles.partner2Name,
+                    weddingDate: collaborator.coupleProfiles.weddingDate
                 )
             }
 

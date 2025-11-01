@@ -353,4 +353,9 @@ protocol BudgetRepositoryProtocol: Sendable {
     ///   - budgetItemId: The ID of the budget item to link to
     /// - Throws: Repository errors if linking fails or item not found
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws
+    
+    /// Fetches the primary budget development scenario
+    /// - Returns: The primary scenario, or nil if none exists
+    /// - Throws: Repository errors if fetch fails
+    func fetchPrimaryBudgetScenario() async throws -> BudgetDevelopmentScenario?
 }

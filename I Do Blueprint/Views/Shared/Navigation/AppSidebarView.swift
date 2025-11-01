@@ -10,9 +10,17 @@ import SwiftUI
 
 struct AppSidebarView: View {
     @EnvironmentObject var coordinator: AppCoordinator
+    @EnvironmentObject var appStores: AppStores
 
     var body: some View {
         List(selection: $coordinator.selectedTab) {
+            // Couple Switcher at top
+            Section {
+                CoupleSwitcherMenu()
+                    .environmentObject(appStores)
+                    .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
+            }
+            
             // Overview
             Section("Overview") {
                 SidebarItem(
@@ -27,6 +35,11 @@ struct AppSidebarView: View {
                 SidebarItem(tab: .guests, icon: "person.3.fill", title: "Guests")
                 SidebarItem(tab: .vendors, icon: "building.2.fill", title: "Vendors")
                 SidebarItem(tab: .timeline, icon: "calendar", title: "Timeline")
+            }
+            
+            // Collaboration
+            Section("Collaboration") {
+                SidebarItem(tab: .collaboration, icon: "person.2.fill", title: "Team")
             }
 
             // Budget
@@ -77,7 +90,7 @@ struct SidebarItem: View {
 #Preview {
     NavigationSplitView {
         AppSidebarView()
-            .environmentObject(AppCoordinator())
+            .environmentObject(AppCoordinator.shared)
     } detail: {
         Text("Detail View")
     }

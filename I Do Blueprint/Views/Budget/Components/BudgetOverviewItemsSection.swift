@@ -52,9 +52,9 @@ struct BudgetOverviewItemsSection: View {
                                 onEditExpense: { _, expenseId in
                                     onEditExpense(item.id, expenseId)
                                 },
-                                onRemoveExpense: { _, expenseId in
+                                onRemoveExpense: { expenseIdFromCard, itemIdFromCard in
                                     Task {
-                                        await onRemoveExpense(item.id, expenseId)
+                                        await onRemoveExpense(expenseIdFromCard, itemIdFromCard)
                                     }
                                 },
                                 onEditGift: { _, giftId in
@@ -101,7 +101,7 @@ struct BudgetOverviewItemsSection: View {
                                         },
                                         onRemoveExpense: { expenseId in
                                             Task {
-                                                await onRemoveExpense(item.id, expenseId)
+                                                await onRemoveExpense(expenseId, item.id)  // ✅ Fixed: correct parameter order
                                             }
                                         },
                                         onRemoveGift: {

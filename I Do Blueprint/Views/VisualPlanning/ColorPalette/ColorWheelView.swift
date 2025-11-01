@@ -176,7 +176,7 @@ extension Color {
 }
 
 #Preview {
-    @State var selectedColor = Color.blue
+    @Previewable @State var selectedColor = Color.blue
 
     return ColorWheelView(selectedColor: $selectedColor)
         .padding()
