@@ -14,7 +14,7 @@ struct QuickActionsToolbar: View {
         .padding(Spacing.md)
         .background(AppColors.cardBackground)
         .cornerRadius(12)
-        .shadow(color: Color.black.opacity(0.05), radius: 8, y: 2)
+        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 8, y: 2)
     }
 }
 

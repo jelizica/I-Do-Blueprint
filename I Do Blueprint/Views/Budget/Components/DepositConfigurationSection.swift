@@ -33,7 +33,7 @@ struct DepositConfigurationSection: View {
                     Toggle("This deposit is a retainer", isOn: $formData.isDepositRetainer)
                 }
                 .padding()
-                .background(Color.gray.opacity(0.1))
+                .background(AppColors.textSecondary.opacity(0.1))
                 .cornerRadius(12)
             }
         }

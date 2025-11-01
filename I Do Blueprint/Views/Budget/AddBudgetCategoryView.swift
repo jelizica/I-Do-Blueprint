@@ -140,9 +140,9 @@ struct AddBudgetCategoryView: View {
                         .overlay(alignment: .leading) {
                             Text("$")
                                 .foregroundColor(.secondary)
-                                .padding(.leading, 8)
+                                .padding(.leading, Spacing.sm)
                         }
-                        .padding(.leading, 16)
+                        .padding(.leading, Spacing.lg)
 
                     TextField("Description (Optional)", text: $description, axis: .vertical)
                         .lineLimit(2 ... 4)
@@ -296,8 +296,8 @@ struct TemplateCardView: View {
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            .padding(.vertical, 8)
-            .padding(.horizontal, 4)
+            .padding(.vertical, Spacing.sm)
+            .padding(.horizontal, Spacing.xs)
             .frame(minHeight: 70)
             .background(isSelected ? Color.blue.opacity(0.1) : Color(NSColor.controlBackgroundColor))
             .overlay(

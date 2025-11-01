@@ -43,7 +43,7 @@ struct DangerZoneView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
-            .padding(.bottom, 8)
+            .padding(.bottom, Spacing.sm)
 
             Divider()
             
@@ -103,7 +103,7 @@ struct DangerZoneView: View {
                                 .font(.caption)
                                 .foregroundColor(.red)
                         }
-                        .padding(8)
+                        .padding(Spacing.sm)
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(6)
                     }
@@ -132,7 +132,7 @@ struct DangerZoneView: View {
             .background(Color.red.opacity(0.1))
             
             Divider()
-                .padding(.vertical, 8)
+                .padding(.vertical, Spacing.sm)
             
             // MARK: - Delete My Data Section (Less Destructive)
 

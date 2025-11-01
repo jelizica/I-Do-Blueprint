@@ -182,7 +182,7 @@ struct LabeledStepProgress: View {
                                 if index < currentStep {
                                     Image(systemName: "checkmark")
                                         .font(.caption)
-                                        .foregroundColor(.white)
+                                        .foregroundColor(AppColors.textPrimary)
                                 } else if index == currentStep {
                                     Circle()
                                         .stroke(color, lineWidth: 2)

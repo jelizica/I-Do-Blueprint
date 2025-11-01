@@ -173,8 +173,8 @@ struct ExportTemplateSelectionView: View {
 
                         Text(template.category.displayName)
                             .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xs)
                             .background(Color.blue.opacity(0.1))
                             .cornerRadius(12)
 
@@ -183,8 +183,8 @@ struct ExportTemplateSelectionView: View {
 
                         Text(template.outputFormat.displayName)
                             .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xs)
                             .background(Color.purple.opacity(0.1))
                             .cornerRadius(12)
                     }
@@ -233,7 +233,7 @@ struct ExportTemplateSelectionView: View {
             // Preview container
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(Color.white)
+                    .fill(AppColors.textPrimary)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
 
                 // Template preview view
@@ -319,7 +319,7 @@ struct TemplateCard: View {
                 // Preview image or placeholder
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.1))
+                        .fill(AppColors.textSecondary.opacity(0.1))
                         .frame(height: 120)
 
                     if let previewImage {
@@ -361,7 +361,7 @@ struct TemplateCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding()
-            .background(isSelected ? Color.blue.opacity(0.1) : Color.white)
+            .background(isSelected ? Color.blue.opacity(0.1) : AppColors.textPrimary)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

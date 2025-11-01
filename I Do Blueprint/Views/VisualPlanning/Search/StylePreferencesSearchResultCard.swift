@@ -81,7 +81,7 @@ struct StylePreferencesSearchResultCard: View {
                             .frame(width: 24, height: 24)
                             .overlay(
                                 Circle()
-                                    .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
                             )
                     }
                     
@@ -181,7 +181,7 @@ struct StylePreferencesSearchResultCard: View {
     
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 8)
-            .fill(isHovered ? Color(NSColor.controlBackgroundColor) : Color.gray.opacity(0.05))
+            .fill(isHovered ? Color(NSColor.controlBackgroundColor) : AppColors.textSecondary.opacity(0.05))
     }
     
     private var cardBorder: some View {

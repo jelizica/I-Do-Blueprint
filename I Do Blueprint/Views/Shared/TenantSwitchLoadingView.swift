@@ -13,7 +13,7 @@ struct TenantSwitchLoadingView: View {
     var body: some View {
         ZStack {
             // Semi-transparent backdrop
-            Color.black.opacity(0.4)
+            AppColors.textPrimary.opacity(0.4)
                 .ignoresSafeArea()
             
             // Loading card
@@ -27,7 +27,7 @@ struct TenantSwitchLoadingView: View {
                 // Main message
                 Text("Switching to \(coupleName)...")
                     .font(.headline)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .multilineTextAlignment(.center)
                 
                 // Subtitle
@@ -35,10 +35,10 @@ struct TenantSwitchLoadingView: View {
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.8))
             }
-            .padding(32)
+            .padding(Spacing.xxxl)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.black.opacity(0.85))
+                    .fill(AppColors.textPrimary.opacity(0.85))
             )
             .shadow(color: .black.opacity(0.3), radius: 20, x: 0, y: 10)
         }

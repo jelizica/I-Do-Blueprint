@@ -17,8 +17,8 @@ struct AffordabilityContributionRow: View {
 
                     Text(contribution.contributionType.displayName)
                         .font(.system(size: 10, weight: .medium))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(contribution.contributionType == .gift ? AppColors.Budget.allocated.opacity(0.1) : AppColors.Budget.income.opacity(0.1))
                         .clipShape(Capsule())
                         .foregroundStyle(contribution.contributionType == .gift ? AppColors.Budget.allocated : AppColors.Budget.income)
@@ -59,7 +59,7 @@ struct AffordabilityContributionRow: View {
                 .help("Delete contribution")
             }
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }

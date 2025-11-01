@@ -24,7 +24,7 @@ struct VendorHeaderView: View {
                 Rectangle()
                     .fill(
                         LinearGradient(
-                            colors: [Color.gray.opacity(0.2), Color.gray.opacity(0.15)],
+                            colors: [AppColors.textSecondary.opacity(0.2), AppColors.textSecondary.opacity(0.15)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing))
                     .overlay(
@@ -37,7 +37,7 @@ struct VendorHeaderView: View {
             .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
-                    .stroke(Color.white.opacity(0.5), lineWidth: 2))
+                    .stroke(AppColors.textPrimary.opacity(0.5), lineWidth: 2))
             
             VStack(spacing: 12) {
                 Text(vendor.vendorName)
@@ -48,8 +48,8 @@ struct VendorHeaderView: View {
                     Text(category)
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.sm)
                         .background(
                             Capsule()
                                 .fill(Color.blue.opacity(0.12)))
@@ -67,7 +67,7 @@ struct VendorHeaderView: View {
                 }
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .frame(maxWidth: .infinity)
         .background(
             RoundedRectangle(cornerRadius: 16)
@@ -110,7 +110,7 @@ struct VendorStatusView: View {
                     icon: "star.fill")
             }
         }
-        .padding(20)
+        .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -220,20 +220,20 @@ struct ContactRow: View {
                     Image(systemName: "arrow.up.right")
                         .foregroundColor(.blue)
                         .font(.system(size: 14, weight: .semibold))
-                        .padding(8)
+                        .padding(Spacing.sm)
                         .background(Circle().fill(Color.blue.opacity(0.12)))
                 }
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.windowBackgroundColor))
                 .shadow(color: .black.opacity(isHovering ? 0.08 : 0.04), radius: isHovering ? 6 : 3, x: 0, y: 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(0.15), lineWidth: 1))
+                .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
         .scaleEffect(isHovering ? 1.01 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in
@@ -277,7 +277,7 @@ struct FinancialRow: View {
                     .font(.system(size: 24))
             }
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(color.opacity(0.08)))

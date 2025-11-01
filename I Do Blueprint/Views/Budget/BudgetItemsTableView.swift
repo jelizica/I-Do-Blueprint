@@ -38,7 +38,7 @@ struct BudgetItemsTableView: View {
                             buttonRects[itemId] = rect
                         },
                         activeDropdownItemId: $activeDropdownItemId)
-                        .padding(.vertical, 4)
+                        .padding(.vertical, Spacing.xs)
                 }
             } header: {
                 // Sticky header with title and column headers
@@ -52,8 +52,8 @@ struct BudgetItemsTableView: View {
                         Spacer()
                     }
                     .padding(.horizontal)
-                    .padding(.top, 12)
-                    .padding(.bottom, 8)
+                    .padding(.top, Spacing.md)
+                    .padding(.bottom, Spacing.sm)
 
                     // Column headers
                     HStack(spacing: 12) {
@@ -82,7 +82,7 @@ struct BudgetItemsTableView: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Spacing.sm)
                 }
                 .background(Color(NSColor.controlBackgroundColor))
             }
@@ -188,7 +188,7 @@ struct BudgetItemRowView: View {
             .buttonStyle(.borderless)
             .frame(width: 60)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, Spacing.sm)
         .padding(.horizontal)
         .background(Color(NSColor.windowBackgroundColor))
         .cornerRadius(8)
@@ -435,7 +435,7 @@ struct EventDropdownView: View {
                                 Text("No events configured")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
-                                    .padding(8)
+                                    .padding(Spacing.sm)
                             }
                         } else {
                             ForEach(weddingEvents, id: \.id) { event in
@@ -460,8 +460,8 @@ struct EventDropdownView: View {
 
                                         Spacer()
                                     }
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, Spacing.xs)
                                     .contentShape(Rectangle())
                                 }
                                 .buttonStyle(.plain)
@@ -475,7 +475,7 @@ struct EventDropdownView: View {
                     }
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(6)
-                    .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                    .shadow(color: AppColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
                     .frame(maxWidth: 200)
                     .fixedSize()
                     .offset(

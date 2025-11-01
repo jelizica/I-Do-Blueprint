@@ -58,7 +58,7 @@ struct CollaborationSettingsView: View {
                         Text("\(collaborationStore.pendingUserInvitations.count)")
                             .font(Typography.caption)
                             .fontWeight(.semibold)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xs)
                             .background(AppColors.warning)

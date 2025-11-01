@@ -50,7 +50,7 @@ struct ExpenseReportsTableTab: View {
                             .frame(width: 80)
                     }
                     .padding(.horizontal)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Spacing.sm)
                     .background(Color(.tertiarySystemFill))
                     
                     Divider()
@@ -70,8 +70,8 @@ struct ExpenseReportsTableTab: View {
                                 
                                 Text(expense.category)
                                     .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 2)
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, Spacing.xxs)
                                     .background(Color(.quaternarySystemFill))
                                     .clipShape(Capsule())
                                     .frame(width: 100)
@@ -90,7 +90,7 @@ struct ExpenseReportsTableTab: View {
                                     .frame(width: 80)
                             }
                             .padding(.horizontal)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, Spacing.sm)
                             
                             if expense.id != paginatedExpenses.last?.id {
                                 Divider()

@@ -245,7 +245,7 @@ struct SearchFiltersView: View {
                                 .frame(width: 40, height: 40)
                                 .overlay(
                                     Circle()
-                                        .stroke(Color.black.opacity(0.1), lineWidth: 1)
+                                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
                                 )
                             
                             Button(action: {
@@ -253,10 +253,10 @@ struct SearchFiltersView: View {
                             }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.caption2)
-                                    .foregroundColor(.white)
+                                    .foregroundColor(AppColors.textPrimary)
                                     .background(
                                         Circle()
-                                            .fill(Color.black.opacity(0.6))
+                                            .fill(AppColors.textPrimary.opacity(0.6))
                                             .frame(width: 16, height: 16)
                                     )
                             }

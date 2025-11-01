@@ -227,7 +227,7 @@ struct GuestStatCard: View {
                 .textCase(.uppercase)
                 .tracking(0.5)
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
@@ -351,7 +351,7 @@ struct GuestListContentView: View {
                         .buttonStyle(PlainButtonStyle())
                     }
                 }
-                .padding(12)
+                .padding(Spacing.md)
             }
             .background(Color(NSColor.windowBackgroundColor))
             .refreshable {
@@ -412,8 +412,8 @@ struct GuestRowView: View {
                     Text(guest.rsvpStatus.displayName)
                         .font(.caption2)
                         .fontWeight(.medium)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(guest.rsvpStatus.color.opacity(0.15))
                         .foregroundColor(guest.rsvpStatus.color)
                         .clipShape(Capsule())
@@ -436,8 +436,8 @@ struct GuestRowView: View {
                         .font(.caption)
                         .fontWeight(.bold)
                         .foregroundColor(.blue)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(Color.blue.opacity(0.1))
                         .clipShape(Capsule())
                 }
@@ -471,7 +471,7 @@ struct GuestRowView: View {
                 .font(.caption)
                 .fontWeight(.semibold)
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -482,7 +482,7 @@ struct GuestRowView: View {
                     y: isHovering ? 4 : 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
+                .stroke(AppColors.textSecondary.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
         .scaleEffect(isHovering ? 1.01 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in

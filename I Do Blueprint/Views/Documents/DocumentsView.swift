@@ -117,10 +117,10 @@ struct DocumentsView: View {
                         Text("\(viewModel.filters.activeFilterCount)")
                             .font(.caption2)
                             .fontWeight(.medium)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(Circle().fill(Color.blue))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                     }
                 }
             }
@@ -143,8 +143,8 @@ struct DocumentsView: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
         .background(Color(NSColor.windowBackgroundColor))
     }
 
@@ -173,8 +173,8 @@ struct DocumentsView: View {
                     }
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
+            .padding(.horizontal, Spacing.xl)
+            .padding(.vertical, Spacing.md)
         }
         .background(Color(NSColor.windowBackgroundColor))
     }
@@ -228,7 +228,7 @@ struct DocumentsView: View {
                     })
             }
         }
-        .padding(20)
+        .padding(Spacing.xl)
     }
 
     // MARK: - List View
@@ -307,8 +307,8 @@ struct DocumentsView: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
         .background(Color(NSColor.controlBackgroundColor))
     }
 
@@ -392,15 +392,15 @@ struct FilterTabButton: View {
                 Text("\(count)")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xxs)
                     .background(
                         Capsule()
                             .fill(isSelected ? color.opacity(0.2) : Color.secondary.opacity(0.1)))
                     .foregroundColor(isSelected ? color : .secondary)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 6)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 8)
                     .fill(isSelected ? color.opacity(0.1) : Color.clear))
@@ -437,7 +437,7 @@ struct BatchTypePickerModal: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                .padding(.top, 24)
+                .padding(.top, Spacing.xxl)
 
                 Divider()
 
@@ -479,7 +479,7 @@ struct BatchTypePickerModal: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, Spacing.xxl)
 
                 Spacer()
             }

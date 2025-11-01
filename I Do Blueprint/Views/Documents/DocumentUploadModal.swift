@@ -113,13 +113,13 @@ struct DocumentUploadModal: View {
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(
-                        isDragging ? Color.blue : Color.gray.opacity(0.3),
+                        isDragging ? Color.blue : AppColors.textSecondary.opacity(0.3),
                         style: StrokeStyle(lineWidth: 2, dash: [10]))
                     .background(
                         RoundedRectangle(cornerRadius: 12)
                             .fill(isDragging ? Color.blue.opacity(0.05) : Color(NSColor.controlBackgroundColor)
                                 .opacity(0.3))))
-            .padding(40)
+            .padding(Spacing.huge)
             .onDrop(of: [.fileURL], isTargeted: $isDragging) { providers in
                 handleDrop(providers: providers)
                 return true
@@ -162,7 +162,7 @@ struct DocumentUploadModal: View {
                     tagsSection(currentFile)
                 }
             }
-            .padding(20)
+            .padding(Spacing.xl)
         }
     }
 
@@ -179,7 +179,7 @@ struct DocumentUploadModal: View {
             HStack {
                 ForEach(0 ..< selectedFiles.count, id: \.self) { index in
                     Circle()
-                        .fill(index <= currentFileIndex ? Color.blue : Color.gray.opacity(0.3))
+                        .fill(index <= currentFileIndex ? Color.blue : AppColors.textSecondary.opacity(0.3))
                         .frame(width: 8, height: 8)
                 }
             }
@@ -373,7 +373,7 @@ struct DocumentUploadModal: View {
                                 .font(.subheadline)
                             Spacer()
                         }
-                        .padding(.vertical, 4)
+                        .padding(.vertical, Spacing.xs)
 
                         if payment.id != availablePayments.last?.id {
                             Divider()
@@ -537,8 +537,8 @@ struct DocumentTagInputView: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xs)
                             .background(
                                 Capsule()
                                     .fill(Color.blue.opacity(0.1)))

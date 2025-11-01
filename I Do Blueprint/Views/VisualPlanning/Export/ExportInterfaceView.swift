@@ -94,7 +94,7 @@ struct ExportInterfaceView: View {
                 .font(.headline)
 
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.1))
+                .fill(AppColors.textSecondary.opacity(0.1))
                 .frame(height: 150)
                 .overlay(
                     Group {
@@ -417,16 +417,16 @@ struct MoodBoardPreviewThumbnail: View {
                     Text(moodBoard.boardName)
                         .font(.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(.white)
-                        .padding(4)
-                        .background(Color.black.opacity(0.6))
+                        .foregroundColor(AppColors.textPrimary)
+                        .padding(Spacing.xs)
+                        .background(AppColors.textPrimary.opacity(0.6))
                         .cornerRadius(4)
 
                     Spacer()
                 }
                 Spacer()
             }
-            .padding(8)
+            .padding(Spacing.sm)
         }
         .cornerRadius(8)
     }
@@ -473,7 +473,7 @@ struct SeatingChartPreviewThumbnail: View {
                 .lineLimit(1)
 
             ZStack {
-                Color.gray.opacity(0.1)
+                AppColors.textSecondary.opacity(0.1)
 
                 // Sample tables
                 ForEach(0 ..< min(chart.tables.count, 6), id: \.self) { index in

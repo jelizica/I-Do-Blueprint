@@ -51,7 +51,7 @@ struct BudgetCategoriesListView: View {
                                 .fontWeight(.semibold)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, Spacing.xs)
                 }
             }
             .navigationTitle(title)

@@ -60,7 +60,7 @@ struct BudgetCalculatorAddContributionSheet: View {
                 .disabled(contributorName.isEmpty || amount.isEmpty)
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .frame(width: 500)
     }
 }

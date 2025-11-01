@@ -46,7 +46,7 @@ struct ExpenseListView: View {
                     ProgressView()
                         .scaleEffect(1.5)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.black.opacity(0.1))
+                        .background(AppColors.textPrimary.opacity(0.1))
                 }
             })
     }

@@ -42,11 +42,11 @@ struct VendorDetailView: View {
         VStack(spacing: 0) {
             // Header with vendor image and basic info
             VendorHeaderView(vendor: vendor)
-                .padding(.bottom, 24)
+                .padding(.bottom, Spacing.xxl)
             
             // Status indicators
             VendorStatusView(vendor: vendor, vendorDetails: vendorDetails)
-                .padding(.bottom, 24)
+                .padding(.bottom, Spacing.xxl)
             
             // Tabbed Content
             TabbedDetailView(
@@ -68,7 +68,7 @@ struct VendorDetailView: View {
                         default: EmptyView()
                         }
                     }
-                    .padding(20)
+                    .padding(Spacing.xl)
                 }
                 .background(Color(NSColor.windowBackgroundColor))
             }

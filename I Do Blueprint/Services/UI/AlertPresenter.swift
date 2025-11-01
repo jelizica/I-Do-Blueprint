@@ -425,7 +425,7 @@ struct ToastView: View {
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.windowBackgroundColor))
-                .shadow(color: Color.black.opacity(0.1), radius: 8, x: 0, y: 4)
+                .shadow(color: AppColors.textPrimary.opacity(0.1), radius: 8, x: 0, y: 4)
         )
         .padding()
     }

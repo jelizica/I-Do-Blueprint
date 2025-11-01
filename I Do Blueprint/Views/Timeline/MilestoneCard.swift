@@ -77,8 +77,8 @@ struct MilestoneCard: View {
                 if let daysText = daysUntilText() {
                     Text(daysText)
                         .font(.caption2)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(
                             Capsule()
                                 .fill(milestoneColor.opacity(0.15)))
@@ -87,7 +87,7 @@ struct MilestoneCard: View {
             }
             .foregroundColor(.secondary)
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.controlBackgroundColor))

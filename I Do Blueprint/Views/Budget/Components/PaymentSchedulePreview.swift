@@ -90,14 +90,14 @@ struct PaymentSchedulePreview: View {
         VStack(spacing: 16) {
             Image(systemName: "calendar.badge.clock")
                 .font(.title)
-                .foregroundColor(.gray)
+                .foregroundColor(AppColors.textSecondary)
             
             Text("Configure payment details to see schedule")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
-        .padding(.top, 40)
+        .padding(.top, Spacing.huge)
     }
 }
 
@@ -129,8 +129,8 @@ struct PaymentScheduleItemRow: View {
                     if item.description.contains("Deposit") || item.description.contains("Retainer") {
                         Text(item.description.contains("Retainer") ? "Retainer" : "Deposit")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.allocated.opacity(0.2))
                             .foregroundColor(AppColors.Budget.allocated)
                             .clipShape(Capsule())
@@ -139,8 +139,8 @@ struct PaymentScheduleItemRow: View {
                     if item.description.contains("Final") {
                         Text("Final")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.income.opacity(0.2))
                             .foregroundColor(AppColors.Budget.income)
                             .clipShape(Capsule())
@@ -149,8 +149,8 @@ struct PaymentScheduleItemRow: View {
                     if item.isRecurring {
                         Text("Recurring")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.pending.opacity(0.2))
                             .foregroundColor(AppColors.Budget.pending)
                             .clipShape(Capsule())
@@ -171,7 +171,7 @@ struct PaymentScheduleItemRow: View {
                     item.description.contains("Deposit") || item.description.contains("Retainer") ? AppColors.Budget.allocated
                         .opacity(0.3) :
                         item.description.contains("Final") ? AppColors.Budget.income.opacity(0.3) :
-                        Color.gray.opacity(0.2),
+                        AppColors.textSecondary.opacity(0.2),
                     lineWidth: 1))
     }
 }

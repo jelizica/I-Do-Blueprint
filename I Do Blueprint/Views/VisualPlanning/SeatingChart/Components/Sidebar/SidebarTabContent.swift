@@ -75,7 +75,7 @@ struct SidebarTablesContent: View {
                         .font(.seatingBodyMedium)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(12)
+                .padding(Spacing.md)
                 .background(Color.seatingAccentTeal.opacity(0.1))
                 .cornerRadius(8)
             }
@@ -164,7 +164,7 @@ struct SidebarAssignmentsContent: View {
                         Text("Auto-Assign Guests")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(12)
+                    .padding(Spacing.md)
                     .background(Color.seatingSuccess.opacity(0.1))
                     .cornerRadius(8)
                 }
@@ -176,7 +176,7 @@ struct SidebarAssignmentsContent: View {
                         Text("Clear All Assignments")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(12)
+                    .padding(Spacing.md)
                     .background(Color.seatingError.opacity(0.1))
                     .cornerRadius(8)
                 }

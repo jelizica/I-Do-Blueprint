@@ -96,10 +96,10 @@ struct AddImagesStepView: View {
                     Image(systemName: "folder")
                     Text("Browse Files")
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.md)
                 .background(Color.blue)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(8)
             }
 
@@ -320,9 +320,9 @@ struct DropZone: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(dragOver ? Color.blue.opacity(0.2) : Color.gray.opacity(0.1))
+            .fill(dragOver ? Color.blue.opacity(0.2) : AppColors.textSecondary.opacity(0.1))
             .stroke(
-                dragOver ? Color.blue : Color.gray.opacity(0.3),
+                dragOver ? Color.blue : AppColors.textSecondary.opacity(0.3),
                 style: StrokeStyle(lineWidth: 2, dash: [8]))
             .frame(height: 200)
             .overlay(
@@ -367,12 +367,12 @@ struct SelectedImageCard: View {
                     .cornerRadius(8)
             } else {
                 Rectangle()
-                    .fill(Color.gray.opacity(0.3))
+                    .fill(AppColors.textSecondary.opacity(0.3))
                     .frame(width: 80, height: 80)
                     .cornerRadius(8)
                     .overlay(
                         Image(systemName: "photo")
-                            .foregroundColor(.gray))
+                            .foregroundColor(AppColors.textSecondary))
             }
 
             // File info
@@ -398,7 +398,7 @@ struct SelectedImageCard: View {
             .buttonStyle(.borderless)
         }
         .frame(width: 100)
-        .padding(8)
+        .padding(Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(12)
     }
@@ -477,11 +477,11 @@ struct StockPhotoLibraryView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                 ForEach(0 ..< 6, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.gray.opacity(0.2))
+                        .fill(AppColors.textSecondary.opacity(0.2))
                         .frame(height: 100)
                         .overlay(
                             Image(systemName: "photo")
-                                .foregroundColor(.gray))
+                                .foregroundColor(AppColors.textSecondary))
                 }
             }
         }

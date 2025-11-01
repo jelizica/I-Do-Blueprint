@@ -104,8 +104,8 @@ struct StickyListHeader: View {
                 Text("\(count)")
                     .font(Typography.caption)
                     .fontWeight(.medium)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xxs)
                     .background(
                         Capsule()
                             .fill(color.opacity(0.15))

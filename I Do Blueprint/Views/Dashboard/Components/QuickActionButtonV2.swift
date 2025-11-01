@@ -26,17 +26,17 @@ struct QuickActionButtonV2: View {
                 Text(title)
                     .font(.system(size: 14, weight: .semibold))
             }
-            .foregroundColor(.black)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
+            .foregroundColor(AppColors.textPrimary)
+            .padding(.horizontal, Spacing.lg)
+            .padding(.vertical, Spacing.md)
             .background(backgroundColor)
             .clipShape(RoundedRectangle(cornerRadius: 0))
             .overlay(
                 Rectangle()
-                    .stroke(Color.black, lineWidth: 2)
+                    .stroke(AppColors.textPrimary, lineWidth: 2)
             )
             .scaleEffect(isHovering ? 1.05 : 1.0)
-            .shadow(color: Color.black.opacity(isHovering ? 0.2 : 0), radius: 8, y: 4)
+            .shadow(color: AppColors.textPrimary.opacity(isHovering ? 0.2 : 0), radius: 8, y: 4)
         }
         .buttonStyle(.plain)
         .animation(AnimationPresets.hover, value: isHovering)

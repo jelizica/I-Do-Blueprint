@@ -63,7 +63,7 @@ struct ExportMoodBoardView: View {
 
             Spacer()
         }
-        .padding(40)
+        .padding(Spacing.huge)
         .frame(width: 595, height: 842)
         .background(branding.backgroundColor)
     }
@@ -81,10 +81,10 @@ struct ExportElementView: View {
             // Note: Image loading from URL would require AsyncImage or pre-loaded data
             // For now, show placeholder
             Rectangle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(AppColors.textSecondary.opacity(0.3))
                 .overlay(
                     Image(systemName: "photo")
-                        .foregroundColor(.gray))
+                        .foregroundColor(AppColors.textSecondary))
 
         case .color:
             Rectangle()
@@ -93,11 +93,11 @@ struct ExportElementView: View {
         case .text:
             ZStack {
                 Rectangle()
-                    .fill(Color.white.opacity(0.8))
+                    .fill(AppColors.textPrimary.opacity(0.8))
 
                 Text(element.elementData.text ?? "Text")
                     .font(.system(size: max(8, element.size.height * 0.3)))
-                    .foregroundColor(.black)
+                    .foregroundColor(AppColors.textPrimary)
                     .multilineTextAlignment(.center)
             }
 
@@ -111,7 +111,7 @@ struct ExportElementView: View {
                     .font(.caption)
                     .multilineTextAlignment(.center)
             }
-            .padding(4)
+            .padding(Spacing.xs)
             .background(Color.orange.opacity(0.1))
             .cornerRadius(4)
         }
@@ -159,6 +159,6 @@ struct ElementMetadataRow: View {
 
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }

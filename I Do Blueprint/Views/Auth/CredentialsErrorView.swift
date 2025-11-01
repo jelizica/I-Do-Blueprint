@@ -29,7 +29,7 @@ struct CredentialsErrorView: View {
                 .font(.body)
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                .padding(.horizontal, Spacing.huge)
 
             // Action buttons
             VStack(spacing: 12) {
@@ -44,7 +44,7 @@ struct CredentialsErrorView: View {
                         Text("Open Setup Guide")
                     }
                     .frame(maxWidth: 300)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
@@ -56,7 +56,7 @@ struct CredentialsErrorView: View {
                         Text("Retry")
                     }
                     .frame(maxWidth: 300)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.large)
@@ -73,14 +73,14 @@ struct CredentialsErrorView: View {
                         Text("Continue in Demo Mode")
                     }
                     .frame(maxWidth: 300)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.borderless)
                 .controlSize(.large)
                 .foregroundColor(AppColors.textTertiary)
                 #endif
             }
-            .padding(.top, 8)
+            .padding(.top, Spacing.sm)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppColors.background)

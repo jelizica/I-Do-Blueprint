@@ -54,8 +54,8 @@ struct DashboardSection<Content: View>: View {
                             .fontWeight(.medium)
                             .foregroundColor(priority.color)
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(
                         Capsule()
                             .fill(priority.color.opacity(0.1)))
@@ -65,7 +65,7 @@ struct DashboardSection<Content: View>: View {
             // Content
             content()
         }
-        .padding(20)
+        .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -120,7 +120,7 @@ enum SectionPriority {
         Text("Content goes here")
             .frame(maxWidth: .infinity)
             .padding()
-            .background(Color.gray.opacity(0.1))
+            .background(AppColors.textSecondary.opacity(0.1))
             .cornerRadius(12)
     }
     .padding()

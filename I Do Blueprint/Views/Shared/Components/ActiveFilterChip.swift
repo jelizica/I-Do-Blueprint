@@ -25,8 +25,8 @@ struct ActiveFilterChip: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Remove \(label) filter")
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(AppColors.primaryLight)
         .cornerRadius(CornerRadius.pill)
     }

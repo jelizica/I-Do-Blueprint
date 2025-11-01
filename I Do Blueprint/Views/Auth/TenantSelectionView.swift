@@ -89,8 +89,8 @@ struct TenantSelectionView: View {
                 }
                 .buttonStyle(.plain)
             }
-            .padding(.horizontal, 40)
-            .padding(.top, 20)
+            .padding(.horizontal, Spacing.huge)
+            .padding(.top, Spacing.xl)
 
             // Header
             VStack(spacing: 8) {
@@ -142,7 +142,7 @@ struct TenantSelectionView: View {
                     .buttonStyle(.plain)
                     .disabled(isLoading)
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, Spacing.huge)
             } else {
                 VStack(spacing: 12) {
                     // Phase 3.3: Search and Sort Controls
@@ -165,8 +165,8 @@ struct TenantSelectionView: View {
                                     .buttonStyle(.plain)
                                 }
                             }
-                            .padding(8)
-                            .background(Color.gray.opacity(0.1))
+                            .padding(Spacing.sm)
+                            .background(AppColors.textSecondary.opacity(0.1))
                             .cornerRadius(8)
                             
                             // Sort options
@@ -181,9 +181,9 @@ struct TenantSelectionView: View {
                                     }) {
                                         Text(option.rawValue)
                                             .font(.caption)
-                                            .padding(.horizontal, 8)
-                                            .padding(.vertical, 4)
-                                            .background(sortOption == option ? Color.blue : Color.gray.opacity(0.1))
+                                            .padding(.horizontal, Spacing.sm)
+                                            .padding(.vertical, Spacing.xs)
+                                            .background(sortOption == option ? Color.blue : AppColors.textSecondary.opacity(0.1))
                                             .foregroundColor(sortOption == option ? .white : .primary)
                                             .cornerRadius(6)
                                     }
@@ -193,7 +193,7 @@ struct TenantSelectionView: View {
                                 Spacer()
                             }
                         }
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, Spacing.huge)
                     }
                     
                     ScrollView {
@@ -208,7 +208,7 @@ struct TenantSelectionView: View {
                                         .font(.headline)
                                         .foregroundColor(.primary)
                                 }
-                                .padding(.horizontal, 4)
+                                .padding(.horizontal, Spacing.xs)
                                 
                                 ForEach(sessionManager.recentCouples) { recent in
                                     Button(action: {
@@ -242,7 +242,7 @@ struct TenantSelectionView: View {
                             }
                             
                             Divider()
-                                    .padding(.vertical, 8)
+                                    .padding(.vertical, Spacing.sm)
                             }
                         }
                         
@@ -255,7 +255,7 @@ struct TenantSelectionView: View {
                                     .font(.headline)
                                     .foregroundColor(.primary)
                             }
-                            .padding(.horizontal, 4)
+                            .padding(.horizontal, Spacing.xs)
                         }
                         
                         // Phase 3.3: Use filtered and sorted couples
@@ -272,7 +272,7 @@ struct TenantSelectionView: View {
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
-                            .padding(.vertical, 40)
+                            .padding(.vertical, Spacing.huge)
                         } else {
                             ForEach(filteredCouples) { couple in
                                 Button(action: {
@@ -293,7 +293,7 @@ struct TenantSelectionView: View {
                                             .foregroundColor(.secondary)
                                     }
                                     .padding()
-                                    .background(Color.gray.opacity(0.1))
+                                    .background(AppColors.textSecondary.opacity(0.1))
                                     .cornerRadius(12)
                                 }
                                 .buttonStyle(.plain)
@@ -315,7 +315,7 @@ struct TenantSelectionView: View {
                         .disabled(isLoading)
                     }
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, Spacing.huge)
             }
 
             Spacer()

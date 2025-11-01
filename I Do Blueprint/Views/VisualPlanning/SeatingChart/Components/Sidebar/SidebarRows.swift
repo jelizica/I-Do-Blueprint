@@ -45,10 +45,10 @@ struct ModernTabButton: View {
                         .foregroundColor(.seatingAccentTeal)
                 }
             }
-            .padding(12)
+            .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.12) : (isHovering ? Color.gray.opacity(0.05) : Color.clear))
+                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.12) : (isHovering ? AppColors.textSecondary.opacity(0.05) : Color.clear))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
@@ -92,7 +92,7 @@ struct ModernTableRow: View {
                 // Progress circle
                 ZStack {
                     Circle()
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 3)
+                        .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 3)
                         .frame(width: 32, height: 32)
 
                     Circle()
@@ -105,10 +105,10 @@ struct ModernTableRow: View {
                         .rotationEffect(.degrees(-90))
                 }
             }
-            .padding(12)
+            .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.1) : Color.white)
+                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.1) : AppColors.textPrimary)
             )
         }
         .buttonStyle(.plain)
@@ -149,7 +149,7 @@ struct GuestGroupToggle: View {
                 .labelsHidden()
                 .toggleStyle(SwitchToggleStyle(tint: group.color))
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }
 
@@ -175,7 +175,7 @@ struct UnassignedGuestRow: View {
 
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }
 
@@ -200,9 +200,9 @@ struct AssignmentRow: View {
 
             Spacer()
         }
-        .padding(.vertical, 8)
-        .padding(.horizontal, 12)
-        .background(Color.white)
+        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal, Spacing.md)
+        .background(AppColors.textPrimary)
         .cornerRadius(8)
     }
 }
@@ -227,7 +227,7 @@ struct ZoneRow: View {
                 .font(.seatingCaption)
                 .foregroundColor(.secondary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }
 
@@ -255,8 +255,8 @@ struct LayoutStyleRow: View {
 
                 Spacer()
             }
-            .padding(8)
-            .background(Color.white)
+            .padding(Spacing.sm)
+            .background(AppColors.textPrimary)
             .cornerRadius(6)
         }
         .buttonStyle(.plain)

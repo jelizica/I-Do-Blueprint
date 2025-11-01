@@ -34,7 +34,7 @@ struct BudgetCalculatorAddScenarioSheet: View {
                 .disabled(scenarioName.isEmpty)
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .frame(width: 400)
     }
 }

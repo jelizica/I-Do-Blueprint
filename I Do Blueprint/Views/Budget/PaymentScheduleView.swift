@@ -286,8 +286,8 @@ struct PaymentScheduleRowView: View {
 
                         Text(payment.paid ? "Paid" : "Pending")
                             .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(payment.paid ? AppColors.Budget.income.opacity(0.2) : AppColors.Budget.pending.opacity(0.2))
                             .foregroundColor(payment.paid ? AppColors.Budget.income : AppColors.Budget.pending)
                             .clipShape(Capsule())
@@ -313,7 +313,7 @@ struct PaymentScheduleRowView: View {
                         .font(.caption)
                 }
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, Spacing.xs)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

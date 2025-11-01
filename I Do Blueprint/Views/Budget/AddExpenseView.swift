@@ -52,9 +52,9 @@ struct AddExpenseView: View {
                         .overlay(alignment: .leading) {
                             Text("$")
                                 .foregroundColor(.secondary)
-                                .padding(.leading, 8)
+                                .padding(.leading, Spacing.sm)
                         }
-                        .padding(.leading, 16)
+                        .padding(.leading, Spacing.lg)
 
                     Picker("Category", selection: $selectedCategoryId) {
                         Text("Select Category").tag(nil as UUID?)
@@ -290,8 +290,8 @@ struct TagView: View {
             }
             .buttonStyle(PlainButtonStyle())
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(AppColors.Budget.allocated.opacity(0.1))
         .foregroundColor(AppColors.Budget.allocated)
         .clipShape(Capsule())

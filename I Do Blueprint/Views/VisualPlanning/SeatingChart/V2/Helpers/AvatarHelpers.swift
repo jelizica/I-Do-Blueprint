@@ -75,11 +75,11 @@ struct AvatarHelpers {
 
     /// SwiftUI color palette for fallback avatars (when API fails)
     static let fallbackColors: [Color] = [
-        Color(red: 0.85, green: 0.82, blue: 0.95),  // Lavender
-        Color(red: 1.0, green: 0.88, blue: 0.82),   // Peach
-        Color(red: 0.82, green: 0.95, blue: 0.88),  // Mint
-        Color(red: 0.95, green: 0.82, blue: 0.88),  // Rose
-        Color(red: 0.0, green: 0.7, blue: 0.7)      // Teal
+        AppColors.Avatar.lavender,  // Lavender
+        AppColors.Avatar.peach,     // Peach
+        AppColors.Avatar.mint,      // Mint
+        AppColors.Avatar.rose,      // Rose
+        AppColors.Avatar.teal       // Teal
     ]
 
     /// Gets a deterministic fallback color based on guest initials
@@ -90,8 +90,8 @@ struct AvatarHelpers {
 
     // MARK: - VIP Indicator Colors
 
-    static let vipBorderColor = Color.yellow
-    static let regularBorderColor = Color.white.opacity(0.3)
+    static let vipBorderColor = AppColors.Avatar.vipBorder
+    static let regularBorderColor = AppColors.textPrimary.opacity(0.3)
     static let vipBorderWidth: CGFloat = 2
     static let regularBorderWidth: CGFloat = 1
 }
@@ -99,9 +99,5 @@ struct AvatarHelpers {
 // MARK: - Additional Color Extensions for Avatars
 
 extension Color {
-    /// Avatar-specific colors (seatingAccentTeal and seatingCream already defined in ColorPalette.swift)
-    static let avatarLavender = Color(red: 0.85, green: 0.82, blue: 0.95)
-    static let avatarPeach = Color(red: 1.0, green: 0.88, blue: 0.82)
-    static let avatarMint = Color(red: 0.82, green: 0.95, blue: 0.88)
-    static let avatarRose = Color(red: 0.95, green: 0.82, blue: 0.88)
+    /// Avatar-specific colors are provided via AppColors.Avatar in DesignSystem.swift
 }

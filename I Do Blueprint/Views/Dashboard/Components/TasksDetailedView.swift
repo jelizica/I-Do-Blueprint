@@ -92,7 +92,7 @@ struct TasksDetailedView: View {
             .padding(Spacing.xl)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(Color.white.opacity(0.6))
+                    .fill(AppColors.textPrimary.opacity(0.6))
                     .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
             )
         }
@@ -169,7 +169,7 @@ struct TaskPriorityBadge: View {
             .fontWeight(.medium)
             .foregroundColor(priorityColor)
             .padding(.horizontal, Spacing.xs)
-            .padding(.vertical, 2)
+            .padding(.vertical, Spacing.xxs)
             .background(
                 RoundedRectangle(cornerRadius: 4)
                     .fill(priorityColor.opacity(0.1))

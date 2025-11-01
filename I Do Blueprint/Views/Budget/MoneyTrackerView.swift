@@ -100,8 +100,8 @@ struct MoneyTrackerView: View {
                     .foregroundStyle(.secondary)
                 TextField("Search transactions...", text: $searchText)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)
 
@@ -113,8 +113,8 @@ struct MoneyTrackerView: View {
                     Text(selectedFilter.rawValue)
                 }
                 .font(.caption)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(selectedFilter != .all ? Color.accentColor : Color(NSColor.controlBackgroundColor))
                 .foregroundColor(selectedFilter != .all ? .white : .primary)
                 .cornerRadius(8)
@@ -353,20 +353,20 @@ struct TransactionRowView: View {
                     if transaction.isOverdue {
                         Text("OVERDUE")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.overBudget)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(4)
                     }
 
                     if transaction.needsThankYou {
                         Text("THANK YOU")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.pending)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(4)
                     }
                 }

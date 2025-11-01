@@ -32,9 +32,9 @@ struct AffordabilityImportGiftsSheet: View {
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 32)
-            .padding(.top, 32)
-            .padding(.bottom, 24)
+            .padding(.horizontal, Spacing.xxxl)
+            .padding(.top, Spacing.xxxl)
+            .padding(.bottom, Spacing.xxl)
 
             Divider()
 
@@ -50,7 +50,7 @@ struct AffordabilityImportGiftsSheet: View {
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(40)
+                    .padding(Spacing.huge)
                 } else {
                     VStack(spacing: 12) {
                         ForEach(availableGifts) { gift in
@@ -66,7 +66,7 @@ struct AffordabilityImportGiftsSheet: View {
                                 })
                         }
                     }
-                    .padding(24)
+                    .padding(Spacing.xxl)
                 }
             }
 
@@ -100,7 +100,7 @@ struct AffordabilityImportGiftsSheet: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(selectedGifts.isEmpty)
             }
-            .padding(24)
+            .padding(Spacing.xxl)
         }
         .frame(width: 600, height: 500)
     }

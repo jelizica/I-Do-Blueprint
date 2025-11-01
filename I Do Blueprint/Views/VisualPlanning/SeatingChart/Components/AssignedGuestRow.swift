@@ -23,7 +23,7 @@ struct AssignedGuestRow: View {
                 Text("\(assignment.seatNumber ?? 0)")
                     .font(.system(.caption, design: .rounded))
                     .fontWeight(.bold)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
             }
 
             Image(systemName: "person.circle.fill")
@@ -75,7 +75,7 @@ struct AssignedGuestRow: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(8)
+        .padding(Spacing.sm)
         .background(Color.blue.opacity(0.05))
         .cornerRadius(8)
     }

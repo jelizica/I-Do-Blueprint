@@ -66,7 +66,7 @@ struct VendorStatusCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(Color.white.opacity(0.6))
+                .fill(AppColors.textPrimary.opacity(0.6))
                 .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
         )
         .sheet(item: $selectedVendor) { vendor in
@@ -125,7 +125,7 @@ struct VendorCategoryCard: View {
                     
                     Image(systemName: vendor.icon)
                         .font(.system(size: 20))
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                 }
                 
                 Spacer()
@@ -157,7 +157,7 @@ struct VendorCategoryCard: View {
         .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(Color.white.opacity(0.8))
+                .fill(AppColors.textPrimary.opacity(0.8))
                 .shadow(color: AppColors.shadowLight, radius: 4, y: 2)
         )
         .overlay(

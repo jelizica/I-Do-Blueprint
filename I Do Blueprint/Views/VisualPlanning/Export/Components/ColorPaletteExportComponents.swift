@@ -26,7 +26,7 @@ struct ColorPaletteExportView: View {
                     .foregroundColor(.secondary)
 
                 Rectangle()
-                    .fill(Color.gray)
+                    .fill(AppColors.textSecondary)
                     .frame(height: 2)
                     .frame(maxWidth: 400)
             }
@@ -110,8 +110,8 @@ struct ColorPaletteExportView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(40)
-        .background(Color.white)
+        .padding(Spacing.huge)
+        .background(AppColors.textPrimary)
     }
 }
 
@@ -129,7 +129,7 @@ struct ColorSwatchExport: View {
                 .frame(width: 80, height: 80)
                 .overlay(
                     Circle()
-                        .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
                 .shadow(color: .black.opacity(0.1), radius: 4)
 
             Text(label)

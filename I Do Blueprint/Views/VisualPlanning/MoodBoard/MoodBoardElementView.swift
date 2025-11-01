@@ -121,24 +121,24 @@ struct MoodBoardElementView: View {
                 placeholderImage
             }
         }
-        .background(Color.gray.opacity(0.1))
+        .background(AppColors.textSecondary.opacity(0.1))
         .cornerRadius(8)
     }
 
     private var placeholderImage: some View {
         Rectangle()
-            .fill(Color.gray.opacity(0.3))
+            .fill(AppColors.textSecondary.opacity(0.3))
             .overlay(
                 Image(systemName: "photo")
                     .font(.largeTitle)
-                    .foregroundColor(.gray))
+                    .foregroundColor(AppColors.textSecondary))
             .cornerRadius(8)
     }
 
     private var colorContent: some View {
         RoundedRectangle(cornerRadius: 12)
             .fill(element.elementData.color ?? .gray)
-            .stroke(Color.black.opacity(0.2), lineWidth: 1)
+            .stroke(AppColors.textPrimary.opacity(0.2), lineWidth: 1)
     }
 
     private var textContent: some View {
@@ -147,8 +147,8 @@ struct MoodBoardElementView: View {
                 size: element.elementData.fontSize ?? 16,
                 design: .default))
             .multilineTextAlignment(.center)
-            .padding(8)
-            .background(Color.white.opacity(0.9))
+            .padding(Spacing.sm)
+            .background(AppColors.textPrimary.opacity(0.9))
             .cornerRadius(6)
             .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
     }
@@ -206,7 +206,7 @@ struct MoodBoardElementView: View {
             if element.isLocked {
                 Image(systemName: "lock.fill")
                     .foregroundColor(.red)
-                    .background(Circle().fill(Color.white))
+                    .background(Circle().fill(AppColors.textPrimary))
                     .offset(x: currentSize.width / 2, y: -currentSize.height / 2)
             }
         }

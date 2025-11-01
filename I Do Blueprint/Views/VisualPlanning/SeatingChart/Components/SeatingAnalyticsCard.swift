@@ -39,7 +39,7 @@ struct SeatingAnalyticsCard: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)

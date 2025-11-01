@@ -60,7 +60,7 @@ struct TableRowView: View {
             // Progress indicator
             ZStack {
                 Circle()
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 3)
+                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 3)
                     .frame(width: 36, height: 36)
 
                 Circle()
@@ -94,14 +94,14 @@ struct TableRowView: View {
                 .transition(.opacity.combined(with: .scale))
             }
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(isSelected ? Color.blue.opacity(0.1) : Color(NSColor.controlBackgroundColor))
                 .shadow(color: .black.opacity(isHovering ? 0.12 : 0.06), radius: isHovering ? 6 : 3, x: 0, y: 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.15), lineWidth: isSelected ? 2 : 1))
+                .stroke(isSelected ? Color.blue : AppColors.textSecondary.opacity(0.15), lineWidth: isSelected ? 2 : 1))
         .scaleEffect(isHovering ? 1.01 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onTapGesture {

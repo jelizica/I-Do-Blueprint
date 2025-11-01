@@ -380,7 +380,7 @@ struct GuestCSVImportView: View {
                 Text("Done")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(maxWidth: 300)
                     .padding(.vertical, Spacing.md)
                     .background(AppColors.primary)

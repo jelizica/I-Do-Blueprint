@@ -40,7 +40,7 @@ struct CoupleCreationView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                .padding(.top, 24)
+                .padding(.top, Spacing.xxl)
                 
                 if let error = errorMessage {
                     HStack {
@@ -105,7 +105,7 @@ struct CoupleCreationView: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(partner1Name.isEmpty || isLoading)
                 }
-                .padding(.bottom, 24)
+                .padding(.bottom, Spacing.xxl)
                 
                 if isLoading {
                     ProgressView()

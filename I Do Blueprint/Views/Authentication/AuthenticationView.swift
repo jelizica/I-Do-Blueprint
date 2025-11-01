@@ -44,7 +44,7 @@ struct AuthenticationView: View {
                         .font(.title3)
                         .foregroundColor(.secondary)
                 }
-                .padding(.bottom, 60)
+                .padding(.bottom, Spacing.huge)
 
                 // Auth form
                 if showSignUp {
@@ -139,8 +139,8 @@ struct LoginView: View {
                             .font(.caption)
                             .foregroundColor(.red)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                    .padding(.vertical, Spacing.sm)
+                    .padding(.horizontal, Spacing.md)
                     .background(Color.red.opacity(0.1))
                     .cornerRadius(8)
                     .accessibilityElement(children: .combine)
@@ -169,7 +169,7 @@ struct LoginView: View {
                 .accessibilityHint("Signs you in to your account")
 
                 Divider()
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Spacing.sm)
 
                 HStack {
                     Text("Don't have an account?")
@@ -182,10 +182,10 @@ struct LoginView: View {
                 }
                 .font(.subheadline)
             }
-            .padding(32)
+            .padding(Spacing.xxxl)
             .background(Color(nsColor: .windowBackgroundColor))
             .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
+            .shadow(color: AppColors.textPrimary.opacity(0.1), radius: 20, x: 0, y: 10)
         }
     }
 
@@ -267,8 +267,8 @@ struct SignUpView: View {
                             .font(.caption)
                             .foregroundColor(.red)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                    .padding(.vertical, Spacing.sm)
+                    .padding(.horizontal, Spacing.md)
                     .background(Color.red.opacity(0.1))
                     .cornerRadius(8)
                 }
@@ -281,8 +281,8 @@ struct SignUpView: View {
                             .font(.caption)
                             .foregroundColor(.green)
                     }
-                    .padding(.vertical, 8)
-                    .padding(.horizontal, 12)
+                    .padding(.vertical, Spacing.sm)
+                    .padding(.horizontal, Spacing.md)
                     .background(Color.green.opacity(0.1))
                     .cornerRadius(8)
                 }
@@ -305,7 +305,7 @@ struct SignUpView: View {
                 .disabled(isLoading || !isFormValid)
 
                 Divider()
-                    .padding(.vertical, 8)
+                    .padding(.vertical, Spacing.sm)
 
                 HStack {
                     Text("Already have an account?")
@@ -318,10 +318,10 @@ struct SignUpView: View {
                 }
                 .font(.subheadline)
             }
-            .padding(32)
+            .padding(Spacing.xxxl)
             .background(Color(nsColor: .windowBackgroundColor))
             .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
+            .shadow(color: AppColors.textPrimary.opacity(0.1), radius: 20, x: 0, y: 10)
         }
     }
 

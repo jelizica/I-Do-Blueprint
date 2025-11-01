@@ -95,7 +95,7 @@ struct TaskCard: View {
                     }
                 }
             }
-            .padding(12)
+            .padding(Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12)
@@ -130,8 +130,8 @@ struct TaskCard: View {
                 .font(.caption2)
                 .fontWeight(.medium)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(
             Capsule()
                 .fill(priorityColor.opacity(0.15)))
@@ -161,8 +161,8 @@ struct TaskCard: View {
                 .font(.caption2)
                 .fontWeight(.medium)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(
             Capsule()
                 .fill(dueDateColor(isOverdue: isOverdue, daysUntil: daysUntil).opacity(0.15)))
@@ -204,8 +204,8 @@ struct TaskCard: View {
             Text(text)
                 .font(.caption2)
         }
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xxs)
         .background(
             Capsule()
                 .fill(color.opacity(0.15)))

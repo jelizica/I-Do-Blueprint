@@ -69,7 +69,7 @@ struct QuickStat: View {
                 .foregroundColor(.primary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(color.opacity(0.08)))

@@ -32,7 +32,7 @@ struct DocumentCard: View {
                 .overlay(alignment: .topTrailing) {
                     if isSelectionMode {
                         selectionCheckbox
-                            .padding(8)
+                            .padding(Spacing.sm)
                     }
                 }
 
@@ -47,8 +47,8 @@ struct DocumentCard: View {
                             .font(.caption2)
                             .fontWeight(.medium)
                     }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xs)
                     .background(
                         Capsule()
                             .fill(colorForType(document.documentType).opacity(0.15)))
@@ -77,8 +77,8 @@ struct DocumentCard: View {
                             ForEach(document.tags.prefix(3), id: \.self) { tag in
                                 Text(tag)
                                     .font(.caption2)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 3)
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, Spacing.xxs)
                                     .background(
                                         Capsule()
                                             .fill(Color.blue.opacity(0.1)))
@@ -115,14 +115,14 @@ struct DocumentCard: View {
                     actionButtons
                 }
             }
-            .padding(12)
+            .padding(Spacing.md)
         }
         .frame(minHeight: 280)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.controlBackgroundColor))
                 .shadow(
-                    color: isHovered || isSelected ? Color.blue.opacity(0.2) : Color.black.opacity(0.05),
+                    color: isHovered || isSelected ? Color.blue.opacity(0.2) : AppColors.textPrimary.opacity(0.05),
                     radius: isHovered || isSelected ? 8 : 4,
                     x: 0,
                     y: isHovered || isSelected ? 4 : 2))
@@ -404,8 +404,8 @@ struct DocumentListRow: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .padding(.horizontal, Spacing.xl)
+        .padding(.vertical, Spacing.md)
         .background(
             Rectangle()
                 .fill(isSelected ? Color.blue

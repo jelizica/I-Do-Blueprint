@@ -81,7 +81,7 @@ struct StyleOverviewCard: View {
                                 .frame(width: 30, height: 30)
                                 .overlay(
                                     Circle()
-                                        .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
                         }
                     }
                 }
@@ -98,13 +98,13 @@ struct StyleOverviewCard: View {
                             ForEach(preferences.styleInfluences, id: \.self) { influence in
                                 Text(influence.displayName)
                                     .font(.caption)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, Spacing.xs)
                                     .background(Color.blue.opacity(0.1))
                                     .cornerRadius(12)
                             }
                         }
-                        .padding(.horizontal, 1)
+                        .padding(.horizontal, Spacing.xxs)
                     }
                 }
             }
@@ -141,7 +141,7 @@ struct ActivityRow: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }
 
@@ -215,9 +215,9 @@ struct EmptyStateView: View {
             Button(actionTitle, action: action)
                 .buttonStyle(.borderedProminent)
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity)
-        .background(Color.gray.opacity(0.05))
+        .background(AppColors.textSecondary.opacity(0.05))
         .cornerRadius(12)
     }
 }
@@ -256,7 +256,7 @@ struct StyleCategoryCard: View {
                             .frame(width: 12, height: 12)
                             .overlay(
                                 Circle()
-                                    .stroke(isSelected ? Color.white.opacity(0.3) : Color.black.opacity(0.1),
+                                    .stroke(isSelected ? AppColors.textPrimary.opacity(0.3) : AppColors.textPrimary.opacity(0.1),
                                     lineWidth: 1)
                             )
                     }
@@ -336,7 +336,7 @@ struct SeasonalColorSuggestions: View {
                             .frame(width: 40, height: 40)
                             .overlay(
                                 Circle()
-                                    .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
 
                         Text(color.hexString)
                             .font(.system(.caption2, design: .monospaced))
@@ -345,7 +345,7 @@ struct SeasonalColorSuggestions: View {
             }
         }
         .padding()
-        .background(season.colors.first?.opacity(0.1) ?? Color.gray.opacity(0.1))
+        .background(season.colors.first?.opacity(0.1) ?? AppColors.textSecondary.opacity(0.1))
         .cornerRadius(12)
     }
 }
@@ -359,7 +359,7 @@ struct CircularProgressView: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(Color.gray.opacity(0.3), lineWidth: 2)
+                .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 2)
 
             Circle()
                 .trim(from: 0, to: progress)
@@ -415,7 +415,7 @@ struct StyleGuideView: View {
                                 }
                             }
                             .padding()
-                            .background(Color.gray.opacity(0.05))
+                            .background(AppColors.textSecondary.opacity(0.05))
                             .cornerRadius(12)
                         }
                     }
@@ -533,7 +533,7 @@ struct ColorAnalysisView: View {
                                     }
                                 }
                                 .padding()
-                                .background(Color.gray.opacity(0.05))
+                                .background(AppColors.textSecondary.opacity(0.05))
                                 .cornerRadius(8)
                             }
                         }

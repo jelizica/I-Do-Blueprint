@@ -97,8 +97,8 @@ struct VisualPlanningSearchView: View {
                         .buttonStyle(.plain)
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(Color(NSColor.controlBackgroundColor))
                 .cornerRadius(8)
 
@@ -150,8 +150,8 @@ struct VisualPlanningSearchView: View {
                                 }
                             }
                             .font(.caption)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xs)
                             .background(Color.blue.opacity(0.1))
                             .cornerRadius(12)
                         }
@@ -187,9 +187,9 @@ struct VisualPlanningSearchView: View {
                             Text(filter.displayName)
                                 .font(.caption)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.gray.opacity(0.1))
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm)
+                        .background(AppColors.textSecondary.opacity(0.1))
                         .cornerRadius(16)
                     }
                     .buttonStyle(.plain)
@@ -401,7 +401,7 @@ struct VisualPlanningSearchView: View {
                 SearchTipRow(icon: "sparkles", text: "Discover by style preferences")
             }
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
     }
 
     private var loadingState: some View {
@@ -413,7 +413,7 @@ struct VisualPlanningSearchView: View {
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
     }
 
     private var noResultsState: some View {
@@ -444,7 +444,7 @@ struct VisualPlanningSearchView: View {
                 .buttonStyle(.borderedProminent)
             }
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
     }
 
     // MARK: - Helper Views and Methods

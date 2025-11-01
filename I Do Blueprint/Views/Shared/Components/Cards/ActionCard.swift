@@ -69,7 +69,7 @@ struct ActionCard: View {
                     Image(systemName: "arrow.right")
                         .font(.caption)
                 }
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .padding(.horizontal, Spacing.lg)
                 .padding(.vertical, Spacing.md)
                 .background(color)

@@ -51,7 +51,7 @@ struct ColorPaletteCreatorView: View {
                     ColorPaletteStepNavigationSection(
                         currentStep: $currentStep,
                         getStepIcon: getStepIcon)
-                        .padding(.bottom, 16)
+                        .padding(.bottom, Spacing.lg)
 
                     // Content section with flexible height
                     Group {
@@ -117,7 +117,7 @@ struct ColorPaletteCreatorView: View {
                         onLoadFromMoodBoard: {
                             showingMoodBoardImport = true
                         })
-                        .padding(.top, 16)
+                        .padding(.top, Spacing.lg)
                 }
                 .frame(width: 320)
                 .padding()

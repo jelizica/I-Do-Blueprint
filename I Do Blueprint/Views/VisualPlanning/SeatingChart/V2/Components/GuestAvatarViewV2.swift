@@ -62,7 +62,7 @@ struct GuestAvatarViewV2: View {
 
     private var loadingPlaceholder: some View {
         Circle()
-            .fill(Color.gray.opacity(0.2))
+            .fill(AppColors.textSecondary.opacity(0.2))
             .frame(width: size, height: size)
             .overlay {
                 ProgressView()
@@ -77,7 +77,7 @@ struct GuestAvatarViewV2: View {
             .overlay {
                 Text(guest.initials)
                     .font(.system(size: size * 0.4, weight: .semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
             }
             .overlay {
                 Circle()

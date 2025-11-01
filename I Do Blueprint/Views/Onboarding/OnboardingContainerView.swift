@@ -213,7 +213,7 @@ struct OnboardingNavigationBar: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
                 }
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .padding(.horizontal, Spacing.xl)
                 .padding(.vertical, Spacing.md)
                 .background(canGoForward ? AppColors.primary : AppColors.textSecondary.opacity(0.5))

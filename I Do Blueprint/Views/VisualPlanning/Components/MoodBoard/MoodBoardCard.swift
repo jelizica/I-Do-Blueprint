@@ -38,7 +38,7 @@ struct MoodBoardCardView: View {
                             MoodBoardElementPreview(element: element)
                         }
                     }
-                    .padding(16)
+                    .padding(Spacing.lg)
                 } else {
                     VStack(spacing: 8) {
                         Image(systemName: "photo.stack")
@@ -60,12 +60,12 @@ struct MoodBoardCardView: View {
                             MoodBoardQuickActionButton(icon: "doc.on.doc", color: .green)
                             MoodBoardQuickActionButton(icon: "trash", color: .red)
                         }
-                        .padding(8)
+                        .padding(Spacing.sm)
                         .background(
                             RoundedRectangle(cornerRadius: 8)
                                 .fill(.ultraThinMaterial))
                     }
-                    .padding(8)
+                    .padding(Spacing.sm)
                     .transition(.opacity.combined(with: .scale))
                 }
             }
@@ -113,8 +113,8 @@ struct MoodBoardCardView: View {
                             Text(tag)
                                 .font(.caption2)
                                 .fontWeight(.medium)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 3)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, Spacing.xxs)
                                 .background(
                                     Capsule()
                                         .fill(Color.blue.opacity(0.12)))
@@ -141,7 +141,7 @@ struct MoodBoardCardView: View {
                     y: isHovering ? 4 : 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
+                .stroke(AppColors.textSecondary.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
         .scaleEffect(isHovering ? 1.01 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in

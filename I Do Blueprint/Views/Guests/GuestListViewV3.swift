@@ -44,7 +44,7 @@ struct GuestListViewV3: View {
                             .textFieldStyle(.plain)
                             .font(.system(size: 14))
                     }
-                    .padding(10)
+                    .padding(Spacing.md)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(8)
 
@@ -83,8 +83,8 @@ struct GuestListViewV3: View {
                         }
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.md)
                 .background(Color(NSColor.windowBackgroundColor))
 
                 Divider()
@@ -108,7 +108,7 @@ struct GuestListViewV3: View {
                                 }
                             }
                         }
-                        .padding(12)
+                        .padding(Spacing.md)
                     }
                     .background(Color(NSColor.windowBackgroundColor))
                 }
@@ -268,7 +268,7 @@ struct CompactStatIcon: View {
                 
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
             }
             
             Text(value)
@@ -320,7 +320,7 @@ struct SimpleGuestCard: View {
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.secondary.opacity(0.5))
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(isSelected ? Color.blue.opacity(0.08) : Color(NSColor.controlBackgroundColor))
@@ -364,8 +364,8 @@ struct GuestDetailViewV3: View {
                     HStack(spacing: 8) {
                         Text(guest.rsvpStatus.displayName)
                             .font(.system(size: 13, weight: .medium))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
+                            .padding(.horizontal, Spacing.md)
+                            .padding(.vertical, Spacing.sm)
                             .background(guest.rsvpStatus.color.opacity(0.15))
                             .foregroundColor(guest.rsvpStatus.color)
                             .cornerRadius(12)
@@ -378,8 +378,8 @@ struct GuestDetailViewV3: View {
                     }
                 }
             }
-            .padding(.top, 32)
-            .padding(.bottom, 24)
+            .padding(.top, Spacing.xxxl)
+            .padding(.bottom, Spacing.xxl)
             .frame(maxWidth: .infinity)
             .background(Color(NSColor.windowBackgroundColor))
 
@@ -396,8 +396,8 @@ struct GuestDetailViewV3: View {
                         }
                     }
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.md)
             }
             .background(Color(NSColor.windowBackgroundColor))
 
@@ -425,7 +425,7 @@ struct GuestDetailViewV3: View {
                         NotesTabContent(guest: guest)
                     }
                 }
-                .padding(24)
+                .padding(Spacing.xxl)
             }
             .background(Color(NSColor.windowBackgroundColor))
         }
@@ -445,8 +445,8 @@ struct GuestTabButton: View {
             Text(tab.rawValue)
                 .font(.system(size: 14, weight: .medium))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.sm)
         .background(isSelected ? Color.blue : Color.clear)
         .foregroundColor(isSelected ? .white : .primary)
         .cornerRadius(8)
@@ -525,7 +525,7 @@ struct EventsTabContent: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Other Events")
                         .font(.system(size: 15, weight: .semibold))
-                        .padding(.top, 8)
+                        .padding(.top, Spacing.sm)
 
                     ForEach(otherEvents, id: \.self) { event in
                         HStack {
@@ -534,7 +534,7 @@ struct EventsTabContent: View {
                             Text(event)
                                 .font(.system(size: 14))
                         }
-                        .padding(10)
+                        .padding(Spacing.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color(NSColor.controlBackgroundColor))
                         .cornerRadius(8)
@@ -570,7 +570,7 @@ struct MealsTabContent: View {
 
                     Text(dietary)
                         .font(.system(size: 14))
-                        .padding(12)
+                        .padding(Spacing.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.orange.opacity(0.1))
                         .cornerRadius(8)
@@ -588,7 +588,7 @@ struct MealsTabContent: View {
 
                     Text(accessibility)
                         .font(.system(size: 14))
-                        .padding(12)
+                        .padding(Spacing.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.blue.opacity(0.1))
                         .cornerRadius(8)
@@ -611,7 +611,7 @@ struct SeatingTabContent: View {
                 Text(guest.tableAssignment != nil ? "\(guest.tableAssignment!)" : "—")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
             }
-            .padding(20)
+            .padding(Spacing.xl)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(12)
@@ -624,7 +624,7 @@ struct SeatingTabContent: View {
                 Text(guest.seatNumber != nil ? "\(guest.seatNumber!)" : "—")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
             }
-            .padding(20)
+            .padding(Spacing.xl)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(12)
@@ -673,7 +673,7 @@ struct AddressTabContent: View {
                         .font(.system(size: 15))
                 }
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(10)
@@ -729,7 +729,7 @@ struct PartyTabContent: View {
 
                         Text(notes)
                             .font(.system(size: 14))
-                            .padding(12)
+                            .padding(Spacing.md)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color(NSColor.controlBackgroundColor))
                             .cornerRadius(8)
@@ -764,7 +764,7 @@ struct GiftsTabContent: View {
                     Text("Remember to send a thank you card!")
                         .font(.system(size: 14))
                         .foregroundColor(.secondary)
-                        .padding(12)
+                        .padding(Spacing.md)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.green.opacity(0.1))
                         .cornerRadius(8)
@@ -781,7 +781,7 @@ struct NotesTabContent: View {
         if let notes = guest.notes, !notes.isEmpty {
             Text(notes)
                 .font(.system(size: 15))
-                .padding(16)
+                .padding(Spacing.lg)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Color(NSColor.controlBackgroundColor))
                 .cornerRadius(10)
@@ -795,7 +795,7 @@ struct NotesTabContent: View {
                     .foregroundColor(.secondary)
             }
             .frame(maxWidth: .infinity)
-            .padding(32)
+            .padding(Spacing.xxxl)
         }
     }
 }
@@ -848,7 +848,7 @@ struct EventRowV3: View {
                 .foregroundColor(isAttending ? .green : .red)
                 .font(.system(size: 20))
         }
-        .padding(14)
+        .padding(Spacing.md)
         .background((isAttending ? Color.green : Color.red).opacity(0.1))
         .cornerRadius(10)
     }
@@ -872,7 +872,7 @@ struct PrepStatusCard: View {
                 .foregroundColor(isDone ? .green : .secondary)
                 .font(.system(size: 20))
         }
-        .padding(16)
+        .padding(Spacing.lg)
         .frame(maxWidth: .infinity)
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(10)

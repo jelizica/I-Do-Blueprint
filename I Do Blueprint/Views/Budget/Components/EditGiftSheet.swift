@@ -135,7 +135,7 @@ struct EditGiftSheet: View {
                             .fontWeight(.medium)
                         TextEditor(text: $editedDescription)
                             .frame(height: 80)
-                            .border(Color.gray.opacity(0.3))
+                            .border(AppColors.textSecondary.opacity(0.3))
                     }
                 }
             }
@@ -170,7 +170,7 @@ struct EditGiftSheet: View {
                 .disabled(editedTitle.isEmpty || editedAmount.isEmpty)
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .frame(width: 500)
     }
 }

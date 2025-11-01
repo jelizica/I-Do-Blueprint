@@ -45,10 +45,10 @@ struct GuestsSummaryCard: View {
                             .foregroundColor(AppColors.Guest.pending)
                     }
                 }
-                .padding(12)
+                .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.05)))
+                        .fill(AppColors.textSecondary.opacity(0.05)))
             }
         }
     }
@@ -170,10 +170,10 @@ struct DashboardBudgetSummaryCard: View {
                             .foregroundColor(metrics.remaining < 0 ? .red : .green)
                     }
                 }
-                .padding(12)
+                .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.05)))
+                        .fill(AppColors.textSecondary.opacity(0.05)))
             }
         }
     }
@@ -214,10 +214,10 @@ struct GiftsSummaryCard: View {
                         .fontWeight(.bold)
                         .foregroundColor(.green)
                 }
-                .padding(12)
+                .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.05)))
+                        .fill(AppColors.textSecondary.opacity(0.05)))
 
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
@@ -273,10 +273,10 @@ struct NotesSummaryCard: View {
                         .fontWeight(.bold)
                         .foregroundColor(.primary)
                 }
-                .padding(12)
+                .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.gray.opacity(0.05)))
+                        .fill(AppColors.textSecondary.opacity(0.05)))
 
                 if !metrics.notesByType.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {

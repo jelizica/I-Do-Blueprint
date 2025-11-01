@@ -39,8 +39,8 @@ extension ExpenseLinkingView {
                         Label("Already Linked", systemImage: "link")
                             .font(.caption)
                             .foregroundColor(AppColors.Budget.allocated)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.allocated.opacity(0.1))
                             .clipShape(Capsule())
                     }
@@ -79,11 +79,11 @@ extension ExpenseLinkingView {
                 }
             }
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? Color.accentColor.opacity(0.1) :
-                    (isLinked ? Color.gray.opacity(0.05) : Color(NSColor.controlBackgroundColor)))
+                    (isLinked ? AppColors.textSecondary.opacity(0.05) : Color(NSColor.controlBackgroundColor)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)))
@@ -99,8 +99,8 @@ extension ExpenseLinkingView {
                 .font(.caption)
         }
         .foregroundColor(config.color)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 2)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xxs)
         .background(config.color.opacity(0.1))
         .clipShape(Capsule())
     }

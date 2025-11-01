@@ -95,9 +95,9 @@ struct PaymentRecordView: View {
                             .overlay(alignment: .leading) {
                                 Text("$")
                                     .foregroundColor(.secondary)
-                                    .padding(.leading, 8)
+                                    .padding(.leading, Spacing.sm)
                             }
-                            .padding(.leading, 16)
+                            .padding(.leading, Spacing.lg)
                             .disabled(markAsFullyPaid)
                             .onChange(of: markAsFullyPaid) { _, newValue in
                                 if newValue {

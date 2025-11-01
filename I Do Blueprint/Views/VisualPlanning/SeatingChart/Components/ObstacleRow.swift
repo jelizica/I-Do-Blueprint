@@ -79,14 +79,14 @@ struct ObstacleRow: View {
                 .help("Delete obstacle")
             }
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.controlBackgroundColor))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
         )
         .alert("Delete Obstacle", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }

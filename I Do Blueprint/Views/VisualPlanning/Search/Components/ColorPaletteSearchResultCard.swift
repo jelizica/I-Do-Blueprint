@@ -67,7 +67,7 @@ struct ColorPaletteSearchResultCard: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                .padding(12)
+                .padding(Spacing.md)
             }
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(12)
@@ -75,7 +75,7 @@ struct ColorPaletteSearchResultCard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isHovered ? Color.blue : Color.clear, lineWidth: 2)
             )
-            .shadow(color: Color.black.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
+            .shadow(color: AppColors.textPrimary.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
@@ -114,15 +114,15 @@ struct ColorPaletteSearchResultCard: View {
                         Text(hexColor.uppercased())
                             .font(.system(size: 8, weight: .medium, design: .monospaced))
                             .foregroundColor(contrastColor(for: hexColor))
-                            .padding(.horizontal, 4)
-                            .padding(.vertical, 2)
-                            .background(Color.black.opacity(0.5))
+                            .padding(.horizontal, Spacing.xs)
+                            .padding(.vertical, Spacing.xxs)
+                            .background(AppColors.textPrimary.opacity(0.5))
                             .cornerRadius(4)
-                            .padding(.bottom, 4)
+                            .padding(.bottom, Spacing.xs)
                     }
                 }
             } else {
-                Color.gray.opacity(0.3)
+                AppColors.textSecondary.opacity(0.3)
                     .overlay(
                         Image(systemName: "exclamationmark.triangle")
                             .foregroundColor(.red)
@@ -143,7 +143,7 @@ struct ColorPaletteSearchResultCard: View {
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.gray.opacity(0.1))
+        .background(AppColors.textSecondary.opacity(0.1))
     }
     
     // MARK: - Helper Methods

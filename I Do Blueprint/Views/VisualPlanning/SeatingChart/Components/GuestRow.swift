@@ -50,8 +50,8 @@ struct GuestRow: View {
                     // Relationship badge
                     Text(guest.relationship.displayName)
                         .font(.caption)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(guest.relationship.color.opacity(0.2))
                         .foregroundColor(guest.relationship.color)
                         .cornerRadius(4)
@@ -128,14 +128,14 @@ struct GuestRow: View {
                 .foregroundColor(.secondary)
                 .help("Drag to assign to table")
         }
-        .padding(10)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(assignedTable != nil ? Color.green.opacity(0.05) : Color(NSColor.controlBackgroundColor))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(assignedTable != nil ? Color.green.opacity(0.3) : Color.gray.opacity(0.2), lineWidth: 1)
+                .stroke(assignedTable != nil ? Color.green.opacity(0.3) : AppColors.textSecondary.opacity(0.2), lineWidth: 1)
         )
     }
 }

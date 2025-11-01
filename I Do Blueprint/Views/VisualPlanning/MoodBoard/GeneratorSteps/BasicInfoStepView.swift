@@ -95,9 +95,9 @@ struct BasicInfoStepView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, Spacing.huge)
             }
-            .padding(.vertical, 20)
+            .padding(.vertical, Spacing.xl)
         }
     }
 }
@@ -167,8 +167,8 @@ struct TagChip: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(Color.blue.opacity(0.1))
         .foregroundColor(.blue)
         .cornerRadius(12)

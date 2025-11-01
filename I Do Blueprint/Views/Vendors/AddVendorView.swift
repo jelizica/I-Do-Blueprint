@@ -67,12 +67,12 @@ struct AddVendorView: View {
                                                     .foregroundColor(.secondary)
                                             }
                                             .frame(maxWidth: .infinity, alignment: .leading)
-                                            .padding(.vertical, 4)
+                                            .padding(.vertical, Spacing.xs)
                                         } else if vendorTypes.isEmpty {
                                             Text("No vendor types available")
                                                 .font(.caption)
                                                 .foregroundColor(.secondary)
-                                                .padding(.vertical, 4)
+                                                .padding(.vertical, Spacing.xs)
                                         } else {
                                             Picker("", selection: $selectedVendorType) {
                                                 Text("Select type...").tag(nil as VendorType?)
@@ -98,7 +98,7 @@ struct AddVendorView: View {
                                             .textFieldStyle(.roundedBorder)
                                     }
                                 }
-                                .padding(.vertical, 8)
+                                .padding(.vertical, Spacing.sm)
                             }
                             
                             // Contact Information
@@ -130,7 +130,7 @@ struct AddVendorView: View {
                                             .textFieldStyle(.roundedBorder)
                                     }
                                 }
-                                .padding(.vertical, 8)
+                                .padding(.vertical, Spacing.sm)
                             }
                             
                             // Financial
@@ -146,7 +146,7 @@ struct AddVendorView: View {
                                             .textFieldStyle(.roundedBorder)
                                     }
                                 }
-                                .padding(.vertical, 8)
+                                .padding(.vertical, Spacing.sm)
                             }
                         }
                         
@@ -215,7 +215,7 @@ struct AddVendorView: View {
                                         }
                                     }
                                 }
-                                .padding(.vertical, 8)
+                                .padding(.vertical, Spacing.sm)
                             }
                             
                             // Additional Details
@@ -229,7 +229,7 @@ struct AddVendorView: View {
                                             .frame(height: 60)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 4)
-                                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
                                             )
                                     }
                                     
@@ -241,11 +241,11 @@ struct AddVendorView: View {
                                             .frame(height: 60)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 4)
-                                                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
                                             )
                                     }
                                 }
-                                .padding(.vertical, 8)
+                                .padding(.vertical, Spacing.sm)
                             }
                         }
                     }
@@ -286,7 +286,7 @@ struct AddVendorView: View {
         .overlay {
             if isSaving {
                 ZStack {
-                    Color.black.opacity(0.3)
+                    AppColors.textPrimary.opacity(0.3)
                         .ignoresSafeArea()
                     
                     ProgressView("Saving vendor...")

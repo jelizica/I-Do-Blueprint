@@ -229,7 +229,7 @@ struct OnboardingGuestImportView: View {
                             .font(Typography.bodyRegular)
                             .fontWeight(.semibold)
                     }
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .frame(maxWidth: 400)
                     .padding(.vertical, Spacing.md)
                     .background(isImporting ? AppColors.textSecondary : AppColors.primary)

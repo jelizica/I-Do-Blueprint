@@ -215,7 +215,7 @@ struct TaskModal: View {
                                 }
                                 .buttonStyle(.plain)
                             }
-                            .padding(.vertical, 4)
+                            .padding(.vertical, Spacing.xs)
                         }
                     }
                 }

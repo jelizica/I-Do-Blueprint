@@ -58,8 +58,8 @@ struct ExpenseCategoriesView: View {
                         .foregroundColor(.secondary)
                     TextField("Search categories...", text: $searchText)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(Color(NSColor.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
@@ -165,7 +165,7 @@ struct CategorySection: View {
                         isParent: false,
                         onEdit: onEdit,
                         onDelete: onDelete)
-                        .padding(.leading, 20)
+                        .padding(.leading, Spacing.xl)
                 }
             }
 
@@ -175,7 +175,7 @@ struct CategorySection: View {
                     totalSpent: totalSpent,
                     totalBudgeted: totalBudgeted,
                     subcategoryCount: subcategories.count)
-                    .padding(.leading, 20)
+                    .padding(.leading, Spacing.xl)
             }
         } header: {
             if !subcategories.isEmpty {
@@ -294,7 +294,7 @@ struct CategoryRowView: View {
             }
             .menuStyle(BorderlessButtonMenuStyle())
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
         .contextMenu {
             Button("Edit") {
                 onEdit(category)
@@ -337,8 +337,8 @@ struct CategorySummaryRow: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.vertical, 2)
-        .padding(.horizontal, 8)
+        .padding(.vertical, Spacing.xxs)
+        .padding(.horizontal, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
         .clipShape(RoundedRectangle(cornerRadius: 4))
     }

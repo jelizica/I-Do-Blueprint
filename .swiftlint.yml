@@ -1,0 +1,57 @@
+# SwiftLint configuration for enforcing design tokens usage
+# - Tokens live in Design/DesignSystem.swift (Spacing, AppColors, Typography)
+# - These rules are initially warnings to avoid breaking builds prior to codemod migration
+# - After migration, consider elevating select rules to `error`
+
+# Limit linting to app source (exclude generated, external, and scripts)
+included:
+  - I Do Blueprint
+excluded:
+  - Packages
+  - Scripts
+  - supabase
+  - .build
+  - DerivedData
+
+reporter: "xcode"
+
+# Custom rules focused on design system enforcement
+custom_rules:
+  no_literal_rgb_colors:
+    name: "No literal RGB/white Color initializer"
+    regex: "\\bColor\\s*\\(\\s*(red|green|blue|white)\\s*:"
+    message: "Use AppColors tokens (semantic colors) instead of literal RGB/white initializers."
+    included:
+      - I Do Blueprint/Views
+      - I Do Blueprint/Services
+    excluded:
+      - I Do Blueprint/Design/ColorPalette.swift
+      - I Do Blueprint/Domain
+    severity: error
+
+  no_basic_foreground_colors:
+    name: "No basic foregroundColor(.gray/.black/.white)"
+    regex: "\\.foregroundColor\\s*\\(\\s*\\.(black|white|gray)\\s*\\)"
+    message: "Use semantic colors from AppColors (e.g., textPrimary/textSecondary/primary)."
+    included:
+      - I Do Blueprint/Views
+      - I Do Blueprint/Services
+    severity: error
+
+  no_numeric_padding:
+    name: "No numeric padding"
+    regex: "\\.padding\\s*\\(\\s*(?:\\.[A-Za-z]+\\s*,\\s*)?\\d+(?:\\.\\d+)?\\s*\\)"
+    message: "Use Spacing.* tokens instead of numeric literals in padding."
+    included:
+      - I Do Blueprint/Views
+      - I Do Blueprint/Services
+    severity: error
+
+  no_custom_font:
+    name: "No .font(.custom)"
+    regex: "\\.font\\s*\\(\\s*\\.custom\\s*\\("
+    message: "Use Typography tokens instead of .font(.custom)."
+    included:
+      - I Do Blueprint/Views
+      - I Do Blueprint/Services
+    severity: error

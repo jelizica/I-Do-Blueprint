@@ -135,8 +135,8 @@ struct PresenceCountBadge: View {
                 .font(.caption)
                 .foregroundColor(AppColors.textSecondary)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(AppColors.cardBackground)
         .cornerRadius(12)
         .accessibilityLabel("\(presenceStore.onlineCount) users online")

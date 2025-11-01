@@ -195,7 +195,7 @@ struct TableViewV2: View {
 
     private var emptySeatView: some View {
         Circle()
-            .strokeBorder(Color.gray.opacity(0.3), style: StrokeStyle(lineWidth: 2 * scale, dash: [4 * scale, 4 * scale]))
+            .strokeBorder(AppColors.textSecondary.opacity(0.3), style: StrokeStyle(lineWidth: 2 * scale, dash: [4 * scale, 4 * scale]))
             .frame(width: avatarSize * 0.8, height: avatarSize * 0.8)
             .overlay {
                 Image(systemName: "plus")

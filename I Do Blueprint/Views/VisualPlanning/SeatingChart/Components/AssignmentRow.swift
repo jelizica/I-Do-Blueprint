@@ -112,14 +112,14 @@ struct SeatingAssignmentRow: View {
                 .help("Remove assignment")
             }
         }
-        .padding(10)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(Color(NSColor.controlBackgroundColor))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
         )
         .alert("Remove Assignment", isPresented: $showingRemoveConfirmation) {
             Button("Cancel", role: .cancel) { }

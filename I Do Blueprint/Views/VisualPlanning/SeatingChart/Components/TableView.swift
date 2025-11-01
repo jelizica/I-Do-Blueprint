@@ -22,23 +22,23 @@ struct TableView: View {
                 switch table.tableShape {
                 case .round:
                     Circle()
-                        .fill(Color.white)
-                        .stroke(isSelected ? Color.blue : Color.gray, lineWidth: 2)
+                        .fill(AppColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
                         .frame(width: 80 * scale, height: 80 * scale)
                 case .rectangular:
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.white)
-                        .stroke(isSelected ? Color.blue : Color.gray, lineWidth: 2)
+                        .fill(AppColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
                         .frame(width: 120 * scale, height: 60 * scale)
                 case .square:
                     Rectangle()
-                        .fill(Color.white)
-                        .stroke(isSelected ? Color.blue : Color.gray, lineWidth: 2)
+                        .fill(AppColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
                         .frame(width: 80 * scale, height: 80 * scale)
                 case .oval:
                     Ellipse()
-                        .fill(Color.white)
-                        .stroke(isSelected ? Color.blue : Color.gray, lineWidth: 2)
+                        .fill(AppColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
                         .frame(width: 100 * scale, height: 70 * scale)
                 }
             }
@@ -57,16 +57,16 @@ struct TableView: View {
 
                 ZStack {
                     Circle()
-                        .fill(guest != nil ? Color.blue : Color.gray.opacity(0.3))
+                        .fill(guest != nil ? Color.blue : AppColors.textSecondary.opacity(0.3))
                         .frame(width: 20 * scale, height: 20 * scale)
                         .overlay(
                             Circle()
-                                .stroke(Color.gray, lineWidth: 1))
+                                .stroke(AppColors.textSecondary, lineWidth: 1))
 
                     if let guest {
                         Text(guest.initials)
                             .font(.system(size: 8 * scale, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                     }
                 }
                 .offset(x: position.x, y: position.y)
@@ -86,8 +86,8 @@ struct TableView: View {
                     Text("✎ Editing")
                         .font(.caption2)
                         .foregroundColor(.blue)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, Spacing.xs)
+                        .padding(.vertical, Spacing.xxs)
                         .background(Color.blue.opacity(0.1))
                         .cornerRadius(4)
                 }

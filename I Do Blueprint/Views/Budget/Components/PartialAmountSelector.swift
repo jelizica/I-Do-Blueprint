@@ -105,7 +105,7 @@ struct PartialAmountSelector: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
-                .padding(.leading, 36)
+                .padding(.leading, Spacing.xxxl)
                 
                 // Validation message
                 if formData.usePartialAmount && formData.partialAmount > 0 {
@@ -113,7 +113,7 @@ struct PartialAmountSelector: View {
                         Label("Partial amount cannot exceed remaining unpaid amount", systemImage: "exclamationmark.triangle.fill")
                             .font(.caption)
                             .foregroundColor(.red)
-                            .padding(.leading, 36)
+                            .padding(.leading, Spacing.xxxl)
                     } else {
                         HStack(spacing: 4) {
                             Text("Will remain unpaid:")
@@ -125,7 +125,7 @@ struct PartialAmountSelector: View {
                                 .fontWeight(.medium)
                                 .foregroundColor(AppColors.Budget.pending)
                         }
-                        .padding(.leading, 36)
+                        .padding(.leading, Spacing.xxxl)
                     }
                 }
             }
@@ -143,7 +143,7 @@ struct PartialAmountSelector: View {
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(AppColors.Budget.allocated.opacity(0.1))
         .cornerRadius(8)
     }

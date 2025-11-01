@@ -119,7 +119,7 @@ struct ExportStyleGuideView: View {
 
             Spacer()
         }
-        .padding(40)
+        .padding(Spacing.huge)
         .frame(width: 595, height: 842)
         .background(branding.backgroundColor)
     }

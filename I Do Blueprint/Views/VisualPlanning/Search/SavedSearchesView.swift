@@ -96,7 +96,7 @@ struct SavedSearchesView: View {
                 }
             }
             .padding(.horizontal, Spacing.sm)
-            .padding(.vertical, 6)
+            .padding(.vertical, Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color(NSColor.controlBackgroundColor))
@@ -184,7 +184,7 @@ struct SavedSearchesView: View {
                 .buttonStyle(.bordered)
             }
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     

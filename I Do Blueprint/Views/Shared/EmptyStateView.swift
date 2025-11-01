@@ -37,15 +37,15 @@ struct SharedEmptyStateView: View {
                 Button(action: action) {
                     Text(actionTitle)
                         .font(.body)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.sm)
                 }
                 .buttonStyle(.borderedProminent)
                 .accessibilityLabel(actionTitle)
                 .accessibilityHint("Performs the primary action")
             }
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
     }
@@ -89,7 +89,7 @@ struct ListCountHeaderView: View {
             Spacer()
         }
         .padding(.horizontal)
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
         .accessibilityLabel("\(filteredCount) of \(totalCount) \(itemName) shown")
     }
 }

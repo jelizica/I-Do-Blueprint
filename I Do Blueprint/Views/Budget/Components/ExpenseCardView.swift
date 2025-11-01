@@ -48,8 +48,8 @@ struct ExpenseCardView: View {
                             Text(expense.paymentStatus.displayName)
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, Spacing.xxs)
                                 .background(statusColor.opacity(0.2))
                                 .foregroundColor(statusColor)
                                 .clipShape(Capsule())
@@ -58,8 +58,8 @@ struct ExpenseCardView: View {
                             Text((expense.approvalStatus ?? "Pending").capitalized)
                                 .font(.caption)
                                 .fontWeight(.medium)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 2)
+                                .padding(.horizontal, Spacing.sm)
+                                .padding(.vertical, Spacing.xxs)
                                 .background(approvalStatusColor.opacity(0.2))
                                 .foregroundColor(approvalStatusColor)
                                 .clipShape(Capsule())
@@ -76,8 +76,8 @@ struct ExpenseCardView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .foregroundColor(.secondary)
-                            .padding(4)
-                            .background(Color.black.opacity(0.05))
+                            .padding(Spacing.xs)
+                            .background(AppColors.textPrimary.opacity(0.05))
                             .clipShape(Circle())
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -140,12 +140,12 @@ struct ExpenseCardView: View {
                     }
                 }
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .background(Color(NSColor.windowBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 1))
+                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
             .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())

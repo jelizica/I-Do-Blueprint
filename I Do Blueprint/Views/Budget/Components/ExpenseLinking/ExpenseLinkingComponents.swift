@@ -26,8 +26,8 @@ extension ExpenseLinkingView {
                     Text("Active Scenario: \(scenario.scenarioName)")
                         .font(.caption)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(AppColors.Budget.allocated.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             } else {
@@ -37,8 +37,8 @@ extension ExpenseLinkingView {
                     Text("Active scenario not available - expense linking disabled")
                         .font(.caption)
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(AppColors.Budget.pending.opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
             }
@@ -59,7 +59,7 @@ extension ExpenseLinkingView {
                     filterExpenses()
                 }
         }
-        .padding(8)
+        .padding(Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
@@ -81,8 +81,8 @@ extension ExpenseLinkingView {
                     .foregroundStyle(.secondary)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
@@ -113,8 +113,8 @@ extension ExpenseLinkingView {
                     .foregroundColor(AppColors.Budget.allocated)
             }
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
@@ -257,7 +257,7 @@ extension ExpenseLinkingView {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity)
     }
     

@@ -43,13 +43,13 @@ struct EditorTabButton: View {
                         .foregroundColor(.blue)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.md)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 10)
                     .fill(
-                        isSelected ? Color.blue.opacity(0.12) : (isHovering ? Color.gray.opacity(0.08) : Color.clear)))
+                        isSelected ? Color.blue.opacity(0.12) : (isHovering ? AppColors.textSecondary.opacity(0.08) : Color.clear)))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(isSelected ? Color.blue.opacity(0.3) : Color.clear, lineWidth: 1))

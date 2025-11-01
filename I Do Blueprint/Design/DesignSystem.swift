@@ -97,6 +97,8 @@ enum AppColors {
     static let textTertiary = Color(nsColor: NSColor.tertiaryLabelColor).opacity(0.95)
     /// Quaternary text - use for very subtle, disabled, or placeholder text
     static let textQuaternary = Color(nsColor: NSColor.quaternaryLabelColor)
+    /// Text on primary surfaces (selected/brand backgrounds)
+    static let onPrimary = Color(nsColor: NSColor.alternateSelectedControlTextColor)
 
     // MARK: - Background Colors (Semantic)
     /// Main window background - use for primary app background
@@ -234,6 +236,16 @@ enum AppColors {
         static let overBudget = AppColors.error
         /// Under budget indicator - use when spending is below budget
         static let underBudget = AppColors.success
+        
+        /// Category tints for dashboard & charts
+        enum CategoryTint {
+            static let venue = Color.fromHex("ED4999")
+            static let catering = Color.fromHex("3B82F6")
+            static let photography = Color.fromHex("22C55E")
+            static let florals = Color.fromHex("EAB308")
+            static let music = Color.fromHex("A855F7")
+            static let other = AppColors.textSecondary
+        }
     }
     
     /// Guest-specific colors for RSVP and guest management
@@ -274,6 +286,25 @@ enum AppColors {
         /// Contract signed - use for vendors with signed contracts
         /// Contrast: 6.57:1 on light background (WCAG AA compliant)
         static let contract = Color.fromHex("10B981")
+        
+        /// Tints for vendor types used in UI badges/avatars
+        enum TypeTint {
+            static let photography = Color.fromHex("FBE5F0")
+            static let catering = Color.fromHex("DBECFF")
+            static let florals = Color.fromHex("FFF6C2")
+            static let music = Color.fromHex("EFE3FF")
+            static let generic = AppColors.cardBackground
+        }
+    }
+    
+    /// Avatar-specific colors for Visual Planning and fallbacks
+    enum Avatar {
+        static let lavender = Color.fromHex("D9D1F2")
+        static let peach = Color.fromHex("FFE0D4")
+        static let mint = Color.fromHex("D1F2E8")
+        static let rose = Color.fromHex("F2D1E0")
+        static let teal = Color.seatingAccentTeal
+        static let vipBorder = AppColors.warning
     }
 }
 

@@ -111,7 +111,7 @@ struct VendorHeroHeaderView: View {
                     // Hover overlay with upload/remove options
                     if isHoveringLogo {
                         Circle()
-                            .fill(Color.black.opacity(0.6))
+                            .fill(AppColors.textPrimary.opacity(0.6))
                             .frame(width: 120, height: 120)
                             .overlay(
                                 VStack(spacing: Spacing.sm) {
@@ -124,7 +124,7 @@ struct VendorHeroHeaderView: View {
                                             Text(selectedLogoImage != nil || vendor.imageUrl != nil ? "Change" : "Upload")
                                                 .font(.system(size: 10, weight: .medium))
                                         }
-                                        .foregroundColor(.white)
+                                        .foregroundColor(AppColors.textPrimary)
                                     }
                                     .buttonStyle(.plain)
                                     
@@ -185,7 +185,7 @@ struct VendorHeroHeaderView: View {
                         .foregroundStyle(.white)
                         .background(
                             Circle()
-                                .fill(Color.gray.opacity(0.8))
+                                .fill(AppColors.textSecondary.opacity(0.8))
                                 .frame(width: 36, height: 36)
                         )
                 }

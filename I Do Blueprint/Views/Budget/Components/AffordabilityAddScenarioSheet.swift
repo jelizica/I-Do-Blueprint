@@ -47,7 +47,7 @@ struct AffordabilityAddScenarioSheet: View {
                 .disabled(scenarioName.isEmpty)
             }
         }
-        .padding(32)
+        .padding(Spacing.xxxl)
         .frame(width: 400, height: 200)
     }
 }

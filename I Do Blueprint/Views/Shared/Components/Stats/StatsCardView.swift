@@ -71,8 +71,8 @@ struct TrendIndicator: View {
             }
         }
         .foregroundColor(trend.color)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xxs)
         .background(trend.color.opacity(0.1))
         .clipShape(Capsule())
         .accessibilityElement(children: .ignore)

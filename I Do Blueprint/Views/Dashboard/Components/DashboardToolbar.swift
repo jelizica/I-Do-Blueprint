@@ -18,7 +18,7 @@ struct DashboardToolbar: ToolbarContent {
                 Task { await onRefresh() }
             }) {
                 Image(systemName: "arrow.clockwise")
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
             }
             .disabled(isLoading)
             .accessibilityLabel("Refresh Dashboard")

@@ -85,8 +85,8 @@ struct TimelineItemRow: View {
                     Text(item.itemType.displayName)
                         .font(.caption2)
                 }
-                .padding(.horizontal, 6)
-                .padding(.vertical, 3)
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xxs)
                 .background(
                     Capsule()
                         .fill(typeConfig.color.opacity(0.15)))
@@ -100,7 +100,7 @@ struct TimelineItemRow: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .padding(12)
+        .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.controlBackgroundColor))

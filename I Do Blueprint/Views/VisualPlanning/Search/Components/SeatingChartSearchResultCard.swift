@@ -105,7 +105,7 @@ struct SeatingChartSearchResultCard: View {
                             GeometryReader { geometry in
                                 ZStack(alignment: .leading) {
                                     RoundedRectangle(cornerRadius: 2)
-                                        .fill(Color.gray.opacity(0.2))
+                                        .fill(AppColors.textSecondary.opacity(0.2))
                                     
                                     RoundedRectangle(cornerRadius: 2)
                                         .fill(Color.blue)
@@ -121,7 +121,7 @@ struct SeatingChartSearchResultCard: View {
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
-                .padding(12)
+                .padding(Spacing.md)
             }
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(12)
@@ -129,7 +129,7 @@ struct SeatingChartSearchResultCard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isHovered ? Color.blue : Color.clear, lineWidth: 2)
             )
-            .shadow(color: Color.black.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
+            .shadow(color: AppColors.textPrimary.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
@@ -162,12 +162,12 @@ struct SeatingChartSearchResultCard: View {
                                 Text("+\(chart.tables.count - 12) more")
                                     .font(.caption)
                                     .fontWeight(.medium)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.black.opacity(0.6))
+                                    .foregroundColor(AppColors.textPrimary)
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, Spacing.xs)
+                                    .background(AppColors.textPrimary.opacity(0.6))
                                     .cornerRadius(8)
-                                    .padding(8)
+                                    .padding(Spacing.sm)
                             }
                         }
                     }

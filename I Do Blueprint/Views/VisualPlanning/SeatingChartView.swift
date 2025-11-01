@@ -119,14 +119,14 @@ struct SeatingChartView: View {
                         .font(.body)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
+                        .padding(.horizontal, Spacing.huge)
                 }
 
                 Button("Create Your First Seating Chart") {
                     showingChartCreator = true
                 }
                 .buttonStyle(.borderedProminent)
-                .padding(.top, 8)
+                .padding(.top, Spacing.sm)
             }
 
             VStack(spacing: 12) {
@@ -156,7 +156,7 @@ struct SeatingChartView: View {
                         description: "Print charts or share with vendors")
                 }
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, Spacing.huge)
 
             Spacer()
         }
@@ -269,7 +269,7 @@ struct InteractiveSeatingStatCard: View {
                     .textCase(.uppercase)
                     .tracking(0.5)
             }
-            .padding(16)
+            .padding(Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12)
@@ -384,8 +384,8 @@ struct SeatingChartCard: View {
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm)
                         .background(
                             Capsule()
                                 .fill(Color.blue.opacity(0.1)))
@@ -421,7 +421,7 @@ struct SeatingChartCard: View {
                     ZStack {
                         // Background circle
                         Circle()
-                            .stroke(Color.gray.opacity(0.15), lineWidth: 4)
+                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 4)
                             .frame(width: 50, height: 50)
 
                         // Progress circle
@@ -454,7 +454,7 @@ struct SeatingChartCard: View {
                         ZStack(alignment: .leading) {
                             // Background
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(Color.gray.opacity(0.15))
+                                .fill(AppColors.textSecondary.opacity(0.15))
                                 .frame(height: 8)
 
                             // Progress bar with gradient
@@ -491,7 +491,7 @@ struct SeatingChartCard: View {
                     y: isHovering ? 4 : 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.gray.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
+                .stroke(AppColors.textSecondary.opacity(isHovering ? 0.3 : 0.15), lineWidth: 1))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(progressColor.opacity(0.2), lineWidth: isHovering ? 2 : 0))
@@ -529,8 +529,8 @@ struct EnhancedStatPill: View {
                     .foregroundColor(.secondary)
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 8)
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(color.opacity(0.08)))
@@ -556,9 +556,9 @@ struct StatPill: View {
                 .font(.caption2)
                 .foregroundColor(.secondary)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color.gray.opacity(0.1))
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
+        .background(AppColors.textSecondary.opacity(0.1))
         .cornerRadius(8)
     }
 }

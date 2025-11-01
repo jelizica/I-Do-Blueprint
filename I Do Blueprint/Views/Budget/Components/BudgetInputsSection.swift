@@ -74,7 +74,7 @@ struct BudgetInputsSection: View {
                         onFieldChanged()
                     }
             }
-            .padding(20)
+            .padding(Spacing.xl)
             .background(Color(NSColor.controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
@@ -124,7 +124,7 @@ struct BudgetInputsSection: View {
                     }
                 }
             }
-            .padding(20)
+            .padding(Spacing.xl)
             .background(Color(NSColor.controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 12))
 
@@ -136,7 +136,7 @@ struct BudgetInputsSection: View {
                         Text("Save Changes")
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, Spacing.md)
                 }
                 .buttonStyle(.borderedProminent)
             }

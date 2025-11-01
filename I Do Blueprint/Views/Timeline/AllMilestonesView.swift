@@ -278,7 +278,7 @@ struct MilestoneRow: View {
                     .foregroundColor(.secondary)
                     .font(.caption)
             }
-            .padding(.vertical, 4)
+            .padding(.vertical, Spacing.xs)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)

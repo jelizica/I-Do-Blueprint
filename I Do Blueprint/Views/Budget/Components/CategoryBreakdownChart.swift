@@ -160,9 +160,9 @@ struct CategoryBreakdownChart: View {
                         Text("Tap to dismiss")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)
-                            .padding(.top, 2)
+                            .padding(.top, Spacing.xxs)
                     }
-                    .padding(12)
+                    .padding(Spacing.md)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                     .shadow(radius: 4)
                     .transition(.scale.combined(with: .opacity))

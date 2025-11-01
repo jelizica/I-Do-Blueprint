@@ -57,7 +57,7 @@ struct BudgetVisualizationCard: View {
                     }
                 }
             }
-            .padding(24)
+            .padding(Spacing.xxl)
             .frame(maxWidth: .infinity, alignment: .leading)
 
             // Right side - Visual element
@@ -79,7 +79,7 @@ struct BudgetVisualizationCard: View {
         .background(backgroundColor)
         .overlay(
             Rectangle()
-                .stroke(Color.black, lineWidth: 3)
+                .stroke(AppColors.textPrimary, lineWidth: 3)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Budget overview")

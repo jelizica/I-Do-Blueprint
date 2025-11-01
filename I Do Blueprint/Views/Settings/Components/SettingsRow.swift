@@ -25,7 +25,7 @@ struct SettingsRow<Content: View>: View {
             content
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, Spacing.sm)
     }
 }
 

@@ -19,7 +19,7 @@ struct ExpenseFiltersBar: View {
                 TextField("Search expenses...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
             }
-            .padding(8)
+            .padding(Spacing.sm)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)
             .frame(maxWidth: 300)
@@ -55,8 +55,8 @@ struct ExpenseFiltersBar: View {
                     Image(systemName: showBenchmarks ? "chevron.up" : "chevron.down")
                     Text("Benchmarks")
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(Color(NSColor.controlBackgroundColor))
                 .cornerRadius(6)
             }
@@ -100,8 +100,8 @@ struct ExpenseViewModeToggle: View {
                         Text(mode == .cards ? "Cards" : "List")
                             .font(.system(size: 12, weight: .medium))
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(viewMode == mode ? AppColors.Budget.allocated : Color(NSColor.controlBackgroundColor))
                     .foregroundColor(viewMode == mode ? .white : .primary)
                 }

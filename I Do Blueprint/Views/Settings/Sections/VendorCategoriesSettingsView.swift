@@ -67,7 +67,7 @@ struct VendorCategoriesSettingsView: View {
                                 "Hide categories you don't need. Hidden categories won't appear in vendor creation forms.")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                                .padding(.bottom, 8)
+                                .padding(.bottom, Spacing.sm)
 
                             ForEach(standardCategories, id: \.self) { category in
                                 StandardCategoryRow(
@@ -222,7 +222,7 @@ struct StandardCategoryRow: View {
                 set: { _ in onToggle() }))
                 .labelsHidden()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }
 
@@ -274,7 +274,7 @@ struct CustomCategoryRow: View {
 
             Divider()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, Spacing.xs)
     }
 }
 

@@ -47,8 +47,8 @@ struct MoodBoardListView: View {
                             .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(8)
 
@@ -74,7 +74,7 @@ struct MoodBoardListView: View {
                         Button(action: { viewMode = .grid }) {
                             Image(systemName: "square.grid.2x2")
                                 .foregroundColor(viewMode == .grid ? .blue : .secondary)
-                                .padding(6)
+                                .padding(Spacing.sm)
                                 .background(viewMode == .grid ? Color.blue.opacity(0.1) : Color.clear)
                                 .cornerRadius(6)
                         }
@@ -83,13 +83,13 @@ struct MoodBoardListView: View {
                         Button(action: { viewMode = .list }) {
                             Image(systemName: "list.bullet")
                                 .foregroundColor(viewMode == .list ? .blue : .secondary)
-                                .padding(6)
+                                .padding(Spacing.sm)
                                 .background(viewMode == .list ? Color.blue.opacity(0.1) : Color.clear)
                                 .cornerRadius(6)
                         }
                         .buttonStyle(.plain)
                     }
-                    .padding(4)
+                    .padding(Spacing.xs)
                     .background(Color(NSColor.controlBackgroundColor))
                     .cornerRadius(8)
 
@@ -101,10 +101,10 @@ struct MoodBoardListView: View {
                             Image(systemName: "plus")
                             Text("New Mood Board")
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.sm)
                         .background(Color.blue)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .cornerRadius(8)
                     }
                 }
@@ -132,8 +132,8 @@ struct MoodBoardListView: View {
                                 }
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
+                                .padding(.horizontal, Spacing.md)
+                                .padding(.vertical, Spacing.sm)
                             }
                             .buttonStyle(.plain)
                         }

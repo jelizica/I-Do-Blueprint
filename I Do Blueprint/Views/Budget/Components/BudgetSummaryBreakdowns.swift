@@ -32,7 +32,7 @@ struct BudgetSummaryBreakdowns: View {
                             .font(.subheadline)
                             .fontWeight(.semibold)
                     }
-                    .padding(.vertical, 2)
+                    .padding(.vertical, Spacing.xxs)
                 }
             }
             .padding()
@@ -82,7 +82,7 @@ struct BudgetSummaryBreakdowns: View {
                                     Text("• \(subcategory)")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
-                                        .padding(.leading, 16)
+                                        .padding(.leading, Spacing.lg)
 
                                     Spacer()
 

@@ -48,12 +48,12 @@ struct HeroMetricCard: View {
                     .foregroundColor(foregroundColor.opacity(0.4))
             }
         }
-        .padding(24)
+        .padding(Spacing.xxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .background(backgroundColor)
         .overlay(
             Rectangle()
-                .stroke(Color.black, lineWidth: 3)
+                .stroke(AppColors.textPrimary, lineWidth: 3)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(subtitle)

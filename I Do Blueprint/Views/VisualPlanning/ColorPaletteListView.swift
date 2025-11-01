@@ -92,10 +92,10 @@ struct ColorPaletteListView: View {
                             Image(systemName: "plus")
                             Text("New Palette")
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, Spacing.lg)
+                        .padding(.vertical, Spacing.sm)
                         .background(Color.purple)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .cornerRadius(8)
                     }
                 }
@@ -115,8 +115,8 @@ struct ColorPaletteListView: View {
                     .foregroundColor(.secondary)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)
             .padding(.horizontal)
@@ -267,8 +267,8 @@ struct ColorPaletteCardView: View {
                     // Show color count instead
                     Text("\(palette.colors.count) colors")
                         .font(.caption)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
                         .background(Color.purple.opacity(0.1))
                         .foregroundColor(.purple)
                         .cornerRadius(4)
@@ -314,7 +314,7 @@ struct EmptyColorPaletteView: View {
                     .font(.body)
                     .foregroundColor(.secondary)
                     .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
+                    .padding(.horizontal, Spacing.huge)
             }
 
             Button(action: {
@@ -324,10 +324,10 @@ struct EmptyColorPaletteView: View {
                     Image(systemName: "plus")
                     Text("Create Your First Color Palette")
                 }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.md)
                 .background(Color.purple)
-                .foregroundColor(.white)
+                .foregroundColor(AppColors.textPrimary)
                 .cornerRadius(10)
             }
 

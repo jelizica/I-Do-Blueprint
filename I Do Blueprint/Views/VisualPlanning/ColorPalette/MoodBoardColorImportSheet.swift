@@ -250,7 +250,7 @@ struct ColorSelectionCard: View {
                     .frame(width: 60, height: 60)
                     .overlay(
                         Circle()
-                            .stroke(isSelected ? AppColors.primary : Color.black.opacity(0.1), lineWidth: isSelected ? 3 : 1))
+                            .stroke(isSelected ? AppColors.primary : AppColors.textPrimary.opacity(0.1), lineWidth: isSelected ? 3 : 1))
                 
                 Text(color.hexString)
                     .font(.system(.caption2, design: .monospaced))

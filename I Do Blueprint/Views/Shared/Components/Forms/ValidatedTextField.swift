@@ -162,8 +162,8 @@ struct ValidatedTextEditor: View {
                     Text(placeholder)
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textTertiary)
-                        .padding(.horizontal, 4)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, Spacing.xs)
+                        .padding(.vertical, Spacing.sm)
                 }
                 
                 TextEditor(text: $text)
@@ -182,7 +182,7 @@ struct ValidatedTextEditor: View {
                         }
                     }
             }
-            .padding(4)
+            .padding(Spacing.xs)
             .background(AppColors.contentBackground)
             .cornerRadius(6)
             .overlay(

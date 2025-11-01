@@ -96,7 +96,7 @@ struct MoneyOwedView: View {
 
                         if owed.id != filteredOwed.last?.id {
                             Divider()
-                                .padding(.leading, 60)
+                                .padding(.leading, Spacing.huge)
                         }
                     }
                 }

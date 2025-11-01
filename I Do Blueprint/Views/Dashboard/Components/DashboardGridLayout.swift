@@ -226,6 +226,6 @@ struct DashboardGridLayout: View {
         daysUntilWedding: 180
     )
     .padding()
-    .background(Color.black)
+    .background(AppColors.textPrimary)
     .frame(width: 1400)
 }

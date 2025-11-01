@@ -47,7 +47,7 @@ struct ColorWheelView: View {
                 .clipShape(Circle())
                 .overlay(
                     Circle()
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 2))
+                        .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 2))
 
                 // Selection indicator
                 Circle()
@@ -55,7 +55,7 @@ struct ColorWheelView: View {
                     .frame(width: 20, height: 20)
                     .overlay(
                         Circle()
-                            .stroke(Color.white, lineWidth: 3)
+                            .stroke(AppColors.textPrimary, lineWidth: 3)
                             .shadow(color: .black.opacity(0.3), radius: 2))
                     .position(getSelectedPosition())
             }
@@ -90,7 +90,7 @@ struct ColorWheelView: View {
                     .frame(height: 40)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                            .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
 
                 Text(selectedColor.hexString)
                     .font(.system(.caption, design: .monospaced))

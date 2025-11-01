@@ -38,13 +38,13 @@ struct SettingsSectionHeader: View {
                     }
                     Text(isSaving ? "Saving..." : "Save \(title)")
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.sm)
             }
             .buttonStyle(.borderedProminent)
             .disabled(!hasUnsavedChanges || isSaving)
         }
-        .padding(.bottom, 8)
+        .padding(.bottom, Spacing.sm)
     }
 }
 

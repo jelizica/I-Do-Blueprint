@@ -26,7 +26,7 @@ struct ColorRefinementRow: View {
                     .frame(width: 50, height: 50)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                            .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
             }
             .buttonStyle(.plain)
 
@@ -77,7 +77,7 @@ struct ColorRefinementRow: View {
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(AppColors.textSecondary.opacity(0.05))
         .cornerRadius(12)
         .sheet(isPresented: $showingColorPicker) {
             ColorPickerSheet(selectedColor: Binding(
@@ -124,7 +124,7 @@ struct ColorPickerSheet: View {
                     .frame(height: 60)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                            .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
 
                 Text(selectedColor.hexString)
                     .font(.system(.caption, design: .monospaced))
@@ -213,7 +213,7 @@ struct WeddingMockupView: View {
                         .frame(width: 24, height: 24)
                         .overlay(
                             Circle()
-                                .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
                 }
             }
         }
@@ -330,7 +330,7 @@ struct AccessibilityContrastCard: View {
             }
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
+        .background(AppColors.textSecondary.opacity(0.05))
         .cornerRadius(12)
     }
 }

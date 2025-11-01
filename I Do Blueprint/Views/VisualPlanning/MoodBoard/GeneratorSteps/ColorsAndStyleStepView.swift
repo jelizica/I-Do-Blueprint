@@ -47,9 +47,9 @@ struct ColorsAndStyleStepView: View {
                     // Style Suggestions
                     styleSuggestionsSection
                 }
-                .padding(.horizontal, 40)
+                .padding(.horizontal, Spacing.huge)
             }
-            .padding(.vertical, 20)
+            .padding(.vertical, Spacing.xl)
         }
     }
 
@@ -146,7 +146,7 @@ struct ColorsAndStyleStepView: View {
                                     }
                                 }
                             }
-                            .padding(.horizontal, 4)
+                            .padding(.horizontal, Spacing.xs)
                         }
                     }
 
@@ -183,10 +183,10 @@ struct ColorsAndStyleStepView: View {
                                 }
                                 Text(isExtracting ? "Extracting..." : "Extract Colors")
                             }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background(selectedImageForExtraction != nil ? Color.purple : Color.gray)
-                            .foregroundColor(.white)
+                            .padding(.horizontal, Spacing.lg)
+                            .padding(.vertical, Spacing.sm)
+                            .background(selectedImageForExtraction != nil ? Color.purple : AppColors.textSecondary)
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(8)
                         }
                         .disabled(selectedImageForExtraction == nil || isExtracting)
@@ -464,7 +464,7 @@ struct ColorSwatchView: View {
                 .frame(width: size, height: size)
                 .overlay(
                     Circle()
-                        .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
 
             VStack(spacing: 2) {
                 Text(label)
@@ -525,12 +525,12 @@ struct ExtractionResultCard: View {
                         .frame(width: 32, height: 32)
                         .overlay(
                             Circle()
-                                .stroke(Color.black.opacity(0.1), lineWidth: 1))
+                                .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
                 }
             }
         }
         .padding()
-        .background(isSelected ? Color.blue.opacity(0.1) : Color.gray.opacity(0.05))
+        .background(isSelected ? Color.blue.opacity(0.1) : AppColors.textSecondary.opacity(0.05))
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)

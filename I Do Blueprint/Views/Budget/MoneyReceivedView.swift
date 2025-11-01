@@ -260,7 +260,7 @@ struct MoneyReceivedView: View {
 
                         if gift.id != filteredGifts.last?.id {
                             Divider()
-                                .padding(.leading, 60)
+                                .padding(.leading, Spacing.huge)
                         }
                     }
                 }
@@ -348,8 +348,8 @@ struct FilterChip: View {
         Button(action: action) {
             Text(title)
                 .font(.caption)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
                 .background(isSelected ? Color.accentColor : Color(NSColor.controlBackgroundColor))
                 .foregroundColor(isSelected ? .white : .primary)
                 .cornerRadius(16)
@@ -371,7 +371,7 @@ struct GiftRowView: View {
                     .frame(width: 40, height: 40)
 
                 Image(systemName: giftTypeIcon)
-                    .foregroundColor(.white)
+                    .foregroundColor(AppColors.textPrimary)
                     .font(.system(size: 16, weight: .medium))
             }
 
@@ -383,10 +383,10 @@ struct GiftRowView: View {
                     if !gift.isThankYouSent {
                         Text("THANK YOU")
                             .font(.caption2)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.pending)
-                            .foregroundColor(.white)
+                            .foregroundColor(AppColors.textPrimary)
                             .cornerRadius(4)
                     }
                 }
@@ -483,10 +483,10 @@ struct GiftDetailView: View {
                             Text(gift.isThankYouSent ? "Thank You Sent" : "Send Thank You")
                         }
                         .font(.caption)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm)
                         .background(gift.isThankYouSent ? AppColors.Budget.income : AppColors.Budget.pending)
-                        .foregroundColor(.white)
+                        .foregroundColor(AppColors.textPrimary)
                         .cornerRadius(8)
                     }
                 }
