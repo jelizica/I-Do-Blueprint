@@ -46,15 +46,8 @@ struct DashboardViewV4: View {
 
         return NavigationStack {
             ZStack {
-                // Background gradient
-                LinearGradient(
-                    colors: [
-                        Color.fromHex("F8F9FA"),
-                        Color.fromHex("E9ECEF")
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                // Background gradient (Design System)
+                AppGradients.appBackground
                 .ignoresSafeArea()
 
                 ScrollView {
@@ -487,15 +480,8 @@ private struct WeddingCountdownCard: View {
 
     var body: some View {
         ZStack {
-            // Muted gradient background
-            LinearGradient(
-                colors: [
-                    AppColors.backgroundSecondary,
-                    AppColors.background
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+            // Colorful header gradient (Design System)
+            AppGradients.dashboardHeader
 
             HStack(spacing: Spacing.xxl * 2) {
                 // Left side - Wedding info

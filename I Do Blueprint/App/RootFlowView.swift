@@ -25,6 +25,10 @@ struct RootFlowView: View {
     @State private var isCheckingOnboarding = false
     @State private var currentTenantId: UUID? = nil
 
+    // JES-196: staged post-onboarding loader
+    @StateObject private var postOnboardingLoader = PostOnboardingLoader()
+    @State private var showPostOnboardingOverlay = false
+
     var body: some View {
         Group {
             if !supabaseManager.isAuthenticated {
@@ -44,24 +48,35 @@ struct RootFlowView: View {
                         if isCompleted {
                             AppLogger.ui.info("RootFlowView: Onboarding completed, transitioning to main app")
                             needsOnboarding = false
-                            
-                            // Load all stores after onboarding completes
-                            Task {
-                                AppLogger.ui.info("RootFlowView: Loading stores after onboarding completion")
-                                await appStores.guest.loadGuestData()
-                                await appStores.vendor.loadVendors()
-                                await appStores.task.loadTasks()
-                                await appStores.budget.loadBudgetData()
-                                AppLogger.ui.info("RootFlowView: All stores loaded successfully")
+
+                            // JES-196: Show staged loader overlay and start background sequence
+                            showPostOnboardingOverlay = true
+                            Task { @MainActor in
+                                AppLogger.ui.info("RootFlowView: Starting PostOnboardingLoader sequence")
+                                await postOnboardingLoader.start(appStores: appStores, settingsStore: settingsStore) {
+                                    AppLogger.ui.info("RootFlowView: PostOnboardingLoader finished")
+                                    showPostOnboardingOverlay = false
+                                }
                             }
                         }
                     }
             } else {
                 // Authenticated with tenant and onboarding complete: Show main app
-                MainAppView()
-                    .environmentObject(appStores)
-                    .environmentObject(settingsStore)
-                    .environmentObject(coordinator)
+                ZStack {
+                    MainAppView()
+                        .environmentObject(appStores)
+                        .environmentObject(settingsStore)
+                        .environmentObject(coordinator)
+
+                    if showPostOnboardingOverlay {
+                        PostOnboardingOverlayView(loader: postOnboardingLoader) {
+                            // Skip for now — hide overlay but keep loads running
+                            showPostOnboardingOverlay = false
+                            postOnboardingLoader.cancel()
+                        }
+                        .transition(.opacity)
+                    }
+                }
             }
         }
         .task(id: sessionManager.getTenantId()) {

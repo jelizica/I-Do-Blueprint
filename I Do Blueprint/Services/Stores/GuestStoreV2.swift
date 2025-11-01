@@ -53,43 +53,74 @@ class GuestStoreV2: ObservableObject {
         
         // Create new load task
         loadTask = Task { @MainActor in
+            let totalStart = Date()
+            var mainThreadAccumulated: TimeInterval = 0
+
             // Only load if idle or error state
             guard loadingState.isIdle || loadingState.hasError else {
                 return
             }
             
-            loadingState = .loading
+            // Mark main-thread work: set loading state
+            do {
+                let t0 = Date()
+                loadingState = .loading
+                mainThreadAccumulated += Date().timeIntervalSince(t0)
+            }
 
             do {
                 // Check for cancellation before expensive operations
                 try Task.checkCancellation()
-                
+
+                // Measure sub-operations
+                let guestsStart = Date()
                 async let guestsResult = repository.fetchGuests()
+                let statsStart = Date()
                 async let statsResult = repository.fetchGuestStats()
 
                 let fetchedGuests = try await guestsResult
                 let fetchedStats = try await statsResult
+
+                // Record sub-operation durations
+                await PerformanceMonitor.shared.recordOperation("guest.fetchGuests", duration: Date().timeIntervalSince(guestsStart))
+                await PerformanceMonitor.shared.recordOperation("guest.fetchGuestStats", duration: Date().timeIntervalSince(statsStart))
                 
                 // Check again before updating state
                 try Task.checkCancellation()
                 
+                // Main-thread updates
+                let t1 = Date()
                 guestStats = fetchedStats
                 filteredGuests = fetchedGuests
                 loadingState = .loaded(fetchedGuests)
+                mainThreadAccumulated += Date().timeIntervalSince(t1)
             } catch is CancellationError {
                 // Don't treat cancellation as error - it's expected during tenant switch
                 AppLogger.ui.debug("GuestStoreV2.loadGuestData: Load cancelled (expected during tenant switch)")
                 // Reset to idle so next load can proceed
+                let tCancel = Date()
                 loadingState = .idle
+                mainThreadAccumulated += Date().timeIntervalSince(tCancel)
             } catch let error as URLError where error.code == .cancelled {
                 // URLError cancellation - also expected
                 AppLogger.ui.debug("GuestStoreV2.loadGuestData: Load cancelled (URLError)")
                 // Reset to idle so next load can proceed
+                let tCancel = Date()
                 loadingState = .idle
+                mainThreadAccumulated += Date().timeIntervalSince(tCancel)
             } catch {
+                let tErr = Date()
                 loadingState = .error(GuestError.fetchFailed(underlying: error))
+                mainThreadAccumulated += Date().timeIntervalSince(tErr)
                 AppLogger.ui.error("GuestStoreV2.loadGuestData: Failed to fetch guests", error: error)
             }
+
+            // Record total
+            await PerformanceMonitor.shared.recordOperation(
+                "guest.loadGuestData",
+                duration: Date().timeIntervalSince(totalStart),
+                mainThread: mainThreadAccumulated
+            )
         }
         
         await loadTask?.value

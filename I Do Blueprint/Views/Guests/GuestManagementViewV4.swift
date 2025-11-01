@@ -87,7 +87,7 @@ struct GuestManagementViewV4: View {
     
     var body: some View {
         ZStack {
-            AppColors.backgroundSecondary
+            AppGradients.appBackground
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {

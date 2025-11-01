@@ -15,6 +15,9 @@ enum ConfigurationError: LocalizedError {
     case missingSupabaseAnonKey
     case invalidURLFormat(String)
     case securityViolation(String)
+    // JES-199 additions
+    case missingSentryDSN
+    case invalidSentryDSN
     
     var errorDescription: String? {
         switch self {
@@ -30,6 +33,10 @@ enum ConfigurationError: LocalizedError {
             return "Invalid Supabase URL format: \(url)"
         case .securityViolation(let message):
             return "Security violation: \(message)"
+        case .missingSentryDSN:
+            return "Sentry DSN not found in configuration"
+        case .invalidSentryDSN:
+            return "Invalid Sentry DSN format in configuration"
         }
     }
     
@@ -43,6 +50,10 @@ enum ConfigurationError: LocalizedError {
             return "The Supabase URL in the configuration is invalid"
         case .securityViolation:
             return "This is a critical security issue. Please contact the developer immediately"
+        case .missingSentryDSN:
+            return "The SENTRY_DSN key is missing from Config.plist"
+        case .invalidSentryDSN:
+            return "The SENTRY_DSN value does not appear to be a valid URL"
         }
     }
     
@@ -60,6 +71,10 @@ enum ConfigurationError: LocalizedError {
             return "The URL '\(url)' is not a valid URL format"
         case .securityViolation(let message):
             return message
+        case .missingSentryDSN:
+            return "Sentry DSN not configured. Error reporting will not function."
+        case .invalidSentryDSN:
+            return "Sentry DSN does not conform to expected URL format."
         }
     }
 }

@@ -42,6 +42,10 @@ class SupabaseManager: ObservableObject {
     @MainActor
     private var activeChannels: [RealtimeChannelV2] = []
 
+    // Intent registry for resilient resubscription
+    @MainActor
+    private var intendedTopics: Set<String> = [] // e.g., "guest_changes", "vendor_changes"
+
     // Track initialization state
     private var initializationTask: Task<Void, Never>?
     private var isInitialized = false
@@ -51,6 +55,13 @@ class SupabaseManager: ObservableObject {
         // Defer client creation until first access via lazy initialization
         self.client = nil
         self.configurationError = nil
+
+        // Observe tenant changes to re-scope realtime channels
+        NotificationCenter.default.addObserver(forName: .tenantDidChange, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor in
+                await self?.handleTenantChange()
+            }
+        }
 
         // Schedule initialization for next run loop after sandbox is ready
         initializationTask = Task { @MainActor in
@@ -354,48 +365,66 @@ class SupabaseManager: ObservableObject {
     }
 }
 
-// MARK: - Real-time Subscriptions
+// MARK: - Tenant/Realtime Helpers
 
 extension SupabaseManager {
-    func subscribeToGuestChanges() -> RealtimeChannelV2? {
-        guard let client = client else {
-            logger.error("Cannot subscribe to guest changes: client not initialized")
-            return nil
+    @MainActor
+    private func namespacedChannelName(base: String) -> String {
+        if let tenantId = SessionManager.shared.getTenantId() {
+            return "\(base)_\(tenantId.uuidString)"
         }
-        
-        let channel = client.realtimeV2.channel("guest_changes")
-
-        Task { @MainActor in
-            do {
-                try await channel.subscribeWithError()
-                // Add to registry after successful subscription
-                activeChannels.append(channel)
-            } catch {
-                logger.error("Failed to subscribe to guest changes", error: error)
-            }
-        }
-
-        return channel
+        return base
     }
 
-    func subscribeToVendorChanges() -> RealtimeChannelV2? {
+    @MainActor
+    fileprivate func handleTenantChange() async {
+        logger.info("Tenant changed - cleaning up and re-subscribing realtime channels")
+        await cleanupChannels()
+        for topic in intendedTopics {
+            _ = await ensureSubscription(forBaseTopic: topic)
+        }
+    }
+
+    @discardableResult
+    func subscribeToGuestChanges() async -> RealtimeChannelV2? {
+        await MainActor.run { intendedTopics.insert("guest_changes") }
+        return await ensureSubscription(forBaseTopic: "guest_changes")
+    }
+
+    @discardableResult
+    func subscribeToVendorChanges() async -> RealtimeChannelV2? {
+        await MainActor.run { intendedTopics.insert("vendor_changes") }
+        return await ensureSubscription(forBaseTopic: "vendor_changes")
+    }
+
+    // Ensures subscription for a base topic with retry/backoff and tenant namespacing
+    @discardableResult
+    func ensureSubscription(forBaseTopic base: String) async -> RealtimeChannelV2? {
         guard let client = client else {
-            logger.error("Cannot subscribe to vendor changes: client not initialized")
+            logger.error("Cannot ensure subscription for \(base): client not initialized")
             return nil
         }
         
-        let channel = client.realtimeV2.channel("vendor_changes")
+        let channelName = await MainActor.run { self.namespacedChannelName(base: base) }
+        let channel = client.realtimeV2.channel(channelName)
 
-        Task { @MainActor in
-            do {
+        do {
+            let _: Void = try await withRetry(policy: .network, operationName: "realtime_subscribe_\(channelName)") {
+                Task { @MainActor in
+                    AppLogger.network.debug("Subscribing to realtime channel: \(channelName)")
+                }
                 try await channel.subscribeWithError()
-                // Add to registry after successful subscription
-                activeChannels.append(channel)
-            } catch {
-                logger.error("Failed to subscribe to vendor changes", error: error)
+                return ()
+            }
+            await MainActor.run {
+                self.activeChannels.append(channel)
+                AppLogger.network.info("Subscribed to realtime channel: \(channelName)")
+            }
+        } catch {
+            await MainActor.run {
+                AppLogger.network.error("Failed to subscribe after retries: \(channelName)", error: error)
             }
         }
-
         return channel
     }
 }

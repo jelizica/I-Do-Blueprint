@@ -118,7 +118,7 @@ class AppCoordinator: ObservableObject {
         case addTask
         case editTask(WeddingTask)
         case addNote
-        case acceptInvitation(String)  // Token parameter
+        case acceptInvitation(token: String, details: InvitationDetails?)
 
         var id: String {
             switch self {
@@ -129,7 +129,7 @@ class AppCoordinator: ObservableObject {
             case .addTask: return "addTask"
             case .editTask(let task): return "editTask-\(task.id)"
             case .addNote: return "addNote"
-            case .acceptInvitation(let token): return "acceptInvitation-\(token)"
+            case .acceptInvitation(let token, _): return "acceptInvitation-\(token)"
             }
         }
 
@@ -150,8 +150,8 @@ class AppCoordinator: ObservableObject {
                 TaskModal(task: task, onSave: { _ in }, onCancel: {})
             case .addNote:
                 NoteModal(note: nil, onSave: { _ in }, onCancel: {})
-            case .acceptInvitation(let token):
-                AcceptInvitationView(token: token, coordinator: coordinator)
+            case .acceptInvitation(let token, let details):
+                AcceptInvitationView(token: token, coordinator: coordinator, details: details)
             }
         }
     }
@@ -250,12 +250,25 @@ class AppCoordinator: ObservableObject {
         let logger = AppLogger.auth
         logger.info("Handling invitation deep link with token")
 
-        // Navigate to collaboration tab
-        selectedTab = .collaboration
-
-        // Present invitation acceptance sheet
-        present(.acceptInvitation(token))
-
-        logger.debug("Presented AcceptInvitationView for token")
+        Task { @MainActor in
+            do {
+                // Prefetch invitation details
+                let details = try await InvitationService.shared.fetchInvitation(token: token)
+                
+                // Navigate to collaboration tab and present with preloaded details
+                selectedTab = .collaboration
+                present(.acceptInvitation(token: token, details: details))
+                logger.debug("Presented AcceptInvitationView with preloaded details")
+            } catch {
+                // Show a lightweight error without presenting the sheet
+                await AlertPresenter.shared.showAlert(
+                    title: "Invitation Error",
+                    message: error.localizedDescription,
+                    style: .warning,
+                    buttons: ["OK"]
+                )
+                logger.error("Failed to prefetch invitation details", error: error)
+            }
+        }
     }
 }

@@ -6,6 +6,8 @@
 //
 
 import SwiftUI
+// Performance feature flags for verbose logging
+import Foundation
 
 struct DeveloperSettingsView: View {
     @Environment(\.dismiss) private var dismiss
@@ -16,9 +18,37 @@ struct DeveloperSettingsView: View {
     @State private var showSuccess = false
     @State private var hasExistingCredentials = false
 
+    // JES-199 diagnostics
+    @State private var configSummary: ConfigValidationSummary? = nil
+
     var body: some View {
         NavigationStack {
             Form {
+                // MARK: - Configuration Diagnostics (read-only)
+                Section {
+                    diagnosticsRow(icon: "bolt.fill", title: "SUPABASE_URL", present: configSummary?.supabaseURLPresent == true, valid: configSummary?.supabaseURLValid == true)
+                    diagnosticsRow(icon: "key.fill", title: "SUPABASE_ANON_KEY", present: configSummary?.supabaseAnonKeyPresent == true, valid: true)
+                    diagnosticsRow(icon: "antenna.radiowaves.left.and.right", title: "SENTRY_DSN", present: configSummary?.sentryDSNPresent == true, valid: configSummary?.sentryDSNValid == true)
+
+                    HStack {
+                        Button("Re-run Validation") {
+                            configSummary = ConfigValidator.validateAll()
+                        }
+                        .buttonStyle(.bordered)
+
+                        Spacer()
+
+                        if let summary = configSummary {
+                            let allGood = summary.supabaseURLPresent && summary.supabaseURLValid && summary.supabaseAnonKeyPresent && summary.sentryDSNPresent && summary.sentryDSNValid
+                            Image(systemName: allGood ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                                .foregroundColor(allGood ? .green : .orange)
+                                .help(allGood ? "All configuration looks valid" : "One or more configuration items require attention")
+                        }
+                    }
+                } header: {
+                    Text("Configuration Diagnostics")
+                }
+
                 Section {
                     Text("Configure Google OAuth credentials for Google Drive and Sheets integration.")
                         .font(.subheadline)
@@ -72,8 +102,31 @@ struct DeveloperSettingsView: View {
                     .disabled(clientID.isEmpty || clientSecret.isEmpty)
                     .frame(maxWidth: .infinity)
                 }
+
+                // MARK: - Performance Logging (DEBUG only)
+                #if DEBUG
+                Section("Performance Logging") {
+                    Toggle(isOn: Binding(
+                        get: { PerformanceFeatureFlags.enablePerformanceMonitoring },
+                        set: { PerformanceFeatureFlags.setPerformanceMonitoring(enabled: $0) }
+                    )) {
+                        Text("Enable verbose performance logging")
+                    }
+                    .help("When enabled, store loads and key operations record timing metrics and breadcrumbs.")
+                }
+                #endif
             }
             .navigationTitle("Developer Settings")
+            
+            #if DEBUG
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    NavigationLink(destination: PerformanceDiagnosticsView()) {
+                        Label("Perf Diagnostics", systemImage: "speedometer")
+                    }
+                }
+            }
+            #endif
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") {
@@ -90,9 +143,32 @@ struct DeveloperSettingsView: View {
             }
             .onAppear {
                 checkExistingCredentials()
+                configSummary = ConfigValidator.validateAll()
             }
         }
         .frame(width: 500, height: 400)
+    }
+
+    // MARK: - Helpers
+
+    @ViewBuilder
+    private func diagnosticsRow(icon: String, title: String, present: Bool, valid: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .foregroundColor(.secondary)
+            Text(title)
+            Spacer()
+            Group {
+                if present {
+                    Image(systemName: valid ? "checkmark.circle.fill" : "exclamationmark.circle.fill")
+                        .foregroundColor(valid ? .green : .orange)
+                } else {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.red)
+                }
+            }
+            .help(present ? (valid ? "Present and valid" : "Present but may be invalid") : "Missing")
+        }
     }
 
     private func saveCredentials() {
