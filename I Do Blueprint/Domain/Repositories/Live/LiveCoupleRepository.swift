@@ -235,6 +235,11 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
             AppLogger.repository.error("Error type: \(type(of: error))")
             AppLogger.repository.error("Error: \(error)")
             AppLogger.repository.error("Localized: \(error.localizedDescription)")
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchCouplesForUser",
+                "repository": "LiveCoupleRepository",
+                "userId": userId.uuidString
+            ])
             throw error
         }
     }

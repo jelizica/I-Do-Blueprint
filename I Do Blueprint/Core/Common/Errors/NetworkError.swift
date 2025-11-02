@@ -142,3 +142,71 @@ enum NetworkError: LocalizedError, Equatable {
         }
     }
 }
+
+// MARK: - AppError Conformance
+extension NetworkError: AppError {
+    var errorCode: String {
+        switch self {
+        case .noConnection: return "NETWORK_NO_CONNECTION"
+        case .timeout: return "NETWORK_TIMEOUT"
+        case .serverError(let code): return "NETWORK_SERVER_\(code)"
+        case .rateLimited: return "NETWORK_RATE_LIMITED"
+        case .badRequest: return "NETWORK_BAD_REQUEST"
+        case .unauthorized: return "NETWORK_UNAUTHORIZED"
+        case .forbidden: return "NETWORK_FORBIDDEN"
+        case .notFound: return "NETWORK_NOT_FOUND"
+        case .invalidResponse: return "NETWORK_INVALID_RESPONSE"
+        case .decodingFailed: return "NETWORK_DECODING_FAILED"
+        }
+    }
+
+    var userMessage: String { errorDescription ?? "A network error occurred." }
+
+    var technicalDetails: String {
+        switch self {
+        case .noConnection: return "No connection"
+        case .timeout: return "Timeout"
+        case .serverError(let code): return "Server error code=\(code)"
+        case .rateLimited(let retry): return "Rate limited retryAfter=\(String(describing: retry))"
+        case .badRequest(let message): return "Bad request: \(message)"
+        case .unauthorized: return "Unauthorized"
+        case .forbidden: return "Forbidden"
+        case .notFound: return "Not found"
+        case .invalidResponse: return "Invalid response"
+        case .decodingFailed(let err): return "Decoding failed: \(err.localizedDescription)"
+        }
+    }
+
+    var recoveryOptions: [ErrorRecoveryOption] {
+        switch self {
+        case .noConnection: return [.checkConnection, .retry, .viewOfflineData]
+        case .timeout: return [.retry, .checkConnection]
+        case .rateLimited(let retry):
+            if let seconds = retry { return [.tryAgainLater] }
+            return [.tryAgainLater]
+        case .serverError: return [.tryAgainLater, .retry]
+        case .badRequest: return [.cancel]
+        case .unauthorized: return [.cancel, .contactSupport]
+        case .forbidden: return [.contactSupport]
+        case .notFound: return [.cancel]
+        case .invalidResponse, .decodingFailed: return [.tryAgainLater]
+        }
+    }
+
+    var severity: ErrorSeverity {
+        switch self {
+        case .noConnection, .timeout, .rateLimited: return .warning
+        case .serverError: return .error
+        case .badRequest, .invalidResponse, .decodingFailed: return .error
+        case .unauthorized, .forbidden: return .critical
+        case .notFound: return .warning
+        }
+    }
+
+    var shouldReport: Bool {
+        switch self {
+        case .badRequest: return false
+        default: return true
+        }
+    }
+}

@@ -9,7 +9,7 @@ import SwiftUI
 
 /// Shows online presence for collaborators
 struct PresenceIndicator: View {
-    @StateObject private var presenceStore = PresenceStoreV2()
+    @Environment(\.presenceStore) private var presenceStore
     let size: IndicatorSize
     
     enum IndicatorSize {
@@ -123,7 +123,7 @@ struct MoreUsersIndicator: View {
 
 /// Compact presence count badge
 struct PresenceCountBadge: View {
-    @StateObject private var presenceStore = PresenceStoreV2()
+    @Environment(\.presenceStore) private var presenceStore
     
     var body: some View {
         HStack(spacing: 4) {

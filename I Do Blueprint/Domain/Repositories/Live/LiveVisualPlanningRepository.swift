@@ -11,7 +11,6 @@ import Supabase
 actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     private let client: SupabaseClient?
     private let logger = AppLogger.api
-    private let sessionManager = SessionManager.shared
     
     init(client: SupabaseClient? = SupabaseManager.shared.client) {
         self.client = client
@@ -25,9 +24,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     }
     
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
 
     // MARK: - Mood Boards
@@ -71,6 +68,10 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             return board
         } catch {
             logger.error("Failed to create mood board", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createMoodBoard",
+                "repository": "LiveVisualPlanningRepository"
+            ])
             throw VisualPlanningError.createFailed(underlying: error)
         }
     }
@@ -91,6 +92,11 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             return board
         } catch {
             logger.error("Failed to update mood board", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateMoodBoard",
+                "repository": "LiveVisualPlanningRepository",
+                "boardId": moodBoard.id.uuidString
+            ])
             throw VisualPlanningError.updateFailed(underlying: error)
         }
     }
@@ -107,6 +113,11 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             logger.info("Deleted mood board: \(id)")
         } catch {
             logger.error("Failed to delete mood board", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteMoodBoard",
+                "repository": "LiveVisualPlanningRepository",
+                "boardId": id.uuidString
+            ])
             throw VisualPlanningError.deleteFailed(underlying: error)
         }
     }
@@ -150,6 +161,10 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             return created
         } catch {
             logger.error("Failed to create color palette", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createColorPalette",
+                "repository": "LiveVisualPlanningRepository"
+            ])
             throw VisualPlanningError.createFailed(underlying: error)
         }
     }
@@ -170,6 +185,11 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             return updated
         } catch {
             logger.error("Failed to update color palette", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateColorPalette",
+                "repository": "LiveVisualPlanningRepository",
+                "paletteId": palette.id.uuidString
+            ])
             throw VisualPlanningError.updateFailed(underlying: error)
         }
     }
@@ -186,6 +206,11 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
             logger.info("Deleted color palette: \(id)")
         } catch {
             logger.error("Failed to delete color palette", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteColorPalette",
+                "repository": "LiveVisualPlanningRepository",
+                "paletteId": id.uuidString
+            ])
             throw VisualPlanningError.deleteFailed(underlying: error)
         }
     }

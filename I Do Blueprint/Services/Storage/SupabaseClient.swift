@@ -94,25 +94,56 @@ class SupabaseManager: ObservableObject {
 
     // MARK: - Client Access with Initialization Wait
 
-    /// Wait for initialization to complete and return the client
+    /// Wait for a ready Supabase client.
+    /// Fast-path returns immediately if a client already exists. Otherwise, race initialization with a timeout.
     /// Can be called from any isolation context
-    func waitForClient() async throws -> SupabaseClient {
-        // Wait for initialization task to complete
-        await initializationTask?.value
+    func waitForClient(timeout: TimeInterval = 3.0) async throws -> SupabaseClient {
+        // Fast-path: if a client already exists and no config error, return it without waiting
+        if let fastClient = await MainActor.run(resultType: SupabaseClient?.self, body: {
+            if self.configurationError != nil { return nil }
+            return self.client
+        }) {
+            return fastClient
+        }
 
-        // Access properties on MainActor
-        return try await MainActor.run {
-            // Check if initialization failed
-            if let error = self.configurationError {
-                throw error
+        // Race the initialization task against a timeout; if timed out but client becomes available, use it
+        let deadline = UInt64(max(0, timeout) * 1_000_000_000)
+
+        // Local timeout error
+        struct _WaitTimeout: Error {}
+
+        do {
+            return try await withThrowingTaskGroup(of: SupabaseClient.self) { group in
+                // Initialization completion path
+                group.addTask { [weak self] in
+                    guard let self else { throw ConfigurationError.configFileUnreadable }
+                    await self.initializationTask?.value
+                    return try await MainActor.run(resultType: SupabaseClient.self, body: {
+                        if let error = self.configurationError { throw error }
+                        guard let client = self.client else { throw ConfigurationError.configFileUnreadable }
+                        return client
+                    })
+                }
+                // Timeout path
+                group.addTask { [weak self] in
+                    guard let self else { throw ConfigurationError.configFileUnreadable }
+                    try await Task.sleep(nanoseconds: deadline)
+                    return try await MainActor.run(resultType: SupabaseClient.self, body: {
+                        if let client = self.client { return client }
+                        throw _WaitTimeout()
+                    })
+                }
+
+                // Return whichever finishes first
+                let client = try await group.next()!
+                group.cancelAll()
+                return client
             }
-
-            // Return the client
-            guard let client = self.client else {
-                throw ConfigurationError.configFileUnreadable
-            }
-
-            return client
+        } catch {
+            // If timed out or failed, but a client now exists, return it; otherwise propagate
+            if let fallback = await MainActor.run(resultType: SupabaseClient?.self, body: { self.client }) { return fallback }
+            if let configErr = await MainActor.run(resultType: ConfigurationError?.self, body: { self.configurationError }) { throw configErr }
+            throw error
         }
     }
 

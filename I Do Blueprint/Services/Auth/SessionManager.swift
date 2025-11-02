@@ -101,6 +101,9 @@ class SessionManager: ObservableObject {
         
         currentTenantId = tenantId
         saveTenantIdToKeychain(tenantId)
+        
+        // Update thread-safe tenant context for background consumers
+        await TenantContextProvider.shared.setTenantId(tenantId)
 
         // Clear repository caches and reset ALL stores when tenant changes
         if tenantChanged {
@@ -166,6 +169,7 @@ class SessionManager: ObservableObject {
     func clearSession() {
         currentTenantId = nil
         deleteTenantIdFromKeychain()
+        Task { await TenantContextProvider.shared.clear() }
         logger.info("Session cleared")
     }
 
@@ -175,6 +179,8 @@ class SessionManager: ObservableObject {
         if let tenantIdString = loadFromKeychain(account: tenantIdAccount),
            let tenantId = UUID(uuidString: tenantIdString) {
             currentTenantId = tenantId
+            // Seed thread-safe context on load as well
+            Task { await TenantContextProvider.shared.setTenantId(tenantId) }
             logger.info("Session loaded from keychain")
         } else {
             logger.debug("No saved session found, will use default on first access")

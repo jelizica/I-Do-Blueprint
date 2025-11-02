@@ -89,6 +89,10 @@ class NotesStoreV2: ObservableObject {
                 loadingState = .idle
             } catch {
                 loadingState = .error(NotesError.fetchFailed(underlying: error))
+                ErrorHandler.shared.handle(
+                    error,
+                    context: ErrorContext(operation: "loadNotes", feature: "notes")
+                )
             }
         }
         
@@ -100,6 +104,10 @@ class NotesStoreV2: ObservableObject {
             return try await repository.fetchNoteById(id)
         } catch {
             loadingState = .error(NotesError.fetchFailed(underlying: error))
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "loadNoteById", feature: "notes", metadata: ["noteId": id.uuidString])
+            )
             return nil
         }
     }
@@ -112,6 +120,10 @@ class NotesStoreV2: ObservableObject {
             loadingState = .loaded(fetchedNotes)
         } catch {
             loadingState = .error(NotesError.fetchFailed(underlying: error))
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "loadNotesByType", feature: "notes", metadata: ["type": type.rawValue])
+            )
         }
     }
 
@@ -166,9 +178,10 @@ class NotesStoreV2: ObservableObject {
                 loadingState = .loaded(notes)
             }
             loadingState = .error(NotesError.createFailed(underlying: error))
-            await handleError(error, operation: "create note") { [weak self] in
-                await self?.createNote(data)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "createNote", feature: "notes")
+            )
         }
     }
 
@@ -212,9 +225,10 @@ class NotesStoreV2: ObservableObject {
                 loadingState = .loaded(notes)
             }
             loadingState = .error(NotesError.updateFailed(underlying: error))
-            await handleError(error, operation: "update note") { [weak self] in
-                await self?.updateNote(note, data: data)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "updateNote", feature: "notes", metadata: ["noteId": note.id.uuidString])
+            )
         }
     }
 
@@ -244,9 +258,10 @@ class NotesStoreV2: ObservableObject {
                 loadingState = .loaded(notes)
             }
             loadingState = .error(NotesError.deleteFailed(underlying: error))
-            await handleError(error, operation: "delete note") { [weak self] in
-                await self?.deleteNote(note)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "deleteNote", feature: "notes", metadata: ["noteId": note.id.uuidString])
+            )
         }
     }
 

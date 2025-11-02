@@ -180,6 +180,27 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
 
     var budgetDevelopmentScenarios: [SavedScenario] = []
     var budgetDevelopmentItems: [BudgetItem] = []
+    
+    func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int) {
+        // Upsert scenario
+        if let idx = budgetDevelopmentScenarios.firstIndex(where: { $0.id == scenario.id }) {
+            budgetDevelopmentScenarios[idx] = scenario
+        } else {
+            budgetDevelopmentScenarios.append(scenario)
+        }
+        // Insert items (assign scenarioId)
+        var count = 0
+        for var item in items {
+            item.scenarioId = scenario.id
+            if let idx = budgetDevelopmentItems.firstIndex(where: { $0.id == item.id }) {
+                budgetDevelopmentItems[idx] = item
+            } else {
+                budgetDevelopmentItems.append(item)
+            }
+            count += 1
+        }
+        return (scenario.id, count)
+    }
 
     func fetchBudgetDevelopmentScenarios() async throws -> [SavedScenario] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
@@ -360,12 +381,37 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
             $0.scenarioId == scenarioId && $0.budgetItemId == budgetItemId
         }
     }
+
+    func fetchExpenseAllocationsForScenario(scenarioId: String) async throws -> [ExpenseAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return expenseAllocations.filter { $0.scenarioId == scenarioId }
+    }
     
     func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         expenseAllocations.append(allocation)
         return allocation
+    }
+
+    func fetchAllocationsForExpense(expenseId: UUID, scenarioId: String) async throws -> [ExpenseAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return expenseAllocations.filter { $0.expenseId == expenseId.uuidString && $0.scenarioId == scenarioId }
+    }
+
+    func fetchAllocationsForExpenseAllScenarios(expenseId: UUID) async throws -> [ExpenseAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return expenseAllocations.filter { $0.expenseId == expenseId.uuidString }
+    }
+
+    func replaceAllocations(expenseId: UUID, scenarioId: String, with newAllocations: [ExpenseAllocation]) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        expenseAllocations.removeAll { $0.expenseId == expenseId.uuidString && $0.scenarioId == scenarioId }
+        expenseAllocations.append(contentsOf: newAllocations)
     }
     
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {

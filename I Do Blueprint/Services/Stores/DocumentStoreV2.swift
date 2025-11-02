@@ -12,7 +12,7 @@ import SwiftUI
 
 /// New architecture version using repositories and dependency injection
 @MainActor
-class DocumentStoreV2: ObservableObject {
+class DocumentStoreV2: ObservableObject, CacheableStore {
     @Published var loadingState: LoadingState<[Document]> = .idle
     @Published var selectedDocument: Document?
 
@@ -42,6 +42,10 @@ class DocumentStoreV2: ObservableObject {
     @Dependency(\.documentRepository) var repository
     @Dependency(\.vendorRepository) var vendorRepository
     @Dependency(\.budgetRepository) var budgetRepository
+    
+    // MARK: - Cache Management
+    var lastLoadTime: Date?
+    let cacheValidityDuration: TimeInterval = 600 // 10 minutes
     
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
@@ -86,13 +90,19 @@ class DocumentStoreV2: ObservableObject {
 
     // MARK: - Public Interface
 
-    func loadDocuments() async {
+    func loadDocuments(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
         
         // Create new load task
         loadTask = Task { @MainActor in
-            guard loadingState.isIdle || loadingState.hasError else { return }
+            // Use cached data if still valid
+            if !force && isCacheValid() {
+                AppLogger.ui.debug("Using cached document data (age: \(Int(cacheAge()))s)")
+                return
+            }
+            
+            guard loadingState.isIdle || loadingState.hasError || force else { return }
             
             loadingState = .loading
 
@@ -104,6 +114,7 @@ class DocumentStoreV2: ObservableObject {
                 try Task.checkCancellation()
                 
                 loadingState = .loaded(fetchedDocuments)
+                lastLoadTime = Date()
             } catch is CancellationError {
                 AppLogger.ui.debug("DocumentStoreV2.loadDocuments: Load cancelled (expected during tenant switch)")
                 loadingState = .idle
@@ -112,6 +123,10 @@ class DocumentStoreV2: ObservableObject {
                 loadingState = .idle
             } catch {
                 loadingState = .error(DocumentError.fetchFailed(underlying: error))
+                ErrorHandler.shared.handle(
+                    error,
+                    context: ErrorContext(operation: "loadDocuments", feature: "document")
+                )
             }
         }
         
@@ -126,6 +141,10 @@ class DocumentStoreV2: ObservableObject {
             loadingState = .loaded(fetchedDocuments)
         } catch {
             loadingState = .error(DocumentError.fetchFailed(underlying: error))
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "loadDocumentsByType", feature: "document", metadata: ["type": type.rawValue])
+            )
         }
     }
 
@@ -137,6 +156,10 @@ class DocumentStoreV2: ObservableObject {
             loadingState = .loaded(fetchedDocuments)
         } catch {
             loadingState = .error(DocumentError.fetchFailed(underlying: error))
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "loadDocumentsByBucket", feature: "document", metadata: ["bucket": bucket.rawValue])
+            )
         }
     }
 
@@ -148,11 +171,15 @@ class DocumentStoreV2: ObservableObject {
             loadingState = .loaded(fetchedDocuments)
         } catch {
             loadingState = .error(DocumentError.fetchFailed(underlying: error))
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "loadDocumentsByVendor", feature: "document", metadata: ["vendorId": vendorId])
+            )
         }
     }
 
     func refreshDocuments() async {
-        await loadDocuments()
+        await loadDocuments(force: true)
     }
 
     func uploadDocument(
@@ -174,12 +201,19 @@ class DocumentStoreV2: ObservableObject {
             }
             
             uploadProgress = 1.0
+            // Invalidate cache due to mutation
+            invalidateCache()
             showSuccess("Document uploaded successfully")
         } catch {
             loadingState = .error(DocumentError.uploadFailed(underlying: error))
-            await handleError(error, operation: "upload document") { [weak self] in
-                await self?.uploadDocument(fileData: fileData, metadata: metadata, coupleId: coupleId)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "uploadDocument",
+                    feature: "document",
+                    metadata: ["fileName": metadata.fileName]
+                )
+            )
         }
 
         isUploading = false
@@ -205,6 +239,8 @@ class DocumentStoreV2: ObservableObject {
                 loadingState = .loaded(docs)
             }
             
+            // Invalidate cache due to mutation
+            invalidateCache()
             showSuccess("Document updated successfully")
         } catch {
             // Rollback on error
@@ -214,9 +250,10 @@ class DocumentStoreV2: ObservableObject {
                 loadingState = .loaded(docs)
             }
             loadingState = .error(DocumentError.updateFailed(underlying: error))
-            await handleError(error, operation: "update document") { [weak self] in
-                await self?.updateDocument(document)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "updateDocument", feature: "document", metadata: ["documentId": document.id.uuidString])
+            )
         }
     }
 
@@ -264,6 +301,10 @@ class DocumentStoreV2: ObservableObject {
                 loadingState = .loaded(docs)
             }
             loadingState = .error(DocumentError.updateFailed(underlying: error))
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "updateDocumentFields", feature: "document", metadata: ["documentId": id.uuidString])
+            )
         }
     }
 
@@ -297,6 +338,10 @@ class DocumentStoreV2: ObservableObject {
                 loadingState = .loaded(docs)
             }
             loadingState = .error(DocumentError.updateFailed(underlying: error))
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "updateDocumentTags", feature: "document", metadata: ["documentId": id.uuidString])
+            )
         }
     }
 
@@ -345,6 +390,8 @@ class DocumentStoreV2: ObservableObject {
 
         do {
             try await repository.deleteDocument(id: document.id)
+            // Invalidate cache due to mutation
+            invalidateCache()
             showSuccess("Document deleted successfully")
         } catch {
             // Rollback on error
@@ -798,6 +845,11 @@ class DocumentStoreV2: ObservableObject {
     
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
+        // Cancel in-flight tasks to avoid race conditions during tenant switch
+        loadTask?.cancel()
+        
+        // Reset state and invalidate cache
         loadingState = .idle
+        lastLoadTime = nil
     }
 }

@@ -10,6 +10,7 @@ import Combine
 import Dependencies
 import Foundation
 import SwiftUI
+import Sentry
 
 @MainActor
 class SettingsStoreV2: ObservableObject {
@@ -26,6 +27,7 @@ class SettingsStoreV2: ObservableObject {
 
     private let repository: any SettingsRepositoryProtocol
     private var loadTask: Task<Void, Never>?
+    private var categoriesFetchCompleted = false
 
     init(repository: (any SettingsRepositoryProtocol)? = nil) {
         self.repository = repository ?? LiveSettingsRepository()
@@ -40,61 +42,122 @@ class SettingsStoreV2: ObservableObject {
     // MARK: - Load Settings
 
     func loadSettings(force: Bool = false) async {
+        // Avoid duplicate concurrent loads unless forced
+        if isLoading && !force { return }
         // Allow reloading if forced or if not already loaded
-        guard force || !hasLoaded else {
-            AppLogger.ui.debug("SettingsStoreV2.loadSettings: Already loaded, skipping")
-            return
-        }
+        if !force && hasLoaded { return }
         
-        // Cancel any previous load task
-        loadTask?.cancel()
+        // Cancel any previous load task when forcing
+        if force { loadTask?.cancel() }
         
         // Create new load task
         loadTask = Task { @MainActor in
             AppLogger.ui.info("SettingsStoreV2.loadSettings: Starting to load settings (force: \(force))")
             isLoading = true
             error = nil
+            categoriesFetchCompleted = false
 
             do {
-                // Check for cancellation before expensive operations
                 try Task.checkCancellation()
-                
-                async let settingsResult = repository.fetchSettings()
-                async let categoriesResult = repository.fetchCustomVendorCategories()
-
-                let fetchedSettings = try await settingsResult
-                let fetchedCategories = try await categoriesResult
-                
-                // Check again before updating state
+                // Fetch base settings first and mark store as loaded for UI responsiveness
+                let fetchedSettings = try await repository.fetchSettings()
                 try Task.checkCancellation()
-                
                 settings = fetchedSettings
                 localSettings = fetchedSettings
-                customVendorCategories = fetchedCategories
                 hasUnsavedChanges = false
                 hasLoaded = true
-                error = nil  // Clear any previous errors on successful load
+                error = nil
+                AppLogger.ui.info("SettingsStoreV2.loadSettings: Settings base loaded; fetching categories in background…")
 
-                AppLogger.ui.info("SettingsStoreV2.loadSettings: Settings loaded successfully")
-                AppLogger.ui.info("SettingsStoreV2: Wedding date from loaded settings: '\(settings.global.weddingDate)'")
-                AppLogger.ui.info("SettingsStoreV2: Custom meal options loaded: \(settings.guests.customMealOptions)")
+                // Fetch categories without blocking; update when ready, with timeout and single retry
+                Task { @MainActor in
+                    let catStart = Date()
+                    do {
+                        let fetchedCategories: [CustomVendorCategory] = try await self.withTimeout(seconds: 10) {
+                            try await self.repository.fetchCustomVendorCategories()
+                        }
+                        self.customVendorCategories = fetchedCategories
+                        self.categoriesFetchCompleted = true
+                        let catDur = Date().timeIntervalSince(catStart)
+                        AppLogger.ui.info("SettingsStoreV2.loadSettings: Categories loaded (\(fetchedCategories.count)) in \(String(format: "%.2f", catDur))s")
+                        await PerformanceMonitor.shared.recordOperation("settings.categories.loaded", duration: catDur)
+                        if fetchedCategories.isEmpty {
+                            SentryService.shared.addBreadcrumb(
+                                message: "settings.categories.none",
+                                category: "settings",
+                                data: ["duration_ms": Int(catDur*1000)]
+                            )
+                        } else {
+                            SentryService.shared.addBreadcrumb(
+                                message: "settings.categories.loaded",
+                                category: "settings",
+                                data: ["count": fetchedCategories.count, "duration_ms": Int(catDur*1000)]
+                            )
+                        }
+                    } catch {
+                        let catDur = Date().timeIntervalSince(catStart)
+                        AppLogger.ui.warning("SettingsStoreV2.loadSettings: Categories timeout/failure after \(String(format: "%.2f", catDur))s")
+                        SentryService.shared.addBreadcrumb(
+                            message: "settings.categories.timeout",
+                            category: "settings",
+                            data: ["duration_ms": Int(catDur*1000)]
+                        )
+                        // Retry once after a short delay
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 3_000_000_000)
+                            do {
+                                let retried = try await self.repository.fetchCustomVendorCategories()
+                                self.customVendorCategories = retried
+                                self.categoriesFetchCompleted = true
+                                let totalDur = Date().timeIntervalSince(catStart)
+                                AppLogger.ui.info("SettingsStoreV2.loadSettings: Categories loaded on retry (\(retried.count)) in \(String(format: "%.2f", totalDur))s")
+                                SentryService.shared.addBreadcrumb(
+                                    message: retried.isEmpty ? "settings.categories.none" : "settings.categories.retry_success",
+                                    category: "settings",
+                                    data: retried.isEmpty ? ["duration_ms": Int(totalDur*1000)] : ["count": retried.count, "duration_ms": Int(totalDur*1000)]
+                                )
+                            } catch {
+                                AppLogger.ui.error("SettingsStoreV2.loadSettings: Categories retry failed", error: error)
+                                SentryService.shared.captureMessage(
+                                    "settings.categories.retry_failed",
+                                    context: ["error": String(describing: error)],
+                                    level: .warning
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Watchdog: log if categories still not loaded after 5s
+                Task { @MainActor in
+                    try? await Task.sleep(nanoseconds: 5_000_000_000)
+                    if self.customVendorCategories.isEmpty && !self.categoriesFetchCompleted {
+                        AppLogger.ui.warning("SettingsStoreV2.loadSettings: Categories still pending after 5s")
+                        SentryService.shared.captureMessage("settings.categories.pending_5s", level: .info)
+                    }
+                }
             } catch is CancellationError {
-                // Don't treat cancellation as error - it's expected during navigation
                 AppLogger.ui.debug("SettingsStoreV2.loadSettings: Load cancelled (expected during navigation)")
-                // Don't update error state or hasLoaded for cancellations
             } catch let error as URLError where error.code == .cancelled {
-                // URLError cancellation - also expected
                 AppLogger.ui.debug("SettingsStoreV2.loadSettings: Load cancelled (URLError)")
             } catch let error as URLError where error.code == .notConnectedToInternet {
                 self.error = .networkUnavailable
                 settings = .default
-                hasLoaded = false  // Don't mark as loaded on error
+                hasLoaded = false
                 AppLogger.ui.error("SettingsStoreV2.loadSettings: Network unavailable")
+                ErrorHandler.shared.handle(
+                    error,
+                    context: ErrorContext(operation: "loadSettings", feature: "settings", metadata: ["reason": "notConnectedToInternet"])
+                )
             } catch {
                 self.error = .fetchFailed(underlying: error)
                 settings = .default
-                hasLoaded = false  // Don't mark as loaded on error
+                hasLoaded = false
                 AppLogger.ui.error("SettingsStoreV2.loadSettings: Failed to fetch settings: \(error)")
+                ErrorHandler.shared.handle(
+                    error,
+                    context: ErrorContext(operation: "loadSettings", feature: "settings")
+                )
             }
 
             isLoading = false
@@ -134,9 +197,17 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.global = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"]) 
+            )
         } catch {
             settings.global = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"]) 
+            )
         }
 
         savingSections.remove("global")
@@ -172,9 +243,11 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.theme = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveThemeSettings", feature: "settings", metadata: ["section": "theme"]))
         } catch {
             settings.theme = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveThemeSettings", feature: "settings", metadata: ["section": "theme"]))
         }
 
         savingSections.remove("theme")
@@ -199,10 +272,12 @@ class SettingsStoreV2: ObservableObject {
             settings.budget = originalBudget
             settings.cashFlow = originalCashFlow
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveBudgetSettings", feature: "settings", metadata: ["section": "budget"]))
         } catch {
             settings.budget = originalBudget
             settings.cashFlow = originalCashFlow
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveBudgetSettings", feature: "settings", metadata: ["section": "budget"]))
         }
 
         savingSections.remove("budget")
@@ -220,9 +295,11 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.tasks = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveTasksSettings", feature: "settings", metadata: ["section": "tasks"]))
         } catch {
             settings.tasks = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveTasksSettings", feature: "settings", metadata: ["section": "tasks"]))
         }
 
         savingSections.remove("tasks")
@@ -240,9 +317,11 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.vendors = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveVendorsSettings", feature: "settings", metadata: ["section": "vendors"]))
         } catch {
             settings.vendors = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveVendorsSettings", feature: "settings", metadata: ["section": "vendors"]))
         }
 
         savingSections.remove("vendors")
@@ -260,9 +339,11 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.guests = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveGuestsSettings", feature: "settings", metadata: ["section": "guests"]))
         } catch {
             settings.guests = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveGuestsSettings", feature: "settings", metadata: ["section": "guests"]))
         }
 
         savingSections.remove("guests")
@@ -280,9 +361,11 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.documents = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveDocumentsSettings", feature: "settings", metadata: ["section": "documents"]))
         } catch {
             settings.documents = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveDocumentsSettings", feature: "settings", metadata: ["section": "documents"]))
         }
 
         savingSections.remove("documents")
@@ -300,9 +383,11 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.notifications = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveNotificationsSettings", feature: "settings", metadata: ["section": "notifications"]))
         } catch {
             settings.notifications = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveNotificationsSettings", feature: "settings", metadata: ["section": "notifications"]))
         }
 
         savingSections.remove("notifications")
@@ -320,9 +405,11 @@ class SettingsStoreV2: ObservableObject {
         } catch let error as URLError where error.code == .notConnectedToInternet {
             settings.links = original
             self.error = .networkUnavailable
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveLinksSettings", feature: "settings", metadata: ["section": "links"]))
         } catch {
             settings.links = original
             self.error = .updateFailed(underlying: error)
+            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveLinksSettings", feature: "settings", metadata: ["section": "links"]))
         }
 
         savingSections.remove("links")
@@ -659,5 +746,20 @@ class SettingsStoreV2: ObservableObject {
 
     func resetLoadedState() {
         hasLoaded = false
+    }
+
+    // MARK: - Timeout Helper
+    private struct SettingsTimeout: Error {}
+    private func withTimeout<T>(seconds: Double, operation: @escaping @Sendable () async throws -> T) async throws -> T {
+        return try await withThrowingTaskGroup(of: T.self) { group in
+            group.addTask { try await operation() }
+            group.addTask {
+                try await Task.sleep(nanoseconds: UInt64(max(0, seconds) * 1_000_000_000))
+                throw SettingsTimeout()
+            }
+            let result = try await group.next()!
+            group.cancelAll()
+            return result
+        }
     }
 }

@@ -22,14 +22,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
     // MARK: - Tenant Context
     
     private func getTenantId() async throws -> UUID {
-        let coupleId = await MainActor.run {
-            SessionManager.shared.currentTenantId
-        }
-        guard let coupleId else {
-            logger.error("Tenant context missing for onboarding operation")
-            throw OnboardingError.tenantContextMissing
-        }
-        return coupleId
+        try await TenantContextProvider.shared.requireTenantId()
     }
     
     // MARK: - Fetch Onboarding Progress
@@ -88,6 +81,10 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
             
         } catch {
             logger.error("Error fetching onboarding progress", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchOnboardingProgress",
+                "repository": "LiveOnboardingRepository"
+            ])
             throw OnboardingError.fetchFailed(underlying: error)
         }
     }
@@ -166,6 +163,10 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
             
         } catch {
             logger.error("Error saving onboarding progress", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "saveOnboardingProgress",
+                "repository": "LiveOnboardingRepository"
+            ])
             throw OnboardingError.saveFailed(underlying: error)
         }
     }
@@ -233,6 +234,10 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
             
         } catch {
             logger.error("Error deleting onboarding progress", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteOnboardingProgress",
+                "repository": "LiveOnboardingRepository"
+            ])
             throw OnboardingError.deleteFailed(underlying: error)
         }
     }

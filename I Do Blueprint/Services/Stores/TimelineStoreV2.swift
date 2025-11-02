@@ -11,7 +11,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class TimelineStoreV2: ObservableObject {
+class TimelineStoreV2: ObservableObject, CacheableStore {
     @Published var loadingState: LoadingState<[TimelineItem]> = .idle
     @Published private(set) var milestones: [Milestone] = []
 
@@ -21,6 +21,10 @@ class TimelineStoreV2: ObservableObject {
     @Published var showCompleted = true
 
     @Dependency(\.timelineRepository) var repository
+    
+    // MARK: - Cache Management
+    var lastLoadTime: Date?
+    let cacheValidityDuration: TimeInterval = 300 // 5 minutes
     
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
@@ -44,13 +48,19 @@ class TimelineStoreV2: ObservableObject {
 
     // MARK: - Timeline Items
 
-    func loadTimelineItems() async {
+    func loadTimelineItems(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
         
         // Create new load task
         loadTask = Task { @MainActor in
-            guard loadingState.isIdle || loadingState.hasError else { return }
+            // Use cached data if still valid
+            if !force && isCacheValid() {
+                AppLogger.ui.debug("Using cached timeline data (age: \(Int(cacheAge()))s)")
+                return
+            }
+            
+            guard loadingState.isIdle || loadingState.hasError || force else { return }
             
             loadingState = .loading
 
@@ -67,6 +77,7 @@ class TimelineStoreV2: ObservableObject {
                 
                 milestones = fetchedMilestones
                 loadingState = .loaded(fetchedItems)
+                lastLoadTime = Date()
             } catch is CancellationError {
                 AppLogger.ui.debug("TimelineStoreV2.loadTimelineItems: Load cancelled (expected during tenant switch)")
                 loadingState = .idle
@@ -82,7 +93,7 @@ class TimelineStoreV2: ObservableObject {
     }
 
     func refreshTimeline() async {
-        await loadTimelineItems()
+        await loadTimelineItems(force: true)
     }
 
     func createTimelineItem(_ insertData: TimelineItemInsertData) async {
@@ -95,12 +106,15 @@ class TimelineStoreV2: ObservableObject {
     loadingState = .loaded(currentItems)
     }
     
+    // Invalidate cache due to mutation
+    invalidateCache()
     showSuccess("Timeline item created successfully")
     } catch {
     loadingState = .error(TimelineError.createFailed(underlying: error))
-    await handleError(error, operation: "create timeline item") { [weak self] in
-    await self?.createTimelineItem(insertData)
-    }
+    ErrorHandler.shared.handle(
+        error,
+        context: ErrorContext(operation: "createTimelineItem", feature: "timeline")
+    )
     }
     }
 
@@ -125,6 +139,8 @@ class TimelineStoreV2: ObservableObject {
                 loadingState = .loaded(items)
             }
             
+            // Invalidate cache due to mutation
+            invalidateCache()
             showSuccess("Timeline item updated successfully")
         } catch {
             // Rollback on error
@@ -134,9 +150,10 @@ class TimelineStoreV2: ObservableObject {
                 loadingState = .loaded(items)
             }
             loadingState = .error(TimelineError.updateFailed(underlying: error))
-            await handleError(error, operation: "update timeline item") { [weak self] in
-                await self?.updateTimelineItem(item)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "updateTimelineItem", feature: "timeline", metadata: ["itemId": item.id.uuidString])
+            )
         }
     }
 
@@ -152,6 +169,8 @@ class TimelineStoreV2: ObservableObject {
 
         do {
             try await repository.deleteTimelineItem(id: item.id)
+            // Invalidate cache due to mutation
+            invalidateCache()
             showSuccess("Timeline item deleted successfully")
         } catch {
             // Rollback on error
@@ -160,9 +179,10 @@ class TimelineStoreV2: ObservableObject {
                 loadingState = .loaded(items)
             }
             loadingState = .error(TimelineError.deleteFailed(underlying: error))
-            await handleError(error, operation: "delete timeline item") { [weak self] in
-                await self?.deleteTimelineItem(item)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "deleteTimelineItem", feature: "timeline", metadata: ["itemId": item.id.uuidString])
+            )
         }
     }
 
@@ -180,6 +200,8 @@ class TimelineStoreV2: ObservableObject {
             let milestone = try await repository.createMilestone(insertData)
             milestones.append(milestone)
             milestones.sort { $0.milestoneDate < $1.milestoneDate }
+            // Invalidate cache due to mutation
+            invalidateCache()
         } catch {
             loadingState = .error(TimelineError.createFailed(underlying: error))
         }
@@ -195,6 +217,8 @@ class TimelineStoreV2: ObservableObject {
                 let updated = try await repository.updateMilestone(milestone)
                 milestones[index] = updated
                 milestones.sort { $0.milestoneDate < $1.milestoneDate }
+                // Invalidate cache due to mutation
+                invalidateCache()
             } catch {
                 // Rollback on error
                 milestones[index] = original
@@ -210,6 +234,8 @@ class TimelineStoreV2: ObservableObject {
 
         do {
             try await repository.deleteMilestone(id: milestone.id)
+            // Invalidate cache due to mutation
+            invalidateCache()
         } catch {
             // Rollback on error
             milestones.insert(removed, at: index)
@@ -337,7 +363,12 @@ class TimelineStoreV2: ObservableObject {
     
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
+        // Cancel in-flight tasks to avoid race conditions during tenant switch
+        loadTask?.cancel()
+        
+        // Reset state and invalidate cache
         loadingState = .idle
         milestones = []
+        lastLoadTime = nil
     }
 }

@@ -110,7 +110,8 @@ struct BudgetDevelopmentView: View {
                         onRemoveItem: removeBudgetItem,
                         onAddCategory: handleNewCategoryName,
                         onAddSubcategory: handleNewSubcategoryName,
-                        onAddEvent: handleNewEventName
+                        onAddEvent: handleNewEventName,
+                        responsibleOptions: personOptions
                     )
                     
                     // Summary sections
@@ -120,7 +121,8 @@ struct BudgetDevelopmentView: View {
                             eventBreakdown: eventBreakdown,
                             categoryBreakdown: categoryBreakdown,
                             personBreakdown: personBreakdown,
-                            totalWithTax: totalWithTax
+                            totalWithTax: totalWithTax,
+                            responsibleOptions: personOptions
                         )
                     }
                 }

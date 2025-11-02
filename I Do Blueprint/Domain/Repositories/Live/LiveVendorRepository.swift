@@ -12,9 +12,13 @@ import Supabase
 actor LiveVendorRepository: VendorRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
-
+    private let cacheStrategy = VendorCacheStrategy()
+    
     // SessionManager for tenant scoping
     private let sessionManager: SessionManager
+
+    // In-flight request de-duplication
+    private var inFlightVendors: [UUID: Task<[Vendor], Error>] = [:]
 
     init(supabase: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
         self.supabase = supabase
@@ -36,9 +40,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
     // Helper to get tenant ID, throws if not set
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
 
     // Helper to invalidate all vendor-related caches for a specific vendor
@@ -50,21 +52,25 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
     }
 
     func fetchVendors() async throws -> [Vendor] {
-        do {
-            let client = try getClient()
-            let tenantId = try await getTenantId()
-            let cacheKey = "vendors_\(tenantId.uuidString)"
+        let tenantId = try await getTenantId()
+        let cacheKey = "vendors_\(tenantId.uuidString)"
+
+        // ✅ Check cache first
+        if let cached: [Vendor] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: vendors (\(cached.count) items)")
+            return cached
+        }
+
+        // Coalesce in-flight requests per-tenant
+        if let task = inFlightVendors[tenantId] {
+            return try await task.value
+        }
+
+        let task = Task<[Vendor], Error> { [weak self] in
+            guard let self = self else { throw CancellationError() }
+            let client = try await self.getClient()
             let startTime = Date()
-
-            // ✅ Check cache first
-            if let cached: [Vendor] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-                logger.info("Cache hit: vendors (\(cached.count) items)")
-                return cached
-            }
-
-            logger.info("Cache miss: fetching vendors from database")
-
-            // Fetch from Supabase with retry and timeout - scoped by tenant
+            self.logger.info("Cache miss: fetching vendors from database")
             let vendors: [Vendor] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("vendor_information")
@@ -74,21 +80,26 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .execute()
                     .value
             }
-
             let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Cache the result
             await RepositoryCache.shared.set(cacheKey, value: vendors, ttl: 60)
-            
-            // ✅ Record performance metrics
             await PerformanceMonitor.shared.recordOperation("fetchVendors", duration: duration)
-
-            logger.info("Fetched \(vendors.count) vendors in \(String(format: "%.2f", duration))s")
+            self.logger.info("Fetched \(vendors.count) vendors in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchVendors", outcome: .success, duration: duration)
-
             return vendors
+        }
+
+        inFlightVendors[tenantId] = task
+        do {
+            let result = try await task.value
+            inFlightVendors[tenantId] = nil
+            return result
         } catch {
+            inFlightVendors[tenantId] = nil
             logger.error("Failed to fetch vendors", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchVendors",
+                "repository": "LiveVendorRepository"
+            ])
             throw VendorError.fetchFailed(underlying: error)
         }
     }
@@ -155,10 +166,8 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .value
             }
 
-            // Invalidate tenant-scoped cache and vendor-specific caches
-            await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
-            await invalidateVendorSpecificCaches(vendorId: created.id, tenantId: tenantId)
+            // Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .vendorCreated(tenantId: tenantId, vendorId: created.id))
 
             let duration = Date().timeIntervalSince(startTime)
             
@@ -171,6 +180,10 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             return created
         } catch {
             logger.error("Failed to create vendor", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createVendor",
+                "repository": "LiveVendorRepository"
+            ])
             throw VendorError.createFailed(underlying: error)
         }
     }
@@ -195,10 +208,8 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .value
             }
 
-            // Invalidate tenant-scoped cache and vendor-specific caches
-            await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
-            await invalidateVendorSpecificCaches(vendorId: vendor.id, tenantId: tenantId)
+            // Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .vendorUpdated(tenantId: tenantId, vendorId: vendor.id))
 
             let duration = Date().timeIntervalSince(startTime)
             
@@ -211,6 +222,11 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             return result
         } catch {
             logger.error("Failed to update vendor", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateVendor",
+                "repository": "LiveVendorRepository",
+                "vendorId": String(vendor.id)
+            ])
             throw VendorError.updateFailed(underlying: error)
         }
     }
@@ -230,10 +246,8 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .execute()
             }
 
-            // Invalidate tenant-scoped cache and vendor-specific caches
-            await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
-            await invalidateVendorSpecificCaches(vendorId: id, tenantId: tenantId)
+            // Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .vendorDeleted(tenantId: tenantId, vendorId: id))
 
             let duration = Date().timeIntervalSince(startTime)
             
@@ -244,6 +258,11 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             AnalyticsService.trackNetwork(operation: "deleteVendor", outcome: .success, duration: duration)
         } catch {
             logger.error("Failed to delete vendor", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteVendor",
+                "repository": "LiveVendorRepository",
+                "vendorId": String(id)
+            ])
             throw VendorError.deleteFailed(underlying: error)
         }
     }
@@ -284,6 +303,11 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to fetch vendor reviews after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "fetchVendorReviews", outcome: .failure(code: nil), duration: duration)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchVendorReviews",
+                "repository": "LiveVendorRepository",
+                "vendorId": String(vendorId)
+            ])
             throw error
         }
     }
@@ -651,7 +675,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             let imported: [Vendor] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("vendor_information")
-                    .insert(insertData)
+                    .upsert(insertData, onConflict: "couple_id,vendor_name_normalized")
                     .select()
                     .execute()
                     .value

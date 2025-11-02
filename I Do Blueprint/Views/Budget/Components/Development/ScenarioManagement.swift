@@ -98,10 +98,7 @@ extension BudgetDevelopmentView {
             isTestData: false)
         
         do {
-            let isUpdate = currentScenarioId != nil
-            let savedScenario = try await budgetStore.saveBudgetDevelopmentScenario(scenarioData, isUpdate: isUpdate)
-            
-            // Delete items marked for deletion
+            // Delete items marked for deletion first (if any existing items were removed)
             if !itemsToDelete.isEmpty {
                 for itemId in itemsToDelete {
                     do {
@@ -113,38 +110,28 @@ extension BudgetDevelopmentView {
                 itemsToDelete.removeAll()
             }
             
+            // Call atomic save (scenario first, then items)
+            let (persistedScenarioId, insertedCount) = try await budgetStore.saveScenarioWithItems(scenarioData, items: budgetItems)
+            
             // Update local state
             if currentScenarioId == nil {
-                savedScenarios.append(savedScenario)
-                currentScenarioId = savedScenario.id
-                selectedScenario = savedScenario.id
+                savedScenarios.append(scenarioData)
+                currentScenarioId = persistedScenarioId
+                selectedScenario = persistedScenarioId
             } else {
                 if let index = savedScenarios.firstIndex(where: { $0.id == currentScenarioId }) {
-                    savedScenarios[index] = savedScenario
+                    savedScenarios[index] = scenarioData
                 }
+                currentScenarioId = persistedScenarioId
             }
             
-            // Update scenario IDs for all items
-            for (index, item) in budgetItems.enumerated() {
-                budgetItems[index].scenarioId = savedScenario.id
+            // Update scenario IDs for all items locally
+            for index in budgetItems.indices {
+                budgetItems[index].scenarioId = persistedScenarioId
             }
+            newlyCreatedItemIds.removeAll()
             
-            var savedCount = 0
-            for (index, item) in budgetItems.enumerated() {
-                do {
-                    let savedItem = try await budgetStore.saveBudgetDevelopmentItem(item)
-                    budgetItems[index] = savedItem
-                    savedCount += 1
-                    
-                    if newlyCreatedItemIds.contains(item.id) {
-                        newlyCreatedItemIds.remove(item.id)
-                    }
-                } catch {
-                    logger.error("Failed to save budget item \(item.itemName)", error: error)
-                }
-            }
-            
-            logger.info("Successfully saved scenario and \(savedCount) budget items to database")
+            logger.info("Successfully saved scenario and \(insertedCount) budget items to database")
         } catch {
             logger.error("Failed to save scenario to database", error: error)
             

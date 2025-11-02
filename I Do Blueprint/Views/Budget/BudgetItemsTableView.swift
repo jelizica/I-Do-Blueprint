@@ -13,6 +13,7 @@ struct BudgetItemsTableView: View {
     let onAddCategory: (String, String) async -> Void
     let onAddSubcategory: (String, String) async -> Void
     let onAddEvent: (String, String) -> Void
+    let responsibleOptions: [String]
 
     @State private var activeDropdownItemId: String?
     @State private var buttonRects: [String: CGRect] = [:]
@@ -37,6 +38,7 @@ struct BudgetItemsTableView: View {
                         onButtonRectChanged: { itemId, rect in
                             buttonRects[itemId] = rect
                         },
+                        responsibleOptions: responsibleOptions,
                         activeDropdownItemId: $activeDropdownItemId)
                         .padding(.vertical, Spacing.xs)
                 }
@@ -123,6 +125,7 @@ struct BudgetItemRowView: View {
     let onAddSubcategory: (String, String) async -> Void
     let onAddEvent: (String, String) -> Void
     let onButtonRectChanged: (String, CGRect) -> Void
+    let responsibleOptions: [String]
 
     @Binding var activeDropdownItemId: String?
 
@@ -378,9 +381,9 @@ struct BudgetItemRowView: View {
             set: { newValue in
                 onUpdateItem(item.id, "personResponsible", newValue)
             })) {
-                Text("Jess").tag("Jess")
-                Text("Liz").tag("Liz")
-                Text("Both").tag("Both")
+                ForEach(responsibleOptions, id: \.self) { name in
+                    Text(name).tag(name)
+                }
             }
             .pickerStyle(.menu)
             .padding(.leading, -8)
@@ -502,5 +505,6 @@ struct EventDropdownView: View {
         onRemoveItem: { _ in },
         onAddCategory: { _, _ in },
         onAddSubcategory: { _, _ in },
-        onAddEvent: { _, _ in })
+        onAddEvent: { _, _ in },
+        responsibleOptions: ["Partner 1", "Partner 2", "Both"]) 
 }

@@ -13,6 +13,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     private let client: SupabaseClient?
     private let supabase: SupabaseManager
     private let sessionManager = SessionManager.shared
+    private let cacheStrategy = DocumentCacheStrategy()
     
     init(client: SupabaseClient? = nil) {
         self.client = client
@@ -32,9 +33,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     }
     
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
 
     // MARK: - Document Operations
@@ -115,6 +114,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     func createDocument(_ insertData: DocumentInsertData) async throws -> Document {
         do {
             let client = try getClient()
+            let tenantId = try await getTenantId()
             let document: Document = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("documents")
@@ -124,8 +124,14 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                     .execute()
                     .value
             }
+            // Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .documentCreated(tenantId: tenantId))
             return document
         } catch {
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createDocument",
+                "repository": "LiveDocumentRepository"
+            ])
             throw DocumentError.createFailed(underlying: error)
         }
     }
@@ -133,6 +139,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     func updateDocument(_ document: Document) async throws -> Document {
         do {
             let client = try getClient()
+            let tenantId = try await getTenantId()
             let updated: Document = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("documents")
@@ -143,8 +150,15 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                     .execute()
                     .value
             }
+            // Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .documentUpdated(tenantId: tenantId))
             return updated
         } catch {
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateDocument",
+                "repository": "LiveDocumentRepository",
+                "documentId": document.id.uuidString
+            ])
             throw DocumentError.updateFailed(underlying: error)
         }
     }
@@ -172,9 +186,17 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                     .eq("id", value: id)
                     .execute()
             }
+            // Invalidate caches via strategy
+            let tenantId = try await getTenantId()
+            await cacheStrategy.invalidate(for: .documentDeleted(tenantId: tenantId))
         } catch let error as DocumentError {
             throw error
         } catch {
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteDocument",
+                "repository": "LiveDocumentRepository",
+                "documentId": id.uuidString
+            ])
             throw DocumentError.deleteFailed(underlying: error)
         }
     }
@@ -214,6 +236,11 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                     .execute()
             }
         } catch {
+            await SentryService.shared.captureError(error, context: [
+                "operation": "batchDeleteDocuments",
+                "repository": "LiveDocumentRepository",
+                "count": ids.count
+            ])
             throw DocumentError.deleteFailed(underlying: error)
         }
     }
@@ -233,6 +260,11 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
             }
             return updated
         } catch {
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateDocumentTags",
+                "repository": "LiveDocumentRepository",
+                "documentId": id.uuidString
+            ])
             throw DocumentError.updateFailed(underlying: error)
         }
     }
@@ -252,6 +284,12 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
             }
             return updated
         } catch {
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateDocumentType",
+                "repository": "LiveDocumentRepository",
+                "documentId": id.uuidString,
+                "type": type.rawValue
+            ])
             throw DocumentError.updateFailed(underlying: error)
         }
     }

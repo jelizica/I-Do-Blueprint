@@ -88,3 +88,71 @@ enum VendorError: LocalizedError {
         }
     }
 }
+
+// MARK: - AppError Conformance
+extension VendorError: AppError {
+    var errorCode: String {
+        switch self {
+        case .fetchFailed: return "VENDOR_FETCH_FAILED"
+        case .createFailed: return "VENDOR_CREATE_FAILED"
+        case .updateFailed: return "VENDOR_UPDATE_FAILED"
+        case .deleteFailed: return "VENDOR_DELETE_FAILED"
+        case .notFound: return "VENDOR_NOT_FOUND"
+        case .validationFailed: return "VENDOR_VALIDATION_FAILED"
+        case .networkUnavailable: return "VENDOR_NETWORK_UNAVAILABLE"
+        case .unauthorized: return "VENDOR_UNAUTHORIZED"
+        case .duplicateVendor: return "VENDOR_DUPLICATE"
+        case .invalidContact: return "VENDOR_INVALID_CONTACT"
+        case .categoryNotFound: return "VENDOR_CATEGORY_NOT_FOUND"
+        case .contractUploadFailed: return "VENDOR_CONTRACT_UPLOAD_FAILED"
+        case .importFailed: return "VENDOR_IMPORT_FAILED"
+        }
+    }
+
+    var userMessage: String { errorDescription ?? "An error occurred." }
+
+    var technicalDetails: String {
+        switch self {
+        case .fetchFailed(let underlying): return "Fetch failed: \(underlying.localizedDescription)"
+        case .createFailed(let underlying): return "Create failed: \(underlying.localizedDescription)"
+        case .updateFailed(let underlying): return "Update failed: \(underlying.localizedDescription)"
+        case .deleteFailed(let underlying): return "Delete failed: \(underlying.localizedDescription)"
+        case .notFound(let id): return "Vendor not found: \(id)"
+        case .validationFailed(let reason): return "Validation failed: \(reason)"
+        case .networkUnavailable: return "No network connection"
+        case .unauthorized: return "Unauthorized"
+        case .duplicateVendor(let name): return "Duplicate vendor: \(name)"
+        case .invalidContact(let reason): return "Invalid contact: \(reason)"
+        case .categoryNotFound: return "Category not found"
+        case .contractUploadFailed(let underlying): return "Contract upload failed: \(underlying.localizedDescription)"
+        case .importFailed(let underlying): return "Import failed: \(underlying.localizedDescription)"
+        }
+    }
+
+    var recoveryOptions: [ErrorRecoveryOption] {
+        switch self {
+        case .networkUnavailable: return [.checkConnection, .retry, .viewOfflineData]
+        case .fetchFailed: return [.retry, .checkConnection, .viewOfflineData]
+        case .createFailed, .updateFailed, .deleteFailed, .importFailed, .contractUploadFailed: return [.retry, .cancel]
+        case .unauthorized: return [.cancel, .contactSupport]
+        case .validationFailed, .duplicateVendor, .invalidContact, .categoryNotFound, .notFound: return [.cancel]
+        }
+    }
+
+    var severity: ErrorSeverity {
+        switch self {
+        case .networkUnavailable, .fetchFailed: return .warning
+        case .createFailed, .updateFailed, .deleteFailed, .contractUploadFailed, .importFailed: return .error
+        case .unauthorized: return .critical
+        case .validationFailed, .duplicateVendor, .invalidContact, .categoryNotFound: return .error
+        case .notFound: return .warning
+        }
+    }
+
+    var shouldReport: Bool {
+        switch self {
+        case .validationFailed, .duplicateVendor, .invalidContact: return false
+        default: return true
+        }
+    }
+}

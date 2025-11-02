@@ -73,19 +73,8 @@ extension BudgetStoreV2 {
     
     // MARK: - Scenario Management
     
-    /// Save a budget development scenario
-    func saveBudgetDevelopmentScenario(
-        _ scenario: SavedScenario,
-        isUpdate: Bool = false
-    ) async throws -> SavedScenario {
-        if isUpdate {
-            if let index = savedScenarios.firstIndex(where: { $0.id == scenario.id }) {
-                savedScenarios[index] = scenario
-            }
-        } else {
-            savedScenarios.append(scenario)
-        }
-        logger.info("Saved budget development scenario")
-        return scenario
+    /// Save scenario and items atomically via repository RPC
+    func saveScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int) {
+        try await repository.saveBudgetScenarioWithItems(scenario, items: items)
     }
 }

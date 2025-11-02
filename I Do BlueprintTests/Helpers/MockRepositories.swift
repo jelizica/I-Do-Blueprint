@@ -368,6 +368,22 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         expenseAllocations.append(allocation)
         return allocation
     }
+
+    func fetchAllocationsForExpense(expenseId: UUID, scenarioId: String) async throws -> [ExpenseAllocation] {
+        if shouldThrowError { throw errorToThrow }
+        return expenseAllocations.filter { $0.expenseId == expenseId.uuidString && $0.scenarioId == scenarioId }
+    }
+
+    func fetchAllocationsForExpenseAllScenarios(expenseId: UUID) async throws -> [ExpenseAllocation] {
+        if shouldThrowError { throw errorToThrow }
+        return expenseAllocations.filter { $0.expenseId == expenseId.uuidString }
+    }
+
+    func replaceAllocations(expenseId: UUID, scenarioId: String, with newAllocations: [ExpenseAllocation]) async throws {
+        if shouldThrowError { throw errorToThrow }
+        expenseAllocations.removeAll { $0.expenseId == expenseId.uuidString && $0.scenarioId == scenarioId }
+        expenseAllocations.append(contentsOf: newAllocations)
+    }
     
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
         if shouldThrowError { throw errorToThrow }

@@ -12,6 +12,7 @@ struct VendorManagementViewV3: View {
     @Environment(\.appStores) private var appStores
     @StateObject private var exportHandler = VendorExportHandler()
     @State private var showingImportSheet = false
+    @StateObject private var sessionManager = SessionManager.shared
     @State private var showingExportOptions = false
     @State private var showingAddVendor = false
     @State private var selectedVendor: Vendor?
@@ -42,6 +43,10 @@ struct VendorManagementViewV3: View {
         }
         .task {
             await vendorStore.loadVendors()
+        }
+        .task(id: sessionManager.getTenantId()) {
+            // Reload vendors when the tenant changes (safe outside view update cycle)
+            await vendorStore.loadVendors(force: true)
         }
         .sheet(isPresented: $showingImportSheet) {
             VendorCSVImportView()

@@ -88,3 +88,71 @@ enum GuestError: LocalizedError {
         }
     }
 }
+
+// MARK: - AppError Conformance
+extension GuestError: AppError {
+    var errorCode: String {
+        switch self {
+        case .fetchFailed: return "GUEST_FETCH_FAILED"
+        case .createFailed: return "GUEST_CREATE_FAILED"
+        case .updateFailed: return "GUEST_UPDATE_FAILED"
+        case .deleteFailed: return "GUEST_DELETE_FAILED"
+        case .notFound: return "GUEST_NOT_FOUND"
+        case .validationFailed: return "GUEST_VALIDATION_FAILED"
+        case .networkUnavailable: return "GUEST_NETWORK_UNAVAILABLE"
+        case .unauthorized: return "GUEST_UNAUTHORIZED"
+        case .duplicateGuest: return "GUEST_DUPLICATE"
+        case .invalidEmail: return "GUEST_INVALID_EMAIL"
+        case .invalidPlusOne: return "GUEST_INVALID_PLUS_ONE"
+        case .rsvpDeadlinePassed: return "GUEST_RSVP_DEADLINE"
+        case .guestListFull: return "GUEST_LIST_FULL"
+        }
+    }
+
+    var userMessage: String { errorDescription ?? "An error occurred." }
+
+    var technicalDetails: String {
+        switch self {
+        case .fetchFailed(let underlying): return "Fetch failed: \(underlying.localizedDescription)"
+        case .createFailed(let underlying): return "Create failed: \(underlying.localizedDescription)"
+        case .updateFailed(let underlying): return "Update failed: \(underlying.localizedDescription)"
+        case .deleteFailed(let underlying): return "Delete failed: \(underlying.localizedDescription)"
+        case .notFound(let id): return "Guest not found: \(id)"
+        case .validationFailed(let reason): return "Validation failed: \(reason)"
+        case .networkUnavailable: return "No network connection"
+        case .unauthorized: return "Unauthorized"
+        case .duplicateGuest(let name): return "Duplicate guest: \(name)"
+        case .invalidEmail(let email): return "Invalid email: \(email)"
+        case .invalidPlusOne(let reason): return "Invalid plus one: \(reason)"
+        case .rsvpDeadlinePassed: return "RSVP deadline passed"
+        case .guestListFull(let max): return "Guest list full (max=\(max))"
+        }
+    }
+
+    var recoveryOptions: [ErrorRecoveryOption] {
+        switch self {
+        case .networkUnavailable: return [.checkConnection, .retry, .viewOfflineData]
+        case .fetchFailed: return [.retry, .checkConnection, .viewOfflineData]
+        case .createFailed, .updateFailed, .deleteFailed: return [.retry, .cancel]
+        case .unauthorized: return [.cancel, .contactSupport]
+        case .validationFailed, .duplicateGuest, .invalidEmail, .invalidPlusOne, .rsvpDeadlinePassed, .guestListFull, .notFound: return [.cancel]
+        }
+    }
+
+    var severity: ErrorSeverity {
+        switch self {
+        case .networkUnavailable, .fetchFailed: return .warning
+        case .createFailed, .updateFailed, .deleteFailed: return .error
+        case .unauthorized: return .critical
+        case .validationFailed, .duplicateGuest, .invalidEmail, .invalidPlusOne: return .error
+        case .rsvpDeadlinePassed, .guestListFull, .notFound: return .warning
+        }
+    }
+
+    var shouldReport: Bool {
+        switch self {
+        case .validationFailed, .duplicateGuest, .invalidEmail, .invalidPlusOne: return false
+        default: return true
+        }
+    }
+}

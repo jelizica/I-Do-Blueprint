@@ -14,6 +14,7 @@ struct VendorListViewV2: View {
     @EnvironmentObject private var vendorStore: VendorStoreV2
     @StateObject private var exportHandler = VendorExportHandler()
     @Dependency(\.alertPresenter) var alertPresenter
+    @StateObject private var sessionManager = SessionManager.shared
     @State private var searchText = ""
     @State private var selectedFilter: VendorFilterOption = .all
     @State private var selectedCategory: String?
@@ -162,10 +163,9 @@ struct VendorListViewV2: View {
             .task {
                 await vendorStore.loadVendors()
             }
-            .onReceive(NotificationCenter.default.publisher(for: .tenantDidChange)) { _ in
-                Task {
-                    await vendorStore.loadVendors()
-                }
+            .task(id: sessionManager.getTenantId()) {
+                // Reload vendors when the tenant changes (safe outside view update cycle)
+                await vendorStore.loadVendors(force: true)
             }
             .task {
                 await monitorVendorStoreAlerts()

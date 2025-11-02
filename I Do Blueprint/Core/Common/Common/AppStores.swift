@@ -28,6 +28,8 @@ final class AppStores: ObservableObject {
     private var _settings: SettingsStoreV2?
     private var _onboarding: OnboardingStoreV2?
     private var _collaboration: CollaborationStoreV2?
+    private var _presence: PresenceStoreV2?
+    private var _activityFeed: ActivityFeedStoreV2?
     
     private let logger = AppLogger.general
     
@@ -118,6 +120,22 @@ final class AppStores: ObservableObject {
             _collaboration = CollaborationStoreV2()
         }
         return _collaboration!
+    }
+    
+    var presence: PresenceStoreV2 {
+        if _presence == nil {
+            logger.debug("Creating PresenceStoreV2")
+            _presence = PresenceStoreV2()
+        }
+        return _presence!
+    }
+    
+    var activityFeed: ActivityFeedStoreV2 {
+        if _activityFeed == nil {
+            logger.debug("Creating ActivityFeedStoreV2")
+            _activityFeed = ActivityFeedStoreV2()
+        }
+        return _activityFeed!
     }
     
     private init() {
@@ -343,5 +361,13 @@ extension EnvironmentValues {
     
     var collaborationStore: CollaborationStoreV2 {
         appStores.collaboration
+    }
+    
+    var presenceStore: PresenceStoreV2 {
+        appStores.presence
+    }
+    
+    var activityFeedStore: ActivityFeedStoreV2 {
+        appStores.activityFeed
     }
 }

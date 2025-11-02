@@ -12,12 +12,10 @@ import Supabase
 actor LivePresenceRepository: PresenceRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
-    private let sessionManager: SessionManager
     private var currentSessionId: String?
 
-    init(supabase: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
+    init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
-        self.sessionManager = sessionManager
         self.currentSessionId = UUID().uuidString
     }
 
@@ -33,15 +31,11 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
     }
 
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
     
     private func getUserId() async throws -> UUID {
-        try await MainActor.run {
-            try AuthContext.shared.requireUserId()
-        }
+        try await UserContextProvider.shared.requireUserId()
     }
     
     private func getSessionId() -> String {

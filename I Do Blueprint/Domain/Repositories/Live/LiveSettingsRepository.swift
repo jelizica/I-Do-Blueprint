@@ -16,21 +16,19 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     }
     
     private func getClient() async throws -> SupabaseClient {
-        // Access the client directly from MainActor
-        return try await MainActor.run {
-            guard let client = SupabaseManager.shared.client else {
-                throw NSError(domain: "SettingsRepository", code: -1, userInfo: [
-                    NSLocalizedDescriptionKey: "Supabase client not initialized"
-                ])
-            }
-            return client
+        // Prefer immediate client if already available to avoid unnecessary waits
+        if let c = await MainActor.run(resultType: SupabaseClient?.self, body: { SupabaseManager.shared.safeClient }) {
+            return c
         }
+        // Otherwise wait briefly for initialization
+        return try await SupabaseManager.shared.waitForClient(timeout: 2.5)
     }
 
     // MARK: - Settings CRUD
 
     func fetchSettings() async throws -> CoupleSettings {
         logger.info("🔍 Starting fetchSettings query...")
+        let overallStart = Date()
         
         struct SettingsRow: Decodable {
             let id: UUID
@@ -42,16 +40,18 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         }
 
         do {
+            let tClientStart = Date()
             logger.debug("Getting Supabase client...")
             let client = try await getClient()
-            logger.debug("✅ Got Supabase client")
+            let tClient = Date().timeIntervalSince(tClientStart)
+            logger.debug("✅ Got Supabase client in \(String(format: "%.2f", tClient))s")
 
-            // Get tenant ID (couple_id) from SessionManager
-            logger.debug("Getting tenant ID from SessionManager...")
-            guard let tenantId = await SessionManager.shared.getTenantId() else {
-                logger.error("❌ No tenant ID set - user needs to select a couple")
-                throw NSError(domain: "SettingsRepository", code: 401, userInfo: [NSLocalizedDescriptionKey: "No couple selected. Please select a couple to continue."])
-            }
+            // Get tenant ID (couple_id) from thread-safe context
+            let tTenantStart = Date()
+            logger.debug("Getting tenant ID from TenantContextProvider...")
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
+            let tTenant = Date().timeIntervalSince(tTenantStart)
+            logger.debug("✅ Got tenantId in \(String(format: "%.2f", tTenant))s")
 
             logger.info("📍 Fetching settings for couple_id: \(tenantId.uuidString)")
             
@@ -63,9 +63,10 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 .limit(1)
             
             logger.debug("Executing query...")
+            let tQueryStart = Date()
             let rows: [SettingsRow] = try await query.execute().value
-            
-            logger.info("✅ Query executed, got \(rows.count) rows")
+            let tQuery = Date().timeIntervalSince(tQueryStart)
+            logger.info("✅ Query executed in \(String(format: "%.2f", tQuery))s, got \(rows.count) rows")
             
             guard let row = rows.first else {
                 logger.error("❌ No settings found for couple_id: \(tenantId.uuidString)")
@@ -74,11 +75,36 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             
             logger.info("✅ Settings loaded successfully - wedding date: '\(row.settings.global.weddingDate)'")
             logger.info("✅ Custom meal options from DB: \(row.settings.guests.customMealOptions)")
+
+            // Record performance details
+            let total = Date().timeIntervalSince(overallStart)
+            await PerformanceMonitor.shared.recordOperation("settings.fetchSettings.total", duration: total)
+            await PerformanceMonitor.shared.recordOperation("settings.fetchSettings.client", duration: tClient)
+            await PerformanceMonitor.shared.recordOperation("settings.fetchSettings.tenant", duration: tTenant)
+            await PerformanceMonitor.shared.recordOperation("settings.fetchSettings.query", duration: tQuery)
+            await MainActor.run {
+                SentryService.shared.addBreadcrumb(
+                    message: "settings.fetchSettings timings",
+                    category: "settings",
+                    data: [
+                        "total_ms": Int(total * 1000),
+                        "client_ms": Int(tClient * 1000),
+                        "tenant_ms": Int(tTenant * 1000),
+                        "query_ms": Int(tQuery * 1000),
+                        "rows": rows.count
+                    ]
+                )
+            }
+
             return row.settings
         } catch {
             logger.error("❌ Query failed with error: \(error)")
             logger.error("Error type: \(type(of: error))")
             logger.error("Error description: \(error.localizedDescription)")
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchSettings",
+                "repository": "LiveSettingsRepository"
+            ])
             throw error
         }
     }
@@ -91,11 +117,8 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
 
             let client = try await getClient()
             
-            // Get tenant ID (couple_id) from SessionManager
-            guard let tenantId = await SessionManager.shared.getTenantId() else {
-                logger.error("No tenant ID set - user needs to select a couple")
-                throw NSError(domain: "SettingsRepository", code: 401, userInfo: [NSLocalizedDescriptionKey: "No couple selected. Please select a couple to continue."])
-            }
+            // Get tenant ID (couple_id) from thread-safe context
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
 
             logger.debug("updateSettings - Couple ID: \(tenantId.uuidString)")
 
@@ -136,6 +159,10 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             throw error
         } catch {
             logger.error("updateSettings - Database update failed", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateSettings",
+                "repository": "LiveSettingsRepository"
+            ])
             throw SettingsError.updateFailed(underlying: error)
         }
     }
@@ -220,12 +247,26 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
 
     func fetchCustomVendorCategories() async throws -> [CustomVendorCategory] {
         let client = try await getClient()
-        return try await client
+        let tenantId = try await TenantContextProvider.shared.requireTenantId()
+        let cacheKey = "custom_vendor_categories_\(tenantId.uuidString)"
+        let start = Date()
+
+        if let cached: [CustomVendorCategory] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
+            logger.info("Cache hit: custom vendor categories")
+            return cached
+        }
+
+        let rows: [CustomVendorCategory] = try await client
             .from("vendor_custom_categories")
             .select()
+            .eq("couple_id", value: tenantId)
             .order("name", ascending: true)
             .execute()
             .value
+
+        await RepositoryCache.shared.set(cacheKey, value: rows, ttl: 300)
+        await PerformanceMonitor.shared.recordOperation("settings.fetchCustomVendorCategories", duration: Date().timeIntervalSince(start))
+        return rows
     }
 
     func createVendorCategory(_ category: CustomVendorCategory) async throws -> CustomVendorCategory {
@@ -265,6 +306,11 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             return category
         } catch {
             logger.error("Failed to create custom vendor category", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createCustomVendorCategory",
+                "repository": "LiveSettingsRepository",
+                "name": name
+            ])
             throw SettingsError.categoryCreateFailed(underlying: error)
         }
     }
@@ -309,6 +355,11 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             return category
         } catch {
             logger.error("Failed to update custom vendor category", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateCustomVendorCategory",
+                "repository": "LiveSettingsRepository",
+                "id": id
+            ])
             throw SettingsError.categoryUpdateFailed(underlying: error)
         }
     }
@@ -329,6 +380,11 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             logger.info("Deleted custom vendor category: \(id)")
         } catch {
             logger.error("Failed to delete custom vendor category", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteCustomVendorCategory",
+                "repository": "LiveSettingsRepository",
+                "id": id
+            ])
             throw SettingsError.categoryDeleteFailed(underlying: error)
         }
     }

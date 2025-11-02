@@ -10,6 +10,7 @@ struct ExpenseLinkingView: View {
     @EnvironmentObject var budgetStore: BudgetStoreV2
     @Dependency(\.budgetRepository) var budgetRepository
     @Dependency(\.vendorRepository) var vendorRepository
+    @Dependency(\.budgetAllocationService) var allocationService
 
     // State for expenses
     @State var expenses: [Expense] = []

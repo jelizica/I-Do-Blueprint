@@ -379,23 +379,26 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private func handleUnlinkExpense(expenseId: String, itemId: String) async {
-    guard currentScenario != nil else {
-    logger.warning("Cannot unlink expense: Current scenario not available")
-    return
-    }
-    
-    
-    do {
-    try await budgetStore.unlinkExpense(expenseId: expenseId, budgetItemId: itemId)
-    logger.info("Expense unlinked successfully")
-    
-    // Delay to ensure database transaction commits and cache invalidation completes
-    try? await Task.sleep(nanoseconds: 250_000_000) // 0.25 seconds
-    
-    await refreshData()
-    } catch {
-    logger.error("Error unlinking expense", error: error)
-    }
+        guard let scenario = currentScenario else {
+            logger.warning("Cannot unlink expense: Current scenario not available")
+            return
+        }
+
+        do {
+            try await budgetStore.unlinkExpense(
+                expenseId: expenseId,
+                budgetItemId: itemId,
+                scenarioId: scenario.id
+            )
+            logger.info("Expense unlinked successfully")
+
+            // Delay to ensure database transaction commits and cache invalidation completes
+            try? await Task.sleep(nanoseconds: 250_000_000) // 0.25 seconds
+
+            await refreshData()
+        } catch {
+            logger.error("Error unlinking expense", error: error)
+        }
     }
 
     private func handleEditGift(giftId _: String, itemId _: String) {

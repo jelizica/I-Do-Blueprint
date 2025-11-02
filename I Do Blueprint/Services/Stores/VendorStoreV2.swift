@@ -12,7 +12,7 @@ import SwiftUI
 
 /// New architecture version using repositories and dependency injection
 @MainActor
-class VendorStoreV2: ObservableObject {
+class VendorStoreV2: ObservableObject, CacheableStore {
     @Published var loadingState: LoadingState<[Vendor]> = .idle
     @Published private(set) var vendorStats: VendorStats?
 
@@ -20,6 +20,10 @@ class VendorStoreV2: ObservableObject {
     @Published var successMessage = ""
 
     @Dependency(\.vendorRepository) var repository
+    
+    // MARK: - Cache Management
+    var lastLoadTime: Date?
+    let cacheValidityDuration: TimeInterval = 600 // 10 minutes (slow-changing)
     
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
@@ -46,13 +50,19 @@ class VendorStoreV2: ObservableObject {
 
     // MARK: - Public Interface
 
-    func loadVendors() async {
+    func loadVendors(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
         
         // Create new load task
         loadTask = Task { @MainActor in
-            guard loadingState.isIdle || loadingState.hasError else { return }
+            // Use cached data if still valid
+            if !force && isCacheValid() {
+                AppLogger.ui.debug("Using cached vendor data (age: \(Int(cacheAge()))s)")
+                return
+            }
+            
+            guard loadingState.isIdle || loadingState.hasError || force else { return }
             
             loadingState = .loading
             let startTime = Date()
@@ -71,6 +81,7 @@ class VendorStoreV2: ObservableObject {
                 
                 vendorStats = fetchedStats
                 loadingState = .loaded(fetchedVendors)
+                lastLoadTime = Date()
 
                 let duration = Date().timeIntervalSince(startTime)
                 AppLogger.repository.debug("Loaded vendors in \(duration)s")
@@ -91,7 +102,7 @@ class VendorStoreV2: ObservableObject {
     }
 
     func refreshVendors() async {
-        await loadVendors()
+        await loadVendors(force: true)
     }
 
     func addVendor(_ vendor: Vendor) async {
@@ -116,6 +127,9 @@ class VendorStoreV2: ObservableObject {
             // Refresh stats
             vendorStats = try await repository.fetchVendorStats()
             
+            // Invalidate cache due to mutation
+            invalidateCache()
+            
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.info("Added vendor '\(vendor.vendorName)' in \(duration)s")
             
@@ -126,13 +140,10 @@ class VendorStoreV2: ObservableObject {
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to add vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.createFailed(underlying: error))
-            await handleError(
+            ErrorHandler.shared.handle(
                 error,
-                operation: "add vendor",
-                context: ["vendorName": vendor.vendorName]
-            ) { [weak self] in
-                await self?.addVendor(vendor)
-            }
+                context: ErrorContext(operation: "addVendor", feature: "vendor", metadata: ["vendorName": vendor.vendorName])
+            )
         }
     }
 
@@ -170,6 +181,9 @@ class VendorStoreV2: ObservableObject {
             // Refresh stats
             vendorStats = try await repository.fetchVendorStats()
 
+            // Invalidate cache due to mutation
+            invalidateCache()
+
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.info("Updated vendor '\(vendor.vendorName)' in \(duration)s")
             
@@ -180,19 +194,17 @@ class VendorStoreV2: ObservableObject {
                let idx = vendors.firstIndex(where: { $0.id == vendor.id }) {
                 vendors[idx] = original
                 loadingState = .loaded(vendors)
-            }
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to update vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.updateFailed(underlying: error))
-            await handleError(
+            ErrorHandler.shared.handle(
                 error,
-                operation: "update vendor",
-                context: [
-                    "vendorId": String(vendor.id),
-                    "vendorName": vendor.vendorName
-                ]
-            ) { [weak self] in
-                await self?.updateVendor(vendor)
+                context: ErrorContext(
+                    operation: "updateVendor",
+                    feature: "vendor",
+                    metadata: ["vendorId": String(vendor.id), "vendorName": vendor.vendorName]
+                )
+            )
             }
         }
     }
@@ -224,6 +236,9 @@ class VendorStoreV2: ObservableObject {
             // Refresh stats after successful delete
             vendorStats = try await repository.fetchVendorStats()
 
+            // Invalidate cache due to mutation
+            invalidateCache()
+
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.info("Deleted vendor '\(vendor.vendorName)' in \(duration)s")
             
@@ -233,19 +248,17 @@ class VendorStoreV2: ObservableObject {
             if case .loaded(var vendors) = loadingState {
                 vendors.insert(removed, at: index)
                 loadingState = .loaded(vendors)
-            }
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to delete vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.deleteFailed(underlying: error))
-            await handleError(
+            ErrorHandler.shared.handle(
                 error,
-                operation: "delete vendor",
-                context: [
-                    "vendorId": String(vendor.id),
-                    "vendorName": vendor.vendorName
-                ]
-            ) { [weak self] in
-                await self?.deleteVendor(vendor)
+                context: ErrorContext(
+                    operation: "deleteVendor",
+                    feature: "vendor",
+                    metadata: ["vendorId": String(vendor.id), "vendorName": vendor.vendorName]
+                )
+            )
             }
         }
     }
@@ -298,7 +311,15 @@ class VendorStoreV2: ObservableObject {
     
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
+        // Cancel in-flight tasks to avoid race conditions during tenant switch
+        loadTask?.cancel()
+        addTask?.cancel()
+        updateTask?.cancel()
+        deleteTask?.cancel()
+        
+        // Reset state and invalidate cache
         loadingState = .idle
         vendorStats = nil
+        lastLoadTime = nil
     }
 }
