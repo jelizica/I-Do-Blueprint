@@ -26,26 +26,31 @@
       "size" : "128x128"
     },
     {
+      "filename" : "iDoBlueprint_Logo_206x206 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "128x128"
     },
     {
+      "filename" : "iDoBlueprint_Logo_206x206.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "256x256"
     },
     {
+      "filename" : "iDoBlueprint_Logo_512x512 1.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "256x256"
     },
     {
+      "filename" : "iDoBlueprint_Logo_512x512.png",
       "idiom" : "mac",
       "scale" : "1x",
       "size" : "512x512"
     },
     {
+      "filename" : "iDoBlueprint_Logo_1024x1024.png",
       "idiom" : "mac",
       "scale" : "2x",
       "size" : "512x512"

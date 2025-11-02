@@ -45,10 +45,25 @@ class AuthContext: ObservableObject {
             currentCoupleId = sessionManager.getTenantId()
             currentUserId = supabaseManager.currentUserId
             currentUserEmail = supabaseManager.currentUserEmail
+            // Seed thread-safe user context for background actors
+            Task {
+                do {
+                    try await UserContextProvider.shared.set(userId: currentUserId, email: currentUserEmail)
+                } catch {
+                    AppLogger.auth.error("Failed to seed user context", error: error)
+                }
+            }
         } else {
             currentCoupleId = nil
             currentUserId = nil
             currentUserEmail = nil
+            Task {
+                do {
+                    try await UserContextProvider.shared.clear()
+                } catch {
+                    AppLogger.auth.error("Failed to clear user context", error: error)
+                }
+            }
         }
     }
     

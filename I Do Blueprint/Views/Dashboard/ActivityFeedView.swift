@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct ActivityFeedView: View {
-    @StateObject private var store = ActivityFeedStoreV2()
+    @Environment(\.activityFeedStore) private var store
     @State private var showingFilters = false
     
     var body: some View {

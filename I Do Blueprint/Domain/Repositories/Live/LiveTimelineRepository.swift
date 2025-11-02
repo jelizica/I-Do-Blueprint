@@ -11,6 +11,7 @@ import Supabase
 actor LiveTimelineRepository: TimelineRepositoryProtocol {
     private let client: SupabaseClient?
     private let logger = AppLogger.repository
+    private let cacheStrategy = TimelineCacheStrategy()
     
     init(client: SupabaseClient? = SupabaseManager.shared.client) {
         self.client = client
@@ -96,6 +97,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let client = try getClient()
             let startTime = Date()
 
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
             let item: TimelineItem = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("timeline_items")
@@ -109,6 +111,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Created timeline item: \(insertData.title)")
             AnalyticsService.trackNetwork(operation: "createTimelineItem", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .timelineItemCreated(tenantId: tenantId))
 
             return item
         } catch {
@@ -122,6 +125,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let client = try getClient()
             let startTime = Date()
 
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
             let updated: TimelineItem = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("timeline_items")
@@ -136,10 +140,11 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Updated timeline item: \(item.title)")
             AnalyticsService.trackNetwork(operation: "updateTimelineItem", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .timelineItemUpdated(tenantId: tenantId))
 
             return updated
         } catch {
-            logger.error("Failed to update timeline item", error: error)
+            logger.error("Failed to update milestone", error: error)
             throw TimelineError.updateFailed(underlying: error)
         }
     }
@@ -157,9 +162,11 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
                     .execute()
             }
 
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Deleted timeline item: \(id)")
             AnalyticsService.trackNetwork(operation: "deleteTimelineItem", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .timelineItemDeleted(tenantId: tenantId))
         } catch {
             logger.error("Failed to delete timeline item", error: error)
             throw TimelineError.deleteFailed(underlying: error)
@@ -227,6 +234,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let client = try getClient()
             let startTime = Date()
 
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
             let milestone: Milestone = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_milestones")
@@ -240,6 +248,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Created milestone: \(insertData.milestoneName)")
             AnalyticsService.trackNetwork(operation: "createMilestone", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .milestoneCreated(tenantId: tenantId))
 
             return milestone
         } catch {
@@ -253,6 +262,7 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let client = try getClient()
             let startTime = Date()
 
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
             let updated: Milestone = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_milestones")
@@ -267,10 +277,11 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Updated milestone: \(milestone.milestoneName)")
             AnalyticsService.trackNetwork(operation: "updateMilestone", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .milestoneUpdated(tenantId: tenantId))
 
             return updated
         } catch {
-            logger.error("Failed to update milestone", error: error)
+            logger.error("Failed to update timeline item", error: error)
             throw TimelineError.updateFailed(underlying: error)
         }
     }
@@ -288,9 +299,11 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
                     .execute()
             }
 
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Deleted milestone: \(id)")
             AnalyticsService.trackNetwork(operation: "deleteMilestone", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .milestoneDeleted(tenantId: tenantId))
         } catch {
             logger.error("Failed to delete milestone", error: error)
             throw TimelineError.deleteFailed(underlying: error)

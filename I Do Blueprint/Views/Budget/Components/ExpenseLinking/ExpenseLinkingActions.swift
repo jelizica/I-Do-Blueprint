@@ -118,22 +118,9 @@ extension ExpenseLinkingView {
                 }
 
                 do {
-                    // Create expense allocation
-                    let allocation = ExpenseAllocation(
-                        id: UUID().uuidString,
-                        expenseId: expense.id.uuidString,
-                        budgetItemId: budgetItem.id,
-                        allocatedAmount: expense.amount, // Will be recalculated server-side for proportional
-                        percentage: nil,
-                        notes: "Linked via Budget Overview Dashboard",
-                        createdAt: Date(),
-                        updatedAt: nil,
-                        coupleId: scenario.coupleId,
-                        scenarioId: scenario.id,
-                        isTestData: false)
-
-                    _ = try await budgetRepository.createExpenseAllocation(allocation)
-                    logger.info("Successfully created allocation for expense: \(expense.expenseName)")
+                    // Proportional link: add to current item and rebalance across all linked items
+                    try await allocationService.linkExpenseProportionally(expense: expense, to: budgetItem.id, inScenario: scenario.id)
+                    logger.info("Successfully linked (proportional) expense: \(expense.expenseName)")
                     successCount += 1
 
                     await MainActor.run {

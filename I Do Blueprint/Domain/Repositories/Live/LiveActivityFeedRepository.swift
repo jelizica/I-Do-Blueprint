@@ -12,11 +12,9 @@ import Supabase
 actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
-    private let sessionManager: SessionManager
 
-    init(supabase: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
+    init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
-        self.sessionManager = sessionManager
     }
 
     convenience init() {
@@ -31,9 +29,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
     }
 
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
 
     // MARK: - Fetch Operations

@@ -11,7 +11,7 @@ import Foundation
 import SwiftUI
 
 @MainActor
-class TaskStoreV2: ObservableObject {
+class TaskStoreV2: ObservableObject, CacheableStore {
     @Published var loadingState: LoadingState<[WeddingTask]> = .idle
     @Published private(set) var taskStats: TaskStats?
     @Published var selectedTask: WeddingTask?
@@ -25,6 +25,10 @@ class TaskStoreV2: ObservableObject {
     @Published var sortOption: TaskSortOption = .dueDate
 
     @Dependency(\.taskRepository) var repository
+    
+    // MARK: - Cache Management
+    var lastLoadTime: Date?
+    let cacheValidityDuration: TimeInterval = 120 // 2 minutes (fast-changing)
     
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
@@ -51,13 +55,19 @@ class TaskStoreV2: ObservableObject {
 
     // MARK: - Task Operations
 
-    func loadTasks() async {
+    func loadTasks(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
         
         // Create new load task
         loadTask = Task { @MainActor in
-            guard loadingState.isIdle || loadingState.hasError else { return }
+            // Use cached data if still valid
+            if !force && isCacheValid() {
+                AppLogger.ui.debug("Using cached task data (age: \(Int(cacheAge()))s)")
+                return
+            }
+            
+            guard loadingState.isIdle || loadingState.hasError || force else { return }
             
             loadingState = .loading
 
@@ -74,6 +84,7 @@ class TaskStoreV2: ObservableObject {
                 
                 taskStats = fetchedStats
                 loadingState = .loaded(fetchedTasks)
+                lastLoadTime = Date()
             } catch is CancellationError {
                 AppLogger.ui.debug("TaskStoreV2.loadTasks: Load cancelled (expected during tenant switch)")
                 loadingState = .idle
@@ -89,7 +100,7 @@ class TaskStoreV2: ObservableObject {
     }
 
     func refreshTasks() async {
-        await loadTasks()
+        await loadTasks(force: true)
     }
 
     func createTask(_ insertData: TaskInsertData) async {
@@ -104,12 +115,15 @@ class TaskStoreV2: ObservableObject {
     }
     
     taskStats = try await repository.fetchTaskStats()
+    // Invalidate cache due to mutation
+    invalidateCache()
     showSuccess("Task created successfully")
     } catch {
     loadingState = .error(TaskError.createFailed(underlying: error))
-    await handleError(error, operation: "create task") { [weak self] in
-    await self?.createTask(insertData)
-    }
+    ErrorHandler.shared.handle(
+        error,
+        context: ErrorContext(operation: "createTask", feature: "task")
+    )
     }
     }
 
@@ -136,6 +150,8 @@ class TaskStoreV2: ObservableObject {
             }
             
             taskStats = try await repository.fetchTaskStats()
+            // Invalidate cache due to mutation
+            invalidateCache()
             showSuccess("Task updated successfully")
         } catch {
             // Rollback on error
@@ -145,9 +161,10 @@ class TaskStoreV2: ObservableObject {
                 loadingState = .loaded(tasks)
             }
             loadingState = .error(TaskError.updateFailed(underlying: error))
-            await handleError(error, operation: "update task") { [weak self] in
-                await self?.updateTask(task)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "updateTask", feature: "task", metadata: ["taskId": task.id.uuidString])
+            )
         }
     }
 
@@ -166,6 +183,8 @@ class TaskStoreV2: ObservableObject {
         do {
             try await repository.deleteTask(id: task.id)
             taskStats = try await repository.fetchTaskStats()
+            // Invalidate cache due to mutation
+            invalidateCache()
             showSuccess("Task deleted successfully")
         } catch {
             // Rollback on error
@@ -174,9 +193,10 @@ class TaskStoreV2: ObservableObject {
                 loadingState = .loaded(tasks)
             }
             loadingState = .error(TaskError.deleteFailed(underlying: error))
-            await handleError(error, operation: "delete task") { [weak self] in
-                await self?.deleteTask(task)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "deleteTask", feature: "task", metadata: ["taskId": task.id.uuidString])
+            )
         }
     }
 
@@ -354,8 +374,16 @@ class TaskStoreV2: ObservableObject {
     
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
+        // Cancel in-flight tasks to avoid race conditions during tenant switch
+        loadTask?.cancel()
+        createTask?.cancel()
+        updateTask?.cancel()
+        deleteTask?.cancel()
+        
+        // Reset state and invalidate cache
         loadingState = .idle
         taskStats = nil
+        lastLoadTime = nil
     }
 }
 

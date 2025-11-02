@@ -28,7 +28,8 @@ struct RootFlowView: View {
     // JES-196: staged post-onboarding loader
     @StateObject private var postOnboardingLoader = PostOnboardingLoader()
     @State private var showPostOnboardingOverlay = false
-
+    @StateObject private var errorHandler = ErrorHandler.shared
+    
     var body: some View {
         Group {
             if !supabaseManager.isAuthenticated {
@@ -118,6 +119,24 @@ struct RootFlowView: View {
                     await settingsStore.loadSettings(force: true)
                     AppLogger.ui.info("RootFlowView: Settings reloaded for new tenant")
                 }
+            }
+        }
+        .sheet(
+            isPresented: Binding(
+                get: { errorHandler.isShowingError },
+                set: { newValue in if !newValue { errorHandler.dismiss() } }
+            )
+        ) {
+            if let appError = errorHandler.currentError {
+                UnifiedErrorView(
+                    error: appError,
+                    onDismiss: { errorHandler.dismiss() },
+                    onRecovery: { _ in errorHandler.dismiss() }
+                )
+            } else {
+                // Fallback if state de-synced
+                Text("An error occurred.")
+                    .padding()
             }
         }
     }

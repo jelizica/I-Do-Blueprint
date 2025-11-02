@@ -25,7 +25,9 @@ extension BudgetStoreV2 {
             }
             
             showSuccess("Category added successfully")
-            logger.info("Added category: \(created.categoryName)")
+            // Store-level cache invalidation on mutation
+            invalidateCache()
+            logger.info("Added category: \(created.categoryName)" )
         } catch {
             loadingState = .error(BudgetError.createFailed(underlying: error))
             await handleError(error, operation: "add category") { [weak self] in
@@ -56,6 +58,7 @@ extension BudgetStoreV2 {
             }
             
             showSuccess("Category updated successfully")
+            invalidateCache()
             logger.info("Updated category: \(updated.categoryName)")
         } catch {
             // Rollback on error
@@ -85,6 +88,7 @@ extension BudgetStoreV2 {
         do {
             try await repository.deleteCategory(id: id)
             showSuccess("Category deleted successfully")
+            invalidateCache()
             logger.info("Deleted category: \(removed.categoryName)")
         } catch {
             // Rollback on error

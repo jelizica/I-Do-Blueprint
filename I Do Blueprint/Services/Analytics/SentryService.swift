@@ -66,6 +66,7 @@ final class SentryService {
             // Profiling configuration
             #if DEBUG
             options.profilesSampleRate = 1.0
+            options.enableAppLaunchProfiling = true
             #else
             options.profilesSampleRate = 0.1
             #endif

@@ -12,7 +12,7 @@ struct AcceptInvitationView: View {
     let coordinator: AppCoordinator
     let details: InvitationDetails?
 
-    @StateObject private var collaborationStore = CollaborationStoreV2()
+    @Environment(\.collaborationStore) private var collaborationStore
     @StateObject private var authContext = AuthContext.shared
 
     @State private var isLoading = true

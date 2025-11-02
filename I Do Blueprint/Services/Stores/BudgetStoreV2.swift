@@ -15,7 +15,7 @@ import Supabase
 import SwiftUI
 
 @MainActor
-class BudgetStoreV2: ObservableObject {
+class BudgetStoreV2: ObservableObject, CacheableStore {
     
     // MARK: - Composed Stores
     
@@ -45,6 +45,19 @@ class BudgetStoreV2: ObservableObject {
     
     /// Primary budget development scenario (cached)
     @Published private(set) var primaryScenario: BudgetDevelopmentScenario?
+    
+    // MARK: - Cache Management
+    
+    // Store-level caching
+    var lastLoadTime: Date?
+    let cacheValidityDuration: TimeInterval = 300 // 5 minutes
+    
+    /// Cache validity that also ensures we actually have loaded data
+    func isCacheValid() -> Bool {
+        guard case .loaded = loadingState,
+              let last = lastLoadTime else { return false }
+        return Date().timeIntervalSince(last) < cacheValidityDuration
+    }
     
     // MARK: - Dependencies
     
@@ -117,6 +130,11 @@ class BudgetStoreV2: ObservableObject {
     
     /// Load all budget data in parallel
     func loadBudgetData(force: Bool = false) async {
+        // Use cached data if still valid
+        if !force && isCacheValid() {
+            logger.debug("Using cached budget data (age: \(Int(cacheAge()))s)")
+            return
+        }
         // Cancel any previous load task
         loadTask?.cancel()
         
@@ -164,6 +182,7 @@ class BudgetStoreV2: ObservableObject {
                 )
                 
                 loadingState = .loaded(budgetData)
+                lastLoadTime = Date()
                 mainThreadAccumulated += Date().timeIntervalSince(t1)
                 
                 // Load data into composed stores (async work not counted toward main-thread)
@@ -206,6 +225,14 @@ class BudgetStoreV2: ObservableObject {
             } catch {
                 let tErr = Date(); loadingState = .error(BudgetError.fetchFailed(underlying: error)); mainThreadAccumulated += Date().timeIntervalSince(tErr)
                 logger.error("Error loading budget data", error: error)
+                ErrorHandler.shared.handle(
+                    error,
+                    context: ErrorContext(
+                        operation: "loadBudgetData",
+                        feature: "budget",
+                        metadata: ["force": force]
+                    )
+                )
             }
 
             await PerformanceMonitor.shared.recordOperation(
@@ -439,7 +466,14 @@ class BudgetStoreV2: ObservableObject {
             }
         } catch {
             logger.error("Failed to load primary scenario", error: error)
-            SentryService.shared.captureError(error, context: ["operation": "loadPrimaryScenario"])
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "loadPrimaryScenario",
+                    feature: "budget",
+                    metadata: [:]
+                )
+            )
         }
     }
     
@@ -447,6 +481,10 @@ class BudgetStoreV2: ObservableObject {
     
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
+        // Cancel in-flight tasks to avoid race conditions during tenant switch
+        loadTask?.cancel()
+        
+        // Reset state and invalidate cache
         loadingState = .idle
         categoryBenchmarks = []
         savedScenarios = []
@@ -458,6 +496,7 @@ class BudgetStoreV2: ObservableObject {
         cashFlowInsights = []
         recentActivities = []
         primaryScenario = nil
+        lastLoadTime = nil
         
         // Reset composed stores
         payments.resetLoadedState()

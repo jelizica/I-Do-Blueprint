@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import Sentry
 
 struct DashboardViewV4: View {
     private let logger = AppLogger.ui
@@ -443,15 +444,35 @@ struct DashboardViewV4: View {
 
         logger.info("Loading dashboard data...")
 
+        // Start Sentry transaction bound to scope so network spans can attach
+        let transaction = SentryService.shared.startTransaction(name: "dashboard.load", operation: "ui.load")
+        let spanBudget = transaction?.startChild(operation: "store.budget.load", description: "BudgetStoreV2.loadBudgetData")
+        let spanVendors = transaction?.startChild(operation: "store.vendor.load", description: "VendorStoreV2.loadVendors")
+        let spanGuests = transaction?.startChild(operation: "store.guest.load", description: "GuestStoreV2.loadGuestData")
+        let spanTasks = transaction?.startChild(operation: "store.task.load", description: "TaskStoreV2.loadTasks")
+        let spanSettings = transaction?.startChild(operation: "store.settings.load", description: "SettingsStoreV2.loadSettings")
+
         // Load data from all stores in parallel
         async let budgetLoad = budgetStore.loadBudgetData()
         async let vendorsLoad = vendorStore.loadVendors()
         async let guestsLoad = guestStore.loadGuestData()
         async let tasksLoad = taskStore.loadTasks()
-        async let settingsLoad = settingsStore.loadSettings()
+        // Fire-and-forget settings load so it doesn't block dashboard readiness
+        Task { @MainActor in
+            await settingsStore.loadSettings()
+            spanSettings?.finish()
+        }
 
-        // Wait for all to complete
-        _ = await (budgetLoad, vendorsLoad, guestsLoad, tasksLoad, settingsLoad)
+        // Wait for core data to complete
+        _ = await (budgetLoad, vendorsLoad, guestsLoad, tasksLoad)
+
+        // Finish spans and transaction
+        spanBudget?.finish()
+        spanVendors?.finish()
+        spanGuests?.finish()
+        spanTasks?.finish()
+        // spanSettings finished in its own Task above
+        SentryService.shared.finishTransaction(name: "dashboard.load", status: .ok)
 
         logger.info("Dashboard data loaded successfully")
         hasLoaded = true

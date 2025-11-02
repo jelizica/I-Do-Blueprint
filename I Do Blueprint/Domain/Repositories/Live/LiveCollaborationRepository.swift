@@ -12,11 +12,9 @@ import Supabase
 actor LiveCollaborationRepository: CollaborationRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
-    private let sessionManager: SessionManager
 
-    init(supabase: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
+    init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
-        self.sessionManager = sessionManager
     }
 
     convenience init() {
@@ -31,15 +29,11 @@ actor LiveCollaborationRepository: CollaborationRepositoryProtocol {
     }
 
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
     
     private func getUserId() async throws -> UUID {
-        try await MainActor.run {
-            try AuthContext.shared.requireUserId()
-        }
+        try await UserContextProvider.shared.requireUserId()
     }
 
     // MARK: - Fetch Operations
@@ -316,6 +310,35 @@ actor LiveCollaborationRepository: CollaborationRepositoryProtocol {
     }
 
     // MARK: - Create, Update, Delete Operations
+    
+    // Helper to fetch couple display name from couple_settings
+    private func fetchCoupleName(tenantId: UUID, client: SupabaseClient) async throws -> String? {
+        struct CoupleSettingsRow: Decodable { let settings: CoupleSettingsJSON }
+        struct CoupleSettingsJSON: Decodable { let global: GlobalSettingsJSON? }
+        struct GlobalSettingsJSON: Decodable {
+            let partner1FullName: String?; let partner2FullName: String?; let partner1Nickname: String?; let partner2Nickname: String?
+            enum CodingKeys: String, CodingKey {
+                case partner1FullName = "partner1_full_name"
+                case partner2FullName = "partner2_full_name"
+                case partner1Nickname = "partner1_nickname"
+                case partner2Nickname = "partner2_nickname"
+            }
+        }
+        let rows: [CoupleSettingsRow] = try await client
+            .from("couple_settings")
+            .select("settings")
+            .eq("couple_id", value: tenantId)
+            .limit(1)
+            .execute()
+            .value
+        if let global = rows.first?.settings.global {
+            let p1 = (global.partner1Nickname?.isEmpty == false ? global.partner1Nickname : global.partner1FullName) ?? ""
+            let p2 = (global.partner2Nickname?.isEmpty == false ? global.partner2Nickname : global.partner2FullName) ?? ""
+            let parts = [p1, p2].filter { !$0.isEmpty }
+            return parts.isEmpty ? nil : parts.joined(separator: " & ")
+        }
+        return nil
+    }
 
     func inviteCollaborator(email: String, roleId: UUID, displayName: String?) async throws -> Collaborator {
         do {
@@ -361,22 +384,11 @@ actor LiveCollaborationRepository: CollaborationRepositoryProtocol {
             // Send invitation email via Resend
             do {
                 // Get inviter's name and couple name
-                let inviterEmail = try await MainActor.run {
-                    try AuthContext.shared.requireUserEmail()
-                }
+                let inviterEmail = try await UserContextProvider.shared.requireUserEmail()
                 let inviterName = inviterEmail
-
-                // Get couple name from settings (access MainActor-isolated store from actor context)
-                let coupleName = await MainActor.run {
-                    let settingsStore = AppStores.shared.settings
-                    let partner1 = settingsStore.settings.global.partner1Nickname.isEmpty ?
-                                   settingsStore.settings.global.partner1FullName :
-                                   settingsStore.settings.global.partner1Nickname
-                    let partner2 = settingsStore.settings.global.partner2Nickname.isEmpty ?
-                                   settingsStore.settings.global.partner2FullName :
-                                   settingsStore.settings.global.partner2Nickname
-                    return "\(partner1) & \(partner2)"
-                }
+                
+                // Derive couple name from database settings (avoid MainActor access)
+                let coupleName = try await fetchCoupleName(tenantId: tenantId, client: client) ?? "Your Wedding"
 
                 // Get role name
                 let roles = try await fetchRoles()

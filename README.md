@@ -55,6 +55,13 @@ The app will automatically use `Config.plist` values if present, otherwise fallb
 
 This allows the app to work out-of-the-box while still supporting custom configurations for development/testing.
 
+### Domain Services
+We use a Domain Services layer to keep repositories focused on CRUD, caching, and tenant/network concerns, and move complex business logic into testable services.
+- BudgetAggregationService: builds BudgetOverview data
+- BudgetAllocationService: recalculates proportional allocations
+
+See docs/DOMAIN_SERVICES_ARCHITECTURE.md for details and examples.
+
 ### Keychain Usage
 The app uses macOS Keychain for storing:
 - User-specific session data (tenant/couple selection)

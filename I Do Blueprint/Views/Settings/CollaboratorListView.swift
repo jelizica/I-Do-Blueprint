@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CollaboratorListView: View {
-    @StateObject private var store = CollaborationStoreV2()
+    @Environment(\.collaborationStore) private var store
     @State private var showingInviteSheet = false
     @State private var selectedCollaborator: Collaborator?
     
@@ -65,7 +65,13 @@ struct CollaboratorListView: View {
         .task {
             await store.loadCollaborationData()
         }
-        .toast(isPresented: $store.showSuccessToast, message: store.successMessage)
+        .toast(
+            isPresented: Binding(
+                get: { store.showSuccessToast },
+                set: { store.showSuccessToast = $0 }
+            ),
+            message: store.successMessage
+        )
     }
 }
 

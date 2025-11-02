@@ -17,6 +17,7 @@ struct BudgetItemsTable: View {
     let onAddCategory: (String, String) async -> Void
     let onAddSubcategory: (String, String) async -> Void
     let onAddEvent: (String, String) -> Void
+    let responsibleOptions: [String]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -50,7 +51,7 @@ struct BudgetItemsTable: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.huge)
             } else {
-                BudgetItemsTableView(
+                    BudgetItemsTableView(
                     items: $budgetItems,
                     budgetStore: budgetStore,
                     selectedTaxRate: selectedTaxRate,
@@ -61,7 +62,8 @@ struct BudgetItemsTable: View {
                     onRemoveItem: onRemoveItem,
                     onAddCategory: onAddCategory,
                     onAddSubcategory: onAddSubcategory,
-                    onAddEvent: onAddEvent)
+                    onAddEvent: onAddEvent,
+                    responsibleOptions: responsibleOptions)
             }
         }
         .padding()

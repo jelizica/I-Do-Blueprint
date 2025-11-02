@@ -13,7 +13,6 @@ import Supabase
 class LiveNotesRepository: NotesRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
-    private let sessionManager = SessionManager.shared
 
     init(supabase: SupabaseClient? = nil) {
         self.supabase = supabase
@@ -32,9 +31,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     }
     
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
 
     // MARK: - Fetch Operations
@@ -62,6 +59,10 @@ class LiveNotesRepository: NotesRepositoryProtocol {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Notes fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchNotes",
+                "repository": "LiveNotesRepository"
+            ])
             throw error
         }
     }
@@ -146,6 +147,10 @@ class LiveNotesRepository: NotesRepositoryProtocol {
             return note
         } catch {
             logger.error("Failed to create note", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createNote",
+                "repository": "LiveNotesRepository"
+            ])
             throw NotesError.createFailed(underlying: error)
         }
     }
@@ -192,6 +197,11 @@ class LiveNotesRepository: NotesRepositoryProtocol {
             return note
         } catch {
             logger.error("Failed to update note", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateNote",
+                "repository": "LiveNotesRepository",
+                "noteId": id.uuidString
+            ])
             throw NotesError.updateFailed(underlying: error)
         }
     }
@@ -213,6 +223,11 @@ class LiveNotesRepository: NotesRepositoryProtocol {
             logger.info("Deleted note: \(id)")
         } catch {
             logger.error("Failed to delete note", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteNote",
+                "repository": "LiveNotesRepository",
+                "noteId": id.uuidString
+            ])
             throw NotesError.deleteFailed(underlying: error)
         }
     }

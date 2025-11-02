@@ -90,6 +90,13 @@ private enum OnboardingRepositoryKey: DependencyKey {
     static let previewValue: any OnboardingRepositoryProtocol = MockOnboardingRepository()
 }
 
+/// Dependency key for BudgetAllocationService
+private enum BudgetAllocationServiceKey: DependencyKey {
+    static let liveValue: any BudgetAllocationServiceProtocol = BudgetAllocationService(repository: LiveRepositories.budget)
+    static let testValue: any BudgetAllocationServiceProtocol = BudgetAllocationService(repository: MockBudgetRepository())
+    static let previewValue: any BudgetAllocationServiceProtocol = BudgetAllocationService(repository: MockBudgetRepository())
+}
+
 /// Dependency key for AlertPresenter
 private enum AlertPresenterKey: DependencyKey {
     @MainActor
@@ -193,6 +200,13 @@ extension DependencyValues {
     var onboardingRepository: any OnboardingRepositoryProtocol {
         get { self[OnboardingRepositoryKey.self] }
         set { self[OnboardingRepositoryKey.self] = newValue }
+    }
+
+    /// Access the budget allocation service dependency
+    /// Performs proportional allocation and rebalancing logic
+    var budgetAllocationService: any BudgetAllocationServiceProtocol {
+        get { self[BudgetAllocationServiceKey.self] }
+        set { self[BudgetAllocationServiceKey.self] = newValue }
     }
 
     /// Access the alert presenter dependency

@@ -9,6 +9,7 @@ struct BudgetSummaryBreakdowns: View {
     let categoryBreakdown: [String: (total: Double, subcategories: [String: Double])]
     let personBreakdown: [String: Double]
     let totalWithTax: Double
+    let responsibleOptions: [String]
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -108,7 +109,7 @@ struct BudgetSummaryBreakdowns: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
-                ForEach(["Jess", "Liz", "Both"], id: \.self) { person in
+                ForEach(responsibleOptions, id: \.self) { person in
                     let amount = personBreakdown[person] ?? 0
                     let percentage = totalWithTax > 0 ? (amount / totalWithTax) * 100 : 0
 
@@ -120,14 +121,14 @@ struct BudgetSummaryBreakdowns: View {
 
                             Spacer()
 
-                            Text("$\(String(format: "%.0f", amount)) (\(String(format: "%.1f", percentage))%)")
+                            Text(String(format: "$%.0f (%.1f%%)", amount, percentage))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
 
                         ProgressView(value: percentage / 100)
                             .progressViewStyle(LinearProgressViewStyle(
-                                tint: person == "Jess" ? .blue : person == "Liz" ? .purple : .green))
+                                tint: colorForPerson(person)))
                             .scaleEffect(y: 0.5)
                     }
                 }
@@ -136,5 +137,16 @@ struct BudgetSummaryBreakdowns: View {
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)
         }
+    }
+
+    private func colorForPerson(_ person: String) -> Color {
+        if let idx = responsibleOptions.firstIndex(of: person) {
+            switch idx {
+            case 0: return .blue
+            case 1: return .purple
+            default: return .green
+            }
+        }
+        return .green
     }
 }

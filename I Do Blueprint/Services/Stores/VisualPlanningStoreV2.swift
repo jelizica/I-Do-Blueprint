@@ -76,9 +76,10 @@ class VisualPlanningStoreV2: ObservableObject {
             showSuccess("Mood board created successfully")
         } catch {
             self.error = .createFailed(underlying: error)
-            await handleError(error, operation: "create mood board") { [weak self] in
-                await self?.createMoodBoard(moodBoard)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "createMoodBoard", feature: "visualPlanning")
+            )
         }
     }
 
@@ -96,9 +97,10 @@ class VisualPlanningStoreV2: ObservableObject {
                 // Rollback on error
                 moodBoards[index] = original
                 self.error = .updateFailed(underlying: error)
-                await handleError(error, operation: "update mood board") { [weak self] in
-                    await self?.updateMoodBoard(moodBoard)
-                }
+                ErrorHandler.shared.handle(
+                    error,
+                    context: ErrorContext(operation: "updateMoodBoard", feature: "visualPlanning", metadata: ["moodBoardId": moodBoard.id.uuidString])
+                )
             }
         }
     }
@@ -115,9 +117,10 @@ class VisualPlanningStoreV2: ObservableObject {
             // Rollback on error
             moodBoards.insert(removed, at: index)
             self.error = .deleteFailed(underlying: error)
-            await handleError(error, operation: "delete mood board") { [weak self] in
-                await self?.deleteMoodBoard(moodBoard)
-            }
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "deleteMoodBoard", feature: "visualPlanning", metadata: ["moodBoardId": moodBoard.id.uuidString])
+            )
         }
     }
 

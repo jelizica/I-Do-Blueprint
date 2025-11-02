@@ -64,8 +64,19 @@ extension BudgetDevelopmentView {
         return breakdown
     }
     
+    var personOptions: [String] {
+        let p1 = settingsStore.settings.global.partner1Nickname.isEmpty ?
+            settingsStore.settings.global.partner1FullName :
+            settingsStore.settings.global.partner1Nickname
+        let p2 = settingsStore.settings.global.partner2Nickname.isEmpty ?
+            settingsStore.settings.global.partner2FullName :
+            settingsStore.settings.global.partner2Nickname
+        return [p1, p2, "Both"]
+    }
+    
     var personBreakdown: [String: Double] {
-        var breakdown: [String: Double] = ["Jess": 0, "Liz": 0, "Both": 0]
+        var breakdown: [String: Double] = [:]
+        for key in personOptions { breakdown[key] = 0 }
         
         for item in budgetItems {
             breakdown[item.personResponsible ?? "Both", default: 0] += item.vendorEstimateWithTax

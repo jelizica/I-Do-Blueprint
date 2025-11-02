@@ -34,6 +34,7 @@ extension BudgetStoreV2 {
             }
             
             showSuccess("Expense added successfully")
+            invalidateCache()
             logger.info("Added expense: \(created.expenseName)")
         } catch {
             loadingState = .error(BudgetError.createFailed(underlying: error))
@@ -70,6 +71,7 @@ extension BudgetStoreV2 {
             }
             
             showSuccess("Expense updated successfully")
+            invalidateCache()
             logger.info("Updated expense: \(updated.expenseName)")
         } catch {
             // Rollback on error
@@ -99,6 +101,7 @@ extension BudgetStoreV2 {
         do {
             try await repository.deleteExpense(id: id)
             showSuccess("Expense deleted successfully")
+            invalidateCache()
             logger.info("Deleted expense: \(removed.expenseName)")
         } catch {
             // Rollback on error
@@ -123,41 +126,104 @@ extension BudgetStoreV2 {
     // MARK: - Expense Linking Operations
     
     /// Unlink an expense from a budget item
-    func unlinkExpense(expenseId: String, budgetItemId: String) async throws {
-    guard let client = SupabaseManager.shared.client else {
-    throw BudgetError.updateFailed(
-    underlying: SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
-    )
-    }
-    
-    do {
-    // Delete the allocation from expense_budget_allocations table
-    logger.info("Attempting to delete allocation: expense_id=\(expenseId), budget_item_id=\(budgetItemId)")
-    
-    let response = try await client
-    .from("expense_budget_allocations")
-    .delete()
-    .eq("expense_id", value: expenseId)
-    .eq("budget_item_id", value: budgetItemId)
-    .execute()
-    
-    logger.info("Delete response status: \(response.response.statusCode)")
-    logger.info("Expense unlinked from database successfully")
-    
-    // Invalidate related caches SYNCHRONOUSLY to ensure they're cleared before any refresh
-    // Use lowercase UUID to match repository cache keys
-    if let scenarioId = primaryScenario?.id.uuidString.lowercased() {
-    await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
-    await RepositoryCache.shared.remove("budget_development_items_\(scenarioId)")
-    logger.info("Invalidated caches for scenario: \(scenarioId)")
-    }
-    await RepositoryCache.shared.remove("expenses")
-    
-    logger.info("Expense unlink complete - caches invalidated")
-    } catch {
-    logger.error("Failed to unlink expense", error: error)
-    throw BudgetError.updateFailed(underlying: error)
-    }
+    /// - Parameters:
+    ///   - expenseId: The expense UUID string
+    ///   - budgetItemId: The budget item UUID string
+    ///   - scenarioId: The scenario UUID string used for precise cache invalidation
+    func unlinkExpense(expenseId: String, budgetItemId: String, scenarioId: String) async throws {
+        // Proportional unlink: remove the specified item from the expense's allocation set,
+        // then rebalance the remaining items proportionally by their budgeted amounts.
+        guard let expenseUUID = UUID(uuidString: expenseId) else {
+            throw BudgetError.updateFailed(underlying: NSError(domain: "BudgetStoreV2", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid expense UUID"]))
+        }
+
+        do {
+            logger.info("Starting proportional unlink for expense_id=\(expenseId), removing budget_item_id=\(budgetItemId) in scenario=\(scenarioId)")
+
+            async let allocationsAsync = repository.fetchAllocationsForExpense(expenseId: expenseUUID, scenarioId: scenarioId)
+            async let itemsAsync = repository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
+            async let expensesAsync = repository.fetchExpenses()
+            let (existing, items, allExpenses) = try await (allocationsAsync, itemsAsync, expensesAsync)
+
+            // Exclude the removed item
+            let removeKey = budgetItemId.lowercased()
+            var remainingIds = existing.map { $0.budgetItemId.lowercased() }.filter { $0 != removeKey }
+
+            // If nothing remains, replace with empty set (fully unlinked)
+            if remainingIds.isEmpty {
+                try await repository.replaceAllocations(expenseId: expenseUUID, scenarioId: scenarioId, with: [])
+            } else {
+                // Build weights from remaining items' vendorEstimateWithTax
+                let budgetById = Dictionary(uniqueKeysWithValues: items.map { ($0.id.lowercased(), $0.vendorEstimateWithTax) })
+                // Keep only ids that exist in items
+                remainingIds = remainingIds.filter { budgetById[$0] != nil }
+
+                let totalBudgeted = remainingIds.compactMap { budgetById[$0] }.reduce(0, +)
+                let amount = allExpenses.first(where: { $0.id == expenseUUID })?.amount ?? 0
+                let coupleId = existing.first?.coupleId ?? items.first?.coupleId ?? ""
+                let isTest = existing.first?.isTestData
+
+                var newAllocations: [ExpenseAllocation] = []
+                if totalBudgeted > 0 {
+                    var remaining = amount
+                    for (idx, key) in remainingIds.enumerated() {
+                        let weight = budgetById[key]! / totalBudgeted
+                        var value = amount * weight
+                        value = (value * 100).rounded() / 100 // round to cents
+                        if idx == remainingIds.count - 1 { value = (remaining * 100).rounded() / 100 }
+                        remaining -= value
+                        newAllocations.append(
+                            ExpenseAllocation(
+                                id: UUID().uuidString,
+                                expenseId: expenseUUID.uuidString,
+                                budgetItemId: key,
+                                allocatedAmount: value,
+                                percentage: nil,
+                                notes: nil,
+                                createdAt: Date(),
+                                updatedAt: nil,
+                                coupleId: coupleId,
+                                scenarioId: scenarioId,
+                                isTestData: isTest
+                            )
+                        )
+                    }
+                } else {
+                    // If we cannot compute weights, allocate 100% to the first remaining item
+                    let target = remainingIds.first!
+                    newAllocations = [
+                        ExpenseAllocation(
+                            id: UUID().uuidString,
+                            expenseId: expenseUUID.uuidString,
+                            budgetItemId: target,
+                            allocatedAmount: amount,
+                            percentage: nil,
+                            notes: nil,
+                            createdAt: Date(),
+                            updatedAt: nil,
+                            coupleId: coupleId,
+                            scenarioId: scenarioId,
+                            isTestData: isTest
+                        )
+                    ]
+                }
+
+                try await repository.replaceAllocations(expenseId: expenseUUID, scenarioId: scenarioId, with: newAllocations)
+            }
+
+            // Invalidate related caches synchronously
+            let scenarioKey = scenarioId.lowercased()
+            await RepositoryCache.shared.remove("budget_overview_items_\(scenarioKey)")
+            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioKey)")
+            if let tenantId = SessionManager.shared.getTenantId()?.uuidString {
+                await RepositoryCache.shared.remove("expenses_\(tenantId)")
+            }
+
+            logger.info("Proportional unlink complete and caches invalidated")
+        } catch {
+            logger.error("Failed proportional unlink for expense", error: error)
+            throw BudgetError.updateFailed(underlying: error)
+        }
     }
     
     /// Unlink a gift from a budget item

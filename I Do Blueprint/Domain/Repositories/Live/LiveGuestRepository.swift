@@ -12,10 +12,14 @@ import Supabase
 actor LiveGuestRepository: GuestRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
-
+    private let cacheStrategy = GuestCacheStrategy()
+    
     // SessionManager for tenant scoping
     private let sessionManager: SessionManager
-
+    
+    // In-flight request de-duplication
+    private var inFlightGuests: [UUID: Task<[Guest], Error>] = [:]
+    
     init(supabase: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
         self.supabase = supabase
         self.sessionManager = sessionManager
@@ -36,27 +40,29 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
 
     // Helper to get tenant ID, throws if not set
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
 
     func fetchGuests() async throws -> [Guest] {
-        do {
-            let client = try getClient()
-            let tenantId = try await getTenantId()
-            let cacheKey = "guests_\(tenantId.uuidString)"
+        let tenantId = try await getTenantId()
+        let cacheKey = "guests_\(tenantId.uuidString)"
+
+        // ✅ Check cache first
+        if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: guests (\(cached.count) items)")
+            return cached
+        }
+
+        // Coalesce in-flight requests per-tenant
+        if let task = inFlightGuests[tenantId] {
+            return try await task.value
+        }
+
+        let task = Task<[Guest], Error> { [weak self] in
+            guard let self = self else { throw CancellationError() }
+            let client = try await self.getClient()
             let startTime = Date()
-
-            // ✅ Check cache first
-            if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-                logger.info("Cache hit: guests (\(cached.count) items)")
-                return cached
-            }
-
-            logger.info("Cache miss: fetching guests from database")
-
-            // Fetch from Supabase with retry and timeout - scoped by tenant
+            self.logger.info("Cache miss: fetching guests from database")
             let guests: [Guest] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("guest_list")
@@ -66,21 +72,26 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
                     .execute()
                     .value
             }
-
             let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Cache the results
             await RepositoryCache.shared.set(cacheKey, value: guests, ttl: 60)
-            
-            // ✅ Record performance metrics
             await PerformanceMonitor.shared.recordOperation("fetchGuests", duration: duration)
-
-            logger.info("Fetched \(guests.count) guests in \(String(format: "%.2f", duration))s")
+            self.logger.info("Fetched \(guests.count) guests in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchGuests", outcome: .success, duration: duration)
-
             return guests
+        }
+
+        inFlightGuests[tenantId] = task
+        do {
+            let result = try await task.value
+            inFlightGuests[tenantId] = nil
+            return result
         } catch {
+            inFlightGuests[tenantId] = nil
             logger.error("Failed to fetch guests", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchGuests",
+                "repository": "LiveGuestRepository"
+            ])
             throw GuestError.fetchFailed(underlying: error)
         }
     }
@@ -165,9 +176,8 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
                     .value
             }
 
-            // ✅ Invalidate tenant-scoped cache
-            await RepositoryCache.shared.remove("guests_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("guest_stats_\(tenantId.uuidString)")
+            // ✅ Invalidate tenant-scoped caches via strategy
+            await cacheStrategy.invalidate(for: .guestCreated(tenantId: tenantId))
 
             let duration = Date().timeIntervalSince(startTime)
             
@@ -180,6 +190,11 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             return created
         } catch {
             logger.error("Failed to create guest", error: error)
+await SentryService.shared.captureError(error, context: [
+                "operation": "createGuest",
+                "repository": "LiveGuestRepository",
+                "guestName": guest.fullName
+            ])
             throw GuestError.createFailed(underlying: error)
         }
     }
@@ -204,9 +219,8 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
                     .value
             }
 
-            // ✅ Invalidate tenant-scoped cache
-            await RepositoryCache.shared.remove("guests_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("guest_stats_\(tenantId.uuidString)")
+            // ✅ Invalidate tenant-scoped caches via strategy
+            await cacheStrategy.invalidate(for: .guestUpdated(tenantId: tenantId))
 
             let duration = Date().timeIntervalSince(startTime)
             
@@ -219,6 +233,11 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             return result
         } catch {
             logger.error("Failed to update guest", error: error)
+await SentryService.shared.captureError(error, context: [
+                "operation": "updateGuest",
+                "repository": "LiveGuestRepository",
+                "guestId": guest.id.uuidString
+            ])
             throw GuestError.updateFailed(underlying: error)
         }
     }
@@ -251,6 +270,11 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             AnalyticsService.trackNetwork(operation: "deleteGuest", outcome: .success, duration: duration)
         } catch {
             logger.error("Failed to delete guest", error: error)
+await SentryService.shared.captureError(error, context: [
+                "operation": "deleteGuest",
+                "repository": "LiveGuestRepository",
+                "guestId": id.uuidString
+            ])
             throw GuestError.deleteFailed(underlying: error)
         }
     }
@@ -357,6 +381,11 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             return imported
         } catch {
             logger.error("Failed to import guests", error: error)
+await SentryService.shared.captureError(error, context: [
+                "operation": "importGuests",
+                "repository": "LiveGuestRepository",
+                "count": guests.count
+            ])
             throw GuestError.createFailed(underlying: error)
         }
     }

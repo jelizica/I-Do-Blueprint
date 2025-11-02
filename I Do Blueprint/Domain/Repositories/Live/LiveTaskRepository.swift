@@ -11,9 +11,13 @@ import Supabase
 actor LiveTaskRepository: TaskRepositoryProtocol {
     private let client: SupabaseClient?
     private let logger = AppLogger.repository
+    private let cacheStrategy = TaskCacheStrategy()
     
     // SessionManager for tenant scoping
     private let sessionManager: SessionManager
+    
+    // In-flight request de-duplication
+    private var inFlightTasks: [UUID: Task<[WeddingTask], Error>] = [:]
     
     init(client: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
         self.client = client
@@ -34,26 +38,29 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
     
     // Helper to get tenant ID, throws if not set
     private func getTenantId() async throws -> UUID {
-        try await MainActor.run {
-            try sessionManager.requireTenantId()
-        }
+        try await TenantContextProvider.shared.requireTenantId()
     }
 
     func fetchTasks() async throws -> [WeddingTask] {
-        let client = try getClient()
         let tenantId = try await getTenantId()
         let cacheKey = "tasks_\(tenantId.uuidString)"
-        let startTime = Date()
-        
+
         // ✅ Check cache first
         if let cached: [WeddingTask] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             logger.info("Cache hit: tasks (\(cached.count) items)")
             return cached
         }
-        
-        logger.info("Cache miss: fetching tasks from database")
-        
-        do {
+
+        // Coalesce in-flight requests per-tenant
+        if let task = inFlightTasks[tenantId] {
+            return try await task.value
+        }
+
+        let task = Task<[WeddingTask], Error> { [weak self] in
+            guard let self = self else { throw CancellationError() }
+            let client = try await self.getClient()
+            let startTime = Date()
+            self.logger.info("Cache miss: fetching tasks from database")
             let tasks: [WeddingTask] = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_tasks")
@@ -68,27 +75,28 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
                     .value
             }
-            
             let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Cache the results
             await RepositoryCache.shared.set(cacheKey, value: tasks, ttl: 60)
-            
-            // ✅ Record performance metrics
             await PerformanceMonitor.shared.recordOperation("fetchTasks", duration: duration)
-            
-            logger.info("Fetched \(tasks.count) tasks in \(String(format: "%.2f", duration))s")
+            self.logger.info("Fetched \(tasks.count) tasks in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchTasks", outcome: .success, duration: duration)
-            
             return tasks
+        }
+
+        inFlightTasks[tenantId] = task
+        do {
+            let result = try await task.value
+            inFlightTasks[tenantId] = nil
+            return result
         } catch {
-            let duration = Date().timeIntervalSince(startTime)
-            
-            // ✅ Record failed operation
-            await PerformanceMonitor.shared.recordOperation("fetchTasks", duration: duration)
-            
-            logger.error("Failed to fetch tasks after \(String(format: "%.2f", duration))s", error: error)
-            AnalyticsService.trackNetwork(operation: "fetchTasks", outcome: .failure(code: nil), duration: duration)
+            inFlightTasks[tenantId] = nil
+            let duration = Date().timeIntervalSince1970 // unused but keep parity
+            await PerformanceMonitor.shared.recordOperation("fetchTasks", duration: 0)
+            logger.error("Failed to fetch tasks", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchTasks",
+                "repository": "LiveTaskRepository"
+            ])
             throw error
         }
     }
@@ -134,6 +142,10 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to fetch task after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchTask",
+                "repository": "LiveTaskRepository"
+            ])
             throw error
         }
     }
@@ -154,9 +166,8 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .value
             }
             
-            // ✅ Invalidate tenant-scoped cache
-            await RepositoryCache.shared.remove("tasks_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("task_stats_\(tenantId.uuidString)")
+            // ✅ Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .taskCreated(tenantId: tenantId, taskId: task.id))
             
             let duration = Date().timeIntervalSince(startTime)
             
@@ -169,6 +180,10 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             return task
         } catch {
             logger.error("Failed to create task", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createTask",
+                "repository": "LiveTaskRepository"
+            ])
             throw TaskError.createFailed(underlying: error)
         }
     }
@@ -191,10 +206,8 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .value
             }
             
-            // ✅ Invalidate tenant-scoped cache
-            await RepositoryCache.shared.remove("tasks_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("task_\(task.id.uuidString)_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("task_stats_\(tenantId.uuidString)")
+            // ✅ Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .taskUpdated(tenantId: tenantId, taskId: task.id))
             
             let duration = Date().timeIntervalSince(startTime)
             
@@ -207,6 +220,11 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             return updated
         } catch {
             logger.error("Failed to update task", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "updateTask",
+                "repository": "LiveTaskRepository",
+                "taskId": task.id.uuidString
+            ])
             throw TaskError.updateFailed(underlying: error)
         }
     }
@@ -226,10 +244,8 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
             }
             
-            // ✅ Invalidate tenant-scoped cache
-            await RepositoryCache.shared.remove("tasks_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("task_\(id.uuidString)_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("task_stats_\(tenantId.uuidString)")
+            // ✅ Invalidate caches via strategy
+            await cacheStrategy.invalidate(for: .taskDeleted(tenantId: tenantId, taskId: id))
             
             let duration = Date().timeIntervalSince(startTime)
             
@@ -240,6 +256,11 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             AnalyticsService.trackNetwork(operation: "deleteTask", outcome: .success, duration: duration)
         } catch {
             logger.error("Failed to delete task", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteTask",
+                "repository": "LiveTaskRepository",
+                "taskId": id.uuidString
+            ])
             throw TaskError.deleteFailed(underlying: error)
         }
     }
@@ -280,6 +301,11 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to fetch subtasks after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchSubtasks",
+                "repository": "LiveTaskRepository",
+                "taskId": taskId.uuidString
+            ])
             throw error
         }
     }
@@ -317,9 +343,8 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .value
             }
             
-            // ✅ Invalidate related caches
-            await RepositoryCache.shared.remove("subtasks_\(taskId.uuidString)_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("task_\(taskId.uuidString)_\(tenantId.uuidString)")
+            // ✅ Invalidate related caches via strategy
+            await cacheStrategy.invalidate(for: .subtaskCreated(tenantId: tenantId, taskId: taskId))
             
             let duration = Date().timeIntervalSince(startTime)
             
@@ -352,9 +377,8 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .value
             }
             
-            // ✅ Invalidate related caches
-            await RepositoryCache.shared.remove("subtasks_\(subtask.taskId.uuidString)_\(tenantId.uuidString)")
-            await RepositoryCache.shared.remove("task_\(subtask.taskId.uuidString)_\(tenantId.uuidString)")
+            // ✅ Invalidate related caches via strategy
+            await cacheStrategy.invalidate(for: .subtaskUpdated(tenantId: tenantId, taskId: subtask.taskId))
             
             let duration = Date().timeIntervalSince(startTime)
             

@@ -340,12 +340,35 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Returns: Array of expense allocations
     /// - Throws: Repository errors if fetch fails
     func fetchExpenseAllocations(scenarioId: String, budgetItemId: String) async throws -> [ExpenseAllocation]
+
+    /// Fetches all expense allocations for a specific scenario (bulk fetch to avoid N+1 queries)
+    /// - Parameter scenarioId: The scenario ID to fetch allocations for
+    /// - Returns: Array of expense allocations for the scenario
+    /// - Throws: Repository errors if fetch fails
+    func fetchExpenseAllocationsForScenario(scenarioId: String) async throws -> [ExpenseAllocation]
     
     /// Creates a new expense allocation
     /// - Parameter allocation: The expense allocation to create
     /// - Returns: The created allocation with server-assigned timestamps
     /// - Throws: Repository errors if creation fails or validation errors
     func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation
+
+    /// Fetches all allocations for a given expense within a scenario
+    /// - Parameters:
+    ///   - expenseId: Expense UUID
+    ///   - scenarioId: Scenario ID
+    func fetchAllocationsForExpense(expenseId: UUID, scenarioId: String) async throws -> [ExpenseAllocation]
+
+    /// Fetches all allocations for a given expense across all scenarios
+    /// - Parameter expenseId: Expense UUID
+    func fetchAllocationsForExpenseAllScenarios(expenseId: UUID) async throws -> [ExpenseAllocation]
+
+    /// Atomically replaces all allocations for an expense within a scenario
+    /// - Parameters:
+    ///   - expenseId: Expense UUID
+    ///   - scenarioId: Scenario ID
+    ///   - newAllocations: New set of allocations to persist
+    func replaceAllocations(expenseId: UUID, scenarioId: String, with newAllocations: [ExpenseAllocation]) async throws
     
     /// Links a gift to a budget development item
     /// - Parameters:
@@ -358,4 +381,12 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Returns: The primary scenario, or nil if none exists
     /// - Throws: Repository errors if fetch fails
     func fetchPrimaryBudgetScenario() async throws -> BudgetDevelopmentScenario?
+    
+    // MARK: - Composite Saves
+    /// Saves a budget development scenario and its items atomically via RPC.
+    /// - Parameters:
+    ///   - scenario: Scenario to create or update (must include couple_id; id optional for create)
+    ///   - items: Items to insert for the scenario (can be empty)
+    /// - Returns: The persisted scenario ID and number of items inserted
+    func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int)
 }
