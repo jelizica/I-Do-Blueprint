@@ -134,9 +134,9 @@ class TasksAPI {
             enum CodingKeys: String, CodingKey {
                 case taskId = "task_id"
                 case subtaskName = "subtask_name"
-                case status
+                case status = "status"
                 case assignedTo = "assigned_to"
-                case notes
+                case notes = "notes"
             }
         }
 
@@ -170,9 +170,9 @@ class TasksAPI {
 
             enum CodingKeys: String, CodingKey {
                 case subtaskName = "subtask_name"
-                case status
+                case status = "status"
                 case assignedTo = "assigned_to"
-                case notes
+                case notes = "notes"
             }
         }
 

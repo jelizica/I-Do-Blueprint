@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct My_Wedding_Planning_AppApp: App {
+struct IDoBlueprint: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var authContext = AuthContext.shared
     @StateObject private var appStores = AppStores.shared
@@ -116,7 +116,7 @@ struct My_Wedding_Planning_AppApp: App {
 
 // MARK: - App Configuration
 
-extension My_Wedding_Planning_AppApp {
+extension IDoBlueprint {
     private var minimumWindowSize: CGSize {
         CGSize(width: 800, height: 600)
     }

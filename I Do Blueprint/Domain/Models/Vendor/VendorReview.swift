@@ -26,12 +26,12 @@ struct VendorReview: Identifiable, Codable, Hashable {
     var wouldRecommend: Bool?
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case vendorId = "vendor_id"
         case coupleId = "couple_id"
-        case rating
+        case rating = "rating"
         case reviewTitle = "review_title"
         case reviewText = "review_text"
         case reviewerName = "reviewer_name"

@@ -197,7 +197,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
         progress.updatedAt = Date()
 
         // Save the completed progress
-        try await saveOnboardingProgress(progress)
+        return try await saveOnboardingProgress(progress)
     }
 
     // MARK: - Delete Onboarding Progress

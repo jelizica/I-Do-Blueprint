@@ -161,6 +161,7 @@
 			buildPhases = (
 				162465392E904FFC00920873 /* Sources */,
 				1624653A2E904FFC00920873 /* Frameworks */,
+				169300002F00000000999999 /* SwiftLint */,
 				1624653B2E904FFC00920873 /* Resources */,
 			);
 			buildRules = (
@@ -332,6 +333,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		169300002F00000000999999 /* SwiftLint */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${SRCROOT}/.swiftlint.yml",
+			);
+			name = SwiftLint;
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if command -v swiftlint >/dev/null 2>&1; then\n  echo 'Running SwiftLint from PATH'\n  swiftlint --config \"$SRCROOT/.swiftlint.yml\" || true\nelse\n  echo 'warning: SwiftLint not installed. Install via Homebrew: brew install swiftlint'\nfi\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */

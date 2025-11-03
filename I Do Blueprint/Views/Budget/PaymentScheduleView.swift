@@ -376,12 +376,12 @@ struct PaymentOverviewCard: View {
 // MARK: - Filter Options
 
 enum PaymentFilterOption: String, CaseIterable {
-    case all
-    case upcoming
-    case overdue
+    case all = "all"
+    case upcoming = "upcoming"
+    case overdue = "overdue"
     case thisWeek = "this_week"
     case thisMonth = "this_month"
-    case paid
+    case paid = "paid"
 
     var displayName: String {
         switch self {

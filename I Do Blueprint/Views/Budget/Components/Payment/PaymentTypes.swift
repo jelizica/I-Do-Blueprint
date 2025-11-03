@@ -26,10 +26,10 @@ enum PaymentFilter {
 // MARK: - Payment Sort Option
 
 enum PaymentSortOption: String, CaseIterable {
-    case dueDate
-    case amount
-    case vendor
-    case status
+    case dueDate = "dueDate"
+    case amount = "amount"
+    case vendor = "vendor"
+    case status = "status"
 
     var displayName: String {
         switch self {

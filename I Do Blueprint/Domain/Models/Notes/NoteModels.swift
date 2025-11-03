@@ -23,10 +23,10 @@ struct Note: Codable, Equatable, Identifiable {
     var relatedEntity: RelatedEntity?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
-        case title
-        case content
+        case title = "title"
+        case content = "content"
         case relatedType = "related_type"
         case relatedId = "related_id"
         case createdAt = "created_at"
@@ -55,14 +55,14 @@ struct Note: Codable, Equatable, Identifiable {
 // MARK: - Note Related Types
 
 enum NoteRelatedType: String, Codable, CaseIterable {
-    case vendor
-    case guest
-    case task
-    case milestone
-    case budget
+    case vendor = "vendor"
+    case guest = "guest"
+    case task = "task"
+    case milestone = "milestone"
+    case budget = "budget"
     case visualElement = "visual_element"
-    case payment
-    case document
+    case payment = "payment"
+    case document = "document"
 
     var displayName: String {
         switch self {
@@ -110,8 +110,8 @@ struct NoteInsertData: Codable {
 
     enum CodingKeys: String, CodingKey {
         case coupleId = "couple_id"
-        case title
-        case content
+        case title = "title"
+        case content = "content"
         case relatedType = "related_type"
         case relatedId = "related_id"
     }

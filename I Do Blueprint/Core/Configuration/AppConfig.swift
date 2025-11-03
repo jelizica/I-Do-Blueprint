@@ -21,6 +21,7 @@ enum AppConfig {
     /// Supabase anonymous key (client-safe)
     /// This key is designed for client-side use and is protected by Row Level Security (RLS) policies
     /// IMPORTANT: Never include the service_role key in client applications
+    // swiftlint:disable:next line_length
     static let supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBjbWFzZm9teWhxYXBhYWF4emJ5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk3NTQ3NzIsImV4cCI6MjA2NTMzMDc3Mn0.eghHJuLI_ria0YjXB0k421qNxajEWqwPsNgD3RwdM4A"
 
     // MARK: - Sentry Configuration

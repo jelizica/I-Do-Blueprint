@@ -40,16 +40,16 @@ class AppCoordinator: ObservableObject {
     // MARK: - Tab Definition
 
     enum AppTab: String, Hashable, CaseIterable {
-        case dashboard
-        case guests
-        case vendors
-        case budget
-        case visualPlanning
-        case timeline
-        case collaboration
-        case notes
-        case documents
-        case settings
+        case dashboard = "dashboard"
+        case guests = "guests"
+        case vendors = "vendors"
+        case budget = "budget"
+        case visualPlanning = "visualPlanning"
+        case timeline = "timeline"
+        case collaboration = "collaboration"
+        case notes = "notes"
+        case documents = "documents"
+        case settings = "settings"
 
         var title: String {
             switch self {

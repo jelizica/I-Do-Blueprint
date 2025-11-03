@@ -72,7 +72,14 @@ struct ExpenseDetailView: View {
 
                         ExpenseDetailRow(label: "Amount Paid", value: expense.paidAmount, formatter: .currency)
 
-                        ExpenseDetailRow(label: "Remaining", value: expense.remainingAmount, formatter: .currency, valueColor: expense.remainingAmount > 0 ? AppColors.Budget.overBudget : AppColors.Budget.income)
+                        ExpenseDetailRow(
+                            label: "Remaining",
+                            value: expense.remainingAmount,
+                            formatter: .currency,
+                            valueColor: expense.remainingAmount > 0
+                                ? AppColors.Budget.overBudget
+                                : AppColors.Budget.income
+                        )
 
                         if let dueDate = expense.dueDate {
                             ExpenseDetailRow(label: "Due Date", value: dueDate, formatter: .date)

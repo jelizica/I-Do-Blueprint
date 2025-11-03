@@ -19,10 +19,10 @@ private struct MembershipResponse: Codable {
     let coupleProfiles: CoupleProfileNested
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case userId = "user_id"
-        case role
+        case role = "role"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case coupleProfiles = "couple_profiles"
@@ -81,6 +81,7 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
         return supabase
     }
 
+    // swiftlint:disable:next function_body_length
     func fetchCouplesForUser(userId: UUID) async throws -> [CoupleMembership] {
         let cacheKey = "couples_\(userId.uuidString)"
 
@@ -108,11 +109,11 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
                 let coupleProfiles: CoupleProfileNested
 
                 enum CodingKeys: String, CodingKey {
-                    case id
+                    case id = "id"
                     case coupleId = "couple_id"
                     case userId = "user_id"
                     case roleId = "role_id"
-                    case status
+                    case status = "status"
                     case createdAt = "created_at"
                     case updatedAt = "updated_at"
                     case coupleProfiles = "couple_profiles"

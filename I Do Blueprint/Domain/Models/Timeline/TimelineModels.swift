@@ -29,21 +29,21 @@ struct TimelineItem: Codable, Equatable, Identifiable {
     var payment: PaymentSummary?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
-        case title
-        case description
+        case title = "title"
+        case description = "description"
         case itemType = "item_type"
         case itemDate = "item_date"
         case endDate = "end_date"
-        case completed
+        case completed = "completed"
         case relatedId = "related_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
-        case task
-        case milestone
-        case vendor
-        case payment
+        case task = "task"
+        case milestone = "milestone"
+        case vendor = "vendor"
+        case payment = "payment"
     }
 
     var isOverdue: Bool {
@@ -58,13 +58,13 @@ struct TimelineItem: Codable, Equatable, Identifiable {
 }
 
 enum TimelineItemType: String, Codable, CaseIterable {
-    case task
-    case milestone
+    case task = "task"
+    case milestone = "milestone"
     case vendorEvent = "vendor_event"
-    case payment
-    case reminder
-    case ceremony
-    case other
+    case payment = "payment"
+    case reminder = "reminder"
+    case ceremony = "ceremony"
+    case other = "other"
 
     var displayName: String {
         switch self {
@@ -117,13 +117,13 @@ struct Milestone: Codable, Equatable, Identifiable {
     var updatedAt: Date
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case milestoneName = "milestone_name"
-        case description
+        case description = "description"
         case milestoneDate = "milestone_date"
-        case completed
-        case color
+        case completed = "completed"
+        case color = "color"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -147,12 +147,12 @@ struct TimelineItemInsertData: Codable {
 
     enum CodingKeys: String, CodingKey {
         case coupleId = "couple_id"
-        case title
-        case description
+        case title = "title"
+        case description = "description"
         case itemType = "item_type"
         case itemDate = "item_date"
         case endDate = "end_date"
-        case completed
+        case completed = "completed"
         case relatedId = "related_id"
     }
 }
@@ -168,10 +168,10 @@ struct MilestoneInsertData: Codable {
     enum CodingKeys: String, CodingKey {
         case coupleId = "couple_id"
         case milestoneName = "milestone_name"
-        case description
+        case description = "description"
         case milestoneDate = "milestone_date"
-        case completed
-        case color
+        case completed = "completed"
+        case color = "color"
     }
 }
 

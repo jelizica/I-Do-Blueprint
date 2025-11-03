@@ -243,7 +243,7 @@ class DocumentsAPI {
             enum CodingKeys: String, CodingKey {
                 case originalFilename = "original_filename"
                 case documentType = "document_type"
-                case tags
+                case tags = "tags"
                 case vendorId = "vendor_id"
                 case expenseId = "expense_id"
             }
@@ -530,7 +530,7 @@ class DocumentsAPI {
             let vendorName: String
 
             enum CodingKeys: String, CodingKey {
-                case id
+                case id = "id"
                 case vendorName = "vendor_name"
             }
         }
@@ -567,7 +567,7 @@ class DocumentsAPI {
             let expenseName: String
 
             enum CodingKeys: String, CodingKey {
-                case id
+                case id = "id"
                 case expenseName = "expense_name"
             }
         }
@@ -608,11 +608,11 @@ class DocumentsAPI {
             let expenseId: UUID?
 
             enum CodingKeys: String, CodingKey {
-                case id
-                case vendor
+                case id = "id"
+                case vendor = "vendor"
                 case paymentAmount = "payment_amount"
                 case paymentDate = "payment_date"
-                case paid
+                case paid = "paid"
                 case expenseId = "expense_id"
             }
         }

@@ -519,6 +519,7 @@ struct AccessibilityAudit {
     // MARK: - Report Generation
 
     /// Generate a comprehensive markdown report of audit results
+    // swiftlint:disable:next function_body_length
     static func generateMarkdownReport() -> String {
         let results = runCompleteAudit()
 

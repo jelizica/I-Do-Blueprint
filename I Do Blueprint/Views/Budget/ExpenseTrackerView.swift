@@ -44,7 +44,7 @@ struct ExpenseTrackerView: View {
     }
 
     // Calculate category benchmarks
-    var categoryBenchmarks: [(category: BudgetCategory, spent: Double, percentage: Double, status: BenchmarkStatus)] {
+    var categoryBenchmarks: [CategoryBenchmarkData] {
         budgetStore.categories.compactMap { category in
             let categoryExpenses = budgetStore.expensesForCategory(category.id)
             let spent = categoryExpenses.reduce(0) { $0 + $1.amount }
@@ -59,7 +59,12 @@ struct ExpenseTrackerView: View {
                 .under
             }
 
-            return (category, spent, percentage, status)
+            return CategoryBenchmarkData(
+                category: category,
+                spent: spent,
+                percentage: percentage,
+                status: status
+            )
         }
     }
 

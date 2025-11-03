@@ -38,7 +38,10 @@ struct MyCollaborationsView: View {
                     activeCollaborationsSection
 
                     // Empty State
-                    if collaborationStore.userCollaborations.isEmpty && collaborationStore.pendingUserInvitations.isEmpty && !collaborationStore.isLoadingCollaborations {
+                    let hasNoCollaborations = collaborationStore.userCollaborations.isEmpty
+                    let hasNoPending = collaborationStore.pendingUserInvitations.isEmpty
+                    let notLoading = !collaborationStore.isLoadingCollaborations
+                    if hasNoCollaborations && hasNoPending && notLoading {
                         emptyStateView
                     }
                 }

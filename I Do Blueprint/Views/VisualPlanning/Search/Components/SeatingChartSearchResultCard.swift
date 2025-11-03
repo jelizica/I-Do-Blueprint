@@ -87,7 +87,7 @@ struct SeatingChartSearchResultCard: View {
                     }
 
                     // Progress bar
-                    if chart.guests.count > 0 {
+                    if !chart.guests.isEmpty {
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
                                 Text("Assignment Progress")
@@ -245,7 +245,7 @@ struct SeatingChartSearchResultCard: View {
     // MARK: - Computed Properties
 
     private var assignmentPercentage: Int {
-        guard chart.guests.count > 0 else { return 0 }
+        guard !chart.guests.isEmpty else { return 0 }
         return Int((Double(chart.seatingAssignments.count) / Double(chart.guests.count)) * 100)
     }
 

@@ -110,7 +110,7 @@ class SupabaseManager: ObservableObject {
         let deadline = UInt64(max(0, timeout) * 1_000_000_000)
 
         // Local timeout error
-        struct _WaitTimeout: Error {}
+        struct WaitTimeoutError: Error {}
 
         do {
             return try await withThrowingTaskGroup(of: SupabaseClient.self) { group in
@@ -130,7 +130,7 @@ class SupabaseManager: ObservableObject {
                     try await Task.sleep(nanoseconds: deadline)
                     return try await MainActor.run(resultType: SupabaseClient.self, body: {
                         if let client = self.client { return client }
-                        throw _WaitTimeout()
+                        throw WaitTimeoutError()
                     })
                 }
 

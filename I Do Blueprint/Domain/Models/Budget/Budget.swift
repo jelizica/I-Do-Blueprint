@@ -1,3 +1,4 @@
+// swiftlint:disable file_length
 import Foundation
 import SwiftUI
 
@@ -23,7 +24,7 @@ struct GiftOrOwed: Identifiable, Codable {
     enum GiftOrOwedType: String, CaseIterable, Codable {
         case giftReceived = "gift_received"
         case moneyOwed = "money_owed"
-        case contribution
+        case contribution = "contribution"
 
         var displayName: String {
             switch self {
@@ -43,9 +44,9 @@ struct GiftOrOwed: Identifiable, Codable {
     }
 
     enum GiftOrOwedStatus: String, CaseIterable, Codable {
-        case pending
-        case received
-        case confirmed
+        case pending = "pending"
+        case received = "received"
+        case confirmed = "confirmed"
 
         var displayName: String {
             switch self {
@@ -65,16 +66,16 @@ struct GiftOrOwed: Identifiable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
-        case title
-        case amount
-        case type
-        case description
+        case title = "title"
+        case amount = "amount"
+        case type = "type"
+        case description = "description"
         case fromPerson = "from_person"
         case expectedDate = "expected_date"
         case receivedDate = "received_date"
-        case status
+        case status = "status"
         case scenarioId = "scenario_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -234,13 +235,13 @@ struct BudgetSummary: Identifiable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case totalBudget = "total_budget"
         case baseBudget = "base_budget"
-        case currency
+        case currency = "currency"
         case weddingDate = "wedding_date"
-        case notes
+        case notes = "notes"
         case includesEngagementRings = "includes_engagement_rings"
         case engagementRingAmount = "engagement_ring_amount"
         case createdAt = "created_at"
@@ -432,7 +433,7 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case categoryName = "category_name"
         case parentCategoryId = "parent_category_id"
@@ -441,11 +442,11 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         case typicalPercentage = "typical_percentage"
         case priorityLevel = "priority_level"
         case isEssential = "is_essential"
-        case notes
+        case notes = "notes"
         case forecastedAmount = "forecasted_amount"
         case confidenceLevel = "confidence_level"
         case lockedAllocation = "locked_allocation"
-        case description
+        case description = "description"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -655,19 +656,19 @@ struct Expense: Identifiable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case budgetCategoryId = "budget_category_id"
         case vendorId = "vendor_id"
         case vendorName = "vendor_name"
         case expenseName = "expense_name"
-        case amount
+        case amount = "amount"
         case expenseDate = "expense_date"
         case paymentMethod = "payment_method"
         case paymentStatus = "payment_status"
         case receiptUrl = "receipt_url"
         case invoiceNumber = "invoice_number"
-        case notes
+        case notes = "notes"
         case approvalStatus = "approval_status"
         case approvedBy = "approved_by"
         case approvedAt = "approved_at"
@@ -889,14 +890,14 @@ struct PaymentSchedule: Identifiable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
-        case vendor
+        case vendor = "vendor"
         case paymentDate = "payment_date"
         case paymentAmount = "payment_amount"
-        case notes
+        case notes = "notes"
         case vendorType = "vendor_type"
-        case paid
+        case paid = "paid"
         case paymentType = "payment_type"
         case customAmount = "custom_amount"
         case billingFrequency = "billing_frequency"
@@ -928,13 +929,13 @@ struct CategoryBenchmark: Identifiable, Codable {
     var lastUpdated: Date
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case categoryName = "category_name"
         case typicalPercentage = "typical_percentage"
         case minPercentage = "min_percentage"
         case maxPercentage = "max_percentage"
-        case description
-        case region
+        case description = "description"
+        case region = "region"
         case lastUpdated = "last_updated"
     }
 }
@@ -942,9 +943,9 @@ struct CategoryBenchmark: Identifiable, Codable {
 // MARK: - Enums
 
 enum BudgetPriority: String, Codable, CaseIterable {
-    case high
-    case medium
-    case low
+    case high = "high"
+    case medium = "medium"
+    case low = "low"
 
     var displayName: String {
         switch self {
@@ -964,12 +965,12 @@ enum BudgetPriority: String, Codable, CaseIterable {
 }
 
 enum PaymentStatus: String, Codable, CaseIterable {
-    case pending
-    case partial
-    case paid
-    case overdue
-    case cancelled
-    case refunded
+    case pending = "pending"
+    case partial = "partial"
+    case paid = "paid"
+    case overdue = "overdue"
+    case cancelled = "cancelled"
+    case refunded = "refunded"
 
     var displayName: String {
         switch self {
@@ -995,15 +996,15 @@ enum PaymentStatus: String, Codable, CaseIterable {
 }
 
 enum PaymentMethod: String, Codable, CaseIterable {
-    case cash
+    case cash = "cash"
     case creditCard = "credit_card"
     case debitCard = "debit_card"
     case bankTransfer = "bank_transfer"
-    case check
-    case venmo
-    case zelle
-    case paypal
-    case other
+    case check = "check"
+    case venmo = "venmo"
+    case zelle = "zelle"
+    case paypal = "paypal"
+    case other = "other"
 
     var displayName: String {
         switch self {
@@ -1021,10 +1022,10 @@ enum PaymentMethod: String, Codable, CaseIterable {
 }
 
 enum RecurringFrequency: String, Codable, CaseIterable {
-    case weekly
-    case monthly
-    case quarterly
-    case yearly
+    case weekly = "weekly"
+    case monthly = "monthly"
+    case quarterly = "quarterly"
+    case yearly = "yearly"
 
     var displayName: String {
         switch self {
@@ -1039,11 +1040,11 @@ enum RecurringFrequency: String, Codable, CaseIterable {
 // MARK: - Filter and Sort Options
 
 enum BudgetSortOption: String, CaseIterable {
-    case category
-    case amount
-    case spent
-    case remaining
-    case priority
+    case category = "category"
+    case amount = "amount"
+    case spent = "spent"
+    case remaining = "remaining"
+    case priority = "priority"
     case dueDate = "due_date"
 
     var displayName: String {
@@ -1059,12 +1060,12 @@ enum BudgetSortOption: String, CaseIterable {
 }
 
 enum BudgetFilterOption: String, CaseIterable {
-    case all
+    case all = "all"
     case overBudget = "over_budget"
     case onTrack = "on_track"
     case underBudget = "under_budget"
     case highPriority = "high_priority"
-    case essential
+    case essential = "essential"
 
     var displayName: String {
         switch self {
@@ -1079,11 +1080,11 @@ enum BudgetFilterOption: String, CaseIterable {
 }
 
 enum ExpenseFilterOption: String, CaseIterable {
-    case all
-    case pending
-    case partial
-    case paid
-    case overdue
+    case all = "all"
+    case pending = "pending"
+    case partial = "partial"
+    case paid = "paid"
+    case overdue = "overdue"
     case dueToday = "due_today"
     case dueSoon = "due_soon"
 
@@ -1208,16 +1209,16 @@ struct BudgetItem: Identifiable, Codable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case scenarioId = "scenario_id"
         case itemName = "item_name"
-        case category
-        case subcategory
+        case category = "category"
+        case subcategory = "subcategory"
         case vendorEstimateWithoutTax = "vendor_estimate_without_tax"
         case taxRate = "tax_rate"
         case vendorEstimateWithTax = "vendor_estimate_with_tax"
         case personResponsible = "person_responsible"
-        case notes
+        case notes = "notes"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case eventId = "event_id"
@@ -1242,7 +1243,7 @@ struct SavedScenario: Identifiable, Codable {
     var isTestData: Bool
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case scenarioName = "scenario_name"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -1264,9 +1265,9 @@ struct TaxInfo: Identifiable, Codable {
     var taxRate: Double
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
-        case region
+        case region = "region"
         case taxRate = "tax_rate"
     }
 
@@ -1294,12 +1295,12 @@ struct ExpenseAllocation: Identifiable, Codable {
     let isTestData: Bool?
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case expenseId = "expense_id"
         case budgetItemId = "budget_item_id"
         case allocatedAmount = "allocated_amount"
-        case percentage
-        case notes
+        case percentage = "percentage"
+        case notes = "notes"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case coupleId = "couple_id"
@@ -1325,16 +1326,16 @@ struct Gift: Identifiable, Codable {
     var updatedAt: Date?
 
     private enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
-        case title
-        case amount
-        case type
-        case description
+        case title = "title"
+        case amount = "amount"
+        case type = "type"
+        case description = "description"
         case fromPerson = "from_person"
         case expectedDate = "expected_date"
         case receivedDate = "received_date"
-        case status
+        case status = "status"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -1354,7 +1355,7 @@ struct AffordabilityScenario: Identifiable, Codable {
     var updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case scenarioName = "scenario_name"
         case partner1Monthly = "partner1_monthly"
         case partner2Monthly = "partner2_monthly"
@@ -1493,13 +1494,13 @@ struct ContributionItem: Identifiable, Codable {
     var updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case scenarioId = "scenario_id"
         case contributorName = "contributor_name"
-        case amount
+        case amount = "amount"
         case contributionDate = "contribution_date"
         case contributionType = "contribution_type"
-        case notes
+        case notes = "notes"
         case coupleId = "couple_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"

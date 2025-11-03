@@ -5,162 +5,162 @@ struct CategoryIcons {
 
     // MARK: - Icon Mapping
 
+    private static let iconMap: [String: String] = [
+        // Venue & Location
+        "venue": "building.2.fill",
+        "venues": "building.2.fill",
+        "accommodation": "bed.double.fill",
+        "hotel": "bed.double.fill",
+        
+        // Food & Beverage
+        "catering": "fork.knife",
+        "food": "fork.knife",
+        "food & beverage": "fork.knife",
+        "cake": "birthday.cake.fill",
+        "dessert": "birthday.cake.fill",
+        "bar": "wineglass.fill",
+        "beverage": "wineglass.fill",
+        
+        // Photography & Videography
+        "photography": "camera.fill",
+        "photographer": "camera.fill",
+        "videography": "video.fill",
+        "video": "video.fill",
+        
+        // Entertainment
+        "music": "music.note",
+        "entertainment": "music.note",
+        "dj": "music.note",
+        "band": "music.mic",
+        "live music": "music.mic",
+        
+        // Flowers & Decorations
+        "flowers": "leaf.fill",
+        "floral": "leaf.fill",
+        "decorations": "sparkles",
+        "decor": "sparkles",
+        
+        // Attire & Beauty
+        "attire": "tshirt.fill",
+        "clothing": "tshirt.fill",
+        "dress": "figure.dress.line.vertical.figure",
+        "gown": "figure.dress.line.vertical.figure",
+        "suit": "person.fill",
+        "tuxedo": "person.fill",
+        "hair": "comb.fill",
+        "makeup": "comb.fill",
+        "beauty": "comb.fill",
+        "jewelry": "crown.fill",
+        "accessories": "crown.fill",
+        
+        // Transportation
+        "transportation": "car.fill",
+        "transport": "car.fill",
+        "limo": "car.side.fill",
+        "limousine": "car.side.fill",
+        
+        // Stationery & Paper
+        "invitations": "envelope.fill",
+        "stationery": "envelope.fill",
+        "favors": "gift.fill",
+        "gifts": "gift.fill",
+        
+        // Planning & Services
+        "planner": "calendar.badge.checkmark",
+        "coordinator": "calendar.badge.checkmark",
+        "officiant": "person.2.fill",
+        
+        // Miscellaneous
+        "miscellaneous": "star.fill",
+        "other": "star.fill",
+        "rentals": "house.fill",
+        "rental": "house.fill",
+        "insurance": "shield.fill"
+    ]
+
     /// Returns the SF Symbol icon name for a given category
     static func icon(for category: String) -> String {
-        switch category.lowercased() {
-        // Venue & Location
-        case "venue", "venues":
-            return "building.2.fill"
-        case "accommodation", "hotel":
-            return "bed.double.fill"
-
-        // Food & Beverage
-        case "catering", "food", "food & beverage":
-            return "fork.knife"  // System SF Symbol
-        case "cake", "dessert":
-            return "birthday.cake.fill"
-        case "bar", "beverage":
-            return "wineglass.fill"
-
-        // Photography & Videography
-        case "photography", "photographer":
-            return "camera.fill"
-        case "videography", "video":
-            return "video.fill"
-
-        // Entertainment
-        case "music", "entertainment", "dj":
-            return "music.note"
-        case "band", "live music":
-            return "music.mic"
-
-        // Flowers & Decorations
-        case "flowers", "floral":
-            return "leaf.fill"
-        case "decorations", "decor":
-            return "sparkles"
-
-        // Attire & Beauty
-        case "attire", "clothing":
-            return "tshirt.fill"
-        case "dress", "gown":
-            return "figure.dress.line.vertical.figure"
-        case "suit", "tuxedo":
-            return "person.fill"
-        case "hair", "makeup", "beauty":
-            return "comb.fill"
-        case "jewelry", "accessories":
-            return "crown.fill"
-
-        // Transportation
-        case "transportation", "transport":
-            return "car.fill"
-        case "limo", "limousine":
-            return "car.side.fill"
-
-        // Stationery & Paper
-        case "invitations", "stationery":
-            return "envelope.fill"
-        case "favors", "gifts":
-            return "gift.fill"
-
-        // Planning & Services
-        case "planner", "coordinator":
-            return "calendar.badge.checkmark"
-        case "officiant":
-            return "person.2.fill"
-
-        // Miscellaneous
-        case "miscellaneous", "other":
-            return "star.fill"
-        case "rentals", "rental":
-            return "house.fill"
-        case "insurance":
-            return "shield.fill"
-
-        default:
-            return "dollarsign.circle.fill"
-        }
+        iconMap[category.lowercased()] ?? "dollarsign.circle.fill"
     }
 
     // MARK: - Color Mapping
 
+    private static let colorMap: [String: Color] = [
+        // Venue & Location
+        "venue": .purple,
+        "venues": .purple,
+        "accommodation": .teal,
+        "hotel": .teal,
+        
+        // Food & Beverage
+        "catering": .orange,
+        "food": .orange,
+        "food & beverage": .orange,
+        "cake": .pink,
+        "dessert": .pink,
+        "bar": .red,
+        "beverage": .red,
+        
+        // Photography & Videography
+        "photography": .pink,
+        "photographer": .pink,
+        "videography": .indigo,
+        "video": .indigo,
+        
+        // Entertainment
+        "music": .blue,
+        "entertainment": .blue,
+        "dj": .blue,
+        "band": .cyan,
+        "live music": .cyan,
+        
+        // Flowers & Decorations
+        "flowers": .green,
+        "floral": .green,
+        "decorations": .mint,
+        "decor": .mint,
+        
+        // Attire & Beauty
+        "attire": .indigo,
+        "clothing": .indigo,
+        "dress": .purple,
+        "gown": .purple,
+        "suit": .brown,
+        "tuxedo": .brown,
+        "hair": .pink,
+        "makeup": .pink,
+        "beauty": .pink,
+        "jewelry": .yellow,
+        "accessories": .yellow,
+        
+        // Transportation
+        "transportation": .cyan,
+        "transport": .cyan,
+        "limo": .blue,
+        "limousine": .blue,
+        
+        // Stationery & Paper
+        "invitations": .purple,
+        "stationery": .purple,
+        "favors": .green,
+        "gifts": .green,
+        
+        // Planning & Services
+        "planner": .orange,
+        "coordinator": .orange,
+        "officiant": .blue,
+        
+        // Miscellaneous
+        "miscellaneous": .gray,
+        "other": .gray,
+        "rentals": .brown,
+        "rental": .brown,
+        "insurance": .blue
+    ]
+
     /// Returns the color for a given category
     static func color(for category: String) -> Color {
-        switch category.lowercased() {
-        // Venue & Location
-        case "venue", "venues":
-            return .purple
-        case "accommodation", "hotel":
-            return .teal
-
-        // Food & Beverage
-        case "catering", "food", "food & beverage":
-            return .orange
-        case "cake", "dessert":
-            return .pink
-        case "bar", "beverage":
-            return .red
-
-        // Photography & Videography
-        case "photography", "photographer":
-            return .pink
-        case "videography", "video":
-            return .indigo
-
-        // Entertainment
-        case "music", "entertainment", "dj":
-            return .blue
-        case "band", "live music":
-            return .cyan
-
-        // Flowers & Decorations
-        case "flowers", "floral":
-            return .green
-        case "decorations", "decor":
-            return .mint
-
-        // Attire & Beauty
-        case "attire", "clothing":
-            return .indigo
-        case "dress", "gown":
-            return .purple
-        case "suit", "tuxedo":
-            return .brown
-        case "hair", "makeup", "beauty":
-            return .pink
-        case "jewelry", "accessories":
-            return .yellow
-
-        // Transportation
-        case "transportation", "transport":
-            return .cyan
-        case "limo", "limousine":
-            return .blue
-
-        // Stationery & Paper
-        case "invitations", "stationery":
-            return .purple
-        case "favors", "gifts":
-            return .green
-
-        // Planning & Services
-        case "planner", "coordinator":
-            return .orange
-        case "officiant":
-            return .blue
-
-        // Miscellaneous
-        case "miscellaneous", "other":
-            return .gray
-        case "rentals", "rental":
-            return .brown
-        case "insurance":
-            return .blue
-
-        default:
-            return .gray
-        }
+        colorMap[category.lowercased()] ?? .gray
     }
 
     // MARK: - Badge Component

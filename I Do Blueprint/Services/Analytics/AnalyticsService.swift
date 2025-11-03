@@ -5,6 +5,8 @@
 //  Advanced analytics and insights for visual planning
 //
 
+// swiftlint:disable file_length
+
 import Combine
 import Foundation
 import SwiftUI
@@ -563,7 +565,7 @@ class AnalyticsService: ObservableObject {
         // 4. Calculate: SELECT item_id, COUNT(*) as count FROM exports GROUP BY item_id
         let totalExports = 0
         let chartsWithExports = 0
-        let avgExports = totalExports > 0 && seatingCharts.count > 0
+        let avgExports = totalExports > 0 && !seatingCharts.isEmpty
             ? Double(totalExports) / Double(seatingCharts.count)
             : 0.0
 

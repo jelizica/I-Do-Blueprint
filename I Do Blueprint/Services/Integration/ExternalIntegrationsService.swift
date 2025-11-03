@@ -115,7 +115,7 @@ class ExternalIntegrationsService: ObservableObject {
         let (data, _) = try await urlSession.data(for: request)
         let response = try JSONDecoder().decode(UnsplashSearchResponse.self, from: data)
 
-        response.results.map { photo in
+        return response.results.map { photo in
             InspirationImage(
                 id: photo.id,
                 url: photo.urls.regular,
@@ -181,7 +181,7 @@ class ExternalIntegrationsService: ObservableObject {
                 thumbnailUrl: "https://example.com/thumb2.jpg")
         ]
 
-        mockBoards.filter { board in
+        return mockBoards.filter { board in
             board.name.localizedCaseInsensitiveContains(query) ||
                 board.description.localizedCaseInsensitiveContains(query)
         }
@@ -377,8 +377,8 @@ class ExternalIntegrationsService: ObservableObject {
 // MARK: - Data Models
 
 enum ServiceType: String, CaseIterable {
-    case unsplash
-    case pinterest
+    case unsplash = "unsplash"
+    case pinterest = "pinterest"
     case vendorMarketplace = "vendor_marketplace"
     case cloudStorage = "cloud_storage"
 
@@ -459,9 +459,9 @@ enum ImageSource {
 }
 
 enum ImageOrientation: String {
-    case landscape
-    case portrait
-    case squarish
+    case landscape = "landscape"
+    case portrait = "portrait"
+    case squarish = "squarish"
     case any = ""
 }
 
@@ -486,14 +486,14 @@ struct VendorProduct {
 }
 
 enum VendorCategory: String, CaseIterable {
-    case floral
-    case catering
-    case photography
-    case venue
-    case music
-    case planning
-    case tableware
-    case decor
+    case floral = "floral"
+    case catering = "catering"
+    case photography = "photography"
+    case venue = "venue"
+    case music = "music"
+    case planning = "planning"
+    case tableware = "tableware"
+    case decor = "decor"
 
     var displayName: String {
         rawValue.capitalized
@@ -526,9 +526,9 @@ enum CloudItemType {
 }
 
 enum SocialPlatform: String, CaseIterable {
-    case instagram
-    case pinterest
-    case facebook
+    case instagram = "instagram"
+    case pinterest = "pinterest"
+    case facebook = "facebook"
 
     var displayName: String {
         rawValue.capitalized

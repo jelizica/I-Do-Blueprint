@@ -1,8 +1,15 @@
 import SwiftUI
 
+struct CategoryBenchmarkData {
+    let category: BudgetCategory
+    let spent: Double
+    let percentage: Double
+    let status: BenchmarkStatus
+}
+
 /// Section displaying category performance benchmarks
 struct CategoryBenchmarksSection: View {
-    let benchmarks: [(category: BudgetCategory, spent: Double, percentage: Double, status: BenchmarkStatus)]
+    let benchmarks: [CategoryBenchmarkData]
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {

@@ -123,7 +123,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 // MARK: - App Integration Extension
 
-extension My_Wedding_Planning_AppApp {
+extension IDoBlueprint {
     /// Configure the AppDelegate for Universal Links handling
     func configureAppDelegate() -> some Scene {
         WindowGroup {

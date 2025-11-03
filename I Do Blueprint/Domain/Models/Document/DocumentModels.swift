@@ -31,7 +31,7 @@ struct Document: Codable, Equatable, Identifiable {
     var autoTagError: String?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case originalFilename = "original_filename"
         case storagePath = "storage_path"
@@ -42,7 +42,7 @@ struct Document: Codable, Equatable, Identifiable {
         case vendorId = "vendor_id"
         case expenseId = "expense_id"
         case paymentId = "payment_id"
-        case tags
+        case tags = "tags"
         case uploadedBy = "uploaded_by"
         case uploadedAt = "uploaded_at"
         case updatedAt = "updated_at"
@@ -76,11 +76,11 @@ struct Document: Codable, Equatable, Identifiable {
 // MARK: - Document Type
 
 enum DocumentType: String, Codable, CaseIterable {
-    case contract
-    case invoice
-    case receipt
-    case photo
-    case other
+    case contract = "contract"
+    case invoice = "invoice"
+    case receipt = "receipt"
+    case photo = "photo"
+    case other = "other"
 
     var displayName: String {
         switch self {
@@ -116,7 +116,7 @@ enum DocumentType: String, Codable, CaseIterable {
 // MARK: - Auto Tag Status
 
 enum AutoTagStatus: String, Codable {
-    case manual
+    case manual = "manual"
     case autoPending = "auto_pending"
     case autoComplete = "auto_complete"
     case autoFailed = "auto_failed"
@@ -125,9 +125,9 @@ enum AutoTagStatus: String, Codable {
 // MARK: - Auto Tag Source
 
 enum AutoTagSource: String, Codable {
-    case manual
-    case ai
-    case heuristic
+    case manual = "manual"
+    case ai = "ai"
+    case heuristic = "heuristic"
 }
 
 // MARK: - Document Bucket
@@ -330,7 +330,7 @@ struct DocumentInsertData: Codable {
         case bucketName = "bucket_name"
         case vendorId = "vendor_id"
         case expenseId = "expense_id"
-        case tags
+        case tags = "tags"
         case autoTagStatus = "auto_tag_status"
         case autoTagSource = "auto_tag_source"
         case uploadedBy = "uploaded_by"
@@ -363,8 +363,8 @@ struct DocumentInsertData: Codable {
 // MARK: - View Mode
 
 enum DocumentViewMode: String, CaseIterable {
-    case grid
-    case list
+    case grid = "grid"
+    case list = "list"
 
     var iconName: String {
         switch self {

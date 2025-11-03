@@ -434,13 +434,45 @@ struct ToastView: View {
 // MARK: - Mock for Testing
 
 /// Mock implementation of AlertPresenterProtocol for testing
+struct AlertCall {
+    let title: String
+    let message: String
+    let style: NSAlert.Style
+    let buttons: [String]
+}
+
+struct ConfirmationCall {
+    let title: String
+    let message: String
+    let confirmButton: String
+    let cancelButton: String
+    let style: NSAlert.Style
+}
+
+struct ErrorCall {
+    let title: String
+    let message: String
+    let error: Error?
+}
+
+struct SuccessCall {
+    let title: String
+    let message: String
+}
+
+struct ToastCall {
+    let message: String
+    let type: ToastType
+    let duration: TimeInterval
+}
+
 @MainActor
 class MockAlertPresenter: ObservableObject, AlertPresenterProtocol {
-    var alertCalls: [(title: String, message: String, style: NSAlert.Style, buttons: [String])] = []
-    var confirmationCalls: [(title: String, message: String, confirmButton: String, cancelButton: String, style: NSAlert.Style)] = []
-    var errorCalls: [(title: String, message: String, error: Error?)] = []
-    var successCalls: [(title: String, message: String)] = []
-    var toastCalls: [(message: String, type: ToastType, duration: TimeInterval)] = []
+    var alertCalls: [AlertCall] = []
+    var confirmationCalls: [ConfirmationCall] = []
+    var errorCalls: [ErrorCall] = []
+    var successCalls: [SuccessCall] = []
+    var toastCalls: [ToastCall] = []
 
     var alertResponse: String = "OK"
     var confirmationResponse: Bool = true
@@ -451,7 +483,7 @@ class MockAlertPresenter: ObservableObject, AlertPresenterProtocol {
         style: NSAlert.Style,
         buttons: [String]
     ) async -> String {
-        alertCalls.append((title, message, style, buttons))
+        alertCalls.append(AlertCall(title: title, message: message, style: style, buttons: buttons))
         return alertResponse
     }
 
@@ -462,7 +494,13 @@ class MockAlertPresenter: ObservableObject, AlertPresenterProtocol {
         cancelButton: String,
         style: NSAlert.Style
     ) async -> Bool {
-        confirmationCalls.append((title, message, confirmButton, cancelButton, style))
+        confirmationCalls.append(ConfirmationCall(
+            title: title,
+            message: message,
+            confirmButton: confirmButton,
+            cancelButton: cancelButton,
+            style: style
+        ))
         return confirmationResponse
     }
 
@@ -471,14 +509,14 @@ class MockAlertPresenter: ObservableObject, AlertPresenterProtocol {
         message: String,
         error: Error?
     ) async {
-        errorCalls.append((title, message, error))
+        errorCalls.append(ErrorCall(title: title, message: message, error: error))
     }
 
     func showSuccess(
         title: String,
         message: String
     ) async {
-        successCalls.append((title, message))
+        successCalls.append(SuccessCall(title: title, message: message))
     }
 
     func showToast(
@@ -486,7 +524,7 @@ class MockAlertPresenter: ObservableObject, AlertPresenterProtocol {
         type: ToastType,
         duration: TimeInterval
     ) {
-        toastCalls.append((message, type, duration))
+        toastCalls.append(ToastCall(message: message, type: type, duration: duration))
     }
 
     func showSuccessToast(_ message: String, duration: TimeInterval = 3.0) {

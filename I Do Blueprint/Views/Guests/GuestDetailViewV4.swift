@@ -5,6 +5,8 @@
 //  Modern modal guest detail view with gradient header
 //
 
+// swiftlint:disable file_length
+
 import SwiftUI
 
 struct GuestDetailViewV4: View {

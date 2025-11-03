@@ -619,9 +619,9 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     case vendorCategoryId = "vendor_category_id"
                     case contactName = "contact_name"
                     case phoneNumber = "phone_number"
-                    case email
-                    case website
-                    case notes
+                    case email = "email"
+                    case website = "website"
+                    case notes = "notes"
                     case quotedAmount = "quoted_amount"
                     case imageUrl = "image_url"
                     case isBooked = "is_booked"
@@ -632,12 +632,12 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     case includeInExport = "include_in_export"
                     case streetAddress = "street_address"
                     case streetAddress2 = "street_address_2"
-                    case city
-                    case state
+                    case city = "city"
+                    case state = "state"
                     case postalCode = "postal_code"
-                    case country
-                    case latitude
-                    case longitude
+                    case country = "country"
+                    case latitude = "latitude"
+                    case longitude = "longitude"
                 }
             }
 

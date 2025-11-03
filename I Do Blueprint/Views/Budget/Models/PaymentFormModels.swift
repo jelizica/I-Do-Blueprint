@@ -5,7 +5,7 @@ import SwiftUI
 // MARK: - Payment Type Enum
 
 enum PaymentType: String, CaseIterable {
-    case individual
+    case individual = "individual"
     case monthly = "simple-recurring"
     case interval = "interval-recurring"
     case cyclical = "cyclical-recurring"

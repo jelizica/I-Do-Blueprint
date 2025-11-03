@@ -1,8 +1,10 @@
+// swiftlint:disable file_length
 import Foundation
 import Supabase
 
 /// Production implementation of BudgetRepositoryProtocol
 /// Uses Supabase client for all data operations with automatic caching
+// swiftlint:disable type_body_length
 actor LiveBudgetRepository: BudgetRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
@@ -292,7 +294,7 @@ await SentryService.shared.captureError(error, context: [
                         let vendorName: String
 
                         enum CodingKeys: String, CodingKey {
-                            case id
+                            case id = "id"
                             case vendorName = "vendor_name"
                         }
                     }
@@ -420,13 +422,13 @@ await SentryService.shared.captureError(error, context: [
                     case budgetCategoryId = "budget_category_id"
                     case vendorId = "vendor_id"
                     case expenseName = "expense_name"
-                    case amount
+                    case amount = "amount"
                     case expenseDate = "expense_date"
                     case paymentMethod = "payment_method"
                     case paymentStatus = "payment_status"
                     case receiptUrl = "receipt_url"
                     case invoiceNumber = "invoice_number"
-                    case notes
+                    case notes = "notes"
                     case approvalStatus = "approval_status"
                     case approvedBy = "approved_by"
                     case approvedAt = "approved_at"
@@ -654,16 +656,16 @@ await SentryService.shared.captureError(error, context: [
                 let updatedAt: Date?
 
                 enum CodingKeys: String, CodingKey {
-                    case coupleId = "couple_id"
-                    case vendor
-                    case paymentDate = "payment_date"
-                    case paymentAmount = "payment_amount"
-                    case notes
-                    case vendorType = "vendor_type"
-                    case paid
-                    case paymentType = "payment_type"
-                    case customAmount = "custom_amount"
-                    case billingFrequency = "billing_frequency"
+                case coupleId = "couple_id"
+                case vendor = "vendor"
+                case paymentDate = "payment_date"
+                case paymentAmount = "payment_amount"
+                case notes = "notes"
+                case vendorType = "vendor_type"
+                case paid = "paid"
+                case paymentType = "payment_type"
+                case customAmount = "custom_amount"
+                case billingFrequency = "billing_frequency"
                     case autoRenew = "auto_renew"
                     case startDate = "start_date"
                     case reminderEnabled = "reminder_enabled"
@@ -2089,7 +2091,9 @@ await SentryService.shared.captureError(error, context: [
         }
         guard let first = results.first,
               !first.scenario_id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw BudgetError.updateFailed(underlying: NSError(domain: "LiveBudgetRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "RPC returned no or empty scenario_id"]))
+            let errorInfo = [NSLocalizedDescriptionKey: "RPC returned no or empty scenario_id"]
+            let error = NSError(domain: "LiveBudgetRepository", code: -1, userInfo: errorInfo)
+            throw BudgetError.updateFailed(underlying: error)
         }
 
         // Resolve tenant id explicitly so errors propagate (don't silently use empty string)

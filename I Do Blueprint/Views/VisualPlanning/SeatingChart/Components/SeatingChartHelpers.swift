@@ -35,7 +35,7 @@ extension SeatingChart {
             }
         }
         // Divide by 2 since each conflict is counted twice
-        conflictCount = conflictCount / 2
+        conflictCount /= 2
 
         // Calculate satisfied preferences
         var satisfiedPreferences = 0
