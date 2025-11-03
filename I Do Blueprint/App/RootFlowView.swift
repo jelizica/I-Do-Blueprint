@@ -15,15 +15,15 @@ struct RootFlowView: View {
     @StateObject private var supabaseManager = SupabaseManager.shared
 
     // Use shared coordinator instance
-    @StateObject private var coordinator: AppCoordinator = AppCoordinator.shared
+    @StateObject private var coordinator = AppCoordinator.shared
     @StateObject private var sessionManager = SessionManager.shared
 
     // Directly observe onboarding store for completion changes
     @ObservedObject private var onboardingStore = AppStores.shared.onboarding
 
-    @State private var needsOnboarding: Bool? = nil
+    @State private var needsOnboarding: Bool?
     @State private var isCheckingOnboarding = false
-    @State private var currentTenantId: UUID? = nil
+    @State private var currentTenantId: UUID?
 
     // JES-196: staged post-onboarding loader
     @StateObject private var postOnboardingLoader = PostOnboardingLoader()
