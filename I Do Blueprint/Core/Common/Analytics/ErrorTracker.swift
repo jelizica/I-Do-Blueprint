@@ -36,9 +36,9 @@ actor ErrorTracker {
         let contextInfo: [String: String]
 
         enum ErrorOutcome: String, Codable {
-            case resolved      // Error was retried and succeeded
-            case failed        // Error was not retryable or all retries failed
-            case cached        // Used cached data as fallback
+            case resolved = "resolved"    // Error was retried and succeeded
+            case failed = "failed"        // Error was not retryable or all retries failed
+            case cached = "cached"        // Used cached data as fallback
         }
     }
 

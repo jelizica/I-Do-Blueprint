@@ -9,8 +9,8 @@ struct FeatureFlagsResponse: Codable {
     let updatedAt: Date
 
     enum CodingKeys: String, CodingKey {
-        case flags
-        case version
+        case flags = "flags"
+        case version = "version"
         case updatedAt = "updated_at"
     }
 }
