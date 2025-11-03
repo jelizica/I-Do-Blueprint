@@ -175,7 +175,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
 
     func updateOnboardingProgress(_ progress: OnboardingProgress) async throws -> OnboardingProgress {
         // Update is the same as save for this implementation
-        return try await saveOnboardingProgress(progress)
+        try await saveOnboardingProgress(progress)
     }
 
     // MARK: - Complete Onboarding
@@ -197,7 +197,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
         progress.updatedAt = Date()
 
         // Save the completed progress
-        return try await saveOnboardingProgress(progress)
+        try await saveOnboardingProgress(progress)
     }
 
     // MARK: - Delete Onboarding Progress

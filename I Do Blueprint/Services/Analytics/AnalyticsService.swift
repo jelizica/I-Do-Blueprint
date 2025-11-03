@@ -353,7 +353,7 @@ class AnalyticsService: ObservableObject {
 
         let hues = colors.map { color -> Double in
             // Extract hue from Color using HSB color space
-            return extractHue(from: color)
+            extractHue(from: color)
         }
 
         let hueDifferences = zip(hues, hues.dropFirst()).map { abs($0.0 - $0.1) }
