@@ -261,7 +261,7 @@ actor RepositoryCache {
     /// - Returns: Dictionary with cache keys
     func stats() -> [String: Any] {
         // Return a dictionary with keys property for backward compatibility
-        return ["keys": Array(cache.keys)]
+        ["keys": Array(cache.keys)]
     }
 }
 

@@ -63,15 +63,15 @@ class ExternalIntegrationsService: ObservableObject {
     // MARK: - API Key Access (Secure)
 
     private func getUnsplashAPIKey() -> String? {
-        return apiKeyManager.getAPIKey(for: .unsplash)
+        apiKeyManager.getAPIKey(for: .unsplash)
     }
 
     private func getPinterestAPIKey() -> String? {
-        return apiKeyManager.getAPIKey(for: .pinterest)
+        apiKeyManager.getAPIKey(for: .pinterest)
     }
 
     private func getVendorAPIKey() -> String? {
-        return apiKeyManager.getAPIKey(for: .vendor)
+        apiKeyManager.getAPIKey(for: .vendor)
     }
 
     // MARK: - Unsplash Integration
@@ -115,7 +115,7 @@ class ExternalIntegrationsService: ObservableObject {
         let (data, _) = try await urlSession.data(for: request)
         let response = try JSONDecoder().decode(UnsplashSearchResponse.self, from: data)
 
-        return response.results.map { photo in
+        response.results.map { photo in
             InspirationImage(
                 id: photo.id,
                 url: photo.urls.regular,
@@ -181,7 +181,7 @@ class ExternalIntegrationsService: ObservableObject {
                 thumbnailUrl: "https://example.com/thumb2.jpg")
         ]
 
-        return mockBoards.filter { board in
+        mockBoards.filter { board in
             board.name.localizedCaseInsensitiveContains(query) ||
                 board.description.localizedCaseInsensitiveContains(query)
         }

@@ -71,7 +71,7 @@ class SecureAPIKeyManager: ObservableObject {
     }
 
     private func hasKey(for type: APIKeyType) -> Bool {
-        return getAPIKey(for: type) != nil
+        getAPIKey(for: type) != nil
     }
 
     // MARK: - Get API Key

@@ -45,15 +45,7 @@ class OnboardingStoreV2: ObservableObject {
     }
 
     var progressPercentage: Double {
-        let totalSteps: Int
-        if selectedMode == .express {
-            // Express flow has 4 steps: welcome, weddingDetails, budgetSetup, completion
-            totalSteps = 4
-        } else {
-            // Guided flow has all steps
-            totalSteps = OnboardingStep.allCases.count
-        }
-
+        let totalSteps: Int = selectedMode == .express ? 4 : OnboardingStep.allCases.count
         let completed = completedSteps.count
         return Double(completed) / Double(totalSteps)
     }
