@@ -7,7 +7,7 @@ struct My_Wedding_Planning_AppApp: App {
     @StateObject private var appStores = AppStores.shared
     @StateObject private var supabaseManager = SupabaseManager.shared
     @State private var credentialsCheckFailed = false
-    @State private var externalConfigError: ConfigurationError? = nil
+    @State private var externalConfigError: ConfigurationError?
 
     // MARK: - Initialization
 

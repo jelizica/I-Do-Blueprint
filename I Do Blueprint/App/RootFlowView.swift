@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+// swiftlint:disable file_types_order
 
 /// Root flow view that handles authentication and tenant selection state
 /// This centralizes the branching logic that was previously duplicated between App and ContentView

@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+// swiftlint:disable file_types_order
 
 // MARK: - Spacing
 
