@@ -15,7 +15,7 @@ struct TimelineViewV2: View {
     @State private var selectedMilestone: Milestone?
     @State private var showingFilters = false
     @State private var scrollOffset: CGFloat = 0
-    @State private var selectedDate: Date = Date()
+    @State private var selectedDate = Date()
 
     private let logger = AppLogger.ui
 

@@ -28,7 +28,7 @@ enum RepositoryNetwork {
         operation: @escaping () async throws -> T
     ) async throws -> T {
         // Use the global withRetry function with timeout handling
-        return try await I_Do_Blueprint.withRetry(policy: policy, operationName: "RepositoryNetwork") {
+        try await I_Do_Blueprint.withRetry(policy: policy, operationName: "RepositoryNetwork") {
             // Wrap operation with timeout using TaskGroup
             try await withThrowingTaskGroup(of: T.self) { group in
                 // Add the main operation
