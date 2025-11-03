@@ -12,11 +12,11 @@ struct CoupleCreationView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var sessionManager = SessionManager.shared
 
-    @State private var partner1Name: String = ""
-    @State private var partner2Name: String = ""
-    @State private var weddingDate: Date = Date()
-    @State private var hasWeddingDate: Bool = false
-    @State private var isLoading: Bool = false
+    @State private var partner1Name = ""
+    @State private var partner2Name = ""
+    @State private var weddingDate = Date()
+    @State private var hasWeddingDate = false
+    @State private var isLoading = false
     @State private var errorMessage: String?
 
     var onComplete: (() -> Void)?
