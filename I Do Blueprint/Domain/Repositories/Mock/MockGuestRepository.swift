@@ -109,14 +109,14 @@ class MockGuestRepository: GuestRepositoryProtocol {
                 guest.phone?.contains(query) == true
         }
     }
-    
+
     func importGuests(_ guests: [Guest]) async throws -> [Guest] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
-        
+
         // Add all guests to the storage
         self.guests.append(contentsOf: guests)
-        
+
         // Return the imported guests (simulating database insert with IDs)
         return guests
     }

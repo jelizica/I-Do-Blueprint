@@ -11,10 +11,10 @@ struct CollaboratorDetailSheet: View {
     let collaborator: Collaborator
     @ObservedObject var store: CollaborationStoreV2
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var showingDeleteConfirmation = false
     @State private var selectedRole: CollaborationRole?
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -23,12 +23,12 @@ struct CollaboratorDetailSheet: View {
                     LabeledContent("Name", value: collaborator.name)
                     LabeledContent("Email", value: collaborator.email)
                     LabeledContent("Status", value: collaborator.status.rawValue.capitalized)
-                    
+
                     if let acceptedAt = collaborator.acceptedAt {
                         LabeledContent("Joined", value: acceptedAt.formatted(date: .abbreviated, time: .omitted))
                     }
                 }
-                
+
                 // Role Management
                 if store.canManageRoles && collaborator.status == .active {
                     Section("Role") {
@@ -44,7 +44,7 @@ struct CollaboratorDetailSheet: View {
                         }
                     }
                 }
-                
+
                 // Actions
                 if store.canManageRoles {
                     Section {
@@ -78,13 +78,13 @@ struct CollaboratorDetailSheet: View {
             }
         }
     }
-    
+
     private func updateRole(_ role: CollaborationRole) {
         Task {
             await store.updateCollaboratorRole(id: collaborator.id, roleId: role.id)
         }
     }
-    
+
     private func removeCollaborator() {
         Task {
             await store.removeCollaborator(id: collaborator.id)

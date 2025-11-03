@@ -5,9 +5,9 @@ struct BudgetAnalyticsView: View {
     @EnvironmentObject private var budgetStore: BudgetStoreV2
     @State private var selectedTimeframe: AnalyticsTimeframe = .sixMonths
     @State private var selectedChartType: ChartType = .categoryBreakdown
-    
+
     private let logger = AppLogger.ui
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -16,7 +16,7 @@ struct BudgetAnalyticsView: View {
                     BudgetAnalyticsHeader(
                         summary: budgetStore.budgetSummary,
                         stats: budgetStore.stats)
-                    
+
                     // Chart controls
                     VStack(spacing: 12) {
                         HStack {
@@ -26,9 +26,9 @@ struct BudgetAnalyticsView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
-                            
+
                             Spacer()
-                            
+
                             Picker("Timeframe", selection: $selectedTimeframe) {
                                 ForEach(AnalyticsTimeframe.allCases, id: \.self) { timeframe in
                                     Text(timeframe.displayName).tag(timeframe)
@@ -38,7 +38,7 @@ struct BudgetAnalyticsView: View {
                         }
                     }
                     .padding(.horizontal)
-                    
+
                     // Main chart
                     ChartContainerView(
                         chartType: selectedChartType,
@@ -46,7 +46,7 @@ struct BudgetAnalyticsView: View {
                         categories: budgetStore.categories,
                         expenses: budgetStore.expenses,
                         benchmarks: budgetStore.categoryBenchmarks)
-                    
+
                     // Insights and recommendations
                     BudgetInsightsView(
                         categories: budgetStore.categories,

@@ -18,13 +18,13 @@ struct CollaborationRole: Identifiable, Codable, Sendable, Hashable {
     let canDelete: Bool
     let canInvite: Bool
     let canManageRoles: Bool
-    
+
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case roleName = "role_name"
-        case description
+        case description = "description"
         case canEdit = "can_edit"
         case canDelete = "can_delete"
         case canInvite = "can_invite"
@@ -34,11 +34,11 @@ struct CollaborationRole: Identifiable, Codable, Sendable, Hashable {
 
 /// Predefined collaboration roles
 enum RoleName: String, Codable, Sendable, CaseIterable {
-    case owner
-    case partner
-    case planner
-    case viewer
-    
+    case owner = "owner"
+    case partner = "partner"
+    case planner = "planner"
+    case viewer = "viewer"
+
     var displayName: String {
         switch self {
         case .owner: return "Owner"
@@ -47,7 +47,7 @@ enum RoleName: String, Codable, Sendable, CaseIterable {
         case .viewer: return "Viewer"
         }
     }
-    
+
     var description: String {
         switch self {
         case .owner:
@@ -60,21 +60,29 @@ enum RoleName: String, Codable, Sendable, CaseIterable {
             return "Read-only access to wedding details"
         }
     }
-    
+
     /// Default permissions for each role
-    var permissions: (canEdit: Bool, canDelete: Bool, canInvite: Bool, canManageRoles: Bool) {
+    var permissions: RolePermissions {
         switch self {
         case .owner:
-            return (true, true, true, true)
+            return RolePermissions(canEdit: true, canDelete: true, canInvite: true, canManageRoles: true)
         case .partner:
-            return (true, true, true, false)
+            return RolePermissions(canEdit: true, canDelete: true, canInvite: true, canManageRoles: false)
         case .planner:
-            return (true, false, false, false)
+            return RolePermissions(canEdit: true, canDelete: false, canInvite: false, canManageRoles: false)
         case .viewer:
-            return (false, false, false, false)
+            return RolePermissions(canEdit: false, canDelete: false, canInvite: false, canManageRoles: false)
         }
     }
 }
+
+struct RolePermissions: Codable, Sendable, Hashable {
+    let canEdit: Bool
+    let canDelete: Bool
+    let canInvite: Bool
+    let canManageRoles: Bool
+}
+
 
 // MARK: - Test Helpers
 

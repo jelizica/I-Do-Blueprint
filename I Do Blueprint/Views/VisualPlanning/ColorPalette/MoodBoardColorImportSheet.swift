@@ -11,61 +11,61 @@ struct MoodBoardColorImportSheet: View {
     let moodBoards: [MoodBoard]
     let onImport: ([Color]) -> Void
     let onDismiss: () -> Void
-    
+
     @State private var selectedMoodBoardId: UUID?
     @State private var extractedColors: [Color] = []
     @State private var selectedColors: Set<String> = []
-    
+
     private let logger = AppLogger.ui
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
             headerSection
-            
+
             Divider()
-            
+
             // Content
             HStack(spacing: 0) {
                 // Mood board list
                 moodBoardListSection
-                
+
                 Divider()
-                
+
                 // Extracted colors
                 extractedColorsSection
             }
-            
+
             Divider()
-            
+
             // Footer
             footerSection
         }
         .frame(width: 700, height: 500)
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         HStack {
             Text("Import Colors from Mood Board")
                 .font(Typography.heading)
-            
+
             Spacer()
         }
         .padding()
     }
-    
+
     // MARK: - Mood Board List Section
-    
+
     private var moodBoardListSection: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Select Mood Board")
                 .font(Typography.subheading)
                 .padding()
-            
+
             Divider()
-            
+
             ScrollView {
                 VStack(spacing: Spacing.sm) {
                     ForEach(moodBoards, id: \.id) { moodBoard in
@@ -82,9 +82,9 @@ struct MoodBoardColorImportSheet: View {
         }
         .frame(width: 300)
     }
-    
+
     // MARK: - Extracted Colors Section
-    
+
     private var extractedColorsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             if extractedColors.isEmpty {
@@ -92,7 +92,7 @@ struct MoodBoardColorImportSheet: View {
                     Image(systemName: "paintpalette")
                         .font(.system(size: 48))
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Text("Select a mood board to extract colors")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textSecondary)
@@ -103,16 +103,16 @@ struct MoodBoardColorImportSheet: View {
                     HStack {
                         Text("Extracted Colors")
                             .font(Typography.subheading)
-                        
+
                         Spacer()
-                        
+
                         Text("\(selectedColors.count) selected")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
                     .padding(.horizontal)
                     .padding(.top)
-                    
+
                     ScrollView {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 4), spacing: Spacing.md) {
                             ForEach(extractedColors, id: \.hexString) { color in
@@ -130,18 +130,18 @@ struct MoodBoardColorImportSheet: View {
             }
         }
     }
-    
+
     // MARK: - Footer Section
-    
+
     private var footerSection: some View {
         HStack {
             Button("Cancel") {
                 onDismiss()
             }
             .buttonStyle(.bordered)
-            
+
             Spacer()
-            
+
             Button("Import \(selectedColors.count) Colors") {
                 let colorsToImport = extractedColors.filter { selectedColors.contains($0.hexString) }
                 onImport(colorsToImport)
@@ -151,23 +151,23 @@ struct MoodBoardColorImportSheet: View {
         }
         .padding()
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func selectMoodBoard(_ moodBoard: MoodBoard) {
         selectedMoodBoardId = moodBoard.id
         extractColors(from: moodBoard)
     }
-    
+
     private func extractColors(from moodBoard: MoodBoard) {
         extractedColors = []
         selectedColors = []
-        
+
         var colors: [Color] = []
-        
+
         // Add background color
         colors.append(moodBoard.backgroundColor)
-        
+
         // Extract colors from elements
         for element in moodBoard.elements {
             switch element.elementType {
@@ -179,17 +179,17 @@ struct MoodBoardColorImportSheet: View {
                 break
             }
         }
-        
+
         // Remove duplicates and limit to 20 colors
         let uniqueColors = Array(Set(colors.map { $0.hexString }))
             .compactMap { Color(hex: $0) }
             .prefix(20)
-        
+
         extractedColors = Array(uniqueColors)
-        
+
         logger.info("Extracted \(extractedColors.count) colors from mood board: \(moodBoard.boardName)")
     }
-    
+
     private func toggleColorSelection(_ color: Color) {
         if selectedColors.contains(color.hexString) {
             selectedColors.remove(color.hexString)
@@ -205,7 +205,7 @@ struct MoodBoardRow: View {
     let moodBoard: MoodBoard
     let isSelected: Bool
     let onSelect: () -> Void
-    
+
     var body: some View {
         Button(action: onSelect) {
             HStack {
@@ -213,14 +213,14 @@ struct MoodBoardRow: View {
                     Text(moodBoard.boardName)
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("\(moodBoard.elements.count) elements")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
-                
+
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(AppColors.primary)
@@ -241,7 +241,7 @@ struct ColorSelectionCard: View {
     let color: Color
     let isSelected: Bool
     let onToggle: () -> Void
-    
+
     var body: some View {
         Button(action: onToggle) {
             VStack(spacing: Spacing.xs) {
@@ -251,7 +251,7 @@ struct ColorSelectionCard: View {
                     .overlay(
                         Circle()
                             .stroke(isSelected ? AppColors.primary : AppColors.textPrimary.opacity(0.1), lineWidth: isSelected ? 3 : 1))
-                
+
                 Text(color.hexString)
                     .font(.system(.caption2, design: .monospaced))
                     .foregroundColor(AppColors.textSecondary)

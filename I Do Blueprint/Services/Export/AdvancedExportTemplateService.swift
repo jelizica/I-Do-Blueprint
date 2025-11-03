@@ -5,6 +5,8 @@
 //  Advanced export templates and customization for professional presentations
 //
 
+// swiftlint:disable file_length
+
 import Combine
 import Foundation
 import PDFKit
@@ -431,10 +433,10 @@ actor ExportGenerator {
                 moodBoard: moodBoard,
                 branding: branding
             )
-            
+
             let detailsRenderer = ImageRenderer(content: detailsView)
             detailsRenderer.scale = 2.0
-            
+
             if let detailsImage = detailsRenderer.nsImage,
                let detailsPage = PDFPage(image: detailsImage) {
                 pages.append(detailsPage)
@@ -611,7 +613,7 @@ enum ExportCategory: String, CaseIterable, Codable {
     case moodBoard = "mood_board"
     case colorPalette = "color_palette"
     case seatingChart = "seating_chart"
-    case comprehensive
+    case comprehensive = "comprehensive"
 
     var displayName: String {
         switch self {
@@ -633,10 +635,10 @@ enum ExportCategory: String, CaseIterable, Codable {
 }
 
 enum ExportFormat: String, CaseIterable, Codable {
-    case pdf
-    case png
-    case jpeg
-    case svg
+    case pdf = "pdf"
+    case png = "png"
+    case jpeg = "jpeg"
+    case svg = "svg"
 
     var displayName: String {
         rawValue.uppercased()
@@ -658,15 +660,15 @@ enum ExportFormat: String, CaseIterable, Codable {
 enum TemplateFeature: String, CaseIterable, Codable {
     case coverPage = "cover_page"
     case tableOfContents = "table_of_contents"
-    case metadata
-    case descriptions
+    case metadata = "metadata"
+    case descriptions = "descriptions"
     case colorPalette = "color_palette"
     case styleGuide = "style_guide"
     case hexCodes = "hex_codes"
     case colorNames = "color_names"
     case usageGuide = "usage_guide"
-    case accessibility
-    case printing
+    case accessibility = "accessibility"
+    case printing = "printing"
     case cmykValues = "cmyk_values"
     case pantoneMatching = "pantone_matching"
     case printOptimized = "print_optimized"
@@ -674,14 +676,14 @@ enum TemplateFeature: String, CaseIterable, Codable {
     case tableDetails = "table_details"
     case specialRequirements = "special_requirements"
     case decorativeElements = "decorative_elements"
-    case measurements
+    case measurements = "measurements"
     case staffNotes = "staff_notes"
     case accessibilityInfo = "accessibility_info"
     case emergencyExits = "emergency_exits"
-    case specifications
-    case requirements
+    case specifications = "specifications"
+    case requirements = "requirements"
     case contactInfo = "contact_info"
-    case timeline
+    case timeline = "timeline"
     case vendorContacts = "vendor_contacts"
     case budgetAllocation = "budget_allocation"
     case moodBoards = "mood_boards"
@@ -689,7 +691,7 @@ enum TemplateFeature: String, CaseIterable, Codable {
     case seatingCharts = "seating_charts"
     case collageLayout = "collage_layout"
     case socialOptimized = "social_optimized"
-    case branding
+    case branding = "branding"
 
     var displayName: String {
         rawValue.replacingOccurrences(of: "_", with: " ").capitalized

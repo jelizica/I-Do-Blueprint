@@ -23,14 +23,14 @@ struct Collaborator: Identifiable, Codable, Sendable, Hashable {
     var displayName: String?
     var avatarUrl: String?
     var lastSeenAt: Date?
-    
+
     // Computed property for full name fallback
     var name: String {
         displayName ?? email
     }
-    
+
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case coupleId = "couple_id"
@@ -39,8 +39,8 @@ struct Collaborator: Identifiable, Codable, Sendable, Hashable {
         case invitedBy = "invited_by"
         case invitedAt = "invited_at"
         case acceptedAt = "accepted_at"
-        case status
-        case email
+        case status = "status"
+        case email = "email"
         case displayName = "display_name"
         case avatarUrl = "avatar_url"
         case lastSeenAt = "last_seen_at"
@@ -49,10 +49,10 @@ struct Collaborator: Identifiable, Codable, Sendable, Hashable {
 
 /// Collaborator status
 enum CollaboratorStatus: String, Codable, Sendable {
-    case pending
-    case active
-    case inactive
-    case revoked
+    case pending = "pending"
+    case active = "active"
+    case inactive = "inactive"
+    case revoked = "revoked"
 }
 
 // MARK: - Test Helpers

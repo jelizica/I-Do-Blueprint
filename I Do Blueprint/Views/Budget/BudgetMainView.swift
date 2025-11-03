@@ -10,9 +10,9 @@ struct BudgetMainView: View {
             // Sidebar with all navigation items (all 12 views accessible)
             BudgetSidebarView(selection: $selectedItem)
                 .frame(width: 240)
-            
+
             Divider()
-            
+
             // Content area - all 12 views preserved
             Group {
                 switch selectedItem {
@@ -216,9 +216,13 @@ struct BudgetSettingsView: View {
                 .padding(.horizontal)
 
                 Text(
-                    "Note: These settings integrate with the main Settings page referenced in the Next.js components. Full functionality includes Global Settings and Budget Settings tabs.")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    """
+                    Note: These settings integrate with the main Settings page referenced in the Next.js components. \
+                    Full functionality includes Global Settings and Budget Settings tabs.
+                    """
+                )
+                .font(.caption)
+                .foregroundStyle(.tertiary)
                     .padding()
             }
         }

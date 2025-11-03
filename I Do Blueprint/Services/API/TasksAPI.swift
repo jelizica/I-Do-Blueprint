@@ -122,7 +122,7 @@ class TasksAPI {
 
     func createSubtask(taskId: UUID, data: SubtaskInsertData) async throws -> Subtask {
         let client = try getClient()
-        
+
         // Create a subtask insert struct
         struct SubtaskInsert: Encodable {
             let taskId: String
@@ -134,9 +134,9 @@ class TasksAPI {
             enum CodingKeys: String, CodingKey {
                 case taskId = "task_id"
                 case subtaskName = "subtask_name"
-                case status
+                case status = "status"
                 case assignedTo = "assigned_to"
-                case notes
+                case notes = "notes"
             }
         }
 
@@ -160,7 +160,7 @@ class TasksAPI {
 
     func updateSubtask(_ id: UUID, data: SubtaskInsertData) async throws -> Subtask {
         let client = try getClient()
-        
+
         // Create a subtask update struct
         struct SubtaskUpdate: Encodable {
             let subtaskName: String
@@ -170,9 +170,9 @@ class TasksAPI {
 
             enum CodingKeys: String, CodingKey {
                 case subtaskName = "subtask_name"
-                case status
+                case status = "status"
                 case assignedTo = "assigned_to"
-                case notes
+                case notes = "notes"
             }
         }
 

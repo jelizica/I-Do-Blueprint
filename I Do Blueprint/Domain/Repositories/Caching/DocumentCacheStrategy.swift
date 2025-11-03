@@ -9,7 +9,7 @@ import Foundation
 
 actor DocumentCacheStrategy: CacheInvalidationStrategy {
     private let cache = RepositoryCache.shared
-    
+
     func invalidate(for operation: CacheOperation) async {
         switch operation {
         case .documentCreated(let tenantId), .documentUpdated(let tenantId), .documentDeleted(let tenantId):
@@ -17,7 +17,7 @@ actor DocumentCacheStrategy: CacheInvalidationStrategy {
         default: break
         }
     }
-    
+
     private func invalidateDocumentCaches(tenantId: UUID) async {
         let id = tenantId.uuidString
         await cache.remove("documents_\(id)")

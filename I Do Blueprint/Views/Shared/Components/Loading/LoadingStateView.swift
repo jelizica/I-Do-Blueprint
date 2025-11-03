@@ -13,35 +13,35 @@ enum LoadingState<T> {
     case loading
     case loaded(T)
     case error(Error)
-    
+
     var isIdle: Bool {
         if case .idle = self {
             return true
         }
         return false
     }
-    
+
     var isLoading: Bool {
         if case .loading = self {
             return true
         }
         return false
     }
-    
+
     var hasError: Bool {
         if case .error = self {
             return true
         }
         return false
     }
-    
+
     var data: T? {
         if case .loaded(let data) = self {
             return data
         }
         return nil
     }
-    
+
     var error: Error? {
         if case .error(let error) = self {
             return error
@@ -57,7 +57,7 @@ struct LoadingStateView<Content: View, Data>: View {
     let content: (Data) -> Content
     let onRetry: (() -> Void)?
     let emptyState: (() -> AnyView)?
-    
+
     init(
         state: LoadingState<Data>,
         @ViewBuilder content: @escaping (Data) -> Content,
@@ -69,7 +69,7 @@ struct LoadingStateView<Content: View, Data>: View {
         self.onRetry = onRetry
         self.emptyState = emptyState
     }
-    
+
     var body: some View {
         switch state {
         case .idle:
@@ -78,13 +78,13 @@ struct LoadingStateView<Content: View, Data>: View {
             } else {
                 EmptyView()
             }
-            
+
         case .loading:
             LoadingView(message: "Loading...")
-            
+
         case .loaded(let data):
             content(data)
-            
+
         case .error(let error):
             ErrorStateView(
                 error: error,
@@ -97,17 +97,17 @@ struct LoadingStateView<Content: View, Data>: View {
 /// Simple loading view with spinner and message
 struct LoadingView: View {
     let message: String
-    
+
     init(message: String = "Loading...") {
         self.message = message
     }
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             ProgressView()
                 .scaleEffect(1.5)
                 .progressViewStyle(.circular)
-            
+
             Text(message)
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
@@ -122,16 +122,16 @@ struct LoadingView: View {
 /// Inline loading indicator for smaller spaces
 struct InlineLoadingView: View {
     let message: String?
-    
+
     init(message: String? = nil) {
         self.message = message
     }
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             ProgressView()
                 .scaleEffect(0.8)
-            
+
             if let message = message {
                 Text(message)
                     .font(Typography.bodySmall)

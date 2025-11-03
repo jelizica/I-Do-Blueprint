@@ -10,7 +10,7 @@ import SwiftUI
 struct TasksDetailedView: View {
     @ObservedObject var store: TaskStoreV2
     @State private var selectedFilter: TaskFilter = .all
-    
+
     enum TaskFilter: String, CaseIterable {
         case all = "All"
         case urgent = "Urgent"
@@ -18,7 +18,7 @@ struct TasksDetailedView: View {
         case inProgress = "In Progress"
         case completed = "Completed"
     }
-    
+
     private var filteredTasks: [WeddingTask] {
         switch selectedFilter {
         case .all:
@@ -33,7 +33,7 @@ struct TasksDetailedView: View {
             return store.tasks.filter { $0.status == .completed }
         }
     }
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             // Summary Cards
@@ -44,21 +44,21 @@ struct TasksDetailedView: View {
                     icon: "list.bullet",
                     color: .blue
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Completed",
                     value: "\(store.tasks.filter { $0.status == .completed }.count)",
                     icon: "checkmark.circle.fill",
                     color: .green
                 )
-                
+
                 DashboardSummaryCard(
                     title: "In Progress",
                     value: "\(store.tasks.filter { $0.status == .inProgress }.count)",
                     icon: "arrow.clockwise",
                     color: .orange
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Urgent",
                     value: "\(store.tasks.filter { $0.priority == .urgent }.count)",
@@ -66,7 +66,7 @@ struct TasksDetailedView: View {
                     color: .red
                 )
             }
-            
+
             // Filter Picker
             Picker("Filter", selection: $selectedFilter) {
                 ForEach(TaskFilter.allCases, id: \.self) { filter in
@@ -74,16 +74,16 @@ struct TasksDetailedView: View {
                 }
             }
             .pickerStyle(.segmented)
-            
+
             // Task List
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("\(filteredTasks.count) Tasks")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 ForEach(filteredTasks) { task in
                     TaskDetailRow(task: task)
-                    
+
                     if task.id != filteredTasks.last?.id {
                         Divider()
                     }
@@ -101,7 +101,7 @@ struct TasksDetailedView: View {
 
 struct TaskDetailRow: View {
     let task: WeddingTask
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.md) {
             // Priority indicator
@@ -109,24 +109,24 @@ struct TaskDetailRow: View {
                 .fill(priorityColor)
                 .frame(width: 12, height: 12)
                 .padding(.top, Spacing.xs)
-            
+
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(task.taskName)
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if let description = task.description, !description.isEmpty {
                     Text(description)
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                         .lineLimit(2)
                 }
-                
+
                 HStack(spacing: Spacing.sm) {
                     TaskPriorityBadge(priority: task.priority)
                     TaskStatusBadge(status: task.status)
-                    
+
                     if let dueDate = task.dueDate {
                         HStack(spacing: Spacing.xxs) {
                             Image(systemName: "calendar")
@@ -138,12 +138,12 @@ struct TaskDetailRow: View {
                     }
                 }
             }
-            
+
             Spacer()
         }
         .padding(.vertical, Spacing.sm)
     }
-    
+
     private var priorityColor: Color {
         switch task.priority {
         case .urgent: return AppColors.error
@@ -152,7 +152,7 @@ struct TaskDetailRow: View {
         case .low: return AppColors.textSecondary
         }
     }
-    
+
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d"
@@ -162,7 +162,7 @@ struct TaskDetailRow: View {
 
 struct TaskPriorityBadge: View {
     let priority: WeddingTaskPriority
-    
+
     var body: some View {
         Text(priorityText)
             .font(Typography.caption2)
@@ -175,7 +175,7 @@ struct TaskPriorityBadge: View {
                     .fill(priorityColor.opacity(0.1))
             )
     }
-    
+
     private var priorityText: String {
         switch priority {
         case .urgent: return "Urgent"
@@ -184,7 +184,7 @@ struct TaskPriorityBadge: View {
         case .low: return "Low"
         }
     }
-    
+
     private var priorityColor: Color {
         switch priority {
         case .urgent: return AppColors.error

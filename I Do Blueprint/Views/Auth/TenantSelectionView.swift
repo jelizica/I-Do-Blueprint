@@ -17,11 +17,11 @@ struct TenantSelectionView: View {
     @State private var errorMessage: String?
     @State private var couples: [CoupleMembership] = []
     @State private var showingCoupleCreation = false
-    
+
     // Phase 3.3: Search & Filter
     @State private var searchText = ""
     @State private var sortOption: SortOption = .recent
-    
+
     enum SortOption: String, CaseIterable {
         case recent = "Recent"
         case name = "Name"
@@ -29,18 +29,18 @@ struct TenantSelectionView: View {
     }
 
     private let coupleRepository = LiveCoupleRepository()
-    
+
     // Phase 3.3: Filtered and sorted couples
     private var filteredCouples: [CoupleMembership] {
         var result = couples
-        
+
         // Apply search filter
         if !searchText.isEmpty {
             result = result.filter { couple in
                 couple.displayName.localizedCaseInsensitiveContains(searchText)
             }
         }
-        
+
         // Apply sort
         switch sortOption {
         case .recent:
@@ -48,7 +48,7 @@ struct TenantSelectionView: View {
             result.sort { couple1, couple2 in
                 let isRecent1 = sessionManager.recentCouples.contains { $0.id == couple1.coupleId }
                 let isRecent2 = sessionManager.recentCouples.contains { $0.id == couple2.coupleId }
-                
+
                 if isRecent1 && !isRecent2 {
                     return true
                 } else if !isRecent1 && isRecent2 {
@@ -66,7 +66,7 @@ struct TenantSelectionView: View {
                 return date1 < date2
             }
         }
-        
+
         return result
     }
 
@@ -154,7 +154,7 @@ struct TenantSelectionView: View {
                                     .foregroundColor(.secondary)
                                 TextField("Search weddings...", text: $searchText)
                                     .textFieldStyle(.plain)
-                                
+
                                 if !searchText.isEmpty {
                                     Button(action: {
                                         searchText = ""
@@ -168,13 +168,13 @@ struct TenantSelectionView: View {
                             .padding(Spacing.sm)
                             .background(AppColors.textSecondary.opacity(0.1))
                             .cornerRadius(8)
-                            
+
                             // Sort options
                             HStack(spacing: 8) {
                                 Text("Sort by:")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                
+
                                 ForEach(SortOption.allCases, id: \.self) { option in
                                     Button(action: {
                                         sortOption = option
@@ -189,13 +189,13 @@ struct TenantSelectionView: View {
                                     }
                                     .buttonStyle(.plain)
                                 }
-                                
+
                                 Spacer()
                             }
                         }
                         .padding(.horizontal, Spacing.huge)
                     }
-                    
+
                     ScrollView {
                         VStack(spacing: 16) {
                             // Phase 3.2: Recently Viewed Section
@@ -209,7 +209,7 @@ struct TenantSelectionView: View {
                                         .foregroundColor(.primary)
                                 }
                                 .padding(.horizontal, Spacing.xs)
-                                
+
                                 ForEach(sessionManager.recentCouples) { recent in
                                     Button(action: {
                                         selectRecentCouple(recent)
@@ -240,12 +240,12 @@ struct TenantSelectionView: View {
                                     .disabled(isLoading)
                                 }
                             }
-                            
+
                             Divider()
                                     .padding(.vertical, Spacing.sm)
                             }
                         }
-                        
+
                         // All Couples Section
                         if !sessionManager.recentCouples.isEmpty && searchText.isEmpty {
                             HStack {
@@ -257,7 +257,7 @@ struct TenantSelectionView: View {
                             }
                             .padding(.horizontal, Spacing.xs)
                         }
-                        
+
                         // Phase 3.3: Use filtered and sorted couples
                         if filteredCouples.isEmpty && !searchText.isEmpty {
                             // No search results
@@ -359,19 +359,19 @@ struct TenantSelectionView: View {
                 }
                 return
             }
-            
+
             let session = try await client.auth.session
             let userId = session.user.id
-            
+
             logger.debug("Loading couples for user: \(userId)")
 
             couples = try await coupleRepository.fetchCouplesForUser(userId: userId)
-            
+
             logger.debug("Found \(couples.count) couples")
             for couple in couples {
                 logger.debug("Couple: \(couple.displayName) (ID: \(couple.coupleId))")
             }
-            
+
             isLoading = false
         } catch {
             logger.error("Error loading couples: \(error)")
@@ -382,26 +382,26 @@ struct TenantSelectionView: View {
 
     private func selectCouple(_ couple: CoupleMembership) {
         errorMessage = nil
-        
+
         logger.info("User selected couple: \(couple.displayName) (ID: \(couple.coupleId))")
 
         Task {
             // Pass couple name and wedding date for visual feedback (Phase 3.1) and recent tracking (Phase 3.2)
             await sessionManager.setTenantId(
-                couple.coupleId, 
+                couple.coupleId,
                 coupleName: couple.displayName,
                 weddingDate: couple.weddingDate
             )
-            
+
             logger.info("Tenant ID set to: \(couple.coupleId)")
 
             // View will automatically hide when tenantId is set (via RootFlowView observation)
         }
     }
-    
+
     private func selectRecentCouple(_ recent: RecentCouple) {
         errorMessage = nil
-        
+
         logger.info("User selected recent couple: \(recent.displayName) (ID: \(recent.id))")
 
         Task {
@@ -410,7 +410,7 @@ struct TenantSelectionView: View {
                 coupleName: recent.displayName,
                 weddingDate: recent.weddingDate
             )
-            
+
             logger.info("Tenant ID set to: \(recent.id)")
         }
     }

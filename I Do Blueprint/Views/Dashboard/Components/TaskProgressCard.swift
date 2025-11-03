@@ -9,11 +9,11 @@ import SwiftUI
 
 struct TaskProgressCard: View {
     @ObservedObject var store: TaskStoreV2
-    
+
     private var recentTasks: [WeddingTask] {
         Array(store.tasks.prefix(5))
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
@@ -21,20 +21,20 @@ struct TaskProgressCard: View {
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 20))
                     .foregroundColor(.green)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Task Tracker")
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("Keep track of your wedding to-dos")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
             }
-            
+
             // Task Table
             VStack(spacing: 0) {
                 // Header Row
@@ -44,13 +44,13 @@ struct TaskProgressCard: View {
                         .fontWeight(.medium)
                         .foregroundColor(AppColors.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                    
+
                     Text("Status")
                         .font(Typography.caption)
                         .fontWeight(.medium)
                         .foregroundColor(AppColors.textSecondary)
                         .frame(width: 100, alignment: .leading)
-                    
+
                     Text("Due Date")
                         .font(Typography.caption)
                         .fontWeight(.medium)
@@ -60,13 +60,13 @@ struct TaskProgressCard: View {
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
                 .background(AppColors.backgroundSecondary)
-                
+
                 Divider()
-                
+
                 // Task Rows
                 ForEach(recentTasks) { task in
                     TaskRow(task: task)
-                    
+
                     if task.id != recentTasks.last?.id {
                         Divider()
                     }
@@ -88,7 +88,7 @@ struct TaskProgressCard: View {
 
 struct TaskRow: View {
     let task: WeddingTask
-    
+
     var body: some View {
         HStack {
             Text(task.taskName)
@@ -96,10 +96,10 @@ struct TaskRow: View {
                 .fontWeight(.medium)
                 .foregroundColor(AppColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            
+
             TaskStatusBadge(status: task.status)
                 .frame(width: 100, alignment: .leading)
-            
+
             if let dueDate = task.dueDate {
                 Text(formattedDate(dueDate))
                     .font(Typography.caption)
@@ -115,7 +115,7 @@ struct TaskRow: View {
         .padding(.horizontal, Spacing.md)
         .padding(.vertical, Spacing.sm)
     }
-    
+
     private func formattedDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM d, yyyy"
@@ -125,7 +125,7 @@ struct TaskRow: View {
 
 struct TaskStatusBadge: View {
     let status: TaskStatus
-    
+
     var body: some View {
         Text(statusText)
             .font(Typography.caption2)
@@ -138,7 +138,7 @@ struct TaskStatusBadge: View {
                     .fill(statusColor.opacity(0.1))
             )
     }
-    
+
     private var statusText: String {
         switch status {
         case .notStarted: return "Pending"
@@ -148,7 +148,7 @@ struct TaskStatusBadge: View {
         case .cancelled: return "Cancelled"
         }
     }
-    
+
     private var statusColor: Color {
         switch status {
         case .completed: return AppColors.success

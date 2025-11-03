@@ -16,9 +16,9 @@ struct ActionCard: View {
     let buttonTitle: String
     let color: Color
     let action: () -> Void
-    
+
     @State private var isHovering = false
-    
+
     init(
         icon: String,
         title: String,
@@ -34,7 +34,7 @@ struct ActionCard: View {
         self.color = color
         self.action = action
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Icon
@@ -46,26 +46,26 @@ struct ActionCard: View {
                         .font(.title2)
                         .foregroundColor(color)
                 )
-            
+
             // Content
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text(title)
                     .font(Typography.title3)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text(description)
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            
+
             // Action button
             Button(action: action) {
                 HStack {
                     Text(buttonTitle)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                    
+
                     Image(systemName: "arrow.right")
                         .font(.caption)
                 }
@@ -114,9 +114,9 @@ struct CompactActionCard: View {
     let title: String
     let color: Color
     let action: () -> Void
-    
+
     @State private var isHovering = false
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.md) {
@@ -128,14 +128,14 @@ struct CompactActionCard: View {
                             .font(.body)
                             .foregroundColor(color)
                     )
-                
+
                 Text(title)
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(AppColors.textTertiary)
@@ -176,7 +176,7 @@ struct CompactActionCard: View {
                 print("Add guest tapped")
             }
         )
-        
+
         ActionCard(
             icon: "building.2.fill",
             title: "Find Vendors",
@@ -199,14 +199,14 @@ struct CompactActionCard: View {
             color: .blue,
             action: {}
         )
-        
+
         CompactActionCard(
             icon: "doc.badge.plus",
             title: "Upload Document",
             color: .green,
             action: {}
         )
-        
+
         CompactActionCard(
             icon: "note.text.badge.plus",
             title: "Create Note",

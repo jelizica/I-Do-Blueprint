@@ -160,7 +160,14 @@ struct NoteCard: View {
                 id: UUID(),
                 coupleId: UUID(),
                 title: "Venue Options",
-                content: "Looking at three potential venues:\n1. Garden Estate - beautiful outdoor space\n2. Historic Mansion - elegant indoor setting\n3. Beach Resort - stunning ocean views\n\nNeed to schedule site visits for next month.",
+                content: """
+                    Looking at three potential venues:
+                    1. Garden Estate - beautiful outdoor space
+                    2. Historic Mansion - elegant indoor setting
+                    3. Beach Resort - stunning ocean views
+                    
+                    Need to schedule site visits for next month.
+                    """,
                 relatedType: .vendor,
                 relatedId: nil,
                 createdAt: Date().addingTimeInterval(-86400 * 2),

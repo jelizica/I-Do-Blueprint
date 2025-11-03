@@ -25,27 +25,27 @@ class TaskStoreV2: ObservableObject, CacheableStore {
     @Published var sortOption: TaskSortOption = .dueDate
 
     @Dependency(\.taskRepository) var repository
-    
+
     // MARK: - Cache Management
     var lastLoadTime: Date?
     let cacheValidityDuration: TimeInterval = 120 // 2 minutes (fast-changing)
-    
+
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
     private var createTask: Task<Void, Never>?
     private var updateTask: Task<Void, Never>?
     private var deleteTask: Task<Void, Never>?
-    
+
     // MARK: - Computed Properties for Backward Compatibility
-    
+
     var tasks: [WeddingTask] {
         loadingState.data ?? []
     }
-    
+
     var isLoading: Bool {
         loadingState.isLoading
     }
-    
+
     var error: TaskError? {
         if case .error(let err) = loadingState {
             return err as? TaskError ?? .fetchFailed(underlying: err)
@@ -58,7 +58,7 @@ class TaskStoreV2: ObservableObject, CacheableStore {
     func loadTasks(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             // Use cached data if still valid
@@ -66,22 +66,22 @@ class TaskStoreV2: ObservableObject, CacheableStore {
                 AppLogger.ui.debug("Using cached task data (age: \(Int(cacheAge()))s)")
                 return
             }
-            
+
             guard loadingState.isIdle || loadingState.hasError || force else { return }
-            
+
             loadingState = .loading
 
             do {
                 try Task.checkCancellation()
-                
+
                 async let tasksResult = repository.fetchTasks()
                 async let statsResult = repository.fetchTaskStats()
 
                 let fetchedTasks = try await tasksResult
                 let fetchedStats = try await statsResult
-                
+
                 try Task.checkCancellation()
-                
+
                 taskStats = fetchedStats
                 loadingState = .loaded(fetchedTasks)
                 lastLoadTime = Date()
@@ -95,7 +95,7 @@ class TaskStoreV2: ObservableObject, CacheableStore {
                 loadingState = .error(TaskError.fetchFailed(underlying: error))
             }
         }
-        
+
         await loadTask?.value
     }
 
@@ -105,15 +105,15 @@ class TaskStoreV2: ObservableObject, CacheableStore {
 
     func createTask(_ insertData: TaskInsertData) async {
     successMessage = nil
-    
+
     do {
     let task = try await repository.createTask(insertData)
-    
+
     if case .loaded(var currentTasks) = loadingState {
     currentTasks.append(task)
     loadingState = .loaded(currentTasks)
     }
-    
+
     taskStats = try await repository.fetchTaskStats()
     // Invalidate cache due to mutation
     invalidateCache()
@@ -135,20 +135,20 @@ class TaskStoreV2: ObservableObject, CacheableStore {
               let index = currentTasks.firstIndex(where: { $0.id == task.id }) else {
             return
         }
-        
+
         let original = currentTasks[index]
         currentTasks[index] = task
         loadingState = .loaded(currentTasks)
 
         do {
             let updated = try await repository.updateTask(task)
-            
+
             if case .loaded(var tasks) = loadingState,
                let idx = tasks.firstIndex(where: { $0.id == task.id }) {
                 tasks[idx] = updated
                 loadingState = .loaded(tasks)
             }
-            
+
             taskStats = try await repository.fetchTaskStats()
             // Invalidate cache due to mutation
             invalidateCache()
@@ -176,7 +176,7 @@ class TaskStoreV2: ObservableObject, CacheableStore {
               let index = currentTasks.firstIndex(where: { $0.id == task.id }) else {
             return
         }
-        
+
         let removed = currentTasks.remove(at: index)
         loadingState = .loaded(currentTasks)
 
@@ -336,7 +336,7 @@ class TaskStoreV2: ObservableObject, CacheableStore {
             loadingState = .idle
         }
     }
-    
+
     func retryLoad() async {
         await loadTasks()
     }
@@ -369,9 +369,9 @@ class TaskStoreV2: ObservableObject, CacheableStore {
     var stats: TaskStats {
         taskStats ?? TaskStats(total: 0, notStarted: 0, inProgress: 0, completed: 0, overdue: 0)
     }
-    
+
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         // Cancel in-flight tasks to avoid race conditions during tenant switch
@@ -379,7 +379,7 @@ class TaskStoreV2: ObservableObject, CacheableStore {
         createTask?.cancel()
         updateTask?.cancel()
         deleteTask?.cancel()
-        
+
         // Reset state and invalidate cache
         loadingState = .idle
         taskStats = nil

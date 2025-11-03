@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Expense Linking Row
 
 extension ExpenseLinkingView {
-    
+
     func expenseRow(_ expense: Expense) -> some View {
         let isLinked = linkedExpenseIds.contains(expense.id)
         let isSelected = selectedExpenses.contains(expense.id)
@@ -89,7 +89,7 @@ extension ExpenseLinkingView {
                         .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)))
         .opacity(isLinked ? 0.6 : 1.0)
     }
-    
+
     func paymentStatusBadge(_ status: PaymentStatus) -> some View {
         let config = paymentStatusConfig(status)
         return HStack(spacing: 4) {

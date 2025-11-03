@@ -20,9 +20,9 @@ struct ActivityEvent: Identifiable, Codable, Sendable {
     let changes: [String: AnyCodable]?
     let metadata: [String: AnyCodable]?
     var isRead: Bool
-    
+
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case coupleId = "couple_id"
         case actorId = "actor_id"
@@ -30,11 +30,11 @@ struct ActivityEvent: Identifiable, Codable, Sendable {
         case resourceType = "resource_type"
         case resourceId = "resource_id"
         case resourceName = "resource_name"
-        case changes
-        case metadata
+        case changes = "changes"
+        case metadata = "metadata"
         case isRead = "is_read"
     }
-    
+
     /// Human-readable description of the activity
     var description: String {
         let action = actionType.displayName
@@ -46,15 +46,15 @@ struct ActivityEvent: Identifiable, Codable, Sendable {
 
 /// Activity action types
 enum ActionType: String, Codable, Sendable {
-    case created
-    case updated
-    case deleted
-    case viewed
-    case commented
-    case invited
-    case joined
-    case left
-    
+    case created = "created"
+    case updated = "updated"
+    case deleted = "deleted"
+    case viewed = "viewed"
+    case commented = "commented"
+    case invited = "invited"
+    case joined = "joined"
+    case left = "left"
+
     var displayName: String {
         switch self {
         case .created: return "Created"
@@ -71,16 +71,16 @@ enum ActionType: String, Codable, Sendable {
 
 /// Resource types that can have activity events
 enum ResourceType: String, Codable, Sendable {
-    case guest
+    case guest = "guest"
     case budgetCategory = "budget_category"
-    case expense
-    case vendor
-    case task
-    case document
-    case timeline
+    case expense = "expense"
+    case vendor = "vendor"
+    case task = "task"
+    case document = "document"
+    case timeline = "timeline"
     case seatingChart = "seating_chart"
-    case collaborator
-    
+    case collaborator = "collaborator"
+
     var displayName: String {
         switch self {
         case .guest: return "guest"

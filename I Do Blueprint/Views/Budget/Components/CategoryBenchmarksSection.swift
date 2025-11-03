@@ -1,15 +1,22 @@
 import SwiftUI
 
+struct CategoryBenchmarkData {
+    let category: BudgetCategory
+    let spent: Double
+    let percentage: Double
+    let status: BenchmarkStatus
+}
+
 /// Section displaying category performance benchmarks
 struct CategoryBenchmarksSection: View {
-    let benchmarks: [(category: BudgetCategory, spent: Double, percentage: Double, status: BenchmarkStatus)]
-    
+    let benchmarks: [CategoryBenchmarkData]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Category Performance vs Budget")
                 .font(.headline)
                 .fontWeight(.semibold)
-            
+
             ScrollView {
                 LazyVStack(spacing: 12) {
                     ForEach(benchmarks, id: \.category.id) { benchmark in
@@ -33,14 +40,14 @@ struct CategoryBenchmarkRow: View {
     let spent: Double
     let percentage: Double
     let status: BenchmarkStatus
-    
+
     var body: some View {
         VStack(spacing: 8) {
             HStack {
                 VStack(alignment: .leading) {
                     Text(category.categoryName)
                         .font(.headline)
-                    
+
                     HStack(spacing: 8) {
                         Image(systemName: status.icon)
                             .foregroundColor(status.color)
@@ -49,9 +56,9 @@ struct CategoryBenchmarkRow: View {
                             .foregroundColor(status.color)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing) {
                     Text(String(format: "$%.2f", spent))
                         .font(.headline)
@@ -60,7 +67,7 @@ struct CategoryBenchmarkRow: View {
                         .foregroundColor(.secondary)
                 }
             }
-            
+
             // Progress bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
@@ -68,7 +75,7 @@ struct CategoryBenchmarkRow: View {
                         .fill(AppColors.textSecondary.opacity(0.2))
                         .frame(height: 8)
                         .cornerRadius(4)
-                    
+
                     Rectangle()
                         .fill(status.color)
                         .frame(
@@ -78,7 +85,7 @@ struct CategoryBenchmarkRow: View {
                 }
             }
             .frame(height: 8)
-            
+
             Text(String(format: "%.1f%% of budget", percentage))
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -91,7 +98,7 @@ struct CategoryBenchmarkRow: View {
 
 enum BenchmarkStatus {
     case under, onTrack, over
-    
+
     var color: Color {
         switch self {
         case .under: AppColors.Budget.underBudget
@@ -99,7 +106,7 @@ enum BenchmarkStatus {
         case .over: AppColors.Budget.overBudget
         }
     }
-    
+
     var icon: String {
         switch self {
         case .under: "arrow.down.circle.fill"
@@ -107,7 +114,7 @@ enum BenchmarkStatus {
         case .over: "exclamationmark.circle.fill"
         }
     }
-    
+
     var label: String {
         switch self {
         case .under: "Under Budget"

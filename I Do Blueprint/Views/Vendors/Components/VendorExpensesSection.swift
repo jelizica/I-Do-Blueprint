@@ -10,35 +10,35 @@ import SwiftUI
 struct VendorExpensesSection: View {
     let expenses: [Expense]
     var payments: [PaymentSchedule] = []
-    
+
     private var totalExpenses: Double {
         expenses.reduce(0) { $0 + $1.amount }
     }
-    
+
     private var paidExpenses: Double {
         // Calculate from actual paid payments linked to expenses
         var totalPaid: Double = 0
-        
+
         for expense in expenses {
             // Get all payments for this expense
             let expensePayments = payments.filter { $0.expenseId == expense.id }
-            
+
             // Sum up paid payments
             let paidForExpense = expensePayments
                 .filter { $0.paid }
                 .reduce(0) { $0 + $1.paymentAmount }
-            
+
             totalPaid += paidForExpense
         }
-        
+
         return totalPaid
     }
-    
+
     private var pendingExpenses: Double {
         // Calculate pending as total minus paid
         totalExpenses - paidExpenses
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Section Header
@@ -47,7 +47,7 @@ struct VendorExpensesSection: View {
                 icon: "receipt.fill",
                 color: AppColors.Vendor.booked
             )
-            
+
             // Summary Cards
             HStack(spacing: Spacing.md) {
                 ExpenseSummaryCard(
@@ -56,14 +56,14 @@ struct VendorExpensesSection: View {
                     icon: "sum",
                     color: AppColors.primary
                 )
-                
+
                 ExpenseSummaryCard(
                     title: "Paid",
                     amount: paidExpenses,
                     icon: "checkmark.circle.fill",
                     color: .green
                 )
-                
+
                 ExpenseSummaryCard(
                     title: "Pending",
                     amount: pendingExpenses,
@@ -71,7 +71,7 @@ struct VendorExpensesSection: View {
                     color: .orange
                 )
             }
-            
+
             // Expense List
             VStack(spacing: Spacing.sm) {
                 ForEach(expenses.sorted(by: { $0.expenseDate > $1.expenseDate })) { expense in
@@ -89,19 +89,19 @@ private struct ExpenseSummaryCard: View {
     let amount: Double
     let icon: String
     let color: Color
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.xs) {
                 Image(systemName: icon)
                     .font(.caption)
                     .foregroundColor(color)
-                
+
                 Text(title)
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Text(amount.formatted(.currency(code: "USD")))
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(AppColors.textPrimary)
@@ -119,7 +119,7 @@ private struct ExpenseSummaryCard: View {
 
 private struct VendorExpenseRow: View {
     let expense: Expense
-    
+
     private var statusColor: Color {
         switch expense.paymentStatus {
         case .paid: return .green
@@ -130,7 +130,7 @@ private struct VendorExpenseRow: View {
         case .refunded: return .purple
         }
     }
-    
+
     private var statusIcon: String {
         switch expense.paymentStatus {
         case .paid: return "checkmark.circle.fill"
@@ -141,7 +141,7 @@ private struct VendorExpenseRow: View {
         case .refunded: return "arrow.uturn.backward.circle.fill"
         }
     }
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             // Status Indicator
@@ -149,38 +149,38 @@ private struct VendorExpenseRow: View {
                 .font(.title3)
                 .foregroundColor(statusColor)
                 .frame(width: 24)
-            
+
             // Expense Info
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(expense.expenseName)
                     .font(.system(size: 15))
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 HStack(spacing: Spacing.xs) {
                     Text(expense.expenseDate.formatted(date: .abbreviated, time: .omitted))
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     if let invoiceNumber = expense.invoiceNumber, !invoiceNumber.isEmpty {
                         Text("•")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
-                        
+
                         Text("Invoice: \(invoiceNumber)")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Amount and Status
             VStack(alignment: .trailing, spacing: Spacing.xxs) {
                 Text(expense.amount.formatted(.currency(code: "USD")))
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text(expense.paymentStatus.displayName)
                     .font(Typography.caption)
                     .foregroundColor(statusColor)

@@ -33,10 +33,10 @@ struct StylePreferences: Codable, Identifiable {
 }
 
 enum TextureCategory: String, CaseIterable, Codable {
-    case fabric
-    case natural
-    case organic
-    case industrial
+    case fabric = "fabric"
+    case natural = "natural"
+    case organic = "organic"
+    case industrial = "industrial"
 
     var displayName: String {
         rawValue.capitalized
@@ -172,12 +172,12 @@ struct StyleActivity: Identifiable {
 // MARK: - Preferences Sections
 
 enum PreferencesSection: String, CaseIterable {
-    case overview
-    case colors
-    case style
-    case themes
-    case inspiration
-    case guidelines
+    case overview = "overview"
+    case colors = "colors"
+    case style = "style"
+    case themes = "themes"
+    case inspiration = "inspiration"
+    case guidelines = "guidelines"
 
     var title: String {
         switch self {

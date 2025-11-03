@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GuestContactTab: View {
     let guest: Guest
-    
+
     var body: some View {
         VStack(spacing: Spacing.xxxl) {
             if hasContactInfo {
@@ -19,11 +19,11 @@ struct GuestContactTab: View {
                     Image(systemName: "envelope.circle")
                         .font(.system(size: 48))
                         .foregroundColor(.secondary)
-                    
+
                     Text("No Contact Information")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    
+
                     Text("Add email, phone, or address to this guest's profile.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -34,7 +34,7 @@ struct GuestContactTab: View {
             }
         }
     }
-    
+
     private var hasContactInfo: Bool {
         guest.email != nil || guest.phone != nil || guest.addressLine1 != nil
     }

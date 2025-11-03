@@ -18,7 +18,7 @@ enum ConfigurationError: LocalizedError {
     // JES-199 additions
     case missingSentryDSN
     case invalidSentryDSN
-    
+
     var errorDescription: String? {
         switch self {
         case .configFileNotFound:
@@ -39,7 +39,7 @@ enum ConfigurationError: LocalizedError {
             return "Invalid Sentry DSN format in configuration"
         }
     }
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .configFileNotFound, .configFileUnreadable:
@@ -56,7 +56,7 @@ enum ConfigurationError: LocalizedError {
             return "The SENTRY_DSN value does not appear to be a valid URL"
         }
     }
-    
+
     var failureReason: String? {
         switch self {
         case .configFileNotFound:
@@ -85,7 +85,7 @@ enum ConversionError: LocalizedError {
     case missingRequiredField(String)
     case invalidDateFormat(String)
     case invalidEnumValue(String, expectedType: String)
-    
+
     var errorDescription: String? {
         switch self {
         case .invalidUUID(let value):
@@ -98,7 +98,7 @@ enum ConversionError: LocalizedError {
             return "Invalid value '\(value)' for type \(type)"
         }
     }
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .invalidUUID:

@@ -15,7 +15,7 @@ struct InfoCard: View {
     let content: String
     let color: Color
     let action: (() -> Void)?
-    
+
     init(
         icon: String,
         title: String,
@@ -29,7 +29,7 @@ struct InfoCard: View {
         self.color = color
         self.action = action
     }
-    
+
     var body: some View {
         Button(action: {
             action?()
@@ -44,21 +44,21 @@ struct InfoCard: View {
                             .font(.title3)
                             .foregroundColor(color)
                     )
-                
+
                 // Content
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(title)
                         .font(Typography.subheading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(content)
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textSecondary)
                         .lineLimit(2)
                 }
-                
+
                 Spacer()
-                
+
                 // Chevron if actionable
                 if action != nil {
                     Image(systemName: "chevron.right")
@@ -87,7 +87,7 @@ struct InfoCard: View {
             content: "June 15, 2024",
             color: .blue
         )
-        
+
         InfoCard(
             icon: "mappin.circle.fill",
             title: "Venue",
@@ -97,7 +97,7 @@ struct InfoCard: View {
                 // TODO: Implement action - print("Venue tapped")
             }
         )
-        
+
         InfoCard(
             icon: "person.2.fill",
             title: "Guest Count",

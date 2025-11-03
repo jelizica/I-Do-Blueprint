@@ -5,6 +5,8 @@
 //  Advanced analytics and insights for visual planning
 //
 
+// swiftlint:disable file_length
+
 import Combine
 import Foundation
 import SwiftUI
@@ -49,7 +51,7 @@ class AnalyticsService: ObservableObject {
 
     init() {
         supabaseService = SupabaseVisualPlanningService()
-        
+
         // Only start periodic updates if feature flag allows
         if PerformanceFeatureFlags.enablePeriodicAnalytics {
             startPeriodicUpdates()
@@ -58,7 +60,7 @@ class AnalyticsService: ObservableObject {
 
     init(supabaseService: SupabaseVisualPlanningService) {
         self.supabaseService = supabaseService
-        
+
         // Only start periodic updates if feature flag allows
         if PerformanceFeatureFlags.enablePeriodicAnalytics {
             startPeriodicUpdates()
@@ -145,7 +147,7 @@ class AnalyticsService: ObservableObject {
         colorPalettes: [ColorPalette],
         seatingCharts: [SeatingChart]) -> OverviewMetrics {
         let totalElements = moodBoards.reduce(into: 0) { $0 += $1.elements.count }
-        
+
         // Export tracking: Requires database schema addition
         // Future: Add export_count field to mood_boards, color_palettes, and seating_charts tables
         // Then sum: moodBoards.reduce(0) { $0 + ($1.exportCount ?? 0) } + ...
@@ -353,7 +355,7 @@ class AnalyticsService: ObservableObject {
 
         let hues = colors.map { color -> Double in
             // Extract hue from Color using HSB color space
-            return extractHue(from: color)
+            extractHue(from: color)
         }
 
         let hueDifferences = zip(hues, hues.dropFirst()).map { abs($0.0 - $0.1) }
@@ -368,32 +370,32 @@ class AnalyticsService: ObservableObject {
         default: return .tetradic
         }
     }
-    
+
     /// Extract hue value from Color in degrees (0-360)
     private func extractHue(from color: Color) -> Double {
         // Convert SwiftUI Color to NSColor to access RGB components
         let nsColor = NSColor(color)
-        
+
         // Convert to RGB color space
         guard let rgbColor = nsColor.usingColorSpace(.deviceRGB) else {
             return 0.0
         }
-        
+
         let r = rgbColor.redComponent
         let g = rgbColor.greenComponent
         let b = rgbColor.blueComponent
-        
+
         let maxComponent = max(r, g, b)
         let minComponent = min(r, g, b)
         let delta = maxComponent - minComponent
-        
+
         // If no saturation, hue is undefined (return 0)
         guard delta > 0.0001 else {
             return 0.0
         }
-        
+
         var hue: Double = 0.0
-        
+
         if maxComponent == r {
             hue = 60.0 * (((g - b) / delta).truncatingRemainder(dividingBy: 6.0))
         } else if maxComponent == g {
@@ -401,12 +403,12 @@ class AnalyticsService: ObservableObject {
         } else {
             hue = 60.0 * (((r - g) / delta) + 4.0)
         }
-        
+
         // Normalize to 0-360 range
         if hue < 0 {
             hue += 360.0
         }
-        
+
         return hue
     }
 
@@ -438,11 +440,11 @@ class AnalyticsService: ObservableObject {
         // Future: Add usage_count field to color_palettes table
         // Track when palettes are applied to mood boards or used in designs
         let totalUsage = 0
-        
+
         // Favorite tracking: Requires database schema addition
         // Future: Add is_favorite field to color_palettes table
         let favoriteCount = 0
-        
+
         let avgUsage = 0.0
 
         let mostUsedPalette = colorPalettes.first
@@ -544,7 +546,7 @@ class AnalyticsService: ObservableObject {
         // Future: Track export events in separate exports table with timestamps
         // Then count: SELECT COUNT(*) FROM exports WHERE tenant_id = ?
         let exportUsage = 0.0
-        
+
         return FeatureUsage(
             moodBoardUsage: Double(moodBoards.count),
             colorPaletteUsage: Double(colorPalettes.count),
@@ -563,8 +565,8 @@ class AnalyticsService: ObservableObject {
         // 4. Calculate: SELECT item_id, COUNT(*) as count FROM exports GROUP BY item_id
         let totalExports = 0
         let chartsWithExports = 0
-        let avgExports = totalExports > 0 && seatingCharts.count > 0 
-            ? Double(totalExports) / Double(seatingCharts.count) 
+        let avgExports = totalExports > 0 && !seatingCharts.isEmpty
+            ? Double(totalExports) / Double(seatingCharts.count)
             : 0.0
 
         return ExportPatterns(
@@ -663,7 +665,7 @@ class AnalyticsService: ObservableObject {
             logger.debug("Periodic analytics updates disabled via feature flag")
             return
         }
-        
+
         analyticsTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
             // Auto-refresh every 5 minutes
             Task { @MainActor in

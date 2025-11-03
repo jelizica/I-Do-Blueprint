@@ -11,9 +11,9 @@ struct MoodBoardSearchResultCard: View {
     private let logger = AppLogger.ui
     let moodBoard: MoodBoard
     let onSelect: () -> Void
-    
+
     @State private var isHovered = false
-    
+
     var body: some View {
         Button(action: onSelect) {
             VStack(alignment: .leading, spacing: 0) {
@@ -21,7 +21,7 @@ struct MoodBoardSearchResultCard: View {
                 moodBoardPreview
                     .frame(height: 180)
                     .clipped()
-                
+
                 // Info section
                 VStack(alignment: .leading, spacing: 8) {
                     // Title
@@ -29,7 +29,7 @@ struct MoodBoardSearchResultCard: View {
                         .font(.headline)
                         .lineLimit(2)
                         .foregroundColor(.primary)
-                    
+
                     // Description
                     if let description = moodBoard.boardDescription, !description.isEmpty {
                         Text(description)
@@ -37,7 +37,7 @@ struct MoodBoardSearchResultCard: View {
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
-                    
+
                     // Metadata row
                     HStack(spacing: 12) {
                         // Style category
@@ -48,9 +48,9 @@ struct MoodBoardSearchResultCard: View {
                                 .font(.caption2)
                         }
                         .foregroundColor(.blue)
-                        
+
                         Spacer()
-                        
+
                         // Element count
                         HStack(spacing: 4) {
                             Image(systemName: "square.grid.2x2")
@@ -59,7 +59,7 @@ struct MoodBoardSearchResultCard: View {
                                 .font(.caption2)
                         }
                         .foregroundColor(.secondary)
-                        
+
                         // Template badge
                         if moodBoard.isTemplate {
                             HStack(spacing: 4) {
@@ -71,7 +71,7 @@ struct MoodBoardSearchResultCard: View {
                             .foregroundColor(.purple)
                         }
                     }
-                    
+
                     // Tags
                     if !moodBoard.tags.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -84,7 +84,7 @@ struct MoodBoardSearchResultCard: View {
                                         .background(AppColors.textSecondary.opacity(0.15))
                                         .cornerRadius(4)
                                 }
-                                
+
                                 if moodBoard.tags.count > 3 {
                                     Text("+\(moodBoard.tags.count - 3)")
                                         .font(.caption2)
@@ -93,7 +93,7 @@ struct MoodBoardSearchResultCard: View {
                             }
                         }
                     }
-                    
+
                     // Date
                     Text(moodBoard.updatedAt.formatted(date: .abbreviated, time: .omitted))
                         .font(.caption2)
@@ -116,14 +116,14 @@ struct MoodBoardSearchResultCard: View {
             isHovered = hovering
         }
     }
-    
+
     // MARK: - Preview
-    
+
     private var moodBoardPreview: some View {
         ZStack {
             // Background
             moodBoard.backgroundColor
-            
+
             // Background image if available
             if let backgroundImage = moodBoard.backgroundImage {
                 AsyncImage(url: URL(string: backgroundImage)) { phase in
@@ -147,7 +147,7 @@ struct MoodBoardSearchResultCard: View {
                 // Empty state
                 placeholderPreview
             }
-            
+
             // Overlay gradient for better text visibility
             LinearGradient(
                 colors: [AppColors.textPrimary.opacity(0.3), Color.clear],
@@ -156,7 +156,7 @@ struct MoodBoardSearchResultCard: View {
             )
         }
     }
-    
+
     private var elementsPreview: some View {
         GeometryReader { geometry in
             ZStack {
@@ -164,7 +164,7 @@ struct MoodBoardSearchResultCard: View {
                 ForEach(Array(moodBoard.elements.prefix(4).enumerated()), id: \.element.id) { index, element in
                     elementThumbnail(element, index: index, in: geometry.size)
                 }
-                
+
                 // Element count overlay
                 if moodBoard.elements.count > 4 {
                     VStack {
@@ -185,7 +185,7 @@ struct MoodBoardSearchResultCard: View {
             }
         }
     }
-    
+
     private func elementThumbnail(_ element: VisualElement, index: Int, in size: CGSize) -> some View {
         let positions: [CGPoint] = [
             CGPoint(x: size.width * 0.25, y: size.height * 0.25),
@@ -193,11 +193,11 @@ struct MoodBoardSearchResultCard: View {
             CGPoint(x: size.width * 0.25, y: size.height * 0.75),
             CGPoint(x: size.width * 0.75, y: size.height * 0.75)
         ]
-        
+
         let position = positions[min(index, positions.count - 1)]
-        
+
         let content: AnyView
-        
+
         switch element.elementType {
         case .image:
             if let imageUrl = element.elementData.imageUrl, let url = URL(string: imageUrl) {
@@ -243,10 +243,10 @@ struct MoodBoardSearchResultCard: View {
                     )
             )
         }
-        
+
         return content.position(position)
     }
-    
+
     private var elementPlaceholder: some View {
         RoundedRectangle(cornerRadius: 8)
             .fill(AppColors.textSecondary.opacity(0.3))
@@ -256,13 +256,13 @@ struct MoodBoardSearchResultCard: View {
                     .foregroundColor(AppColors.textSecondary)
             )
     }
-    
+
     private var placeholderPreview: some View {
         VStack(spacing: 8) {
             Image(systemName: "photo.on.rectangle.angled")
                 .font(.system(size: 40))
                 .foregroundColor(.secondary)
-            
+
             Text("No Preview")
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -281,7 +281,7 @@ struct MoodBoardSearchResultCard: View {
         isTemplate: true,
         tags: ["outdoor", "garden", "natural", "earthy"]
     )
-    
+
     MoodBoardSearchResultCard(moodBoard: sampleMoodBoard) {
         // TODO: Implement action - print("Selected mood board")
     }

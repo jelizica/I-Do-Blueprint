@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GuestEventDetailsTab: View {
     let guest: Guest
-    
+
     var body: some View {
         VStack(spacing: Spacing.xxxl) {
             // Event Details

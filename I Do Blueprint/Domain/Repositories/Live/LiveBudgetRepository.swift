@@ -1,18 +1,20 @@
+// swiftlint:disable file_length
 import Foundation
 import Supabase
 
 /// Production implementation of BudgetRepositoryProtocol
 /// Uses Supabase client for all data operations with automatic caching
+// swiftlint:disable type_body_length
 actor LiveBudgetRepository: BudgetRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
     private let sessionManager = SessionManager.shared
-    
+
     // In-flight request de-duplication
     private var inFlightSummary: Task<BudgetSummary?, Error>?
     private var inFlightCategories: Task<[BudgetCategory], Error>?
     private var inFlightExpenses: [UUID: Task<[Expense], Error>] = [:]
-    
+
     // Domain Services
     private lazy var allocationService = BudgetAllocationService(repository: self)
     private lazy var aggregationService = BudgetAggregationService(repository: self)
@@ -25,16 +27,16 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     init() {
         supabase = SupabaseManager.shared.client
     }
-    
+
     private let cacheStrategy = BudgetCacheStrategy()
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
         }
         return supabase
     }
-    
+
     private func getTenantId() async throws -> UUID {
         try await TenantContextProvider.shared.requireTenantId()
     }
@@ -98,17 +100,17 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func fetchCategories() async throws -> [BudgetCategory] {
     do {
     let cacheKey = "budget_categories"
-    
+
     // Check cache first (1 min TTL for fresher data)
     if let cached: [BudgetCategory] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
     return cached
     }
-    
+
     // Coalesce in-flight request (singleton scope)
     if let task = inFlightCategories {
         return try await task.value
     }
-    
+
     let task = Task<[BudgetCategory], Error> { [weak self] in
         guard let self = self else { throw CancellationError() }
         let client = try await self.getClient()
@@ -161,7 +163,7 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Created category: \(created.categoryName)")
 
@@ -199,7 +201,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Updated category: \(result.categoryName)")
 
@@ -232,7 +234,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Deleted category: \(id)")
 
@@ -281,22 +283,22 @@ await SentryService.shared.captureError(error, context: [
                         .execute()
                         .value
                 }
-                
+
                 // Get unique vendor IDs
                 let vendorIds = expenses.compactMap { $0.vendorId }
-                
+
                 // If there are vendor IDs, fetch vendor names in a separate query
                 if !vendorIds.isEmpty {
                     struct VendorBasic: Codable {
                         let id: Int64
                         let vendorName: String
-                        
+
                         enum CodingKeys: String, CodingKey {
-                            case id
+                            case id = "id"
                             case vendorName = "vendor_name"
                         }
                     }
-                    
+
                     let vendors: [VendorBasic] = try await RepositoryNetwork.withRetry {
                         try await client
                             .from("vendor_information")
@@ -305,10 +307,10 @@ await SentryService.shared.captureError(error, context: [
                             .execute()
                             .value
                     }
-                    
+
                     // Create a lookup dictionary
                     let vendorDict = Dictionary(uniqueKeysWithValues: vendors.map { ($0.id, $0.vendorName) })
-                    
+
                     // Map expenses with vendor names
                     let expensesWithVendors = expenses.map { expense in
                         Expense(
@@ -334,7 +336,7 @@ await SentryService.shared.captureError(error, context: [
                             updatedAt: expense.updatedAt
                         )
                     }
-                    
+
                     let duration = Date().timeIntervalSince(startTime)
                     if duration > 1.0 {
                         self.logger.info("Slow expense fetch: \(String(format: "%.2f", duration))s for \(expensesWithVendors.count) items")
@@ -378,7 +380,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Created expense: \(created.expenseName)")
 
@@ -415,18 +417,18 @@ await SentryService.shared.captureError(error, context: [
                 let approvedAt: Date?
                 let invoiceDocumentUrl: String?
                 let updatedAt: Date
-                
+
                 enum CodingKeys: String, CodingKey {
                     case budgetCategoryId = "budget_category_id"
                     case vendorId = "vendor_id"
                     case expenseName = "expense_name"
-                    case amount
+                    case amount = "amount"
                     case expenseDate = "expense_date"
                     case paymentMethod = "payment_method"
                     case paymentStatus = "payment_status"
                     case receiptUrl = "receipt_url"
                     case invoiceNumber = "invoice_number"
-                    case notes
+                    case notes = "notes"
                     case approvalStatus = "approval_status"
                     case approvedBy = "approved_by"
                     case approvedAt = "approved_at"
@@ -434,7 +436,7 @@ await SentryService.shared.captureError(error, context: [
                     case updatedAt = "updated_at"
                 }
             }
-            
+
             let updateData = ExpenseUpdate(
                 budgetCategoryId: expense.budgetCategoryId,
                 vendorId: expense.vendorId,
@@ -529,7 +531,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Deleted expense: \(id)")
 
@@ -540,18 +542,18 @@ await SentryService.shared.captureError(error, context: [
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
-    
+
     func fetchExpensesByVendor(vendorId: Int64) async throws -> [Expense] {
         let cacheKey = "expenses_vendor_\(vendorId)"
-        
+
         // Check cache first (30 sec TTL for very fresh data)
         if let cached: [Expense] = await RepositoryCache.shared.get(cacheKey, maxAge: 30) {
             return cached
         }
-        
+
         let client = try getClient()
         let startTime = Date()
-        
+
         do {
             let expenses: [Expense] = try await RepositoryNetwork.withRetry {
                 try await client
@@ -562,16 +564,16 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Only log if slow
             if duration > 1.0 {
                 logger.info("Slow vendor expenses fetch: \(String(format: "%.2f", duration))s for \(expenses.count) items")
             }
-            
+
             await RepositoryCache.shared.set(cacheKey, value: expenses)
-            
+
             return expenses
         } catch {
             let duration = Date().timeIntervalSince(startTime)
@@ -606,7 +608,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Only log if slow
             if duration > 1.0 {
                 logger.info("Slow payment schedules fetch: \(String(format: "%.2f", duration))s for \(schedules.count) items")
@@ -652,18 +654,18 @@ await SentryService.shared.captureError(error, context: [
                 let paymentPlanType: String?
                 let createdAt: Date
                 let updatedAt: Date?
-                
+
                 enum CodingKeys: String, CodingKey {
-                    case coupleId = "couple_id"
-                    case vendor
-                    case paymentDate = "payment_date"
-                    case paymentAmount = "payment_amount"
-                    case notes
-                    case vendorType = "vendor_type"
-                    case paid
-                    case paymentType = "payment_type"
-                    case customAmount = "custom_amount"
-                    case billingFrequency = "billing_frequency"
+                case coupleId = "couple_id"
+                case vendor = "vendor"
+                case paymentDate = "payment_date"
+                case paymentAmount = "payment_amount"
+                case notes = "notes"
+                case vendorType = "vendor_type"
+                case paid = "paid"
+                case paymentType = "payment_type"
+                case customAmount = "custom_amount"
+                case billingFrequency = "billing_frequency"
                     case autoRenew = "auto_renew"
                     case startDate = "start_date"
                     case reminderEnabled = "reminder_enabled"
@@ -680,7 +682,7 @@ await SentryService.shared.captureError(error, context: [
                     case updatedAt = "updated_at"
                 }
             }
-            
+
             let insertData = PaymentScheduleInsert(
                 coupleId: schedule.coupleId,
                 vendor: schedule.vendor,
@@ -707,7 +709,7 @@ await SentryService.shared.captureError(error, context: [
                 createdAt: schedule.createdAt,
                 updatedAt: schedule.updatedAt
             )
-            
+
             let created: PaymentSchedule = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("payment_plans")
@@ -719,7 +721,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Created payment schedule for vendor: \(created.vendor)")
 
@@ -739,7 +741,7 @@ await SentryService.shared.captureError(error, context: [
 
             var updated = schedule
             updated.updatedAt = Date()
-            
+
             let result: PaymentSchedule = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("payment_plans")
@@ -752,7 +754,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Updated payment schedule: \(result.id)")
 
@@ -769,7 +771,7 @@ await SentryService.shared.captureError(error, context: [
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             try await RepositoryNetwork.withRetry {
                 try await client
                     .from("payment_plans")
@@ -779,7 +781,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Deleted payment schedule: \(id)")
 
@@ -789,17 +791,17 @@ await SentryService.shared.captureError(error, context: [
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
-    
+
     func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
         let cacheKey = "payment_schedules_vendor_\(vendorId)"
-        
+
         if let cached: [PaymentSchedule] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
-        
+
         let client = try getClient()
         let startTime = Date()
-        
+
         do {
             let schedules: [PaymentSchedule] = try await RepositoryNetwork.withRetry {
                 try await client
@@ -810,16 +812,16 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Only log if slow
             if duration > 1.0 {
                 logger.info("Slow vendor payment schedules fetch: \(String(format: "%.2f", duration))s for \(schedules.count) items")
             }
-            
+
             await RepositoryCache.shared.set(cacheKey, value: schedules)
-            
+
             return schedules
         } catch {
             let duration = Date().timeIntervalSince(startTime)
@@ -854,7 +856,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Only log if slow
             if duration > 1.0 {
                 logger.info("Slow gifts/owed fetch: \(String(format: "%.2f", duration))s for \(items.count) items")
@@ -886,7 +888,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Created gift/owed: \(created.title)")
 
@@ -924,7 +926,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Updated gift/owed: \(result.title)")
 
@@ -955,7 +957,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Deleted gift/owed: \(id)")
 
@@ -966,19 +968,19 @@ await SentryService.shared.captureError(error, context: [
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
-    
+
     // MARK: - Gift Received Operations
-    
+
     func fetchGiftsReceived() async throws -> [GiftReceived] {
         let cacheKey = "gifts_received"
-        
+
         if let cached: [GiftReceived] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
-        
+
         let client = try getClient()
         let startTime = Date()
-        
+
         do {
             let gifts: [GiftReceived] = try await RepositoryNetwork.withRetry {
                 try await client
@@ -988,16 +990,16 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Only log if slow
             if duration > 1.0 {
                 logger.info("Slow gifts received fetch: \(String(format: "%.2f", duration))s for \(gifts.count) items")
             }
-            
+
             await RepositoryCache.shared.set(cacheKey, value: gifts)
-            
+
             return gifts
         } catch {
             let duration = Date().timeIntervalSince(startTime)
@@ -1005,12 +1007,12 @@ await SentryService.shared.captureError(error, context: [
             throw error
         }
     }
-    
+
     func createGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             let created: GiftReceived = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("gift_received")
@@ -1020,31 +1022,31 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Created gift received from: \(created.fromPerson)")
-            
+
             // Invalidate cache
             await RepositoryCache.shared.remove("gifts_received")
-            
+
             return created
         } catch {
             logger.error("Failed to create gift received", error: error)
             throw BudgetError.createFailed(underlying: error)
         }
     }
-    
+
     func updateGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             // Create updated gift object with new timestamp
             var updated = gift
             updated.updatedAt = Date()
-            
+
             let result: GiftReceived = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("gift_received")
@@ -1055,27 +1057,27 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Updated gift received from: \(result.fromPerson)")
-            
+
             // Invalidate cache
             await RepositoryCache.shared.remove("gifts_received")
-            
+
             return result
         } catch {
             logger.error("Failed to update gift received", error: error)
             throw BudgetError.updateFailed(underlying: error)
         }
     }
-    
+
     func deleteGiftReceived(id: UUID) async throws {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             try await RepositoryNetwork.withRetry {
                 try await client
                     .from("gift_received")
@@ -1083,12 +1085,12 @@ await SentryService.shared.captureError(error, context: [
                     .eq("id", value: id)
                     .execute()
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Deleted gift received: \(id)")
-            
+
             // Invalidate cache
             await RepositoryCache.shared.remove("gifts_received")
         } catch {
@@ -1096,19 +1098,19 @@ await SentryService.shared.captureError(error, context: [
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
-    
+
     // MARK: - Money Owed Operations
-    
+
     func fetchMoneyOwed() async throws -> [MoneyOwed] {
         let cacheKey = "money_owed"
-        
+
         if let cached: [MoneyOwed] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
-        
+
         let client = try getClient()
         let startTime = Date()
-        
+
         do {
             let items: [MoneyOwed] = try await RepositoryNetwork.withRetry {
                 try await client
@@ -1119,16 +1121,16 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Only log if slow
             if duration > 1.0 {
                 logger.info("Slow money owed fetch: \(String(format: "%.2f", duration))s for \(items.count) items")
             }
-            
+
             await RepositoryCache.shared.set(cacheKey, value: items)
-            
+
             return items
         } catch {
             let duration = Date().timeIntervalSince(startTime)
@@ -1136,12 +1138,12 @@ await SentryService.shared.captureError(error, context: [
             throw error
         }
     }
-    
+
     func createMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             let created: MoneyOwed = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("money_owed")
@@ -1151,31 +1153,31 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Created money owed to: \(created.toPerson)")
-            
+
             // Invalidate cache
             await RepositoryCache.shared.remove("money_owed")
-            
+
             return created
         } catch {
             logger.error("Failed to create money owed", error: error)
             throw BudgetError.createFailed(underlying: error)
         }
     }
-    
+
     func updateMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             // Create updated money object with new timestamp
             var updated = money
             updated.updatedAt = Date()
-            
+
             let result: MoneyOwed = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("money_owed")
@@ -1186,27 +1188,27 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Updated money owed to: \(result.toPerson)")
-            
+
             // Invalidate cache
             await RepositoryCache.shared.remove("money_owed")
-            
+
             return result
         } catch {
             logger.error("Failed to update money owed", error: error)
             throw BudgetError.updateFailed(underlying: error)
         }
     }
-    
+
     func deleteMoneyOwed(id: UUID) async throws {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             try await RepositoryNetwork.withRetry {
                 try await client
                     .from("money_owed")
@@ -1214,12 +1216,12 @@ await SentryService.shared.captureError(error, context: [
                     .eq("id", value: id)
                     .execute()
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Deleted money owed: \(id)")
-            
+
             // Invalidate cache
             await RepositoryCache.shared.remove("money_owed")
         } catch {
@@ -1254,7 +1256,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Only log if slow
             if duration > 1.0 {
                 logger.info("Slow affordability scenarios fetch: \(String(format: "%.2f", duration))s for \(scenarios.count) items")
@@ -1286,7 +1288,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Saved affordability scenario: \(saved.scenarioName)")
 
@@ -1313,7 +1315,7 @@ await SentryService.shared.captureError(error, context: [
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Deleted affordability scenario: \(id)")
 
@@ -1423,7 +1425,7 @@ await SentryService.shared.captureError(error, context: [
             .value
 
         await RepositoryCache.shared.remove("affordability_contributions_\(contribution.scenarioId)")
-        
+
         // Log important mutation
         logger.info("Saved contribution from: \(saved.contributorName)")
 
@@ -1439,7 +1441,7 @@ await SentryService.shared.captureError(error, context: [
             .execute()
 
         await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
-        
+
         // Log important mutation
         logger.info("Deleted contribution: \(id)")
     }
@@ -1456,7 +1458,7 @@ await SentryService.shared.captureError(error, context: [
 
         await RepositoryCache.shared.remove("gifts_and_owed")
         await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
-        
+
         // Log important mutation
         logger.info("Linked \(giftIds.count) gifts to scenario \(scenarioId)")
     }
@@ -1490,11 +1492,11 @@ await SentryService.shared.captureError(error, context: [
     // Get tenant ID for cache key
     let tenantId = try await getTenantId()
     let cacheKey = "budget_dev_scenarios_\(tenantId.uuidString)"
-    
+
     if let cached: [SavedScenario] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
     return cached
     }
-    
+
     let client = try getClient()
     let scenarios: [SavedScenario] = try await client
     .from("budget_development_scenarios")
@@ -1503,9 +1505,9 @@ await SentryService.shared.captureError(error, context: [
     .order("created_at", ascending: false)
     .execute()
     .value
-    
+
     await RepositoryCache.shared.set(cacheKey, value: scenarios)
-    
+
     return scenarios
     }
 
@@ -1565,7 +1567,7 @@ await SentryService.shared.captureError(error, context: [
                 .value
 
             await RepositoryCache.shared.remove("budget_dev_scenarios")
-            
+
             // Log important mutation
             logger.info("Created budget development scenario: \(created.scenarioName)")
 
@@ -1589,7 +1591,7 @@ await SentryService.shared.captureError(error, context: [
                 .value
 
             await RepositoryCache.shared.remove("budget_dev_scenarios")
-            
+
             // Log important mutation
             logger.info("Updated budget development scenario: \(result.scenarioName)")
 
@@ -1615,7 +1617,7 @@ await SentryService.shared.captureError(error, context: [
                 await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
             }
             await RepositoryCache.shared.remove("budget_dev_items_all")
-            
+
             // Log important mutation
             logger.info("Created budget development item: \(created.itemName)")
 
@@ -1690,8 +1692,8 @@ await SentryService.shared.captureError(error, context: [
             throw BudgetError.updateFailed(underlying: error)
         }
     }
-    
-    
+
+
 
     func deleteBudgetDevelopmentItem(id: String) async throws {
         do {
@@ -1704,7 +1706,7 @@ await SentryService.shared.captureError(error, context: [
 
             // Invalidate all item caches since we don't know which scenario
             await RepositoryCache.shared.remove("budget_dev_items_all")
-            
+
             // Log important mutation
             logger.info("Deleted budget development item: \(id)")
         } catch {
@@ -1718,14 +1720,14 @@ await SentryService.shared.captureError(error, context: [
     func fetchTaxRates() async throws -> [TaxInfo] {
     do {
     let cacheKey = "tax_rates"
-    
+
     if let cached: [TaxInfo] = await RepositoryCache.shared.get(cacheKey, maxAge: 3600) {
     return cached
     }
-    
+
     let client = try getClient()
     let startTime = Date()
-    
+
     let rates: [TaxInfo] = try await RepositoryNetwork.withRetry {
     try await client
     .from("tax_rates")
@@ -1734,16 +1736,16 @@ await SentryService.shared.captureError(error, context: [
     .execute()
     .value
     }
-    
+
     let duration = Date().timeIntervalSince(startTime)
-    
+
     // Only log if slow
     if duration > 1.0 {
     logger.info("Slow tax rates fetch: \(String(format: "%.2f", duration))s for \(rates.count) items")
     }
-    
+
     await RepositoryCache.shared.set(cacheKey, value: rates)
-    
+
     return rates
     } catch {
     logger.error("Failed to fetch tax rates", error: error)
@@ -1755,7 +1757,7 @@ await SentryService.shared.captureError(error, context: [
     do {
     let client = try getClient()
     let startTime = Date()
-    
+
     let created: TaxInfo = try await RepositoryNetwork.withRetry {
     try await client
     .from("tax_rates")
@@ -1765,26 +1767,26 @@ await SentryService.shared.captureError(error, context: [
     .execute()
     .value
     }
-    
+
     let duration = Date().timeIntervalSince(startTime)
-    
+
     // Log important mutation
     logger.info("Created tax rate for region: \(created.region)")
-    
+
     await RepositoryCache.shared.remove("tax_rates")
-    
+
     return created
     } catch {
     logger.error("Failed to create tax rate", error: error)
     throw BudgetError.createFailed(underlying: error)
     }
     }
-    
+
     func updateTaxRate(_ taxInfo: TaxInfo) async throws -> TaxInfo {
     do {
     let client = try getClient()
     let startTime = Date()
-    
+
     let result: TaxInfo = try await RepositoryNetwork.withRetry {
     try await client
     .from("tax_rates")
@@ -1795,26 +1797,26 @@ await SentryService.shared.captureError(error, context: [
     .execute()
     .value
     }
-    
+
     let duration = Date().timeIntervalSince(startTime)
-    
+
     // Log important mutation
     logger.info("Updated tax rate for region: \(result.region)")
-    
+
     await RepositoryCache.shared.remove("tax_rates")
-    
+
     return result
     } catch {
     logger.error("Failed to update tax rate", error: error)
     throw BudgetError.updateFailed(underlying: error)
     }
     }
-    
+
     func deleteTaxRate(id: Int64) async throws {
     do {
     let client = try getClient()
     let startTime = Date()
-    
+
     try await RepositoryNetwork.withRetry {
     try await client
     .from("tax_rates")
@@ -1822,12 +1824,12 @@ await SentryService.shared.captureError(error, context: [
     .eq("id", value: String(id))
     .execute()
     }
-    
+
     let duration = Date().timeIntervalSince(startTime)
-    
+
     // Log important mutation
     logger.info("Deleted tax rate: \(id)")
-    
+
     await RepositoryCache.shared.remove("tax_rates")
     } catch {
     logger.error("Failed to delete tax rate", error: error)
@@ -1836,18 +1838,18 @@ await SentryService.shared.captureError(error, context: [
     }
 
     // MARK: - Wedding Events
-    
+
     func fetchWeddingEvents() async throws -> [WeddingEvent] {
     do {
     let cacheKey = "wedding_events"
-    
+
     if let cached: [WeddingEvent] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
     return cached
     }
-    
+
     let client = try getClient()
     let startTime = Date()
-    
+
     let events: [WeddingEvent] = try await RepositoryNetwork.withRetry {
     try await client
     .from("wedding_events")
@@ -1856,30 +1858,30 @@ await SentryService.shared.captureError(error, context: [
     .execute()
     .value
     }
-    
+
     let duration = Date().timeIntervalSince(startTime)
-    
+
     // Only log if slow
     if duration > 1.0 {
     logger.info("Slow wedding events fetch: \(String(format: "%.2f", duration))s for \(events.count) items")
     }
-    
+
     await RepositoryCache.shared.set(cacheKey, value: events)
-    
+
     return events
     } catch {
     logger.error("Failed to fetch wedding events", error: error)
     throw BudgetError.fetchFailed(underlying: error)
     }
     }
-    
+
     // MARK: - Expense Allocations
-    
+
     func fetchExpenseAllocations(scenarioId: String, budgetItemId: String) async throws -> [ExpenseAllocation] {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             let allocations: [ExpenseAllocation] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("expense_budget_allocations")
@@ -1889,24 +1891,24 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
             if duration > 1.0 {
                 logger.info("Slow expense allocations fetch: \(String(format: "%.2f", duration))s for \(allocations.count) items")
             }
-            
+
             return allocations
         } catch {
             logger.error("Failed to fetch expense allocations", error: error)
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
-    
+
     func fetchExpenseAllocationsForScenario(scenarioId: String) async throws -> [ExpenseAllocation] {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             let allocations: [ExpenseAllocation] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("expense_budget_allocations")
@@ -1915,23 +1917,23 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
             if duration > 1.0 {
                 logger.info("Slow expense allocations fetch (scenario): \(String(format: "%.2f", duration))s for \(allocations.count) items")
             }
-            
+
             return allocations
         } catch {
             logger.error("Failed to fetch expense allocations for scenario", error: error)
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
-    
+
     func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation {
         let client = try getClient()
         let startTime = Date()
-        
+
         do {
             let created: ExpenseAllocation = try await RepositoryNetwork.withRetry {
                 try await client
@@ -2033,11 +2035,11 @@ await SentryService.shared.captureError(error, context: [
         // Only invalidate cache after successful replace
         await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
     }
-    
+
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
         let client = try getClient()
         let startTime = Date()
-        
+
         do {
             try await RepositoryNetwork.withRetry {
                 try await client
@@ -2046,12 +2048,12 @@ await SentryService.shared.captureError(error, context: [
                     .eq("id", value: budgetItemId)
                     .execute()
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Log important mutation
             logger.info("Linked gift \(giftId) to budget item \(budgetItemId)")
-            
+
             // Invalidate related caches
             await RepositoryCache.shared.remove("gifts_and_owed")
             // Invalidate budget development items cache for all scenarios
@@ -2066,9 +2068,9 @@ await SentryService.shared.captureError(error, context: [
             throw error
         }
     }
-    
+
     // MARK: - Composite Saves (Scenario + Items)
-    
+
     func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int) {
         struct Params: Encodable {
             let p_scenario: SavedScenario
@@ -2089,7 +2091,9 @@ await SentryService.shared.captureError(error, context: [
         }
         guard let first = results.first,
               !first.scenario_id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw BudgetError.updateFailed(underlying: NSError(domain: "LiveBudgetRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "RPC returned no or empty scenario_id"]))
+            let errorInfo = [NSLocalizedDescriptionKey: "RPC returned no or empty scenario_id"]
+            let error = NSError(domain: "LiveBudgetRepository", code: -1, userInfo: errorInfo)
+            throw BudgetError.updateFailed(underlying: error)
         }
 
         // Resolve tenant id explicitly so errors propagate (don't silently use empty string)
@@ -2104,21 +2108,21 @@ await SentryService.shared.captureError(error, context: [
         logger.info("Saved scenario + items via RPC in \(String(format: "%.2f", duration))s (items=\(first.inserted_items))")
         return (first.scenario_id, first.inserted_items)
     }
-    
+
     // MARK: - Primary Budget Scenario
-    
+
     func fetchPrimaryBudgetScenario() async throws -> BudgetDevelopmentScenario? {
     let client = try getClient()
     let startTime = Date()
     let tenantId = try await getTenantId()
-    
+
     // Check cache first (tenant-specific key to prevent cross-couple data leakage)
     let cacheKey = "primary_budget_scenario_\(tenantId.uuidString)"
     if let cached: BudgetDevelopmentScenario = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
     logger.info("Cache hit: primary budget scenario")
     return cached
     }
-    
+
     do {
     // Query with explicit couple_id filter (don't rely solely on RLS for cache correctness)
     let scenarios: [BudgetDevelopmentScenario] = try await RepositoryNetwork.withRetry {
@@ -2131,19 +2135,19 @@ await SentryService.shared.captureError(error, context: [
     .execute()
     .value
     }
-    
+
     let scenario = scenarios.first
     let duration = Date().timeIntervalSince(startTime)
-    
+
     if let scenario = scenario {
     logger.info("Fetched primary budget scenario: \(scenario.scenarioName) ($\(scenario.totalWithTax)) in \(String(format: "%.2f", duration))s")
-    
+
     // Cache the result (5 minute TTL) with tenant-specific key
     await RepositoryCache.shared.set(cacheKey, value: scenario, ttl: 300)
             } else {
                 logger.info("No primary budget scenario found in \(String(format: "%.2f", duration))s")
             }
-            
+
             return scenario
         } catch {
             let duration = Date().timeIntervalSince(startTime)

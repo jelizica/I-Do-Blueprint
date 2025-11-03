@@ -14,14 +14,14 @@ struct GuestDetailViewV2: View {
     @EnvironmentObject var settingsStore: SettingsStoreV2
     @State private var showingEditSheet = false
     @State private var selectedTab = 0
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Hero Header Section with Edit Button
             HeroHeaderView(guest: guest, onEdit: {
                 showingEditSheet = true
             })
-            
+
             // Tabbed Content
             TabbedDetailView(
                 tabs: [
@@ -113,9 +113,9 @@ struct EditGuestSheet: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var guestStore: GuestStoreV2
     @EnvironmentObject var settingsStore: SettingsStoreV2
-    
+
     let guest: Guest
-    
+
     @State private var firstName: String
     @State private var lastName: String
     @State private var email: String
@@ -130,7 +130,7 @@ struct EditGuestSheet: View {
     @State private var dietaryRestrictions: String
     @State private var notes: String
     @State private var isSaving = false
-    
+
     init(guest: Guest) {
         self.guest = guest
         _firstName = State(initialValue: guest.firstName)
@@ -147,7 +147,7 @@ struct EditGuestSheet: View {
         _dietaryRestrictions = State(initialValue: guest.dietaryRestrictions ?? "")
         _notes = State(initialValue: guest.notes ?? "")
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -155,21 +155,21 @@ struct EditGuestSheet: View {
                     TextField("First Name", text: $firstName)
                     TextField("Last Name", text: $lastName)
                 }
-                
+
                 Section("Contact Information") {
                     TextField("Email", text: $email)
                         .textContentType(.emailAddress)
                     TextField("Phone", text: $phone)
                         .textContentType(.telephoneNumber)
                 }
-                
+
                 Section("RSVP Status") {
                     Picker("Status", selection: $rsvpStatus) {
                         ForEach(RSVPStatus.allCases, id: \.self) { status in
                             Text(status.displayName).tag(status)
                         }
                     }
-                    
+
                     Picker("Invited By", selection: $invitedBy) {
                         Text("Not Selected").tag(nil as InvitedBy?)
                         ForEach(InvitedBy.allCases, id: \.self) { inviter in
@@ -177,22 +177,22 @@ struct EditGuestSheet: View {
                         }
                     }
                 }
-                
+
                 Section("Plus One") {
                     Toggle("Plus One Allowed", isOn: $plusOneAllowed)
-                    
+
                     if plusOneAllowed {
                         TextField("Plus One Name", text: $plusOneName)
                         Toggle("Plus One Attending", isOn: $plusOneAttending)
                     }
                 }
-                
+
                 Section("Additional Details") {
                     TextField("Relationship to Couple", text: $relationshipToCouple)
                     TextField("Meal Option", text: $mealOption)
                     TextField("Dietary Restrictions", text: $dietaryRestrictions)
                 }
-                
+
                 Section("Notes") {
                     TextEditor(text: $notes)
                         .frame(minHeight: 80)
@@ -207,7 +207,7 @@ struct EditGuestSheet: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         Task {
@@ -220,11 +220,11 @@ struct EditGuestSheet: View {
         }
         .presentationDetents([.large])
     }
-    
+
     private func saveGuest() async {
         isSaving = true
         defer { isSaving = false }
-        
+
         var updatedGuest = guest
         updatedGuest.firstName = firstName
         updatedGuest.lastName = lastName
@@ -240,7 +240,7 @@ struct EditGuestSheet: View {
         updatedGuest.dietaryRestrictions = dietaryRestrictions.isEmpty ? nil : dietaryRestrictions
         updatedGuest.notes = notes.isEmpty ? nil : notes
         updatedGuest.updatedAt = Date()
-        
+
         await guestStore.updateGuest(updatedGuest)
         dismiss()
     }

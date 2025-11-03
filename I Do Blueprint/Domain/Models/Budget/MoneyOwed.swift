@@ -20,21 +20,21 @@ struct MoneyOwed: Identifiable, Codable, Sendable, Equatable {
     var isPaid: Bool
     let createdAt: Date
     var updatedAt: Date?
-    
+
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case toPerson = "to_person"
-        case amount
-        case reason
+        case amount = "amount"
+        case reason = "reason"
         case dueDate = "due_date"
-        case priority
-        case notes
+        case priority = "priority"
+        case notes = "notes"
         case isPaid = "is_paid"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
-    
+
     init(
         id: UUID = UUID(),
         coupleId: UUID,
@@ -68,7 +68,7 @@ enum OwedPriority: String, CaseIterable, Codable, Sendable {
     case low = "Low"
     case medium = "Medium"
     case high = "High"
-    
+
     var displayName: String {
         rawValue
     }

@@ -5,6 +5,8 @@
 //  Modal for displaying vendor details from dashboard
 //
 
+// swiftlint:disable file_length
+
 import SwiftUI
 import Dependencies
 
@@ -12,39 +14,39 @@ struct VendorDetailModal: View {
     let vendor: Vendor
     @ObservedObject var vendorStore: VendorStoreV2
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var selectedTab = 0
     @State private var showingEditSheet = false
     @State private var loadedImage: NSImage?
-    
+
     // Financial data
     @State private var expenses: [Expense] = []
     @State private var payments: [PaymentSchedule] = []
     @State private var isLoadingFinancials = false
     @State private var financialLoadError: Error?
-    
+
     // Documents data
     @State private var documents: [Document] = []
     @State private var isLoadingDocuments = false
     @State private var documentLoadError: Error?
-    
+
     @Dependency(\.budgetRepository) var budgetRepository
     @Dependency(\.documentRepository) var documentRepository
-    
+
     private let logger = AppLogger.ui
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
             modalHeader
-            
+
             Divider()
-            
+
             // Tab Bar
             tabBar
-            
+
             Divider()
-            
+
             // Content
             ScrollView {
                 VStack(spacing: Spacing.xl) {
@@ -75,9 +77,9 @@ struct VendorDetailModal: View {
             logger.info("VendorDetailModal appeared for vendor: \(vendor.vendorName)")
         }
     }
-    
+
     // MARK: - Image Loading
-    
+
     /// Load vendor image asynchronously from URL
     private func loadVendorImage() async {
         guard let imageUrl = vendor.imageUrl,
@@ -85,7 +87,7 @@ struct VendorDetailModal: View {
             loadedImage = nil
             return
         }
-        
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let nsImage = NSImage(data: data) {
@@ -100,9 +102,9 @@ struct VendorDetailModal: View {
             }
         }
     }
-    
+
     // MARK: - Header
-    
+
     private var modalHeader: some View {
         HStack(spacing: Spacing.md) {
             // Vendor Icon or Logo
@@ -116,7 +118,7 @@ struct VendorDetailModal: View {
                         )
                     )
                     .frame(width: 56, height: 56)
-                
+
                 if let image = loadedImage {
                     Image(nsImage: image)
                         .resizable()
@@ -129,23 +131,23 @@ struct VendorDetailModal: View {
                         .foregroundColor(AppColors.textPrimary)
                 }
             }
-            
+
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(vendor.vendorName)
                     .font(Typography.title2)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 HStack(spacing: Spacing.sm) {
                     if let type = vendor.vendorType {
                         Text(type)
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     if vendor.isBooked == true {
                         Text("•")
                             .foregroundColor(AppColors.textSecondary)
-                        
+
                         HStack(spacing: Spacing.xxs) {
                             Image(systemName: "checkmark.circle.fill")
                                 .font(.system(size: 12))
@@ -156,9 +158,9 @@ struct VendorDetailModal: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Action Buttons
             HStack(spacing: Spacing.sm) {
                 Button {
@@ -173,7 +175,7 @@ struct VendorDetailModal: View {
                 }
                 .buttonStyle(.plain)
                 .accessibleActionButton(label: "Edit vendor", hint: "Opens edit form")
-                
+
                 Button {
                     dismiss()
                 } label: {
@@ -191,9 +193,9 @@ struct VendorDetailModal: View {
         .padding(Spacing.xl)
         .background(AppColors.textPrimary)
     }
-    
+
     // MARK: - Tab Bar
-    
+
     private var tabBar: some View {
         HStack(spacing: 0) {
             VendorModalTabButton(title: "Overview", icon: "info.circle", isSelected: selectedTab == 0) {
@@ -211,9 +213,9 @@ struct VendorDetailModal: View {
         }
         .background(AppColors.textPrimary)
     }
-    
+
     // MARK: - Overview Tab
-    
+
     private var overviewTab: some View {
         VStack(spacing: Spacing.xl) {
             // Quick Info Cards
@@ -226,7 +228,7 @@ struct VendorDetailModal: View {
                         color: AppColors.Vendor.booked
                     )
                 }
-                
+
                 if vendor.isBooked == true, let dateBooked = vendor.dateBooked {
                     VendorQuickInfoCard(
                         icon: "calendar.circle.fill",
@@ -236,7 +238,7 @@ struct VendorDetailModal: View {
                     )
                 }
             }
-            
+
             // Contact Information
             if hasContactInfo {
                 VStack(alignment: .leading, spacing: Spacing.md) {
@@ -245,12 +247,12 @@ struct VendorDetailModal: View {
                         icon: "person.circle.fill",
                         color: AppColors.primary
                     )
-                    
+
                     VStack(spacing: Spacing.sm) {
                         if let contactName = vendor.contactName {
                             VendorContactRow(icon: "person.fill", label: "Contact", value: contactName)
                         }
-                        
+
                         if let phone = vendor.phoneNumber {
                             VendorContactRow(icon: "phone.fill", label: "Phone", value: phone, isLink: true) {
                                 if let url = URL(string: "tel:\(phone.filter { !$0.isWhitespace })") {
@@ -258,7 +260,7 @@ struct VendorDetailModal: View {
                                 }
                             }
                         }
-                        
+
                         if let email = vendor.email {
                             VendorContactRow(icon: "envelope.fill", label: "Email", value: email, isLink: true) {
                                 if let url = URL(string: "mailto:\(email)") {
@@ -266,7 +268,7 @@ struct VendorDetailModal: View {
                                 }
                             }
                         }
-                        
+
                         if let website = vendor.website {
                             VendorContactRow(icon: "globe", label: "Website", value: website, isLink: true) {
                                 if let url = URL(string: website) {
@@ -280,7 +282,7 @@ struct VendorDetailModal: View {
                     .cornerRadius(CornerRadius.md)
                 }
             }
-            
+
             // Address
             if let address = vendor.address {
                 VStack(alignment: .leading, spacing: Spacing.md) {
@@ -289,7 +291,7 @@ struct VendorDetailModal: View {
                         icon: "mappin.circle.fill",
                         color: AppColors.Vendor.contacted
                     )
-                    
+
                     Text(address)
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
@@ -301,16 +303,16 @@ struct VendorDetailModal: View {
             }
         }
     }
-    
+
     // MARK: - Financial Tab
-    
+
     private var financialTab: some View {
         VStack(spacing: Spacing.xl) {
             if isLoadingFinancials {
                 VStack(spacing: Spacing.md) {
                     ProgressView()
                         .scaleEffect(1.5)
-                    
+
                     Text("Loading financial data...")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
@@ -325,14 +327,14 @@ struct VendorDetailModal: View {
                         icon: "banknote.fill",
                         color: AppColors.primary
                     )
-                    
+
                     FinancialSummaryCard(
                         title: "Total Expenses",
                         amount: totalExpenses,
                         icon: "chart.bar.fill",
                         color: AppColors.warning
                     )
-                    
+
                     FinancialSummaryCard(
                         title: "Total Paid",
                         amount: totalPaid,
@@ -340,7 +342,7 @@ struct VendorDetailModal: View {
                         color: AppColors.success
                     )
                 }
-                
+
                 // Expenses List
                 if !expenses.isEmpty {
                     VStack(alignment: .leading, spacing: Spacing.md) {
@@ -349,7 +351,7 @@ struct VendorDetailModal: View {
                             icon: "list.bullet.circle.fill",
                             color: AppColors.warning
                         )
-                        
+
                         VStack(spacing: Spacing.sm) {
                             ForEach(expenses) { expense in
                                 ExpenseRow(expense: expense)
@@ -360,7 +362,7 @@ struct VendorDetailModal: View {
                         .cornerRadius(CornerRadius.md)
                     }
                 }
-                
+
                 // Payments List
                 if !payments.isEmpty {
                     VStack(alignment: .leading, spacing: Spacing.md) {
@@ -369,7 +371,7 @@ struct VendorDetailModal: View {
                             icon: "calendar.circle.fill",
                             color: AppColors.success
                         )
-                        
+
                         VStack(spacing: Spacing.sm) {
                             ForEach(payments) { payment in
                                 PaymentRow(payment: payment)
@@ -389,16 +391,16 @@ struct VendorDetailModal: View {
             }
         }
     }
-    
+
     // MARK: - Documents Tab
-    
+
     private var documentsTab: some View {
         VStack(spacing: Spacing.xl) {
             if isLoadingDocuments {
                 VStack(spacing: Spacing.md) {
                     ProgressView()
                         .scaleEffect(1.5)
-                    
+
                     Text("Loading documents...")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
@@ -411,7 +413,7 @@ struct VendorDetailModal: View {
                         icon: "doc.text.fill",
                         color: AppColors.primary
                     )
-                    
+
                     VStack(spacing: Spacing.sm) {
                         ForEach(documents) { document in
                             DocumentRow(document: document)
@@ -430,9 +432,9 @@ struct VendorDetailModal: View {
             }
         }
     }
-    
+
     // MARK: - Notes Tab
-    
+
     private var notesTab: some View {
         VStack(spacing: Spacing.xl) {
             if let notes = vendor.notes, !notes.isEmpty {
@@ -442,7 +444,7 @@ struct VendorDetailModal: View {
                         icon: "note.text.fill",
                         color: AppColors.primary
                     )
-                    
+
                     Text(notes)
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
@@ -460,33 +462,33 @@ struct VendorDetailModal: View {
             }
         }
     }
-    
+
     // MARK: - Data Loading
-    
+
     private func loadFinancialData() async {
         isLoadingFinancials = true
         financialLoadError = nil
-        
+
         do {
             async let expensesTask = budgetRepository.fetchExpensesByVendor(vendorId: vendor.id)
             async let paymentsTask = budgetRepository.fetchPaymentSchedulesByVendor(vendorId: vendor.id)
-            
+
             expenses = try await expensesTask
             payments = try await paymentsTask
-            
+
             logger.info("Loaded financial data for vendor \(vendor.vendorName): \(expenses.count) expenses, \(payments.count) payments")
         } catch {
             financialLoadError = error
             logger.error("Error loading financial data for vendor \(vendor.id)", error: error)
         }
-        
+
         isLoadingFinancials = false
     }
-    
+
     private func loadDocuments() async {
         isLoadingDocuments = true
         documentLoadError = nil
-        
+
         do {
             documents = try await documentRepository.fetchDocuments(vendorId: Int(vendor.id))
             logger.info("Loaded \(documents.count) documents for vendor \(vendor.vendorName)")
@@ -494,30 +496,30 @@ struct VendorDetailModal: View {
             documentLoadError = error
             logger.error("Error loading documents for vendor \(vendor.id)", error: error)
         }
-        
+
         isLoadingDocuments = false
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var hasContactInfo: Bool {
         vendor.contactName != nil || vendor.email != nil || vendor.phoneNumber != nil || vendor.website != nil
     }
-    
+
     private var hasAnyFinancialInfo: Bool {
         vendor.quotedAmount != nil || !expenses.isEmpty || !payments.isEmpty
     }
-    
+
     private var totalExpenses: Double {
         expenses.reduce(0) { $0 + $1.amount }
     }
-    
+
     private var totalPaid: Double {
         payments.filter { $0.paid == true }.reduce(0) { $0 + $1.paymentAmount }
     }
-    
+
     // MARK: - Helper Functions
-    
+
     private func iconForVendorType(_ type: String) -> String {
         switch type.lowercased() {
         case "venue": return "mappin.circle.fill"
@@ -528,7 +530,7 @@ struct VendorDetailModal: View {
         default: return "briefcase.fill"
         }
     }
-    
+
     private func gradientForVendorType(_ type: String) -> [Color] {
         switch type.lowercased() {
         case "venue": return [Color.fromHex("EC4899"), Color.fromHex("F43F5E")]
@@ -548,7 +550,7 @@ private struct VendorModalTabButton: View {
     let icon: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.xs) {
@@ -580,24 +582,24 @@ private struct VendorQuickInfoCard: View {
     let title: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 24))
                 .foregroundColor(color)
-            
+
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(title)
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 Text(value)
                     .font(Typography.bodyRegular)
                     .fontWeight(.bold)
                     .foregroundColor(AppColors.textPrimary)
             }
-            
+
             Spacer()
         }
         .padding(Spacing.md)
@@ -613,19 +615,19 @@ private struct VendorContactRow: View {
     let value: String
     var isLink: Bool = false
     var action: (() -> Void)? = nil
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 14))
                 .foregroundColor(AppColors.textSecondary)
                 .frame(width: 20)
-            
+
             Text(label)
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
                 .frame(width: 80, alignment: .leading)
-            
+
             if isLink, let action = action {
                 Button(action: action) {
                     Text(value)
@@ -639,7 +641,7 @@ private struct VendorContactRow: View {
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
             }
-            
+
             Spacer()
         }
     }
@@ -650,17 +652,17 @@ private struct FinancialSummaryCard: View {
     let amount: Double
     let icon: String
     let color: Color
-    
+
     var body: some View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: icon)
                 .font(.system(size: 24))
                 .foregroundColor(color)
-            
+
             Text(title)
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text(amount.formatted(.currency(code: "USD")))
                 .font(.system(size: 20, weight: .bold))
                 .foregroundColor(AppColors.textPrimary)
@@ -674,27 +676,27 @@ private struct FinancialSummaryCard: View {
 
 private struct ExpenseRow: View {
     let expense: Expense
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(expense.expenseName)
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text(expense.expenseDate.formatted(date: .abbreviated, time: .omitted))
                     .font(Typography.caption2)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
+
             VStack(alignment: .trailing, spacing: Spacing.xxs) {
                 Text(expense.amount.formatted(.currency(code: "USD")))
                     .font(Typography.bodyRegular)
                     .fontWeight(.bold)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 VendorStatusBadge(status: expense.paymentStatus)
             }
         }
@@ -706,14 +708,14 @@ private struct ExpenseRow: View {
 
 private struct PaymentRow: View {
     let payment: PaymentSchedule
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if let notes = payment.notes, !notes.isEmpty {
                     Text(notes)
                         .font(Typography.caption2)
@@ -721,15 +723,15 @@ private struct PaymentRow: View {
                         .lineLimit(1)
                 }
             }
-            
+
             Spacer()
-            
+
             VStack(alignment: .trailing, spacing: Spacing.xxs) {
                 Text(payment.paymentAmount.formatted(.currency(code: "USD")))
                     .font(Typography.bodyRegular)
                     .fontWeight(.bold)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 HStack(spacing: Spacing.xxs) {
                     Image(systemName: payment.paid == true ? "checkmark.circle.fill" : "circle")
                         .font(.system(size: 12))
@@ -747,25 +749,25 @@ private struct PaymentRow: View {
 
 private struct DocumentRow: View {
     let document: Document
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             Image(systemName: "doc.fill")
                 .font(.system(size: 16))
                 .foregroundColor(AppColors.primary)
-            
+
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(document.originalFilename)
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text(document.documentType.displayName)
                     .font(Typography.caption2)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
+
             Text(document.uploadedAt.formatted(date: .abbreviated, time: .omitted))
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
@@ -778,7 +780,7 @@ private struct DocumentRow: View {
 
 private struct VendorStatusBadge: View {
     let status: PaymentStatus
-    
+
     private var statusColor: Color {
         switch status {
         case .paid: return AppColors.success
@@ -787,7 +789,7 @@ private struct VendorStatusBadge: View {
         default: return AppColors.textSecondary
         }
     }
-    
+
     var body: some View {
         Text(status.displayName)
             .font(Typography.caption2)
@@ -803,17 +805,17 @@ private struct VendorEmptyStateView: View {
     let icon: String
     let title: String
     let message: String
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text(title)
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text(message)
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)

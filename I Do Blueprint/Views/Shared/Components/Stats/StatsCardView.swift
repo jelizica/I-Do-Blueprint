@@ -10,7 +10,7 @@ import SwiftUI
 /// Individual statistics card displaying icon, value, label, and optional trend
 struct StatsCardView: View {
     let stat: StatItem
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             // Icon and trend row
@@ -19,23 +19,23 @@ struct StatsCardView: View {
                     .font(.title2)
                     .foregroundColor(stat.color)
                     .accessibilityHidden(true)
-                
+
                 Spacer()
-                
+
                 if let trend = stat.trend {
                     TrendIndicator(trend: trend)
                 }
             }
-            
+
             Spacer()
-            
+
             // Value
             Text(stat.value)
                 .font(Typography.numberLarge)
                 .foregroundColor(AppColors.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-            
+
             // Label
             Text(stat.label)
                 .font(Typography.caption)
@@ -56,12 +56,12 @@ struct StatsCardView: View {
 /// Trend indicator showing directional change
 struct TrendIndicator: View {
     let trend: StatItem.Trend
-    
+
     var body: some View {
         HStack(spacing: 2) {
             Image(systemName: trend.icon)
                 .font(.caption2)
-            
+
             if case .up(let value) = trend {
                 Text(value)
                     .font(Typography.caption2)

@@ -23,7 +23,7 @@ struct OnboardingProgress: Codable, Equatable {
     var budgetSetupStatus: BudgetSetupStatus?
     let createdAt: Date
     var updatedAt: Date
-    
+
     init(
         id: UUID = UUID(),
         coupleId: UUID,
@@ -57,15 +57,15 @@ struct OnboardingProgress: Codable, Equatable {
 
 /// Represents each step in the onboarding flow
 enum OnboardingStep: String, Codable, CaseIterable, Hashable {
-    case welcome
-    case weddingDetails
-    case defaultSettings
-    case featurePreferences
-    case guestImport
-    case vendorImport
-    case budgetSetup
-    case completion
-    
+    case welcome = "welcome"
+    case weddingDetails = "weddingDetails"
+    case defaultSettings = "defaultSettings"
+    case featurePreferences = "featurePreferences"
+    case guestImport = "guestImport"
+    case vendorImport = "vendorImport"
+    case budgetSetup = "budgetSetup"
+    case completion = "completion"
+
     var title: String {
         switch self {
         case .welcome: return "Welcome"
@@ -78,7 +78,7 @@ enum OnboardingStep: String, Codable, CaseIterable, Hashable {
         case .completion: return "All Set!"
         }
     }
-    
+
     var description: String {
         switch self {
         case .welcome:
@@ -99,7 +99,7 @@ enum OnboardingStep: String, Codable, CaseIterable, Hashable {
             return "You're all set! Let's start planning."
         }
     }
-    
+
     var isOptional: Bool {
         switch self {
         case .guestImport, .vendorImport, .featurePreferences:
@@ -108,7 +108,7 @@ enum OnboardingStep: String, Codable, CaseIterable, Hashable {
             return false
         }
     }
-    
+
     var nextStep: OnboardingStep? {
         let allSteps = OnboardingStep.allCases
         guard let currentIndex = allSteps.firstIndex(of: self),
@@ -117,7 +117,7 @@ enum OnboardingStep: String, Codable, CaseIterable, Hashable {
         }
         return allSteps[currentIndex + 1]
     }
-    
+
     var previousStep: OnboardingStep? {
         let allSteps = OnboardingStep.allCases
         guard let currentIndex = allSteps.firstIndex(of: self),
@@ -142,7 +142,7 @@ struct WeddingDetails: Codable, Equatable {
     var weddingStyle: WeddingStyle?
     var estimatedGuestCount: Int?
     var weddingEvents: [OnboardingWeddingEvent]
-    
+
     init(
         weddingDate: Date? = nil,
         isWeddingDateTBD: Bool = false,
@@ -166,7 +166,7 @@ struct WeddingDetails: Codable, Equatable {
         self.estimatedGuestCount = estimatedGuestCount
         self.weddingEvents = weddingEvents
     }
-    
+
     var isValid: Bool {
         // Partner names are required (trim whitespace)
         // Wedding date is required UNLESS TBD is checked
@@ -186,7 +186,7 @@ struct OnboardingWeddingEvent: Codable, Equatable, Identifiable {
     var eventTime: String
     var venueLocation: String
     var isMainEvent: Bool
-    
+
     init(
         id: String = UUID().uuidString,
         eventName: String,
@@ -202,7 +202,7 @@ struct OnboardingWeddingEvent: Codable, Equatable, Identifiable {
         self.venueLocation = venueLocation
         self.isMainEvent = isMainEvent
     }
-    
+
     /// Creates default ceremony event
     static func defaultCeremony() -> OnboardingWeddingEvent {
         OnboardingWeddingEvent(
@@ -211,7 +211,7 @@ struct OnboardingWeddingEvent: Codable, Equatable, Identifiable {
             isMainEvent: true
         )
     }
-    
+
     /// Creates default reception event
     static func defaultReception() -> OnboardingWeddingEvent {
         OnboardingWeddingEvent(
@@ -225,15 +225,15 @@ struct OnboardingWeddingEvent: Codable, Equatable, Identifiable {
 // MARK: - Wedding Style
 
 enum WeddingStyle: String, Codable, CaseIterable {
-    case traditional
-    case modern
-    case rustic
-    case beach
-    case garden
-    case destination
-    case intimate
-    case formal
-    
+    case traditional = "traditional"
+    case modern = "modern"
+    case rustic = "rustic"
+    case beach = "beach"
+    case garden = "garden"
+    case destination = "destination"
+    case intimate = "intimate"
+    case formal = "formal"
+
     var displayName: String {
         switch self {
         case .traditional: return "Traditional"
@@ -246,7 +246,7 @@ enum WeddingStyle: String, Codable, CaseIterable {
         case .formal: return "Formal"
         }
     }
-    
+
     var icon: String {
         switch self {
         case .traditional: return "building.columns"
@@ -271,7 +271,7 @@ struct OnboardingDefaultSettings: Codable, Equatable {
     var budgetPreferences: BudgetPreferences?
     var notificationPreferences: NotificationPreferences?
     var featurePreferences: FeaturePreferences?
-    
+
     init(
         currency: String = "USD",
         timezone: String = TimeZone.current.identifier,
@@ -297,7 +297,7 @@ struct FeaturePreferences: Codable, Equatable {
     var vendors: VendorsSettings
     var guests: GuestsSettings
     var documents: DocumentsSettings
-    
+
     init(
         tasks: TasksSettings = TasksSettings.default,
         vendors: VendorsSettings = VendorsSettings.default,
@@ -318,7 +318,7 @@ struct BudgetPreferences: Codable, Equatable {
     var trackPayments: Bool
     var enableAlerts: Bool
     var alertThreshold: Double
-    
+
     init(
         totalBudget: Double? = nil,
         trackPayments: Bool = true,
@@ -340,7 +340,7 @@ struct NotificationPreferences: Codable, Equatable {
     var taskReminders: Bool
     var paymentReminders: Bool
     var eventReminders: Bool
-    
+
     init(
         emailEnabled: Bool = true,
         pushEnabled: Bool = true,
@@ -366,7 +366,7 @@ struct ImportStatus: Codable, Equatable {
     var successfulRows: Int
     var failedRows: Int
     var errors: [ImportError]
-    
+
     init(
         isStarted: Bool = false,
         isCompleted: Bool = false,
@@ -382,7 +382,7 @@ struct ImportStatus: Codable, Equatable {
         self.failedRows = failedRows
         self.errors = errors
     }
-    
+
     var progress: Double {
         guard totalRows > 0 else { return 0 }
         return Double(successfulRows + failedRows) / Double(totalRows)
@@ -396,7 +396,7 @@ struct ImportError: Codable, Equatable, Identifiable {
     let lineNumber: Int
     let message: String
     let field: String?
-    
+
     init(
         id: UUID = UUID(),
         lineNumber: Int,
@@ -417,7 +417,7 @@ struct BudgetSetupStatus: Codable, Equatable {
     var isCompleted: Bool
     var totalBudget: Double?
     var categoriesCreated: Int
-    
+
     init(
         isStarted: Bool = false,
         isCompleted: Bool = false,
@@ -435,16 +435,16 @@ struct BudgetSetupStatus: Codable, Equatable {
 
 /// Determines the onboarding flow mode
 enum OnboardingMode: String, Codable {
-    case guided // Full step-by-step onboarding
-    case express // Quick setup with defaults
-    
+    case guided = "guided" // Full step-by-step onboarding
+    case express = "express" // Quick setup with defaults
+
     var displayName: String {
         switch self {
         case .guided: return "Guided Setup"
         case .express: return "Express Setup"
         }
     }
-    
+
     var description: String {
         switch self {
         case .guided:

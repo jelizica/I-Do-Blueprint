@@ -104,7 +104,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func getAppCoordinator() -> AppCoordinator? {
         // Access the AppCoordinator through the shared environment
         // This will be properly wired up when we integrate with AppCoordinator
-        return AppCoordinator.shared
+        AppCoordinator.shared
     }
 
     private func showInvitationError(_ message: String) {
@@ -123,7 +123,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 // MARK: - App Integration Extension
 
-extension My_Wedding_Planning_AppApp {
+extension IDoBlueprint {
     /// Configure the AppDelegate for Universal Links handling
     func configureAppDelegate() -> some Scene {
         WindowGroup {

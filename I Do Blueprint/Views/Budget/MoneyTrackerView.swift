@@ -315,7 +315,7 @@ struct MoneyTrackerView: View {
             } else {
                 isOverdue = false
             }
-            
+
             transactions.append(MoneyTransaction(
                 id: owed.id.uuidString,
                 type: .owed,

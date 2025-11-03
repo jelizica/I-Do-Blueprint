@@ -12,48 +12,48 @@ struct InvitationAcceptedSuccessView: View {
     let coupleId: UUID
     let onSwitchToCouple: () -> Void
     let onStayHere: () -> Void
-    
+
     private let logger = AppLogger.ui
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             // Success Icon
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
                 .foregroundColor(AppColors.success)
-            
+
             // Title
             Text("Welcome to the Team!")
                 .font(Typography.title1)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             // Message
             VStack(spacing: Spacing.sm) {
                 Text("You've successfully joined")
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 Text(coupleName)
                     .font(Typography.bodyLarge)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.primary)
             }
-            
+
             // Info Card
             VStack(alignment: .leading, spacing: Spacing.md) {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "info.circle.fill")
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("You now have access to this couple's wedding planning data")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("You can switch between couples anytime using the couple switcher")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
@@ -62,9 +62,9 @@ struct InvitationAcceptedSuccessView: View {
             .padding(Spacing.md)
             .background(AppColors.primary.opacity(0.1))
             .cornerRadius(8)
-            
+
             Spacer()
-            
+
             // Action Buttons
             VStack(spacing: Spacing.md) {
                 Button {
@@ -80,7 +80,7 @@ struct InvitationAcceptedSuccessView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .keyboardShortcut(.defaultAction)
-                
+
                 Button {
                     logger.info("User chose to stay on current couple")
                     onStayHere()

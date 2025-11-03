@@ -13,7 +13,7 @@ import Combine
 /// This serves as a reference for implementing loading states in new features
 struct LoadingStateViewExample: View {
     @StateObject private var viewModel = ExampleViewModel()
-    
+
     var body: some View {
         NavigationStack {
             LoadingStateView(
@@ -58,25 +58,25 @@ struct LoadingStateViewExample: View {
 @MainActor
 class ExampleViewModel: ObservableObject {
     @Published var loadingState: LoadingState<[ExampleItem]> = .idle
-    
+
     func loadData() async {
         guard loadingState.isIdle || loadingState.hasError else { return }
-        
+
         loadingState = .loading
-        
+
         // Simulate network delay
         try? await Task.sleep(nanoseconds: 1_000_000_000)
-        
+
         // Simulate data loading
         let items = [
             ExampleItem(id: UUID(), name: "Item 1", value: "Value 1"),
             ExampleItem(id: UUID(), name: "Item 2", value: "Value 2"),
             ExampleItem(id: UUID(), name: "Item 3", value: "Value 3")
         ]
-        
+
         loadingState = .loaded(items)
     }
-    
+
     func retryLoad() async {
         await loadData()
     }

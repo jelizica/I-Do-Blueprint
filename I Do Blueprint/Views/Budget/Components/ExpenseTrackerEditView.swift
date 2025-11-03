@@ -5,11 +5,11 @@ struct ExpenseTrackerEditView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var budgetStore: BudgetStoreV2
     @EnvironmentObject var settingsStore: SettingsStoreV2
-    
+
     let expense: Expense
-    
+
     private let logger = AppLogger.ui
-    
+
     @State private var expenseName: String
     @State private var amount: Double
     @State private var selectedCategoryId: UUID?
@@ -21,7 +21,7 @@ struct ExpenseTrackerEditView: View {
     @State private var invoiceNumber: String
     @State private var isSubmitting = false
     @State private var availableVendors: [Vendor] = []
-    
+
     init(expense: Expense) {
         self.expense = expense
         _expenseName = State(initialValue: expense.expenseName)
@@ -34,7 +34,7 @@ struct ExpenseTrackerEditView: View {
         _notes = State(initialValue: expense.notes ?? "")
         _invoiceNumber = State(initialValue: expense.invoiceNumber ?? "")
     }
-    
+
     let paymentMethods = [
         ("credit_card", "Credit Card"),
         ("debit_card", "Debit Card"),
@@ -45,34 +45,34 @@ struct ExpenseTrackerEditView: View {
         ("zelle", "Zelle"),
         ("other", "Other")
     ]
-    
+
     let paymentStatuses: [(PaymentStatus, String)] = [
         (.pending, "Pending"),
         (.paid, "Paid"),
         (.overdue, "Overdue"),
         (.cancelled, "Cancelled")
     ]
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 Section("Basic Information") {
                     TextField("Expense Name", text: $expenseName)
                         .help("Name or description of the expense")
-                    
+
                     TextField(
                         "Amount",
                         value: $amount,
                         format: .currency(code: settingsStore.settings.global.currency))
                         .help("Total amount of the expense")
-                    
+
                     DatePicker("Date", selection: $expenseDate, displayedComponents: .date)
                         .help("Date of the expense")
-                    
+
                     TextField("Invoice Number (Optional)", text: $invoiceNumber)
                         .help("Invoice or reference number")
                 }
-                
+
                 Section("Category & Vendor") {
                     Picker("Category", selection: $selectedCategoryId) {
                         Text("Select Category").tag(nil as UUID?)
@@ -81,7 +81,7 @@ struct ExpenseTrackerEditView: View {
                         }
                     }
                     .help("Budget category for this expense")
-                    
+
                     Picker("Vendor (Optional)", selection: $selectedVendorId) {
                         Text("No Vendor").tag(nil as Int64?)
                         ForEach(availableVendors) { vendor in
@@ -90,21 +90,21 @@ struct ExpenseTrackerEditView: View {
                     }
                     .help("Link this expense to a vendor")
                 }
-                
+
                 Section("Payment Details") {
                     Picker("Payment Method", selection: $paymentMethod) {
                         ForEach(paymentMethods, id: \.0) { method in
                             Text(method.1).tag(method.0)
                         }
                     }
-                    
+
                     Picker("Payment Status", selection: $paymentStatus) {
                         ForEach(paymentStatuses, id: \.0) { status in
                             Text(status.1).tag(status.0)
                         }
                     }
                 }
-                
+
                 Section("Additional Notes") {
                     TextEditor(text: $notes)
                         .frame(minHeight: 60, maxHeight: 120)
@@ -119,7 +119,7 @@ struct ExpenseTrackerEditView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         updateExpense()
@@ -132,7 +132,7 @@ struct ExpenseTrackerEditView: View {
             }
         }
     }
-    
+
     private func loadVendors() async {
         let vendorStore = AppStores.shared.vendor
         await vendorStore.loadVendors()
@@ -140,12 +140,12 @@ struct ExpenseTrackerEditView: View {
             .filter { !$0.isArchived }
             .sorted { $0.vendorName < $1.vendorName }
     }
-    
+
     private func updateExpense() {
         guard let categoryId = selectedCategoryId else { return }
-        
+
         isSubmitting = true
-        
+
         Task {
             do {
                 var updatedExpense = expense
@@ -159,7 +159,7 @@ struct ExpenseTrackerEditView: View {
                 updatedExpense.invoiceNumber = invoiceNumber.isEmpty ? nil : invoiceNumber
                 updatedExpense.notes = notes.isEmpty ? nil : notes
                 updatedExpense.updatedAt = Date()
-                
+
                 _ = try await budgetStore.updateExpense(updatedExpense)
                 dismiss()
             } catch {

@@ -11,7 +11,7 @@ struct VendorOverviewTab: View {
     let vendor: Vendor
     @Binding var editedVendor: Vendor
     let isEditing: Bool
-    
+
     var body: some View {
         VStack(spacing: 16) {
             DetailRow(
@@ -21,7 +21,7 @@ struct VendorOverviewTab: View {
                 editValue: Binding(
                     get: { editedVendor.vendorType ?? "" },
                     set: { editedVendor.vendorType = $0.isEmpty ? nil : $0 }))
-            
+
             if let address = vendor.address {
                 DetailRow(
                     title: "Address",
@@ -34,7 +34,7 @@ struct VendorOverviewTab: View {
                             // In a real implementation, this would update the appropriate database field
                         }))
             }
-            
+
             if let description = vendor.businessDescription {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Business Description")
@@ -48,7 +48,7 @@ struct VendorOverviewTab: View {
                 .background(Color(NSColor.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
             }
-            
+
             if let notes = vendor.notes {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Notes")

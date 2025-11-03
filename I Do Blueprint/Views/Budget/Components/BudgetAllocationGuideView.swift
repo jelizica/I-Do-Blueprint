@@ -4,9 +4,9 @@ import SwiftUI
 struct BudgetAllocationGuideView: View {
     let unallocatedAmount: Double
     let categories: [BudgetCategory]
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
     private var recommendations: [AllocationRecommendation] {
         // Calculate recommendations based on typical wedding budget percentages
         let typicalAllocations: [String: Double] = [
@@ -18,7 +18,7 @@ struct BudgetAllocationGuideView: View {
             "Attire": 0.05,
             "Other": 0.15
         ]
-        
+
         return categories.compactMap { category in
             if let typical = typicalAllocations[category.categoryName] {
                 let suggestedAmount = unallocatedAmount * typical
@@ -33,7 +33,7 @@ struct BudgetAllocationGuideView: View {
             return nil
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -43,7 +43,7 @@ struct BudgetAllocationGuideView: View {
                         Text("Available to Allocate")
                             .font(.headline)
                             .foregroundColor(.secondary)
-                        
+
                         Text(NumberFormatter.currency.string(from: NSNumber(value: unallocatedAmount)) ?? "$0")
                             .font(.system(size: 36, weight: .bold))
                             .foregroundColor(AppColors.Budget.allocated)
@@ -52,15 +52,15 @@ struct BudgetAllocationGuideView: View {
                     .padding()
                     .background(AppColors.Budget.allocated.opacity(0.1))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
-                    
+
                     Divider()
-                    
+
                     // Recommendations
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Suggested Allocation")
                             .font(.title2)
                             .fontWeight(.semibold)
-                        
+
                         if recommendations.isEmpty {
                             Text("Create budget categories to see allocation recommendations.")
                                 .font(.subheadline)
@@ -72,23 +72,23 @@ struct BudgetAllocationGuideView: View {
                             }
                         }
                     }
-                    
+
                     Divider()
-                    
+
                     // Tips
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Tips")
                             .font(.title3)
                             .fontWeight(.semibold)
-                        
+
                         TipRow(
                             icon: "lightbulb.fill",
                             text: "Allocate 10-15% as a contingency buffer for unexpected expenses.")
-                        
+
                         TipRow(
                             icon: "chart.pie.fill",
                             text: "Review your allocations monthly and adjust as needed based on actual spending.")
-                        
+
                         TipRow(
                             icon: "dollarsign.circle.fill",
                             text: "Prioritize must-have categories before nice-to-have items.")
@@ -117,29 +117,29 @@ struct AllocationRecommendation {
 
 struct RecommendationRow: View {
     let recommendation: AllocationRecommendation
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Text(recommendation.categoryName)
                     .font(.headline)
-                
+
                 Spacer()
-                
+
                 Text("\(Int(recommendation.percentage * 100))%")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             HStack {
                 Text("Current:")
                     .font(.caption)
                     .foregroundColor(.secondary)
                 Text(NumberFormatter.currency.string(from: NSNumber(value: recommendation.currentAllocation)) ?? "$0")
                     .font(.caption)
-                
+
                 Spacer()
-                
+
                 Text("Suggested:")
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -158,13 +158,13 @@ struct RecommendationRow: View {
 struct TipRow: View {
     let icon: String
     let text: String
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: icon)
                 .foregroundColor(AppColors.Budget.allocated)
                 .font(.title3)
-            
+
             Text(text)
                 .font(.subheadline)
                 .foregroundColor(.secondary)

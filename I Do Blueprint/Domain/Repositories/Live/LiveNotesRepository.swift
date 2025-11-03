@@ -22,14 +22,14 @@ class LiveNotesRepository: NotesRepositoryProtocol {
     init() {
         supabase = SupabaseManager.shared.client
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
         }
         return supabase
     }
-    
+
     private func getTenantId() async throws -> UUID {
         try await TenantContextProvider.shared.requireTenantId()
     }
@@ -117,8 +117,8 @@ class LiveNotesRepository: NotesRepositoryProtocol {
 
                 enum CodingKeys: String, CodingKey {
                     case coupleId = "couple_id"
-                    case title
-                    case content
+                    case title = "title"
+                    case content = "content"
                     case relatedType = "related_type"
                     case relatedId = "related_id"
                 }
@@ -159,7 +159,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             struct NoteUpdate: Encodable {
                 let title: String?
                 let content: String
@@ -167,8 +167,8 @@ class LiveNotesRepository: NotesRepositoryProtocol {
                 let relatedId: String?
 
                 enum CodingKeys: String, CodingKey {
-                    case title
-                    case content
+                    case title = "title"
+                    case content = "content"
                     case relatedType = "related_type"
                     case relatedId = "related_id"
                 }
@@ -190,10 +190,10 @@ class LiveNotesRepository: NotesRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Updated note: \(data.title ?? "Untitled")")
-            
+
             return note
         } catch {
             logger.error("Failed to update note", error: error)
@@ -210,7 +210,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
         do {
             let client = try getClient()
             let startTime = Date()
-            
+
             try await RepositoryNetwork.withRetry {
                 try await client
                     .from("notes")
@@ -218,7 +218,7 @@ class LiveNotesRepository: NotesRepositoryProtocol {
                     .eq("id", value: id.uuidString)
                     .execute()
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Deleted note: \(id)")
         } catch {

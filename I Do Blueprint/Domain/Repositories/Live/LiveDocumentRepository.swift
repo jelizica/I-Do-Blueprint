@@ -14,24 +14,24 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
     private let supabase: SupabaseManager
     private let sessionManager = SessionManager.shared
     private let cacheStrategy = DocumentCacheStrategy()
-    
+
     init(client: SupabaseClient? = nil) {
         self.client = client
         self.supabase = SupabaseManager.shared
     }
-    
+
     init() {
         self.client = SupabaseManager.shared.client
         self.supabase = SupabaseManager.shared
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let client = client else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
         }
         return client
     }
-    
+
     private func getTenantId() async throws -> UUID {
         try await TenantContextProvider.shared.requireTenantId()
     }
@@ -325,7 +325,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
             let client = try getClient()
             // Generate unique storage path
             let timestamp = Int(Date().timeIntervalSince1970)
-            
+
             // Sanitize filename: replace spaces and remove/replace invalid characters
             // Supabase Storage doesn't allow: [ ] { } < > # % " ' ` ^ | \ and some others
             var sanitizedFilename = metadata.fileName
@@ -344,7 +344,7 @@ actor LiveDocumentRepository: DocumentRepositoryProtocol {
                 .replacingOccurrences(of: "\\", with: "-")
                 .replacingOccurrences(of: "<", with: "")
                 .replacingOccurrences(of: ">", with: "")
-            
+
             let storagePath = "\(coupleId)/\(timestamp)_\(sanitizedFilename)"
 
             // Upload to storage (30s timeout for storage operations)

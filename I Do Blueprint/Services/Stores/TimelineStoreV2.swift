@@ -21,24 +21,24 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
     @Published var showCompleted = true
 
     @Dependency(\.timelineRepository) var repository
-    
+
     // MARK: - Cache Management
     var lastLoadTime: Date?
     let cacheValidityDuration: TimeInterval = 300 // 5 minutes
-    
+
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
-    
+
     // MARK: - Computed Properties for Backward Compatibility
-    
+
     var timelineItems: [TimelineItem] {
         loadingState.data ?? []
     }
-    
+
     var isLoading: Bool {
         loadingState.isLoading
     }
-    
+
     var error: TimelineError? {
         if case .error(let err) = loadingState {
             return err as? TimelineError ?? .fetchFailed(underlying: err)
@@ -51,7 +51,7 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
     func loadTimelineItems(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             // Use cached data if still valid
@@ -59,22 +59,22 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
                 AppLogger.ui.debug("Using cached timeline data (age: \(Int(cacheAge()))s)")
                 return
             }
-            
+
             guard loadingState.isIdle || loadingState.hasError || force else { return }
-            
+
             loadingState = .loading
 
             do {
                 try Task.checkCancellation()
-                
+
                 async let itemsResult = repository.fetchTimelineItems()
                 async let milestonesResult = repository.fetchMilestones()
 
                 let fetchedItems = try await itemsResult
                 let fetchedMilestones = try await milestonesResult
-                
+
                 try Task.checkCancellation()
-                
+
                 milestones = fetchedMilestones
                 loadingState = .loaded(fetchedItems)
                 lastLoadTime = Date()
@@ -88,7 +88,7 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
                 loadingState = .error(TimelineError.fetchFailed(underlying: error))
             }
         }
-        
+
         await loadTask?.value
     }
 
@@ -99,13 +99,13 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
     func createTimelineItem(_ insertData: TimelineItemInsertData) async {
     do {
     let item = try await repository.createTimelineItem(insertData)
-    
+
     if case .loaded(var currentItems) = loadingState {
     currentItems.append(item)
     currentItems.sort { $0.itemDate < $1.itemDate }
     loadingState = .loaded(currentItems)
     }
-    
+
     // Invalidate cache due to mutation
     invalidateCache()
     showSuccess("Timeline item created successfully")
@@ -124,21 +124,21 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
               let index = currentItems.firstIndex(where: { $0.id == item.id }) else {
             return
         }
-        
+
         let original = currentItems[index]
         currentItems[index] = item
         loadingState = .loaded(currentItems)
 
         do {
             let updated = try await repository.updateTimelineItem(item)
-            
+
             if case .loaded(var items) = loadingState,
                let idx = items.firstIndex(where: { $0.id == item.id }) {
                 items[idx] = updated
                 items.sort { $0.itemDate < $1.itemDate }
                 loadingState = .loaded(items)
             }
-            
+
             // Invalidate cache due to mutation
             invalidateCache()
             showSuccess("Timeline item updated successfully")
@@ -163,7 +163,7 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
               let index = currentItems.firstIndex(where: { $0.id == item.id }) else {
             return
         }
-        
+
         let removed = currentItems.remove(at: index)
         loadingState = .loaded(currentItems)
 
@@ -352,20 +352,20 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
     func completedItemsCount() -> Int {
         filteredItems.filter(\.completed).count
     }
-    
+
     // MARK: - Retry Helper
-    
+
     func retryLoad() async {
         await loadTimelineItems()
     }
-    
+
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         // Cancel in-flight tasks to avoid race conditions during tenant switch
         loadTask?.cancel()
-        
+
         // Reset state and invalidate cache
         loadingState = .idle
         milestones = []

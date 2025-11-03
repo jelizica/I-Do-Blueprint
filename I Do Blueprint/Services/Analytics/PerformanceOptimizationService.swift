@@ -35,12 +35,12 @@ class PerformanceOptimizationService: ObservableObject {
 
     init() {
         setupCacheConfiguration()
-        
+
         // Only start monitoring if feature flags allow
         if PerformanceFeatureFlags.enableMemoryWarningMonitoring {
             setupMemoryWarningObserver()
         }
-        
+
         if PerformanceFeatureFlags.enablePerformanceMonitoring {
             startPerformanceMonitoring()
         }
@@ -64,13 +64,13 @@ class PerformanceOptimizationService: ObservableObject {
         // Note: macOS doesn't have a direct memory warning notification like iOS
         // We could monitor system memory pressure through other means if needed
         // For now, we'll handle this through periodic cleanup
-        
+
         // Only enable if feature flag is set (disabled by default to save memory)
         guard PerformanceFeatureFlags.enableMemoryWarningMonitoring else {
             logger.debug("Memory warning monitoring disabled via feature flag")
             return
         }
-        
+
         memoryWarningCancellable = Timer.publish(every: 60, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
@@ -145,13 +145,13 @@ class PerformanceOptimizationService: ObservableObject {
             logger.debug("Image preloading disabled via feature flag")
             return
         }
-        
+
         Task(priority: priority) {
             let urls = elements.compactMap { element -> URL? in
                 guard let imageUrl = element.elementData.imageUrl else { return nil }
                 return URL(string: imageUrl)
             }
-            
+
             // Use SafeImageLoader for memory-safe loading
             await SafeImageLoader.shared.preloadImages(urls: urls, delay: 0.1)
         }
@@ -163,7 +163,7 @@ class PerformanceOptimizationService: ObservableObject {
             logger.debug("Mood board thumbnail preloading disabled via feature flag")
             return
         }
-        
+
         Task(priority: .low) {
             for moodBoard in moodBoards {
                 let thumbnailElements = Array(moodBoard.elements.prefix(3))
@@ -171,7 +171,7 @@ class PerformanceOptimizationService: ObservableObject {
                     guard let imageUrl = element.elementData.imageUrl else { return nil }
                     return URL(string: imageUrl)
                 }
-                
+
                 // Use SafeImageLoader for memory-safe thumbnail loading
                 for url in urls {
                     _ = await SafeImageLoader.shared.loadThumbnail(from: url)
@@ -270,7 +270,7 @@ class PerformanceOptimizationService: ObservableObject {
             logger.debug("Performance monitoring disabled via feature flag")
             return
         }
-        
+
         Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 self?.updatePerformanceMetrics()

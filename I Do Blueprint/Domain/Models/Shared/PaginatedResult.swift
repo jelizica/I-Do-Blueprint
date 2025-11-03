@@ -24,9 +24,9 @@ import Foundation
 ///         .range(from: offset, to: offset + pageSize - 1)
 ///         .execute()
 ///         .value
-///     
+///
 ///     let totalCount = try await fetchTotalCount()
-///     
+///
 ///     return PaginatedResult(
 ///         items: guests,
 ///         page: page,
@@ -43,57 +43,57 @@ import Foundation
 /// }
 /// ```
 struct PaginatedResult<T: Codable & Sendable>: Codable, Sendable {
-    
+
     // MARK: - Properties
-    
+
     /// The items in the current page
     let items: [T]
-    
+
     /// The current page number (0-indexed)
     let page: Int
-    
+
     /// The number of items per page
     let pageSize: Int
-    
+
     /// The total number of items across all pages
     let totalCount: Int
-    
+
     // MARK: - Computed Properties
-    
+
     /// Whether there are more pages available
     var hasMore: Bool {
         let loadedCount = (page + 1) * pageSize
         return loadedCount < totalCount
     }
-    
+
     /// The total number of pages
     var totalPages: Int {
         guard totalCount > 0 else { return 0 }
         return (totalCount + pageSize - 1) / pageSize
     }
-    
+
     /// Whether this is the first page
     var isFirstPage: Bool {
         page == 0
     }
-    
+
     /// Whether this is the last page
     var isLastPage: Bool {
         !hasMore
     }
-    
+
     /// The range of items in this page (e.g., "1-50 of 200")
     var rangeDescription: String {
         guard totalCount > 0 else { return "0 items" }
-        
+
         let start = page * pageSize + 1
         let end = min((page + 1) * pageSize, totalCount)
-        
+
         return "\(start)-\(end) of \(totalCount)"
     }
-    
+
     // MARK: - Initializers
-    
+
     /// Creates a paginated result
     ///
     /// - Parameters:
@@ -107,16 +107,16 @@ struct PaginatedResult<T: Codable & Sendable>: Codable, Sendable {
         self.pageSize = pageSize
         self.totalCount = totalCount
     }
-    
+
     /// Creates an empty paginated result
     ///
     /// Useful for initial states or error conditions.
     static func empty(pageSize: Int = 50) -> PaginatedResult<T> {
         PaginatedResult(items: [], page: 0, pageSize: pageSize, totalCount: 0)
     }
-    
+
     // MARK: - Transformation
-    
+
     /// Maps the items to a different type
     ///
     /// Useful for transforming paginated results while preserving pagination metadata.

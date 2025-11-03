@@ -37,22 +37,22 @@ struct Invitation: Codable, Identifiable, Equatable, Hashable {
     let metadata: [String: String]?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case coupleId = "couple_id"
-        case email
+        case email = "email"
         case roleId = "role_id"
         case invitedBy = "invited_by"
         case invitedAt = "invited_at"
         case expiresAt = "expires_at"
-        case status
-        case token
+        case status = "status"
+        case token = "token"
         case displayName = "display_name"
-        case message
+        case message = "message"
         case acceptedBy = "accepted_by"
         case acceptedAt = "accepted_at"
-        case metadata
+        case metadata = "metadata"
     }
 
     // MARK: - Computed Properties
@@ -92,11 +92,11 @@ struct InvitationDetails: Codable, Sendable {
 
 /// Status of an invitation
 enum InvitationStatus: String, Codable, CaseIterable {
-    case pending
-    case accepted
-    case expired
-    case cancelled
-    case declined
+    case pending = "pending"
+    case accepted = "accepted"
+    case expired = "expired"
+    case cancelled = "cancelled"
+    case declined = "declined"
 
     var displayName: String {
         switch self {

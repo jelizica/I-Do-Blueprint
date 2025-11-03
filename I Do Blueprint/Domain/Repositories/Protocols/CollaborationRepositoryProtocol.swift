@@ -26,9 +26,9 @@ import Foundation
 /// All methods are async and can be called from any actor context.
 /// The protocol conforms to `Sendable` for safe concurrent access.
 protocol CollaborationRepositoryProtocol: Sendable {
-    
+
     // MARK: - Fetch Operations
-    
+
     /// Fetches all collaborators for the current couple
     ///
     /// Returns collaborators sorted by creation date (newest first).
@@ -37,7 +37,7 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Returns: Array of collaborator records
     /// - Throws: Repository errors if fetch fails or tenant context is missing
     func fetchCollaborators() async throws -> [Collaborator]
-    
+
     /// Fetches all available collaboration roles
     ///
     /// Returns system-defined roles (owner, partner, planner, viewer).
@@ -45,20 +45,20 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Returns: Array of collaboration roles
     /// - Throws: Repository errors if fetch fails
     func fetchRoles() async throws -> [CollaborationRole]
-    
+
     /// Fetches a specific collaborator by ID
     ///
     /// - Parameter id: The UUID of the collaborator
     /// - Returns: The collaborator if found
     /// - Throws: Repository errors if fetch fails or collaborator not found
     func fetchCollaborator(id: UUID) async throws -> Collaborator
-    
+
     /// Fetches the current user's collaborator record for the couple
     ///
     /// - Returns: The current user's collaborator record, or nil if user is not a collaborator
     /// - Throws: Repository errors if fetch fails
     func fetchCurrentUserCollaborator() async throws -> Collaborator?
-    
+
     /// Fetches all collaborations for the current user across all couples
     ///
     /// Returns collaborations sorted by wedding date (soonest first).
@@ -78,7 +78,7 @@ protocol CollaborationRepositoryProtocol: Sendable {
     func fetchInvitationByToken(_ token: String) async throws -> InvitationDetails
 
     // MARK: - Create, Update, Delete Operations
-    
+
     /// Invites a new collaborator
     ///
     /// Creates a collaborator record with pending status.
@@ -91,7 +91,7 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Returns: The created collaborator with pending status
     /// - Throws: Repository errors if creation fails or user lacks permission
     func inviteCollaborator(email: String, roleId: UUID, displayName: String?) async throws -> Collaborator
-    
+
     /// Accepts a collaboration invitation
     ///
     /// Updates the collaborator status from pending to active.
@@ -100,7 +100,7 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Returns: The updated collaborator with active status
     /// - Throws: Repository errors if update fails or invitation not found
     func acceptInvitation(id: UUID) async throws -> Collaborator
-    
+
     /// Updates a collaborator's role
     ///
     /// Only users with manage_roles permission can update roles.
@@ -111,7 +111,7 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Returns: The updated collaborator
     /// - Throws: Repository errors if update fails or user lacks permission
     func updateCollaboratorRole(id: UUID, roleId: UUID) async throws -> Collaborator
-    
+
     /// Removes a collaborator
     ///
     /// Only users with manage_roles permission can remove collaborators.
@@ -120,7 +120,7 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Parameter id: The collaborator ID to remove
     /// - Throws: Repository errors if deletion fails or user lacks permission
     func removeCollaborator(id: UUID) async throws
-    
+
     /// Allows user to leave a collaboration (remove themselves)
     ///
     /// User can only leave if they are not the last owner.
@@ -128,7 +128,7 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Parameter coupleId: The couple ID to leave
     /// - Throws: Repository errors if removal fails or user is last owner
     func leaveCollaboration(coupleId: UUID) async throws
-    
+
     /// Declines a pending invitation
     ///
     /// Updates collaborator status from pending to declined.
@@ -136,24 +136,24 @@ protocol CollaborationRepositoryProtocol: Sendable {
     /// - Parameter id: The collaborator ID
     /// - Throws: Repository errors if update fails
     func declineInvitation(id: UUID) async throws
-    
+
     // MARK: - Permission Checks
-    
+
     /// Checks if the current user has a specific permission
     ///
     /// - Parameter permission: The permission to check (can_edit, can_delete, can_invite, can_manage_roles)
     /// - Returns: True if user has the permission
     /// - Throws: Repository errors if check fails
     func hasPermission(_ permission: String) async throws -> Bool
-    
+
     /// Gets the current user's role name
     ///
     /// - Returns: The role name (owner, partner, planner, viewer), or nil if user is not a collaborator
     /// - Throws: Repository errors if fetch fails
     func getCurrentUserRole() async throws -> RoleName?
-    
+
     // MARK: - Onboarding Support
-    
+
     /// Creates an owner collaborator record during onboarding
     ///
     /// This method is called automatically when a user completes onboarding and creates their couple profile.

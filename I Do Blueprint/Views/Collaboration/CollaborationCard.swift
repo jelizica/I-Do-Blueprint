@@ -12,7 +12,7 @@ struct CollaborationCard: View {
     let isCurrentWedding: Bool
     let onSwitchTo: () -> Void
     let onLeave: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header with couple name and role
@@ -21,7 +21,7 @@ struct CollaborationCard: View {
                     Text(collaboration.coupleName)
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     if let weddingDate = collaboration.weddingDate {
                         HStack(spacing: Spacing.xs) {
                             Image(systemName: "calendar")
@@ -32,15 +32,15 @@ struct CollaborationCard: View {
                         .foregroundColor(AppColors.textSecondary)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 // Role badge
                 roleBadge
             }
-            
+
             Divider()
-            
+
             // Metadata
             HStack(spacing: Spacing.lg) {
                 if let invitedBy = collaboration.invitedBy {
@@ -52,7 +52,7 @@ struct CollaborationCard: View {
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 HStack(spacing: Spacing.xs) {
                     Image(systemName: "clock")
                         .font(.system(size: 12))
@@ -61,9 +61,9 @@ struct CollaborationCard: View {
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Divider()
-            
+
             // Actions
             HStack(spacing: Spacing.md) {
                 if isCurrentWedding {
@@ -87,9 +87,9 @@ struct CollaborationCard: View {
                     .buttonStyle(.borderedProminent)
                     .accessibilityLabel("Switch to \(collaboration.coupleName)'s wedding")
                 }
-                
+
                 Spacer()
-                
+
                 Button(action: onLeave) {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
@@ -107,9 +107,9 @@ struct CollaborationCard: View {
         .cornerRadius(12)
         .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 4, x: 0, y: 2)
     }
-    
+
     // MARK: - Role Badge
-    
+
     private var roleBadge: some View {
         Text(collaboration.role.displayName)
             .font(Typography.caption)
@@ -120,7 +120,7 @@ struct CollaborationCard: View {
             .background(roleColor.opacity(0.1))
             .cornerRadius(6)
     }
-    
+
     private var roleColor: Color {
         switch collaboration.role {
         case .owner:

@@ -170,7 +170,7 @@ struct PaymentScheduleView: View {
             getVendorName: { vendorId in
                 // Look up vendor name from vendors list using vendor_id
                 guard let vendorId = vendorId else { return nil }
-                
+
                 // Access vendors from VendorStoreV2 through AppStores
                 let vendors = AppStores.shared.vendor.vendors
                 return vendors.first(where: { $0.id == vendorId })?.vendorName
@@ -376,12 +376,12 @@ struct PaymentOverviewCard: View {
 // MARK: - Filter Options
 
 enum PaymentFilterOption: String, CaseIterable {
-    case all
-    case upcoming
-    case overdue
+    case all = "all"
+    case upcoming = "upcoming"
+    case overdue = "overdue"
     case thisWeek = "this_week"
     case thisMonth = "this_month"
-    case paid
+    case paid = "paid"
 
     var displayName: String {
         switch self {

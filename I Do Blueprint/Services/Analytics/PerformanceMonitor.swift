@@ -21,12 +21,12 @@ import Foundation
 /// // In repository
 /// func fetchGuests() async throws -> [Guest] {
 ///     let startTime = Date()
-///     
+///
 ///     let guests = try await client.from("guest_list").select().execute().value
-///     
+///
 ///     let duration = Date().timeIntervalSince(startTime)
 ///     await PerformanceMonitor.shared.recordOperation("fetchGuests", duration: duration)
-///     
+///
 ///     return guests
 /// }
 ///
@@ -35,9 +35,9 @@ import Foundation
 /// print(report)
 /// ```
 actor PerformanceMonitor {
-    
+
     // MARK: - Types
-    
+
     struct PerfEvent: Sendable, Identifiable, Codable {
         let id: UUID = UUID()
         let operation: String
@@ -45,7 +45,7 @@ actor PerformanceMonitor {
         let mainThread: TimeInterval?
         let timestamp: Date
     }
-    
+
     struct PerfStats: Sendable, Codable, Identifiable {
         var id: String { operation }
         let operation: String
@@ -57,45 +57,45 @@ actor PerformanceMonitor {
         let max: TimeInterval
         let p95: TimeInterval
     }
-    
+
     // MARK: - Singleton
-    
+
     static let shared = PerformanceMonitor()
-    
+
     private let logger = AppLogger.analytics
-    
+
     // MARK: - Configuration
-    
+
     /// Enable verbose breadcrumbs/logs when performance monitoring is enabled via PerformanceFeatureFlags
     private var verboseEnabled: Bool {
         PerformanceFeatureFlags.enablePerformanceMonitoring
     }
-    
+
     // MARK: - Storage
-    
+
     /// Recent events buffer (for diagnostics UI)
     private var recentEvents: [PerfEvent] = []
     private let maxRecentEvents = 500
-    
+
     /// Threshold for slow operation warnings (in seconds)
     private let slowOperationThreshold: TimeInterval = 1.0
-    
+
     /// Maximum number of samples to keep per operation
     private let maxSamplesPerOperation = 100
-    
+
     // MARK: - Private Properties
-    
+
     /// Operation timing data
     private var operationTimes: [String: [TimeInterval]] = [:]
-    
+
     /// Slow operation alerts
     private var slowOperations: [(operation: String, duration: TimeInterval, timestamp: Date)] = []
-    
+
     /// Total operation counts
     private var operationCounts: [String: Int] = [:]
-    
+
     // MARK: - Public Interface
-    
+
     /// Records an operation duration (total time only)
     ///
     /// - Parameters:
@@ -114,30 +114,30 @@ actor PerformanceMonitor {
         // Record timing
         var times = operationTimes[operation, default: []]
         times.append(duration)
-        
+
         // Keep only recent samples to prevent memory growth
         if times.count > maxSamplesPerOperation {
             times.removeFirst(times.count - maxSamplesPerOperation)
         }
-        
+
         operationTimes[operation] = times
-        
+
         // Increment count
         operationCounts[operation, default: 0] += 1
-        
+
         // Check for slow operations
         if duration > slowOperationThreshold {
             let alert = (operation: operation, duration: duration, timestamp: Date())
             slowOperations.append(alert)
-            
+
             // Keep only recent slow operations (last 50)
             if slowOperations.count > 50 {
                 slowOperations.removeFirst(slowOperations.count - 50)
             }
-            
+
             logger.warning("Slow operation detected: \(operation) took \(String(format: "%.2f", duration))s")
         }
-        
+
         // Optional Sentry breadcrumb for visibility when enabled
         if verboseEnabled {
             var data: [String: Any] = [
@@ -155,7 +155,7 @@ actor PerformanceMonitor {
                 )
             }
         }
-        
+
         // Record recent event for diagnostics
         let event = PerfEvent(
             operation: operation,
@@ -168,7 +168,7 @@ actor PerformanceMonitor {
             recentEvents.removeFirst(recentEvents.count - maxRecentEvents)
         }
     }
-    
+
     /// Gets the average duration for an operation
     ///
     /// - Parameter operation: The operation name
@@ -179,7 +179,7 @@ actor PerformanceMonitor {
         }
         return times.reduce(0, +) / Double(times.count)
     }
-    
+
     /// Gets the median duration for an operation
     ///
     /// - Parameter operation: The operation name
@@ -188,17 +188,17 @@ actor PerformanceMonitor {
         guard let times = operationTimes[operation], !times.isEmpty else {
             return nil
         }
-        
+
         let sorted = times.sorted()
         let count = sorted.count
-        
+
         if count % 2 == 0 {
             return (sorted[count / 2 - 1] + sorted[count / 2]) / 2
         } else {
             return sorted[count / 2]
         }
     }
-    
+
     /// Gets the 95th percentile duration for an operation
     ///
     /// - Parameter operation: The operation name
@@ -207,12 +207,12 @@ actor PerformanceMonitor {
         guard let times = operationTimes[operation], !times.isEmpty else {
             return nil
         }
-        
+
         let sorted = times.sorted()
         let index = Int(Double(sorted.count) * 0.95)
         return sorted[min(index, sorted.count - 1)]
     }
-    
+
     /// Gets statistics for an operation
     ///
     /// - Parameter operation: The operation name
@@ -221,10 +221,10 @@ actor PerformanceMonitor {
         guard let times = operationTimes[operation], !times.isEmpty else {
             return nil
         }
-        
+
         let sorted = times.sorted()
         let count = operationCounts[operation, default: 0]
-        
+
         return [
             "operation": operation,
             "count": count,
@@ -236,21 +236,21 @@ actor PerformanceMonitor {
             "p95": p95Duration(for: operation) ?? 0
         ]
     }
-    
+
     /// Gets all slow operations
     ///
     /// - Returns: Array of slow operation alerts
     func slowOperationAlerts() -> [(operation: String, duration: TimeInterval, timestamp: Date)] {
         slowOperations
     }
-    
+
     /// Clears all performance data
     func clear() {
         operationTimes.removeAll()
         slowOperations.removeAll()
         operationCounts.removeAll()
     }
-    
+
     /// Convenience to measure an async block and record total duration
     func measureAsync<T>(name: String, block: () async throws -> T) async rethrows -> T {
         let start = Date()
@@ -301,17 +301,17 @@ actor PerformanceMonitor {
     func performanceReport() -> String {
         var report = "⚡️ Performance Report\n"
         report += "=" * 50 + "\n\n"
-        
+
         let operations = operationTimes.keys.sorted()
-        
+
         if operations.isEmpty {
             report += "No performance data recorded.\n"
             return report
         }
-        
+
         for operation in operations {
             guard let stats = statistics(for: operation) else { continue }
-            
+
             report += "Operation: \(operation)\n"
             report += "  Count: \(stats["count"] ?? 0)\n"
             report += "  Average: \(formatDuration(stats["average"] as? TimeInterval ?? 0))\n"
@@ -320,28 +320,28 @@ actor PerformanceMonitor {
             report += "  Max: \(formatDuration(stats["max"] as? TimeInterval ?? 0))\n"
             report += "  P95: \(formatDuration(stats["p95"] as? TimeInterval ?? 0))\n\n"
         }
-        
+
         // Slow operations summary
         if !slowOperations.isEmpty {
             report += "=" * 50 + "\n"
             report += "⚠️ Slow Operations (>\(String(format: "%.1f", slowOperationThreshold))s):\n\n"
-            
+
             let recentSlowOps = slowOperations.suffix(10)
             for alert in recentSlowOps {
                 let timeAgo = formatTimeAgo(alert.timestamp)
                 report += "  \(alert.operation): \(formatDuration(alert.duration)) (\(timeAgo))\n"
             }
-            
+
             if slowOperations.count > 10 {
                 report += "\n  ... and \(slowOperations.count - 10) more\n"
             }
         }
-        
+
         return report
     }
-    
+
     // MARK: - Private Helpers
-    
+
     /// Formats a duration for display
     private func formatDuration(_ duration: TimeInterval) -> String {
         if duration < 0.001 {
@@ -352,11 +352,11 @@ actor PerformanceMonitor {
             return String(format: "%.2fs", duration)
         }
     }
-    
+
     /// Formats a timestamp as "time ago"
     private func formatTimeAgo(_ date: Date) -> String {
         let seconds = Date().timeIntervalSince(date)
-        
+
         if seconds < 60 {
             return "\(Int(seconds))s ago"
         } else if seconds < 3600 {

@@ -22,16 +22,16 @@ struct CoupleSettings: Codable, Equatable {
     var links: LinksSettings
 
     enum CodingKeys: String, CodingKey {
-        case global
-        case theme
-        case budget
+        case global = "global"
+        case theme = "theme"
+        case budget = "budget"
         case cashFlow = "cash_flow"
-        case tasks
-        case vendors
-        case guests
-        case documents
-        case notifications
-        case links
+        case tasks = "tasks"
+        case vendors = "vendors"
+        case guests = "guests"
+        case documents = "documents"
+        case notifications = "notifications"
+        case links = "links"
     }
 
     static var `default`: CoupleSettings {
@@ -63,10 +63,10 @@ struct GlobalSettings: Codable, Equatable {
     var weddingEvents: [SettingsWeddingEvent]
 
     enum CodingKeys: String, CodingKey {
-        case currency
+        case currency = "currency"
         case weddingDate = "wedding_date"
         case isWeddingDateTBD = "is_wedding_date_tbd"
-        case timezone
+        case timezone = "timezone"
         case partner1FullName = "partner1_full_name"
         case partner1Nickname = "partner1_nickname"
         case partner2FullName = "partner2_full_name"
@@ -118,12 +118,12 @@ struct SettingsWeddingEvent: Codable, Equatable, Identifiable {
     var eventOrder: Int
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case eventName = "event_name"
         case eventDate = "event_date"
         case eventTime = "event_time"
         case venueLocation = "venue_location"
-        case description
+        case description = "description"
         case isMainEvent = "is_main_event"
         case eventOrder = "event_order"
     }
@@ -184,7 +184,7 @@ struct BudgetSettings: Codable, Equatable {
         case engagementRingAmount = "engagement_ring_amount"
         case autoCategorize = "auto_categorize"
         case paymentReminders = "payment_reminders"
-        case notes
+        case notes = "notes"
         case taxRates = "tax_rates"
     }
 
@@ -214,9 +214,9 @@ struct SettingsTaxRate: Codable, Equatable, Identifiable {
     var isDefault: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case name
-        case rate
+        case id = "id"
+        case name = "name"
+        case rate = "rate"
         case isDefault = "is_default"
     }
 }
@@ -405,10 +405,10 @@ struct ImportantLink: Codable, Equatable, Identifiable {
     var description: String?
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case url
-        case description
+        case id = "id"
+        case title = "title"
+        case url = "url"
+        case description = "description"
     }
 }
 
@@ -424,10 +424,10 @@ struct CustomVendorCategory: Codable, Equatable, Identifiable {
     var updatedAt: Date
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
-        case name
-        case description
+        case name = "name"
+        case description = "description"
         case typicalBudgetPercentage = "typical_budget_percentage"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -462,6 +462,6 @@ struct PhoneFormatError: Codable, Equatable, Identifiable {
         case contactId = "contact_id"
         case vendorName = "vendor_name"
         case contactName = "contact_name"
-        case error
+        case error = "error"
     }
 }

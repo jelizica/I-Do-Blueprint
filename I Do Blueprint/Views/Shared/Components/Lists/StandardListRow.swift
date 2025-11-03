@@ -17,9 +17,9 @@ struct StandardListRow: View {
     let badgeColor: Color?
     let accessory: Accessory
     let action: (() -> Void)?
-    
+
     @State private var isHovering = false
-    
+
     init(
         icon: String? = nil,
         iconColor: Color? = nil,
@@ -39,7 +39,7 @@ struct StandardListRow: View {
         self.accessory = accessory
         self.action = action
     }
-    
+
     enum Accessory {
         case none
         case chevron
@@ -47,7 +47,7 @@ struct StandardListRow: View {
         case toggle(Binding<Bool>)
         case button(String, () -> Void)
     }
-    
+
     var body: some View {
         Button(action: {
             action?()
@@ -64,7 +64,7 @@ struct StandardListRow: View {
                                 .foregroundColor(iconColor ?? .blue)
                         )
                 }
-                
+
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: Spacing.sm) {
@@ -72,7 +72,7 @@ struct StandardListRow: View {
                             .font(Typography.bodyRegular)
                             .fontWeight(.medium)
                             .foregroundColor(AppColors.textPrimary)
-                        
+
                         if let badge = badge {
                             Text(badge)
                                 .font(Typography.caption2)
@@ -86,7 +86,7 @@ struct StandardListRow: View {
                                 .foregroundColor(badgeColor ?? .blue)
                         }
                     }
-                    
+
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(Typography.bodySmall)
@@ -94,9 +94,9 @@ struct StandardListRow: View {
                             .lineLimit(2)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 // Accessory
                 accessoryView
             }
@@ -118,27 +118,27 @@ struct StandardListRow: View {
         .accessibilityLabel(accessibilityLabel)
         .accessibilityAddTraits(action != nil ? .isButton : [])
     }
-    
+
     @ViewBuilder
     private var accessoryView: some View {
         switch accessory {
         case .none:
             EmptyView()
-            
+
         case .chevron:
             Image(systemName: "chevron.right")
                 .font(.caption)
                 .foregroundColor(AppColors.textTertiary)
-            
+
         case .checkmark:
             Image(systemName: "checkmark")
                 .font(.body)
                 .foregroundColor(AppColors.success)
-            
+
         case .toggle(let binding):
             Toggle("", isOn: binding)
                 .labelsHidden()
-            
+
         case .button(let title, let buttonAction):
             Button(action: buttonAction) {
                 Text(title)
@@ -148,7 +148,7 @@ struct StandardListRow: View {
             .buttonStyle(.bordered)
         }
     }
-    
+
     private var hasInteractiveAccessory: Bool {
         switch accessory {
         case .toggle, .button:
@@ -157,7 +157,7 @@ struct StandardListRow: View {
             return false
         }
     }
-    
+
     private var accessibilityLabel: String {
         var label = title
         if let subtitle = subtitle {
@@ -180,9 +180,9 @@ struct SelectableListRow: View {
     let subtitle: String?
     let isSelected: Bool
     let action: () -> Void
-    
+
     @State private var isHovering = false
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.md) {
@@ -190,7 +190,7 @@ struct SelectableListRow: View {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
                     .foregroundColor(isSelected ? AppColors.primary : AppColors.textTertiary)
-                
+
                 // Icon
                 if let icon = icon {
                     Circle()
@@ -202,21 +202,21 @@ struct SelectableListRow: View {
                                 .foregroundColor(iconColor ?? .blue)
                         )
                 }
-                
+
                 // Content
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(Typography.bodyRegular)
                         .fontWeight(.medium)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
                 }
-                
+
                 Spacer()
             }
             .padding(.horizontal, Spacing.md)
@@ -250,9 +250,9 @@ struct SelectableListRow: View {
             accessory: .chevron,
             action: {}
         )
-        
+
         Divider()
-        
+
         StandardListRow(
             icon: "building.2.fill",
             iconColor: .purple,
@@ -262,9 +262,9 @@ struct SelectableListRow: View {
             badgeColor: .green,
             accessory: .checkmark
         )
-        
+
         Divider()
-        
+
         StandardListRow(
             icon: "bell.fill",
             iconColor: .orange,
@@ -272,9 +272,9 @@ struct SelectableListRow: View {
             subtitle: "Receive updates about your wedding",
             accessory: .toggle(.constant(true))
         )
-        
+
         Divider()
-        
+
         StandardListRow(
             icon: "doc.fill",
             iconColor: .red,
@@ -296,7 +296,7 @@ struct SelectableListRow: View {
             isSelected: true,
             action: {}
         )
-        
+
         SelectableListRow(
             icon: "person.fill",
             iconColor: .blue,
@@ -305,7 +305,7 @@ struct SelectableListRow: View {
             isSelected: false,
             action: {}
         )
-        
+
         SelectableListRow(
             icon: "person.fill",
             iconColor: .blue,

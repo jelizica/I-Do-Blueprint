@@ -4,15 +4,15 @@ import SwiftUI
 struct PaymentSchedulePreview: View {
     let schedule: [PaymentScheduleItem]
     let totalAmount: Double
-    
+
     private var totalScheduleAmount: Double {
         schedule.reduce(0) { $0 + $1.amount }
     }
-    
+
     private var amountDifference: Double {
         totalScheduleAmount - totalAmount
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             previewHeader
@@ -21,7 +21,7 @@ struct PaymentSchedulePreview: View {
         .frame(width: 350)
         .background(Color(NSColor.textBackgroundColor))
     }
-    
+
     private var previewHeader: some View {
         VStack(spacing: 12) {
             HStack {
@@ -31,7 +31,7 @@ struct PaymentSchedulePreview: View {
                     .font(.headline)
                 Spacer()
             }
-            
+
             VStack(spacing: 8) {
                 HStack {
                     Text("Total Amount:")
@@ -39,14 +39,14 @@ struct PaymentSchedulePreview: View {
                     Text(NumberFormatter.currency.string(from: NSNumber(value: totalAmount)) ?? "$0")
                         .fontWeight(.semibold)
                 }
-                
+
                 HStack {
                     Text("Number of Payments:")
                     Spacer()
                     Text("\(schedule.count)")
                         .fontWeight(.semibold)
                 }
-                
+
                 HStack {
                     Text("Schedule Total:")
                     Spacer()
@@ -54,7 +54,7 @@ struct PaymentSchedulePreview: View {
                         .fontWeight(.semibold)
                         .foregroundColor(abs(amountDifference) > 0.01 ? AppColors.Budget.overBudget : .primary)
                 }
-                
+
                 if abs(amountDifference) > 0.01 {
                     HStack {
                         Text("Difference:")
@@ -70,7 +70,7 @@ struct PaymentSchedulePreview: View {
         .padding()
         .background(AppColors.Budget.allocated.opacity(0.1))
     }
-    
+
     private var previewContent: some View {
         ScrollView {
             LazyVStack(spacing: 8) {
@@ -85,13 +85,13 @@ struct PaymentSchedulePreview: View {
             .padding()
         }
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: 16) {
             Image(systemName: "calendar.badge.clock")
                 .font(.title)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text("Configure payment details to see schedule")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -105,26 +105,26 @@ struct PaymentSchedulePreview: View {
 struct PaymentScheduleItemRow: View {
     let item: PaymentScheduleItem
     let index: Int
-    
+
     var body: some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.description)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
+
                 Text(item.dueDate, style: .date)
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
-            
+
             Spacer()
-            
+
             VStack(alignment: .trailing, spacing: 4) {
                 Text(NumberFormatter.currency.string(from: NSNumber(value: item.amount)) ?? "$0")
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                
+
                 HStack(spacing: 4) {
                     if item.description.contains("Deposit") || item.description.contains("Retainer") {
                         Text(item.description.contains("Retainer") ? "Retainer" : "Deposit")
@@ -135,7 +135,7 @@ struct PaymentScheduleItemRow: View {
                             .foregroundColor(AppColors.Budget.allocated)
                             .clipShape(Capsule())
                     }
-                    
+
                     if item.description.contains("Final") {
                         Text("Final")
                             .font(.caption2)
@@ -145,7 +145,7 @@ struct PaymentScheduleItemRow: View {
                             .foregroundColor(AppColors.Budget.income)
                             .clipShape(Capsule())
                     }
-                    
+
                     if item.isRecurring {
                         Text("Recurring")
                             .font(.caption2)

@@ -226,7 +226,7 @@ struct SeatingChartEditorViewV2: View {
     private func saveChart() {
         Task {
             do {
-                                
+
                 // Log table details
                 for (index, table) in editableChart.tables.enumerated() {
                                     }

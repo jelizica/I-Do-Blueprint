@@ -23,31 +23,31 @@ extension ContractStatus {
 struct VendorDetailView: View {
     let vendor: Vendor
     let onSave: (Vendor) -> Void
-    
+
     @State private var isEditing = false
     @State private var editedVendor: Vendor
     @State private var vendorDetails: VendorDetails
     @State private var isLoadingDetails = true
     @State private var selectedTab = 0
     @EnvironmentObject var vendorStore: VendorStoreV2
-    
+
     init(vendor: Vendor, onSave: @escaping (Vendor) -> Void) {
         self.vendor = vendor
         self.onSave = onSave
         _editedVendor = State(initialValue: vendor)
         _vendorDetails = State(initialValue: VendorDetails(vendor: vendor))
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header with vendor image and basic info
             VendorHeaderView(vendor: vendor)
                 .padding(.bottom, Spacing.xxl)
-            
+
             // Status indicators
             VendorStatusView(vendor: vendor, vendorDetails: vendorDetails)
                 .padding(.bottom, Spacing.xxl)
-            
+
             // Tabbed Content
             TabbedDetailView(
                 tabs: [
@@ -87,7 +87,7 @@ struct VendorDetailView: View {
                             isEditing = false
                         }
                         .buttonStyle(.bordered)
-                        
+
                         Button("Save") {
                             onSave(editedVendor)
                             isEditing = false
@@ -104,16 +104,16 @@ struct VendorDetailView: View {
             }
         }
     }
-    
+
     private func loadVendorDetails() async {
         isLoadingDetails = true
         defer { isLoadingDetails = false }
-        
+
         // Fetch extended data in parallel
         async let reviewStats = try? await vendorStore.repository.fetchVendorReviewStats(vendorId: vendor.id)
         async let paymentSummary = try? await vendorStore.repository.fetchVendorPaymentSummary(vendorId: vendor.id)
         async let contractInfo = try? await vendorStore.repository.fetchVendorContractSummary(vendorId: vendor.id)
-        
+
         vendorDetails.reviewStats = await reviewStats
         vendorDetails.paymentSummary = await paymentSummary
         vendorDetails.contractInfo = await contractInfo

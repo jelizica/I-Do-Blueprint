@@ -14,31 +14,31 @@ struct MetricCard: View {
     let format: MetricFormat
     let icon: String
     let color: Color
-    
+
     enum MetricFormat {
         case percentage
         case fraction
         case number
         case currency
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
                 Image(systemName: icon)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(color)
-                
+
                 Spacer()
             }
-            
+
             Spacer()
-            
+
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(formattedValue)
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text(title)
                     .font(Typography.bodySmall)
                     .foregroundColor(AppColors.textSecondary)
@@ -56,7 +56,7 @@ struct MetricCard: View {
                 .stroke(color.opacity(0.2), lineWidth: 1)
         )
     }
-    
+
     private var formattedValue: String {
         switch format {
         case .percentage:
@@ -83,7 +83,7 @@ struct MetricCard: View {
             icon: "dollarsign.circle.fill",
             color: .green
         )
-        
+
         MetricCard(
             title: "Guests RSVP'd",
             value: 120,

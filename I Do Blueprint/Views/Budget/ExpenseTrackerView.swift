@@ -14,12 +14,12 @@ struct ExpenseTrackerView: View {
     @State private var isLoadingExpenses = false
     @State private var showBenchmarks = false
     @State private var viewMode: ExpenseViewMode = .cards
-    
+
     private let logger = AppLogger.ui
-    
+
     var filteredExpenses: [Expense] {
         var results = budgetStore.expenses
-        
+
         // Apply search filter
         if !searchText.isEmpty {
             results = results.filter { expense in
@@ -27,30 +27,30 @@ struct ExpenseTrackerView: View {
                     (expense.notes ?? "").localizedCaseInsensitiveContains(searchText)
             }
         }
-        
+
         // Apply status filter
         if let filterStatus = selectedFilterStatus {
             results = results.filter { expense in
                 expense.paymentStatus == filterStatus
             }
         }
-        
+
         // Apply category filter
         if let categoryId = selectedCategoryFilter {
             results = results.filter { $0.budgetCategoryId == categoryId }
         }
-        
+
         return results.sorted { $0.expenseDate > $1.expenseDate }
     }
-    
+
     // Calculate category benchmarks
-    var categoryBenchmarks: [(category: BudgetCategory, spent: Double, percentage: Double, status: BenchmarkStatus)] {
+    var categoryBenchmarks: [CategoryBenchmarkData] {
         budgetStore.categories.compactMap { category in
             let categoryExpenses = budgetStore.expensesForCategory(category.id)
             let spent = categoryExpenses.reduce(0) { $0 + $1.amount }
             let budgeted = category.allocatedAmount
             let percentage = budgeted > 0 ? (spent / budgeted) * 100 : 0
-            
+
             let status: BenchmarkStatus = if percentage > 100 {
                 .over
             } else if percentage > 50 {
@@ -58,16 +58,21 @@ struct ExpenseTrackerView: View {
             } else {
                 .under
             }
-            
-            return (category, spent, percentage, status)
+
+            return CategoryBenchmarkData(
+                category: category,
+                spent: spent,
+                percentage: percentage,
+                status: status
+            )
         }
     }
-    
+
     var body: some View {
         ZStack {
             Color(NSColor.windowBackgroundColor)
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 20) {
                 // Header with stats
                 ExpenseTrackerHeader(
@@ -76,7 +81,7 @@ struct ExpenseTrackerView: View {
                     paidAmount: budgetStore.paidExpensesAmount,
                     expenseCount: budgetStore.expenses.count,
                     onAddExpense: { showAddExpenseSheet = true })
-                
+
                 // Filters
                 ExpenseFiltersBar(
                     searchText: $searchText,
@@ -85,7 +90,7 @@ struct ExpenseTrackerView: View {
                     viewMode: $viewMode,
                     showBenchmarks: $showBenchmarks,
                     categories: budgetStore.categories)
-                
+
                 // Expense List
                 ExpenseListView(
                     expenses: filteredExpenses,
@@ -99,7 +104,7 @@ struct ExpenseTrackerView: View {
                         showDeleteAlert = true
                     },
                     onAddExpense: { showAddExpenseSheet = true })
-                
+
                 // Category Benchmarks (collapsible)
                 if showBenchmarks {
                     CategoryBenchmarksSection(benchmarks: categoryBenchmarks)
@@ -139,14 +144,14 @@ struct ExpenseTrackerView: View {
             Text("Are you sure you want to delete this expense? This action cannot be undone.")
         }
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func loadExpenses() {
         Task {
             isLoadingExpenses = true
             defer { isLoadingExpenses = false }
-            
+
             do {
                 try await budgetStore.loadExpenses()
             } catch {
@@ -154,7 +159,7 @@ struct ExpenseTrackerView: View {
             }
         }
     }
-    
+
     private func deleteExpense(_ expense: Expense) {
         Task {
             do {

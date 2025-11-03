@@ -11,20 +11,20 @@ struct GuestOverviewTab: View {
     let guest: Guest
     let onEdit: () -> Void
     @EnvironmentObject var settingsStore: SettingsStoreV2
-    
+
     var body: some View {
         VStack(spacing: Spacing.xxxl) {
             // Quick Actions Toolbar
             QuickActionsToolbar(actions: quickActions)
-            
+
             // Quick Info Cards
             QuickInfoSection(guest: guest)
         }
     }
-    
+
     private var quickActions: [QuickAction] {
         var actions: [QuickAction] = []
-        
+
         // Call action
         if let phone = guest.phone {
             actions.append(QuickAction(icon: "phone.fill", title: "Call", color: .green) {
@@ -33,7 +33,7 @@ struct GuestOverviewTab: View {
                 }
             })
         }
-        
+
         // Email action
         if let email = guest.email {
             actions.append(QuickAction(icon: "envelope.fill", title: "Email", color: .blue) {
@@ -42,12 +42,12 @@ struct GuestOverviewTab: View {
                 }
             })
         }
-        
+
         // Edit action
         actions.append(QuickAction(icon: "pencil", title: "Edit", color: AppColors.primary) {
             onEdit()
         })
-        
+
         return actions
     }
 }

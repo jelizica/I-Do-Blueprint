@@ -107,7 +107,7 @@ struct VendorHeroHeaderView: View {
                             }
                         )
                         .shadow(color: statusColor.opacity(0.3), radius: 15, y: 5)
-                    
+
                     // Hover overlay with upload/remove options
                     if isHoveringLogo {
                         Circle()
@@ -119,15 +119,16 @@ struct VendorHeroHeaderView: View {
                                         showingImagePicker = true
                                     }) {
                                         VStack(spacing: 4) {
-                                            Image(systemName: selectedLogoImage != nil || vendor.imageUrl != nil ? "photo.badge.arrow.down" : "photo.badge.plus")
+                                            let hasImage = selectedLogoImage != nil || vendor.imageUrl != nil
+                                            Image(systemName: hasImage ? "photo.badge.arrow.down" : "photo.badge.plus")
                                                 .font(.system(size: 20))
-                                            Text(selectedLogoImage != nil || vendor.imageUrl != nil ? "Change" : "Upload")
+                                            Text(hasImage ? "Change" : "Upload")
                                                 .font(.system(size: 10, weight: .medium))
                                         }
                                         .foregroundColor(AppColors.textPrimary)
                                     }
                                     .buttonStyle(.plain)
-                                    
+
                                     if selectedLogoImage != nil || vendor.imageUrl != nil {
                                         Button(action: {
                                             selectedLogoImage = nil
@@ -208,7 +209,7 @@ struct VendorHeroHeaderView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                
+
                 if let onEdit = onEdit {
                     Button(action: onEdit) {
                         Image(systemName: "pencil.circle.fill")
@@ -248,9 +249,9 @@ struct VendorHeroHeaderView: View {
     private var statusColor: Color {
         vendor.isBooked == true ? AppColors.Vendor.booked : AppColors.Vendor.pending
     }
-    
+
     // MARK: - Private Methods
-    
+
     /// Load vendor image asynchronously from URL
     private func loadVendorImage() async {
         guard let imageUrl = vendor.imageUrl,
@@ -258,7 +259,7 @@ struct VendorHeroHeaderView: View {
             loadedVendorImage = nil
             return
         }
-        
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let nsImage = NSImage(data: data) {
@@ -273,12 +274,12 @@ struct VendorHeroHeaderView: View {
             }
         }
     }
-    
+
     private func handleImageSelection(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
-            
+
             // Load the image
             if let imageData = try? Data(contentsOf: url),
                let nsImage = NSImage(data: imageData) {
@@ -288,7 +289,7 @@ struct VendorHeroHeaderView: View {
             } else {
                 AppLogger.ui.error("Failed to load image from URL: \(url.path)")
             }
-            
+
         case .failure(let error):
             AppLogger.ui.error("Error selecting logo image", error: error)
         }

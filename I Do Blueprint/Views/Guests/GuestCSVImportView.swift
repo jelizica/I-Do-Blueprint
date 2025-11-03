@@ -17,7 +17,7 @@ enum ImportMode {
 struct GuestCSVImportView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var guestStore: GuestStoreV2
-    
+
     @State private var importService = FileImportService()
     @State private var selectedFileURL: URL?
     @State private var importPreview: ImportPreview?
@@ -29,30 +29,30 @@ struct GuestCSVImportView: View {
     @State private var importSuccess = false
     @State private var importStats: ImportStats?
     @State private var importMode: ImportMode = .addOnly
-    
+
     @Dependency(\.guestRepository) var guestRepository
     private let sessionManager = SessionManager.shared
     private let logger = AppLogger.general
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             headerSection
-            
+
             if let preview = importPreview {
                 previewSection(preview: preview)
             } else {
                 filePickerSection
             }
-            
+
             Spacer()
-            
+
             // Bottom buttons
             HStack(spacing: Spacing.md) {
                 Button("Cancel") {
                     dismiss()
                 }
                 .buttonStyle(.bordered)
-                
+
                 Spacer()
             }
             .padding(.horizontal, Spacing.xl)
@@ -83,19 +83,19 @@ struct GuestCSVImportView: View {
             }
         }
     }
-    
+
     // MARK: - View Sections
-    
+
     private var headerSection: some View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: "square.and.arrow.down")
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.primary)
-            
+
             Text("Import Guests")
                 .font(Typography.title2)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Upload a CSV or Excel file to add or sync your guest list")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
@@ -103,7 +103,7 @@ struct GuestCSVImportView: View {
         }
         .padding(.top, Spacing.lg)
     }
-    
+
     private var filePickerSection: some View {
         VStack(spacing: Spacing.lg) {
             // Import mode selection
@@ -112,7 +112,7 @@ struct GuestCSVImportView: View {
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 VStack(spacing: Spacing.sm) {
                     importModeOption(
                         mode: .addOnly,
@@ -120,7 +120,7 @@ struct GuestCSVImportView: View {
                         description: "Add new guests from the file. Existing guests won't be modified or deleted.",
                         icon: "plus.circle"
                     )
-                    
+
                     importModeOption(
                         mode: .sync,
                         title: "Sync",
@@ -133,19 +133,19 @@ struct GuestCSVImportView: View {
             .frame(maxWidth: 500)
             .background(AppColors.cardBackground)
             .cornerRadius(8)
-            
+
             // File picker button
             Button(action: { showFilePicker = true }) {
                 VStack(spacing: Spacing.md) {
                     Image(systemName: "doc.badge.plus")
                         .font(.system(size: 40))
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("Choose File")
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("Supported formats: CSV, Excel (.xlsx)")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
@@ -164,7 +164,7 @@ struct GuestCSVImportView: View {
         }
         .padding(.horizontal, Spacing.xl)
     }
-    
+
     private func importModeOption(mode: ImportMode, title: String, description: String, icon: String) -> some View {
         Button(action: { importMode = mode }) {
             HStack(spacing: Spacing.md) {
@@ -172,21 +172,21 @@ struct GuestCSVImportView: View {
                     .font(.system(size: 24))
                     .foregroundColor(importMode == mode ? AppColors.primary : AppColors.textSecondary)
                     .frame(width: 32)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(title)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(description)
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                         .multilineTextAlignment(.leading)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: importMode == mode ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(importMode == mode ? AppColors.primary : AppColors.textSecondary)
             }
@@ -196,27 +196,27 @@ struct GuestCSVImportView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
     private func previewSection(preview: ImportPreview) -> some View {
         VStack(spacing: Spacing.lg) {
             // File info
             HStack {
                 Image(systemName: "doc.text.fill")
                     .foregroundColor(AppColors.primary)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(preview.fileName)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("\(preview.totalRows) guests • \(importMode == .addOnly ? "Add Only" : "Sync") Mode")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
-                
+
                 if !isImporting && !importSuccess {
                     Button(action: { clearImport() }) {
                         Image(systemName: "xmark.circle.fill")
@@ -228,7 +228,7 @@ struct GuestCSVImportView: View {
             .padding(Spacing.md)
             .background(AppColors.cardBackground)
             .cornerRadius(8)
-            
+
             if !importSuccess {
                 // Preview table
                 ScrollView([.horizontal, .vertical]) {
@@ -245,9 +245,9 @@ struct GuestCSVImportView: View {
                                     .background(AppColors.cardBackground)
                             }
                         }
-                        
+
                         Divider()
-                        
+
                         // Rows (show first 10)
                         ForEach(Array(preview.rows.prefix(10).enumerated()), id: \.offset) { index, row in
                             HStack(spacing: 0) {
@@ -266,13 +266,13 @@ struct GuestCSVImportView: View {
                 .frame(maxHeight: 250)
                 .background(AppColors.cardBackground)
                 .cornerRadius(8)
-                
+
                 if preview.totalRows > 10 {
                     Text("Showing first 10 of \(preview.totalRows) guests")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 // Validation or importing status
                 if let validation = validationResult {
                     validationSection(validation: validation)
@@ -292,7 +292,7 @@ struct GuestCSVImportView: View {
         }
         .padding(.horizontal, Spacing.xl)
     }
-    
+
     private func validationSection(validation: ImportValidationResult) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             if validation.isValid {
@@ -313,13 +313,13 @@ struct GuestCSVImportView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.red)
                     }
-                    
+
                     ForEach(Array(validation.errors.prefix(5).enumerated()), id: \.offset) { _, error in
                         Text("• Row \(error.row): \(error.message)")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     if validation.errors.count > 5 {
                         Text("... and \(validation.errors.count - 5) more errors")
                             .font(Typography.caption)
@@ -333,44 +333,44 @@ struct GuestCSVImportView: View {
         .background(validation.isValid ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
         .cornerRadius(8)
     }
-    
+
     private func successSection(stats: ImportStats) -> some View {
         VStack(spacing: Spacing.md) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(.green)
-            
+
             Text("Import Complete!")
                 .font(Typography.title3)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             VStack(spacing: Spacing.xs) {
                 if stats.added > 0 {
                     Text("✅ Added: \(stats.added) guests")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 if stats.updated > 0 {
                     Text("🔄 Updated: \(stats.updated) guests")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 if stats.deleted > 0 {
                     Text("🗑️ Removed: \(stats.deleted) guests")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 if stats.skipped > 0 {
                     Text("⏭️ Skipped: \(stats.skipped) duplicates")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
-            Button(action: { 
+
+            Button(action: {
                 // Reload data before dismissing
                 Task {
                     await guestStore.loadGuestData()
@@ -391,21 +391,21 @@ struct GuestCSVImportView: View {
         }
         .padding(Spacing.xl)
     }
-    
+
     // MARK: - Actions
-    
+
     private func handleFileSelection(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
             selectedFileURL = url
             loadFile(url)
-            
+
         case .failure(let error):
             errorMessage = "Failed to select file: \(error.localizedDescription)"
         }
     }
-    
+
     private func loadFile(_ url: URL) {
         Task {
             do {
@@ -416,10 +416,10 @@ struct GuestCSVImportView: View {
                 } else {
                     preview = try await importService.parseCSV(from: url)
                 }
-                
+
                 await MainActor.run {
                     importPreview = preview
-                    
+
                     // Auto-import after preview loads
                     performImport()
                 }
@@ -430,7 +430,7 @@ struct GuestCSVImportView: View {
             }
         }
     }
-    
+
     private func clearImport() {
         importPreview = nil
         selectedFileURL = nil
@@ -439,10 +439,10 @@ struct GuestCSVImportView: View {
         importSuccess = false
         importStats = nil
     }
-    
+
     private func performImport() {
         guard let preview = importPreview else { return }
-        
+
         // Define target fields for mapping
         let targetFields = [
             "firstName", "lastName", "email", "phone", "rsvpStatus",
@@ -456,28 +456,28 @@ struct GuestCSVImportView: View {
             "mealOption", "giftReceived", "notes",
             "hairDone", "makeupDone", "preparationNotes"
         ]
-        
+
         // Infer column mappings
         columnMappings = importService.inferMappings(headers: preview.headers, targetFields: targetFields)
-        
+
         // Validate the import
         let validation = importService.validateImport(preview: preview, mappings: columnMappings)
         validationResult = validation
-        
+
         // If validation fails, don't proceed
         guard validation.isValid else {
             logger.warning("Import validation failed with \(validation.errors.count) errors")
             return
         }
-        
+
         // Get couple ID from session
         guard let coupleId = sessionManager.currentTenantId else {
             errorMessage = "No couple selected. Please sign in first."
             return
         }
-        
+
         isImporting = true
-        
+
         Task {
             do {
                 // Convert CSV rows to Guest objects
@@ -486,14 +486,14 @@ struct GuestCSVImportView: View {
                     mappings: columnMappings,
                     coupleId: coupleId
                 )
-                
+
                 logger.info("Converted \(newGuests.count) guests, starting import with mode: \(importMode)")
-                
+
                 // Get existing guests
                 let existingGuests = guestStore.guests
-                
+
                 var stats = ImportStats(added: 0, updated: 0, deleted: 0, skipped: 0)
-                
+
                 if importMode == .addOnly {
                     // Add Only mode: Only add guests that don't exist
                     stats = try await performAddOnlyImport(newGuests: newGuests, existingGuests: existingGuests)
@@ -501,10 +501,10 @@ struct GuestCSVImportView: View {
                     // Sync mode: Add new, update existing, delete removed
                     stats = try await performSyncImport(newGuests: newGuests, existingGuests: existingGuests)
                 }
-                
+
                 // Reload guest data
                 await guestStore.loadGuestData()
-                
+
                 await MainActor.run {
                     importStats = stats
                     importSuccess = true
@@ -520,14 +520,14 @@ struct GuestCSVImportView: View {
             }
         }
     }
-    
+
     private func performAddOnlyImport(newGuests: [Guest], existingGuests: [Guest]) async throws -> ImportStats {
         var stats = ImportStats(added: 0, updated: 0, deleted: 0, skipped: 0)
-        
+
         // Create a set of existing guest emails for quick lookup
         let existingEmails = Set(existingGuests.compactMap { $0.email?.lowercased() })
         let existingNames = Set(existingGuests.map { "\($0.firstName.lowercased())_\($0.lastName.lowercased())" })
-        
+
         // Filter out guests that already exist
         let guestsToAdd = newGuests.filter { guest in
             // Check by email if available
@@ -537,33 +537,33 @@ struct GuestCSVImportView: View {
                     return false
                 }
             }
-            
+
             // Check by name
             let nameKey = "\(guest.firstName.lowercased())_\(guest.lastName.lowercased())"
             if existingNames.contains(nameKey) {
                 stats.skipped += 1
                 return false
             }
-            
+
             return true
         }
-        
+
         // Import new guests
         if !guestsToAdd.isEmpty {
             let imported = try await guestRepository.importGuests(guestsToAdd)
             stats.added = imported.count
         }
-        
+
         return stats
     }
-    
+
     private func performSyncImport(newGuests: [Guest], existingGuests: [Guest]) async throws -> ImportStats {
         var stats = ImportStats(added: 0, updated: 0, deleted: 0, skipped: 0)
-        
+
         // Create lookup dictionaries
         var existingByEmail: [String: Guest] = [:]
         var existingByName: [String: Guest] = [:]
-        
+
         for guest in existingGuests {
             if let email = guest.email?.lowercased(), !email.isEmpty {
                 existingByEmail[email] = guest
@@ -571,25 +571,25 @@ struct GuestCSVImportView: View {
             let nameKey = "\(guest.firstName.lowercased())_\(guest.lastName.lowercased())"
             existingByName[nameKey] = guest
         }
-        
+
         // Track which existing guests are in the new file
         var matchedGuestIds = Set<UUID>()
-        
+
         // Process new guests
         for newGuest in newGuests {
             var existingGuest: Guest?
-            
+
             // Try to match by email first
             if let email = newGuest.email?.lowercased(), !email.isEmpty {
                 existingGuest = existingByEmail[email]
             }
-            
+
             // If no email match, try name
             if existingGuest == nil {
                 let nameKey = "\(newGuest.firstName.lowercased())_\(newGuest.lastName.lowercased())"
                 existingGuest = existingByName[nameKey]
             }
-            
+
             if let existing = existingGuest {
                 // Guest exists - mark as matched (don't update in sync mode to avoid data loss)
                 matchedGuestIds.insert(existing.id)
@@ -602,7 +602,7 @@ struct GuestCSVImportView: View {
                 stats.added += 1
             }
         }
-        
+
         // Delete guests not in the new file
         for existingGuest in existingGuests {
             if !matchedGuestIds.contains(existingGuest.id) {
@@ -610,7 +610,7 @@ struct GuestCSVImportView: View {
                 stats.deleted += 1
             }
         }
-        
+
         return stats
     }
 }

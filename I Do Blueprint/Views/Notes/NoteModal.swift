@@ -350,6 +350,7 @@ struct NoteModal: View {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     private func loadEntitiesForType(_ type: NoteRelatedType?) async {
         guard let type else { return }
 
@@ -370,7 +371,7 @@ struct NoteModal: View {
                     let vendorName: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case vendorName = "vendor_name"
                     }
                 }
@@ -391,7 +392,7 @@ struct NoteModal: View {
                     let lastName: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case firstName = "first_name"
                         case lastName = "last_name"
                     }
@@ -412,7 +413,7 @@ struct NoteModal: View {
                     let taskName: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case taskName = "task_name"
                     }
                 }
@@ -432,7 +433,7 @@ struct NoteModal: View {
                     let milestoneName: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case milestoneName = "milestone_name"
                     }
                 }
@@ -452,7 +453,7 @@ struct NoteModal: View {
                     let categoryName: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case categoryName = "category_name"
                     }
                 }
@@ -472,7 +473,7 @@ struct NoteModal: View {
                     let elementName: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case elementName = "element_name"
                     }
                 }
@@ -492,7 +493,7 @@ struct NoteModal: View {
                     let paymentDescription: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case paymentDescription = "payment_description"
                     }
                 }
@@ -512,7 +513,7 @@ struct NoteModal: View {
                     let fileName: String
 
                     enum CodingKeys: String, CodingKey {
-                        case id
+                        case id = "id"
                         case fileName = "file_name"
                     }
                 }

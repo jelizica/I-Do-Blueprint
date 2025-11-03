@@ -36,34 +36,34 @@ import Foundation
 /// await cache.clear()
 /// ```
 actor RepositoryCache {
-    
+
     // MARK: - Singleton
-    
+
     static let shared = RepositoryCache()
-    
+
     private let logger = AppLogger.cache
-    
+
     // MARK: - Private Properties
-    
+
     /// Cache entry containing data and expiration time
     private struct CacheEntry {
         let data: Data
         let expiresAt: Date
-        
+
         var isExpired: Bool {
             Date() > expiresAt
         }
     }
-    
+
     /// In-memory cache storage
     private var cache: [String: CacheEntry] = [:]
-    
+
     /// Cache metrics for monitoring
     private var hits: [String: Int] = [:]
     private var misses: [String: Int] = [:]
-    
+
     // MARK: - Public Interface
-    
+
     /// Retrieves a cached value if it exists and hasn't expired
     ///
     /// - Parameters:
@@ -76,7 +76,7 @@ actor RepositoryCache {
             recordMiss(key)
             return nil
         }
-        
+
         // Check if expired
         let isExpired: Bool
         if let maxAge = maxAge {
@@ -85,14 +85,14 @@ actor RepositoryCache {
         } else {
             isExpired = entry.isExpired
         }
-        
+
         if isExpired {
             // Remove expired entry
             cache.removeValue(forKey: key)
             recordMiss(key)
             return nil
         }
-        
+
         // Decode and return
         do {
             let value = try JSONDecoder().decode(T.self, from: entry.data)
@@ -105,7 +105,7 @@ actor RepositoryCache {
             return nil
         }
     }
-    
+
     /// Stores a value in the cache with a time-to-live
     ///
     /// - Parameters:
@@ -122,21 +122,21 @@ actor RepositoryCache {
             logger.warning("Failed to cache value for key '\(key)': \(error.localizedDescription)")
         }
     }
-    
+
     /// Invalidates a specific cache entry
     ///
     /// - Parameter key: The cache key to invalidate
     func invalidate(_ key: String) {
         cache.removeValue(forKey: key)
     }
-    
+
     /// Removes a specific cache entry (alias for invalidate for backward compatibility)
     ///
     /// - Parameter key: The cache key to remove
     func remove(_ key: String) {
         invalidate(key)
     }
-    
+
     /// Invalidates all cache entries matching a prefix
     ///
     /// Useful for invalidating all related cache entries at once.
@@ -149,19 +149,19 @@ actor RepositoryCache {
             cache.removeValue(forKey: key)
         }
     }
-    
+
     /// Clears all cache entries
     func clear() {
         cache.removeAll()
         hits.removeAll()
         misses.removeAll()
     }
-    
+
     /// Clears all cache entries (alias for clear for backward compatibility)
     func clearAll() {
         clear()
     }
-    
+
     /// Removes expired entries from the cache
     ///
     /// This is called automatically during get operations,
@@ -172,19 +172,19 @@ actor RepositoryCache {
             cache.removeValue(forKey: key)
         }
     }
-    
+
     // MARK: - Cache Metrics
-    
+
     /// Records a cache hit for metrics
     private func recordHit(_ key: String) {
         hits[key, default: 0] += 1
     }
-    
+
     /// Records a cache miss for metrics
     private func recordMiss(_ key: String) {
         misses[key, default: 0] += 1
     }
-    
+
     /// Calculates the hit rate for a specific key
     ///
     /// - Parameter key: The cache key
@@ -193,51 +193,51 @@ actor RepositoryCache {
         let totalHits = hits[key, default: 0]
         let totalMisses = misses[key, default: 0]
         let total = totalHits + totalMisses
-        
+
         guard total > 0 else { return 0 }
         return Double(totalHits) / Double(total)
     }
-    
+
     /// Generates a cache performance report
     ///
     /// - Returns: A formatted string with cache statistics
     func performanceReport() -> String {
         var report = "📊 Cache Performance Report\n"
         report += "=" * 50 + "\n\n"
-        
+
         let allKeys = Set(hits.keys).union(misses.keys).sorted()
-        
+
         if allKeys.isEmpty {
             report += "No cache activity recorded.\n"
             return report
         }
-        
+
         for key in allKeys {
             let totalHits = hits[key, default: 0]
             let totalMisses = misses[key, default: 0]
             let rate = hitRate(for: key)
-            
+
             report += "Key: \(key)\n"
             report += "  Hits: \(totalHits)\n"
             report += "  Misses: \(totalMisses)\n"
             report += "  Hit Rate: \(String(format: "%.1f%%", rate * 100))\n\n"
         }
-        
+
         // Overall statistics
         let totalHits = hits.values.reduce(0, +)
         let totalMisses = misses.values.reduce(0, +)
         let overallRate = Double(totalHits) / Double(totalHits + totalMisses)
-        
+
         report += "=" * 50 + "\n"
         report += "Overall Statistics:\n"
         report += "  Total Hits: \(totalHits)\n"
         report += "  Total Misses: \(totalMisses)\n"
         report += "  Overall Hit Rate: \(String(format: "%.1f%%", overallRate * 100))\n"
         report += "  Active Entries: \(cache.count)\n"
-        
+
         return report
     }
-    
+
     /// Returns cache statistics as a dictionary
     ///
     /// - Returns: Dictionary with cache metrics
@@ -246,7 +246,7 @@ actor RepositoryCache {
         let totalMisses = misses.values.reduce(0, +)
         let total = totalHits + totalMisses
         let overallRate = total > 0 ? Double(totalHits) / Double(total) : 0
-        
+
         return [
             "totalHits": totalHits,
             "totalMisses": totalMisses,
@@ -255,13 +255,13 @@ actor RepositoryCache {
             "trackedKeys": hits.keys.count + misses.keys.count
         ]
     }
-    
+
     /// Returns cache keys (for backward compatibility)
     ///
     /// - Returns: Dictionary with cache keys
     func stats() -> [String: Any] {
         // Return a dictionary with keys property for backward compatibility
-        return ["keys": Array(cache.keys)]
+        ["keys": Array(cache.keys)]
     }
 }
 

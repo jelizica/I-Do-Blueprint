@@ -3,11 +3,11 @@ import SwiftUI
 /// Sheet view for adding a new expense
 struct ExpenseTrackerAddView: View {
     private let logger = AppLogger.ui
-    
+
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var budgetStore: BudgetStoreV2
     @EnvironmentObject var settingsStore: SettingsStoreV2
-    
+
     @State private var expenseName = ""
     @State private var amount: Double = 0
     @State private var selectedCategoryId: UUID?
@@ -19,7 +19,7 @@ struct ExpenseTrackerAddView: View {
     @State private var invoiceNumber = ""
     @State private var isSubmitting = false
     @State private var availableVendors: [Vendor] = []
-    
+
     let paymentMethods = [
         ("credit_card", "Credit Card"),
         ("debit_card", "Debit Card"),
@@ -30,34 +30,34 @@ struct ExpenseTrackerAddView: View {
         ("zelle", "Zelle"),
         ("other", "Other")
     ]
-    
+
     let paymentStatuses: [(PaymentStatus, String)] = [
         (.pending, "Pending"),
         (.paid, "Paid"),
         (.overdue, "Overdue"),
         (.cancelled, "Cancelled")
     ]
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 Section("Basic Information") {
                     TextField("Expense Name", text: $expenseName)
                         .help("Name or description of the expense")
-                    
+
                     TextField(
                         "Amount",
                         value: $amount,
                         format: .currency(code: settingsStore.settings.global.currency))
                         .help("Total amount of the expense")
-                    
+
                     DatePicker("Date", selection: $expenseDate, displayedComponents: .date)
                         .help("Date of the expense")
-                    
+
                     TextField("Invoice Number (Optional)", text: $invoiceNumber)
                         .help("Invoice or reference number")
                 }
-                
+
                 Section("Category & Vendor") {
                     Picker("Category", selection: $selectedCategoryId) {
                         Text("Select Category").tag(nil as UUID?)
@@ -66,7 +66,7 @@ struct ExpenseTrackerAddView: View {
                         }
                     }
                     .help("Budget category for this expense")
-                    
+
                     Picker("Vendor (Optional)", selection: $selectedVendorId) {
                         Text("No Vendor").tag(nil as Int64?)
                         ForEach(availableVendors) { vendor in
@@ -75,21 +75,21 @@ struct ExpenseTrackerAddView: View {
                     }
                     .help("Link this expense to a vendor")
                 }
-                
+
                 Section("Payment Details") {
                     Picker("Payment Method", selection: $paymentMethod) {
                         ForEach(paymentMethods, id: \.0) { method in
                             Text(method.1).tag(method.0)
                         }
                     }
-                    
+
                     Picker("Payment Status", selection: $paymentStatus) {
                         ForEach(paymentStatuses, id: \.0) { status in
                             Text(status.1).tag(status.0)
                         }
                     }
                 }
-                
+
                 Section("Additional Notes") {
                     TextEditor(text: $notes)
                         .frame(minHeight: 60, maxHeight: 120)
@@ -104,7 +104,7 @@ struct ExpenseTrackerAddView: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         addExpense()
@@ -117,7 +117,7 @@ struct ExpenseTrackerAddView: View {
             }
         }
     }
-    
+
     private func loadVendors() async {
         let vendorStore = AppStores.shared.vendor
         await vendorStore.loadVendors()
@@ -125,17 +125,17 @@ struct ExpenseTrackerAddView: View {
             .filter { !$0.isArchived }
             .sorted { $0.vendorName < $1.vendorName }
     }
-    
+
     private func addExpense() {
         guard let categoryId = selectedCategoryId else { return }
-        
+
         guard let coupleId = SessionManager.shared.getTenantId() else {
             logger.error("Cannot add expense: No couple selected")
             return
         }
-        
+
         isSubmitting = true
-        
+
         Task {
             do {
                 let expense = Expense(
@@ -158,7 +158,7 @@ struct ExpenseTrackerAddView: View {
                     isTestData: false,
                     createdAt: Date(),
                     updatedAt: nil)
-                
+
                 _ = try await budgetStore.createExpense(expense)
                 dismiss()
             } catch {

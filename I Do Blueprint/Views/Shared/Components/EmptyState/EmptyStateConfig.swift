@@ -14,19 +14,19 @@ struct EmptyStateConfig {
     let title: String
     let message: String
     let action: ActionConfig?
-    
+
     struct ActionConfig {
         let title: String
         let icon: String
         let handler: () -> Void
-        
+
         init(title: String, icon: String = "plus.circle.fill", handler: @escaping () -> Void) {
             self.title = title
             self.icon = icon
             self.handler = handler
         }
     }
-    
+
     init(icon: String, title: String, message: String, action: ActionConfig? = nil) {
         self.icon = icon
         self.title = title
@@ -47,7 +47,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Guest", handler: onAdd)
         )
     }
-    
+
     /// Empty state for vendor list
     static func vendors(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -57,7 +57,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Vendor", handler: onAdd)
         )
     }
-    
+
     /// Empty state for notes
     static func notes(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -67,7 +67,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Note", handler: onAdd)
         )
     }
-    
+
     /// Empty state for documents
     static func documents(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -77,7 +77,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Document", handler: onAdd)
         )
     }
-    
+
     /// Empty state for tasks
     static func tasks(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -87,7 +87,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Task", handler: onAdd)
         )
     }
-    
+
     /// Empty state for timeline events
     static func timeline(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -97,7 +97,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Event", handler: onAdd)
         )
     }
-    
+
     /// Empty state for mood boards
     static func moodBoards(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -107,7 +107,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Create Mood Board", handler: onAdd)
         )
     }
-    
+
     /// Empty state for color palettes
     static func colorPalettes(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -117,7 +117,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Create Palette", handler: onAdd)
         )
     }
-    
+
     /// Empty state for budget categories
     static func budgetCategories(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -127,7 +127,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Category", handler: onAdd)
         )
     }
-    
+
     /// Empty state for expenses
     static func expenses(onAdd: @escaping () -> Void) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -137,7 +137,7 @@ extension EmptyStateConfig {
             action: ActionConfig(title: "Add Expense", handler: onAdd)
         )
     }
-    
+
     /// Generic empty state with custom configuration
     static func custom(
         icon: String,
@@ -152,7 +152,7 @@ extension EmptyStateConfig {
         } else {
             nil
         }
-        
+
         return EmptyStateConfig(
             icon: icon,
             title: title,
@@ -160,7 +160,7 @@ extension EmptyStateConfig {
             action: action
         )
     }
-    
+
     /// Empty state for search results
     static func searchResults(query: String) -> EmptyStateConfig {
         EmptyStateConfig(
@@ -170,7 +170,7 @@ extension EmptyStateConfig {
             action: nil
         )
     }
-    
+
     /// Empty state for filtered results
     static func filteredResults() -> EmptyStateConfig {
         EmptyStateConfig(

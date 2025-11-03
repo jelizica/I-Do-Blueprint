@@ -11,23 +11,23 @@ import SwiftUI
 // MARK: - Style Category
 
 enum StyleCategory: String, CaseIterable, Codable, Hashable {
-    case modern
-    case classic
-    case rustic
-    case bohemian
-    case vintage
-    case romantic
-    case minimalist
-    case industrial
-    case garden
-    case beach
-    case mountain
-    case urban
-    case destination
-    case cultural
-    case seasonal
-    case custom
-    case glamorous
+    case modern = "modern"
+    case classic = "classic"
+    case rustic = "rustic"
+    case bohemian = "bohemian"
+    case vintage = "vintage"
+    case romantic = "romantic"
+    case minimalist = "minimalist"
+    case industrial = "industrial"
+    case garden = "garden"
+    case beach = "beach"
+    case mountain = "mountain"
+    case urban = "urban"
+    case destination = "destination"
+    case cultural = "cultural"
+    case seasonal = "seasonal"
+    case custom = "custom"
+    case glamorous = "glamorous"
     case beachCoastal = "beach_coastal"
 
     var displayName: String {
@@ -79,7 +79,7 @@ enum StyleCategory: String, CaseIterable, Codable, Hashable {
     var iconName: String {
         icon
     }
-    
+
     /// Suggested color palette for this wedding style
     var suggestedColors: [Color] {
         switch self {
@@ -209,13 +209,13 @@ enum StyleCategory: String, CaseIterable, Codable, Hashable {
 // MARK: - Color Harmony Type
 
 enum ColorHarmonyType: String, CaseIterable, Codable, Hashable {
-    case monochromatic
-    case complementary
-    case triadic
-    case analogous
+    case monochromatic = "monochromatic"
+    case complementary = "complementary"
+    case triadic = "triadic"
+    case analogous = "analogous"
     case splitComplementary = "split-complementary"
-    case tetradic
-    case custom
+    case tetradic = "tetradic"
+    case custom = "custom"
 
     var displayName: String {
         switch self {
@@ -245,10 +245,10 @@ enum ColorHarmonyType: String, CaseIterable, Codable, Hashable {
 // MARK: - Element Type
 
 enum ElementType: String, CaseIterable, Codable, Hashable {
-    case image
-    case color
-    case text
-    case inspiration
+    case image = "image"
+    case color = "color"
+    case text = "text"
+    case inspiration = "inspiration"
 
     var displayName: String {
         switch self {
@@ -272,10 +272,10 @@ enum ElementType: String, CaseIterable, Codable, Hashable {
 // MARK: - Table Shape
 
 enum TableShape: String, CaseIterable, Codable, Hashable {
-    case round
-    case rectangular
-    case square
-    case oval
+    case round = "round"
+    case rectangular = "rectangular"
+    case square = "square"
+    case oval = "oval"
 
     var displayName: String {
         switch self {
@@ -290,10 +290,10 @@ enum TableShape: String, CaseIterable, Codable, Hashable {
 // MARK: - Wedding Season
 
 enum WeddingSeason: String, CaseIterable, Codable, Hashable {
-    case spring
-    case summer
-    case fall
-    case winter
+    case spring = "spring"
+    case summer = "summer"
+    case fall = "fall"
+    case winter = "winter"
 
     var displayName: String {
         switch self {
@@ -321,10 +321,10 @@ enum WeddingSeason: String, CaseIterable, Codable, Hashable {
 // MARK: - Formality Level
 
 enum FormalityLevel: String, CaseIterable, Codable, Hashable {
-    case casual
+    case casual = "casual"
     case semiCasual = "semi_casual"
-    case semiformal
-    case formal
+    case semiformal = "semiformal"
+    case formal = "formal"
     case blackTie = "black_tie"
     case whiteTie = "white_tie"
 
@@ -343,25 +343,25 @@ enum FormalityLevel: String, CaseIterable, Codable, Hashable {
 // MARK: - Texture Type
 
 enum TextureType: String, CaseIterable, Codable, Hashable {
-    case smooth
-    case rough
-    case soft
-    case metallic
-    case wood
-    case fabric
-    case glass
-    case stone
-    case silk
-    case lace
-    case chiffon
-    case velvet
-    case linen
-    case tulle
-    case satin
-    case organza
-    case burlap
-    case cotton
-    case metal
+    case smooth = "smooth"
+    case rough = "rough"
+    case soft = "soft"
+    case metallic = "metallic"
+    case wood = "wood"
+    case fabric = "fabric"
+    case glass = "glass"
+    case stone = "stone"
+    case silk = "silk"
+    case lace = "lace"
+    case chiffon = "chiffon"
+    case velvet = "velvet"
+    case linen = "linen"
+    case tulle = "tulle"
+    case satin = "satin"
+    case organza = "organza"
+    case burlap = "burlap"
+    case cotton = "cotton"
+    case metal = "metal"
 
     var displayName: String {
         rawValue.capitalized
@@ -371,9 +371,9 @@ enum TextureType: String, CaseIterable, Codable, Hashable {
 // MARK: - Trend Direction
 
 enum TrendDirection: String, CaseIterable, Codable, Hashable {
-    case up
-    case down
-    case stable
+    case up = "up"
+    case down = "down"
+    case stable = "stable"
 
     var displayName: String {
         rawValue.capitalized
@@ -403,16 +403,16 @@ enum TrendDirection: String, CaseIterable, Codable, Hashable {
 // MARK: - Insight Type
 
 enum InsightType: String, CaseIterable, Codable, Hashable {
-    case overspending
-    case savings
-    case seasonality
-    case vendor
-    case category
-    case timeline
-    case recommendation
-    case warning
-    case alert
-    case info
+    case overspending = "overspending"
+    case savings = "savings"
+    case seasonality = "seasonality"
+    case vendor = "vendor"
+    case category = "category"
+    case timeline = "timeline"
+    case recommendation = "recommendation"
+    case warning = "warning"
+    case alert = "alert"
+    case info = "info"
 
     var displayName: String {
         switch self {
@@ -460,7 +460,7 @@ enum InsightType: String, CaseIterable, Codable, Hashable {
 enum PaletteVisibility: String, CaseIterable, Codable, Hashable {
     case publicPalette = "public"
     case privatePalette = "private"
-    case shared
+    case shared = "shared"
 
     var displayName: String {
         switch self {
@@ -490,12 +490,12 @@ enum PaletteVisibility: String, CaseIterable, Codable, Hashable {
 // MARK: - Venue Layout
 
 enum VenueLayout: String, CaseIterable, Codable, Hashable {
-    case round
-    case rectangular
+    case round = "round"
+    case rectangular = "rectangular"
     case uShape = "u_shape"
-    case theater
-    case cocktail
-    case garden
+    case theater = "theater"
+    case cocktail = "cocktail"
+    case garden = "garden"
 
     var displayName: String {
         switch self {

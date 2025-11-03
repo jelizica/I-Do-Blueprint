@@ -5,6 +5,8 @@
 //  Enhanced guest management interface matching modern design
 //
 
+// swiftlint:disable file_length
+
 import SwiftUI
 
 struct GuestListViewV3: View {
@@ -39,7 +41,7 @@ struct GuestListViewV3: View {
                         Image(systemName: "magnifyingglass")
                             .foregroundColor(.secondary)
                             .font(.system(size: 14))
-                        
+
                         TextField("Search guests...", text: $searchText)
                             .textFieldStyle(.plain)
                             .font(.system(size: 14))
@@ -55,7 +57,7 @@ struct GuestListViewV3: View {
                             Text("Status")
                                 .font(.system(size: 13))
                                 .foregroundColor(.secondary)
-                            
+
                             Picker("", selection: $selectedStatus) {
                                 Text("All Status").tag(RSVPStatus?.none)
                                 ForEach(RSVPStatus.allCases, id: \.self) { status in
@@ -71,7 +73,7 @@ struct GuestListViewV3: View {
                             Text("Invited By")
                                 .font(.system(size: 13))
                                 .foregroundColor(.secondary)
-                            
+
                             Picker("", selection: $selectedInvitedBy) {
                                 Text("All Guests").tag(InvitedBy?.none)
                                 ForEach(InvitedBy.allCases, id: \.self) { invitedBy in
@@ -137,7 +139,7 @@ struct GuestListViewV3: View {
                     Label("Import CSV", systemImage: "square.and.arrow.down")
                 }
             }
-            
+
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     showingAddGuest = true
@@ -204,7 +206,7 @@ enum GuestDetailTab: String, CaseIterable {
     case party = "Party"
     case gifts = "Gifts"
     case notes = "Notes"
-    
+
     var icon: String {
         switch self {
         case .contact: return "person.fill"
@@ -231,19 +233,19 @@ struct CompactStatsRow: View {
                 color: .purple,
                 value: "\(stats.totalGuests)"
             )
-            
+
             CompactStatIcon(
                 icon: "checkmark.circle.fill",
                 color: .green,
                 value: "\(stats.attendingGuests)"
             )
-            
+
             CompactStatIcon(
                 icon: "clock.fill",
                 color: .orange,
                 value: "\(stats.pendingGuests)"
             )
-            
+
             CompactStatIcon(
                 icon: "chart.bar.fill",
                 color: .blue,
@@ -265,12 +267,12 @@ struct CompactStatIcon: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(color)
                     .frame(width: 56, height: 56)
-                
+
                 Image(systemName: icon)
                     .font(.system(size: 24))
                     .foregroundColor(AppColors.textPrimary)
             }
-            
+
             Text(value)
                 .font(.system(size: 11, weight: .medium))
                 .foregroundColor(.secondary)
@@ -307,7 +309,7 @@ struct SimpleGuestCard: View {
                 Text(guest.fullName)
                     .font(.system(size: 15, weight: .medium))
                     .foregroundColor(.primary)
-                
+
                 Text(guest.rsvpStatus.displayName)
                     .font(.system(size: 12))
                     .foregroundColor(guest.rsvpStatus.color)

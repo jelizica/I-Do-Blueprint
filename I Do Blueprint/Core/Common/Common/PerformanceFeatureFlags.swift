@@ -18,7 +18,7 @@ enum PerformanceFeatureFlags {
         return false
         #endif
     }
-    
+
     /// Enable performance monitoring timers (every 30-60 seconds)
     /// Disable this when debugging memory issues
     static var enablePerformanceMonitoring: Bool {
@@ -28,7 +28,7 @@ enum PerformanceFeatureFlags {
         return false
         #endif
     }
-    
+
     /// Enable memory warning simulation/monitoring
     static var enableMemoryWarningMonitoring: Bool {
         #if DEBUG
@@ -37,7 +37,7 @@ enum PerformanceFeatureFlags {
         return false
         #endif
     }
-    
+
     /// Enable image preloading for visual planning
     /// Can consume significant memory if many images are preloaded
     static var enableImagePreloading: Bool {
@@ -47,7 +47,7 @@ enum PerformanceFeatureFlags {
         return true // Enable in production but with limits
         #endif
     }
-    
+
     /// Maximum concurrent image loads
     static var maxConcurrentImageLoads: Int {
         #if DEBUG
@@ -56,30 +56,30 @@ enum PerformanceFeatureFlags {
         return 4
         #endif
     }
-    
+
     // MARK: - Setters (Debug only)
-    
+
     #if DEBUG
     static func setPeriodicAnalytics(enabled: Bool) {
         UserDefaults.standard.set(enabled, forKey: "enablePeriodicAnalytics")
     }
-    
+
     static func setPerformanceMonitoring(enabled: Bool) {
         UserDefaults.standard.set(enabled, forKey: "enablePerformanceMonitoring")
     }
-    
+
     static func setMemoryWarningMonitoring(enabled: Bool) {
         UserDefaults.standard.set(enabled, forKey: "enableMemoryWarningMonitoring")
     }
-    
+
     static func setImagePreloading(enabled: Bool) {
         UserDefaults.standard.set(enabled, forKey: "enableImagePreloading")
     }
-    
+
     static func setMaxConcurrentImageLoads(_ count: Int) {
         UserDefaults.standard.set(count, forKey: "maxConcurrentImageLoads")
     }
-    
+
     /// Reset all performance flags to defaults
     static func resetToDefaults() {
         UserDefaults.standard.removeObject(forKey: "enablePeriodicAnalytics")
@@ -89,7 +89,7 @@ enum PerformanceFeatureFlags {
         UserDefaults.standard.removeObject(forKey: "maxConcurrentImageLoads")
     }
     #endif
-    
+
     /// Get all current flag states (for debugging)
     static func currentState() -> [String: Any] {
         [

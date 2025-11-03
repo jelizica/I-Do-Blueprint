@@ -14,31 +14,34 @@ struct MyCollaborationsView: View {
     @State private var collaborationToLeave: UserCollaboration?
     @State private var showError = false
     @State private var errorMessage = ""
-    
+
     private let logger = AppLogger.ui
-    
+
     // Get current wedding ID from session
     private var currentWeddingId: UUID? {
         try? SessionManager.shared.getTenantId()
     }
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
                     // Header
                     headerSection
-                    
+
                     // Pending Invitations Section
                     if !collaborationStore.pendingUserInvitations.isEmpty {
                         pendingInvitationsSection
                     }
-                    
+
                     // Active Collaborations Section
                     activeCollaborationsSection
-                    
+
                     // Empty State
-                    if collaborationStore.userCollaborations.isEmpty && collaborationStore.pendingUserInvitations.isEmpty && !collaborationStore.isLoadingCollaborations {
+                    let hasNoCollaborations = collaborationStore.userCollaborations.isEmpty
+                    let hasNoPending = collaborationStore.pendingUserInvitations.isEmpty
+                    let notLoading = !collaborationStore.isLoadingCollaborations
+                    if hasNoCollaborations && hasNoPending && notLoading {
                         emptyStateView
                     }
                 }
@@ -83,32 +86,32 @@ struct MyCollaborationsView: View {
             Text(errorMessage)
         }
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("My Collaborations")
                 .font(Typography.title1)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Manage all weddings you're helping to plan")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
         }
     }
-    
+
     // MARK: - Pending Invitations Section
-    
+
     private var pendingInvitationsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
                 Label("Pending Invitations", systemImage: "envelope.fill")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
-                
+
                 Text("\(collaborationStore.pendingUserInvitations.count)")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
@@ -117,7 +120,7 @@ struct MyCollaborationsView: View {
                     .background(AppColors.warning.opacity(0.1))
                     .cornerRadius(12)
             }
-            
+
             ForEach(collaborationStore.pendingUserInvitations) { invitation in
                 PendingInvitationCard(
                     invitation: invitation,
@@ -145,18 +148,18 @@ struct MyCollaborationsView: View {
             }
         }
     }
-    
+
     // MARK: - Active Collaborations Section
-    
+
     private var activeCollaborationsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
                 Label("Active Collaborations", systemImage: "person.2.fill")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
-                
+
                 if !collaborationStore.userCollaborations.isEmpty {
                     Text("\(collaborationStore.userCollaborations.count)")
                         .font(Typography.caption)
@@ -167,7 +170,7 @@ struct MyCollaborationsView: View {
                         .cornerRadius(12)
                 }
             }
-            
+
             if collaborationStore.isLoadingCollaborations {
                 ProgressView()
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -189,19 +192,19 @@ struct MyCollaborationsView: View {
             }
         }
     }
-    
+
     // MARK: - Empty State
-    
+
     private var emptyStateView: some View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "person.2.slash")
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text("No Collaborations Yet")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("You haven't been invited to collaborate on any weddings yet. When someone invites you, their invitation will appear here.")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
@@ -211,23 +214,23 @@ struct MyCollaborationsView: View {
         .padding(Spacing.xxl)
         .frame(maxWidth: .infinity)
     }
-    
+
     // MARK: - Actions
-    
+
     private func switchToCollaboration(_ collaboration: UserCollaboration) {
         logger.info("Switching to collaboration: \(collaboration.coupleName)")
-        
+
         Task {
             await SessionManager.shared.setTenantId(
                 collaboration.coupleId,
                 coupleName: collaboration.coupleName,
                 weddingDate: collaboration.weddingDate
             )
-            
+
             // Reload collaboration data after switching
             // This ensures the view updates with the new context
             await collaborationStore.loadUserCollaborations()
-            
+
             // Track switch
             SentryService.shared.trackAction(
                 "collaboration_switched",
@@ -237,7 +240,7 @@ struct MyCollaborationsView: View {
                     "couple_name": collaboration.coupleName
                 ]
             )
-            
+
             // Close the sheet after switching
             dismiss()
         }

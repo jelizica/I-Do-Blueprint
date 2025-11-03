@@ -6,14 +6,14 @@ struct BudgetInsightsView: View {
     let expenses: [Expense]
     let benchmarks: [CategoryBenchmark]
     let summary: BudgetSummary?
-    
+
     @State private var showingCategorySheet = false
     @State private var showingPaymentSheet = false
     @State private var showingBudgetAllocationSheet = false
-    
+
     private var insights: [BudgetInsight] {
         var results: [BudgetInsight] = []
-        
+
         // Over budget categories
         let overBudgetCategories = categories.filter(\.isOverBudget)
         if !overBudgetCategories.isEmpty {
@@ -23,7 +23,7 @@ struct BudgetInsightsView: View {
                 description: "\(overBudgetCategories.count) categories are over budget. Consider reallocating funds or reducing expenses.",
                 action: "Review Categories"))
         }
-        
+
         // Overdue payments
         let overdueExpenses = expenses.filter(\.isOverdue)
         if !overdueExpenses.isEmpty {
@@ -33,7 +33,7 @@ struct BudgetInsightsView: View {
                 description: "\(overdueExpenses.count) payments are overdue. Total amount: \(NumberFormatter.currency.string(from: NSNumber(value: overdueExpenses.reduce(0) { $0 + $1.remainingAmount })) ?? "$0")",
                 action: "View Payments"))
         }
-        
+
         // Budget allocation recommendations
         if let summary {
             let unallocatedAmount = summary.totalBudget - summary.totalAllocated
@@ -45,16 +45,16 @@ struct BudgetInsightsView: View {
                     action: "Allocate Funds"))
             }
         }
-        
+
         return results
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Insights & Recommendations")
                 .font(.title2)
                 .fontWeight(.semibold)
-            
+
             if insights.isEmpty {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
@@ -92,7 +92,7 @@ struct BudgetInsightsView: View {
                 categories: categories)
         }
     }
-    
+
     private func handleInsightAction(_ action: String) {
         switch action {
         case "Review Categories":
@@ -117,26 +117,26 @@ struct BudgetInsight {
 struct InsightRowView: View {
     let insight: BudgetInsight
     let onAction: (String) -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             Image(systemName: insight.type.icon)
                 .foregroundColor(insight.type.color)
                 .font(.title3)
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(insight.title)
                     .font(.subheadline)
                     .fontWeight(.semibold)
-                
+
                 Text(insight.description)
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .lineLimit(2)
             }
-            
+
             Spacer()
-            
+
             Button(insight.action) {
                 onAction(insight.action)
             }

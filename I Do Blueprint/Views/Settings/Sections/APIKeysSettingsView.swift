@@ -9,7 +9,7 @@ import SwiftUI
 
 struct APIKeysSettingsView: View {
     @StateObject private var apiKeyManager = SecureAPIKeyManager.shared
-    
+
     @State private var unsplashKey = ""
     @State private var pinterestKey = ""
     @State private var vendorKey = ""
@@ -20,7 +20,7 @@ struct APIKeysSettingsView: View {
     @State private var validatingType: SecureAPIKeyManager.APIKeyType?
     @State private var showSuccessAlert = false
     @State private var successMessage = ""
-    
+
     var body: some View {
         Form {
             // Header Section
@@ -30,12 +30,12 @@ struct APIKeysSettingsView: View {
                         Image(systemName: "key.fill")
                             .font(.title2)
                             .foregroundColor(AppColors.primary)
-                        
+
                         Text("API Key Management")
                             .font(Typography.heading)
                             .foregroundColor(AppColors.textPrimary)
                     }
-                    
+
                     Text("Configure API keys for third-party integrations. Keys are securely stored in macOS Keychain and never leave your device.")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
@@ -45,7 +45,12 @@ struct APIKeysSettingsView: View {
                         Image(systemName: "info.circle.fill")
                             .foregroundColor(AppColors.primary)
                             .font(.caption)
-                        Text("Note: Email invitations work out-of-the-box using a shared service. Only add a Resend API key if you need custom email domain support.")
+                        Text(
+                        """
+                        Note: Email invitations work out-of-the-box using a shared service. \
+                        Only add a Resend API key if you need custom email domain support.
+                        """
+                    )
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -59,7 +64,7 @@ struct APIKeysSettingsView: View {
                 .padding(.vertical, Spacing.xs)
             }
             .listRowBackground(Color.clear)
-            
+
             // Unsplash API Key
             apiKeySection(
                 type: .unsplash,
@@ -67,7 +72,7 @@ struct APIKeysSettingsView: View {
                 keyBinding: $unsplashKey,
                 description: "Access millions of high-quality wedding inspiration photos"
             )
-            
+
             // Pinterest API Key
             apiKeySection(
                 type: .pinterest,
@@ -75,7 +80,7 @@ struct APIKeysSettingsView: View {
                 keyBinding: $pinterestKey,
                 description: "Import and sync Pinterest boards for wedding planning"
             )
-            
+
             // Vendor API Key
             apiKeySection(
                 type: .vendor,
@@ -89,7 +94,10 @@ struct APIKeysSettingsView: View {
                 type: .resend,
                 isConfigured: apiKeyManager.hasResendKey,
                 keyBinding: $resendKey,
-                description: "Optional: The app uses a shared email service for invitations. Add your own Resend API key only if you want to use your custom email domain."
+                description: """
+                    Optional: The app uses a shared email service for invitations. \
+                    Add your own Resend API key only if you want to use your custom email domain.
+                    """
             )
         }
         .formStyle(.grouped)
@@ -112,9 +120,9 @@ struct APIKeysSettingsView: View {
         .accessibilityElement(children: .contain)
         .accessibilityLabel("API Keys Settings")
     }
-    
+
     // MARK: - API Key Section
-    
+
     @ViewBuilder
     private func apiKeySection(
         type: SecureAPIKeyManager.APIKeyType,
@@ -133,7 +141,7 @@ struct APIKeysSettingsView: View {
                 Text(type.displayName)
                     .font(Typography.subheading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if isConfigured {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(AppColors.success)
@@ -145,16 +153,16 @@ struct APIKeysSettingsView: View {
                 Text(description)
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 Link("Get API Key →", destination: URL(string: type.helpURL)!)
                     .font(Typography.caption)
                     .foregroundColor(AppColors.primary)
             }
         }
     }
-    
+
     // MARK: - Configured Key View
-    
+
     @ViewBuilder
     private func configuredKeyView(for type: SecureAPIKeyManager.APIKeyType) -> some View {
         HStack(spacing: Spacing.md) {
@@ -162,19 +170,19 @@ struct APIKeysSettingsView: View {
                 .foregroundColor(AppColors.success)
                 .font(.title3)
                 .accessibilityHidden(true)
-            
+
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("\(type.displayName) API key configured")
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text("Stored securely in Keychain")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
+
             Button(role: .destructive) {
                 removeKey(for: type)
             } label: {
@@ -188,9 +196,9 @@ struct APIKeysSettingsView: View {
         }
         .padding(.vertical, Spacing.xs)
     }
-    
+
     // MARK: - Unconfigured Key View
-    
+
     @ViewBuilder
     private func unconfiguredKeyView(
         for type: SecureAPIKeyManager.APIKeyType,
@@ -202,18 +210,18 @@ struct APIKeysSettingsView: View {
                     .foregroundColor(AppColors.textSecondary)
                     .font(.title3)
                     .accessibilityHidden(true)
-                
+
                 Text("No API key configured")
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("API Key")
                     .font(Typography.bodySmall)
                     .fontWeight(.medium)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 SecureField("Enter your \(type.displayName) API key", text: keyBinding)
                     .textFieldStyle(.roundedBorder)
                     .font(Typography.bodyRegular)
@@ -221,7 +229,7 @@ struct APIKeysSettingsView: View {
                     .accessibilityLabel("\(type.displayName) API key input")
                     .accessibilityHint("Enter your API key from \(type.displayName)")
             }
-            
+
             HStack(spacing: Spacing.sm) {
                 Button {
                     Task {
@@ -244,7 +252,7 @@ struct APIKeysSettingsView: View {
                 .disabled(keyBinding.wrappedValue.isEmpty || isValidating)
                 .accessibilityLabel("Save and validate \(type.displayName) API key")
                 .accessibilityHint("Validates the API key and stores it securely in Keychain")
-                
+
                 if !keyBinding.wrappedValue.isEmpty {
                     Button {
                         keyBinding.wrappedValue = ""
@@ -259,28 +267,28 @@ struct APIKeysSettingsView: View {
         }
         .padding(.vertical, Spacing.xs)
     }
-    
+
     // MARK: - Actions
-    
+
     private func saveAndValidateKey(_ key: String, for type: SecureAPIKeyManager.APIKeyType) async {
         isValidating = true
         validatingType = type
         validationError = nil
-        
+
         do {
             // Validate key first
             let isValid = try await apiKeyManager.validateAPIKey(key, for: type)
-            
+
             guard isValid else {
                 validationError = "API key validation failed. Please check your key and try again."
                 isValidating = false
                 validatingType = nil
                 return
             }
-            
+
             // Store if valid
             try apiKeyManager.storeAPIKey(key, for: type)
-            
+
             // Clear input and show success
             await MainActor.run {
                 switch type {
@@ -300,11 +308,11 @@ struct APIKeysSettingsView: View {
         } catch {
             validationError = error.localizedDescription
         }
-        
+
         isValidating = false
         validatingType = nil
     }
-    
+
     private func removeKey(for type: SecureAPIKeyManager.APIKeyType) {
         apiKeyManager.deleteAPIKey(for: type)
         successMessage = "\(type.displayName) API key removed"

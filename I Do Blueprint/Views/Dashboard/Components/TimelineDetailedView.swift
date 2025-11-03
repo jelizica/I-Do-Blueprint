@@ -9,11 +9,11 @@ import SwiftUI
 
 struct TimelineDetailedView: View {
     @ObservedObject var store: TimelineStoreV2
-    
+
     private var sortedItems: [TimelineItem] {
         store.timelineItems.sorted { $0.itemDate < $1.itemDate }
     }
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             // Summary Cards
@@ -24,14 +24,14 @@ struct TimelineDetailedView: View {
                     icon: "calendar",
                     color: .purple
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Completed",
                     value: "\(store.timelineItems.filter { $0.completed }.count)",
                     icon: "checkmark.circle.fill",
                     color: .green
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Upcoming",
                     value: "\(store.timelineItems.filter { !$0.completed && $0.itemDate >= Date() }.count)",
@@ -39,13 +39,13 @@ struct TimelineDetailedView: View {
                     color: .blue
                 )
             }
-            
+
             // Timeline Items
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Timeline")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 ForEach(sortedItems) { item in
                     DashboardTimelineItemRow(item: item)
                 }
@@ -62,7 +62,7 @@ struct TimelineDetailedView: View {
 
 struct DashboardTimelineItemRow: View {
     let item: TimelineItem
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.md) {
             // Date indicator
@@ -70,13 +70,13 @@ struct DashboardTimelineItemRow: View {
                 Text(monthDay)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(item.completed ? AppColors.success : AppColors.textPrimary)
-                
+
                 Text(year)
                     .font(Typography.caption2)
                     .foregroundColor(AppColors.textSecondary)
             }
             .frame(width: 60)
-            
+
             // Content
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 HStack {
@@ -84,21 +84,21 @@ struct DashboardTimelineItemRow: View {
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Spacer()
-                    
+
                     if item.completed {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundColor(AppColors.success)
                     }
                 }
-                
+
                 if let description = item.description, !description.isEmpty {
                     Text(description)
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 HStack(spacing: Spacing.xs) {
                     Image(systemName: typeIcon)
                         .font(.system(size: 10))
@@ -118,19 +118,19 @@ struct DashboardTimelineItemRow: View {
                 )
         )
     }
-    
+
     private var monthDay: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "d"
         return formatter.string(from: item.itemDate)
     }
-    
+
     private var year: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMM"
         return formatter.string(from: item.itemDate)
     }
-    
+
     private var typeIcon: String {
         switch item.itemType {
         case .milestone: return "flag.fill"
@@ -141,7 +141,7 @@ struct DashboardTimelineItemRow: View {
         @unknown default: return "circle"
         }
     }
-    
+
     private var typeText: String {
         switch item.itemType {
         case .milestone: return "Milestone"

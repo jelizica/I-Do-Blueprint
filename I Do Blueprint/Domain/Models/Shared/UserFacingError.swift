@@ -17,7 +17,7 @@ enum UserFacingError: LocalizedError {
     case unauthorized
     case rateLimited
     case unknown(Error)
-    
+
     var errorDescription: String? {
         switch self {
         case .networkUnavailable:
@@ -38,7 +38,7 @@ enum UserFacingError: LocalizedError {
             return "An unexpected error occurred: \(error.localizedDescription)"
         }
     }
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .networkUnavailable:
@@ -59,7 +59,7 @@ enum UserFacingError: LocalizedError {
             return "Try again or contact support if the problem persists."
         }
     }
-    
+
     var isRetryable: Bool {
         switch self {
         case .networkUnavailable, .serverError, .timeout, .rateLimited:
@@ -68,7 +68,7 @@ enum UserFacingError: LocalizedError {
             return false
         }
     }
-    
+
     /// Maps any error to a user-facing error
     static func from(_ error: Error) -> UserFacingError {
         // Check for NetworkError (already exists)
@@ -90,7 +90,7 @@ enum UserFacingError: LocalizedError {
                 return .serverError
             }
         }
-        
+
         // Check for URLError
         if let urlError = error as? URLError {
             switch urlError.code {
@@ -102,17 +102,17 @@ enum UserFacingError: LocalizedError {
                 return .serverError
             }
         }
-        
+
         // Check for domain errors (BudgetError, GuestError, etc.)
         // These are already wrapped, so treat as server errors
         let errorString = String(describing: error)
-        if errorString.contains("BudgetError") || 
+        if errorString.contains("BudgetError") ||
            errorString.contains("GuestError") ||
            errorString.contains("VendorError") ||
            errorString.contains("TaskError") {
             return .serverError
         }
-        
+
         return .unknown(error)
     }
 }

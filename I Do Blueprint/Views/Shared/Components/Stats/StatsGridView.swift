@@ -12,13 +12,13 @@ struct StatsGridView: View {
     let stats: [StatItem]
     let columns: Int
     let spacing: CGFloat
-    
+
     init(stats: [StatItem], columns: Int = 3, spacing: CGFloat = Spacing.md) {
         self.stats = stats
         self.columns = columns
         self.spacing = spacing
     }
-    
+
     var body: some View {
         LazyVGrid(
             columns: Array(repeating: GridItem(.flexible(), spacing: spacing), count: columns),
@@ -39,13 +39,13 @@ struct AdaptiveStatsGridView: View {
     let stats: [StatItem]
     let minColumnWidth: CGFloat
     let spacing: CGFloat
-    
+
     init(stats: [StatItem], minColumnWidth: CGFloat = 180, spacing: CGFloat = Spacing.md) {
         self.stats = stats
         self.minColumnWidth = minColumnWidth
         self.spacing = spacing
     }
-    
+
     var body: some View {
         LazyVGrid(
             columns: [GridItem(.adaptive(minimum: minColumnWidth), spacing: spacing)],

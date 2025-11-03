@@ -11,9 +11,9 @@ struct ObstacleRow: View {
     let obstacle: VenueObstacle
     let onEdit: () -> Void
     let onDelete: () -> Void
-    
+
     @State private var showingDeleteConfirmation = false
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Obstacle icon
@@ -21,45 +21,45 @@ struct ObstacleRow: View {
                 Circle()
                     .fill(obstacle.obstacleType.defaultColor.opacity(0.2))
                     .frame(width: 40, height: 40)
-                
+
                 Image(systemName: obstacle.obstacleType.icon)
                     .font(.system(size: 18))
                     .foregroundColor(obstacle.obstacleType.defaultColor)
             }
-            
+
             // Obstacle info
             VStack(alignment: .leading, spacing: 4) {
                 Text(obstacle.name)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                
+
                 HStack(spacing: 8) {
                     Text(obstacle.obstacleType.displayName)
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Text("•")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     Text("\(Int(obstacle.size.width)) × \(Int(obstacle.size.height))")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    
+
                     if obstacle.isMovable {
                         Text("•")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Text("Movable")
                             .font(.caption)
                             .foregroundColor(.green)
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Action buttons
             HStack(spacing: 8) {
                 Button(action: onEdit) {
@@ -69,7 +69,7 @@ struct ObstacleRow: View {
                 }
                 .buttonStyle(.plain)
                 .help("Edit obstacle")
-                
+
                 Button(action: { showingDeleteConfirmation = true }) {
                     Image(systemName: "trash")
                         .font(.system(size: 14))
@@ -109,7 +109,7 @@ struct ObstacleRow: View {
             onEdit: { print("Edit tapped") },
             onDelete: { print("Delete tapped") }
         )
-        
+
         ObstacleRow(
             obstacle: VenueObstacle(
                 name: "Dance Floor",
@@ -120,7 +120,7 @@ struct ObstacleRow: View {
             onEdit: { print("Edit tapped") },
             onDelete: { print("Delete tapped") }
         )
-        
+
         ObstacleRow(
             obstacle: VenueObstacle(
                 name: "Support Column",

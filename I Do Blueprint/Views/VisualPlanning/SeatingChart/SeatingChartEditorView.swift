@@ -132,7 +132,7 @@ struct SeatingChartEditorView: View {
                     })
             }
         }
-        
+
         .sheet(isPresented: $showingAssignmentEditor) {
             if let assignment = editingAssignment,
                let index = editableChart.seatingAssignments.firstIndex(where: { $0.id == assignment.id }) {
@@ -277,25 +277,25 @@ struct SeatingChartEditorView: View {
     private func removeAssignment(_ assignment: SeatingAssignment) {
         editableChart.seatingAssignments.removeAll { $0.id == assignment.id }
     }
-    
+
     private func editObstacle(_ obstacle: VenueObstacle) {
         editingObstacle = obstacle
         showingObstacleEditor = true
     }
-    
+
     private func removeObstacle(_ obstacle: VenueObstacle) {
         editableChart.venueConfiguration.obstacles.removeAll { $0.id == obstacle.id }
     }
-    
+
     private func assignGuest(_ guest: SeatingGuest) {
         guestToAssign = guest
         showingTableSelector = true
     }
-    
+
     private func unassignGuest(_ guest: SeatingGuest) {
         editableChart.seatingAssignments.removeAll { $0.guestId == guest.id }
     }
-    
+
     private func importGuests(_ guests: [SeatingGuest]) {
         // Add guests that aren't already in the chart
         for guest in guests {
@@ -304,7 +304,7 @@ struct SeatingChartEditorView: View {
             }
         }
     }
-    
+
     private func editAssignment(_ assignment: SeatingAssignment) {
         editingAssignment = assignment
         showingAssignmentEditor = true
@@ -338,7 +338,7 @@ struct SeatingChartEditorView: View {
             }
         }
     }
-    
+
     private func loadAvailableGuests() -> [SeatingGuest] {
         // Return guests that aren't already in the chart
         // This is a synchronous function for the sheet, so we return empty array

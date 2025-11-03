@@ -11,21 +11,21 @@ import SwiftUI
 struct OnboardingContainerView: View {
     @Environment(\.appStores) private var appStores
     @Environment(\.dismiss) private var dismiss
-    
+
     // ✅ CRITICAL: Use @ObservedObject to actually observe store changes
     @ObservedObject private var store: OnboardingStoreV2
-    
+
     init() {
         // Get the store from AppStores singleton
         self.store = AppStores.shared.onboarding
     }
-    
+
     var body: some View {
         ZStack {
             // Background
             AppColors.background
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Progress indicator
                 if store.currentStep != .welcome && store.currentStep != .completion {
@@ -36,11 +36,11 @@ struct OnboardingContainerView: View {
                     .padding(.horizontal, Spacing.xl)
                     .padding(.top, Spacing.lg)
                 }
-                
+
                 // Current step content
                 currentStepView
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                
+
                 // Navigation buttons
                 if store.currentStep != .welcome && store.currentStep != .completion {
                     OnboardingNavigationBar(
@@ -68,7 +68,7 @@ struct OnboardingContainerView: View {
                     .padding(.bottom, Spacing.xl)
                 }
             }
-            
+
             // Loading overlay
             if store.isLoading {
                 LoadingView(message: "Saving your progress...")
@@ -85,7 +85,7 @@ struct OnboardingContainerView: View {
             await store.loadProgress()
         }
     }
-    
+
     @ViewBuilder
     private var currentStepView: some View {
         switch store.currentStep {
@@ -114,16 +114,16 @@ struct OnboardingContainerView: View {
 struct OnboardingProgressBar: View {
     let currentStep: OnboardingStep
     let completedSteps: Set<OnboardingStep>
-    
+
     private var allSteps: [OnboardingStep] {
         OnboardingStep.allCases.filter { $0 != .welcome && $0 != .completion }
     }
-    
+
     private var progress: Double {
         let currentIndex = allSteps.firstIndex(of: currentStep) ?? 0
         return Double(currentIndex) / Double(max(allSteps.count - 1, 1))
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             // Step indicator
@@ -132,7 +132,7 @@ struct OnboardingProgressBar: View {
                     stepIndicator(for: step)
                 }
             }
-            
+
             // Current step label
             Text(currentStep.title)
                 .font(Typography.caption)
@@ -142,12 +142,12 @@ struct OnboardingProgressBar: View {
         .accessibilityLabel("Progress: \(currentStep.title)")
         .accessibilityValue("\(Int(progress * 100))% complete")
     }
-    
+
     @ViewBuilder
     private func stepIndicator(for step: OnboardingStep) -> some View {
         let isCompleted = completedSteps.contains(step)
         let isCurrent = step == currentStep
-        
+
         RoundedRectangle(cornerRadius: 2)
             .fill(isCompleted || isCurrent ? AppColors.primary : AppColors.textSecondary.opacity(0.3))
             .frame(height: 4)
@@ -167,7 +167,7 @@ struct OnboardingNavigationBar: View {
     let onBack: () -> Void
     let onNext: () -> Void
     let onSkip: () -> Void
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             // Back button
@@ -188,9 +188,9 @@ struct OnboardingNavigationBar: View {
             .opacity(canGoBack ? 1.0 : 0.5)
             .accessibilityLabel("Go back to previous step")
             .accessibilityHint(canGoBack ? "Returns to the previous onboarding step" : "Cannot go back from this step")
-            
+
             Spacer()
-            
+
             // Skip button (for optional steps)
             if isOptionalStep {
                 Button(action: onSkip) {
@@ -204,7 +204,7 @@ struct OnboardingNavigationBar: View {
                 .accessibilityLabel("Skip this optional step")
                 .accessibilityHint("Moves to the next step without completing this one")
             }
-            
+
             // Next button
             Button(action: onNext) {
                 HStack(spacing: Spacing.xs) {
@@ -230,30 +230,30 @@ struct OnboardingNavigationBar: View {
 
 struct GuestImportPlaceholderView: View {
     @Environment(\.onboardingStore) private var store
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             Spacer()
-            
+
             Image(systemName: "person.2.fill")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.primary)
-            
+
             Text("Import Guest List")
                 .font(Typography.title2)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("You can import your guest list from a CSV or Excel file, or skip this step and add guests later.")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
-            
+
             Text("Guest import functionality coming in Stage 4")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
                 .padding(.top, Spacing.lg)
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -263,30 +263,30 @@ struct GuestImportPlaceholderView: View {
 
 struct VendorImportPlaceholderView: View {
     @Environment(\.onboardingStore) private var store
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             Spacer()
-            
+
             Image(systemName: "briefcase.fill")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.primary)
-            
+
             Text("Import Vendor List")
                 .font(Typography.title2)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("You can import your vendor list from a CSV or Excel file, or skip this step and add vendors later.")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
-            
+
             Text("Vendor import functionality coming in Stage 4")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
                 .padding(.top, Spacing.lg)
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -296,30 +296,30 @@ struct VendorImportPlaceholderView: View {
 
 struct BudgetSetupPlaceholderView: View {
     @Environment(\.onboardingStore) private var store
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             Spacer()
-            
+
             Image(systemName: "dollarsign.circle.fill")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.primary)
-            
+
             Text("Budget Setup")
                 .font(Typography.title2)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Set up your wedding budget with categories and allocations, or skip this step and configure it later.")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
-            
+
             Text("Budget wizard coming in Stage 4")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
                 .padding(.top, Spacing.lg)
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

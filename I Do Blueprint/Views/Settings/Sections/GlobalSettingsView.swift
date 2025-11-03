@@ -133,7 +133,7 @@ struct GlobalSettingsView: View {
                             .labelsHidden()
                             .frame(maxWidth: 200)
                         }
-                        
+
                         Toggle("TBD", isOn: $viewModel.localSettings.global.isWeddingDateTBD)
                             .toggleStyle(.checkbox)
                             .help("Check if wedding date is to be determined")

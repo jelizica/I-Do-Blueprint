@@ -13,16 +13,16 @@ struct GuestManagementViewV4: View {
     @Environment(\.guestStore) private var guestStore
     @EnvironmentObject private var settingsStore: SettingsStoreV2
     @EnvironmentObject private var coordinator: AppCoordinator
-    
+
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
     @State private var showingImportSheet = false
-    
+
     private var settings: CoupleSettings {
         settingsStore.settings
     }
-    
+
     private var weddingTitle: String {
         let partner1 = settings.global.partner1Nickname.isEmpty
             ? settings.global.partner1FullName
@@ -30,22 +30,22 @@ struct GuestManagementViewV4: View {
         let partner2 = settings.global.partner2Nickname.isEmpty
             ? settings.global.partner2FullName
             : settings.global.partner2Nickname
-        
+
         if !partner1.isEmpty && !partner2.isEmpty {
             return "\(partner1) & \(partner2)'s Wedding"
         }
         return "Wedding"
     }
-    
+
     private var weddingDate: String {
         if settings.global.isWeddingDateTBD {
             return "Date TBD"
         }
-        
+
         guard !settings.global.weddingDate.isEmpty else {
             return "Date TBD"
         }
-        
+
         // Format the date nicely
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
@@ -53,59 +53,59 @@ struct GuestManagementViewV4: View {
             formatter.dateStyle = .long
             return formatter.string(from: date)
         }
-        
+
         return settings.global.weddingDate
     }
-    
-    
+
+
     private var totalGuests: Int {
         guestStore.guests.count
     }
-    
+
     private var confirmedCount: Int {
         guestStore.guests.filter { $0.rsvpStatus == .confirmed || $0.rsvpStatus == .attending }.count
     }
-    
+
     private var pendingCount: Int {
         guestStore.guests.filter { $0.rsvpStatus == .pending || $0.rsvpStatus == .invited }.count
     }
-    
+
     private var declinedCount: Int {
         guestStore.guests.filter { $0.rsvpStatus == .declined }.count
     }
-    
+
     private var acceptanceRate: Double {
         guard totalGuests > 0 else { return 0 }
         return Double(confirmedCount) / Double(totalGuests)
     }
-    
+
     private var weeklyChange: Int {
         // Calculate guests added in the last 7 days
         let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         return guestStore.guests.filter { $0.createdAt > weekAgo }.count
     }
-    
+
     var body: some View {
         ZStack {
             AppGradients.appBackground
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Sticky Header Section
                 headerSection
                     .padding(.horizontal, Spacing.huge)
                     .padding(.top, Spacing.xxxl)
                     .padding(.bottom, Spacing.xxl)
-                
+
                 // Scrollable Content Section
                 ScrollView {
                     VStack(spacing: Spacing.xl) {
                         // Stats Cards
                         statsSection
-                        
+
                         // Search and Filters
                         searchAndFiltersSection
-                        
+
                         // Guest List
                         guestListSection
                     }
@@ -166,9 +166,9 @@ struct GuestManagementViewV4: View {
             }
         }
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         HStack(alignment: .center, spacing: 0) {
             // Title and Description
@@ -176,14 +176,14 @@ struct GuestManagementViewV4: View {
                 Text("Guest Management")
                     .font(Typography.displaySmall)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text("Manage and track all your guests in one place")
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
+
             // Action Buttons
             HStack(spacing: 12) {
                 // Import Button
@@ -207,7 +207,7 @@ struct GuestManagementViewV4: View {
                     )
                 }
                 .buttonStyle(.plain)
-                
+
                 // Export Button
                 Button {
                     exportGuestList()
@@ -229,7 +229,7 @@ struct GuestManagementViewV4: View {
                     )
                 }
                 .buttonStyle(.plain)
-                
+
                 // Add Guest Button
                 Button {
                     coordinator.present(.addGuest)
@@ -251,9 +251,9 @@ struct GuestManagementViewV4: View {
         }
         .frame(height: 68)
     }
-    
+
     // MARK: - Stats Section
-    
+
     private var statsSection: some View {
         HStack(spacing: Spacing.lg) {
             GuestManagementStatCard(
@@ -263,7 +263,7 @@ struct GuestManagementViewV4: View {
                 subtitleColor: AppColors.success,
                 icon: "person.3.fill"
             )
-            
+
             GuestManagementStatCard(
                 title: "Confirmed",
                 value: "\(confirmedCount)",
@@ -271,7 +271,7 @@ struct GuestManagementViewV4: View {
                 subtitleColor: AppColors.success,
                 icon: "checkmark.circle.fill"
             )
-            
+
             GuestManagementStatCard(
                 title: "Pending",
                 value: "\(pendingCount)",
@@ -279,7 +279,7 @@ struct GuestManagementViewV4: View {
                 subtitleColor: AppColors.warning,
                 icon: "clock.fill"
             )
-            
+
             GuestManagementStatCard(
                 title: "Declined",
                 value: "\(declinedCount)",
@@ -289,9 +289,9 @@ struct GuestManagementViewV4: View {
             )
         }
     }
-    
+
     // MARK: - Search and Filters Section
-    
+
     private var searchAndFiltersSection: some View {
         // Inline search UI removed in favor of native .searchable & toolbar pickers
         Group {
@@ -325,10 +325,10 @@ struct GuestManagementViewV4: View {
             }
         }
     }
-    
-    
+
+
     // MARK: - Guest List Section
-    
+
     private var guestListSection: some View {
         Group {
             if guestStore.isLoading {
@@ -359,21 +359,21 @@ struct GuestManagementViewV4: View {
             }
         }
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "person.3")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.textTertiary)
-            
+
             Text("No guests found")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Add your first guest to get started")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Button {
                 coordinator.present(.addGuest)
             } label: {
@@ -392,7 +392,7 @@ struct GuestManagementViewV4: View {
         .background(AppColors.cardBackground)
         .cornerRadius(CornerRadius.lg)
     }
-    
+
     private var loadMoreButton: some View {
         Button {
             // Load more functionality
@@ -407,9 +407,9 @@ struct GuestManagementViewV4: View {
         }
         .buttonStyle(.plain)
     }
-    
+
     // MARK: - Helper Functions
-    
+
     private func exportGuestList() {
         // Export functionality will be implemented
         AppLogger.ui.info("Export guest list requested")
@@ -424,7 +424,7 @@ private struct GuestManagementStatCard: View {
     let subtitle: String?
     let subtitleColor: Color
     let icon: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -432,20 +432,20 @@ private struct GuestManagementStatCard: View {
                     Text(title)
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Text(value)
                         .font(Typography.displayMedium)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(Typography.caption)
                             .foregroundColor(subtitleColor)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: icon)
                     .font(.system(size: 24))
                     .foregroundColor(AppColors.primary.opacity(0.2))
@@ -463,7 +463,7 @@ struct GuestCardV4: View {
     let guest: Guest
     let settings: CoupleSettings
     @State private var avatarImage: NSImage?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Avatar and Status Badge
@@ -494,14 +494,14 @@ struct GuestCardV4: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, Spacing.xxl)
                 .padding(.leading, Spacing.xxl)
-                
+
                 // Status Badge
                 statusBadge
                     .padding(.top, Spacing.xxl)
                     .padding(.trailing, Spacing.xxl)
             }
             .frame(height: 72)
-            
+
             // Guest Name
 Text(guest.fullName)
                 .font(Typography.heading)
@@ -509,7 +509,7 @@ Text(guest.fullName)
                 .lineLimit(1)
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.top, Spacing.sm)
-            
+
             // Email
             if let email = guest.email, !email.isEmpty {
             Text(email)
@@ -519,7 +519,7 @@ Text(guest.fullName)
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.top, Spacing.xs)
             }
-            
+
             // Invited By
             if let invitedBy = guest.invitedBy {
                 Text(invitedBy.displayName(with: settings))
@@ -528,21 +528,21 @@ Text(guest.fullName)
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.top, Spacing.sm)
             }
-            
+
             Spacer()
-            
+
             // Table and Meal Section
             VStack(spacing: 0) {
                 Divider()
                     .background(AppColors.borderLight)
-                
+
                 HStack {
                     Text("Table")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Spacer()
-                    
+
                     if let table = guest.tableAssignment {
                         Text("\(table)")
                             .font(Typography.caption)
@@ -555,17 +555,17 @@ Text(guest.fullName)
                 }
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.vertical, Spacing.sm)
-                
+
                 Divider()
                     .background(AppColors.borderLight)
-                
+
                 HStack {
                     Text("Meal Choice")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Spacer()
-                    
+
                     if let mealOption = guest.mealOption, !mealOption.isEmpty {
                         Text(mealOption)
                             .font(Typography.caption)
@@ -594,7 +594,7 @@ Text(guest.fullName)
             value: guest.rsvpStatus.displayName
         )
     }
-    
+
     private var statusBadge: some View {
         Group {
             switch guest.rsvpStatus {
@@ -633,9 +633,9 @@ Text(guest.fullName)
             }
         }
     }
-    
+
     // MARK: - Avatar Loading
-    
+
     private func loadAvatar() async {
         do {
             let image = try await guest.fetchAvatar(
@@ -654,13 +654,13 @@ Text(guest.fullName)
 private struct GuestFilterChip: View {
     let title: String
     let onRemove: () -> Void
-    
+
     var body: some View {
         HStack(spacing: Spacing.xs) {
             Text(title)
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(AppColors.textTertiary)
@@ -677,22 +677,22 @@ private struct GuestFilterChip: View {
 struct ErrorView: View {
     let error: Error
     let retry: () -> Void
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.error)
-            
+
             Text("Error Loading Guests")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text(error.localizedDescription)
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
-            
+
             Button(action: retry) {
                 Text("Try Again")
                     .font(Typography.heading)

@@ -9,39 +9,39 @@ import SwiftUI
 
 struct VendorPaymentsSection: View {
     let payments: [PaymentSchedule]
-    
+
     private var totalAmount: Double {
         payments.reduce(0) { $0 + $1.paymentAmount }
     }
-    
+
     private var paidAmount: Double {
         payments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
     }
-    
+
     private var remainingAmount: Double {
         totalAmount - paidAmount
     }
-    
+
     private var upcomingPayments: [PaymentSchedule] {
         payments.filter { !$0.paid && $0.paymentDate >= Date() }
             .sorted { $0.paymentDate < $1.paymentDate }
     }
-    
+
     private var overduePayments: [PaymentSchedule] {
         payments.filter { !$0.paid && $0.paymentDate < Date() }
             .sorted { $0.paymentDate < $1.paymentDate }
     }
-    
+
     private var paidPayments: [PaymentSchedule] {
         payments.filter { $0.paid }
             .sorted { $0.paymentDate > $1.paymentDate }
     }
-    
+
     private var progressPercentage: Double {
         guard totalAmount > 0 else { return 0 }
         return (paidAmount / totalAmount) * 100
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Section Header
@@ -50,7 +50,7 @@ struct VendorPaymentsSection: View {
                 icon: "calendar.badge.clock",
                 color: AppColors.Vendor.pending
             )
-            
+
             // Progress Card
             PaymentProgressCard(
                 totalAmount: totalAmount,
@@ -58,33 +58,33 @@ struct VendorPaymentsSection: View {
                 remainingAmount: remainingAmount,
                 progressPercentage: progressPercentage
             )
-            
+
             // Overdue Payments (if any)
             if !overduePayments.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
                     Text("Overdue")
                         .font(.subheadline)
                         .foregroundColor(.red)
-                    
+
                     ForEach(overduePayments) { payment in
                         VendorPaymentRow(payment: payment, isOverdue: true)
                     }
                 }
             }
-            
+
             // Upcoming Payments
             if !upcomingPayments.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
                     Text("Upcoming")
                         .font(.subheadline)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     ForEach(upcomingPayments) { payment in
                         VendorPaymentRow(payment: payment, isOverdue: false)
                     }
                 }
             }
-            
+
             // Paid Payments (collapsible)
             if !paidPayments.isEmpty {
                 DisclosureGroup {
@@ -98,9 +98,9 @@ struct VendorPaymentsSection: View {
                         Text("Paid (\(paidPayments.count))")
                         .font(.subheadline)
                         .foregroundColor(AppColors.textSecondary)
-                        
+
                         Spacer()
-                        
+
                         Text(paidAmount.formatted(.currency(code: "USD")))
                             .font(Typography.caption)
                             .foregroundColor(.green)
@@ -121,7 +121,7 @@ private struct PaymentProgressCard: View {
     let paidAmount: Double
     let remainingAmount: Double
     let progressPercentage: Double
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Progress Bar
@@ -130,21 +130,21 @@ private struct PaymentProgressCard: View {
                     Text("Payment Progress")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Spacer()
-                    
+
                     Text("\(Int(progressPercentage))%")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(AppColors.primary)
                 }
-                
+
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         // Background
                         RoundedRectangle(cornerRadius: 4)
                             .fill(AppColors.border.opacity(0.3))
                             .frame(height: 8)
-                        
+
                         // Progress
                         RoundedRectangle(cornerRadius: 4)
                             .fill(
@@ -159,40 +159,40 @@ private struct PaymentProgressCard: View {
                 }
                 .frame(height: 8)
             }
-            
+
             // Amount Summary
             HStack(spacing: Spacing.lg) {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Paid")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Text(paidAmount.formatted(.currency(code: "USD")))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.green)
                 }
-                
+
                 Divider()
                     .frame(height: 30)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Remaining")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Text(remainingAmount.formatted(.currency(code: "USD")))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.orange)
                 }
-                
+
                 Divider()
                     .frame(height: 30)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Total")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Text(totalAmount.formatted(.currency(code: "USD")))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(AppColors.textPrimary)
@@ -212,7 +212,7 @@ private struct PaymentProgressCard: View {
 private struct VendorPaymentRow: View {
     let payment: PaymentSchedule
     let isOverdue: Bool
-    
+
     private var statusColor: Color {
         if payment.paid {
             return .green
@@ -222,7 +222,7 @@ private struct VendorPaymentRow: View {
             return .orange
         }
     }
-    
+
     private var statusIcon: String {
         if payment.paid {
             return "checkmark.circle.fill"
@@ -232,7 +232,7 @@ private struct VendorPaymentRow: View {
             return "clock.fill"
         }
     }
-    
+
     private var statusText: String {
         if payment.paid {
             return "Paid"
@@ -242,14 +242,14 @@ private struct VendorPaymentRow: View {
             return "Pending"
         }
     }
-    
+
     private var daysUntilDue: Int? {
         guard !payment.paid else { return nil }
         let calendar = Calendar.current
         let days = calendar.dateComponents([.day], from: Date(), to: payment.paymentDate).day
         return days
     }
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             // Status Indicator
@@ -257,14 +257,14 @@ private struct VendorPaymentRow: View {
                 .font(.title3)
                 .foregroundColor(statusColor)
                 .frame(width: 24)
-            
+
             // Payment Info
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 HStack(spacing: Spacing.xs) {
                     Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
                         .font(.system(size: 15))
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     if payment.isDeposit {
                         Text("• Deposit")
                             .font(Typography.caption)
@@ -275,17 +275,17 @@ private struct VendorPaymentRow: View {
                             .foregroundColor(.purple)
                     }
                 }
-                
+
                 HStack(spacing: Spacing.xs) {
                     Text(statusText)
                         .font(Typography.caption)
                         .foregroundColor(statusColor)
-                    
+
                     if let days = daysUntilDue {
                         Text("•")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
-                        
+
                         if days == 0 {
                             Text("Due today")
                                 .font(Typography.caption)
@@ -298,9 +298,9 @@ private struct VendorPaymentRow: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Amount
             Text(payment.paymentAmount.formatted(.currency(code: "USD")))
                 .font(.system(size: 15, weight: .semibold))

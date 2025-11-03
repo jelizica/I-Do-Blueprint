@@ -13,13 +13,13 @@ struct SummaryCard: View {
     let title: String
     let items: [SummaryItem]
     let action: (() -> Void)?
-    
+
     init(title: String, items: [SummaryItem], action: (() -> Void)? = nil) {
         self.title = title
         self.items = items
         self.action = action
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
@@ -27,9 +27,9 @@ struct SummaryCard: View {
                 Text(title)
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
-                
+
                 if let action = action {
                     Button(action: action) {
                         Image(systemName: "chevron.right")
@@ -40,9 +40,9 @@ struct SummaryCard: View {
                     .accessibilityLabel("View details")
                 }
             }
-            
+
             Divider()
-            
+
             // Summary items
             VStack(spacing: Spacing.sm) {
                 ForEach(items) { item in
@@ -63,7 +63,7 @@ struct SummaryItem: Identifiable {
     let value: String
     let icon: String?
     let color: Color?
-    
+
     init(label: String, value: String, icon: String? = nil, color: Color? = nil) {
         self.label = label
         self.value = value
@@ -75,7 +75,7 @@ struct SummaryItem: Identifiable {
 /// Row for displaying a summary item
 struct SummaryItemRow: View {
     let item: SummaryItem
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             if let icon = item.icon {
@@ -84,13 +84,13 @@ struct SummaryItemRow: View {
                     .foregroundColor(item.color ?? AppColors.textSecondary)
                     .frame(width: 20)
             }
-            
+
             Text(item.label)
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Spacer()
-            
+
             Text(item.value)
                 .font(Typography.bodyRegular)
                 .fontWeight(.medium)
@@ -111,7 +111,7 @@ struct CompactSummaryCard: View {
     let icon: String
     let color: Color
     let trend: StatItem.Trend?
-    
+
     init(
         title: String,
         value: String,
@@ -127,7 +127,7 @@ struct CompactSummaryCard: View {
         self.color = color
         self.trend = trend
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             // Icon and trend
@@ -140,25 +140,25 @@ struct CompactSummaryCard: View {
                             .font(.body)
                             .foregroundColor(color)
                     )
-                
+
                 Spacer()
-                
+
                 if let trend = trend {
                     TrendIndicator(trend: trend)
                 }
             }
-            
+
             // Value
             Text(value)
                 .font(Typography.numberLarge)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             // Title and subtitle
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(Typography.caption2)
@@ -201,7 +201,7 @@ struct CompactSummaryCard: View {
             icon: "dollarsign.circle.fill",
             color: .blue
         )
-        
+
         CompactSummaryCard(
             title: "Spent",
             value: "$18,000",
@@ -210,7 +210,7 @@ struct CompactSummaryCard: View {
             color: .orange,
             trend: .up("+$2,000")
         )
-        
+
         CompactSummaryCard(
             title: "Remaining",
             value: "$7,000",

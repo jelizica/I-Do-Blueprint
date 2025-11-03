@@ -114,54 +114,42 @@ class SettingsAPI {
         var merged = current
 
         for (key, value) in updates {
-            switch key {
-            case "global":
-                if let globalDict = value as? [String: Any] {
-                    merged.global = mergeGlobalSettings(current: merged.global, updates: globalDict)
-                }
-            case "theme":
-                if let themeDict = value as? [String: Any] {
-                    merged.theme = mergeThemeSettings(current: merged.theme, updates: themeDict)
-                }
-            case "budget":
-                if let budgetDict = value as? [String: Any] {
-                    merged.budget = mergeBudgetSettings(current: merged.budget, updates: budgetDict)
-                }
-            case "cash_flow":
-                if let cashFlowDict = value as? [String: Any] {
-                    merged.cashFlow = mergeCashFlowSettings(current: merged.cashFlow, updates: cashFlowDict)
-                }
-            case "tasks":
-                if let tasksDict = value as? [String: Any] {
-                    merged.tasks = mergeTasksSettings(current: merged.tasks, updates: tasksDict)
-                }
-            case "vendors":
-                if let vendorsDict = value as? [String: Any] {
-                    merged.vendors = mergeVendorsSettings(current: merged.vendors, updates: vendorsDict)
-                }
-            case "guests":
-                if let guestsDict = value as? [String: Any] {
-                    merged.guests = mergeGuestsSettings(current: merged.guests, updates: guestsDict)
-                }
-            case "documents":
-                if let documentsDict = value as? [String: Any] {
-                    merged.documents = mergeDocumentsSettings(current: merged.documents, updates: documentsDict)
-                }
-            case "notifications":
-                if let notificationsDict = value as? [String: Any] {
-                    merged.notifications = mergeNotificationsSettings(
-                        current: merged.notifications,
-                        updates: notificationsDict)
-                }
-            case "links":
-                if let linksDict = value as? [String: Any] {
-                    merged.links = mergeLinksSettings(current: merged.links, updates: linksDict)
-                }
-            default:
-                break
-            }
+            guard let updateDict = value as? [String: Any] else { continue }
+            
+            merged = applySettingsUpdate(to: merged, key: key, updates: updateDict)
         }
 
+        return merged
+    }
+    
+    private func applySettingsUpdate(to settings: CoupleSettings, key: String, updates: [String: Any]) -> CoupleSettings {
+        var merged = settings
+        
+        switch key {
+        case "global":
+            merged.global = mergeGlobalSettings(current: merged.global, updates: updates)
+        case "theme":
+            merged.theme = mergeThemeSettings(current: merged.theme, updates: updates)
+        case "budget":
+            merged.budget = mergeBudgetSettings(current: merged.budget, updates: updates)
+        case "cash_flow":
+            merged.cashFlow = mergeCashFlowSettings(current: merged.cashFlow, updates: updates)
+        case "tasks":
+            merged.tasks = mergeTasksSettings(current: merged.tasks, updates: updates)
+        case "vendors":
+            merged.vendors = mergeVendorsSettings(current: merged.vendors, updates: updates)
+        case "guests":
+            merged.guests = mergeGuestsSettings(current: merged.guests, updates: updates)
+        case "documents":
+            merged.documents = mergeDocumentsSettings(current: merged.documents, updates: updates)
+        case "notifications":
+            merged.notifications = mergeNotificationsSettings(current: merged.notifications, updates: updates)
+        case "links":
+            merged.links = mergeLinksSettings(current: merged.links, updates: updates)
+        default:
+            break
+        }
+        
         return merged
     }
 
@@ -418,7 +406,7 @@ struct VendorUsingCategory: Codable, Identifiable {
     let vendorName: String
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case vendorName = "vendor_name"
+    case id = "id"
+    case vendorName = "vendor_name"
     }
 }

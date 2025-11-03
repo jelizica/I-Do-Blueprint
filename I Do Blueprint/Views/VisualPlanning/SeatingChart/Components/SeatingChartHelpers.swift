@@ -25,7 +25,7 @@ extension SeatingChart {
         var conflictCount = 0
         for assignment in seatingAssignments {
             guard let guest = guests.first(where: { $0.id == assignment.guestId }) else { continue }
-            
+
             // Check if any conflicting guests are at the same table
             let tableAssignments = seatingAssignments.filter { $0.tableId == assignment.tableId }
             for conflictId in guest.conflicts {
@@ -35,18 +35,18 @@ extension SeatingChart {
             }
         }
         // Divide by 2 since each conflict is counted twice
-        conflictCount = conflictCount / 2
-        
+        conflictCount /= 2
+
         // Calculate satisfied preferences
         var satisfiedPreferences = 0
         let totalPreferences = guests.reduce(0) { $0 + $1.preferences.count }
-        
+
         for guest in guests {
             guard let assignment = seatingAssignments.first(where: { $0.guestId == guest.id }),
                   let table = tables.first(where: { $0.id == assignment.tableId }) else {
                 continue
             }
-            
+
             // Check each preference
             for preference in guest.preferences {
                 // Simple preference matching based on table position

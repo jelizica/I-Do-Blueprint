@@ -54,9 +54,9 @@ import Foundation
 /// try await repository.updateVendor(updated)
 /// ```
 protocol VendorRepositoryProtocol: Sendable {
-    
+
     // MARK: - Fetch Operations
-    
+
     /// Fetches all vendors for the current couple
     ///
     /// Returns vendors sorted by creation date (newest first).
@@ -65,7 +65,7 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Array of vendor records
     /// - Throws: Repository errors if fetch fails or tenant context is missing
     func fetchVendors() async throws -> [Vendor]
-    
+
     /// Fetches vendor statistics for the current couple
     ///
     /// Calculates aggregate statistics including:
@@ -79,9 +79,9 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Vendor statistics object
     /// - Throws: Repository errors if fetch fails
     func fetchVendorStats() async throws -> VendorStats
-    
+
     // MARK: - Create, Update, Delete Operations
-    
+
     /// Creates a new vendor record
     ///
     /// The vendor will be automatically associated with the current couple's tenant ID.
@@ -91,7 +91,7 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: The created vendor with server-assigned ID and timestamps
     /// - Throws: Repository errors if creation fails or validation errors
     func createVendor(_ vendor: Vendor) async throws -> Vendor
-    
+
     /// Updates an existing vendor record
     ///
     /// Updates the vendor and sets the `updatedAt` timestamp.
@@ -101,7 +101,7 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: The updated vendor with new timestamp
     /// - Throws: Repository errors if update fails, vendor not found, or unauthorized
     func updateVendor(_ vendor: Vendor) async throws -> Vendor
-    
+
     /// Deletes a vendor record
     ///
     /// Permanently removes the vendor from the database.
@@ -110,9 +110,9 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Parameter id: The ID of the vendor to delete
     /// - Throws: Repository errors if deletion fails, vendor not found, or unauthorized
     func deleteVendor(id: Int64) async throws
-    
+
     // MARK: - Extended Vendor Data Operations
-    
+
     /// Fetches reviews for a specific vendor
     ///
     /// Returns all reviews associated with the vendor, sorted by date.
@@ -121,7 +121,7 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Array of vendor reviews
     /// - Throws: Repository errors if fetch fails or vendor not found
     func fetchVendorReviews(vendorId: Int64) async throws -> [VendorReview]
-    
+
     /// Fetches review statistics for a specific vendor
     ///
     /// Calculates aggregate review statistics including:
@@ -133,7 +133,7 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Optional review statistics (nil if no reviews)
     /// - Throws: Repository errors if fetch fails
     func fetchVendorReviewStats(vendorId: Int64) async throws -> VendorReviewStats?
-    
+
     /// Fetches payment summary for a specific vendor
     ///
     /// Returns payment information including:
@@ -146,7 +146,7 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Optional payment summary (nil if no payments)
     /// - Throws: Repository errors if fetch fails
     func fetchVendorPaymentSummary(vendorId: Int64) async throws -> VendorPaymentSummary?
-    
+
     /// Fetches contract summary for a specific vendor
     ///
     /// Returns contract information including:
@@ -158,7 +158,7 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Optional contract (nil if no contract)
     /// - Throws: Repository errors if fetch fails
     func fetchVendorContractSummary(vendorId: Int64) async throws -> VendorContract?
-    
+
     /// Fetches complete vendor details
     ///
     /// Returns comprehensive vendor information including:
@@ -171,9 +171,9 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Complete vendor details
     /// - Throws: Repository errors if fetch fails or vendor not found
     func fetchVendorDetails(id: Int64) async throws -> VendorDetails
-    
+
     // MARK: - Vendor Types
-    
+
     /// Fetches all vendor types from the vendor_types reference table
     ///
     /// Returns all available vendor type categories.
@@ -182,9 +182,9 @@ protocol VendorRepositoryProtocol: Sendable {
     /// - Returns: Array of vendor types sorted alphabetically
     /// - Throws: Repository errors if fetch fails
     func fetchVendorTypes() async throws -> [VendorType]
-    
+
     // MARK: - Bulk Import Operations
-    
+
     /// Imports multiple vendors from CSV data in a single batch operation
     ///
     /// Performs a batch insert of vendor records with the following features:

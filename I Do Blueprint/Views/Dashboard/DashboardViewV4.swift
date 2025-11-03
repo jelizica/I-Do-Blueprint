@@ -5,6 +5,8 @@
 //  Modern dashboard with Supabase data integration
 //  Displays real-time wedding planning metrics and countdown
 //
+// swiftlint:disable file_length
+
 
 import SwiftUI
 import Sentry

@@ -359,7 +359,10 @@ struct BudgetItemRowView: View {
         Picker("", selection: Binding(
             get: {
                 // Find closest matching tax rate ID (item.taxRate is stored as percentage, rate.taxRate is decimal)
-                budgetStore.taxRates.min(by: { abs(($0.taxRate * 100) - item.taxRate) < abs(($1.taxRate * 100) - item.taxRate) })?.id ?? budgetStore.taxRates.first?.id ?? 0
+                let closestRate = budgetStore.taxRates.min(by: {
+                    abs(($0.taxRate * 100) - item.taxRate) < abs(($1.taxRate * 100) - item.taxRate)
+                })
+                return closestRate?.id ?? budgetStore.taxRates.first?.id ?? 0
             },
             set: { newId in
                 if let selectedRate = budgetStore.taxRates.first(where: { $0.id == newId }) {
@@ -506,5 +509,5 @@ struct EventDropdownView: View {
         onAddCategory: { _, _ in },
         onAddSubcategory: { _, _ in },
         onAddEvent: { _, _ in },
-        responsibleOptions: ["Partner 1", "Partner 2", "Both"]) 
+        responsibleOptions: ["Partner 1", "Partner 2", "Both"])
 }

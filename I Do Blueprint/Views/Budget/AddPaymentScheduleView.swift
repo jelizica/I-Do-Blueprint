@@ -28,16 +28,16 @@ struct AddPaymentScheduleView: View {
     private var selectedExpense: Expense? {
         expenses.first { $0.id == formData.selectedExpenseId }
     }
-    
+
     /// Calculate total already paid for the selected expense from existing payment schedules
     private var alreadyPaidForExpense: Double {
         guard let expenseId = formData.selectedExpenseId else { return 0 }
-        
+
         return existingPaymentSchedules
             .filter { $0.expenseId == expenseId && $0.paid }
             .reduce(0) { $0 + $1.paymentAmount }
     }
-    
+
     /// Calculate remaining unpaid amount for the selected expense
     private var remainingUnpaidAmount: Double {
         guard let expense = selectedExpense else { return 0 }
@@ -137,12 +137,12 @@ struct AddPaymentScheduleView: View {
             VStack(spacing: 20) {
                 headerSection
                 expenseSelectionSection
-                
+
                 // Show partial amount selector if an expense is selected
                 if let expense = selectedExpense {
                     partialAmountSection(expense: expense)
                 }
-                
+
                 paymentTypeSection
                 paymentDetailsSection
                 additionalOptionsSection
@@ -174,9 +174,9 @@ struct AddPaymentScheduleView: View {
             alreadyPaid: alreadyPaidForExpense,
             remainingAmount: remainingUnpaidAmount)
     }
-    
+
     // MARK: - Partial Amount Section
-    
+
     private func partialAmountSection(expense: Expense) -> some View {
         PartialAmountSelector(
             formData: formData,
@@ -191,14 +191,14 @@ struct AddPaymentScheduleView: View {
         PaymentTypeSelector(selectedType: $formData.paymentType)
     }
 
-    
+
     // MARK: - Payment Details Section
 
     private var paymentDetailsSection: some View {
         PaymentDetailsForm(formData: formData, focusedField: $focusedField)
     }
 
-    
+
     // MARK: - Additional Options Section
 
     private var additionalOptionsSection: some View {
@@ -208,7 +208,7 @@ struct AddPaymentScheduleView: View {
             focusedField: $focusedField)
     }
 
-    
+
     // MARK: - Helper Methods
 
     private func updateTotalAmountFromExpense() {
@@ -227,16 +227,16 @@ struct AddPaymentScheduleView: View {
             showingValidationAlert = true
             return
         }
-        
+
         // Validate that payment doesn't exceed remaining unpaid amount
         let effectiveAmount = formData.effectiveAmount
-        
+
         guard effectiveAmount > 0 else {
             validationMessage = "Please enter a valid payment amount greater than $0."
             showingValidationAlert = true
             return
         }
-        
+
         guard effectiveAmount <= remainingUnpaidAmount else {
             validationMessage = "Payment amount cannot exceed the remaining unpaid amount of \(NumberFormatter.currency.string(from: NSNumber(value: remainingUnpaidAmount)) ?? "$0").\n\nThis expense has already had \(NumberFormatter.currency.string(from: NSNumber(value: alreadyPaidForExpense)) ?? "$0") paid through existing payment schedules."
             showingValidationAlert = true
@@ -256,18 +256,18 @@ struct AddPaymentScheduleView: View {
         }
 
         let selectedExpense = expenses.first { $0.id == formData.selectedExpenseId }
-        
+
         // Validate that the expense has a vendor (vendor_id can be 0, which is valid)
         guard let vendorId = selectedExpense?.vendorId else {
             validationMessage = "This expense must have a vendor assigned before creating a payment schedule."
             showingValidationAlert = true
             return
         }
-        
+
         // Get vendor name from database - must exist
         // Note: vendor_id can be 0, which is a valid ID
         let vendorName = getVendorName(vendorId)
-        
+
         guard let vendorName = vendorName, !vendorName.isEmpty else {
             validationMessage = "The vendor for this expense does not exist in the database. Please ensure the vendor is properly set up before creating a payment schedule.\n\nVendor ID: \(vendorId)"
             showingValidationAlert = true

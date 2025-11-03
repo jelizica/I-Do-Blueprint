@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GuestsDetailedView: View {
     @ObservedObject var store: GuestStoreV2
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             // Summary Cards
@@ -18,28 +18,28 @@ struct GuestsDetailedView: View {
                 let yesCount = guests.filter { $0.rsvpStatus == .attending || $0.rsvpStatus == .confirmed }.count
                 let pendingCount = guests.filter { $0.rsvpStatus == .pending || $0.rsvpStatus == .invited || $0.rsvpStatus == .maybe }.count
                 let noCount = guests.filter { $0.rsvpStatus == .declined }.count
-                
+
                 DashboardSummaryCard(
                     title: "Total Guests",
                     value: "\(guests.count)",
                     icon: "person.2.fill",
                     color: .blue
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Accepted",
                     value: "\(yesCount)",
                     icon: "checkmark.circle.fill",
                     color: .green
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Pending",
                     value: "\(pendingCount)",
                     icon: "clock.fill",
                     color: .orange
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Declined",
                     value: "\(noCount)",
@@ -47,16 +47,16 @@ struct GuestsDetailedView: View {
                     color: .red
                 )
             }
-            
+
             // Guest List
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Recent Guests")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 ForEach(Array(store.guests.prefix(10))) { guest in
                     DashboardGuestRow(guest: guest)
-                    
+
                     if guest.id != store.guests.prefix(10).last?.id {
                         Divider()
                     }
@@ -74,7 +74,7 @@ struct GuestsDetailedView: View {
 
 struct DashboardGuestRow: View {
     let guest: Guest
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -82,16 +82,16 @@ struct DashboardGuestRow: View {
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if let email = guest.email, !email.isEmpty {
                     Text(email)
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
+
             Spacer()
-            
+
             RSVPStatusBadge(status: guest.rsvpStatus)
         }
         .padding(.vertical, Spacing.sm)
@@ -100,7 +100,7 @@ struct DashboardGuestRow: View {
 
 struct RSVPStatusBadge: View {
     let status: RSVPStatus
-    
+
     var body: some View {
         Text(statusText)
             .font(Typography.caption2)
@@ -113,7 +113,7 @@ struct RSVPStatusBadge: View {
                     .fill(statusColor.opacity(0.1))
             )
     }
-    
+
     private var statusText: String {
         switch status {
         case .invited: return "Invited"
@@ -128,7 +128,7 @@ struct RSVPStatusBadge: View {
         case .noResponse: return "No Response"
         }
     }
-    
+
     private var statusColor: Color {
         switch status {
         case .attending, .confirmed:

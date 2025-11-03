@@ -16,23 +16,23 @@ struct VendorManagementViewV3: View {
     @State private var showingExportOptions = false
     @State private var showingAddVendor = false
     @State private var selectedVendor: Vendor?
-    
+
     private var vendorStore: VendorStoreV2 {
         appStores.vendor
     }
-    
+
     var body: some View {
         ZStack {
             AppGradients.appBackground
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 0) {
                 // Header Section
                 headerSection
                     .padding(.horizontal, Spacing.huge)
                     .padding(.top, Spacing.xxxl)
                     .padding(.bottom, Spacing.xxl)
-                
+
                 // Content Section
                 ScrollView {
                     vendorGridSection
@@ -59,9 +59,9 @@ struct VendorManagementViewV3: View {
             )
         }
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         HStack(alignment: .center, spacing: 0) {
             // Title and Description
@@ -69,14 +69,14 @@ struct VendorManagementViewV3: View {
                 Text("Vendor Management")
                     .font(Typography.displaySmall)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text("Manage and track all your vendors in one place")
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
+
             // Action Buttons
             HStack(spacing: 12) {
                 // Import Button
@@ -104,7 +104,7 @@ struct VendorManagementViewV3: View {
                     label: "Import vendors",
                     hint: "Import vendors from CSV or Excel file"
                 )
-                
+
                 // Export Button
                 Button {
                     showingExportOptions = true
@@ -143,7 +143,7 @@ struct VendorManagementViewV3: View {
                     }
                     Button("Cancel", role: .cancel) {}
                 }
-                
+
                 // Add Vendor Button
                 Button {
                     showingAddVendor = true
@@ -172,32 +172,32 @@ struct VendorManagementViewV3: View {
         }
         .frame(height: 68)
     }
-    
+
     // MARK: - Vendor Grid Section
-    
+
     private var vendorGridSection: some View {
         Group {
             switch vendorStore.loadingState {
             case .idle:
                 EmptyView()
-                
+
             case .loading:
                 ProgressView("Loading vendors...")
                     .frame(maxWidth: .infinity, maxHeight: 400)
-                
+
             case .loaded(let vendors):
                 if vendors.isEmpty {
                     emptyStateView
                 } else {
                     vendorGrid(vendors: vendors)
                 }
-                
+
             case .error(let error):
                 errorView(error: error)
             }
         }
     }
-    
+
     private func vendorGrid(vendors: [Vendor]) -> some View {
         LazyVGrid(
             columns: [
@@ -216,21 +216,21 @@ struct VendorManagementViewV3: View {
             }
         }
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: 16) {
             Image(systemName: "person.3.fill")
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text("No Vendors Yet")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Add your first vendor to get started")
                 .font(Typography.bodySmall)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Button {
                 showingAddVendor = true
             } label: {
@@ -246,22 +246,22 @@ struct VendorManagementViewV3: View {
         }
         .frame(maxWidth: .infinity, maxHeight: 400)
     }
-    
+
     private func errorView(error: Error) -> some View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.error)
-            
+
             Text("Error Loading Vendors")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text(error.localizedDescription)
                 .font(Typography.bodySmall)
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
-            
+
             Button {
                 Task {
                     await vendorStore.retryLoad()
@@ -286,7 +286,7 @@ struct VendorManagementViewV3: View {
 struct VendorCardV3: View {
     let vendor: Vendor
     @State private var loadedImage: NSImage?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Avatar and Status Badge
@@ -313,14 +313,14 @@ struct VendorCardV3: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, Spacing.xxl)
                     .padding(.leading, Spacing.xxl)
-                
+
                 // Status Badge
                 statusBadge
                     .padding(.top, Spacing.xxl)
                     .padding(.trailing, Spacing.xxl)
             }
             .frame(height: 72)
-            
+
             // Vendor Name
             Text(vendor.vendorName)
                 .font(Typography.heading)
@@ -328,7 +328,7 @@ struct VendorCardV3: View {
                 .lineLimit(1)
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.top, Spacing.sm)
-            
+
             // Contact Email
             if let email = vendor.email, !email.isEmpty {
                 Text(email)
@@ -338,7 +338,7 @@ struct VendorCardV3: View {
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.top, Spacing.xs)
             }
-            
+
             // Vendor Type
             if let vendorType = vendor.vendorType, !vendorType.isEmpty {
                 Text(vendorType)
@@ -347,21 +347,21 @@ struct VendorCardV3: View {
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.top, Spacing.sm)
             }
-            
+
             Spacer()
-            
+
             // Quoted Amount Section
             VStack(spacing: 0) {
                 Divider()
                     .background(AppColors.borderLight)
-                
+
                 HStack {
                     Text("Quoted Amount")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Spacer()
-                    
+
                     Text(formatCurrency(vendor.quotedAmount ?? 0))
                         .font(Typography.numberMedium)
                         .foregroundColor(AppColors.textPrimary)
@@ -386,7 +386,7 @@ struct VendorCardV3: View {
             await loadVendorImage()
         }
     }
-    
+
     /// Load vendor image asynchronously from URL
     private func loadVendorImage() async {
         guard let imageUrl = vendor.imageUrl,
@@ -394,7 +394,7 @@ struct VendorCardV3: View {
             loadedImage = nil
             return
         }
-        
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let nsImage = NSImage(data: data) {
@@ -408,7 +408,7 @@ struct VendorCardV3: View {
             }
         }
     }
-    
+
 private var statusBadge: some View {
         Group {
             if vendor.isBooked == true {
@@ -430,7 +430,7 @@ private var statusBadge: some View {
             }
         }
     }
-    
+
     private func formatCurrency(_ amount: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -445,7 +445,7 @@ private var statusBadge: some View {
 struct AddVendorSheet: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var vendorStore: VendorStoreV2
-    
+
     @State private var vendorName = ""
     @State private var vendorType = ""
     @State private var contactName = ""
@@ -455,7 +455,7 @@ struct AddVendorSheet: View {
     @State private var quotedAmount = ""
     @State private var notes = ""
     @State private var isBooked = false
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -464,7 +464,7 @@ struct AddVendorSheet: View {
                     TextField("Vendor Type", text: $vendorType)
                         .textContentType(.jobTitle)
                 }
-                
+
                 Section("Contact Information") {
                     TextField("Contact Name", text: $contactName)
                         .textContentType(.name)
@@ -475,11 +475,11 @@ struct AddVendorSheet: View {
                     TextField("Website", text: $website)
                         .textContentType(.URL)
                 }
-                
+
                 Section("Pricing") {
                     TextField("Quoted Amount", text: $quotedAmount)
                 }
-                
+
                 Section("Additional Details") {
                     TextEditor(text: $notes)
                         .frame(minHeight: 100)
@@ -493,7 +493,7 @@ struct AddVendorSheet: View {
                         dismiss()
                     }
                 }
-                
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         saveVendor()
@@ -503,14 +503,14 @@ struct AddVendorSheet: View {
             }
         }
     }
-    
+
     private func saveVendor() {
         // Get the current couple ID from session
         guard let coupleId = SessionManager.shared.getTenantId() else {
             AppLogger.ui.error("Cannot create vendor: No couple ID available")
             return
         }
-        
+
         let vendor = Vendor(
             id: 0, // Will be assigned by database
             createdAt: Date(),
@@ -541,7 +541,7 @@ struct AddVendorSheet: View {
             latitude: nil,
             longitude: nil
         )
-        
+
         Task {
             await vendorStore.addVendor(vendor)
             dismiss()

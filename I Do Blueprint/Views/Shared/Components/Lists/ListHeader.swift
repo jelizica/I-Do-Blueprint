@@ -12,41 +12,41 @@ struct ListHeader: View {
     let title: String
     let count: Int?
     let action: ActionConfig?
-    
+
     init(title: String, count: Int? = nil, action: ActionConfig? = nil) {
         self.title = title
         self.count = count
         self.action = action
     }
-    
+
     struct ActionConfig {
         let title: String
         let icon: String?
         let handler: () -> Void
-        
+
         init(title: String, icon: String? = nil, handler: @escaping () -> Void) {
             self.title = title
             self.icon = icon
             self.handler = handler
         }
     }
-    
+
     var body: some View {
         HStack {
             HStack(spacing: Spacing.xs) {
                 Text(title)
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if let count = count {
                     Text("(\(count))")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
+
             Spacer()
-            
+
             if let action = action {
                 Button(action: action.handler) {
                     HStack(spacing: 4) {
@@ -79,14 +79,14 @@ struct StickyListHeader: View {
     let count: Int?
     let icon: String?
     let color: Color
-    
+
     init(title: String, count: Int? = nil, icon: String? = nil, color: Color = .blue) {
         self.title = title
         self.count = count
         self.icon = icon
         self.color = color
     }
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             if let icon = icon {
@@ -94,12 +94,12 @@ struct StickyListHeader: View {
                     .font(.body)
                     .foregroundColor(color)
             }
-            
+
             Text(title)
                 .font(Typography.subheading)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             if let count = count {
                 Text("\(count)")
                     .font(Typography.caption)
@@ -112,7 +112,7 @@ struct StickyListHeader: View {
                     )
                     .foregroundColor(color)
             }
-            
+
             Spacer()
         }
         .padding(.horizontal, Spacing.md)
@@ -130,7 +130,7 @@ struct CollapsibleListHeader: View {
     let title: String
     let count: Int?
     @Binding var isExpanded: Bool
-    
+
     var body: some View {
         Button(action: {
             withAnimation(AnimationStyle.spring) {
@@ -142,18 +142,18 @@ struct CollapsibleListHeader: View {
                     .font(.caption)
                     .foregroundColor(AppColors.textSecondary)
                     .frame(width: 16)
-                
+
                 Text(title)
                     .font(Typography.subheading)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if let count = count {
                     Text("(\(count))")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
             }
             .padding(.horizontal, Spacing.md)
@@ -176,9 +176,9 @@ struct CollapsibleListHeader: View {
             title: "Recent Guests",
             count: 25
         )
-        
+
         Divider()
-        
+
         ListHeader(
             title: "Vendors",
             count: 12,
@@ -188,24 +188,24 @@ struct CollapsibleListHeader: View {
                 handler: {}
             )
         )
-        
+
         Divider()
-        
+
         StickyListHeader(
             title: "Confirmed",
             count: 120,
             icon: "checkmark.circle.fill",
             color: .green
         )
-        
+
         Divider()
-        
+
         CollapsibleListHeader(
             title: "Pending Responses",
             count: 25,
             isExpanded: .constant(true)
         )
-        
+
         CollapsibleListHeader(
             title: "Declined",
             count: 5,
@@ -227,16 +227,16 @@ struct CollapsibleListHeader: View {
                     handler: {}
                 )
             )
-            
+
             Divider()
-            
+
             StickyListHeader(
                 title: "Confirmed",
                 count: 120,
                 icon: "checkmark.circle.fill",
                 color: .green
             )
-            
+
             ForEach(0..<3) { _ in
                 StandardListRow(
                     icon: "person.fill",
@@ -247,14 +247,14 @@ struct CollapsibleListHeader: View {
                 )
                 Divider()
             }
-            
+
             StickyListHeader(
                 title: "Pending",
                 count: 25,
                 icon: "clock.fill",
                 color: .orange
             )
-            
+
             ForEach(0..<2) { _ in
                 StandardListRow(
                     icon: "person.fill",

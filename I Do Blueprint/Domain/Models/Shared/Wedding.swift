@@ -68,7 +68,7 @@ struct WeddingEventDB: Codable {
     let updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case eventName = "event_name"
         case eventType = "event_type"
         case eventDate = "event_date"
@@ -76,15 +76,15 @@ struct WeddingEventDB: Codable {
         case endTime = "end_time"
         case venueId = "venue_id"
         case venueName = "venue_name"
-        case address
-        case city
-        case state
+        case address = "address"
+        case city = "city"
+        case state = "state"
         case zipCode = "zip_code"
         case guestCount = "guest_count"
         case budgetAllocated = "budget_allocated"
-        case notes
+        case notes = "notes"
         case isConfirmed = "is_confirmed"
-        case description
+        case description = "description"
         case eventOrder = "event_order"
         case isMainEvent = "is_main_event"
         case venueLocation = "venue_location"

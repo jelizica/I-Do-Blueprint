@@ -64,7 +64,7 @@ struct VendorListToolbar: ToolbarContent {
                         .frame(width: 20, height: 20)
                         .accessibilityLabel("Exporting vendors")
                 }
-                
+
                 // Import button
                 Button {
                     onImport()

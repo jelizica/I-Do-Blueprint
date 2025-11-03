@@ -33,7 +33,7 @@ struct SeatingChart: Identifiable, Codable, Hashable {
     var defaultTableStyle: TableShape
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case tenantId = "couple_id"
         case chartName = "chart_name"
         case eventId = "event_id"
@@ -43,7 +43,7 @@ struct SeatingChart: Identifiable, Codable, Hashable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case isActive = "is_active"
-        case notes
+        case notes = "notes"
         case isFinalized = "is_finalized"
         case canvasWidth = "canvas_width"
         case canvasHeight = "canvas_height"
@@ -168,7 +168,14 @@ struct VenueObstacle: Identifiable, Codable, Hashable {
 }
 
 enum ObstacleType: String, CaseIterable, Codable {
-    case wall, column, bar, buffet, danceFloor, stage, dj, photo
+    case wall = "wall"
+    case column = "column"
+    case bar = "bar"
+    case buffet = "buffet"
+    case danceFloor = "danceFloor"
+    case stage = "stage"
+    case dj = "dj"
+    case photo = "photo"
 
     var displayName: String {
         switch self {
@@ -314,7 +321,14 @@ struct SeatingGuest: Identifiable, Codable, Hashable {
 }
 
 enum GuestRelationship: String, CaseIterable, Codable {
-    case bride, groom, brideSide, groomSide, family, friend, coworker, vendor
+    case bride = "bride"
+    case groom = "groom"
+    case brideSide = "brideSide"
+    case groomSide = "groomSide"
+    case family = "family"
+    case friend = "friend"
+    case coworker = "coworker"
+    case vendor = "vendor"
 
     var displayName: String {
         switch self {
@@ -359,8 +373,15 @@ struct AccessibilityNeeds: Codable, Hashable {
 }
 
 enum SeatingPreference: String, CaseIterable, Codable {
-    case nearDanceFloor, farFromSpeakers, nearBar, nearBathroom, headTable,
-         quietArea, familyTable, kidsTable, viewOfStage
+    case nearDanceFloor = "nearDanceFloor"
+    case farFromSpeakers = "farFromSpeakers"
+    case nearBar = "nearBar"
+    case nearBathroom = "nearBathroom"
+    case headTable = "headTable"
+    case quietArea = "quietArea"
+    case familyTable = "familyTable"
+    case kidsTable = "kidsTable"
+    case viewOfStage = "viewOfStage"
 
     var displayName: String {
         switch self {
@@ -394,14 +415,14 @@ struct SeatingAssignment: Identifiable, Codable, Hashable {
         self.tableId = tableId
         self.seatNumber = seatNumber
         assignedAt = Date()
-        
+
         // Get user email from auth context
         if let userEmail = AuthContext.shared.currentUserEmail {
             assignedBy = userEmail
         } else {
             assignedBy = "unknown"
         }
-        
+
         notes = ""
     }
 }
@@ -429,7 +450,10 @@ struct LayoutSettings: Codable, Hashable {
 }
 
 enum SeatingColorScheme: String, CaseIterable, Codable {
-    case relationship, dietary, accessibility, assignment
+    case relationship = "relationship"
+    case dietary = "dietary"
+    case accessibility = "accessibility"
+    case assignment = "assignment"
 
     var displayName: String {
         switch self {

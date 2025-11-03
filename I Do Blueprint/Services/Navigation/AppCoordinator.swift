@@ -40,16 +40,16 @@ class AppCoordinator: ObservableObject {
     // MARK: - Tab Definition
 
     enum AppTab: String, Hashable, CaseIterable {
-        case dashboard
-        case guests
-        case vendors
-        case budget
-        case visualPlanning
-        case timeline
-        case collaboration
-        case notes
-        case documents
-        case settings
+        case dashboard = "dashboard"
+        case guests = "guests"
+        case vendors = "vendors"
+        case budget = "budget"
+        case visualPlanning = "visualPlanning"
+        case timeline = "timeline"
+        case collaboration = "collaboration"
+        case notes = "notes"
+        case documents = "documents"
+        case settings = "settings"
 
         var title: String {
             switch self {
@@ -254,7 +254,7 @@ class AppCoordinator: ObservableObject {
             do {
                 // Prefetch invitation details
                 let details = try await InvitationService.shared.fetchInvitation(token: token)
-                
+
                 // Navigate to collaboration tab and present with preloaded details
                 selectedTab = .collaboration
                 present(.acceptInvitation(token: token, details: details))
