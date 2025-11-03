@@ -10,7 +10,7 @@ import SwiftUI
 struct VendorStatusCard: View {
     @ObservedObject var store: VendorStoreV2
     @State private var selectedVendor: Vendor?
-    
+
     struct VendorCategory: Identifiable {
         let id = UUID()
         let name: String
@@ -19,7 +19,7 @@ struct VendorStatusCard: View {
         let icon: String
         let gradientColors: [Color]
     }
-    
+
     private var vendorCategories: [VendorCategory] {
         let vendors = store.vendors.prefix(6)
         return vendors.map { vendor in
@@ -32,7 +32,7 @@ struct VendorStatusCard: View {
             )
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
@@ -40,14 +40,14 @@ struct VendorStatusCard: View {
                 Image(systemName: "sparkles")
                     .font(.system(size: 20))
                     .foregroundColor(Color.fromHex( "A855F7"))
-                
+
                 Text("Our Vendors")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
             }
-            
+
             // Vendor Grid
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -74,7 +74,7 @@ struct VendorStatusCard: View {
                 .frame(width: 900, height: 700)
         }
     }
-    
+
     private func iconForVendorType(_ type: String) -> String {
         switch type.lowercased() {
         case "venue": return "mappin.circle.fill"
@@ -85,7 +85,7 @@ struct VendorStatusCard: View {
         default: return "briefcase.fill"
         }
     }
-    
+
     private func gradientForVendorType(_ type: String) -> [Color] {
         switch type.lowercased() {
         case "venue": return [Color.fromHex( "EC4899"), Color.fromHex( "F43F5E")]
@@ -101,14 +101,14 @@ struct VendorStatusCard: View {
 struct VendorCategoryCard: View {
     let vendor: VendorStatusCard.VendorCategory
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             cardContent
         }
         .buttonStyle(.plain)
     }
-    
+
     private var cardContent: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -122,14 +122,14 @@ struct VendorCategoryCard: View {
                             )
                         )
                         .frame(width: 48, height: 48)
-                    
+
                     Image(systemName: vendor.icon)
                         .font(.system(size: 20))
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 Spacer()
-                
+
                 Text(vendor.status)
                     .font(Typography.caption2)
                     .fontWeight(.medium)
@@ -141,14 +141,14 @@ struct VendorCategoryCard: View {
                             .fill(vendor.status == "Confirmed" ? AppColors.success.opacity(0.1) : AppColors.warning.opacity(0.1))
                     )
             }
-            
+
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(vendor.name)
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.textPrimary)
                     .lineLimit(1)
-                
+
                 Text(vendor.category)
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)

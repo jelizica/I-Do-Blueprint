@@ -7,9 +7,9 @@ struct ExpenseFiltersBar: View {
     @Binding var selectedCategoryFilter: UUID?
     @Binding var viewMode: ExpenseViewMode
     @Binding var showBenchmarks: Bool
-    
+
     let categories: [BudgetCategory]
-    
+
     var body: some View {
         HStack(spacing: 16) {
             // Search
@@ -23,7 +23,7 @@ struct ExpenseFiltersBar: View {
             .background(Color(NSColor.controlBackgroundColor))
             .cornerRadius(8)
             .frame(maxWidth: 300)
-            
+
             // Status Filter
             Picker("Status", selection: $selectedFilterStatus) {
                 Text("All Status").tag(nil as PaymentStatus?)
@@ -33,7 +33,7 @@ struct ExpenseFiltersBar: View {
             }
             .pickerStyle(MenuPickerStyle())
             .frame(width: 150)
-            
+
             // Category Filter
             Picker("Category", selection: $selectedCategoryFilter) {
                 Text("All Categories").tag(nil as UUID?)
@@ -43,12 +43,12 @@ struct ExpenseFiltersBar: View {
             }
             .pickerStyle(MenuPickerStyle())
             .frame(width: 200)
-            
+
             Spacer()
-            
+
             // View Mode Toggle
             ExpenseViewModeToggle(viewMode: $viewMode)
-            
+
             // Toggle Benchmarks
             Button(action: { withAnimation { showBenchmarks.toggle() } }) {
                 HStack {
@@ -67,14 +67,14 @@ struct ExpenseFiltersBar: View {
 
 enum ExpenseViewMode {
     case cards, list
-    
+
     var icon: String {
         switch self {
         case .cards: "rectangle.grid.2x2"
         case .list: "list.bullet"
         }
     }
-    
+
     var title: String {
         switch self {
         case .cards: "Card View"
@@ -85,7 +85,7 @@ enum ExpenseViewMode {
 
 struct ExpenseViewModeToggle: View {
     @Binding var viewMode: ExpenseViewMode
-    
+
     var body: some View {
         HStack(spacing: 0) {
             ForEach([ExpenseViewMode.cards, ExpenseViewMode.list], id: \.self) { mode in

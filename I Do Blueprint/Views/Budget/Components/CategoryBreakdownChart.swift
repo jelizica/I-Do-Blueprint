@@ -5,40 +5,40 @@ import SwiftUI
 struct CategoryBreakdownChart: View {
     let categories: [BudgetCategory]
     let expenses: [Expense]
-    
+
     @State private var selectedCategory: (category: BudgetCategory, spending: Double)?
     @State private var showTooltip = false
-    
+
     private let logger = AppLogger.ui
-    
+
     private func projectedSpending(for categoryId: UUID) -> Double {
         let categoryExpenses = expenses.filter { $0.budgetCategoryId == categoryId }
         let total = categoryExpenses.reduce(0) { $0 + $1.amount }
-        
+
         if total > 0 {
                     }
-        
+
         return total
     }
-    
+
     private var categoriesWithSpending: [(category: BudgetCategory, spending: Double)] {
                 if !categories.isEmpty {
                     }
         if !expenses.isEmpty {
                     }
-        
+
         let result = categories.compactMap { category in
             let spending = projectedSpending(for: category.id)
             return spending > 0 ? (category: category, spending: spending) : nil
         }
-        
+
                 return result
     }
-    
+
     private var totalSpending: Double {
         categoriesWithSpending.reduce(0) { $0 + $1.spending }
     }
-    
+
     private func categoryAtLocation(
         _ location: CGPoint,
         proxy: ChartProxy,
@@ -49,35 +49,35 @@ struct CategoryBreakdownChart: View {
         let center = CGPoint(
             x: plotRect.midX,
             y: plotRect.midY)
-        
+
         // Calculate angle from center
         let deltaX = location.x - center.x
         let deltaY = location.y - center.y
         let angle = atan2(deltaY, deltaX)
         let normalizedAngle = angle < 0 ? angle + 2 * .pi : angle
         let angleDegrees = normalizedAngle * 180 / .pi
-        
+
         // Find which category this angle corresponds to
         var currentAngle: Double = -90 // Start from top (12 o'clock position)
         for item in categoriesWithSpending {
             let itemAngle = (item.spending / totalSpending) * 360
             let startAngle = currentAngle
             let endAngle = currentAngle + itemAngle
-            
+
             // Normalize angles for comparison
             let normalizedClickAngle = angleDegrees >= 270 ? angleDegrees - 360 : angleDegrees
             let normalizedStartAngle = startAngle >= 270 ? startAngle - 360 : startAngle
             let normalizedEndAngle = endAngle >= 270 ? endAngle - 360 : endAngle
-            
+
             if normalizedClickAngle >= normalizedStartAngle, normalizedClickAngle < normalizedEndAngle {
                 return item
             }
             currentAngle += itemAngle
         }
-        
+
         return nil
     }
-    
+
     var body: some View {
         if categoriesWithSpending.isEmpty {
             ContentUnavailableView(
@@ -123,7 +123,7 @@ struct CategoryBreakdownChart: View {
                             }
                     }
                 }
-                
+
                 // Tap tooltip
                 if let selectedItem = selectedCategory, showTooltip {
                     VStack(alignment: .leading, spacing: 4) {
@@ -135,28 +135,28 @@ struct CategoryBreakdownChart: View {
                                 .font(.headline)
                                 .fontWeight(.semibold)
                         }
-                        
+
                         Text(
                             "Projected Spending: \(NumberFormatter.currency.string(from: NSNumber(value: selectedItem.spending)) ?? "$0")")
                             .font(.subheadline)
-                        
+
                         Text(
                             "Allocated: \(NumberFormatter.currency.string(from: NSNumber(value: selectedItem.category.allocatedAmount)) ?? "$0")")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        
+
                         let percentage = totalSpending > 0 ? (selectedItem.spending / totalSpending) * 100 : 0
                         Text("Share: \(String(format: "%.1f", percentage))%")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
+
                         if selectedItem.spending > selectedItem.category.allocatedAmount {
                             Text("Over Budget")
                                 .font(.caption)
                                 .foregroundColor(AppColors.Budget.overBudget)
                                 .fontWeight(.medium)
                         }
-                        
+
                         Text("Tap to dismiss")
                             .font(.caption2)
                             .foregroundStyle(.tertiary)

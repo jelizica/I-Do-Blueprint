@@ -3,7 +3,7 @@ import SwiftUI
 /// Statistics cards section for expense reports
 struct ExpenseStatisticsCards: View {
     let statistics: ExpenseStatistics
-    
+
     var body: some View {
         // Using Component Library - StatsGridView
         StatsGridView(

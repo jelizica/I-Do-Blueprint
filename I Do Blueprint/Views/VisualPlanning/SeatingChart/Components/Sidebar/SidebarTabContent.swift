@@ -11,7 +11,7 @@ import SwiftUI
 
 struct SidebarLayoutContent: View {
     @Binding var chart: SeatingChart
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Table zones section
@@ -54,7 +54,7 @@ struct SidebarTablesContent: View {
     @Binding var chart: SeatingChart
     @Binding var selectedTableId: UUID?
     let searchText: String
-    
+
     private var filteredTables: [Table] {
         if searchText.isEmpty {
             return chart.tables
@@ -63,7 +63,7 @@ struct SidebarTablesContent: View {
             "Table \(table.tableNumber)".localizedCaseInsensitiveContains(searchText)
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Quick add
@@ -103,13 +103,13 @@ struct SidebarGuestsContent: View {
     @Binding var guestGroups: [SeatingGuestGroup]
     @Binding var showingGroupEditor: Bool
     let searchText: String
-    
+
     private var unassignedGuests: [SeatingGuest] {
         chart.guests.filter { guest in
             !chart.seatingAssignments.contains { $0.guestId == guest.id }
         }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Guest groups section
@@ -147,7 +147,7 @@ struct SidebarGuestsContent: View {
 
 struct SidebarAssignmentsContent: View {
     @Binding var chart: SeatingChart
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Progress card
@@ -199,7 +199,7 @@ struct SidebarAssignmentsContent: View {
 
 struct SidebarAnalyticsContent: View {
     let chart: SeatingChart
-    
+
     private var analytics: (
         totalGuests: Int,
         assignedGuests: Int,
@@ -215,22 +215,22 @@ struct SidebarAnalyticsContent: View {
         let totalTables = chart.tables.count
         let occupiedTables = Set(chart.seatingAssignments.map(\.tableId)).count
         let progress = totalGuests > 0 ? Double(assignedGuests) / Double(totalGuests) : 0
-        
+
         // Calculate conflicts
         var conflictCount = 0
         var processedPairs = Set<String>()
         let assignmentsByTable = Dictionary(grouping: chart.seatingAssignments, by: \.tableId)
-        
+
         for (_, assignments) in assignmentsByTable {
             let guestIdsAtTable = assignments.map(\.guestId)
-            
+
             for assignment in assignments {
                 guard let guest = chart.guests.first(where: { $0.id == assignment.guestId }) else { continue }
-                
+
                 for conflictId in guest.conflicts {
                     if guestIdsAtTable.contains(conflictId) {
                         let pairKey = [guest.id.uuidString, conflictId.uuidString].sorted().joined(separator: "-")
-                        
+
                         if !processedPairs.contains(pairKey) {
                             conflictCount += 1
                             processedPairs.insert(pairKey)
@@ -250,7 +250,7 @@ struct SidebarAnalyticsContent: View {
             conflictCount
         )
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             // Stats cards

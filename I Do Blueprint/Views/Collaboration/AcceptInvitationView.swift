@@ -285,11 +285,11 @@ struct AcceptInvitationView: View {
             _ = try await collaborationStore.repository.acceptInvitation(id: invitationId)
 
             logger.info("Successfully accepted invitation - collaborator access granted")
-            
+
             // Store couple info for success view
             acceptedCoupleId = details.coupleId
             acceptedCoupleName = details.coupleName ?? "Wedding Planning"
-            
+
             acceptSuccess = true
             isAccepting = false
 
@@ -304,24 +304,24 @@ struct AcceptInvitationView: View {
             ])
         }
     }
-    
+
     private func switchToAcceptedCouple(coupleId: UUID, coupleName: String) async {
         logger.info("Switching to accepted couple: \(coupleName)")
-        
+
         // Update session manager to switch to the new couple (async call)
         await SessionManager.shared.setTenantId(
             coupleId,
             coupleName: coupleName,
             weddingDate: nil // Will be loaded from settings
         )
-        
+
         // Reset all stores to reload data for new couple
         await MainActor.run {
             appStores.resetAllStores()
         }
-        
+
         logger.info("Switched to couple: \(coupleName)")
-        
+
         // Track couple switch
         await SentryService.shared.trackAction(
             "couple_switched_after_invitation",
@@ -331,7 +331,7 @@ struct AcceptInvitationView: View {
                 "couple_name": coupleName
             ]
         )
-        
+
         // Dismiss the invitation view
         await MainActor.run {
             coordinator.dismiss()

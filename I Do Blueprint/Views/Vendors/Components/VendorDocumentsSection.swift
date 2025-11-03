@@ -11,7 +11,7 @@ import Dependencies
 struct VendorDocumentsSection: View {
     let documents: [Document]
     @State private var selectedDocument: Document?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             SectionHeaderV2(
@@ -19,7 +19,7 @@ struct VendorDocumentsSection: View {
                 icon: "doc.text.fill",
                 color: AppColors.primary
             )
-            
+
             VStack(spacing: Spacing.sm) {
                 ForEach(documents) { document in
                     DocumentRowView(document: document)
@@ -39,7 +39,7 @@ struct VendorDocumentsSection: View {
 
 struct DocumentRowView: View {
     let document: Document
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             // Document Icon
@@ -47,19 +47,19 @@ struct DocumentRowView: View {
                 RoundedRectangle(cornerRadius: CornerRadius.sm)
                     .fill(documentTypeColor.opacity(0.1))
                     .frame(width: 48, height: 48)
-                
+
                 Image(systemName: documentTypeIcon)
                     .font(.system(size: 20))
                     .foregroundColor(documentTypeColor)
             }
-            
+
             // Document Info
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(document.originalFilename)
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
                     .lineLimit(1)
-                
+
                 HStack(spacing: Spacing.sm) {
                     // Document Type Badge
                     Text(document.documentType.displayName)
@@ -69,25 +69,25 @@ struct DocumentRowView: View {
                         .padding(.vertical, Spacing.xxs)
                         .background(documentTypeColor.opacity(0.1))
                         .cornerRadius(CornerRadius.sm)
-                    
+
                     // File Size
                     Text(document.formattedSize)
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     // Upload Date
                     Text("•")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Text(document.uploadedAt.formatted(date: .abbreviated, time: .omitted))
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
+
             Spacer()
-            
+
             // Chevron
             Image(systemName: "chevron.right")
                 .font(.system(size: 14))
@@ -101,7 +101,7 @@ struct DocumentRowView: View {
                 .stroke(AppColors.border, lineWidth: 1)
         )
     }
-    
+
     private var documentTypeIcon: String {
         switch document.documentType {
         case .contract:
@@ -116,7 +116,7 @@ struct DocumentRowView: View {
             return "doc.fill"
         }
     }
-    
+
     private var documentTypeColor: Color {
         switch document.documentType {
         case .contract:
@@ -140,7 +140,7 @@ struct DocumentDetailSheet: View {
     @Environment(\.dismiss) var dismiss
     @State private var isDownloading = false
     @Dependency(\.documentRepository) var documentRepository
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -148,9 +148,9 @@ struct DocumentDetailSheet: View {
                 Text("Document Details")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
-                
+
                 Button(action: { dismiss() }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 24))
@@ -160,9 +160,9 @@ struct DocumentDetailSheet: View {
             }
             .padding(Spacing.xl)
             .background(AppColors.cardBackground)
-            
+
             Divider()
-            
+
             // Content
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
@@ -172,38 +172,38 @@ struct DocumentDetailSheet: View {
                             RoundedRectangle(cornerRadius: CornerRadius.md)
                                 .fill(documentTypeColor.opacity(0.1))
                                 .frame(width: 64, height: 64)
-                            
+
                             Image(systemName: documentTypeIcon)
                                 .font(.system(size: 32))
                                 .foregroundColor(documentTypeColor)
                         }
-                        
+
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             Text(document.originalFilename)
                                 .font(Typography.heading)
                                 .foregroundColor(AppColors.textPrimary)
-                            
+
                             Text(document.documentType.displayName)
                                 .font(Typography.caption)
                                 .foregroundColor(AppColors.textSecondary)
                         }
                     }
-                    
+
                     Divider()
-                    
+
                     // Document Details
                     VStack(alignment: .leading, spacing: Spacing.md) {
                         DocumentDetailRow(label: "File Size", value: document.formattedSize)
                         DocumentDetailRow(label: "File Type", value: document.fileExtension)
                         DocumentDetailRow(label: "Uploaded", value: document.uploadedAt.formatted(date: .long, time: .shortened))
                         DocumentDetailRow(label: "Uploaded By", value: document.uploadedBy)
-                        
+
                         if !document.tags.isEmpty {
                             VStack(alignment: .leading, spacing: Spacing.sm) {
                                 Text("Tags")
                                     .font(Typography.caption)
                                     .foregroundColor(AppColors.textSecondary)
-                                
+
                                 TagFlowLayout(spacing: Spacing.xs) {
                                     ForEach(document.tags, id: \.self) { tag in
                                         Text(tag)
@@ -218,9 +218,9 @@ struct DocumentDetailSheet: View {
                             }
                         }
                     }
-                    
+
                     Divider()
-                    
+
                     // Actions
                     VStack(spacing: Spacing.sm) {
                         Button(action: { downloadDocument() }) {
@@ -249,7 +249,7 @@ struct DocumentDetailSheet: View {
         .frame(width: 500, height: 600)
         .background(AppColors.background)
     }
-    
+
     private var documentTypeIcon: String {
         switch document.documentType {
         case .contract:
@@ -264,7 +264,7 @@ struct DocumentDetailSheet: View {
             return "doc.fill"
         }
     }
-    
+
     private var documentTypeColor: Color {
         switch document.documentType {
         case .contract:
@@ -279,21 +279,21 @@ struct DocumentDetailSheet: View {
             return .gray
         }
     }
-    
+
     private func downloadDocument() {
         isDownloading = true
-        
+
         Task {
             do {
                 // Get document data
                 let data = try await documentRepository.downloadDocument(document: document)
-                
+
                 // Show save panel
                 await MainActor.run {
                     let panel = NSSavePanel()
                     panel.nameFieldStringValue = document.originalFilename
                     panel.canCreateDirectories = true
-                    
+
                     panel.begin { response in
                         if response == .OK, let url = panel.url {
                             do {
@@ -319,15 +319,15 @@ struct DocumentDetailSheet: View {
 struct DocumentDetailRow: View {
     let label: String
     let value: String
-    
+
     var body: some View {
         HStack {
             Text(label)
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Spacer()
-            
+
             Text(value)
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textPrimary)
@@ -339,7 +339,7 @@ struct DocumentDetailRow: View {
 
 struct TagFlowLayout: Layout {
     var spacing: CGFloat = 8
-    
+
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let result = FlowResult(
             in: proposal.replacingUnspecifiedDimensions().width,
@@ -348,7 +348,7 @@ struct TagFlowLayout: Layout {
         )
         return result.size
     }
-    
+
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let result = FlowResult(
             in: bounds.width,
@@ -359,30 +359,30 @@ struct TagFlowLayout: Layout {
             subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x, y: bounds.minY + result.positions[index].y), proposal: .unspecified)
         }
     }
-    
+
     struct FlowResult {
         var size: CGSize = .zero
         var positions: [CGPoint] = []
-        
+
         init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
             var x: CGFloat = 0
             var y: CGFloat = 0
             var lineHeight: CGFloat = 0
-            
+
             for subview in subviews {
                 let size = subview.sizeThatFits(.unspecified)
-                
+
                 if x + size.width > maxWidth && x > 0 {
                     x = 0
                     y += lineHeight + spacing
                     lineHeight = 0
                 }
-                
+
                 positions.append(CGPoint(x: x, y: y))
                 lineHeight = max(lineHeight, size.height)
                 x += size.width + spacing
             }
-            
+
             self.size = CGSize(width: maxWidth, height: y + lineHeight)
         }
     }

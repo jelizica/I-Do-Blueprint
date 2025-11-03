@@ -11,18 +11,18 @@ import Supabase
 actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
     private let client: SupabaseClient?
     private let logger = AppLogger.api
-    
+
     init(client: SupabaseClient? = SupabaseManager.shared.client) {
         self.client = client
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let client = client else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
         }
         return client
     }
-    
+
     private func getTenantId() async throws -> UUID {
         try await TenantContextProvider.shared.requireTenantId()
     }
@@ -63,7 +63,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .single()
                 .execute()
                 .value
-            
+
             logger.info("Created mood board: \(moodBoard.boardName)")
             return board
         } catch {
@@ -87,7 +87,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .single()
                 .execute()
                 .value
-            
+
             logger.info("Updated mood board: \(moodBoard.boardName)")
             return board
         } catch {
@@ -109,7 +109,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .delete()
                 .eq("id", value: id)
                 .execute()
-            
+
             logger.info("Deleted mood board: \(id)")
         } catch {
             logger.error("Failed to delete mood board", error: error)
@@ -156,7 +156,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .single()
                 .execute()
                 .value
-            
+
             logger.info("Created color palette: \(palette.name)")
             return created
         } catch {
@@ -180,7 +180,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .single()
                 .execute()
                 .value
-            
+
             logger.info("Updated color palette: \(palette.name)")
             return updated
         } catch {
@@ -202,7 +202,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .delete()
                 .eq("id", value: id)
                 .execute()
-            
+
             logger.info("Deleted color palette: \(id)")
         } catch {
             logger.error("Failed to delete color palette", error: error)
@@ -251,7 +251,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .single()
                 .execute()
                 .value
-            
+
             logger.info("Created seating chart: \(chart.chartName)")
             return created
         } catch {
@@ -324,7 +324,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
 
         // Log important mutation
         logger.info("Updated seating chart: \(chart.id) with \(chart.tables.count) tables and \(chart.seatingAssignments.count) assignments")
-        
+
         return completeChart
     }
 
@@ -349,7 +349,7 @@ actor LiveVisualPlanningRepository: VisualPlanningRepositoryProtocol {
                 .delete()
                 .eq("id", value: id)
                 .execute()
-            
+
             logger.info("Deleted seating chart: \(id)")
         } catch {
             logger.error("Failed to delete seating chart", error: error)

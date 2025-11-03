@@ -23,12 +23,12 @@ struct Collaborator: Identifiable, Codable, Sendable, Hashable {
     var displayName: String?
     var avatarUrl: String?
     var lastSeenAt: Date?
-    
+
     // Computed property for full name fallback
     var name: String {
         displayName ?? email
     }
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"

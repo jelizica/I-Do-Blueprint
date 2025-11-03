@@ -17,24 +17,24 @@ class NotesStoreV2: ObservableObject {
     @Dependency(\.notesRepository) var repository
 
     @Published var loadingState: LoadingState<[Note]> = .idle
-    
+
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
 
     // Filtering and search
     @Published var searchText = ""
     @Published var selectedType: NoteRelatedType?
-    
+
     // MARK: - Computed Properties for Backward Compatibility
-    
+
     var notes: [Note] {
         loadingState.data ?? []
     }
-    
+
     var isLoading: Bool {
         loadingState.isLoading
     }
-    
+
     var error: NotesError? {
         if case .error(let err) = loadingState {
             return err as? NotesError ?? .fetchFailed(underlying: err)
@@ -66,20 +66,20 @@ class NotesStoreV2: ObservableObject {
     func loadNotes() async {
         // Cancel any previous load task
         loadTask?.cancel()
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             guard loadingState.isIdle || loadingState.hasError else { return }
-            
+
             loadingState = .loading
 
             do {
                 try Task.checkCancellation()
-                
+
                 let fetchedNotes = try await repository.fetchNotes()
-                
+
                 try Task.checkCancellation()
-                
+
                 loadingState = .loaded(fetchedNotes)
             } catch is CancellationError {
                 AppLogger.ui.debug("NotesStoreV2.loadNotes: Load cancelled (expected during tenant switch)")
@@ -95,7 +95,7 @@ class NotesStoreV2: ObservableObject {
                 )
             }
         }
-        
+
         await loadTask?.value
     }
 
@@ -169,7 +169,7 @@ class NotesStoreV2: ObservableObject {
                 notes[index] = createdNote
                 loadingState = .loaded(notes)
             }
-            
+
             showSuccess("Note created successfully")
         } catch {
             // Rollback optimistic update
@@ -209,13 +209,13 @@ class NotesStoreV2: ObservableObject {
 
         do {
             let serverNote = try await repository.updateNote(id: note.id, data: data)
-            
+
             if case .loaded(var notes) = loadingState,
                let idx = notes.firstIndex(where: { $0.id == note.id }) {
                 notes[idx] = serverNote
                 loadingState = .loaded(notes)
             }
-            
+
             showSuccess("Note updated successfully")
         } catch {
             // Rollback on error
@@ -366,15 +366,15 @@ class NotesStoreV2: ObservableObject {
         // Use searchText property
         await searchNotes(query: searchText)
     }
-    
+
     // MARK: - Retry Helper
-    
+
     func retryLoad() async {
         await loadNotes()
     }
-    
+
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         loadingState = .idle

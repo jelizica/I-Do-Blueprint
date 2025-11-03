@@ -12,7 +12,7 @@ struct DashboardViewV2: View {
     private let logger = AppLogger.ui
     // Use singleton stores from AppStores to prevent memory explosion
     @EnvironmentObject private var appStores: AppStores
-    
+
     // Convenience accessors
     private var budgetStore: BudgetStoreV2 { appStores.budget }
     private var vendorStore: VendorStoreV2 { appStores.vendor }
@@ -105,11 +105,11 @@ struct DashboardViewV2: View {
             logger.info("Already loaded, skipping")
             return
         }
-        
+
         hasLoaded = true
         isLoading = true
         defer { isLoading = false }
-        
+
         logger.debug("Starting to load all data...")
 
         // Load data from all stores in parallel
@@ -126,10 +126,10 @@ struct DashboardViewV2: View {
         _ = await (budgetLoad, vendorsLoad, guestsLoad, tasksLoad, settingsLoad, timelineLoad, notesLoad, documentsLoad)
 
         logger.info("All data loaded, building summary...")
-        
+
         // Build dashboard summary from store data
         buildDashboardSummary()
-        
+
         logger.info("Summary built successfully")
     }
 

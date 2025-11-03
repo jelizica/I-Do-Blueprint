@@ -15,7 +15,7 @@ class NotesAPI {
     init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
@@ -141,7 +141,7 @@ class NotesAPI {
 
     func createNote(_ data: NoteInsertData) async throws -> Note {
         let client = try getClient()
-        
+
         struct NoteInsert: Encodable {
             let coupleId: String
             let title: String?
@@ -195,7 +195,7 @@ class NotesAPI {
 
     func updateNote(_ id: UUID, data: NoteInsertData) async throws -> Note {
         let client = try getClient()
-        
+
         struct NoteUpdate: Encodable {
             let title: String?
             let content: String

@@ -10,27 +10,27 @@ import Charts
 
 struct RSVPOverviewCard: View {
     @ObservedObject var store: GuestStoreV2
-    
+
     private struct RSVPData: Identifiable {
         let id = UUID()
         let name: String
         let value: Int
         let color: Color
     }
-    
+
     private var rsvpData: [RSVPData] {
         let guests = store.guests
         let yesCount = guests.filter { $0.rsvpStatus == .attending || $0.rsvpStatus == .confirmed }.count
         let pendingCount = guests.filter { $0.rsvpStatus == .pending || $0.rsvpStatus == .invited || $0.rsvpStatus == .maybe }.count
         let noCount = guests.filter { $0.rsvpStatus == .declined }.count
-        
+
         return [
             RSVPData(name: "Accepted", value: yesCount, color: AppColors.Guest.confirmed),
             RSVPData(name: "Pending", value: pendingCount, color: AppColors.Guest.pending),
             RSVPData(name: "Declined", value: noCount, color: AppColors.Guest.declined)
         ]
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
@@ -38,20 +38,20 @@ struct RSVPOverviewCard: View {
                 Image(systemName: "person.2.fill")
                     .font(.system(size: 20))
                     .foregroundColor(.blue)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Guest Responses")
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("\(store.guests.count) guests invited")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
             }
-            
+
             // Donut Chart
             if #available(macOS 13.0, *) {
                 Chart(rsvpData) { item in
@@ -72,12 +72,12 @@ struct RSVPOverviewCard: View {
                             Circle()
                                 .fill(item.color)
                                 .frame(width: 12, height: 12)
-                            
+
                             Text(item.name)
                                 .font(Typography.bodySmall)
-                            
+
                             Spacer()
-                            
+
                             Text("\(item.value)")
                                 .font(Typography.bodySmall)
                                 .fontWeight(.semibold)
@@ -86,7 +86,7 @@ struct RSVPOverviewCard: View {
                 }
                 .padding(.vertical, Spacing.xl)
             }
-            
+
             // Legend
             HStack(spacing: Spacing.lg) {
                 ForEach(rsvpData) { item in
@@ -94,7 +94,7 @@ struct RSVPOverviewCard: View {
                         Circle()
                             .fill(item.color)
                             .frame(width: 12, height: 12)
-                        
+
                         Text("\(item.name): \(item.value)")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)

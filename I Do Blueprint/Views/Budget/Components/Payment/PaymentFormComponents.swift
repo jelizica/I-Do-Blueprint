@@ -76,7 +76,7 @@ struct AddPaymentView: View {
 
         do {
             let coupleId = try authContext.requireCoupleId()
-            
+
             // Create PaymentSchedule with authenticated couple ID
             let payment = PaymentSchedule(
                 id: Int64.random(in: 1 ... Int64.max),

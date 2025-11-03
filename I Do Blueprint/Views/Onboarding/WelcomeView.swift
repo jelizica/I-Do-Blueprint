@@ -10,32 +10,32 @@ import SwiftUI
 struct WelcomeView: View {
     @Environment(\.onboardingStore) private var store
     @State private var selectedMode: OnboardingMode = .guided
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: Spacing.xxl) {
                 Spacer()
                     .frame(height: Spacing.xxl)
-                
+
                 // App icon/logo
                 Image(systemName: "heart.circle.fill")
                     .font(.system(size: 80))
                     .foregroundColor(AppColors.primary)
                     .accessibilityHidden(true)
-                
+
                 // Welcome message
                 VStack(spacing: Spacing.md) {
                     Text("Welcome to")
                         .font(Typography.title2)
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     Text("I Do Blueprint")
                         .font(.system(size: 36, weight: .bold))
                         .foregroundColor(AppColors.textPrimary)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Welcome to I Do Blueprint")
-                
+
                 // Description
                 Text("Let's get started planning your perfect wedding. We'll guide you through setting up your account and importing your data.")
                     .font(Typography.bodyRegular)
@@ -43,20 +43,20 @@ struct WelcomeView: View {
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Spacing.xxl)
                     .fixedSize(horizontal: false, vertical: true)
-                
+
                 // Mode selection
                 VStack(spacing: Spacing.lg) {
                     Text("Choose your setup style")
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     VStack(spacing: Spacing.md) {
                         ModeSelectionCard(
                             mode: .guided,
                             isSelected: selectedMode == .guided,
                             onSelect: { selectedMode = .guided }
                         )
-                        
+
                         ModeSelectionCard(
                             mode: .express,
                             isSelected: selectedMode == .express,
@@ -65,7 +65,7 @@ struct WelcomeView: View {
                     }
                     .padding(.horizontal, Spacing.xl)
                 }
-                
+
                 // Get started button
                 Button(action: {
                     Task {
@@ -79,7 +79,7 @@ struct WelcomeView: View {
                         Text("Get Started")
                             .font(Typography.bodyLarge)
                             .fontWeight(.semibold)
-                        
+
                         Image(systemName: "arrow.right")
                             .font(.system(size: 16, weight: .semibold))
                     }
@@ -93,7 +93,7 @@ struct WelcomeView: View {
                 .padding(.top, Spacing.lg)
                 .accessibilityLabel("Get started with \(selectedMode.displayName)")
                 .accessibilityHint("Begins the onboarding process")
-                
+
                 Spacer()
                     .frame(height: Spacing.xxl)
             }
@@ -109,7 +109,7 @@ struct ModeSelectionCard: View {
     let mode: OnboardingMode
     let isSelected: Bool
     let onSelect: () -> Void
-    
+
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: Spacing.md) {
@@ -118,7 +118,7 @@ struct ModeSelectionCard: View {
                     Circle()
                         .stroke(isSelected ? AppColors.primary : AppColors.textSecondary.opacity(0.3), lineWidth: 2)
                         .frame(width: 24, height: 24)
-                    
+
                     if isSelected {
                         Circle()
                             .fill(AppColors.primary)
@@ -126,20 +126,20 @@ struct ModeSelectionCard: View {
                     }
                 }
                 .accessibilityHidden(true)
-                
+
                 // Mode info
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(mode.displayName)
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(mode.description)
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                
+
                 Spacer()
             }
             .padding(Spacing.lg)

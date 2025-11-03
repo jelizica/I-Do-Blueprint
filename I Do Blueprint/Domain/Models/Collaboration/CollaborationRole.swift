@@ -18,7 +18,7 @@ struct CollaborationRole: Identifiable, Codable, Sendable, Hashable {
     let canDelete: Bool
     let canInvite: Bool
     let canManageRoles: Bool
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
@@ -38,7 +38,7 @@ enum RoleName: String, Codable, Sendable, CaseIterable {
     case partner
     case planner
     case viewer
-    
+
     var displayName: String {
         switch self {
         case .owner: return "Owner"
@@ -47,7 +47,7 @@ enum RoleName: String, Codable, Sendable, CaseIterable {
         case .viewer: return "Viewer"
         }
     }
-    
+
     var description: String {
         switch self {
         case .owner:
@@ -60,7 +60,7 @@ enum RoleName: String, Codable, Sendable, CaseIterable {
             return "Read-only access to wedding details"
         }
     }
-    
+
     /// Default permissions for each role
     var permissions: (canEdit: Bool, canDelete: Bool, canInvite: Bool, canManageRoles: Bool) {
         switch self {

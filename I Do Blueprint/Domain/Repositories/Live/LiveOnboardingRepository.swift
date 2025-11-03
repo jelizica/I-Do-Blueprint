@@ -11,34 +11,34 @@ import Supabase
 /// Live implementation of onboarding repository with caching and Supabase integration
 actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
     private let logger = AppLogger.database
-    
+
     private var supabase: SupabaseClient {
         guard let client = SupabaseManager.shared.client else {
             fatalError("Supabase client not initialized")
         }
         return client
     }
-    
+
     // MARK: - Tenant Context
-    
+
     private func getTenantId() async throws -> UUID {
         try await TenantContextProvider.shared.requireTenantId()
     }
-    
+
     // MARK: - Fetch Onboarding Progress
-    
+
     func fetchOnboardingProgress() async throws -> OnboardingProgress? {
         let coupleId = try await getTenantId()
         let cacheKey = "onboarding_progress_\(coupleId.uuidString)"
-        
+
         // Check cache first
         if let cached: OnboardingProgress = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             logger.info("Cache hit: onboarding progress")
             return cached
         }
-        
+
         logger.info("Fetching onboarding progress for couple: \(coupleId.uuidString)")
-        
+
         do {
             struct SettingsRow: Decodable {
                 let id: UUID
@@ -47,7 +47,7 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
                 let created_at: Date?
                 let updated_at: Date?
             }
-            
+
             let rows: [SettingsRow] = try await supabase.database
                 .from("couple_settings")
                 .select()
@@ -55,30 +55,30 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
                 .limit(1)
                 .execute()
                 .value
-            
+
             guard let row = rows.first else {
                 logger.info("No onboarding progress found for couple")
                 return nil
             }
-            
+
             guard let progressDTO = row.onboarding_progress else {
                 logger.info("Onboarding progress column is null")
                 return nil
             }
-            
+
             let progress = progressDTO.toDomain(
                 id: row.id,
                 coupleId: row.couple_id,
                 createdAt: row.created_at ?? Date(),
                 updatedAt: row.updated_at ?? Date()
             )
-            
+
             // Cache the result
             await RepositoryCache.shared.set(cacheKey, value: progress, ttl: 60)
-            
+
             logger.info("Successfully fetched onboarding progress")
             return progress
-            
+
         } catch {
             logger.error("Error fetching onboarding progress", error: error)
             await SentryService.shared.captureError(error, context: [
@@ -88,32 +88,32 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
             throw OnboardingError.fetchFailed(underlying: error)
         }
     }
-    
+
     // MARK: - Save Onboarding Progress
-    
+
     func saveOnboardingProgress(_ progress: OnboardingProgress) async throws -> OnboardingProgress {
         let coupleId = try await getTenantId()
-        
+
         guard progress.coupleId == coupleId else {
             logger.error("Couple ID mismatch in onboarding progress")
             throw OnboardingError.tenantContextMissing
         }
-        
+
         logger.info("Saving onboarding progress for couple: \(coupleId.uuidString)")
-        
+
         do {
             let dto = OnboardingProgressDTO.fromDomain(progress)
-            
+
             struct UpdatePayload: Encodable {
                 let onboarding_progress: OnboardingProgressDTO
                 let updated_at: Date
             }
-            
+
             let payload = UpdatePayload(
                 onboarding_progress: dto,
                 updated_at: Date()
             )
-            
+
             struct SettingsRow: Decodable {
                 let id: UUID
                 let couple_id: UUID
@@ -121,46 +121,46 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
                 let created_at: Date?
                 let updated_at: Date?
             }
-            
+
             // Use upsert to handle both insert and update cases
             struct UpsertPayload: Encodable {
                 let couple_id: String
                 let onboarding_progress: OnboardingProgressDTO
                 let updated_at: String
             }
-            
+
             let upsertPayload = UpsertPayload(
                 couple_id: coupleId.uuidString,
                 onboarding_progress: dto,
                 updated_at: Date().ISO8601Format()
             )
-            
+
             let rows: [SettingsRow] = try await supabase.database
                 .from("couple_settings")
                 .upsert(upsertPayload, onConflict: "couple_id")
                 .select()
                 .execute()
                 .value
-            
+
             guard let row = rows.first else {
                 logger.error("No settings row found after upsert")
                 throw OnboardingError.saveFailed(underlying: NSError(domain: "OnboardingRepository", code: 404))
             }
-            
+
             let savedProgress = row.onboarding_progress.toDomain(
                 id: row.id,
                 coupleId: row.couple_id,
                 createdAt: row.created_at ?? Date(),
                 updatedAt: row.updated_at ?? Date()
             )
-            
+
             // Invalidate cache
             let cacheKey = "onboarding_progress_\(coupleId.uuidString)"
             await RepositoryCache.shared.remove(cacheKey)
-            
+
             logger.info("Successfully saved onboarding progress")
             return savedProgress
-            
+
         } catch {
             logger.error("Error saving onboarding progress", error: error)
             await SentryService.shared.captureError(error, context: [
@@ -170,68 +170,68 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
             throw OnboardingError.saveFailed(underlying: error)
         }
     }
-    
+
     // MARK: - Update Onboarding Progress
-    
+
     func updateOnboardingProgress(_ progress: OnboardingProgress) async throws -> OnboardingProgress {
         // Update is the same as save for this implementation
         return try await saveOnboardingProgress(progress)
     }
-    
+
     // MARK: - Complete Onboarding
-    
+
     func completeOnboarding() async throws -> OnboardingProgress {
         let coupleId = try await getTenantId()
-        
+
         logger.info("Completing onboarding for couple: \(coupleId.uuidString)")
-        
+
         // Fetch current progress
         guard var progress = try await fetchOnboardingProgress() else {
             logger.error("No onboarding progress found to complete")
             throw OnboardingError.progressNotFound
         }
-        
+
         // Mark as completed
         progress.isCompleted = true
         progress.currentStep = .completion
         progress.updatedAt = Date()
-        
+
         // Save the completed progress
         return try await saveOnboardingProgress(progress)
     }
-    
+
     // MARK: - Delete Onboarding Progress
-    
+
     func deleteOnboardingProgress() async throws {
         let coupleId = try await getTenantId()
-        
+
         logger.info("Deleting onboarding progress for couple: \(coupleId.uuidString)")
-        
+
         do {
             struct UpdatePayload: Encodable {
                 let onboarding_progress: String?
                 let updated_at: Date
-                
+
                 init() {
                     self.onboarding_progress = nil
                     self.updated_at = Date()
                 }
             }
-            
+
             let payload = UpdatePayload()
-            
+
             try await supabase.database
                 .from("couple_settings")
                 .update(payload)
                 .eq("couple_id", value: coupleId)
                 .execute()
-            
+
             // Invalidate cache
             let cacheKey = "onboarding_progress_\(coupleId.uuidString)"
             await RepositoryCache.shared.remove(cacheKey)
-            
+
             logger.info("Successfully deleted onboarding progress")
-            
+
         } catch {
             logger.error("Error deleting onboarding progress", error: error)
             await SentryService.shared.captureError(error, context: [
@@ -241,9 +241,9 @@ actor LiveOnboardingRepository: OnboardingRepositoryProtocol {
             throw OnboardingError.deleteFailed(underlying: error)
         }
     }
-    
+
     // MARK: - Check Onboarding Completion
-    
+
     func isOnboardingCompleted() async throws -> Bool {
         guard let progress = try await fetchOnboardingProgress() else {
             return false
@@ -264,7 +264,7 @@ private struct OnboardingProgressDTO: Codable {
     let guestImportStatus: ImportStatusDTO?
     let vendorImportStatus: ImportStatusDTO?
     let budgetSetupStatus: BudgetSetupStatusDTO?
-    
+
     func toDomain(id: UUID, coupleId: UUID, createdAt: Date, updatedAt: Date) -> OnboardingProgress {
         OnboardingProgress(
             id: id,
@@ -281,7 +281,7 @@ private struct OnboardingProgressDTO: Codable {
             updatedAt: updatedAt
         )
     }
-    
+
     static func fromDomain(_ progress: OnboardingProgress) -> OnboardingProgressDTO {
         OnboardingProgressDTO(
             currentStep: progress.currentStep.rawValue,
@@ -303,7 +303,7 @@ private struct WeddingDetailsDTO: Codable {
     let partner2Name: String
     let weddingStyle: String?
     let estimatedGuestCount: Int?
-    
+
     func toDomain() -> WeddingDetails {
         WeddingDetails(
             weddingDate: weddingDate,
@@ -314,7 +314,7 @@ private struct WeddingDetailsDTO: Codable {
             estimatedGuestCount: estimatedGuestCount
         )
     }
-    
+
     static func fromDomain(_ details: WeddingDetails) -> WeddingDetailsDTO {
         WeddingDetailsDTO(
             weddingDate: details.weddingDate,
@@ -332,7 +332,7 @@ private struct OnboardingDefaultSettingsDTO: Codable {
     let timezone: String
     let budgetPreferences: BudgetPreferencesDTO?
     let notificationPreferences: NotificationPreferencesDTO?
-    
+
     func toDomain() -> OnboardingDefaultSettings {
         OnboardingDefaultSettings(
             currency: currency,
@@ -341,7 +341,7 @@ private struct OnboardingDefaultSettingsDTO: Codable {
             notificationPreferences: notificationPreferences?.toDomain()
         )
     }
-    
+
     static func fromDomain(_ settings: OnboardingDefaultSettings) -> OnboardingDefaultSettingsDTO {
         OnboardingDefaultSettingsDTO(
             currency: settings.currency,
@@ -357,7 +357,7 @@ private struct BudgetPreferencesDTO: Codable {
     let trackPayments: Bool
     let enableAlerts: Bool
     let alertThreshold: Double
-    
+
     func toDomain() -> BudgetPreferences {
         BudgetPreferences(
             totalBudget: totalBudget,
@@ -366,7 +366,7 @@ private struct BudgetPreferencesDTO: Codable {
             alertThreshold: alertThreshold
         )
     }
-    
+
     static func fromDomain(_ prefs: BudgetPreferences) -> BudgetPreferencesDTO {
         BudgetPreferencesDTO(
             totalBudget: prefs.totalBudget,
@@ -383,7 +383,7 @@ private struct NotificationPreferencesDTO: Codable {
     let taskReminders: Bool
     let paymentReminders: Bool
     let eventReminders: Bool
-    
+
     func toDomain() -> NotificationPreferences {
         NotificationPreferences(
             emailEnabled: emailEnabled,
@@ -393,7 +393,7 @@ private struct NotificationPreferencesDTO: Codable {
             eventReminders: eventReminders
         )
     }
-    
+
     static func fromDomain(_ prefs: NotificationPreferences) -> NotificationPreferencesDTO {
         NotificationPreferencesDTO(
             emailEnabled: prefs.emailEnabled,
@@ -412,7 +412,7 @@ private struct ImportStatusDTO: Codable {
     let successfulRows: Int
     let failedRows: Int
     let errors: [ImportErrorDTO]
-    
+
     func toDomain() -> ImportStatus {
         ImportStatus(
             isStarted: isStarted,
@@ -423,7 +423,7 @@ private struct ImportStatusDTO: Codable {
             errors: errors.map { $0.toDomain() }
         )
     }
-    
+
     static func fromDomain(_ status: ImportStatus) -> ImportStatusDTO {
         ImportStatusDTO(
             isStarted: status.isStarted,
@@ -441,7 +441,7 @@ private struct ImportErrorDTO: Codable {
     let lineNumber: Int
     let message: String
     let field: String?
-    
+
     func toDomain() -> ImportError {
         ImportError(
             id: UUID(uuidString: id) ?? UUID(),
@@ -450,7 +450,7 @@ private struct ImportErrorDTO: Codable {
             field: field
         )
     }
-    
+
     static func fromDomain(_ error: ImportError) -> ImportErrorDTO {
         ImportErrorDTO(
             id: error.id.uuidString,
@@ -466,7 +466,7 @@ private struct BudgetSetupStatusDTO: Codable {
     let isCompleted: Bool
     let totalBudget: Double?
     let categoriesCreated: Int
-    
+
     func toDomain() -> BudgetSetupStatus {
         BudgetSetupStatus(
             isStarted: isStarted,
@@ -475,7 +475,7 @@ private struct BudgetSetupStatusDTO: Codable {
             categoriesCreated: categoriesCreated
         )
     }
-    
+
     static func fromDomain(_ status: BudgetSetupStatus) -> BudgetSetupStatusDTO {
         BudgetSetupStatusDTO(
             isStarted: status.isStarted,

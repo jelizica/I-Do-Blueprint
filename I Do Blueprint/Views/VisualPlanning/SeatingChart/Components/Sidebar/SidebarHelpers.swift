@@ -60,7 +60,7 @@ struct GuestGroupEditorSheet: View {
                 .font(.seatingBody)
                 .foregroundColor(.secondary)
                 .padding()
-            
+
             Button("Close") {
                 dismiss()
             }

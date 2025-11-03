@@ -8,7 +8,7 @@ struct ExpenseListView: View {
     let onExpenseSelected: (Expense) -> Void
     let onExpenseDelete: (Expense) -> Void
     let onAddExpense: () -> Void
-    
+
     var body: some View {
         ScrollView {
             if expenses.isEmpty {
@@ -56,7 +56,7 @@ struct ExpenseCardsGridView: View {
     let expenses: [Expense]
     let onExpenseSelected: (Expense) -> Void
     let onExpenseDelete: (Expense) -> Void
-    
+
     var body: some View {
         LazyVGrid(columns: [
             GridItem(.flexible(), spacing: 16),
@@ -78,7 +78,7 @@ struct ExpenseListRowsView: View {
     let expenses: [Expense]
     let onExpenseSelected: (Expense) -> Void
     let onExpenseDelete: (Expense) -> Void
-    
+
     var body: some View {
         LazyVStack(spacing: 12) {
             ForEach(expenses, id: \.id) { expense in

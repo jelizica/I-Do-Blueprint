@@ -20,7 +20,7 @@ struct ActivityEvent: Identifiable, Codable, Sendable {
     let changes: [String: AnyCodable]?
     let metadata: [String: AnyCodable]?
     var isRead: Bool
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
@@ -34,7 +34,7 @@ struct ActivityEvent: Identifiable, Codable, Sendable {
         case metadata
         case isRead = "is_read"
     }
-    
+
     /// Human-readable description of the activity
     var description: String {
         let action = actionType.displayName
@@ -54,7 +54,7 @@ enum ActionType: String, Codable, Sendable {
     case invited
     case joined
     case left
-    
+
     var displayName: String {
         switch self {
         case .created: return "Created"
@@ -80,7 +80,7 @@ enum ResourceType: String, Codable, Sendable {
     case timeline
     case seatingChart = "seating_chart"
     case collaborator
-    
+
     var displayName: String {
         switch self {
         case .guest: return "guest"

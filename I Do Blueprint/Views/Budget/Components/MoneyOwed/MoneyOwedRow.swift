@@ -220,7 +220,7 @@ struct OwedDetailView: View {
     private func convertToGiftOrOwed(owed: MoneyOwed) -> GiftOrOwed? {
         do {
             let coupleId = try authContext.requireCoupleId()
-            
+
             return GiftOrOwed(
                 id: UUID(), // Will be handled by database
                 coupleId: coupleId,

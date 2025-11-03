@@ -17,9 +17,9 @@ struct SeatingChartCanvas: View {
     @Binding var isDraggingTable: Bool
     @Binding var dragStartPosition: CGPoint
     @Binding var draggingTableId: UUID?
-    
+
     let updateTablePositionWithTranslation: (UUID, CGPoint, CGSize) -> Void
-    
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -126,7 +126,7 @@ struct SeatingChartCanvas: View {
         tenantId: "sample",
         chartName: "Wedding Reception",
         eventId: nil)
-    
+
     SeatingChartCanvas(
         editableChart: .constant(sampleChart),
         selectedTableId: .constant(nil),

@@ -12,30 +12,30 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
     private let client: SupabaseClient?
     private let logger = AppLogger.repository
     private let cacheStrategy = TaskCacheStrategy()
-    
+
     // SessionManager for tenant scoping
     private let sessionManager: SessionManager
-    
+
     // In-flight request de-duplication
     private var inFlightTasks: [UUID: Task<[WeddingTask], Error>] = [:]
-    
+
     init(client: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
         self.client = client
         self.sessionManager = sessionManager
     }
-    
+
     init() {
         self.client = SupabaseManager.shared.client
         self.sessionManager = .shared
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let client = client else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
         }
         return client
     }
-    
+
     // Helper to get tenant ID, throws if not set
     private func getTenantId() async throws -> UUID {
         try await TenantContextProvider.shared.requireTenantId()
@@ -106,13 +106,13 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         let tenantId = try await getTenantId()
         let cacheKey = "task_\(id.uuidString)_\(tenantId.uuidString)"
         let startTime = Date()
-        
+
         // ✅ Check cache first
         if let cached: WeddingTask = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             logger.info("Cache hit: task \(id)")
             return cached
         }
-        
+
         do {
             let tasks: [WeddingTask] = try await RepositoryNetwork.withRetry {
                 try await client.database
@@ -129,15 +129,15 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             if let task = tasks.first {
                 // ✅ Cache the result
                 await RepositoryCache.shared.set(cacheKey, value: task, ttl: 60)
                 logger.info("Fetched task in \(String(format: "%.2f", duration))s")
             }
-            
+
             return tasks.first
         } catch {
             let duration = Date().timeIntervalSince(startTime)
@@ -155,7 +155,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             let task: WeddingTask = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_tasks")
@@ -165,18 +165,18 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             // ✅ Invalidate caches via strategy
             await cacheStrategy.invalidate(for: .taskCreated(tenantId: tenantId, taskId: task.id))
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("createTask", duration: duration)
-            
+
             logger.info("Created task: \(insertData.taskName)")
             AnalyticsService.trackNetwork(operation: "createTask", outcome: .success, duration: duration)
-            
+
             return task
         } catch {
             logger.error("Failed to create task", error: error)
@@ -193,7 +193,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             let updated: WeddingTask = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_tasks")
@@ -205,18 +205,18 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             // ✅ Invalidate caches via strategy
             await cacheStrategy.invalidate(for: .taskUpdated(tenantId: tenantId, taskId: task.id))
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("updateTask", duration: duration)
-            
+
             logger.info("Updated task: \(task.taskName)")
             AnalyticsService.trackNetwork(operation: "updateTask", outcome: .success, duration: duration)
-            
+
             return updated
         } catch {
             logger.error("Failed to update task", error: error)
@@ -234,7 +234,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_tasks")
@@ -243,15 +243,15 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .eq("couple_id", value: tenantId)
                     .execute()
             }
-            
+
             // ✅ Invalidate caches via strategy
             await cacheStrategy.invalidate(for: .taskDeleted(tenantId: tenantId, taskId: id))
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("deleteTask", duration: duration)
-            
+
             logger.info("Deleted task: \(id)")
             AnalyticsService.trackNetwork(operation: "deleteTask", outcome: .success, duration: duration)
         } catch {
@@ -272,13 +272,13 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         let tenantId = try await getTenantId()
         let cacheKey = "subtasks_\(taskId.uuidString)_\(tenantId.uuidString)"
         let startTime = Date()
-        
+
         // ✅ Check cache first
         if let cached: [Subtask] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             logger.info("Cache hit: subtasks for task \(taskId)")
             return cached
         }
-        
+
         do {
             let subtasks: [Subtask] = try await RepositoryNetwork.withRetry {
                 try await client.database
@@ -289,14 +289,14 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Cache the results
             await RepositoryCache.shared.set(cacheKey, value: subtasks, ttl: 60)
-            
+
             logger.info("Fetched \(subtasks.count) subtasks in \(String(format: "%.2f", duration))s")
-            
+
             return subtasks
         } catch {
             let duration = Date().timeIntervalSince(startTime)
@@ -315,7 +315,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             struct SubtaskInsert: Encodable {
                 let task_id: UUID
                 let subtask_name: String
@@ -342,17 +342,17 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             // ✅ Invalidate related caches via strategy
             await cacheStrategy.invalidate(for: .subtaskCreated(tenantId: tenantId, taskId: taskId))
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("createSubtask", duration: duration)
-            
+
             logger.info("Created subtask: \(insertData.subtaskName)")
-            
+
             return subtask
         } catch {
             logger.error("Failed to create subtask", error: error)
@@ -365,7 +365,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             let updated: Subtask = try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_subtasks")
@@ -376,17 +376,17 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             // ✅ Invalidate related caches via strategy
             await cacheStrategy.invalidate(for: .subtaskUpdated(tenantId: tenantId, taskId: subtask.taskId))
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("updateSubtask", duration: duration)
-            
+
             logger.info("Updated subtask: \(subtask.subtaskName)")
-            
+
             return updated
         } catch {
             logger.error("Failed to update subtask", error: error)
@@ -399,7 +399,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             // Fetch the subtask first to get the taskId for cache invalidation
             let subtasks: [Subtask] = try await client.database
                 .from("wedding_subtasks")
@@ -408,7 +408,7 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                 .limit(1)
                 .execute()
                 .value
-            
+
             try await RepositoryNetwork.withRetry {
                 try await client.database
                     .from("wedding_subtasks")
@@ -416,18 +416,18 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
                     .eq("id", value: id)
                     .execute()
             }
-            
+
             // ✅ Invalidate related caches
             if let taskId = subtasks.first?.taskId {
                 await RepositoryCache.shared.remove("subtasks_\(taskId.uuidString)_\(tenantId.uuidString)")
                 await RepositoryCache.shared.remove("task_\(taskId.uuidString)_\(tenantId.uuidString)")
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("deleteSubtask", duration: duration)
-            
+
             logger.info("Deleted subtask: \(id)")
         } catch {
             logger.error("Failed to delete subtask", error: error)
@@ -441,15 +441,15 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
         let tenantId = try await getTenantId()
         let cacheKey = "task_stats_\(tenantId.uuidString)"
         let startTime = Date()
-        
+
         // ✅ Check cache first
         if let cached: TaskStats = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             logger.info("Cache hit: task stats")
             return cached
         }
-        
+
         logger.info("Cache miss: calculating task stats")
-        
+
         let tasks: [WeddingTask] = try await fetchTasks()
         let now = Date()
 
@@ -459,17 +459,17 @@ actor LiveTaskRepository: TaskRepositoryProtocol {
             inProgress: tasks.filter { $0.status == .inProgress }.count,
             completed: tasks.filter { $0.status == .completed }.count,
             overdue: tasks.filter { !$0.status.isCompleted && ($0.dueDate ?? .distantFuture) < now }.count)
-        
+
         let duration = Date().timeIntervalSince(startTime)
-        
+
         // ✅ Cache the result
         await RepositoryCache.shared.set(cacheKey, value: stats, ttl: 60)
-        
+
         // ✅ Record performance
         await PerformanceMonitor.shared.recordOperation("fetchTaskStats", duration: duration)
-        
+
         logger.info("Calculated task stats in \(String(format: "%.2f", duration))s")
-        
+
         return stats
     }
 }

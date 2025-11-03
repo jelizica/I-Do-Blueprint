@@ -7,14 +7,14 @@ struct ChartContainerView: View {
     let categories: [BudgetCategory]
     let expenses: [Expense]
     let benchmarks: [CategoryBenchmark]
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(chartType.displayName)
                 .font(.title2)
                 .fontWeight(.semibold)
                 .padding(.horizontal)
-            
+
             Group {
                 switch chartType {
                 case .categoryBreakdown:
@@ -37,7 +37,7 @@ struct ChartContainerView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
-    
+
     private var filteredExpenses: [Expense] {
         let cutoffDate = Calendar.current
             .date(byAdding: timeframe.dateComponent, value: -timeframe.value, to: Date()) ?? Date()
@@ -53,7 +53,7 @@ enum ChartType: String, CaseIterable {
     case spendingTrend = "spending_trend"
     case budgetProgress = "budget_progress"
     case benchmarkComparison = "benchmark_comparison"
-    
+
     var displayName: String {
         switch self {
         case .categoryBreakdown: "Category Breakdown"
@@ -69,7 +69,7 @@ enum AnalyticsTimeframe: String, CaseIterable {
     case sixMonths = "6m"
     case oneYear = "1y"
     case allTime = "all"
-    
+
     var displayName: String {
         switch self {
         case .threeMonths: "3 Months"
@@ -78,7 +78,7 @@ enum AnalyticsTimeframe: String, CaseIterable {
         case .allTime: "All Time"
         }
     }
-    
+
     var dateComponent: Calendar.Component {
         switch self {
         case .threeMonths, .sixMonths: .month
@@ -86,7 +86,7 @@ enum AnalyticsTimeframe: String, CaseIterable {
         case .allTime: .year
         }
     }
-    
+
     var value: Int {
         switch self {
         case .threeMonths: 3

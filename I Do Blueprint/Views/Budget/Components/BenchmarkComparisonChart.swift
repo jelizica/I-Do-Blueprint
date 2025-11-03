@@ -5,12 +5,12 @@ import SwiftUI
 struct BenchmarkComparisonChart: View {
     let categories: [BudgetCategory]
     let benchmarks: [CategoryBenchmark]
-    
+
     private var comparisonData: [BenchmarkComparison] {
         categories.compactMap { category in
             guard let benchmark = benchmarks.first(where: { $0.categoryName == category.categoryName }),
                   let summary = getBudgetSummary() else { return nil }
-            
+
             let actualPercentage = (category.allocatedAmount / summary.totalBudget) * 100
             return BenchmarkComparison(
                 categoryName: category.categoryName,
@@ -19,7 +19,7 @@ struct BenchmarkComparisonChart: View {
                 color: category.color)
         }
     }
-    
+
     var body: some View {
         if comparisonData.isEmpty {
             ContentUnavailableView(
@@ -33,7 +33,7 @@ struct BenchmarkComparisonChart: View {
                         x: .value("Category", data.categoryName),
                         y: .value("Typical", data.typicalPercentage))
                         .foregroundStyle(.gray.opacity(0.5))
-                    
+
                     BarMark(
                         x: .value("Category", data.categoryName),
                         y: .value("Your Budget", data.actualPercentage))
@@ -52,13 +52,13 @@ struct BenchmarkComparisonChart: View {
             }
         }
     }
-    
+
     private func getBudgetSummary() -> BudgetSummary? {
         // In a real implementation, this would come from the budget store
         // For now, calculate from categories
         let totalBudget = categories.reduce(0) { $0 + $1.allocatedAmount }
         guard totalBudget > 0 else { return nil }
-        
+
         return BudgetSummary(
             id: UUID(),
             coupleId: UUID(),

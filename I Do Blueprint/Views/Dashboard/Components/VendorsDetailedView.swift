@@ -9,27 +9,27 @@ import SwiftUI
 
 struct VendorsDetailedView: View {
     @ObservedObject var store: VendorStoreV2
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             // Summary Cards
             HStack(spacing: Spacing.md) {
                 let bookedCount = store.vendors.filter { $0.isBooked == true }.count
-                
+
                 DashboardSummaryCard(
                     title: "Total Vendors",
                     value: "\(store.vendors.count)",
                     icon: "briefcase.fill",
                     color: .purple
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Booked",
                     value: "\(bookedCount)",
                     icon: "checkmark.seal.fill",
                     color: .green
                 )
-                
+
                 DashboardSummaryCard(
                     title: "Pending",
                     value: "\(store.vendors.count - bookedCount)",
@@ -37,7 +37,7 @@ struct VendorsDetailedView: View {
                     color: .orange
                 )
             }
-            
+
             // Vendor Grid
             LazyVGrid(columns: [
                 GridItem(.flexible()),
@@ -54,7 +54,7 @@ struct VendorsDetailedView: View {
 
 struct VendorCard: View {
     let vendor: Vendor
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -68,14 +68,14 @@ struct VendorCard: View {
                             )
                         )
                         .frame(width: 48, height: 48)
-                    
+
                     Image(systemName: vendorIcon)
                         .font(.system(size: 20))
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 Spacer()
-                
+
                 Text(vendor.isBooked == true ? "Booked" : "Pending")
                     .font(Typography.caption2)
                     .fontWeight(.medium)
@@ -87,18 +87,18 @@ struct VendorCard: View {
                             .fill((vendor.isBooked == true ? AppColors.success : AppColors.warning).opacity(0.1))
                     )
             }
-            
+
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(vendor.vendorName)
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.textPrimary)
                     .lineLimit(2)
-                
+
                 Text(vendor.vendorType ?? "Other")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 if let amount = vendor.quotedAmount {
                     Text("$\(Int(amount).formatted())")
                         .font(Typography.bodySmall)
@@ -115,10 +115,10 @@ struct VendorCard: View {
                 .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
         )
     }
-    
+
     private var vendorIcon: String {
         guard let type = vendor.vendorType?.lowercased() else { return "briefcase.fill" }
-        
+
         switch type {
         case "venue": return "mappin.circle.fill"
         case "photography", "photographer": return "camera.fill"
@@ -128,12 +128,12 @@ struct VendorCard: View {
         default: return "briefcase.fill"
         }
     }
-    
+
     private var gradientColors: [Color] {
         guard let type = vendor.vendorType?.lowercased() else {
             return [Color.fromHex( "6366F1"), Color.fromHex( "8B5CF6")]
         }
-        
+
         switch type {
         case "venue": return [Color.fromHex( "EC4899"), Color.fromHex( "F43F5E")]
         case "photography", "photographer": return [Color.fromHex( "A855F7"), Color.fromHex( "EC4899")]

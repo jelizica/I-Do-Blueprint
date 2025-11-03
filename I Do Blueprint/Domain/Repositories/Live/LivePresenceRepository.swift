@@ -22,7 +22,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
     convenience init() {
         self.init(supabase: SupabaseManager.shared.client)
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
@@ -33,11 +33,11 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
     private func getTenantId() async throws -> UUID {
         try await TenantContextProvider.shared.requireTenantId()
     }
-    
+
     private func getUserId() async throws -> UUID {
         try await UserContextProvider.shared.requireUserId()
     }
-    
+
     private func getSessionId() -> String {
         if let sessionId = currentSessionId {
             return sessionId
@@ -48,7 +48,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
     }
 
     // MARK: - Fetch Operations
-    
+
     func fetchActivePresence() async throws -> [Presence] {
         do {
             let client = try getClient()
@@ -66,7 +66,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
 
             // Fetch only non-stale presence (heartbeat within last 5 minutes)
             let fiveMinutesAgo = Date().addingTimeInterval(-300)
-            
+
             let presence: [Presence] = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("presence")
@@ -80,10 +80,10 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Cache for 10 seconds (presence changes frequently)
             await RepositoryCache.shared.set(cacheKey, value: presence, ttl: 10)
-            
+
             await PerformanceMonitor.shared.recordOperation("fetchActivePresence", duration: duration)
 
             logger.info("Fetched \(presence.count) active presence records in \(String(format: "%.2f", duration))s")
@@ -97,7 +97,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
             throw PresenceError.fetchFailed(underlying: error)
         }
     }
-    
+
     func fetchPresence(userId: UUID) async throws -> Presence? {
         do {
             let client = try getClient()
@@ -130,7 +130,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
     }
 
     // MARK: - Presence Management
-    
+
     func trackPresence(
         status: PresenceStatus,
         currentView: String?,
@@ -178,7 +178,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
 
             let duration = Date().timeIntervalSince(startTime)
             await PerformanceMonitor.shared.recordOperation("trackPresence", duration: duration)
-            
+
             logger.info("Tracked presence in \(String(format: "%.2f", duration))s")
 
             return updated
@@ -191,7 +191,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
             throw PresenceError.updateFailed(underlying: error)
         }
     }
-    
+
     func updateEditingState(
         isEditing: Bool,
         resourceType: String?,
@@ -211,7 +211,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
                 let last_heartbeat: Date
                 let updated_at: Date
             }
-            
+
             let updates = UpdatePayload(
                 is_editing: isEditing,
                 editing_resource_type: resourceType,
@@ -238,7 +238,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
 
             let duration = Date().timeIntervalSince(startTime)
             await PerformanceMonitor.shared.recordOperation("updateEditingState", duration: duration)
-            
+
             logger.info("Updated editing state in \(String(format: "%.2f", duration))s")
 
             return updated
@@ -251,7 +251,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
             throw PresenceError.updateFailed(underlying: error)
         }
     }
-    
+
     func sendHeartbeat() async throws -> Presence {
         do {
             let client = try getClient()
@@ -264,7 +264,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
                 let last_heartbeat: Date
                 let updated_at: Date
             }
-            
+
             let updates = UpdatePayload(
                 last_heartbeat: Date(),
                 updated_at: Date()
@@ -287,7 +287,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
 
             let duration = Date().timeIntervalSince(startTime)
             await PerformanceMonitor.shared.recordOperation("sendHeartbeat", duration: duration)
-            
+
             logger.debug("Sent heartbeat in \(String(format: "%.2f", duration))s")
 
             return updated
@@ -297,7 +297,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
             throw PresenceError.updateFailed(underlying: error)
         }
     }
-    
+
     func stopTracking() async throws {
         do {
             let client = try getClient()
@@ -314,7 +314,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
                 let editing_resource_id: UUID?
                 let updated_at: Date
             }
-            
+
             let updates = UpdatePayload(
                 status: "offline",
                 is_editing: false,
@@ -338,7 +338,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
 
             let duration = Date().timeIntervalSince(startTime)
             await PerformanceMonitor.shared.recordOperation("stopTracking", duration: duration)
-            
+
             logger.info("Stopped tracking presence in \(String(format: "%.2f", duration))s")
         } catch {
             logger.error("Failed to stop tracking", error: error)
@@ -350,7 +350,7 @@ actor LivePresenceRepository: PresenceRepositoryProtocol {
     }
 
     // MARK: - Cleanup
-    
+
     func cleanupStalePresence() async throws -> Int {
         do {
             let client = try getClient()
@@ -388,7 +388,7 @@ enum PresenceError: Error, LocalizedError {
     case updateFailed(underlying: Error)
     case cleanupFailed(underlying: Error)
     case tenantContextMissing
-    
+
     var errorDescription: String? {
         switch self {
         case .fetchFailed(let error):

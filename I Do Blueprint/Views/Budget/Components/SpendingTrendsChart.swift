@@ -5,7 +5,7 @@ import SwiftUI
 struct SpendingTrendsChart: View {
     let expenses: [Expense]
     let timeframe: AnalyticsTimeframe
-    
+
     private var monthlySpending: [MonthlySpending] {
         let groupedExpenses = Dictionary(grouping: expenses) { expense in
             guard let approvedAt = expense.approvedAt else { return "" }
@@ -13,14 +13,14 @@ struct SpendingTrendsChart: View {
             formatter.dateFormat = "yyyy-MM"
             return formatter.string(from: approvedAt)
         }
-        
+
         return groupedExpenses.compactMap { key, expenses in
             guard !key.isEmpty else { return nil }
             let total = expenses.reduce(0) { $0 + $1.paidAmount }
             return MonthlySpending(month: key, amount: total)
         }.sorted { $0.month < $1.month }
     }
-    
+
     var body: some View {
         if monthlySpending.isEmpty {
             ContentUnavailableView(
@@ -34,7 +34,7 @@ struct SpendingTrendsChart: View {
                     y: .value("Amount", data.amount))
                     .foregroundStyle(AppColors.Budget.allocated)
                     .symbol(.circle)
-                
+
                 AreaMark(
                     x: .value("Month", data.month),
                     y: .value("Amount", data.amount))

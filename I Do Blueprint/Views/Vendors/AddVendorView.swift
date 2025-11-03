@@ -7,7 +7,7 @@ struct AddVendorView: View {
 
     @Environment(\.dismiss) private var dismiss
     @Dependency(\.vendorRepository) var repository
-    
+
     @State private var vendorName = ""
     @State private var vendorType = ""
     @State private var budgetCategoryName = ""
@@ -52,12 +52,12 @@ struct AddVendorView: View {
                                         TextField("Enter vendor name", text: $vendorName)
                                             .textFieldStyle(.roundedBorder)
                                     }
-                                    
+
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Vendor Type")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
-                                        
+
                                         if isLoadingTypes {
                                             HStack {
                                                 ProgressView()
@@ -89,7 +89,7 @@ struct AddVendorView: View {
                                             }
                                         }
                                     }
-                                    
+
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Contact Person")
                                             .font(.caption)
@@ -100,7 +100,7 @@ struct AddVendorView: View {
                                 }
                                 .padding(.vertical, Spacing.sm)
                             }
-                            
+
                             // Contact Information
                             GroupBox(label: Text("Contact Information").font(.headline)) {
                                 VStack(spacing: 12) {
@@ -111,7 +111,7 @@ struct AddVendorView: View {
                                         TextField("(555) 123-4567", text: $phoneNumber)
                                             .textFieldStyle(.roundedBorder)
                                     }
-                                    
+
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Email")
                                             .font(.caption)
@@ -120,7 +120,7 @@ struct AddVendorView: View {
                                             .textContentType(.emailAddress)
                                             .textFieldStyle(.roundedBorder)
                                     }
-                                    
+
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Website")
                                             .font(.caption)
@@ -132,7 +132,7 @@ struct AddVendorView: View {
                                 }
                                 .padding(.vertical, Spacing.sm)
                             }
-                            
+
                             // Financial
                             GroupBox(label: Text("Financial").font(.headline)) {
                                 VStack(alignment: .leading, spacing: 4) {
@@ -149,7 +149,7 @@ struct AddVendorView: View {
                                 .padding(.vertical, Spacing.sm)
                             }
                         }
-                        
+
                         // Right Column
                         VStack(spacing: 16) {
                             // Address
@@ -163,7 +163,7 @@ struct AddVendorView: View {
                                             .textContentType(.streetAddressLine1)
                                             .textFieldStyle(.roundedBorder)
                                     }
-                                    
+
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Street Address 2 (Optional)")
                                             .font(.caption)
@@ -172,7 +172,7 @@ struct AddVendorView: View {
                                             .textContentType(.streetAddressLine2)
                                             .textFieldStyle(.roundedBorder)
                                     }
-                                    
+
                                     HStack(spacing: 12) {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("City")
@@ -182,7 +182,7 @@ struct AddVendorView: View {
                                                 .textContentType(.addressCity)
                                                 .textFieldStyle(.roundedBorder)
                                         }
-                                        
+
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("State")
                                                 .font(.caption)
@@ -193,7 +193,7 @@ struct AddVendorView: View {
                                                 .frame(width: 60)
                                         }
                                     }
-                                    
+
                                     HStack(spacing: 12) {
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("Postal Code")
@@ -204,7 +204,7 @@ struct AddVendorView: View {
                                                 .textFieldStyle(.roundedBorder)
                                                 .frame(width: 100)
                                         }
-                                        
+
                                         VStack(alignment: .leading, spacing: 4) {
                                             Text("Country")
                                                 .font(.caption)
@@ -217,7 +217,7 @@ struct AddVendorView: View {
                                 }
                                 .padding(.vertical, Spacing.sm)
                             }
-                            
+
                             // Additional Details
                             GroupBox(label: Text("Additional Details").font(.headline)) {
                                 VStack(spacing: 12) {
@@ -232,7 +232,7 @@ struct AddVendorView: View {
                                                     .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
                                             )
                                     }
-                                    
+
                                     VStack(alignment: .leading, spacing: 4) {
                                         Text("Notes")
                                             .font(.caption)
@@ -288,7 +288,7 @@ struct AddVendorView: View {
                 ZStack {
                     AppColors.textPrimary.opacity(0.3)
                         .ignoresSafeArea()
-                    
+
                     ProgressView("Saving vendor...")
                         .padding()
                         .background(Color(NSColor.windowBackgroundColor))
@@ -305,7 +305,7 @@ struct AddVendorView: View {
             errorMessage = "Vendor name is required"
             return
         }
-        
+
         // Get current couple ID from session
         guard let coupleId = await MainActor.run(body: {
             SessionManager.shared.getTenantId()
@@ -313,10 +313,10 @@ struct AddVendorView: View {
             errorMessage = "No couple selected. Please select your wedding couple to continue."
             return
         }
-        
+
         isSaving = true
         errorMessage = nil
-        
+
         // Create vendor with proper field mapping
         let newVendor = Vendor(
             id: 0, // Database will auto-generate
@@ -350,11 +350,11 @@ struct AddVendorView: View {
         )
 
         onSave(newVendor)
-        
+
         isSaving = false
         dismiss()
     }
-    
+
     private func loadVendorTypes() async {
         isLoadingTypes = true
         do {

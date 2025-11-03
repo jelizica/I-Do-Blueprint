@@ -10,16 +10,16 @@ import SwiftUI
 struct InviteCollaboratorSheet: View {
     @ObservedObject var store: CollaborationStoreV2
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var email = ""
     @State private var displayName = ""
     @State private var selectedRole: CollaborationRole?
     @State private var isInviting = false
-    
+
     var isValid: Bool {
         !email.isEmpty && email.contains("@") && selectedRole != nil
     }
-    
+
     var body: some View {
         NavigationStack {
             Form {
@@ -27,12 +27,12 @@ struct InviteCollaboratorSheet: View {
                     TextField("Email Address", text: $email)
                         .textContentType(.emailAddress)
                         .accessibilityLabel("Email address")
-                    
+
                     TextField("Display Name (Optional)", text: $displayName)
                         .textContentType(.name)
                         .accessibilityLabel("Display name")
                 }
-                
+
                 Section("Role") {
                     ForEach(store.roles, id: \.id) { role in
                         RoleSelectionRow(
@@ -42,7 +42,7 @@ struct InviteCollaboratorSheet: View {
                         )
                     }
                 }
-                
+
                 Section {
                     Button(action: sendInvitation) {
                         if isInviting {
@@ -68,21 +68,21 @@ struct InviteCollaboratorSheet: View {
             }
         }
     }
-    
+
     private func sendInvitation() {
         guard let role = selectedRole else { return }
-        
+
         isInviting = true
-        
+
         Task {
             await store.inviteCollaborator(
                 email: email,
                 roleId: role.id,
                 displayName: displayName.isEmpty ? nil : displayName
             )
-            
+
             isInviting = false
-            
+
             // Dismiss on success
             if store.error == nil {
                 dismiss()
@@ -97,7 +97,7 @@ struct RoleSelectionRow: View {
     let role: CollaborationRole
     let isSelected: Bool
     let onSelect: () -> Void
-    
+
     var body: some View {
         Button(action: onSelect) {
             HStack {
@@ -105,12 +105,12 @@ struct RoleSelectionRow: View {
                     Text(role.roleName.displayName)
                         .font(.body)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(role.description ?? role.roleName.description)
                         .font(.caption)
                         .foregroundColor(AppColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
-                    
+
                     // Permissions
                     HStack(spacing: 8) {
                         if role.canEdit {
@@ -127,9 +127,9 @@ struct RoleSelectionRow: View {
                         }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(AppColors.primary)
@@ -149,7 +149,7 @@ struct RoleSelectionRow: View {
 struct PermissionBadge: View {
     let text: String
     let color: Color
-    
+
     var body: some View {
         Text(text)
             .font(.caption2)

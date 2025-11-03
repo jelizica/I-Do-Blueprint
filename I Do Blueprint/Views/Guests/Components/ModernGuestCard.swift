@@ -141,9 +141,9 @@ struct ModernGuestCard: View {
         }
         .contentShape(Rectangle())
     }
-    
+
     // MARK: - Avatar Loading
-    
+
     private func loadAvatar() async {
         do {
             let image = try await guest.fetchAvatar(

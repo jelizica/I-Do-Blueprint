@@ -9,7 +9,7 @@ import SwiftUI
 
 struct TimelineMilestonesCard: View {
     @ObservedObject var store: TimelineStoreV2
-    
+
     struct TimelineMilestone: Identifiable {
         let id = UUID()
         let title: String
@@ -17,7 +17,7 @@ struct TimelineMilestonesCard: View {
         let progress: Double
         let items: [String]
     }
-    
+
     private var milestones: [TimelineMilestone] {
         [
             TimelineMilestone(
@@ -40,7 +40,7 @@ struct TimelineMilestonesCard: View {
             )
         ]
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
@@ -48,20 +48,20 @@ struct TimelineMilestonesCard: View {
                 Image(systemName: "calendar")
                     .font(.system(size: 20))
                     .foregroundColor(Color.fromHex( "EC4899"))
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Wedding Timeline")
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("Your journey to the big day")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
             }
-            
+
             // Timeline
             VStack(alignment: .leading, spacing: Spacing.xxl) {
                 ForEach(Array(milestones.enumerated()), id: \.element.id) { index, milestone in
@@ -85,9 +85,9 @@ struct TimelineMilestonesCard: View {
 struct TimelineMilestoneRow: View {
     let milestone: TimelineMilestonesCard.TimelineMilestone
     let isLast: Bool
-    
+
     @State private var animatedProgress: Double = 0
-    
+
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.md) {
             // Timeline indicator
@@ -97,7 +97,7 @@ struct TimelineMilestoneRow: View {
                         .fill(AppColors.textPrimary)
                         .frame(width: 40, height: 40)
                         .shadow(color: AppColors.shadowLight, radius: 4)
-                    
+
                     Circle()
                         .fill(
                             LinearGradient(
@@ -109,7 +109,7 @@ struct TimelineMilestoneRow: View {
                         .frame(width: 16, height: 16)
                         .opacity(milestone.progress > 0 ? 1 : 0.3)
                 }
-                
+
                 if !isLast {
                     Rectangle()
                         .fill(
@@ -126,31 +126,31 @@ struct TimelineMilestoneRow: View {
                         .padding(.top, Spacing.xs)
                 }
             }
-            
+
             // Content
             VStack(alignment: .leading, spacing: Spacing.md) {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(milestone.title)
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(milestone.description)
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 // Progress bar if applicable
                 if milestone.progress > 0 && milestone.progress < 1 {
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         ProgressView(value: animatedProgress, total: 1.0)
                             .tint(Color.fromHex( "EC4899"))
-                        
+
                         Text("\(Int(animatedProgress * 100))% of planning complete")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
                 }
-                
+
                 // Items
                 if !milestone.items.isEmpty {
                     HStack(spacing: Spacing.xs) {

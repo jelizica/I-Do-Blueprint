@@ -12,58 +12,58 @@ struct SavedSearchesView: View {
     let onSelect: (SavedSearch) -> Void
     let onDelete: (SavedSearch) -> Void
     let onDismiss: () -> Void
-    
+
     @State private var editingSearch: SavedSearch?
     @State private var showingRenameAlert = false
     @State private var newName = ""
     @State private var searchFilter = ""
     @State private var sortOption: SortOption = .lastUsed
-    
+
     private let logger = AppLogger.ui
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
             headerSection
-            
+
             Divider()
-            
+
             // Search and sort
             controlsSection
-            
+
             Divider()
-            
+
             // Saved searches list
             if filteredSearches.isEmpty {
                 emptyStateSection
             } else {
                 savedSearchesListSection
             }
-            
+
             Divider()
-            
+
             // Footer
             footerSection
         }
         .frame(width: 550, height: 650)
     }
-    
+
     // MARK: - Header
-    
+
     private var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Saved Searches")
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text("\(savedSearches.count) saved search\(savedSearches.count == 1 ? "" : "es")")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
+
             Button(action: onDismiss) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(AppColors.textSecondary)
@@ -74,19 +74,19 @@ struct SavedSearchesView: View {
         }
         .padding()
     }
-    
+
     // MARK: - Controls
-    
+
     private var controlsSection: some View {
         HStack(spacing: Spacing.md) {
             // Search field
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 TextField("Search saved searches...", text: $searchFilter)
                     .textFieldStyle(.plain)
-                
+
                 if !searchFilter.isEmpty {
                     Button(action: { searchFilter = "" }) {
                         Image(systemName: "xmark.circle.fill")
@@ -101,7 +101,7 @@ struct SavedSearchesView: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color(NSColor.controlBackgroundColor))
             )
-            
+
             // Sort picker
             Picker("Sort", selection: $sortOption) {
                 ForEach(SortOption.allCases, id: \.self) { option in
@@ -113,9 +113,9 @@ struct SavedSearchesView: View {
         }
         .padding()
     }
-    
+
     // MARK: - Saved Searches List
-    
+
     private var savedSearchesListSection: some View {
         ScrollView {
             LazyVStack(spacing: Spacing.sm) {
@@ -157,26 +157,26 @@ struct SavedSearchesView: View {
             Text("Enter a new name for this saved search")
         }
     }
-    
+
     // MARK: - Empty State
-    
+
     private var emptyStateSection: some View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "bookmark.slash")
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text(searchFilter.isEmpty ? "No Saved Searches" : "No Matching Searches")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text(searchFilter.isEmpty ?
                  "Save your frequently used searches for quick access" :
                  "Try adjusting your search filter")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
                 .multilineTextAlignment(.center)
-            
+
             if !searchFilter.isEmpty {
                 Button("Clear Filter") {
                     searchFilter = ""
@@ -187,17 +187,17 @@ struct SavedSearchesView: View {
         .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
+
     // MARK: - Footer
-    
+
     private var footerSection: some View {
         HStack {
             Text("Tip: Save searches from the main search view")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Spacer()
-            
+
             Button("Done") {
                 onDismiss()
             }
@@ -206,15 +206,15 @@ struct SavedSearchesView: View {
         }
         .padding()
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private var filteredSearches: [SavedSearch] {
         let filtered = searchFilter.isEmpty ? savedSearches : savedSearches.filter { search in
             search.name.localizedCaseInsensitiveContains(searchFilter) ||
             search.query.localizedCaseInsensitiveContains(searchFilter)
         }
-        
+
         return filtered.sorted { lhs, rhs in
             switch sortOption {
             case .name:
@@ -240,7 +240,7 @@ struct SavedSearchesView: View {
             }
         }
     }
-    
+
     private func renameSearch(_ search: SavedSearch, to newName: String) {
         if let index = savedSearches.firstIndex(where: { $0.id == search.id }) {
             // Create new SavedSearch with updated name
@@ -255,14 +255,14 @@ struct SavedSearchesView: View {
             logger.info("Renamed search to: \(newName)")
         }
     }
-    
+
     // MARK: - Sort Option
-    
+
     enum SortOption: String, CaseIterable {
         case lastUsed = "Last Used"
         case name = "Name"
         case dateCreated = "Date Created"
-        
+
         var displayName: String {
             rawValue
         }
@@ -276,9 +276,9 @@ struct SavedSearchRow: View {
     let onSelect: () -> Void
     let onRename: () -> Void
     let onDelete: () -> Void
-    
+
     @State private var isHovered = false
-    
+
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: Spacing.md) {
@@ -287,48 +287,48 @@ struct SavedSearchRow: View {
                     .font(.title3)
                     .foregroundColor(AppColors.primary)
                     .frame(width: 30)
-                
+
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(search.name)
                         .font(Typography.subheading)
                         .foregroundColor(AppColors.textPrimary)
                         .lineLimit(1)
-                    
+
                     if !search.query.isEmpty {
                         Text("Query: \"\(search.query)\"")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                             .lineLimit(1)
                     }
-                    
+
                     HStack(spacing: Spacing.sm) {
                         Label(formatDate(search.createdAt), systemImage: "calendar")
                             .font(.caption2)
                             .foregroundColor(AppColors.textSecondary)
-                        
+
                         if let lastUsed = search.lastUsed {
                             Text("•")
                                 .foregroundColor(AppColors.textSecondary)
-                            
+
                             Label("Used \(formatRelativeDate(lastUsed))", systemImage: "clock")
                                 .font(.caption2)
                                 .foregroundColor(AppColors.textSecondary)
                         }
-                        
+
                         if activeFilterCount > 0 {
                             Text("•")
                                 .foregroundColor(AppColors.textSecondary)
-                            
+
                             Label("\(activeFilterCount) filter\(activeFilterCount == 1 ? "" : "s")", systemImage: "line.3.horizontal.decrease")
                                 .font(.caption2)
                                 .foregroundColor(AppColors.primary)
                         }
                     }
                 }
-                
+
                 Spacer()
-                
+
                 // Actions (shown on hover)
                 if isHovered {
                     HStack(spacing: 4) {
@@ -338,7 +338,7 @@ struct SavedSearchRow: View {
                         }
                         .buttonStyle(.plain)
                         .help("Rename")
-                        
+
                         Button(action: onDelete) {
                             Image(systemName: "trash")
                                 .foregroundColor(.red)
@@ -347,7 +347,7 @@ struct SavedSearchRow: View {
                         .help("Delete")
                     }
                 }
-                
+
                 Image(systemName: "chevron.right")
                     .font(.caption)
                     .foregroundColor(AppColors.textSecondary)
@@ -367,7 +367,7 @@ struct SavedSearchRow: View {
             isHovered = hovering
         }
     }
-    
+
     private var activeFilterCount: Int {
         var count = 0
         count += search.filters.styleCategories.count
@@ -379,14 +379,14 @@ struct SavedSearchRow: View {
         if search.filters.dateRange != nil { count += 1 }
         return count
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .none
         return formatter.string(from: date)
     }
-    
+
     private func formatRelativeDate(_ date: Date) -> String {
         let formatter = RelativeDateTimeFormatter()
         formatter.unitsStyle = .short

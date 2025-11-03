@@ -10,9 +10,9 @@ import XCTest
 
 @MainActor
 final class RepositoryNetworkTests: XCTestCase {
-    
+
     // MARK: - Retry Logic Tests
-    
+
     func testRetryOnTransientError() async throws {
         // Given: An operation that fails twice then succeeds
         var attempts = 0
@@ -23,11 +23,11 @@ final class RepositoryNetworkTests: XCTestCase {
             }
             return "success"
         }
-        
+
         // When: Executing with retry
         do {
             let result = try await RepositoryNetwork.withRetry(operation: operation)
-            
+
             // Then: Should succeed after retries
             XCTAssertEqual(result, "success")
             // Note: Retry count may vary due to async timing
@@ -36,7 +36,7 @@ final class RepositoryNetworkTests: XCTestCase {
             XCTFail("Should have succeeded after retries, but failed with: \(error)")
         }
     }
-    
+
     func testNoRetryOnNonRetryableError() async throws {
         // Given: An operation that throws a non-retryable error
         var attempts = 0
@@ -44,7 +44,7 @@ final class RepositoryNetworkTests: XCTestCase {
             attempts += 1
             throw NetworkError.unauthorized
         }
-        
+
         // When/Then: Should fail immediately without retry
         do {
             _ = try await RepositoryNetwork.withRetry(operation: operation)
@@ -54,7 +54,7 @@ final class RepositoryNetworkTests: XCTestCase {
             XCTAssertEqual(attempts, 1, "Should not retry non-retryable errors")
         }
     }
-    
+
     func testMaxRetriesReached() async throws {
         // Given: An operation that always fails with retryable error
         var attempts = 0
@@ -62,7 +62,7 @@ final class RepositoryNetworkTests: XCTestCase {
             attempts += 1
             throw NetworkError.serverError(statusCode: 500)
         }
-        
+
         // When/Then: Should fail after max retries
         do {
             _ = try await RepositoryNetwork.withRetry(operation: operation)
@@ -72,7 +72,7 @@ final class RepositoryNetworkTests: XCTestCase {
             XCTAssertEqual(attempts, 3, "Should have attempted max retries")
         }
     }
-    
+
     func testTimeoutHandling() async throws {
         // Given: An operation that takes too long
         let operation = {
@@ -80,7 +80,7 @@ final class RepositoryNetworkTests: XCTestCase {
             try await Task.sleep(nanoseconds: 15_000_000_000) // 15 seconds
             return "should not reach here"
         }
-        
+
         // When/Then: Should timeout
         do {
             _ = try await RepositoryNetwork.withRetry(
@@ -92,7 +92,7 @@ final class RepositoryNetworkTests: XCTestCase {
             XCTAssertEqual(error, .timeout)
         }
     }
-    
+
     func testSuccessfulOperationNoRetry() async throws {
         // Given: An operation that succeeds immediately
         var attempts = 0
@@ -100,15 +100,15 @@ final class RepositoryNetworkTests: XCTestCase {
             attempts += 1
             return "success"
         }
-        
+
         // When: Executing with retry
         let result = try await RepositoryNetwork.withRetry(operation: operation)
-        
+
         // Then: Should succeed on first attempt
         XCTAssertEqual(result, "success")
         XCTAssertEqual(attempts, 1, "Should only attempt once on success")
     }
-    
+
     func testRetryWithDifferentPolicy() async throws {
         // Given: An operation that fails once then succeeds
         var attempts = 0
@@ -119,50 +119,50 @@ final class RepositoryNetworkTests: XCTestCase {
             }
             return "success"
         }
-        
+
         // When: Executing with standard policy (2 max attempts)
         let result = try await RepositoryNetwork.withRetry(
             policy: .standard,
             operation: operation
         )
-        
+
         // Then: Should succeed after one retry
         XCTAssertEqual(result, "success")
         XCTAssertEqual(attempts, 2)
     }
-    
+
     // MARK: - Cache Fallback Tests
-    
+
     func testCacheFallbackOnNetworkError() async throws {
         // Given: Cached data exists
         let cacheKey = "test_cache_key"
         let cachedData = TestData(value: "cached")
         try await RepositoryNetwork.offlineCache.save(cachedData, forKey: cacheKey, ttl: 300)
-        
+
         // And: An operation that fails
         let operation: () async throws -> TestData = {
             throw NetworkError.noConnection
         }
-        
+
         // When: Fetching with cache fallback
         let result = try await RepositoryNetwork.fetchWithCache(
             cacheKey: cacheKey,
             operation: operation
         )
-        
+
         // Then: Should return cached data
         XCTAssertEqual(result.value, "cached")
     }
-    
+
     func testCacheFallbackNoCache() async throws {
         // Given: No cached data exists
         let cacheKey = "nonexistent_cache_key"
-        
+
         // And: An operation that fails
         let operation: () async throws -> TestData = {
             throw NetworkError.noConnection
         }
-        
+
         // When/Then: Should throw error (no cache available)
         do {
             _ = try await RepositoryNetwork.fetchWithCache(
@@ -174,7 +174,7 @@ final class RepositoryNetworkTests: XCTestCase {
             XCTAssertEqual(error, .noConnection)
         }
     }
-    
+
     func testCacheUpdateOnSuccess() async throws {
         // Given: A successful operation
         let cacheKey = "test_cache_update"
@@ -182,40 +182,40 @@ final class RepositoryNetworkTests: XCTestCase {
         let operation = {
             return newData
         }
-        
+
         // When: Fetching with cache
         let result = try await RepositoryNetwork.fetchWithCache(
             cacheKey: cacheKey,
             operation: operation
         )
-        
+
         // Then: Should return fresh data
         XCTAssertEqual(result.value, "fresh")
-        
+
         // And: Cache should be updated
         let cached = await RepositoryNetwork.offlineCache.load(TestData.self, forKey: cacheKey)
         XCTAssertEqual(cached?.value, "fresh")
     }
-    
+
     // MARK: - Timeout Tests
-    
+
     func testCustomTimeout() async throws {
         // Given: An operation that takes 2 seconds
         let operation = {
             try await Task.sleep(nanoseconds: 2_000_000_000)
             return "success"
         }
-        
+
         // When: Using extended timeout (15 seconds)
         let result = try await RepositoryNetwork.withRetry(
             timeout: RepositoryNetwork.extendedTimeout,
             operation: operation
         )
-        
+
         // Then: Should succeed
         XCTAssertEqual(result, "success")
     }
-    
+
     func testTimeoutCancelsOperation() async throws {
         // Given: An operation that tracks cancellation
         var wasCancelled = false
@@ -228,7 +228,7 @@ final class RepositoryNetworkTests: XCTestCase {
                 throw CancellationError()
             }
         }
-        
+
         // When: Timing out
         do {
             _ = try await RepositoryNetwork.withRetry(
@@ -243,9 +243,9 @@ final class RepositoryNetworkTests: XCTestCase {
             XCTAssertTrue(error is NetworkError)
         }
     }
-    
+
     // MARK: - Error Type Tests
-    
+
     func testRetryableErrors() async throws {
         let retryableErrors: [NetworkError] = [
             .noConnection,
@@ -254,12 +254,12 @@ final class RepositoryNetworkTests: XCTestCase {
             .serverError(statusCode: 503),
             .rateLimited(retryAfter: 5)
         ]
-        
+
         for error in retryableErrors {
             XCTAssertTrue(error.isRetryable, "\(error) should be retryable")
         }
     }
-    
+
     func testNonRetryableErrors() async throws {
         let nonRetryableErrors: [NetworkError] = [
             .unauthorized,
@@ -269,19 +269,19 @@ final class RepositoryNetworkTests: XCTestCase {
             .invalidResponse,
             .decodingFailed(underlying: NSError(domain: "test", code: 0))
         ]
-        
+
         for error in nonRetryableErrors {
             XCTAssertFalse(error.isRetryable, "\(error) should not be retryable")
         }
     }
-    
+
     // MARK: - Performance Tests
-    
+
     func testNoExponentialTaskGrowth() async throws {
         // Given: Multiple concurrent retry operations
         let operationCount = 10
         var completedOperations = 0
-        
+
         // When: Running operations concurrently
         await withTaskGroup(of: Void.self) { group in
             for i in 0..<operationCount {
@@ -302,13 +302,13 @@ final class RepositoryNetworkTests: XCTestCase {
                 }
             }
         }
-        
+
         // Then: All operations should complete
         XCTAssertEqual(completedOperations, operationCount)
     }
-    
+
     // MARK: - Helper Types
-    
+
     struct TestData: Codable, Equatable {
         let value: String
     }

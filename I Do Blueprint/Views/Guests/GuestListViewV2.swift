@@ -33,7 +33,7 @@ struct GuestListViewV2: View {
                         Label("Import CSV", systemImage: "square.and.arrow.down")
                     }
                 }
-                
+
                 ToolbarItem(placement: .primaryAction) {
                     Button {
                         showingAddGuest = true
@@ -118,7 +118,7 @@ struct GuestListViewV2: View {
     }
 
     // MARK: - Subviews
-    
+
     private var mainContent: some View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
@@ -128,16 +128,16 @@ struct GuestListViewV2: View {
             }
         }
     }
-    
+
     private func leftPanel(geometry: GeometryProxy) -> some View {
         VStack(spacing: 0) {
             if let stats = guestStore.guestStats {
                 ModernStatsView(stats: stats)
                     .padding(Spacing.md)
             }
-            
+
             Divider()
-            
+
             ModernSearchBar(
                 searchText: $searchText,
                 selectedStatus: $selectedStatus,
@@ -148,9 +148,9 @@ struct GuestListViewV2: View {
             )
             .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.sm)
-            
+
             Divider()
-            
+
             guestListView
         }
         .frame(
@@ -159,7 +159,7 @@ struct GuestListViewV2: View {
         )
         .background(AppColors.background)
     }
-    
+
     private var guestListView: some View {
         Group {
             if groupByStatus {
@@ -186,7 +186,7 @@ struct GuestListViewV2: View {
             }
         }
     }
-    
+
     private var rightPanel: some View {
         Group {
             if let selectedGuestId = selectedGuest?.id,
@@ -199,7 +199,7 @@ struct GuestListViewV2: View {
             }
         }
     }
-    
+
     @MainActor
     private func addGuest(_ guest: Guest) async {
         await guestStore.addGuest(guest)

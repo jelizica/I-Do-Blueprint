@@ -394,14 +394,14 @@ struct SeatingAssignment: Identifiable, Codable, Hashable {
         self.tableId = tableId
         self.seatNumber = seatNumber
         assignedAt = Date()
-        
+
         // Get user email from auth context
         if let userEmail = AuthContext.shared.currentUserEmail {
             assignedBy = userEmail
         } else {
             assignedBy = "unknown"
         }
-        
+
         notes = ""
     }
 }

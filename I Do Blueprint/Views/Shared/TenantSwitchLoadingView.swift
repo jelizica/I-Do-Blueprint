@@ -9,13 +9,13 @@ import SwiftUI
 
 struct TenantSwitchLoadingView: View {
     let coupleName: String
-    
+
     var body: some View {
         ZStack {
             // Semi-transparent backdrop
             AppColors.textPrimary.opacity(0.4)
                 .ignoresSafeArea()
-            
+
             // Loading card
             VStack(spacing: 20) {
                 // Progress indicator
@@ -23,13 +23,13 @@ struct TenantSwitchLoadingView: View {
                     .scaleEffect(1.5)
                     .progressViewStyle(.circular)
                     .tint(.white)
-                
+
                 // Main message
                 Text("Switching to \(coupleName)...")
                     .font(.headline)
                     .foregroundColor(AppColors.textPrimary)
                     .multilineTextAlignment(.center)
-                
+
                 // Subtitle
                 Text("Loading wedding data")
                     .font(.subheadline)

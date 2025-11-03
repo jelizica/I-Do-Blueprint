@@ -9,7 +9,7 @@ import Foundation
 
 actor GuestCacheStrategy: CacheInvalidationStrategy {
     private let cache = RepositoryCache.shared
-    
+
     func invalidate(for operation: CacheOperation) async {
         switch operation {
         case .guestCreated(let tenantId),
@@ -21,7 +21,7 @@ actor GuestCacheStrategy: CacheInvalidationStrategy {
             break
         }
     }
-    
+
     private func invalidateGuestCaches(tenantId: UUID) async {
         let id = tenantId.uuidString
         await cache.remove("guests_\(id)")

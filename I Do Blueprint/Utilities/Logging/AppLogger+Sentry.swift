@@ -9,7 +9,7 @@ import Foundation
 import Sentry
 
 extension AppLogger {
-    
+
     /// Log an error and send it to Sentry
     /// - Parameters:
     ///   - message: Error message
@@ -28,21 +28,21 @@ extension AppLogger {
     ) {
         // Log to AppLogger as usual
         self.error(message, error: error, file: file, function: function)
-        
+
         // Also send to Sentry with additional context
         var sentryContext = context ?? [:]
         sentryContext["file"] = file
         sentryContext["function"] = function
         sentryContext["line"] = line
         sentryContext["message"] = message
-        
+
         SentryService.shared.captureError(
             error,
             context: sentryContext,
             level: .error
         )
     }
-    
+
     /// Log a warning and send it to Sentry
     /// - Parameters:
     ///   - message: Warning message
@@ -59,13 +59,13 @@ extension AppLogger {
     ) {
         // Log to AppLogger as usual
         self.warning(message, file: file, function: function)
-        
+
         // Also send to Sentry with additional context
         var sentryContext = context ?? [:]
         sentryContext["file"] = file
         sentryContext["function"] = function
         sentryContext["line"] = line
-        
+
         SentryService.shared.captureMessage(
             message,
             context: sentryContext,
@@ -77,7 +77,7 @@ extension AppLogger {
 // MARK: - Convenience Methods for Common Scenarios
 
 extension AppLogger {
-    
+
     /// Log a repository error with Sentry tracking
     /// - Parameters:
     ///   - operation: The operation that failed (e.g., "fetchGuests", "createExpense")
@@ -91,14 +91,14 @@ extension AppLogger {
         var context = additionalContext ?? [:]
         context["operation"] = operation
         context["errorType"] = String(describing: type(of: error))
-        
+
         errorWithSentry(
             "Repository operation '\(operation)' failed",
             error: error,
             context: context
         )
     }
-    
+
     /// Log a network error with Sentry tracking
     /// - Parameters:
     ///   - endpoint: The API endpoint that failed
@@ -113,18 +113,18 @@ extension AppLogger {
             "endpoint": endpoint,
             "errorType": String(describing: type(of: error))
         ]
-        
+
         if let statusCode = statusCode {
             context["statusCode"] = statusCode
         }
-        
+
         errorWithSentry(
             "Network request to '\(endpoint)' failed",
             error: error,
             context: context
         )
     }
-    
+
     /// Log a data parsing error with Sentry tracking
     /// - Parameters:
     ///   - dataType: The type of data being parsed
@@ -137,7 +137,7 @@ extension AppLogger {
             "dataType": dataType,
             "errorType": String(describing: type(of: error))
         ]
-        
+
         errorWithSentry(
             "Failed to parse \(dataType)",
             error: error,

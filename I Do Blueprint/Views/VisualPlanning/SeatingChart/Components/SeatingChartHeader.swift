@@ -14,7 +14,7 @@ struct SeatingChartHeader: View {
     let onFitToView: () -> Void
     let onSave: () -> Void
     let onClose: () -> Void
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 2) {

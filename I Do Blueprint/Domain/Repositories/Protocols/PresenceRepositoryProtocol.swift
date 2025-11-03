@@ -26,9 +26,9 @@ import Foundation
 /// All methods are async and can be called from any actor context.
 /// The protocol conforms to `Sendable` for safe concurrent access.
 protocol PresenceRepositoryProtocol: Sendable {
-    
+
     // MARK: - Fetch Operations
-    
+
     /// Fetches all active presence records for the current couple
     ///
     /// Returns only non-stale presence records (heartbeat within last 5 minutes).
@@ -37,16 +37,16 @@ protocol PresenceRepositoryProtocol: Sendable {
     /// - Returns: Array of active presence records
     /// - Throws: Repository errors if fetch fails or tenant context is missing
     func fetchActivePresence() async throws -> [Presence]
-    
+
     /// Fetches presence for a specific user
     ///
     /// - Parameter userId: The user ID
     /// - Returns: The user's presence if found
     /// - Throws: Repository errors if fetch fails
     func fetchPresence(userId: UUID) async throws -> Presence?
-    
+
     // MARK: - Presence Management
-    
+
     /// Tracks presence for the current user
     ///
     /// Creates or updates presence record with current status and location.
@@ -65,7 +65,7 @@ protocol PresenceRepositoryProtocol: Sendable {
         currentResourceType: String?,
         currentResourceId: UUID?
     ) async throws -> Presence
-    
+
     /// Updates editing state for the current user
     ///
     /// Marks the user as currently editing a specific resource.
@@ -81,7 +81,7 @@ protocol PresenceRepositoryProtocol: Sendable {
         resourceType: String?,
         resourceId: UUID?
     ) async throws -> Presence
-    
+
     /// Sends a heartbeat to keep presence alive
     ///
     /// Updates the last_heartbeat timestamp to prevent cleanup.
@@ -90,16 +90,16 @@ protocol PresenceRepositoryProtocol: Sendable {
     /// - Returns: The updated presence record
     /// - Throws: Repository errors if operation fails
     func sendHeartbeat() async throws -> Presence
-    
+
     /// Stops tracking presence for the current user
     ///
     /// Sets status to offline and stops heartbeat.
     ///
     /// - Throws: Repository errors if operation fails
     func stopTracking() async throws
-    
+
     // MARK: - Cleanup
-    
+
     /// Manually triggers cleanup of stale presence records
     ///
     /// Removes presence records with no heartbeat in last 5 minutes.

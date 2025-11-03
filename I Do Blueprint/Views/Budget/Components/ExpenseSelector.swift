@@ -6,37 +6,37 @@ struct ExpenseSelector: View {
     @Binding var selectedExpenseId: UUID?
     var alreadyPaid: Double = 0
     var remainingAmount: Double?
-    
+
     private var selectedExpense: Expense? {
         expenses.first { $0.id == selectedExpenseId }
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Expense Selection")
                 .font(.headline)
-            
+
             if expenses.isEmpty {
                 emptyStateView
             } else {
                 expensePickerView
-                
+
                 if let selectedExpense {
                     expenseDetailsView(for: selectedExpense)
                 }
             }
         }
     }
-    
+
     private var emptyStateView: some View {
         VStack(spacing: 12) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.title)
                 .foregroundColor(AppColors.Budget.pending)
-            
+
             Text("No expenses available")
                 .font(.headline)
-            
+
             Text("You need to create budget expenses first before setting up payment plans.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -46,7 +46,7 @@ struct ExpenseSelector: View {
         .background(AppColors.Budget.pending.opacity(0.1))
         .cornerRadius(12)
     }
-    
+
     private var expensePickerView: some View {
         Picker("Select Expense", selection: $selectedExpenseId) {
             Text("Choose an expense").tag(nil as UUID?)
@@ -62,7 +62,7 @@ struct ExpenseSelector: View {
         }
         .pickerStyle(.menu)
     }
-    
+
     private func expenseDetailsView(for expense: Expense) -> some View {
         VStack(spacing: 8) {
             HStack {
@@ -73,14 +73,14 @@ struct ExpenseSelector: View {
                     .font(.title3)
                     .fontWeight(.semibold)
             }
-            
+
             HStack {
                 Text("Already Paid")
                 Spacer()
                 Text(NumberFormatter.currency.string(from: NSNumber(value: alreadyPaid)) ?? "$0")
                     .foregroundColor(AppColors.Budget.income)
             }
-            
+
             HStack {
                 Text("Remaining")
                 Spacer()

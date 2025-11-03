@@ -9,7 +9,7 @@ import Foundation
 
 actor TimelineCacheStrategy: CacheInvalidationStrategy {
     private let cache = RepositoryCache.shared
-    
+
     func invalidate(for operation: CacheOperation) async {
         switch operation {
         case .timelineItemCreated(let tenantId), .timelineItemUpdated(let tenantId), .timelineItemDeleted(let tenantId):
@@ -19,13 +19,13 @@ actor TimelineCacheStrategy: CacheInvalidationStrategy {
         default: break
         }
     }
-    
+
     private func invalidateTimelineCaches(tenantId: UUID) async {
         let id = tenantId.uuidString
         await cache.remove("timeline_items_\(id)")
         await cache.remove("timeline_stats_\(id)")
     }
-    
+
     private func invalidateMilestoneCaches(tenantId: UUID) async {
         let id = tenantId.uuidString
         await cache.remove("milestones_\(id)")

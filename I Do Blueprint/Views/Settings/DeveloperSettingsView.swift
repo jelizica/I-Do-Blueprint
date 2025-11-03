@@ -117,7 +117,7 @@ struct DeveloperSettingsView: View {
                 #endif
             }
             .navigationTitle("Developer Settings")
-            
+
             #if DEBUG
             .toolbar {
                 ToolbarItem(placement: .automatic) {

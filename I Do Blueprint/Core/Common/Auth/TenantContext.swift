@@ -10,7 +10,7 @@ import Foundation
 /// Errors related to tenant context access
 enum TenantContextError: LocalizedError {
     case noTenantContext
-    
+
     var errorDescription: String? {
         switch self {
         case .noTenantContext:
@@ -22,26 +22,26 @@ enum TenantContextError: LocalizedError {
 /// Actor providing thread-safe access to the current tenant (couple) ID
 actor TenantContextProvider {
     static let shared = TenantContextProvider()
-    
+
     private var currentTenantId: UUID?
-    
+
     // MARK: - Accessors
     func getTenantId() -> UUID? {
         currentTenantId
     }
-    
+
     func requireTenantId() throws -> UUID {
         guard let id = currentTenantId else {
             throw TenantContextError.noTenantContext
         }
         return id
     }
-    
+
     // MARK: - Mutators
     func setTenantId(_ id: UUID) {
         currentTenantId = id
     }
-    
+
     func clear() {
         currentTenantId = nil
     }

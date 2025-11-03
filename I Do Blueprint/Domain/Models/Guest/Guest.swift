@@ -251,7 +251,7 @@ extension Guest {
     var avatarIdentifier: String {
         fullName
     }
-    
+
     /// Fetch avatar image for this guest
     /// - Parameter size: Desired image size (default 100x100)
     /// - Returns: NSImage of the avatar

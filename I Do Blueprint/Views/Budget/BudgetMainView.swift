@@ -10,9 +10,9 @@ struct BudgetMainView: View {
             // Sidebar with all navigation items (all 12 views accessible)
             BudgetSidebarView(selection: $selectedItem)
                 .frame(width: 240)
-            
+
             Divider()
-            
+
             // Content area - all 12 views preserved
             Group {
                 switch selectedItem {

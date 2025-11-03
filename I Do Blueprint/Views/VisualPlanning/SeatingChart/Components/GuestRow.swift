@@ -12,7 +12,7 @@ struct GuestRow: View {
     let assignedTable: Table?
     let onAssign: () -> Void
     let onUnassign: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Guest avatar/initials
@@ -20,32 +20,32 @@ struct GuestRow: View {
                 Circle()
                     .fill(guest.relationship.color.opacity(0.2))
                     .frame(width: 40, height: 40)
-                
+
                 Text(guest.initials)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(guest.relationship.color)
             }
-            
+
             // Guest info
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(guest.fullName)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    
+
                     if guest.isVIP {
                         Image(systemName: "star.fill")
                             .font(.system(size: 10))
                             .foregroundColor(.yellow)
                     }
-                    
+
                     if guest.plusOne != nil {
                         Image(systemName: "person.2.fill")
                             .font(.system(size: 10))
                             .foregroundColor(.blue)
                     }
                 }
-                
+
                 HStack(spacing: 8) {
                     // Relationship badge
                     Text(guest.relationship.displayName)
@@ -55,14 +55,14 @@ struct GuestRow: View {
                         .background(guest.relationship.color.opacity(0.2))
                         .foregroundColor(guest.relationship.color)
                         .cornerRadius(4)
-                    
+
                     // Group badge
                     if let group = guest.group {
                         Text(group)
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     // Dietary restrictions icon
                     if !guest.dietaryRestrictions.isEmpty {
                         Image(systemName: "leaf.fill")
@@ -70,7 +70,7 @@ struct GuestRow: View {
                             .foregroundColor(.green)
                             .help(guest.dietaryRestrictions)
                     }
-                    
+
                     // Accessibility icon
                     if let accessibility = guest.accessibility,
                        accessibility.wheelchairAccessible || accessibility.mobilityLimited {
@@ -81,9 +81,9 @@ struct GuestRow: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Assignment status and actions
             if let table = assignedTable {
                 HStack(spacing: 8) {
@@ -92,14 +92,14 @@ struct GuestRow: View {
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.green)
-                        
+
                         if let tableName = table.tableName {
                             Text(tableName)
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    
+
                     Button(action: onUnassign) {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 16))
@@ -121,7 +121,7 @@ struct GuestRow: View {
                 .buttonStyle(.plain)
                 .help("Assign to table")
             }
-            
+
             // Drag handle
             Image(systemName: "line.3.horizontal")
                 .font(.system(size: 12))
@@ -156,7 +156,7 @@ struct GuestRow: View {
             onAssign: { print("Assign tapped") },
             onUnassign: { print("Unassign tapped") }
         )
-        
+
         // Assigned VIP guest with plus-one
         GuestRow(
             guest: {
@@ -176,7 +176,7 @@ struct GuestRow: View {
             onAssign: { print("Assign tapped") },
             onUnassign: { print("Unassign tapped") }
         )
-        
+
         // Guest with accessibility needs
         GuestRow(
             guest: {

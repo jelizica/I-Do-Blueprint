@@ -61,15 +61,15 @@ class ExternalIntegrationsService: ObservableObject {
     }
 
     // MARK: - API Key Access (Secure)
-    
+
     private func getUnsplashAPIKey() -> String? {
         return apiKeyManager.getAPIKey(for: .unsplash)
     }
-    
+
     private func getPinterestAPIKey() -> String? {
         return apiKeyManager.getAPIKey(for: .pinterest)
     }
-    
+
     private func getVendorAPIKey() -> String? {
         return apiKeyManager.getAPIKey(for: .vendor)
     }
@@ -97,7 +97,7 @@ class ExternalIntegrationsService: ObservableObject {
         guard let apiKey = getUnsplashAPIKey() else {
             throw IntegrationError.apiKeyNotConfigured(service: "Unsplash")
         }
-        
+
         guard connectionStatus[.unsplash] == .connected else {
             throw IntegrationError.notConnected("Unsplash")
         }
@@ -160,7 +160,7 @@ class ExternalIntegrationsService: ObservableObject {
         guard let _ = getPinterestAPIKey() else {
             throw IntegrationError.apiKeyNotConfigured(service: "Pinterest")
         }
-        
+
         guard connectionStatus[.pinterest] == .connected else {
             throw IntegrationError.notConnected("Pinterest")
         }

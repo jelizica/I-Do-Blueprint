@@ -14,7 +14,7 @@ struct SeatingChartSidebar: View {
     @Binding var editingTableId: UUID?
     @Binding var showingTableEditor: Bool
     @Binding var showingGuestImport: Bool
-    
+
     let onEditTable: (Table) -> Void
     let onDeleteTable: (Table) -> Void
     let onAddTable: () -> Void
@@ -30,14 +30,14 @@ struct SeatingChartSidebar: View {
     let loadAvailableGuests: () -> [SeatingGuest]
     let importGuests: ([SeatingGuest]) -> Void
     let calculateAnalytics: () -> SeatingAnalytics
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Tab Selection
             tabSelectionSection
-            
+
             Divider()
-            
+
             // Tab Content
             switch selectedTab {
             case .layout:
@@ -54,9 +54,9 @@ struct SeatingChartSidebar: View {
         }
         .frame(minWidth: 320, idealWidth: 360)
     }
-    
+
     // MARK: - Tab Selection
-    
+
     private var tabSelectionSection: some View {
         VStack(spacing: 8) {
             ForEach(EditorTab.allCases, id: \.self) { tab in
@@ -72,7 +72,7 @@ struct SeatingChartSidebar: View {
         }
         .padding(Spacing.md)
     }
-    
+
     private func getTabCount(for tab: EditorTab) -> Int? {
         switch tab {
         case .layout:
@@ -87,9 +87,9 @@ struct SeatingChartSidebar: View {
             nil
         }
     }
-    
+
     // MARK: - Layout Tab
-    
+
     private var layoutTabContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -183,9 +183,9 @@ struct SeatingChartSidebar: View {
             .padding()
         }
     }
-    
+
     // MARK: - Tables Tab
-    
+
     private var tablesTabContent: some View {
         VStack(spacing: 0) {
             // Header
@@ -223,9 +223,9 @@ struct SeatingChartSidebar: View {
             }
         }
     }
-    
+
     // MARK: - Guests Tab
-    
+
     private var guestsTabContent: some View {
         VStack(spacing: 0) {
             // Header
@@ -271,9 +271,9 @@ struct SeatingChartSidebar: View {
             )
         }
     }
-    
+
     // MARK: - Assignments Tab
-    
+
     private var assignmentsTabContent: some View {
         VStack(spacing: 0) {
             // Header
@@ -336,14 +336,14 @@ struct SeatingChartSidebar: View {
             }
         }
     }
-    
+
     private func getAssignmentProgress() -> Double {
         guard !editableChart.guests.isEmpty else { return 0 }
         return Double(editableChart.seatingAssignments.count) / Double(editableChart.guests.count)
     }
-    
+
     // MARK: - Analytics Tab
-    
+
     private var analyticsTabContent: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -418,7 +418,7 @@ struct SeatingChartSidebar: View {
         tenantId: "sample",
         chartName: "Wedding Reception",
         eventId: nil)
-    
+
     SeatingChartSidebar(
         editableChart: .constant(sampleChart),
         selectedTab: .constant(.layout),

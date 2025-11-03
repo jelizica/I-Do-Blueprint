@@ -14,7 +14,7 @@ struct RecentCouple: Codable, Identifiable, Equatable {
     let displayName: String
     let weddingDate: Date?
     let lastAccessedAt: Date
-    
+
     /// Creates a new recent couple entry
     init(id: UUID, displayName: String, weddingDate: Date?, lastAccessedAt: Date = Date()) {
         self.id = id
@@ -22,7 +22,7 @@ struct RecentCouple: Codable, Identifiable, Equatable {
         self.weddingDate = weddingDate
         self.lastAccessedAt = lastAccessedAt
     }
-    
+
     /// Formatted wedding date string for display
     var formattedWeddingDate: String? {
         guard let weddingDate = weddingDate else { return nil }
@@ -30,7 +30,7 @@ struct RecentCouple: Codable, Identifiable, Equatable {
         formatter.dateStyle = .medium
         return formatter.string(from: weddingDate)
     }
-    
+
     /// Relative time since last access (e.g., "2 hours ago")
     var relativeAccessTime: String {
         let formatter = RelativeDateTimeFormatter()

@@ -13,7 +13,7 @@ struct InlineLoadingStateView<Content: View, Data>: View {
     let state: LoadingState<Data>
     let content: (Data) -> Content
     let errorIcon: String
-    
+
     init(
         state: LoadingState<Data>,
         errorIcon: String = "exclamationmark.circle.fill",
@@ -23,7 +23,7 @@ struct InlineLoadingStateView<Content: View, Data>: View {
         self.errorIcon = errorIcon
         self.content = content
     }
-    
+
     var body: some View {
         ZStack {
             switch state {
@@ -31,10 +31,10 @@ struct InlineLoadingStateView<Content: View, Data>: View {
                 ProgressView()
                     .scaleEffect(0.8)
                     .accessibilityLabel("Loading")
-                
+
             case .loaded(let data):
                 content(data)
-                
+
             case .error(let error):
                 Image(systemName: errorIcon)
                     .foregroundColor(.red)

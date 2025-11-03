@@ -24,7 +24,7 @@ struct Presence: Identifiable, Codable, Sendable, Hashable {
     var editingResourceId: UUID?
     var lastHeartbeat: Date
     var metadata: [String: String]
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"
@@ -42,12 +42,12 @@ struct Presence: Identifiable, Codable, Sendable, Hashable {
         case lastHeartbeat = "last_heartbeat"
         case metadata
     }
-    
+
     /// Check if presence is stale (no heartbeat in last 5 minutes)
     var isStale: Bool {
         Date().timeIntervalSince(lastHeartbeat) > 300 // 5 minutes
     }
-    
+
     /// Check if user is currently online
     var isOnline: Bool {
         status == .online && !isStale

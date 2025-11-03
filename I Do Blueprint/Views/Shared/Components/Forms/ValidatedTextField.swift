@@ -15,11 +15,11 @@ struct ValidatedTextField: View {
     let validation: ValidationRule?
     let isRequired: Bool
     let autocorrection: Bool
-    
+
     @State private var errorMessage: String?
     @State private var hasBeenEdited: Bool = false
     @FocusState private var isFocused: Bool
-    
+
     init(
         label: String,
         text: Binding<String>,
@@ -35,7 +35,7 @@ struct ValidatedTextField: View {
         self.isRequired = isRequired
         self.autocorrection = autocorrection
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Label with required indicator
@@ -43,14 +43,14 @@ struct ValidatedTextField: View {
                 Text(label)
                     .font(Typography.subheading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if isRequired {
                     Text("*")
                         .font(Typography.subheading)
                         .foregroundColor(AppColors.error)
                 }
             }
-            
+
             // Text field
             TextField(placeholder, text: $text)
                 .textFieldStyle(.roundedBorder)
@@ -71,7 +71,7 @@ struct ValidatedTextField: View {
                     RoundedRectangle(cornerRadius: 6)
                         .stroke(errorMessage != nil ? AppColors.error : Color.clear, lineWidth: 1)
                 )
-            
+
             // Error message
             if let error = errorMessage {
                 HStack(spacing: 4) {
@@ -90,19 +90,19 @@ struct ValidatedTextField: View {
             isRequired: isRequired
         )
     }
-    
+
     private func validate() {
         guard let validation = validation else {
             errorMessage = nil
             return
         }
-        
+
         let result = validation.validate(text)
         withAnimation(AnimationStyle.fast) {
             errorMessage = result.errorMessage
         }
     }
-    
+
     /// Public method to trigger validation
     func performValidation() -> Bool {
         validate()
@@ -120,11 +120,11 @@ struct ValidatedTextEditor: View {
     let validation: ValidationRule?
     let isRequired: Bool
     let minHeight: CGFloat
-    
+
     @State private var errorMessage: String?
     @State private var hasBeenEdited: Bool = false
     @FocusState private var isFocused: Bool
-    
+
     init(
         label: String,
         text: Binding<String>,
@@ -140,7 +140,7 @@ struct ValidatedTextEditor: View {
         self.isRequired = isRequired
         self.minHeight = minHeight
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             // Label with required indicator
@@ -148,14 +148,14 @@ struct ValidatedTextEditor: View {
                 Text(label)
                     .font(Typography.subheading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if isRequired {
                     Text("*")
                         .font(Typography.subheading)
                         .foregroundColor(AppColors.error)
                 }
             }
-            
+
             // Text editor with placeholder
             ZStack(alignment: .topLeading) {
                 if text.isEmpty {
@@ -165,7 +165,7 @@ struct ValidatedTextEditor: View {
                         .padding(.horizontal, Spacing.xs)
                         .padding(.vertical, Spacing.sm)
                 }
-                
+
                 TextEditor(text: $text)
                     .font(Typography.bodyRegular)
                     .focused($isFocused)
@@ -189,7 +189,7 @@ struct ValidatedTextEditor: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(errorMessage != nil ? AppColors.error : AppColors.border, lineWidth: 1)
             )
-            
+
             // Error message
             if let error = errorMessage {
                 HStack(spacing: 4) {
@@ -208,13 +208,13 @@ struct ValidatedTextEditor: View {
             isRequired: isRequired
         )
     }
-    
+
     private func validate() {
         guard let validation = validation else {
             errorMessage = nil
             return
         }
-        
+
         let result = validation.validate(text)
         withAnimation(AnimationStyle.fast) {
             errorMessage = result.errorMessage
@@ -226,7 +226,7 @@ struct ValidatedTextEditor: View {
 
 #Preview("Required Text Field") {
     @Previewable @State var text = ""
-    
+
     ValidatedTextField(
         label: "Name",
         text: $text,
@@ -239,7 +239,7 @@ struct ValidatedTextEditor: View {
 
 #Preview("Email Field") {
     @Previewable @State var email = ""
-    
+
     ValidatedTextField(
         label: "Email",
         text: $email,
@@ -253,7 +253,7 @@ struct ValidatedTextEditor: View {
 
 #Preview("Phone Field") {
     @Previewable @State var phone = ""
-    
+
     ValidatedTextField(
         label: "Phone",
         text: $phone,
@@ -266,7 +266,7 @@ struct ValidatedTextEditor: View {
 
 #Preview("Text Editor") {
     @Previewable @State var notes = ""
-    
+
     ValidatedTextEditor(
         label: "Notes",
         text: $notes,
@@ -283,7 +283,7 @@ struct ValidatedTextEditor: View {
     @Previewable @State var email = ""
     @Previewable @State var phone = ""
     @Previewable @State var notes = ""
-    
+
     Form {
         Section("Contact Information") {
             ValidatedTextField(
@@ -293,7 +293,7 @@ struct ValidatedTextEditor: View {
                 validation: .requiredName,
                 isRequired: true
             )
-            
+
             ValidatedTextField(
                 label: "Email",
                 text: $email,
@@ -302,7 +302,7 @@ struct ValidatedTextEditor: View {
                 isRequired: true,
                 autocorrection: false
             )
-            
+
             ValidatedTextField(
                 label: "Phone",
                 text: $phone,
@@ -310,7 +310,7 @@ struct ValidatedTextEditor: View {
                 validation: PhoneRule()
             )
         }
-        
+
         Section("Additional Information") {
             ValidatedTextEditor(
                 label: "Notes",

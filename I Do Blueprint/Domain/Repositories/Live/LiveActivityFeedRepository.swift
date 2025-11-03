@@ -20,7 +20,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
     convenience init() {
         self.init(supabase: SupabaseManager.shared.client)
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
@@ -33,7 +33,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
     }
 
     // MARK: - Fetch Operations
-    
+
     func fetchActivities(limit: Int = 50, offset: Int = 0) async throws -> [ActivityEvent] {
         do {
             let client = try getClient()
@@ -62,10 +62,10 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             }
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Cache for 30 seconds
             await RepositoryCache.shared.set(cacheKey, value: activities, ttl: 30)
-            
+
             await PerformanceMonitor.shared.recordOperation("fetchActivities", duration: duration)
 
             logger.info("Fetched \(activities.count) activities in \(String(format: "%.2f", duration))s")
@@ -81,7 +81,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             throw ActivityFeedError.fetchFailed(underlying: error)
         }
     }
-    
+
     func fetchActivities(actionType: ActionType, limit: Int = 50) async throws -> [ActivityEvent] {
         do {
             let client = try getClient()
@@ -115,7 +115,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             throw ActivityFeedError.fetchFailed(underlying: error)
         }
     }
-    
+
     func fetchActivities(resourceType: ResourceType, limit: Int = 50) async throws -> [ActivityEvent] {
         do {
             let client = try getClient()
@@ -149,7 +149,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             throw ActivityFeedError.fetchFailed(underlying: error)
         }
     }
-    
+
     func fetchActivities(actorId: UUID, limit: Int = 50) async throws -> [ActivityEvent] {
         do {
             let client = try getClient()
@@ -183,7 +183,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             throw ActivityFeedError.fetchFailed(underlying: error)
         }
     }
-    
+
     func fetchUnreadCount() async throws -> Int {
         do {
             let client = try getClient()
@@ -212,10 +212,10 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
 
             let count = result.count
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Cache for 10 seconds
             await RepositoryCache.shared.set(cacheKey, value: count, ttl: 10)
-            
+
             await PerformanceMonitor.shared.recordOperation("fetchUnreadCount", duration: duration)
 
             logger.info("Fetched unread count: \(count) in \(String(format: "%.2f", duration))s")
@@ -231,7 +231,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
     }
 
     // MARK: - Update Operations
-    
+
     func markAsRead(id: UUID) async throws -> ActivityEvent {
         do {
             let client = try getClient()
@@ -241,7 +241,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             struct UpdatePayload: Encodable {
                 let is_read: Bool
             }
-            
+
             let updates = UpdatePayload(is_read: true)
 
             let updated: ActivityEvent = try await RepositoryNetwork.withRetry {
@@ -261,7 +261,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
 
             let duration = Date().timeIntervalSince(startTime)
             await PerformanceMonitor.shared.recordOperation("markAsRead", duration: duration)
-            
+
             logger.info("Marked activity as read in \(String(format: "%.2f", duration))s")
 
             return updated
@@ -274,7 +274,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             throw ActivityFeedError.updateFailed(underlying: error)
         }
     }
-    
+
     func markAllAsRead() async throws -> Int {
         do {
             let client = try getClient()
@@ -284,7 +284,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             struct UpdatePayload: Encodable {
                 let is_read: Bool
             }
-            
+
             let updates = UpdatePayload(is_read: true)
 
             // Update all unread activities
@@ -305,7 +305,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
 
             let duration = Date().timeIntervalSince(startTime)
             await PerformanceMonitor.shared.recordOperation("markAllAsRead", duration: duration)
-            
+
             logger.info("Marked all activities as read in \(String(format: "%.2f", duration))s")
 
             return count
@@ -319,7 +319,7 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
     }
 
     // MARK: - Statistics
-    
+
     func fetchActivityStats() async throws -> ActivityStats {
         do {
             let client = try getClient()
@@ -339,19 +339,19 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             let activities = try await fetchActivities(limit: 1000, offset: 0)
 
             let totalActivities = activities.count
-            
+
             // Count by action type
             var activitiesByAction: [ActionType: Int] = [:]
             for activity in activities {
                 activitiesByAction[activity.actionType, default: 0] += 1
             }
-            
+
             // Count by resource type
             var activitiesByResource: [ResourceType: Int] = [:]
             for activity in activities {
                 activitiesByResource[activity.resourceType, default: 0] += 1
             }
-            
+
             // Count recent activities (last 24 hours)
             let oneDayAgo = Date().addingTimeInterval(-86400)
             let recentActivityCount = activities.filter { $0.createdAt > oneDayAgo }.count
@@ -364,10 +364,10 @@ actor LiveActivityFeedRepository: ActivityFeedRepositoryProtocol {
             )
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Cache for 1 minute
             await RepositoryCache.shared.set(cacheKey, value: stats, ttl: 60)
-            
+
             await PerformanceMonitor.shared.recordOperation("fetchActivityStats", duration: duration)
 
             logger.info("Calculated activity stats in \(String(format: "%.2f", duration))s")
@@ -389,7 +389,7 @@ enum ActivityFeedError: Error, LocalizedError {
     case fetchFailed(underlying: Error)
     case updateFailed(underlying: Error)
     case tenantContextMissing
-    
+
     var errorDescription: String? {
         switch self {
         case .fetchFailed(let error):

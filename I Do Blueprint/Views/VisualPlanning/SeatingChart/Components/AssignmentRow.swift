@@ -13,9 +13,9 @@ struct SeatingAssignmentRow: View {
     let table: Table
     let onEdit: () -> Void
     let onRemove: () -> Void
-    
+
     @State private var showingRemoveConfirmation = false
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Guest avatar
@@ -23,55 +23,55 @@ struct SeatingAssignmentRow: View {
                 Circle()
                     .fill(guest.relationship.color.opacity(0.2))
                     .frame(width: 36, height: 36)
-                
+
                 Text(guest.initials)
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(guest.relationship.color)
             }
-            
+
             // Guest and table info
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
                     Text(guest.fullName)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    
+
                     if guest.isVIP {
                         Image(systemName: "star.fill")
                             .font(.system(size: 9))
                             .foregroundColor(.yellow)
                     }
                 }
-                
+
                 HStack(spacing: 8) {
                     // Table info
                     HStack(spacing: 4) {
                         Image(systemName: "tablecells")
                             .font(.system(size: 10))
                             .foregroundColor(.blue)
-                        
+
                         Text("Table \(table.tableNumber)")
                             .font(.caption)
                             .foregroundColor(.blue)
                     }
-                    
+
                     // Seat number if assigned
                     if let seatNumber = assignment.seatNumber {
                         Text("•")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Text("Seat \(seatNumber)")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     // Notes indicator
                     if !assignment.notes.isEmpty {
                         Text("•")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        
+
                         Image(systemName: "note.text")
                             .font(.system(size: 10))
                             .foregroundColor(.orange)
@@ -79,20 +79,20 @@ struct SeatingAssignmentRow: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Assignment metadata
             VStack(alignment: .trailing, spacing: 2) {
                 Text(assignment.assignedAt, style: .date)
                     .font(.caption2)
                     .foregroundColor(.secondary)
-                
+
                 Text(assignment.assignedBy)
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
-            
+
             // Action buttons
             HStack(spacing: 8) {
                 Button(action: onEdit) {
@@ -102,7 +102,7 @@ struct SeatingAssignmentRow: View {
                 }
                 .buttonStyle(.plain)
                 .help("Edit assignment")
-                
+
                 Button(action: { showingRemoveConfirmation = true }) {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 18))
@@ -151,7 +151,7 @@ struct SeatingAssignmentRow: View {
             onEdit: { print("Edit tapped") },
             onRemove: { print("Remove tapped") }
         )
-        
+
         // VIP assignment with notes
         SeatingAssignmentRow(
             assignment: {
@@ -179,7 +179,7 @@ struct SeatingAssignmentRow: View {
             onEdit: { print("Edit tapped") },
             onRemove: { print("Remove tapped") }
         )
-        
+
         // Assignment without seat number
         SeatingAssignmentRow(
             assignment: SeatingAssignment(

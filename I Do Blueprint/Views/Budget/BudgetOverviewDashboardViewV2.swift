@@ -79,9 +79,9 @@ struct BudgetOverviewDashboardViewV2: View {
                 logger.error("Tenant change notification missing tenant ID")
                 return
             }
-            
+
             logger.info("Budget Overview: Received tenant change to \(newTenantIdString)")
-            
+
             // Reset state when tenant changes
             selectedScenarioId = ""
             budgetItems = []
@@ -92,34 +92,34 @@ struct BudgetOverviewDashboardViewV2: View {
             searchQuery = ""
             debouncedSearchQuery = ""
             activeFilters = []
-            
+
             // Reload data for new tenant with validation
             Task {
                 // Add small delay to ensure cache invalidation completes
                 try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-                
+
                 await loadInitialData()
-                
+
                 // Verify we loaded the correct tenant's data
                 guard let currentTenantId = SessionManager.shared.getTenantId(),
                       currentTenantId == newTenantId else {
                     logger.error("Budget Overview: Loaded data for wrong tenant! Expected \(newTenantIdString), retrying...")
-                    
+
                     // Retry with longer delay
                     try? await Task.sleep(nanoseconds: 200_000_000) // 0.2 seconds
                     await loadInitialData()
-                    
+
                     // Final validation
                     guard let finalTenantId = SessionManager.shared.getTenantId(),
                           finalTenantId == newTenantId else {
                         logger.error("Budget Overview: Still loading wrong tenant data after retry!")
                         return
                     }
-                    
+
                     logger.info("Budget Overview: Successfully loaded correct tenant data after retry")
                     return
                 }
-                
+
                 logger.info("Budget Overview: Successfully loaded data for tenant \(newTenantIdString)")
             }
         }
@@ -353,7 +353,7 @@ struct BudgetOverviewDashboardViewV2: View {
     private func handleScenarioChange(_ scenarioId: String) async {
         // Guard against feedback loops
         guard selectedScenarioId != scenarioId else { return }
-        
+
         selectedScenarioId = scenarioId
         activeFilters = []
         searchQuery = ""
@@ -410,7 +410,7 @@ struct BudgetOverviewDashboardViewV2: View {
             return
         }
 
-        
+
         do {
             try await budgetStore.unlinkGift(budgetItemId: itemId)
             logger.info("Gift unlinked successfully")

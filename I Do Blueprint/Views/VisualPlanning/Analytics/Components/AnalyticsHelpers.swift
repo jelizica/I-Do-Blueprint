@@ -10,7 +10,7 @@ import Foundation
 // MARK: - Analytics Helpers
 
 extension AnalyticsDashboardView {
-    
+
     func calculateTrend(for type: MetricType) -> TrendDirection {
         let recentActivity = analyticsService.dashboardData.overview.recentActivity
         guard recentActivity.count >= 2 else { return .stable }

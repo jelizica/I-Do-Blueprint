@@ -11,9 +11,9 @@ import Foundation
 struct ValidationResult {
     let isValid: Bool
     let errorMessage: String?
-    
+
     static let valid = ValidationResult(isValid: true, errorMessage: nil)
-    
+
     static func invalid(_ message: String) -> ValidationResult {
         ValidationResult(isValid: false, errorMessage: message)
     }
@@ -29,11 +29,11 @@ protocol ValidationRule {
 /// Validates that a field is not empty
 struct RequiredRule: ValidationRule {
     let fieldName: String
-    
+
     init(fieldName: String = "This field") {
         self.fieldName = fieldName
     }
-    
+
     func validate(_ value: String) -> ValidationResult {
         if value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return .invalid("\(fieldName) is required")
@@ -47,7 +47,7 @@ struct EmailRule: ValidationRule {
     func validate(_ value: String) -> ValidationResult {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let predicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        
+
         if !predicate.evaluate(with: value) {
             return .invalid("Please enter a valid email address")
         }
@@ -59,12 +59,12 @@ struct EmailRule: ValidationRule {
 struct MinLengthRule: ValidationRule {
     let minLength: Int
     let fieldName: String
-    
+
     init(minLength: Int, fieldName: String = "This field") {
         self.minLength = minLength
         self.fieldName = fieldName
     }
-    
+
     func validate(_ value: String) -> ValidationResult {
         if value.count < minLength {
             return .invalid("\(fieldName) must be at least \(minLength) characters")
@@ -77,12 +77,12 @@ struct MinLengthRule: ValidationRule {
 struct MaxLengthRule: ValidationRule {
     let maxLength: Int
     let fieldName: String
-    
+
     init(maxLength: Int, fieldName: String = "This field") {
         self.maxLength = maxLength
         self.fieldName = fieldName
     }
-    
+
     func validate(_ value: String) -> ValidationResult {
         if value.count > maxLength {
             return .invalid("\(fieldName) must be no more than \(maxLength) characters")
@@ -96,7 +96,7 @@ struct PhoneRule: ValidationRule {
     func validate(_ value: String) -> ValidationResult {
         // Remove common formatting characters
         let cleaned = value.replacingOccurrences(of: "[^0-9]", with: "", options: .regularExpression)
-        
+
         // Check if it's a valid length (10-15 digits)
         if cleaned.count < 10 || cleaned.count > 15 {
             return .invalid("Please enter a valid phone number")
@@ -121,18 +121,18 @@ struct URLRule: ValidationRule {
 struct NumericRule: ValidationRule {
     let allowDecimal: Bool
     let allowNegative: Bool
-    
+
     init(allowDecimal: Bool = true, allowNegative: Bool = false) {
         self.allowDecimal = allowDecimal
         self.allowNegative = allowNegative
     }
-    
+
     func validate(_ value: String) -> ValidationResult {
         let pattern = allowDecimal ? "[0-9]*\\.?[0-9]+" : "[0-9]+"
         let fullPattern = allowNegative ? "-?\(pattern)" : pattern
-        
+
         let predicate = NSPredicate(format: "SELF MATCHES %@", fullPattern)
-        
+
         if !predicate.evaluate(with: value) {
             return .invalid("Please enter a valid number")
         }
@@ -144,28 +144,28 @@ struct NumericRule: ValidationRule {
 struct CurrencyRule: ValidationRule {
     let minAmount: Double?
     let maxAmount: Double?
-    
+
     init(minAmount: Double? = nil, maxAmount: Double? = nil) {
         self.minAmount = minAmount
         self.maxAmount = maxAmount
     }
-    
+
     func validate(_ value: String) -> ValidationResult {
         // Remove currency symbols and commas
         let cleaned = value.replacingOccurrences(of: "[^0-9.]", with: "", options: .regularExpression)
-        
+
         guard let amount = Double(cleaned) else {
             return .invalid("Please enter a valid amount")
         }
-        
+
         if let min = minAmount, amount < min {
             return .invalid("Amount must be at least $\(String(format: "%.2f", min))")
         }
-        
+
         if let max = maxAmount, amount > max {
             return .invalid("Amount must be no more than $\(String(format: "%.2f", max))")
         }
-        
+
         return .valid
     }
 }
@@ -173,15 +173,15 @@ struct CurrencyRule: ValidationRule {
 /// Validates date format
 struct DateRule: ValidationRule {
     let format: String
-    
+
     init(format: String = "MM/dd/yyyy") {
         self.format = format
     }
-    
+
     func validate(_ value: String) -> ValidationResult {
         let formatter = DateFormatter()
         formatter.dateFormat = format
-        
+
         if formatter.date(from: value) == nil {
             return .invalid("Please enter a valid date (\(format))")
         }
@@ -194,11 +194,11 @@ struct DateRule: ValidationRule {
 /// Combines multiple validation rules
 struct CompositeRule: ValidationRule {
     let rules: [ValidationRule]
-    
+
     init(rules: [ValidationRule]) {
         self.rules = rules
     }
-    
+
     func validate(_ value: String) -> ValidationResult {
         for rule in rules {
             let result = rule.validate(value)
@@ -229,7 +229,7 @@ extension ValidationRule where Self == CompositeRule {
             EmailRule()
         ])
     }
-    
+
     /// Required phone validation
     static var requiredPhone: ValidationRule {
         CompositeRule(rules: [
@@ -237,7 +237,7 @@ extension ValidationRule where Self == CompositeRule {
             PhoneRule()
         ])
     }
-    
+
     /// Required URL validation
     static var requiredURL: ValidationRule {
         CompositeRule(rules: [
@@ -245,7 +245,7 @@ extension ValidationRule where Self == CompositeRule {
             URLRule()
         ])
     }
-    
+
     /// Required name validation (2-50 characters)
     static var requiredName: ValidationRule {
         CompositeRule(rules: [
@@ -254,7 +254,7 @@ extension ValidationRule where Self == CompositeRule {
             MaxLengthRule(maxLength: 50, fieldName: "Name")
         ])
     }
-    
+
     /// Required currency validation (positive amounts only)
     static var requiredCurrency: ValidationRule {
         CompositeRule(rules: [

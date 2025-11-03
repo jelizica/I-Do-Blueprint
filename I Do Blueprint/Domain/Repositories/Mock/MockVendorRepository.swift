@@ -130,27 +130,27 @@ class MockVendorRepository: VendorRepositoryProtocol, @unchecked Sendable {
         details.contractInfo = try? await fetchVendorContractSummary(vendorId: id)
         return details
     }
-    
+
     // MARK: - Vendor Types
-    
+
     var vendorTypes: [VendorType] = []
-    
+
     func fetchVendorTypes() async throws -> [VendorType] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         return vendorTypes
     }
-    
+
     // MARK: - Bulk Import Operations
-    
+
     var importVendorsCalled = false
     var importedVendors: [Vendor] = []
-    
+
     func importVendors(_ vendors: [VendorImportData]) async throws -> [Vendor] {
         importVendorsCalled = true
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
-        
+
         // Convert VendorImportData to Vendor objects with mock IDs
         let now = Date()
         let imported = vendors.enumerated().map { index, importData in
@@ -185,11 +185,11 @@ class MockVendorRepository: VendorRepositoryProtocol, @unchecked Sendable {
                 longitude: importData.longitude
             )
         }
-        
+
         // Add to vendors array
         self.vendors.append(contentsOf: imported)
         self.importedVendors = imported
-        
+
         return imported
     }
 

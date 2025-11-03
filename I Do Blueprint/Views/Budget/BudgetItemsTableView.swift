@@ -506,5 +506,5 @@ struct EventDropdownView: View {
         onAddCategory: { _, _ in },
         onAddSubcategory: { _, _ in },
         onAddEvent: { _, _ in },
-        responsibleOptions: ["Partner 1", "Partner 2", "Both"]) 
+        responsibleOptions: ["Partner 1", "Partner 2", "Both"])
 }

@@ -23,7 +23,7 @@ enum OnboardingError: Error, LocalizedError {
     case parsingFailed(String)
     case duplicateDetectionFailed(underlying: Error)
     case rollbackFailed(underlying: Error)
-    
+
     var errorDescription: String? {
         switch self {
         case .fetchFailed(let error):
@@ -58,7 +58,7 @@ enum OnboardingError: Error, LocalizedError {
             return "Failed to rollback import: \(error.localizedDescription)"
         }
     }
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .fetchFailed, .saveFailed, .updateFailed, .deleteFailed:

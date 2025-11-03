@@ -148,16 +148,16 @@ class SupabaseManager: ObservableObject {
     }
 
     // MARK: - Client Creation (Throwing)
-    
+
     private static func createSupabaseClient() throws -> SupabaseClient {
         let logger = AppLogger.api
-        
+
         // Use AppConfig with plist fallback
         let supabaseURLString = AppConfig.getSupabaseURL()
         let supabaseAnonKey = AppConfig.getSupabaseAnonKey()
-        
+
         logger.debug("Loading Supabase configuration...")
-        
+
         #if DEBUG
         // Check if we're using hardcoded config or plist fallback
         let usingHardcodedConfig = (AppConfig.loadFromPlist(key: "SUPABASE_URL") == nil)
@@ -169,7 +169,7 @@ class SupabaseManager: ObservableObject {
         logger.logPrivate("SUPABASE_URL: \(supabaseURLString)", level: .debug)
         logger.logPrivate("url present: true, anonKey present: true, serviceKey present: false", level: .debug)
         #endif
-        
+
         // SECURITY: Check if service-role key is present in the bundle (plist only)
         if let configPath = Bundle.main.path(forResource: "Config", ofType: "plist"),
            let config = NSDictionary(contentsOfFile: configPath),
@@ -199,9 +199,9 @@ class SupabaseManager: ObservableObject {
                 global: .init(
                     headers: ["x-client-info": "wedding-app-macos/1.0.0"])))
     }
-    
+
     // MARK: - Safe Client Access
-    
+
     var safeClient: SupabaseClient? {
         if let error = configurationError {
             logger.error("Cannot access Supabase client due to configuration error", error: error)
@@ -213,32 +213,32 @@ class SupabaseManager: ObservableObject {
     @MainActor
     private func setupAuthListener() async {
         guard let client = client else { return }
-        
+
         for await authState in client.auth.authStateChanges {
             let session = authState.session
 
             if let session {
                 isAuthenticated = true
                 currentUser = session.user
-                
+
                 // Set Sentry user context on login
                 SentryService.shared.setUser(
                     userId: session.user.id.uuidString,
                     email: session.user.email,
                     username: session.user.email
                 )
-                
+
                 logger.info("User authenticated and Sentry context set")
             } else {
                 isAuthenticated = false
                 currentUser = nil
-                
+
                 // Clear Sentry user context on logout
                 SentryService.shared.clearUser()
-                
+
                 // Clean up channels when user signs out
                 await cleanupChannels()
-                
+
                 logger.info("User signed out and Sentry context cleared")
             }
         }
@@ -251,24 +251,24 @@ class SupabaseManager: ObservableObject {
             currentUser = nil
             return
         }
-        
+
         do {
             let session = try await client.auth.session
             isAuthenticated = true
             currentUser = session.user
-            
+
             // Set Sentry user context if already logged in
             SentryService.shared.setUser(
                 userId: session.user.id.uuidString,
                 email: session.user.email,
                 username: session.user.email
             )
-            
+
             logger.info("Existing session found, Sentry context set")
         } catch {
             isAuthenticated = false
             currentUser = nil
-            
+
             // Clear Sentry user context if no session
             SentryService.shared.clearUser()
         }
@@ -280,7 +280,7 @@ class SupabaseManager: ObservableObject {
         guard let client = client else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         do {
             try await client.auth.signIn(email: email, password: password)
             logger.infoWithRedactedEmail("auth_login_success for", email: email)
@@ -294,7 +294,7 @@ class SupabaseManager: ObservableObject {
         guard let client = client else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         do {
             try await client.auth.signUp(email: email, password: password)
             logger.infoWithRedactedEmail("auth_signup_success for", email: email)
@@ -308,7 +308,7 @@ class SupabaseManager: ObservableObject {
         guard let client = client else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         do {
             // Clean up all tracked channels
             await cleanupChannels()
@@ -371,7 +371,7 @@ class SupabaseManager: ObservableObject {
         guard let client = client else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         do {
             try await client.auth.resetPasswordForEmail(email)
             logger.infoWithRedactedEmail("auth_password_reset_requested for", email: email)
@@ -421,7 +421,7 @@ extension SupabaseManager {
             logger.error("Cannot ensure subscription for \(base): client not initialized")
             return nil
         }
-        
+
         let channelName = await MainActor.run { self.namespacedChannelName(base: base) }
         let channel = client.realtimeV2.channel(channelName)
 
@@ -477,7 +477,7 @@ extension SupabaseManager {
               let user = client.auth.currentUser else { return nil }
         return UUID(uuidString: user.id.uuidString)
     }
-    
+
     var currentUserEmail: String? {
         guard let client = client else { return nil }
         return client.auth.currentUser?.email

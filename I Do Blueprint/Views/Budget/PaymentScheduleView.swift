@@ -170,7 +170,7 @@ struct PaymentScheduleView: View {
             getVendorName: { vendorId in
                 // Look up vendor name from vendors list using vendor_id
                 guard let vendorId = vendorId else { return nil }
-                
+
                 // Access vendors from VendorStoreV2 through AppStores
                 let vendors = AppStores.shared.vendor.vendors
                 return vendors.first(where: { $0.id == vendorId })?.vendorName

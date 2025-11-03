@@ -11,10 +11,10 @@ import SwiftUI
 struct PresenceIndicator: View {
     @Environment(\.presenceStore) private var presenceStore
     let size: IndicatorSize
-    
+
     enum IndicatorSize {
         case small, medium, large
-        
+
         var avatarSize: CGFloat {
             switch self {
             case .small: return 24
@@ -22,7 +22,7 @@ struct PresenceIndicator: View {
             case .large: return 40
             }
         }
-        
+
         var statusSize: CGFloat {
             switch self {
             case .small: return 8
@@ -31,7 +31,7 @@ struct PresenceIndicator: View {
             }
         }
     }
-    
+
     var body: some View {
         HStack(spacing: -8) {
             ForEach(Array(presenceStore.onlineUsers.prefix(3)), id: \.id) { presence in
@@ -41,7 +41,7 @@ struct PresenceIndicator: View {
                     size: size
                 )
             }
-            
+
             if presenceStore.onlineCount > 3 {
                 MoreUsersIndicator(
                     count: presenceStore.onlineCount - 3,
@@ -62,14 +62,14 @@ struct PresenceAvatar: View {
     let displayName: String
     let isOnline: Bool
     let size: PresenceIndicator.IndicatorSize
-    
+
     var initials: String {
         let components = displayName.components(separatedBy: " ")
         let firstInitial = components.first?.first.map(String.init) ?? ""
         let lastInitial = components.count > 1 ? components.last?.first.map(String.init) ?? "" : ""
         return (firstInitial + lastInitial).uppercased()
     }
-    
+
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Circle()
@@ -84,7 +84,7 @@ struct PresenceAvatar: View {
                     Circle()
                         .stroke(AppColors.background, lineWidth: 2)
                 )
-            
+
             if isOnline {
                 Circle()
                     .fill(AppColors.success)
@@ -103,7 +103,7 @@ struct PresenceAvatar: View {
 struct MoreUsersIndicator: View {
     let count: Int
     let size: PresenceIndicator.IndicatorSize
-    
+
     var body: some View {
         Circle()
             .fill(AppColors.cardBackground)
@@ -124,13 +124,13 @@ struct MoreUsersIndicator: View {
 /// Compact presence count badge
 struct PresenceCountBadge: View {
     @Environment(\.presenceStore) private var presenceStore
-    
+
     var body: some View {
         HStack(spacing: 4) {
             Circle()
                 .fill(AppColors.success)
                 .frame(width: 8, height: 8)
-            
+
             Text("\(presenceStore.onlineCount)")
                 .font(.caption)
                 .foregroundColor(AppColors.textSecondary)

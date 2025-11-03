@@ -10,11 +10,11 @@ import SwiftUI
 struct CollaborationMainView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selectedSection: CollaborationSection = .team
-    
+
     enum CollaborationSection: String, CaseIterable {
         case team = "Team"
         case activity = "Activity"
-        
+
         var icon: String {
             switch self {
             case .team: return "person.2.fill"
@@ -22,7 +22,7 @@ struct CollaborationMainView: View {
             }
         }
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -32,9 +32,9 @@ struct CollaborationMainView: View {
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Spacer()
-                    
+
                     // Section picker
                     Picker("Section", selection: $selectedSection) {
                         ForEach(CollaborationSection.allCases, id: \.self) { section in
@@ -46,9 +46,9 @@ struct CollaborationMainView: View {
                     .frame(width: 300)
                 }
                 .padding()
-                
+
                 Divider()
-                
+
                 // Content
                 Group {
                     switch selectedSection {

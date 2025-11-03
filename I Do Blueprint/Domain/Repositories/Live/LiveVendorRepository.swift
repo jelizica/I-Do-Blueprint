@@ -13,7 +13,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
     private let cacheStrategy = VendorCacheStrategy()
-    
+
     // SessionManager for tenant scoping
     private let sessionManager: SessionManager
 
@@ -30,7 +30,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
         supabase = SupabaseManager.shared.client
         sessionManager = .shared
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
@@ -138,10 +138,10 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             averageRating: averageRating)
 
         let duration = Date().timeIntervalSince(startTime)
-        
+
         // ✅ Cache the result
         await RepositoryCache.shared.set(cacheKey, value: stats, ttl: 60)
-        
+
         // ✅ Record performance
         await PerformanceMonitor.shared.recordOperation("fetchVendorStats", duration: duration)
 
@@ -170,10 +170,10 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             await cacheStrategy.invalidate(for: .vendorCreated(tenantId: tenantId, vendorId: created.id))
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("createVendor", duration: duration)
-            
+
             logger.info("Created vendor in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "createVendor", outcome: .success, duration: duration)
 
@@ -212,10 +212,10 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             await cacheStrategy.invalidate(for: .vendorUpdated(tenantId: tenantId, vendorId: vendor.id))
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("updateVendor", duration: duration)
-            
+
             logger.info("Updated vendor in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "updateVendor", outcome: .success, duration: duration)
 
@@ -250,10 +250,10 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             await cacheStrategy.invalidate(for: .vendorDeleted(tenantId: tenantId, vendorId: id))
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("deleteVendor", duration: duration)
-            
+
             logger.info("Deleted vendor in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "deleteVendor", outcome: .success, duration: duration)
         } catch {
@@ -518,22 +518,22 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
         return details
     }
-    
+
     // MARK: - Vendor Types
-    
+
     func fetchVendorTypes() async throws -> [VendorType] {
         let client = try getClient()
         let cacheKey = "vendor_types_all"
         let startTime = Date()
-        
+
         // ✅ Check cache first (long TTL since this is reference data)
         if let cached: [VendorType] = await RepositoryCache.shared.get(cacheKey, maxAge: 3600) {
             logger.info("Cache hit: vendor types (\(cached.count) items)")
             return cached
         }
-        
+
         logger.info("Cache miss: fetching vendor types from database")
-        
+
         do {
             let vendorTypes: [VendorType] = try await RepositoryNetwork.withRetry {
                 try await client
@@ -543,47 +543,47 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Cache the result (1 hour TTL for reference data)
             await RepositoryCache.shared.set(cacheKey, value: vendorTypes, ttl: 3600)
-            
+
             // ✅ Record performance metrics
             await PerformanceMonitor.shared.recordOperation("fetchVendorTypes", duration: duration)
-            
+
             logger.info("Fetched \(vendorTypes.count) vendor types in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "fetchVendorTypes", outcome: .success, duration: duration)
-            
+
             return vendorTypes
         } catch {
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record failed operation
             await PerformanceMonitor.shared.recordOperation("fetchVendorTypes", duration: duration)
-            
+
             logger.error("Failed to fetch vendor types after \(String(format: "%.2f", duration))s", error: error)
             AnalyticsService.trackNetwork(operation: "fetchVendorTypes", outcome: .failure(code: nil), duration: duration)
             throw error
         }
     }
-    
+
     // MARK: - Bulk Import Operations
-    
+
     /// Imports multiple vendors from CSV data in a single batch operation
     func importVendors(_ vendors: [VendorImportData]) async throws -> [Vendor] {
         guard !vendors.isEmpty else {
             logger.info("No vendors to import")
             return []
         }
-        
+
         do {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             logger.info("Starting import of \(vendors.count) vendors for couple: \(tenantId.uuidString)")
-            
+
             // Convert VendorImportData to database-compatible format
             // Note: We need to convert to a format that Supabase can insert
             // The database will auto-generate the ID (Int64)
@@ -612,7 +612,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                 let country: String?
                 let latitude: Double?
                 let longitude: Double?
-                
+
                 private enum CodingKeys: String, CodingKey {
                     case vendorName = "vendor_name"
                     case vendorType = "vendor_type"
@@ -640,7 +640,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     case longitude
                 }
             }
-            
+
             // Convert import data to insert format
             let insertData = vendors.map { vendor in
                 VendorInsertData(
@@ -670,7 +670,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     longitude: vendor.longitude
                 )
             }
-            
+
             // Perform batch insert with retry
             let imported: [Vendor] = try await RepositoryNetwork.withRetry {
                 try await client
@@ -680,31 +680,31 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
                     .execute()
                     .value
             }
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // Invalidate all vendor-related caches
             await RepositoryCache.shared.remove("vendors_\(tenantId.uuidString)")
             await RepositoryCache.shared.remove("vendor_stats_\(tenantId.uuidString)")
-            
+
             // Record performance metrics
             await PerformanceMonitor.shared.recordOperation("importVendors", duration: duration)
-            
+
             logger.info("Successfully imported \(imported.count) vendors in \(String(format: "%.2f", duration))s")
-            
+
             // Track analytics
             AnalyticsService.trackNetwork(operation: "importVendors", outcome: .success, duration: duration)
-            
+
             return imported
         } catch {
             logger.error("Failed to import vendors", error: error)
-            
+
             // Capture error with Sentry
             await SentryService.shared.captureError(error, context: [
                 "operation": "importVendors",
                 "vendorCount": vendors.count
             ])
-            
+
             throw VendorError.importFailed(underlying: error)
         }
     }

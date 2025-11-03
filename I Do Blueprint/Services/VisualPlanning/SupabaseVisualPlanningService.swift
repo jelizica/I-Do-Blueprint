@@ -13,7 +13,7 @@ import SwiftUI
 @MainActor
 class SupabaseVisualPlanningService: ObservableObject {
     private let supabase: SupabaseClient?
-    
+
     @Published var isLoading = false
     @Published var lastSyncDate: Date?
     @Published var syncErrors: [SupabaseError] = []
@@ -35,12 +35,12 @@ class SupabaseVisualPlanningService: ObservableObject {
             self.configurationError = .configFileUnreadable
         }
     }
-    
+
     // MARK: - Client Creation (Throwing)
-    
+
     private static func createSupabaseClient() throws -> SupabaseClient {
         let logger = AppLogger.api
-        
+
         guard let configPath = Bundle.main.path(forResource: "Config", ofType: "plist") else {
             logger.error("Config.plist file not found in bundle")
             throw ConfigurationError.configFileNotFound
@@ -82,7 +82,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -127,7 +127,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -154,7 +154,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -181,7 +181,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -199,7 +199,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -218,7 +218,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -237,7 +237,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -272,7 +272,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -304,7 +304,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -322,7 +322,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         isLoading = true
         defer { isLoading = false }
 
@@ -375,7 +375,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         let response: [VisualElementDTO] = try await supabase
             .from("visual_elements")
             .select("*")
@@ -390,7 +390,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         let response: [TableDTO] = try await supabase
             .from("seating_tables")
             .select("*")
@@ -405,7 +405,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         let response: [SeatAssignmentDTO] = try await supabase
             .from("seat_assignments")
             .select("*")
@@ -420,7 +420,7 @@ class SupabaseVisualPlanningService: ObservableObject {
         guard let supabase = supabase else {
             throw configurationError ?? ConfigurationError.configFileUnreadable
         }
-        
+
         // Fetch from guest_list table
         struct GuestListDTO: Codable {
             let id: String

@@ -11,18 +11,18 @@ import SwiftUI
 
 struct BudgetOverviewCard: View {
     @ObservedObject var store: BudgetStoreV2
-    
+
     // Computed properties for budget values
     private var totalBudget: Double {
         // Get from primary budget development scenario
         store.primaryScenarioTotal
     }
-    
+
     private var amountSpent: Double {
         // Get total from paid payments
         store.payments.totalPaid
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
@@ -30,24 +30,24 @@ struct BudgetOverviewCard: View {
                 Image(systemName: "dollarsign.circle.fill")
                     .font(.system(size: 20))
                     .foregroundColor(.green)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Budget Overview")
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("Paid payments vs total budget")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
             }
-            
+
             // Circular Progress
             HStack {
                 Spacer()
-                
+
                 DashboardCircularProgressView(
                     currentValue: amountSpent,
                     goalValue: totalBudget,
@@ -55,10 +55,10 @@ struct BudgetOverviewCard: View {
                     strokeWidth: 20,
                     color: budgetColor
                 )
-                
+
                 Spacer()
             }
-            
+
             // Budget breakdown
             VStack(spacing: Spacing.sm) {
                 budgetRow(
@@ -66,13 +66,13 @@ struct BudgetOverviewCard: View {
                     value: totalBudget,
                     color: AppColors.textPrimary
                 )
-                
+
                 budgetRow(
                     label: "Paid",
                     value: amountSpent,
                     color: budgetColor
                 )
-                
+
                 budgetRow(
                     label: "Remaining",
                     value: max(0, totalBudget - amountSpent),
@@ -88,7 +88,7 @@ struct BudgetOverviewCard: View {
                 .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
         )
     }
-    
+
     private var budgetColor: Color {
         let percentage = totalBudget > 0 ? (amountSpent / totalBudget) * 100 : 0
         if percentage >= 100 {
@@ -99,20 +99,20 @@ struct BudgetOverviewCard: View {
             return AppColors.success
         }
     }
-    
+
     private var remainingColor: Color {
         let remaining = totalBudget - amountSpent
         return remaining > 0 ? AppColors.success : AppColors.error
     }
-    
+
     private func budgetRow(label: String, value: Double, color: Color) -> some View {
         HStack {
             Text(label)
                 .font(Typography.bodySmall)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Spacer()
-            
+
             Text("$\(Int(value).formatted())")
                 .font(Typography.bodySmall)
                 .fontWeight(.semibold)

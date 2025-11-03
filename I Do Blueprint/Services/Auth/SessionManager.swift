@@ -57,11 +57,11 @@ class SessionManager: ObservableObject {
     static let shared = SessionManager()
 
     @Published private(set) var currentTenantId: UUID?
-    
+
     // MARK: - Tenant Switching State (Phase 3.1)
     @Published private(set) var isSwitchingTenant = false
     @Published private(set) var switchingToCoupleName: String?
-    
+
     // MARK: - Recently Viewed Couples (Phase 3.2)
     @Published private(set) var recentCouples: [RecentCouple] = []
     private let maxRecentCouples = 5
@@ -91,32 +91,32 @@ class SessionManager: ObservableObject {
     func setTenantId(_ tenantId: UUID, coupleName: String? = nil, weddingDate: Date? = nil) async {
         let previousTenantId = currentTenantId
         let tenantChanged = previousTenantId != nil && previousTenantId != tenantId
-        
+
         // Set switching state for visual feedback (Phase 3.1)
         if let coupleName = coupleName {
             isSwitchingTenant = true
             switchingToCoupleName = coupleName
             logger.debug("Starting tenant switch to: \(coupleName)")
         }
-        
+
         currentTenantId = tenantId
         saveTenantIdToKeychain(tenantId)
-        
+
         // Update thread-safe tenant context for background consumers
         await TenantContextProvider.shared.setTenantId(tenantId)
 
         // Clear repository caches and reset ALL stores when tenant changes
         if tenantChanged {
             logger.info("Tenant changed from \(previousTenantId!.uuidString) to \(tenantId.uuidString)")
-            
+
             // Clear repository caches
             await RepositoryCache.shared.clearAll()
             logger.info("Cleared repository caches on tenant change")
-            
+
             // Reset ALL stores so they reload data for the new tenant
             AppStores.shared.resetAllStores()
             logger.info("Reset all store loaded states for new tenant")
-            
+
             // Post notification for any observers
             await MainActor.run {
                 NotificationCenter.default.post(
@@ -134,12 +134,12 @@ class SessionManager: ObservableObject {
         }
 
         logger.info("Session tenant ID set: \(tenantId.uuidString)")
-        
+
         // Update recent couples list (Phase 3.2)
         if let coupleName = coupleName {
             updateRecentCouples(id: tenantId, name: coupleName, weddingDate: weddingDate)
         }
-        
+
         // Clear switching state (Phase 3.1)
         if coupleName != nil {
             // Small delay to ensure UI updates are visible
@@ -273,9 +273,9 @@ class SessionManager: ObservableObject {
             logger.debug("Keychain item deleted for account: \(account)")
         }
     }
-    
+
     // MARK: - Recently Viewed Couples (Phase 3.2)
-    
+
     /// Updates the recent couples list with a newly accessed couple
     /// - Parameters:
     ///   - id: The couple's UUID
@@ -284,7 +284,7 @@ class SessionManager: ObservableObject {
     func updateRecentCouples(id: UUID, name: String, weddingDate: Date?) {
         // Remove if already exists (to update position)
         recentCouples.removeAll { $0.id == id }
-        
+
         // Add to front of list
         let recent = RecentCouple(
             id: id,
@@ -293,25 +293,25 @@ class SessionManager: ObservableObject {
             lastAccessedAt: Date()
         )
         recentCouples.insert(recent, at: 0)
-        
+
         // Keep only last N couples
         if recentCouples.count > maxRecentCouples {
             recentCouples = Array(recentCouples.prefix(maxRecentCouples))
         }
-        
+
         // Persist to UserDefaults
         saveRecentCouples()
-        
+
         logger.debug("Updated recent couples: \(name) added to top of list (\(recentCouples.count) total)")
     }
-    
+
     /// Loads recent couples from UserDefaults
     private func loadRecentCouples() {
         guard let data = UserDefaults.standard.data(forKey: recentCouplesKey) else {
             logger.debug("No recent couples found in UserDefaults")
             return
         }
-        
+
         do {
             let decoded = try JSONDecoder().decode([RecentCouple].self, from: data)
             recentCouples = decoded
@@ -321,7 +321,7 @@ class SessionManager: ObservableObject {
             recentCouples = []
         }
     }
-    
+
     /// Saves recent couples to UserDefaults
     private func saveRecentCouples() {
         do {
@@ -332,7 +332,7 @@ class SessionManager: ObservableObject {
             logger.error("Failed to encode recent couples: \(error.localizedDescription)")
         }
     }
-    
+
     /// Clears all recent couples
     func clearRecentCouples() {
         recentCouples = []

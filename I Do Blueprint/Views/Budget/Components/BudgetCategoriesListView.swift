@@ -4,9 +4,9 @@ import SwiftUI
 struct BudgetCategoriesListView: View {
     let categories: [BudgetCategory]
     let title: String
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
     var body: some View {
         NavigationStack {
             List {
@@ -15,15 +15,15 @@ struct BudgetCategoriesListView: View {
                         HStack {
                             Text(category.categoryName)
                                 .font(.headline)
-                            
+
                             Spacer()
-                            
+
                             if category.isOverBudget {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundColor(AppColors.Budget.pending)
                             }
                         }
-                        
+
                         HStack {
                             Text("Allocated:")
                                 .font(.caption)
@@ -31,9 +31,9 @@ struct BudgetCategoriesListView: View {
                             Text(NumberFormatter.currency.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")
                                 .font(.caption)
                                 .fontWeight(.medium)
-                            
+
                             Spacer()
-                            
+
                             Text("Spent:")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -42,7 +42,7 @@ struct BudgetCategoriesListView: View {
                                 .fontWeight(.medium)
                                 .foregroundColor(category.isOverBudget ? AppColors.Budget.overBudget : .primary)
                         }
-                        
+
                         if category.isOverBudget {
                             let overAmount = category.spentAmount - category.allocatedAmount
                             Text("Over by: \(NumberFormatter.currency.string(from: NSNumber(value: overAmount)) ?? "$0")")

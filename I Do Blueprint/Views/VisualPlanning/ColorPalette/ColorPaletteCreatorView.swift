@@ -28,7 +28,7 @@ struct ColorPaletteCreatorView: View {
     @State private var isExtracting = false
     @State private var extractedColors: [ExtractedColor] = []
     @StateObject private var colorExtractionService = ColorExtractionService()
-    
+
     // Mood board import states
     @State private var showingMoodBoardImport = false
 
@@ -395,7 +395,7 @@ struct ColorPaletteCreatorView: View {
         case .preview: "eye"
         }
     }
-    
+
     private func importColorsFromMoodBoard(_ colors: [Color]) {
         // Add imported colors to palette
         for color in colors {
@@ -403,9 +403,9 @@ struct ColorPaletteCreatorView: View {
                 selectedPaletteColors.append(PaletteColor(color: color, role: .accent))
             }
         }
-        
+
         logger.info("Imported \(colors.count) colors from mood board")
-        
+
         // Move to preview step to show imported colors
         if !selectedPaletteColors.isEmpty {
             currentStep = .preview

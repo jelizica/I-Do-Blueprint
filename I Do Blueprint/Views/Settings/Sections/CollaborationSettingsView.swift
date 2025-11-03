@@ -12,7 +12,7 @@ struct CollaborationSettingsView: View {
     @StateObject private var collaborationStore = AppStores.shared.collaboration
     @State private var showMyCollaborations = false
     @State private var showTeamManagement = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xl) {
             // Header
@@ -20,14 +20,14 @@ struct CollaborationSettingsView: View {
                 Text("Collaboration")
                     .font(Typography.title1)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text("Manage your wedding collaborations and team members")
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Divider()
-            
+
             // My Collaborations Button (opens as sheet)
             Button(action: {
                 showMyCollaborations = true
@@ -39,20 +39,20 @@ struct CollaborationSettingsView: View {
                         .frame(width: 32, height: 32)
                         .background(AppColors.primary.opacity(0.1))
                         .cornerRadius(8)
-                    
+
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("My Collaborations")
                             .font(Typography.bodyRegular)
                             .fontWeight(.medium)
                             .foregroundColor(AppColors.textPrimary)
-                        
+
                         Text("View and manage all weddings you're collaborating on")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     // Badge showing pending invitations
                     if !collaborationStore.pendingUserInvitations.isEmpty {
                         Text("\(collaborationStore.pendingUserInvitations.count)")
@@ -64,7 +64,7 @@ struct CollaborationSettingsView: View {
                             .background(AppColors.warning)
                             .cornerRadius(12)
                     }
-                    
+
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
                         .foregroundColor(AppColors.textSecondary)
@@ -80,7 +80,7 @@ struct CollaborationSettingsView: View {
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
-            
+
             // Team Management Button (opens as sheet)
             Button(action: {
                 showTeamManagement = true
@@ -92,20 +92,20 @@ struct CollaborationSettingsView: View {
                         .frame(width: 32, height: 32)
                         .background(AppColors.success.opacity(0.1))
                         .cornerRadius(8)
-                    
+
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Team Management")
                             .font(Typography.bodyRegular)
                             .fontWeight(.medium)
                             .foregroundColor(AppColors.textPrimary)
-                        
+
                         Text("Manage collaborators for your current wedding")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
                         .foregroundColor(AppColors.textSecondary)
@@ -121,7 +121,7 @@ struct CollaborationSettingsView: View {
                     .presentationDetents([.large])
                     .presentationDragIndicator(.visible)
             }
-            
+
             Spacer()
         }
         .padding(Spacing.xl)

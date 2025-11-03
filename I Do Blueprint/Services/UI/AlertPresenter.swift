@@ -178,7 +178,7 @@ class AlertPresenter: ObservableObject, AlertPresenterProtocol {
             buttons: ["OK"]
         )
     }
-    
+
     /// Show an error with optional retry action
     func showError(
         title: String = "Error",
@@ -191,19 +191,19 @@ class AlertPresenter: ObservableObject, AlertPresenterProtocol {
         } else {
             buttons = ["OK"]
         }
-        
+
         let result = await showAlert(
             title: title,
             message: message,
             style: .critical,
             buttons: buttons
         )
-        
+
         if result == "Retry", let retry = retryAction {
             await retry()
         }
     }
-    
+
     /// Show a network error with automatic retry
     func showNetworkError(
         operation: String,
@@ -215,7 +215,7 @@ class AlertPresenter: ObservableObject, AlertPresenterProtocol {
             retryAction: retry
         )
     }
-    
+
     /// Show a user-facing error with optional retry
     func showUserFacingError(
         _ error: UserFacingError,
@@ -226,7 +226,7 @@ class AlertPresenter: ObservableObject, AlertPresenterProtocol {
             error.errorDescription,
             error.recoverySuggestion
         ].compactMap { $0 }.joined(separator: "\n\n")
-        
+
         if error.isRetryable, let retry = retryAction {
             await showError(title: title, message: message, retryAction: retry)
         } else {
@@ -336,7 +336,7 @@ class AlertPresenter: ObservableObject, AlertPresenterProtocol {
                     }
                     return
                 }
-                
+
                 alert.beginSheetModal(for: window) { _ in
                     // Modal dismissed
                 }

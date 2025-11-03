@@ -9,7 +9,7 @@ import Foundation
 
 actor VendorCacheStrategy: CacheInvalidationStrategy {
     private let cache = RepositoryCache.shared
-    
+
     func invalidate(for operation: CacheOperation) async {
         switch operation {
         case .vendorCreated(let tenantId, let vendorId),
@@ -20,7 +20,7 @@ actor VendorCacheStrategy: CacheInvalidationStrategy {
             break
         }
     }
-    
+
     private func invalidateVendorCaches(tenantId: UUID, vendorId: Int64?) async {
         let id = tenantId.uuidString
         await cache.remove("vendors_\(id)")

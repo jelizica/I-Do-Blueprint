@@ -20,21 +20,21 @@ struct OnboardingGuestImportView: View {
     @State private var errorMessage: String?
     @State private var importSuccess = false
     @State private var importedCount = 0
-    
+
     @Dependency(\.guestRepository) var guestRepository
     private let sessionManager = SessionManager.shared
     private let logger = AppLogger.general
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             headerSection
-            
+
             if let preview = importPreview {
                 previewSection(preview: preview)
             } else {
                 filePickerSection
             }
-            
+
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -54,19 +54,19 @@ struct OnboardingGuestImportView: View {
             Text(message)
         }
     }
-    
+
     // MARK: - View Sections
-    
+
     private var headerSection: some View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: "person.2.fill")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.primary)
-            
+
             Text("Import Guest List")
                 .font(Typography.title1)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Upload a CSV or Excel file with your guest list to get started quickly")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
@@ -75,7 +75,7 @@ struct OnboardingGuestImportView: View {
         }
         .padding(.top, Spacing.xl)
     }
-    
+
     private var filePickerSection: some View {
         VStack(spacing: Spacing.lg) {
             // File picker button
@@ -84,12 +84,12 @@ struct OnboardingGuestImportView: View {
                     Image(systemName: "doc.badge.plus")
                         .font(.system(size: 48))
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("Choose File")
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("Supported formats: CSV, Excel (.xlsx)")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
@@ -107,22 +107,22 @@ struct OnboardingGuestImportView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Choose CSV file to import")
             .accessibilityHint("Opens file picker to select a guest list CSV file")
-            
+
             // Format help
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Expected CSV Format:")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text("• First row should contain column headers")
                     .font(Typography.bodySmall)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 Text("• Required: Full Name or First Name + Last Name")
                     .font(Typography.bodySmall)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 Text("• Optional: Email, Phone, Address, RSVP Status")
                     .font(Typography.bodySmall)
                     .foregroundColor(AppColors.textSecondary)
@@ -134,27 +134,27 @@ struct OnboardingGuestImportView: View {
         }
         .padding(.horizontal, Spacing.xl)
     }
-    
+
     private func previewSection(preview: ImportPreview) -> some View {
         VStack(spacing: Spacing.lg) {
             // File info
             HStack {
                 Image(systemName: "doc.text.fill")
                     .foregroundColor(AppColors.primary)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(preview.fileName)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("\(preview.totalRows) guests • \(preview.headers.count) columns")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
-                
+
                 Button(action: { clearImport() }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(AppColors.textSecondary)
@@ -165,7 +165,7 @@ struct OnboardingGuestImportView: View {
             .padding(Spacing.md)
             .background(AppColors.cardBackground)
             .cornerRadius(8)
-            
+
             // Preview table
             ScrollView([.horizontal, .vertical]) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -181,9 +181,9 @@ struct OnboardingGuestImportView: View {
                                 .background(AppColors.cardBackground)
                         }
                     }
-                    
+
                     Divider()
-                    
+
                     // Rows (show first 10)
                     ForEach(Array(preview.rows.prefix(10).enumerated()), id: \.offset) { index, row in
                         HStack(spacing: 0) {
@@ -202,18 +202,18 @@ struct OnboardingGuestImportView: View {
             .frame(maxHeight: 300)
             .background(AppColors.cardBackground)
             .cornerRadius(8)
-            
+
             if preview.totalRows > 10 {
                 Text("Showing first 10 of \(preview.totalRows) guests")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             // Validation results
             if let validation = validationResult {
                 validationSection(validation: validation)
             }
-            
+
             // Import button
             if !importSuccess {
                 Button(action: { performImport() }) {
@@ -244,24 +244,24 @@ struct OnboardingGuestImportView: View {
         }
         .padding(.horizontal, Spacing.xl)
     }
-    
+
     // MARK: - Actions
-    
+
     private func handleFileSelection(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
             selectedFileURL = url
             loadFile(url)
-            
+
         case .failure(let error):
             errorMessage = "Failed to select file: \(error.localizedDescription)"
         }
     }
-    
+
     private func loadFile(_ url: URL) {
         isImporting = true
-        
+
         Task {
             do {
                 // Detect file type by extension
@@ -271,11 +271,11 @@ struct OnboardingGuestImportView: View {
                 } else {
                     preview = try await importService.parseCSV(from: url)
                 }
-                
+
                 await MainActor.run {
                     importPreview = preview
                     isImporting = false
-                    
+
                     // Auto-import after preview loads
                     performImport()
                 }
@@ -287,7 +287,7 @@ struct OnboardingGuestImportView: View {
             }
         }
     }
-    
+
     private func clearImport() {
         importPreview = nil
         selectedFileURL = nil
@@ -296,7 +296,7 @@ struct OnboardingGuestImportView: View {
         importSuccess = false
         importedCount = 0
     }
-    
+
     private func validationSection(validation: ImportValidationResult) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             if validation.isValid {
@@ -317,13 +317,13 @@ struct OnboardingGuestImportView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.red)
                     }
-                    
+
                     ForEach(Array(validation.errors.prefix(5).enumerated()), id: \.offset) { _, error in
                         Text("• Row \(error.row): \(error.message)")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     if validation.errors.count > 5 {
                         Text("... and \(validation.errors.count - 5) more errors")
                             .font(Typography.caption)
@@ -331,7 +331,7 @@ struct OnboardingGuestImportView: View {
                     }
                 }
             }
-            
+
             if !validation.warnings.isEmpty {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     HStack {
@@ -342,13 +342,13 @@ struct OnboardingGuestImportView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.orange)
                     }
-                    
+
                     ForEach(Array(validation.warnings.prefix(3).enumerated()), id: \.offset) { _, warning in
                         Text("• Row \(warning.row): \(warning.message)")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     if validation.warnings.count > 3 {
                         Text("... and \(validation.warnings.count - 3) more warnings")
                             .font(Typography.caption)
@@ -362,21 +362,21 @@ struct OnboardingGuestImportView: View {
         .background(validation.isValid ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
         .cornerRadius(8)
     }
-    
+
     private var successSection: some View {
         VStack(spacing: Spacing.md) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 60))
                 .foregroundColor(.green)
-            
+
             Text("Import Successful!")
                 .font(Typography.title2)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Successfully imported \(importedCount) guests")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Button(action: { clearImport() }) {
                 Text("Import Another File")
                     .font(Typography.bodyRegular)
@@ -391,10 +391,10 @@ struct OnboardingGuestImportView: View {
         }
         .padding(Spacing.xl)
     }
-    
+
     private func performImport() {
         guard let preview = importPreview else { return }
-        
+
         // Define target fields for mapping
         let targetFields = [
             "firstName", "lastName", "email", "phone", "rsvpStatus",
@@ -408,28 +408,28 @@ struct OnboardingGuestImportView: View {
             "mealOption", "giftReceived", "notes",
             "hairDone", "makeupDone", "preparationNotes"
         ]
-        
+
         // Infer column mappings
         columnMappings = importService.inferMappings(headers: preview.headers, targetFields: targetFields)
-        
+
         // Validate the import
         let validation = importService.validateImport(preview: preview, mappings: columnMappings)
         validationResult = validation
-        
+
         // If validation fails, don't proceed
         guard validation.isValid else {
             logger.warning("Import validation failed with \(validation.errors.count) errors")
             return
         }
-        
+
         // Get couple ID from session
         guard let coupleId = sessionManager.currentTenantId else {
             errorMessage = "No couple selected. Please sign in first."
             return
         }
-        
+
         isImporting = true
-        
+
         Task {
             do {
                 // Convert CSV rows to Guest objects
@@ -438,12 +438,12 @@ struct OnboardingGuestImportView: View {
                     mappings: columnMappings,
                     coupleId: coupleId
                 )
-                
+
                 logger.info("Converted \(guests.count) guests, starting import...")
-                
+
                 // Import guests to database
                 let imported = try await guestRepository.importGuests(guests)
-                
+
                 await MainActor.run {
                     importedCount = imported.count
                     importSuccess = true

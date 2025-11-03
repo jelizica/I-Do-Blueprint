@@ -12,7 +12,7 @@ struct ConfigurationErrorView: View {
     let error: ConfigurationError
     let onRetry: () -> Void
     let onContactSupport: () -> Void
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             // Error Icon
@@ -20,12 +20,12 @@ struct ConfigurationErrorView: View {
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.warning)
                 .accessibilityLabel("Configuration error icon")
-            
+
             // Title
             Text("Configuration Error")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             // Error Description
             if let description = error.errorDescription {
                 Text(description)
@@ -34,7 +34,7 @@ struct ConfigurationErrorView: View {
                     .foregroundColor(AppColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            
+
             // Recovery Suggestion
             if let suggestion = error.recoverySuggestion {
                 VStack(spacing: Spacing.sm) {
@@ -42,7 +42,7 @@ struct ConfigurationErrorView: View {
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(suggestion)
                         .font(Typography.bodyRegular)
                         .multilineTextAlignment(.center)
@@ -53,7 +53,7 @@ struct ConfigurationErrorView: View {
                 .background(AppColors.warning.opacity(0.1))
                 .cornerRadius(CornerRadius.md)
             }
-            
+
             // Actions
             HStack(spacing: Spacing.md) {
                 Button(action: onRetry) {
@@ -68,7 +68,7 @@ struct ConfigurationErrorView: View {
                     label: "Restart application",
                     hint: "Restarts the application to retry configuration"
                 )
-                
+
                 Button(action: onContactSupport) {
                     Text("Contact Support")
                         .font(Typography.bodyRegular)
@@ -82,7 +82,7 @@ struct ConfigurationErrorView: View {
                     hint: "Opens email to contact support team"
                 )
             }
-            
+
             // Technical Details (Expandable)
             DisclosureGroup {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -90,20 +90,20 @@ struct ConfigurationErrorView: View {
                         .font(Typography.caption)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(String(describing: error))
                         .font(.system(.caption, design: .monospaced))
                         .foregroundColor(AppColors.textSecondary)
-                    
+
                     if let failureReason = error.failureReason {
                         Divider()
                             .padding(.vertical, Spacing.xs)
-                        
+
                         Text("Failure Reason:")
                             .font(Typography.caption)
                             .fontWeight(.semibold)
                             .foregroundColor(AppColors.textPrimary)
-                        
+
                         Text(failureReason)
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)

@@ -42,24 +42,24 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
     @Dependency(\.documentRepository) var repository
     @Dependency(\.vendorRepository) var vendorRepository
     @Dependency(\.budgetRepository) var budgetRepository
-    
+
     // MARK: - Cache Management
     var lastLoadTime: Date?
     let cacheValidityDuration: TimeInterval = 600 // 10 minutes
-    
+
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
-    
+
     // MARK: - Computed Properties for Backward Compatibility
-    
+
     var documents: [Document] {
         loadingState.data ?? []
     }
-    
+
     var isLoading: Bool {
         loadingState.isLoading
     }
-    
+
     var error: DocumentError? {
         if case .error(let err) = loadingState {
             return err as? DocumentError ?? .fetchFailed(underlying: err)
@@ -93,7 +93,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
     func loadDocuments(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             // Use cached data if still valid
@@ -101,18 +101,18 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
                 AppLogger.ui.debug("Using cached document data (age: \(Int(cacheAge()))s)")
                 return
             }
-            
+
             guard loadingState.isIdle || loadingState.hasError || force else { return }
-            
+
             loadingState = .loading
 
             do {
                 try Task.checkCancellation()
-                
+
                 let fetchedDocuments = try await repository.fetchDocuments()
-                
+
                 try Task.checkCancellation()
-                
+
                 loadingState = .loaded(fetchedDocuments)
                 lastLoadTime = Date()
             } catch is CancellationError {
@@ -129,7 +129,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
                 )
             }
         }
-        
+
         await loadTask?.value
     }
 
@@ -194,12 +194,12 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
                 fileData: fileData,
                 metadata: metadata,
                 coupleId: coupleId)
-            
+
             if case .loaded(var currentDocuments) = loadingState {
                 currentDocuments.insert(document, at: 0)
                 loadingState = .loaded(currentDocuments)
             }
-            
+
             uploadProgress = 1.0
             // Invalidate cache due to mutation
             invalidateCache()
@@ -225,20 +225,20 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
               let index = currentDocuments.firstIndex(where: { $0.id == document.id }) else {
             return
         }
-        
+
         let original = currentDocuments[index]
         currentDocuments[index] = document
         loadingState = .loaded(currentDocuments)
 
         do {
             let updated = try await repository.updateDocument(document)
-            
+
             if case .loaded(var docs) = loadingState,
                let idx = docs.firstIndex(where: { $0.id == document.id }) {
                 docs[idx] = updated
                 loadingState = .loaded(docs)
             }
-            
+
             // Invalidate cache due to mutation
             invalidateCache()
             showSuccess("Document updated successfully")
@@ -269,7 +269,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
               let index = currentDocuments.firstIndex(where: { $0.id == id }) else {
             return
         }
-        
+
         let original = currentDocuments[index]
 
         // Create updated document
@@ -287,7 +287,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
 
         do {
             let result = try await repository.updateDocument(updated)
-            
+
             if case .loaded(var docs) = loadingState,
                let idx = docs.firstIndex(where: { $0.id == id }) {
                 docs[idx] = result
@@ -314,7 +314,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
               let index = currentDocuments.firstIndex(where: { $0.id == id }) else {
             return
         }
-        
+
         let original = currentDocuments[index]
         var updated = original
         updated.tags = tags
@@ -324,7 +324,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
 
         do {
             let result = try await repository.updateDocumentTags(id: id, tags: tags)
-            
+
             if case .loaded(var docs) = loadingState,
                let idx = docs.firstIndex(where: { $0.id == id }) {
                 docs[idx] = result
@@ -351,7 +351,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
               let index = currentDocuments.firstIndex(where: { $0.id == id }) else {
             return
         }
-        
+
         let original = currentDocuments[index]
         var updated = original
         updated.documentType = type
@@ -361,7 +361,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
 
         do {
             let result = try await repository.updateDocumentType(id: id, type: type)
-            
+
             if case .loaded(var docs) = loadingState,
                let idx = docs.firstIndex(where: { $0.id == id }) {
                 docs[idx] = result
@@ -384,7 +384,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
               let index = currentDocuments.firstIndex(where: { $0.id == document.id }) else {
             return
         }
-        
+
         let removed = currentDocuments.remove(at: index)
         loadingState = .loaded(currentDocuments)
 
@@ -409,7 +409,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
     func batchDeleteDocuments(ids: [UUID]) async {
         // Optimistic batch delete
         guard case .loaded(var currentDocuments) = loadingState else { return }
-        
+
         let originalDocuments = currentDocuments
         currentDocuments.removeAll { ids.contains($0.id) }
         loadingState = .loaded(currentDocuments)
@@ -451,9 +451,9 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
             return nil
         }
     }
-    
+
     // MARK: - Retry Helper
-    
+
     func retryLoad() async {
         await loadDocuments()
     }
@@ -789,14 +789,14 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
         uploadedBy: String) async throws -> Document {
         // Start accessing security-scoped resource
         let didStartAccessing = metadata.localURL.startAccessingSecurityScopedResource()
-        
+
         defer {
             // Always stop accessing when done
             if didStartAccessing {
                 metadata.localURL.stopAccessingSecurityScopedResource()
             }
         }
-        
+
         // Read file data directly from the file system
         let fileData: Data
         do {
@@ -818,12 +818,12 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
                 fileData: fileData,
                 metadata: metadata,
                 coupleId: coupleId)
-            
+
             if case .loaded(var currentDocuments) = loadingState {
                 currentDocuments.insert(document, at: 0)
                 loadingState = .loaded(currentDocuments)
             }
-            
+
             uploadProgress = 1.0
             isUploading = false
             AppLogger.ui.info("Document uploaded successfully: \(document.originalFilename)")
@@ -840,14 +840,14 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
         guard let document = documents.first(where: { $0.id == id }) else { return }
         await deleteDocument(document)
     }
-    
+
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         // Cancel in-flight tasks to avoid race conditions during tenant switch
         loadTask?.cancel()
-        
+
         // Reset state and invalidate cache
         loadingState = .idle
         lastLoadTime = nil

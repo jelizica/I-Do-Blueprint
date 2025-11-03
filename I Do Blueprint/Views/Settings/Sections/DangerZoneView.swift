@@ -10,7 +10,7 @@ import SwiftUI
 
 struct DangerZoneView: View {
     @ObservedObject var viewModel: SettingsStoreV2
-    
+
     // Delete My Data states
     @State private var showDeleteConfirmation = false
     @State private var confirmationText = ""
@@ -19,7 +19,7 @@ struct DangerZoneView: View {
     @State private var keepCategories = false
     @State private var isAuthenticating = false
     @State private var authenticationError: String?
-    
+
     // Delete Account states
     @State private var accountDeletionConfirmationText = ""
     @State private var isAuthenticatingForAccount = false
@@ -46,9 +46,9 @@ struct DangerZoneView: View {
             .padding(.bottom, Spacing.sm)
 
             Divider()
-            
+
             // MARK: - Delete Account Section (Most Destructive)
-            
+
             GroupBox(label: Text("")) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -59,18 +59,18 @@ struct DangerZoneView: View {
                             .font(.headline)
                             .foregroundColor(.red)
                     }
-                    
+
                     Text("This will permanently delete your entire account AND all wedding data. You will not be able to log in again.")
                         .font(.body)
                         .foregroundColor(.secondary)
-                    
+
                     Divider()
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("⚠️ **This action is irreversible and includes:**")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                        
+
                         VStack(alignment: .leading, spacing: 4) {
                             Label("All wedding planning data", systemImage: "checkmark.circle.fill")
                             Label("Your account and login credentials", systemImage: "checkmark.circle.fill")
@@ -80,21 +80,21 @@ struct DangerZoneView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     }
-                    
+
                     Divider()
-                    
+
                     VStack(alignment: .leading, spacing: 8) {
                         Text("To confirm, type: **DELETE MY ACCOUNT**")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                        
+
                         TextField("Type here...", text: $accountDeletionConfirmationText)
                             .textFieldStyle(.roundedBorder)
                             .onChange(of: accountDeletionConfirmationText) { _, _ in
                                 accountDeletionError = nil
                             }
                     }
-                    
+
                     if let error = accountDeletionError {
                         HStack(spacing: 8) {
                             Image(systemName: "exclamationmark.triangle.fill")
@@ -107,7 +107,7 @@ struct DangerZoneView: View {
                         .background(Color.red.opacity(0.1))
                         .cornerRadius(6)
                     }
-                    
+
                     Button(action: handleAccountDeletionWithAuth) {
                         if isAuthenticatingForAccount || isDeletingAccount {
                             HStack {
@@ -130,10 +130,10 @@ struct DangerZoneView: View {
                 .padding()
             }
             .background(Color.red.opacity(0.1))
-            
+
             Divider()
                 .padding(.vertical, Spacing.sm)
-            
+
             // MARK: - Delete My Data Section (Less Destructive)
 
             // Warning Card
@@ -221,25 +221,25 @@ struct DangerZoneView: View {
             Text("Your account has been permanently deleted. You will be signed out.")
         }
     }
-    
+
     // MARK: - Account Deletion Methods
-    
+
     private func handleAccountDeletionWithAuth() {
         // First authenticate with biometrics
         accountDeletionError = nil
         isAuthenticatingForAccount = true
-        
+
         let context = LAContext()
         var error: NSError?
-        
+
         // Check if biometric authentication is available
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) {
             let reason = "Authenticate to permanently delete your account"
-            
+
             context.evaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, localizedReason: reason) { success, _ in
                 DispatchQueue.main.async {
                     isAuthenticatingForAccount = false
-                    
+
                     if success {
                         // Authentication successful, proceed with account deletion
                         performAccountDeletion()
@@ -253,11 +253,11 @@ struct DangerZoneView: View {
             // Biometrics not available, fall back to password authentication
             if context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) {
                 let reason = "Authenticate to permanently delete your account"
-                
+
                 context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { success, _ in
                     DispatchQueue.main.async {
                         isAuthenticatingForAccount = false
-                        
+
                         if success {
                             performAccountDeletion()
                         } else {
@@ -272,27 +272,27 @@ struct DangerZoneView: View {
             }
         }
     }
-    
+
     private func performAccountDeletion() {
         isDeletingAccount = true
         accountDeletionError = nil
-        
+
         Task {
             do {
                 try await viewModel.deleteAccount()
-                
+
                 // Show success message briefly before user is signed out
                 await MainActor.run {
                     isDeletingAccount = false
                     showAccountDeletionSuccess = true
                 }
-                
+
                 // Wait 2 seconds for user to see the success message
                 try await Task.sleep(nanoseconds: 2_000_000_000)
-                
+
                 // User will be automatically redirected to login screen
                 // because SessionManager.clearSession() was called in the repository
-                
+
             } catch {
                 await MainActor.run {
                     isDeletingAccount = false
@@ -302,7 +302,7 @@ struct DangerZoneView: View {
             }
         }
     }
-    
+
     // MARK: - Data Deletion Methods
 
     private func handleDeleteWithAuth() {

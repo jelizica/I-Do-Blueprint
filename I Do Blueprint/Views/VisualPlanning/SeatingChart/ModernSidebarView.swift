@@ -33,14 +33,14 @@ struct ModernSidebarView: View {
                 switch selectedTab {
                 case .layout:
                     SidebarLayoutContent(chart: $chart)
-                    
+
                 case .tables:
                     SidebarTablesContent(
                         chart: $chart,
                         selectedTableId: $selectedTableId,
                         searchText: searchText
                     )
-                    
+
                 case .guests:
                     SidebarGuestsContent(
                         chart: $chart,
@@ -48,10 +48,10 @@ struct ModernSidebarView: View {
                         showingGroupEditor: $showingGroupEditor,
                         searchText: searchText
                     )
-                    
+
                 case .assignments:
                     SidebarAssignmentsContent(chart: $chart)
-                    
+
                 case .analytics:
                     SidebarAnalyticsContent(chart: chart)
                 }

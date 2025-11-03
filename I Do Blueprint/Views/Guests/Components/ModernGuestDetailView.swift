@@ -195,9 +195,9 @@ struct ModernGuestDetailView: View {
         .background(AppColors.background)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
+
     // MARK: - Avatar Loading
-    
+
     private func loadDetailAvatar() async {
         do {
             let image = try await guest.fetchAvatar(

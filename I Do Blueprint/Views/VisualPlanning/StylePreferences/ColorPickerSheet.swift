@@ -13,21 +13,21 @@ struct PrimaryColorPickerSheet: View {
     @Binding var colors: [Color]
     let maxColors: Int
     let onDismiss: () -> Void
-    
+
     @State private var selectedColorIndex: Int?
     @State private var tempColor: Color = .blue
     @State private var showingAddColor = false
     @State private var showingEditColor = false
-    
+
     private let logger = AppLogger.ui
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
             headerSection
-            
+
             Divider()
-            
+
             // Color list
             ScrollView {
                 VStack(spacing: Spacing.lg) {
@@ -35,17 +35,17 @@ struct PrimaryColorPickerSheet: View {
                     if !colors.isEmpty {
                         currentColorsSection
                     }
-                    
+
                     // Add color button
                     if colors.count < maxColors {
                         addColorButton
                     }
-                    
+
                     // Color harmony suggestions
                     if !colors.isEmpty {
                         harmonySuggestionsSection
                     }
-                    
+
                     // Guidance text
                     if colors.isEmpty {
                         emptyStateSection
@@ -53,38 +53,38 @@ struct PrimaryColorPickerSheet: View {
                 }
                 .padding()
             }
-            
+
             Divider()
-            
+
             // Footer
             footerSection
         }
         .frame(width: 500, height: 600)
     }
-    
+
     // MARK: - Header Section
-    
+
     private var headerSection: some View {
         HStack {
             Text("Choose Primary Colors")
                 .font(Typography.heading)
-            
+
             Spacer()
-            
+
             Text("\(colors.count)/\(maxColors)")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
         }
         .padding()
     }
-    
+
     // MARK: - Current Colors Section
-    
+
     private var currentColorsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Your Colors")
                 .font(Typography.subheading)
-            
+
             ForEach(Array(colors.enumerated()), id: \.offset) { index, color in
                 ColorRow(
                     color: color,
@@ -94,9 +94,9 @@ struct PrimaryColorPickerSheet: View {
             }
         }
     }
-    
+
     // MARK: - Add Color Button
-    
+
     private var addColorButton: some View {
         Button(action: { showingAddColor = true }) {
             HStack {
@@ -123,18 +123,18 @@ struct PrimaryColorPickerSheet: View {
                 })
         }
     }
-    
+
     // MARK: - Harmony Suggestions Section
-    
+
     private var harmonySuggestionsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Suggested Harmonies")
                 .font(Typography.subheading)
-            
+
             Text("Based on your selected colors")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             // Show complementary, analogous, triadic suggestions
             HStack(spacing: Spacing.sm) {
                 ForEach(suggestedColors, id: \.self) { color in
@@ -158,18 +158,18 @@ struct PrimaryColorPickerSheet: View {
             }
         }
     }
-    
+
     // MARK: - Empty State Section
-    
+
     private var emptyStateSection: some View {
         VStack(spacing: Spacing.md) {
             Image(systemName: "paintpalette")
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Text("No Colors Selected")
                 .font(Typography.subheading)
-            
+
             Text("Choose 2-4 primary colors that will define your wedding palette")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
@@ -177,18 +177,18 @@ struct PrimaryColorPickerSheet: View {
         }
         .padding()
     }
-    
+
     // MARK: - Footer Section
-    
+
     private var footerSection: some View {
         HStack {
             Button("Cancel") {
                 onDismiss()
             }
             .buttonStyle(.bordered)
-            
+
             Spacer()
-            
+
             Button("Done") {
                 onDismiss()
             }
@@ -196,59 +196,59 @@ struct PrimaryColorPickerSheet: View {
         }
         .padding()
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func editColor(at index: Int) {
         selectedColorIndex = index
         tempColor = colors[index]
         showingEditColor = true
     }
-    
+
     private func deleteColor(at index: Int) {
         let removedColor = colors[index]
         colors.remove(at: index)
         logger.info("Removed color: \(removedColor.hexString)")
     }
-    
+
     private var suggestedColors: [Color] {
         // Generate complementary, analogous, or triadic colors
         // based on existing colors
         guard let firstColor = colors.first else { return [] }
         return generateHarmonyColors(from: firstColor)
     }
-    
+
     private func generateHarmonyColors(from color: Color) -> [Color] {
         // Convert color to HSB
         let nsColor = NSColor(color)
         guard let rgb = nsColor.usingColorSpace(.deviceRGB) else { return [] }
-        
+
         var hue: CGFloat = 0
         var saturation: CGFloat = 0
         var brightness: CGFloat = 0
         var alpha: CGFloat = 0
-        
+
         NSColor(red: rgb.redComponent, green: rgb.greenComponent, blue: rgb.blueComponent, alpha: 1.0)
             .getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
-        
+
         var suggestions: [Color] = []
-        
+
         // Complementary (opposite on color wheel)
         let complementaryHue = (hue + 0.5).truncatingRemainder(dividingBy: 1.0)
         suggestions.append(Color(hue: complementaryHue, saturation: saturation, brightness: brightness))
-        
+
         // Analogous (adjacent colors)
         let analogous1Hue = (hue + 0.083).truncatingRemainder(dividingBy: 1.0) // +30 degrees
         let analogous2Hue = (hue - 0.083 + 1.0).truncatingRemainder(dividingBy: 1.0) // -30 degrees
         suggestions.append(Color(hue: analogous1Hue, saturation: saturation, brightness: brightness))
         suggestions.append(Color(hue: analogous2Hue, saturation: saturation, brightness: brightness))
-        
+
         // Triadic (120 degrees apart)
         let triadic1Hue = (hue + 0.333).truncatingRemainder(dividingBy: 1.0)
         let triadic2Hue = (hue + 0.666).truncatingRemainder(dividingBy: 1.0)
         suggestions.append(Color(hue: triadic1Hue, saturation: saturation, brightness: brightness))
         suggestions.append(Color(hue: triadic2Hue, saturation: saturation, brightness: brightness))
-        
+
         // Filter out colors that are too similar to existing colors
         return suggestions.filter { suggestedColor in
             !colors.contains { existingColor in
@@ -256,7 +256,7 @@ struct PrimaryColorPickerSheet: View {
             }
         }.prefix(5).map { $0 }
     }
-    
+
     private func colorsAreSimilar(_ color1: Color, _ color2: Color) -> Bool {
         let hex1 = color1.hexString
         let hex2 = color2.hexString
@@ -271,7 +271,7 @@ struct ColorRow: View {
     let index: Int
     let onEdit: () -> Void
     let onDelete: () -> Void
-    
+
     var body: some View {
         HStack(spacing: Spacing.md) {
             // Color preview
@@ -281,19 +281,19 @@ struct ColorRow: View {
                 .overlay(
                     Circle()
                         .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
-            
+
             // Color info
             VStack(alignment: .leading, spacing: 4) {
                 Text("Color \(index + 1)")
                     .font(Typography.bodyRegular)
-                
+
                 Text(color.hexString)
                     .font(.system(.caption, design: .monospaced))
                     .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Spacer()
-            
+
             // Actions
             HStack(spacing: Spacing.sm) {
                 Button(action: onEdit) {
@@ -302,7 +302,7 @@ struct ColorRow: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Edit color \(index + 1)")
-                
+
                 Button(action: onDelete) {
                     Image(systemName: "trash")
                         .foregroundColor(AppColors.error)
@@ -324,27 +324,27 @@ struct ColorPickerModal: View {
     @Binding var selectedColor: Color
     let onSave: () -> Void
     let onCancel: () -> Void
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             Text(title)
                 .font(Typography.heading)
-            
+
             ColorPicker("Select Color", selection: $selectedColor, supportsOpacity: false)
                 .labelsHidden()
                 .frame(height: 200)
-            
+
             // Show hex value
             Text(selectedColor.hexString)
                 .font(.system(.body, design: .monospaced))
                 .foregroundColor(AppColors.textSecondary)
-            
+
             HStack {
                 Button("Cancel", action: onCancel)
                     .buttonStyle(.bordered)
-                
+
                 Spacer()
-                
+
                 Button("Add", action: onSave)
                     .buttonStyle(.borderedProminent)
             }

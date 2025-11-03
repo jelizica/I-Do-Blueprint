@@ -46,10 +46,10 @@ class SettingsStoreV2: ObservableObject {
         if isLoading && !force { return }
         // Allow reloading if forced or if not already loaded
         if !force && hasLoaded { return }
-        
+
         // Cancel any previous load task when forcing
         if force { loadTask?.cancel() }
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             AppLogger.ui.info("SettingsStoreV2.loadSettings: Starting to load settings (force: \(force))")
@@ -162,7 +162,7 @@ class SettingsStoreV2: ObservableObject {
 
             isLoading = false
         }
-        
+
         await loadTask?.value
     }
 
@@ -199,14 +199,14 @@ class SettingsStoreV2: ObservableObject {
             self.error = .networkUnavailable
             ErrorHandler.shared.handle(
                 error,
-                context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"]) 
+                context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"])
             )
         } catch {
             settings.global = original
             self.error = .updateFailed(underlying: error)
             ErrorHandler.shared.handle(
                 error,
-                context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"]) 
+                context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"])
             )
         }
 
@@ -265,7 +265,7 @@ class SettingsStoreV2: ObservableObject {
             try await repository.updateCashFlowSettings(localSettings.cashFlow)
             checkUnsavedChanges()
             successMessage = "Budget settings updated"
-            
+
             // Notify other parts of the app that settings have changed
             NotificationCenter.default.post(name: .settingsDidChange, object: nil)
         } catch let error as URLError where error.code == .notConnectedToInternet {
@@ -683,9 +683,9 @@ class SettingsStoreV2: ObservableObject {
     func formatPhoneNumbers() async throws -> PhoneFormatResult {
         try await repository.formatPhoneNumbers()
     }
-    
+
     // MARK: - Account Deletion
-    
+
     /// Delete the entire user account and all associated data
     ///
     /// This is a destructive operation that:
@@ -699,18 +699,18 @@ class SettingsStoreV2: ObservableObject {
     /// - Throws: SettingsError.accountDeletionFailed if deletion fails
     func deleteAccount() async throws {
         AppLogger.ui.info("SettingsStoreV2: Starting account deletion")
-        
+
         do {
             try await repository.deleteAccount()
             AppLogger.ui.info("SettingsStoreV2: Account deletion completed")
-            
+
             // Track deletion event for audit trail
             SentryService.shared.trackAction(
                 "account_deleted",
                 category: "account",
                 metadata: ["timestamp": Date().ISO8601Format()]
             )
-            
+
         } catch {
             AppLogger.ui.error("SettingsStoreV2: Account deletion failed", error: error)
             SentryService.shared.captureError(error, context: [

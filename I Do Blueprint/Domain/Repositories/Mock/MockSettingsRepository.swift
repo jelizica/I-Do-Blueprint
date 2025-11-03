@@ -224,9 +224,9 @@ class MockSettingsRepository: SettingsRepositoryProtocol {
             customVendorCategories = []
         }
     }
-    
+
     // MARK: - Account Deletion
-    
+
     func deleteAccount() async throws {
         deleteAccountCalled = true
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }

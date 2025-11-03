@@ -7,16 +7,16 @@ struct ExpenseTrackerHeader: View {
     let paidAmount: Double
     let expenseCount: Int
     let onAddExpense: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 16) {
             HStack {
                 Text("Expense Tracker")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                
+
                 Spacer()
-                
+
                 Button(action: onAddExpense) {
                     HStack {
                         Image(systemName: "plus")
@@ -29,7 +29,7 @@ struct ExpenseTrackerHeader: View {
                     .cornerRadius(8)
                 }
             }
-            
+
             // Stats Cards - Using Component Library
             StatsGridView(
                 stats: [

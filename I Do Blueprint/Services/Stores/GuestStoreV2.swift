@@ -25,23 +25,23 @@ class GuestStoreV2: ObservableObject, CacheableStore {
     let cacheValidityDuration: TimeInterval = 60 // 1 minute (fast-changing)
 
     @Dependency(\.guestRepository) var repository
-    
+
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
     private var addTask: Task<Void, Never>?
     private var updateTask: Task<Void, Never>?
     private var deleteTask: Task<Void, Never>?
-    
+
     // MARK: - Computed Properties for Backward Compatibility
-    
+
     var guests: [Guest] {
         loadingState.data ?? []
     }
-    
+
     var isLoading: Bool {
         loadingState.isLoading
     }
-    
+
     var error: GuestError? {
         if case .error(let err) = loadingState {
             return err as? GuestError ?? .fetchFailed(underlying: err)
@@ -54,7 +54,7 @@ class GuestStoreV2: ObservableObject, CacheableStore {
     func loadGuestData(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             let totalStart = Date()
@@ -69,7 +69,7 @@ class GuestStoreV2: ObservableObject, CacheableStore {
             guard loadingState.isIdle || loadingState.hasError || force else {
                 return
             }
-            
+
             // Mark main-thread work: set loading state
             do {
                 let t0 = Date()
@@ -93,10 +93,10 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 // Record sub-operation durations
                 await PerformanceMonitor.shared.recordOperation("guest.fetchGuests", duration: Date().timeIntervalSince(guestsStart))
                 await PerformanceMonitor.shared.recordOperation("guest.fetchGuestStats", duration: Date().timeIntervalSince(statsStart))
-                
+
                 // Check again before updating state
                 try Task.checkCancellation()
-                
+
                 // Main-thread updates
                 let t1 = Date()
                 guestStats = fetchedStats
@@ -132,14 +132,14 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 mainThread: mainThreadAccumulated
             )
         }
-        
+
         await loadTask?.value
     }
 
     func addGuest(_ guest: Guest) async {
         // Cancel any previous add task
         addTask?.cancel()
-        
+
         // Create new add task
         addTask = Task { @MainActor in
             // Add breadcrumb for debugging
@@ -148,14 +148,14 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 category: "guest",
                 data: ["guestName": guest.fullName]
             )
-            
+
             do {
                 try Task.checkCancellation()
-                
+
                 let created = try await repository.createGuest(guest)
-                
+
                 try Task.checkCancellation()
-                
+
                 // Update loaded state with new guest
                 if case .loaded(var currentGuests) = loadingState {
                     currentGuests.append(created)
@@ -188,14 +188,14 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 )
             }
         }
-        
+
         await addTask?.value
     }
 
     func updateGuest(_ guest: Guest) async {
         // Cancel any previous update task
         updateTask?.cancel()
-        
+
         // Create new update task
         updateTask = Task { @MainActor in
             // Add breadcrumb for debugging
@@ -207,13 +207,13 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                     "guestName": guest.fullName
                 ]
             )
-            
+
             // Optimistic UI update - show changes immediately before server confirms
             guard case .loaded(var currentGuests) = loadingState,
                   let index = currentGuests.firstIndex(where: { $0.id == guest.id }) else {
                 return
             }
-            
+
             let original = currentGuests[index]
             currentGuests[index] = guest
             loadingState = .loaded(currentGuests)
@@ -225,12 +225,12 @@ class GuestStoreV2: ObservableObject, CacheableStore {
 
             do {
                 try Task.checkCancellation()
-                
+
                 // Persist to backend and get confirmed data
                 let updated = try await repository.updateGuest(guest)
-                
+
                 try Task.checkCancellation()
-                
+
                 if case .loaded(var guests) = loadingState,
                    let idx = guests.firstIndex(where: { $0.id == guest.id }) {
                     guests[idx] = updated
@@ -244,10 +244,10 @@ class GuestStoreV2: ObservableObject, CacheableStore {
 
                 // Recalculate guest statistics after update
                 guestStats = try await repository.fetchGuestStats()
-                
+
                 // Invalidate store cache since data changed
                 invalidateCache()
-                
+
                 showSuccess("Guest updated successfully")
             } catch is CancellationError {
                 // Revert optimistic update on cancellation
@@ -295,14 +295,14 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 )
             }
         }
-        
+
         await updateTask?.value
     }
 
     func deleteGuest(id: UUID) async {
         // Cancel any previous delete task
         deleteTask?.cancel()
-        
+
         // Create new delete task
         deleteTask = Task { @MainActor in
             // Add breadcrumb for debugging
@@ -311,13 +311,13 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 category: "guest",
                 data: ["guestId": id.uuidString]
             )
-            
+
             // Optimistic delete - remove from UI immediately
             guard case .loaded(var currentGuests) = loadingState,
                   let index = currentGuests.firstIndex(where: { $0.id == id }) else {
                 return
             }
-            
+
             let removed = currentGuests.remove(at: index)
             loadingState = .loaded(currentGuests)
 
@@ -328,18 +328,18 @@ class GuestStoreV2: ObservableObject, CacheableStore {
 
             do {
                 try Task.checkCancellation()
-                
+
                 // Persist deletion to backend
                 try await repository.deleteGuest(id: id)
-                
+
                 try Task.checkCancellation()
 
                 // Recalculate statistics without deleted guest
                 guestStats = try await repository.fetchGuestStats()
-                
+
                 // Invalidate store cache since data changed
                 invalidateCache()
-                
+
                 showSuccess("Guest deleted successfully")
             } catch is CancellationError {
                 // Restore guest on cancellation
@@ -375,7 +375,7 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 )
             }
         }
-        
+
         await deleteTask?.value
     }
 
@@ -428,15 +428,15 @@ class GuestStoreV2: ObservableObject, CacheableStore {
     var pendingGuests: Int {
         guests.filter { $0.rsvpStatus == .pending || $0.rsvpStatus == .invited }.count
     }
-    
+
     // MARK: - Retry Helper
-    
+
     func retryLoad() async {
         await loadGuestData()
     }
-    
+
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         // Cancel in-flight tasks to avoid race conditions during tenant switch
@@ -444,7 +444,7 @@ class GuestStoreV2: ObservableObject, CacheableStore {
         addTask?.cancel()
         updateTask?.cancel()
         deleteTask?.cancel()
-        
+
         // Reset state and invalidate cache
         loadingState = .idle
         guestStats = nil

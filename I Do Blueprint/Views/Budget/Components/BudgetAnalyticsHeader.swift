@@ -4,7 +4,7 @@ import SwiftUI
 struct BudgetAnalyticsHeader: View {
     let summary: BudgetSummary?
     let stats: BudgetStats
-    
+
     var body: some View {
         VStack(spacing: 16) {
             if let summary {
@@ -33,7 +33,7 @@ struct BudgetAnalyticsHeader: View {
                     columns: 3
                 )
             }
-            
+
             // Quick insights - Using Component Library
             if stats.projectedOverage > 0 {
                 InfoCard(

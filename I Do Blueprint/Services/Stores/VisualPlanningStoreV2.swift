@@ -32,7 +32,7 @@ class VisualPlanningStoreV2: ObservableObject {
     @Published var stylePreferences: StylePreferences?
 
     @Dependency(\.visualPlanningRepository) var repository
-    
+
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
 
@@ -41,7 +41,7 @@ class VisualPlanningStoreV2: ObservableObject {
     func loadMoodBoards() async {
         // Cancel any previous load task
         loadTask?.cancel()
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             isLoading = true
@@ -49,11 +49,11 @@ class VisualPlanningStoreV2: ObservableObject {
 
             do {
                 try Task.checkCancellation()
-                
+
                 let fetchedBoards = try await repository.fetchMoodBoards()
-                
+
                 try Task.checkCancellation()
-                
+
                 moodBoards = fetchedBoards
             } catch is CancellationError {
                 AppLogger.ui.debug("VisualPlanningStoreV2.loadMoodBoards: Load cancelled (expected during tenant switch)")
@@ -65,7 +65,7 @@ class VisualPlanningStoreV2: ObservableObject {
 
             isLoading = false
         }
-        
+
         await loadTask?.value
     }
 
@@ -290,9 +290,9 @@ class VisualPlanningStoreV2: ObservableObject {
     var activeSeatingChart: SeatingChart? {
         seatingCharts.first(where: \.isActive)
     }
-    
+
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         hasLoaded = false

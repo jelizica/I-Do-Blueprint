@@ -17,84 +17,84 @@ class CollaborationStoreV2: ObservableObject {
     @Published private(set) var roles: [CollaborationRole] = []
     @Published private(set) var currentUserRole: RoleName?
     @Published private(set) var currentUserCollaborator: Collaborator?
-    
+
     @Published var showSuccessToast = false
     @Published var successMessage = ""
-    
+
     // My Collaborations state
     @Published var userCollaborations: [UserCollaboration] = []
     @Published var pendingUserInvitations: [UserCollaboration] = []
     @Published var isLoadingCollaborations = false
     @Published var collaborationsError: Error?
-    
+
     @Dependency(\.collaborationRepository) var repository
-    
+
     // MARK: - Computed Properties
-    
+
     var collaborators: [Collaborator] {
         loadingState.data ?? []
     }
-    
+
     var isLoading: Bool {
         loadingState.isLoading
     }
-    
+
     var error: CollaborationError? {
         if case .error(let err) = loadingState {
             return err as? CollaborationError ?? .fetchFailed(underlying: err)
         }
         return nil
     }
-    
+
     var activeCollaborators: [Collaborator] {
         collaborators.filter { $0.status == .active }
     }
-    
+
     var pendingInvitations: [Collaborator] {
         collaborators.filter { $0.status == .pending }
     }
-    
+
     // MARK: - Permissions
-    
+
     var canInvite: Bool {
         currentUserRole == .owner || currentUserRole == .partner
     }
-    
+
     var canManageRoles: Bool {
         currentUserRole == .owner
     }
-    
+
     var canEdit: Bool {
         currentUserRole == .owner || currentUserRole == .partner || currentUserRole == .planner
     }
-    
+
     // MARK: - Public Interface
-    
+
     func loadCollaborationData() async {
         // Only load if idle or error state
         guard loadingState.isIdle || loadingState.hasError else {
             return
         }
-        
+
         loadingState = .loading
-        
+
         do {
             async let collaboratorsResult = repository.fetchCollaborators()
             async let rolesResult = repository.fetchRoles()
             async let currentUserResult = repository.fetchCurrentUserCollaborator()
             async let roleResult = repository.getCurrentUserRole()
-            
+
             let fetchedCollaborators = try await collaboratorsResult
             roles = try await rolesResult
             currentUserCollaborator = try await currentUserResult
             currentUserRole = try await roleResult
-            
+
             loadingState = .loaded(fetchedCollaborators)
         } catch {
             loadingState = .error(CollaborationError.fetchFailed(underlying: error))
         }
     }
-    
+
     func inviteCollaborator(email: String, roleId: UUID, displayName: String?) async {
         // Add breadcrumb for debugging
         addOperationBreadcrumb(
@@ -102,20 +102,20 @@ class CollaborationStoreV2: ObservableObject {
             category: "collaboration",
             data: ["email": email]
         )
-        
+
         do {
             let created = try await repository.inviteCollaborator(
                 email: email,
                 roleId: roleId,
                 displayName: displayName
             )
-            
+
             // Update loaded state with new collaborator
             if case .loaded(var currentCollaborators) = loadingState {
                 currentCollaborators.append(created)
                 loadingState = .loaded(currentCollaborators)
             }
-            
+
             // Show success feedback
             HapticFeedback.itemAdded()
             showSuccess("Invitation sent to \(email)")
@@ -130,7 +130,7 @@ class CollaborationStoreV2: ObservableObject {
             }
         }
     }
-    
+
     func acceptInvitation(id: UUID) async {
         // Add breadcrumb for debugging
         addOperationBreadcrumb(
@@ -138,29 +138,29 @@ class CollaborationStoreV2: ObservableObject {
             category: "collaboration",
             data: ["collaboratorId": id.uuidString]
         )
-        
+
         // Optimistic update
         guard case .loaded(var currentCollaborators) = loadingState,
               let index = currentCollaborators.firstIndex(where: { $0.id == id }) else {
             return
         }
-        
+
         let original = currentCollaborators[index]
         var updated = original
         updated.status = .active
         updated.acceptedAt = Date()
         currentCollaborators[index] = updated
         loadingState = .loaded(currentCollaborators)
-        
+
         do {
             let accepted = try await repository.acceptInvitation(id: id)
-            
+
             if case .loaded(var collaborators) = loadingState,
                let idx = collaborators.firstIndex(where: { $0.id == id }) {
                 collaborators[idx] = accepted
                 loadingState = .loaded(collaborators)
             }
-            
+
             showSuccess("Invitation accepted")
         } catch {
             // Rollback on error
@@ -179,7 +179,7 @@ class CollaborationStoreV2: ObservableObject {
             }
         }
     }
-    
+
     func updateCollaboratorRole(id: UUID, roleId: UUID) async {
         // Add breadcrumb for debugging
         addOperationBreadcrumb(
@@ -187,17 +187,17 @@ class CollaborationStoreV2: ObservableObject {
             category: "collaboration",
             data: ["collaboratorId": id.uuidString]
         )
-        
+
         do {
             let updatedCollaborator = try await repository.updateCollaboratorRole(id: id, roleId: roleId)
-            
+
             // Update in loaded state
             if case .loaded(var collaborators) = loadingState,
                let idx = collaborators.firstIndex(where: { $0.id == id }) {
                 collaborators[idx] = updatedCollaborator
                 loadingState = .loaded(collaborators)
             }
-            
+
             showSuccess("Role updated successfully")
         } catch {
             loadingState = .error(CollaborationError.updateFailed(underlying: error))
@@ -210,7 +210,7 @@ class CollaborationStoreV2: ObservableObject {
             }
         }
     }
-    
+
     func removeCollaborator(id: UUID) async {
         // Add breadcrumb for debugging
         addOperationBreadcrumb(
@@ -218,16 +218,16 @@ class CollaborationStoreV2: ObservableObject {
             category: "collaboration",
             data: ["collaboratorId": id.uuidString]
         )
-        
+
         // Optimistic delete
         guard case .loaded(var currentCollaborators) = loadingState,
               let index = currentCollaborators.firstIndex(where: { $0.id == id }) else {
             return
         }
-        
+
         let removed = currentCollaborators.remove(at: index)
         loadingState = .loaded(currentCollaborators)
-        
+
         do {
             try await repository.removeCollaborator(id: id)
             showSuccess("Collaborator removed")
@@ -247,7 +247,7 @@ class CollaborationStoreV2: ObservableObject {
             }
         }
     }
-    
+
     func checkPermission(_ permission: String) async -> Bool {
         do {
             return try await repository.hasPermission(permission)
@@ -255,13 +255,13 @@ class CollaborationStoreV2: ObservableObject {
             return false
         }
     }
-    
+
     func getRoleForId(_ roleId: UUID) -> CollaborationRole? {
         roles.first(where: { $0.id == roleId })
     }
-    
+
     // MARK: - My Collaborations
-    
+
     /// Load all collaborations for current user across all couples
     func loadUserCollaborations() async {
         // Defer loading state update to avoid "Publishing during view updates"
@@ -269,16 +269,16 @@ class CollaborationStoreV2: ObservableObject {
             isLoadingCollaborations = true
             collaborationsError = nil
         }
-        
+
         addOperationBreadcrumb(
             "loadUserCollaborations",
             category: "collaboration",
             data: [:]
         )
-        
+
         do {
             let collaborations = try await repository.fetchUserCollaborations()
-            
+
             // Defer data updates to next run loop to avoid "Publishing during view updates"
             await MainActor.run {
                 // Split into active and pending
@@ -286,7 +286,7 @@ class CollaborationStoreV2: ObservableObject {
                 pendingUserInvitations = collaborations.filter { $0.status == .pending }
                 isLoadingCollaborations = false
             }
-            
+
             AppLogger.ui.info("Loaded \(userCollaborations.count) active collaborations, \(pendingUserInvitations.count) pending")
         } catch {
             // Defer error state update
@@ -294,14 +294,14 @@ class CollaborationStoreV2: ObservableObject {
                 collaborationsError = error
                 isLoadingCollaborations = false
             }
-            
+
             AppLogger.ui.error("Failed to load user collaborations", error: error)
             await SentryService.shared.captureError(error, context: [
                 "operation": "loadUserCollaborations"
             ])
         }
     }
-    
+
     /// Leave a collaboration (remove self from a couple)
     func leaveCollaboration(coupleId: UUID) async throws {
         addOperationBreadcrumb(
@@ -309,24 +309,24 @@ class CollaborationStoreV2: ObservableObject {
             category: "collaboration",
             data: ["coupleId": coupleId.uuidString]
         )
-        
+
         do {
             try await repository.leaveCollaboration(coupleId: coupleId)
-            
+
             // Defer state update to avoid "Publishing during view updates"
             await MainActor.run {
                 // Remove from local state
                 userCollaborations.removeAll { $0.coupleId == coupleId }
             }
-            
+
             AppLogger.ui.info("Left collaboration for couple: \(coupleId)")
-            
+
             await SentryService.shared.trackAction(
                 "collaboration_left",
                 category: "collaboration",
                 metadata: ["couple_id": coupleId.uuidString]
             )
-            
+
             showSuccess("You have left the wedding")
             HapticFeedback.itemDeleted()
         } catch {
@@ -338,7 +338,7 @@ class CollaborationStoreV2: ObservableObject {
             throw error
         }
     }
-    
+
     /// Decline a pending invitation
     func declineInvitation(id: UUID) async throws {
         addOperationBreadcrumb(
@@ -346,24 +346,24 @@ class CollaborationStoreV2: ObservableObject {
             category: "collaboration",
             data: ["invitationId": id.uuidString]
         )
-        
+
         do {
             try await repository.declineInvitation(id: id)
-            
+
             // Defer state update to avoid "Publishing during view updates"
             await MainActor.run {
                 // Remove from pending invitations
                 pendingUserInvitations.removeAll { $0.id == id }
             }
-            
+
             AppLogger.ui.info("Declined invitation: \(id)")
-            
+
             await SentryService.shared.trackAction(
                 "invitation_declined",
                 category: "collaboration",
                 metadata: ["invitation_id": id.uuidString]
             )
-            
+
             showSuccess("Invitation declined")
             HapticFeedback.selectionChanged()
         } catch {
@@ -375,7 +375,7 @@ class CollaborationStoreV2: ObservableObject {
             throw error
         }
     }
-    
+
     /// Accept a pending invitation from My Collaborations view
     func acceptUserInvitation(id: UUID) async throws {
         addOperationBreadcrumb(
@@ -383,16 +383,16 @@ class CollaborationStoreV2: ObservableObject {
             category: "collaboration",
             data: ["invitationId": id.uuidString]
         )
-        
+
         do {
             let accepted = try await repository.acceptInvitation(id: id)
-            
+
             // Defer state updates to avoid "Publishing during view updates"
             await MainActor.run {
                 // Move from pending to active
                 if let index = pendingUserInvitations.firstIndex(where: { $0.id == id }) {
                     let invitation = pendingUserInvitations.remove(at: index)
-                    
+
                     // Create active collaboration from accepted invitation
                     let activeCollaboration = UserCollaboration(
                         id: accepted.id,
@@ -406,19 +406,19 @@ class CollaborationStoreV2: ObservableObject {
                         acceptedAt: Date(),
                         lastSeenAt: nil
                     )
-                    
+
                     userCollaborations.append(activeCollaboration)
                 }
             }
-            
+
             AppLogger.ui.info("Accepted invitation: \(id)")
-            
+
             await SentryService.shared.trackAction(
                 "invitation_accepted",
                 category: "collaboration",
                 metadata: ["invitation_id": id.uuidString]
             )
-            
+
             showSuccess("Invitation accepted! You can now switch to this wedding.")
             HapticFeedback.itemAdded()
         } catch {
@@ -430,15 +430,15 @@ class CollaborationStoreV2: ObservableObject {
             throw error
         }
     }
-    
+
     // MARK: - Retry Helper
-    
+
     func retryLoad() async {
         await loadCollaborationData()
     }
-    
+
     // MARK: - Private Helpers
-    
+
     private func showSuccess(_ message: String) {
         successMessage = message
         showSuccessToast = true

@@ -12,7 +12,7 @@ struct VendorType: Identifiable, Codable, Hashable {
     let id: Int64
     let createdAt: Date
     let vendorType: String
-    
+
     private enum CodingKeys: String, CodingKey {
         case id
         case createdAt = "created_at"

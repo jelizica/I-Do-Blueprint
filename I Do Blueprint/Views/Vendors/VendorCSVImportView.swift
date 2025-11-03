@@ -12,7 +12,7 @@ import Dependencies
 struct VendorCSVImportView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var vendorStore: VendorStoreV2
-    
+
     @State private var importService = FileImportService()
     @State private var selectedFileURL: URL?
     @State private var importPreview: ImportPreview?
@@ -24,30 +24,30 @@ struct VendorCSVImportView: View {
     @State private var importSuccess = false
     @State private var importStats: ImportStats?
     @State private var importMode: ImportMode = .addOnly
-    
+
     @Dependency(\.vendorRepository) var vendorRepository
     private let sessionManager = SessionManager.shared
     private let logger = AppLogger.general
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             headerSection
-            
+
             if let preview = importPreview {
                 previewSection(preview: preview)
             } else {
                 filePickerSection
             }
-            
+
             Spacer()
-            
+
             // Bottom buttons
             HStack(spacing: Spacing.md) {
                 Button("Cancel") {
                     dismiss()
                 }
                 .buttonStyle(.bordered)
-                
+
                 Spacer()
             }
             .padding(.horizontal, Spacing.xl)
@@ -70,19 +70,19 @@ struct VendorCSVImportView: View {
             Text(message)
         }
     }
-    
+
     // MARK: - View Sections
-    
+
     private var headerSection: some View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: "square.and.arrow.down")
                 .font(.system(size: 48))
                 .foregroundColor(AppColors.primary)
-            
+
             Text("Import Vendors")
                 .font(Typography.title2)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Upload a CSV or Excel file to add or sync your vendor list")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
@@ -90,7 +90,7 @@ struct VendorCSVImportView: View {
         }
         .padding(.top, Spacing.lg)
     }
-    
+
     private var filePickerSection: some View {
         VStack(spacing: Spacing.lg) {
             // Import mode selection
@@ -99,7 +99,7 @@ struct VendorCSVImportView: View {
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 VStack(spacing: Spacing.sm) {
                     importModeOption(
                         mode: .addOnly,
@@ -107,7 +107,7 @@ struct VendorCSVImportView: View {
                         description: "Add new vendors from the file. Existing vendors won't be modified.",
                         icon: "plus.circle"
                     )
-                    
+
                     importModeOption(
                         mode: .sync,
                         title: "Sync",
@@ -120,19 +120,19 @@ struct VendorCSVImportView: View {
             .frame(maxWidth: 500)
             .background(AppColors.cardBackground)
             .cornerRadius(8)
-            
+
             // File picker button
             Button(action: { showFilePicker = true }) {
                 VStack(spacing: Spacing.md) {
                     Image(systemName: "doc.badge.plus")
                         .font(.system(size: 40))
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("Choose File")
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.primary)
-                    
+
                     Text("Supported formats: CSV, Excel (.xlsx)")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
@@ -151,7 +151,7 @@ struct VendorCSVImportView: View {
         }
         .padding(.horizontal, Spacing.xl)
     }
-    
+
     private func importModeOption(mode: ImportMode, title: String, description: String, icon: String) -> some View {
         Button(action: { importMode = mode }) {
             HStack(spacing: Spacing.md) {
@@ -159,21 +159,21 @@ struct VendorCSVImportView: View {
                     .font(.system(size: 24))
                     .foregroundColor(importMode == mode ? AppColors.primary : AppColors.textSecondary)
                     .frame(width: 32)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(title)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text(description)
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                         .multilineTextAlignment(.leading)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: importMode == mode ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(importMode == mode ? AppColors.primary : AppColors.textSecondary)
             }
@@ -183,27 +183,27 @@ struct VendorCSVImportView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
     private func previewSection(preview: ImportPreview) -> some View {
         VStack(spacing: Spacing.lg) {
             // File info
             HStack {
                 Image(systemName: "doc.text.fill")
                     .foregroundColor(AppColors.primary)
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(preview.fileName)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("\(preview.totalRows) vendors • \(importMode == .addOnly ? "Add Only" : "Sync") Mode")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
-                
+
                 if !isImporting && !importSuccess {
                     Button(action: { clearImport() }) {
                         Image(systemName: "xmark.circle.fill")
@@ -215,7 +215,7 @@ struct VendorCSVImportView: View {
             .padding(Spacing.md)
             .background(AppColors.cardBackground)
             .cornerRadius(8)
-            
+
             if !importSuccess {
                 // Preview table
                 ScrollView([.horizontal, .vertical]) {
@@ -232,9 +232,9 @@ struct VendorCSVImportView: View {
                                     .background(AppColors.cardBackground)
                             }
                         }
-                        
+
                         Divider()
-                        
+
                         // Rows (show first 10)
                         ForEach(Array(preview.rows.prefix(10).enumerated()), id: \.offset) { index, row in
                             HStack(spacing: 0) {
@@ -253,13 +253,13 @@ struct VendorCSVImportView: View {
                 .frame(maxHeight: 250)
                 .background(AppColors.cardBackground)
                 .cornerRadius(8)
-                
+
                 if preview.totalRows > 10 {
                     Text("Showing first 10 of \(preview.totalRows) vendors")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 // Validation or importing status
                 if let validation = validationResult {
                     validationSection(validation: validation)
@@ -279,7 +279,7 @@ struct VendorCSVImportView: View {
         }
         .padding(.horizontal, Spacing.xl)
     }
-    
+
     private func validationSection(validation: ImportValidationResult) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             if validation.isValid {
@@ -300,13 +300,13 @@ struct VendorCSVImportView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.red)
                     }
-                    
+
                     ForEach(Array(validation.errors.prefix(5).enumerated()), id: \.offset) { _, error in
                         Text("• Row \(error.row): \(error.message)")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     if validation.errors.count > 5 {
                         Text("... and \(validation.errors.count - 5) more errors")
                             .font(Typography.caption)
@@ -320,44 +320,44 @@ struct VendorCSVImportView: View {
         .background(validation.isValid ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
         .cornerRadius(8)
     }
-    
+
     private func successSection(stats: ImportStats) -> some View {
         VStack(spacing: Spacing.md) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 48))
                 .foregroundColor(.green)
-            
+
             Text("Import Complete!")
                 .font(Typography.title3)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             VStack(spacing: Spacing.xs) {
                 if stats.added > 0 {
                     Text("✅ Added: \(stats.added) vendors")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 if stats.updated > 0 {
                     Text("🔄 Updated: \(stats.updated) vendors")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 if stats.deleted > 0 {
                     Text("🗑️ Removed: \(stats.deleted) vendors")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 if stats.skipped > 0 {
                     Text("⏭️ Skipped: \(stats.skipped) duplicates")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
-            Button(action: { 
+
+            Button(action: {
                 // Reload data before dismissing
                 Task {
                     await vendorStore.loadVendors()
@@ -378,21 +378,21 @@ struct VendorCSVImportView: View {
         }
         .padding(Spacing.xl)
     }
-    
+
     // MARK: - Actions
-    
+
     private func handleFileSelection(_ result: Result<[URL], Error>) {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
             selectedFileURL = url
             loadFile(url)
-            
+
         case .failure(let error):
             errorMessage = "Failed to select file: \(error.localizedDescription)"
         }
     }
-    
+
     private func loadFile(_ url: URL) {
         Task {
             do {
@@ -403,10 +403,10 @@ struct VendorCSVImportView: View {
                 } else {
                     preview = try await importService.parseCSV(from: url)
                 }
-                
+
                 await MainActor.run {
                     importPreview = preview
-                    
+
                     // Auto-import after preview loads
                     performImport()
                 }
@@ -417,7 +417,7 @@ struct VendorCSVImportView: View {
             }
         }
     }
-    
+
     private func clearImport() {
         importPreview = nil
         selectedFileURL = nil
@@ -426,10 +426,10 @@ struct VendorCSVImportView: View {
         importSuccess = false
         importStats = nil
     }
-    
+
     private func performImport() {
         guard let preview = importPreview else { return }
-        
+
         // Define vendor target fields
         let vendorFields = [
             "vendorName", "vendorType", "contactName", "phoneNumber", "email",
@@ -438,28 +438,28 @@ struct VendorCSVImportView: View {
             "latitude", "longitude", "budgetCategoryId", "vendorCategoryId",
             "includeInExport", "imageUrl", "notes"
         ]
-        
+
         // Infer column mappings
         columnMappings = importService.inferMappings(headers: preview.headers, targetFields: vendorFields)
-        
+
         // Validate the import
         let validation = importService.validateImport(preview: preview, mappings: columnMappings)
         validationResult = validation
-        
+
         // If validation fails, don't proceed
         guard validation.isValid else {
             logger.warning("Import validation failed with \(validation.errors.count) errors")
             return
         }
-        
+
         // Get couple ID from session
         guard let coupleId = sessionManager.currentTenantId else {
             errorMessage = "No couple selected. Please sign in first."
             return
         }
-        
+
         isImporting = true
-        
+
         Task {
             do {
                 // Convert CSV rows to VendorImportData objects
@@ -468,14 +468,14 @@ struct VendorCSVImportView: View {
                     mappings: columnMappings,
                     coupleId: coupleId
                 )
-                
+
                 logger.info("Converted \(newVendors.count) vendors, starting import with mode: \(importMode)")
-                
+
                 // Get existing vendors
                 let existingVendors = vendorStore.vendors
-                
+
                 var stats = ImportStats(added: 0, updated: 0, deleted: 0, skipped: 0)
-                
+
                 if importMode == .addOnly {
                     // Add Only mode: Only add vendors that don't exist
                     stats = try await performAddOnlyImport(newVendors: newVendors, existingVendors: existingVendors)
@@ -483,10 +483,10 @@ struct VendorCSVImportView: View {
                     // Sync mode: Add new, update existing
                     stats = try await performSyncImport(newVendors: newVendors, existingVendors: existingVendors)
                 }
-                
+
                 // Reload vendor data
                 await vendorStore.loadVendors()
-                
+
                 await MainActor.run {
                     importStats = stats
                     importSuccess = true
@@ -502,14 +502,14 @@ struct VendorCSVImportView: View {
             }
         }
     }
-    
+
     private func performAddOnlyImport(newVendors: [VendorImportData], existingVendors: [Vendor]) async throws -> ImportStats {
         var stats = ImportStats(added: 0, updated: 0, deleted: 0, skipped: 0)
-        
+
         // Create a set of existing vendor names and emails for quick lookup
         let existingNames = Set(existingVendors.map { $0.vendorName.lowercased() })
         let existingEmails = Set(existingVendors.compactMap { $0.email?.lowercased() })
-        
+
         // Filter out vendors that already exist
         let vendorsToAdd = newVendors.filter { vendor in
             // Check by name
@@ -517,7 +517,7 @@ struct VendorCSVImportView: View {
                 stats.skipped += 1
                 return false
             }
-            
+
             // Check by email if available
             if let email = vendor.email?.lowercased(), !email.isEmpty {
                 if existingEmails.contains(email) {
@@ -525,50 +525,50 @@ struct VendorCSVImportView: View {
                     return false
                 }
             }
-            
+
             return true
         }
-        
+
         // Import new vendors
         if !vendorsToAdd.isEmpty {
             let imported = try await vendorRepository.importVendors(vendorsToAdd)
             stats.added = imported.count
         }
-        
+
         return stats
     }
-    
+
     private func performSyncImport(newVendors: [VendorImportData], existingVendors: [Vendor]) async throws -> ImportStats {
         var stats = ImportStats(added: 0, updated: 0, deleted: 0, skipped: 0)
-        
+
         // Create lookup dictionaries
         var existingByName: [String: Vendor] = [:]
         var existingByEmail: [String: Vendor] = [:]
-        
+
         for vendor in existingVendors {
             existingByName[vendor.vendorName.lowercased()] = vendor
             if let email = vendor.email?.lowercased(), !email.isEmpty {
                 existingByEmail[email] = vendor
             }
         }
-        
+
         // Track which existing vendors are in the new file
         var matchedVendorIds = Set<Int64>()
-        
+
         // Process new vendors
         var vendorsToAdd: [VendorImportData] = []
-        
+
         for newVendor in newVendors {
             var existingVendor: Vendor?
-            
+
             // Try to match by name first
             existingVendor = existingByName[newVendor.vendorName.lowercased()]
-            
+
             // If no name match, try email
             if existingVendor == nil, let email = newVendor.email?.lowercased(), !email.isEmpty {
                 existingVendor = existingByEmail[email]
             }
-            
+
             if let existing = existingVendor {
                 // Vendor exists - mark as matched (don't update to preserve data)
                 matchedVendorIds.insert(existing.id)
@@ -578,13 +578,13 @@ struct VendorCSVImportView: View {
                 vendorsToAdd.append(newVendor)
             }
         }
-        
+
         // Import new vendors
         if !vendorsToAdd.isEmpty {
             let imported = try await vendorRepository.importVendors(vendorsToAdd)
             stats.added = imported.count
         }
-        
+
         // Delete vendors not in the new file
         for existingVendor in existingVendors {
             if !matchedVendorIds.contains(existingVendor.id) {
@@ -592,7 +592,7 @@ struct VendorCSVImportView: View {
                 stats.deleted += 1
             }
         }
-        
+
         return stats
     }
 }

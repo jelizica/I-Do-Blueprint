@@ -137,7 +137,7 @@ struct BudgetSidebarView: View {
             }
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
-            
+
             // List content
             List(selection: $selection) {
                 ForEach(BudgetGroup.allCases, id: \.self) { group in

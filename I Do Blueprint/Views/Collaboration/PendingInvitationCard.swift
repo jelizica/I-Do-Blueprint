@@ -11,7 +11,7 @@ struct PendingInvitationCard: View {
     let invitation: UserCollaboration
     let onAccept: () -> Void
     let onDecline: () -> Void
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header with couple name and role
@@ -21,12 +21,12 @@ struct PendingInvitationCard: View {
                         Image(systemName: "envelope.fill")
                             .font(.system(size: 14))
                             .foregroundColor(AppColors.warning)
-                        
+
                         Text(invitation.coupleName)
                             .font(Typography.heading)
                             .foregroundColor(AppColors.textPrimary)
                     }
-                    
+
                     if let weddingDate = invitation.weddingDate {
                         HStack(spacing: Spacing.xs) {
                             Image(systemName: "calendar")
@@ -37,15 +37,15 @@ struct PendingInvitationCard: View {
                         .foregroundColor(AppColors.textSecondary)
                     }
                 }
-                
+
                 Spacer()
-                
+
                 // Role badge
                 roleBadge
             }
-            
+
             Divider()
-            
+
             // Invitation details
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 if let invitedBy = invitation.invitedBy {
@@ -57,7 +57,7 @@ struct PendingInvitationCard: View {
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
                 }
-                
+
                 HStack(spacing: Spacing.xs) {
                     Image(systemName: "clock")
                         .font(.system(size: 12))
@@ -66,9 +66,9 @@ struct PendingInvitationCard: View {
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
             }
-            
+
             Divider()
-            
+
             // Actions
             HStack(spacing: Spacing.md) {
                 Button(action: onAccept) {
@@ -82,7 +82,7 @@ struct PendingInvitationCard: View {
                 .buttonStyle(.borderedProminent)
                 .tint(AppColors.success)
                 .accessibilityLabel("Accept invitation from \(invitation.coupleName)")
-                
+
                 Button(action: onDecline) {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "xmark.circle")
@@ -104,9 +104,9 @@ struct PendingInvitationCard: View {
         )
         .cornerRadius(12)
     }
-    
+
     // MARK: - Role Badge
-    
+
     private var roleBadge: some View {
         HStack(spacing: Spacing.xs) {
             Image(systemName: "star.fill")
