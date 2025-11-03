@@ -270,7 +270,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     }
 
     func createVendorCategory(_ category: CustomVendorCategory) async throws -> CustomVendorCategory {
-        return try await createCustomVendorCategory(
+        try await createCustomVendorCategory(
             name: category.name,
             description: category.description,
             typicalBudgetPercentage: category.typicalBudgetPercentage
@@ -316,7 +316,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     }
 
     func updateVendorCategory(_ category: CustomVendorCategory) async throws -> CustomVendorCategory {
-        return try await updateCustomVendorCategory(
+        try await updateCustomVendorCategory(
             id: category.id,
             name: category.name,
             description: category.description,
