@@ -55,16 +55,16 @@ enum AppConfig {
 
     /// Get Supabase URL with fallback to Config.plist
     static func getSupabaseURL() -> String {
-        return loadFromPlist(key: "SUPABASE_URL") ?? supabaseURL
+        loadFromPlist(key: "SUPABASE_URL") ?? supabaseURL
     }
 
     /// Get Supabase anon key with fallback to Config.plist
     static func getSupabaseAnonKey() -> String {
-        return loadFromPlist(key: "SUPABASE_ANON_KEY") ?? supabaseAnonKey
+        loadFromPlist(key: "SUPABASE_ANON_KEY") ?? supabaseAnonKey
     }
 
     /// Get Sentry DSN with fallback to Config.plist
     static func getSentryDSN() -> String {
-        return loadFromPlist(key: "SENTRY_DSN") ?? sentryDSN
+        loadFromPlist(key: "SENTRY_DSN") ?? sentryDSN
     }
 }
