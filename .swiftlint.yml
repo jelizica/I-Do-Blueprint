@@ -15,6 +15,72 @@ excluded:
 
 reporter: "xcode"
 
+# Adopt recommended opt-in rules (kept lean and pragmatic for this app)
+opt_in_rules:
+  - array_init
+  - attributes
+  - closure_end_indentation
+  - closure_spacing
+  - collection_alignment
+  - contains_over_first_not_nil
+  - discouraged_optional_boolean
+  - empty_count
+  - explicit_enum_raw_value
+  - explicit_init
+  - file_types_order
+  - implicit_return
+  - redundant_nil_coalescing
+  - redundant_type_annotation
+  - yoda_condition
+  - prefer_self_type_over_type_of_self
+
+# Rule configurations
+line_length:
+  warning: 120
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+  ignores_interpolated_strings: true
+
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  excluded: [id, x, y, to, vc]
+  allowed_symbols: ["_"]
+
+type_name:
+  min_length: 3
+  max_length:
+    warning: 50
+    error: 60
+  excluded: [id, URL, JSON]
+
+file_length:
+  warning: 400
+  error: 800
+
+type_body_length:
+  warning: 300
+  error: 600
+
+function_body_length:
+  warning: 80
+  error: 120
+
+function_parameter_count:
+  warning: 8
+  error: 10
+
+cyclomatic_complexity:
+  warning: 12
+  error: 20
+
+nesting:
+  type_level:
+    warning: 2
+    error: 3
+
 # Custom rules focused on design system enforcement
 custom_rules:
   no_literal_rgb_colors:
@@ -23,6 +89,8 @@ custom_rules:
     message: "Use AppColors tokens (semantic colors) instead of literal RGB/white initializers."
     included:
       - I Do Blueprint/Views
+      - I Do Blueprint/I Do Blueprint/Views
+      - I Do Blueprint/App
       - I Do Blueprint/Services
     excluded:
       - I Do Blueprint/Design/ColorPalette.swift
@@ -35,6 +103,8 @@ custom_rules:
     message: "Use semantic colors from AppColors (e.g., textPrimary/textSecondary/primary)."
     included:
       - I Do Blueprint/Views
+      - I Do Blueprint/I Do Blueprint/Views
+      - I Do Blueprint/App
       - I Do Blueprint/Services
     severity: error
 
@@ -44,6 +114,8 @@ custom_rules:
     message: "Use Spacing.* tokens instead of numeric literals in padding."
     included:
       - I Do Blueprint/Views
+      - I Do Blueprint/I Do Blueprint/Views
+      - I Do Blueprint/App
       - I Do Blueprint/Services
     severity: error
 
@@ -53,5 +125,7 @@ custom_rules:
     message: "Use Typography tokens instead of .font(.custom)."
     included:
       - I Do Blueprint/Views
+      - I Do Blueprint/I Do Blueprint/Views
+      - I Do Blueprint/App
       - I Do Blueprint/Services
     severity: error
