@@ -81,6 +81,11 @@ nesting:
     warning: 2
     error: 3
 
+file_types_order:
+  excluded:
+    - "I Do Blueprint/Design/**"
+    - "I Do Blueprint/App/RootFlowView.swift"
+
 # Custom rules focused on design system enforcement
 custom_rules:
   no_literal_rgb_colors:

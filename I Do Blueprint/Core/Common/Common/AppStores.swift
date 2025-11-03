@@ -313,61 +313,24 @@ struct AppStoresKey: EnvironmentKey {
     static let defaultValue = AppStores.shared
 }
 
+// Expose AppStores and individual stores via Environment
 extension EnvironmentValues {
     var appStores: AppStores {
         get { self[AppStoresKey.self] }
         set { self[AppStoresKey.self] = newValue }
     }
-}
-
-// NOTE: These extensions allow views to access stores via environment
-// Stores are created lazily on first access to minimize memory usage
-extension EnvironmentValues {
-    var budgetStore: BudgetStoreV2 {
-        appStores.budget
-    }
-
-    var guestStore: GuestStoreV2 {
-        appStores.guest
-    }
-
-    var vendorStore: VendorStoreV2 {
-        appStores.vendor
-    }
-
-    var documentStore: DocumentStoreV2 {
-        appStores.document
-    }
-
-    var taskStore: TaskStoreV2 {
-        appStores.task
-    }
-
-    var timelineStore: TimelineStoreV2 {
-        appStores.timeline
-    }
-
-    var notesStore: NotesStoreV2 {
-        appStores.notes
-    }
-
-    var visualPlanningStore: VisualPlanningStoreV2 {
-        appStores.visualPlanning
-    }
-
-    var onboardingStore: OnboardingStoreV2 {
-        appStores.onboarding
-    }
-
-    var collaborationStore: CollaborationStoreV2 {
-        appStores.collaboration
-    }
-
-    var presenceStore: PresenceStoreV2 {
-        appStores.presence
-    }
-
-    var activityFeedStore: ActivityFeedStoreV2 {
-        appStores.activityFeed
-    }
+    
+    // Stores are created lazily on first access to minimize memory usage
+    var budgetStore: BudgetStoreV2 { appStores.budget }
+    var guestStore: GuestStoreV2 { appStores.guest }
+    var vendorStore: VendorStoreV2 { appStores.vendor }
+    var documentStore: DocumentStoreV2 { appStores.document }
+    var taskStore: TaskStoreV2 { appStores.task }
+    var timelineStore: TimelineStoreV2 { appStores.timeline }
+    var notesStore: NotesStoreV2 { appStores.notes }
+    var visualPlanningStore: VisualPlanningStoreV2 { appStores.visualPlanning }
+    var onboardingStore: OnboardingStoreV2 { appStores.onboarding }
+    var collaborationStore: CollaborationStoreV2 { appStores.collaboration }
+    var presenceStore: PresenceStoreV2 { appStores.presence }
+    var activityFeedStore: ActivityFeedStoreV2 { appStores.activityFeed }
 }
