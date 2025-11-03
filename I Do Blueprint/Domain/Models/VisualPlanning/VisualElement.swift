@@ -24,7 +24,7 @@ struct VisualElement: Identifiable, Codable, Hashable {
     var notes: String?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case moodBoardId = "mood_board_id"
@@ -32,13 +32,13 @@ struct VisualElement: Identifiable, Codable, Hashable {
         case elementData = "element_data"
         case positionX = "position_x"
         case positionY = "position_y"
-        case width
-        case height
-        case rotation
-        case opacity
+        case width = "width"
+        case height = "height"
+        case rotation = "rotation"
+        case opacity = "opacity"
         case zIndex = "z_index"
         case isLocked = "is_locked"
-        case notes
+        case notes = "notes"
     }
 
     init(from decoder: Decoder) throws {
@@ -126,23 +126,25 @@ struct VisualElement: Identifiable, Codable, Hashable {
         var alt: String?
 
         enum TextAlignment: String, Codable, Hashable {
-            case leading, center, trailing
+            case leading = "leading"
+            case center = "center"
+            case trailing = "trailing"
         }
 
         enum CodingKeys: String, CodingKey {
             case imageUrl = "url"
             case assetUrl = "asset_url"
             case thumbnailUrl = "thumbnail_url"
-            case color
-            case text
+            case color = "color"
+            case text = "text"
             case fontSize = "font_size"
             case fontName = "font_name"
             case textAlignment = "text_alignment"
             case sourceUrl = "source_url"
             case originalFilename = "original_filename"
             case fileSize = "file_size"
-            case dimensions
-            case alt
+            case dimensions = "dimensions"
+            case alt = "alt"
         }
 
         init(from decoder: Decoder) throws {
@@ -199,7 +201,8 @@ struct VisualElement: Identifiable, Codable, Hashable {
         }
 
         private enum DimensionKeys: String, CodingKey {
-            case width, height
+            case width = "width"
+            case height = "height"
         }
 
         init(

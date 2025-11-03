@@ -197,18 +197,20 @@ struct SidebarAssignmentsContent: View {
 
 // MARK: - Analytics Content
 
+struct SidebarAnalyticsData {
+    let totalGuests: Int
+    let assignedGuests: Int
+    let unassignedGuests: Int
+    let totalTables: Int
+    let occupiedTables: Int
+    let assignmentProgress: Double
+    let conflictCount: Int
+}
+
 struct SidebarAnalyticsContent: View {
     let chart: SeatingChart
 
-    private var analytics: (
-        totalGuests: Int,
-        assignedGuests: Int,
-        unassignedGuests: Int,
-        totalTables: Int,
-        occupiedTables: Int,
-        assignmentProgress: Double,
-        conflictCount: Int
-    ) {
+    private var analytics: SidebarAnalyticsData {
         let totalGuests = chart.guests.count
         let assignedGuests = chart.seatingAssignments.count
         let unassignedGuests = totalGuests - assignedGuests
@@ -240,14 +242,14 @@ struct SidebarAnalyticsContent: View {
             }
         }
 
-        return (
-            totalGuests,
-            assignedGuests,
-            unassignedGuests,
-            totalTables,
-            occupiedTables,
-            progress,
-            conflictCount
+        return SidebarAnalyticsData(
+            totalGuests: totalGuests,
+            assignedGuests: assignedGuests,
+            unassignedGuests: unassignedGuests,
+            totalTables: totalTables,
+            occupiedTables: occupiedTables,
+            assignmentProgress: progress,
+            conflictCount: conflictCount
         )
     }
 

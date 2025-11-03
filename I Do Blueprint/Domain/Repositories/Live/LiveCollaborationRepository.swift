@@ -1,4 +1,5 @@
 //
+// swiftlint:disable file_length
 //  LiveCollaborationRepository.swift
 //  I Do Blueprint
 //
@@ -9,6 +10,7 @@ import Foundation
 import Supabase
 
 /// Production implementation of CollaborationRepositoryProtocol
+// swiftlint:disable type_body_length
 actor LiveCollaborationRepository: CollaborationRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
@@ -611,6 +613,7 @@ actor LiveCollaborationRepository: CollaborationRepositoryProtocol {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     func fetchUserCollaborations() async throws -> [UserCollaboration] {
         do {
             let client = try getClient()

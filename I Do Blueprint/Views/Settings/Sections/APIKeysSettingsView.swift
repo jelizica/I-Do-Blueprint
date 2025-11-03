@@ -45,7 +45,12 @@ struct APIKeysSettingsView: View {
                         Image(systemName: "info.circle.fill")
                             .foregroundColor(AppColors.primary)
                             .font(.caption)
-                        Text("Note: Email invitations work out-of-the-box using a shared service. Only add a Resend API key if you need custom email domain support.")
+                        Text(
+                        """
+                        Note: Email invitations work out-of-the-box using a shared service. \
+                        Only add a Resend API key if you need custom email domain support.
+                        """
+                    )
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
@@ -89,7 +94,10 @@ struct APIKeysSettingsView: View {
                 type: .resend,
                 isConfigured: apiKeyManager.hasResendKey,
                 keyBinding: $resendKey,
-                description: "Optional: The app uses a shared email service for invitations. Add your own Resend API key only if you want to use your custom email domain."
+                description: """
+                    Optional: The app uses a shared email service for invitations. \
+                    Add your own Resend API key only if you want to use your custom email domain.
+                    """
             )
         }
         .formStyle(.grouped)

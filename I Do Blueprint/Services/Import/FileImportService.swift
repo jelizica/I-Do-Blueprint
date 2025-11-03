@@ -5,6 +5,8 @@
 //  Service for parsing CSV and XLSX files for guest/vendor import
 //
 
+// swiftlint:disable file_length
+
 import Foundation
 import AppKit
 import CoreXLSX

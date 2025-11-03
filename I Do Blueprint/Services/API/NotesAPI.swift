@@ -151,8 +151,8 @@ class NotesAPI {
 
             enum CodingKeys: String, CodingKey {
                 case coupleId = "couple_id"
-                case title
-                case content
+                case title = "title"
+                case content = "content"
                 case relatedType = "related_type"
                 case relatedId = "related_id"
             }
@@ -203,8 +203,8 @@ class NotesAPI {
             let relatedId: String?
 
             enum CodingKeys: String, CodingKey {
-                case title
-                case content
+                case title = "title"
+                case content = "content"
                 case relatedType = "related_type"
                 case relatedId = "related_id"
             }

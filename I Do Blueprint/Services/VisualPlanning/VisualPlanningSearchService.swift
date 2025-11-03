@@ -432,10 +432,21 @@ struct SearchFilters: Codable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case tenantId, styleCategories, seasons, paletteVisibility, venueLayouts
-        case favoritesOnly, showTemplatesOnly, finalizedOnly, sortBy, sortOrder
-        case dateRangeStart, dateRangeEnd, guestCountRangeStart, guestCountRangeEnd
-        case colorData
+        case tenantId = "tenantId"
+        case styleCategories = "styleCategories"
+        case seasons = "seasons"
+        case paletteVisibility = "paletteVisibility"
+        case venueLayouts = "venueLayouts"
+        case favoritesOnly = "favoritesOnly"
+        case showTemplatesOnly = "showTemplatesOnly"
+        case finalizedOnly = "finalizedOnly"
+        case sortBy = "sortBy"
+        case sortOrder = "sortOrder"
+        case dateRangeStart = "dateRangeStart"
+        case dateRangeEnd = "dateRangeEnd"
+        case guestCountRangeStart = "guestCountRangeStart"
+        case guestCountRangeEnd = "guestCountRangeEnd"
+        case colorData = "colorData"
     }
 
     init(from decoder: Decoder) throws {
@@ -500,11 +511,11 @@ struct SearchFilters: Codable {
     }
 
     enum SortOption: String, CaseIterable, Codable {
-        case relevance
-        case name
+        case relevance = "relevance"
+        case name = "name"
         case dateCreated = "date_created"
         case dateModified = "date_modified"
-        case usage
+        case usage = "usage"
 
         var displayName: String {
             switch self {
@@ -531,11 +542,11 @@ struct SearchFilters: Codable {
 }
 
 enum QuickFilter: String, CaseIterable {
-    case recent
-    case favorites
-    case templates
-    case completed
-    case myColors = "my_colors"
+case recent = "recent"
+case favorites = "favorites"
+case templates = "templates"
+case completed = "completed"
+case myColors = "my_colors"
 
     var displayName: String {
         switch self {

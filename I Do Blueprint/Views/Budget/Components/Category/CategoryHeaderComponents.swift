@@ -73,16 +73,23 @@ struct CategoryHeaderView: View {
 
 // MARK: - Category Stats View
 
+struct ExpenseStats {
+    let total: Int
+    let pending: Int
+    let paid: Int
+    let overdue: Int
+}
+
 struct CategoryStatsView: View {
     let category: BudgetCategory
     let expenses: [Expense]
 
-    private var expenseStats: (total: Int, pending: Int, paid: Int, overdue: Int) {
+    private var expenseStats: ExpenseStats {
         let total = expenses.count
         let pending = expenses.filter { $0.paymentStatus == .pending }.count
         let paid = expenses.filter { $0.paymentStatus == .paid }.count
         let overdue = expenses.filter(\.isOverdue).count
-        return (total, pending, paid, overdue)
+        return ExpenseStats(total: total, pending: pending, paid: paid, overdue: overdue)
     }
 
     var body: some View {

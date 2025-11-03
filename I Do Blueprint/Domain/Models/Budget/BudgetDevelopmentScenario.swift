@@ -20,7 +20,7 @@ struct BudgetDevelopmentScenario: Identifiable, Codable, Equatable {
     var updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case scenarioName = "scenario_name"
         case totalWithoutTax = "total_without_tax"

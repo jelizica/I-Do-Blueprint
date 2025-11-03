@@ -28,7 +28,7 @@ struct MoodBoard: Identifiable, Codable, Hashable {
     var notes: String?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case tenantId = "couple_id"
@@ -40,12 +40,12 @@ struct MoodBoard: Identifiable, Codable, Hashable {
         case canvasHeight = "canvas_height"
         case backgroundColor = "background_color"
         case backgroundImage = "background_image"
-        case elements
+        case elements = "elements"
         case isTemplate = "is_template"
         case isPublic = "is_public"
-        case tags
+        case tags = "tags"
         case inspirationUrls = "inspiration_urls"
-        case notes
+        case notes = "notes"
     }
 
     init(from decoder: Decoder) throws {
@@ -166,7 +166,10 @@ struct MoodBoardTemplate: Identifiable, Codable, Hashable {
 
 extension Color: Codable {
     enum CodingKeys: String, CodingKey {
-        case red, green, blue, alpha
+        case red = "red"
+        case green = "green"
+        case blue = "blue"
+        case alpha = "alpha"
     }
 
     public init(from decoder: Decoder) throws {

@@ -366,9 +366,9 @@ struct DashboardFiltersView: View {
 // MARK: - Supporting Types
 
 enum DashboardPeriod: String, CaseIterable {
-    case week
-    case month
-    case quarter
+    case week = "week"
+    case month = "month"
+    case quarter = "quarter"
 
     var displayName: String {
         switch self {

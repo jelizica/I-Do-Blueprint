@@ -57,14 +57,14 @@ struct OnboardingProgress: Codable, Equatable {
 
 /// Represents each step in the onboarding flow
 enum OnboardingStep: String, Codable, CaseIterable, Hashable {
-    case welcome
-    case weddingDetails
-    case defaultSettings
-    case featurePreferences
-    case guestImport
-    case vendorImport
-    case budgetSetup
-    case completion
+    case welcome = "welcome"
+    case weddingDetails = "weddingDetails"
+    case defaultSettings = "defaultSettings"
+    case featurePreferences = "featurePreferences"
+    case guestImport = "guestImport"
+    case vendorImport = "vendorImport"
+    case budgetSetup = "budgetSetup"
+    case completion = "completion"
 
     var title: String {
         switch self {
@@ -225,14 +225,14 @@ struct OnboardingWeddingEvent: Codable, Equatable, Identifiable {
 // MARK: - Wedding Style
 
 enum WeddingStyle: String, Codable, CaseIterable {
-    case traditional
-    case modern
-    case rustic
-    case beach
-    case garden
-    case destination
-    case intimate
-    case formal
+    case traditional = "traditional"
+    case modern = "modern"
+    case rustic = "rustic"
+    case beach = "beach"
+    case garden = "garden"
+    case destination = "destination"
+    case intimate = "intimate"
+    case formal = "formal"
 
     var displayName: String {
         switch self {
@@ -435,8 +435,8 @@ struct BudgetSetupStatus: Codable, Equatable {
 
 /// Determines the onboarding flow mode
 enum OnboardingMode: String, Codable {
-    case guided // Full step-by-step onboarding
-    case express // Quick setup with defaults
+    case guided = "guided" // Full step-by-step onboarding
+    case express = "express" // Quick setup with defaults
 
     var displayName: String {
         switch self {

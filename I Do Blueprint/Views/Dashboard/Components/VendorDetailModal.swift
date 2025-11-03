@@ -5,6 +5,8 @@
 //  Modal for displaying vendor details from dashboard
 //
 
+// swiftlint:disable file_length
+
 import SwiftUI
 import Dependencies
 

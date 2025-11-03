@@ -139,6 +139,7 @@ struct DashboardViewV2: View {
         }
     }
 
+    // swiftlint:disable:next function_body_length
     private func buildDashboardSummary() {
         // Build TaskMetrics
         let tasks = taskStore.tasks

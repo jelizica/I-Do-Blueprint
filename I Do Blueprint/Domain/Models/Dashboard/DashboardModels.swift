@@ -39,16 +39,16 @@ struct TaskMetrics: Codable, Equatable {
     let recentTasks: [TaskSummary]
 
     enum CodingKeys: String, CodingKey {
-        case total
-        case completed
+        case total = "total"
+        case completed = "completed"
         case inProgress = "in_progress"
         case notStarted = "not_started"
         case onHold = "on_hold"
-        case cancelled
-        case overdue
+        case cancelled = "cancelled"
+        case overdue = "overdue"
         case dueThisWeek = "due_this_week"
         case highPriority = "high_priority"
-        case urgent
+        case urgent = "urgent"
         case completionRate = "completion_rate"
         case recentTasks = "recent_tasks"
     }
@@ -63,10 +63,10 @@ struct TaskSummary: Codable, Equatable, Identifiable {
     let assignedTo: [String]
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case taskName = "task_name"
-        case priority
-        case status
+        case priority = "priority"
+        case status = "status"
         case dueDate = "due_date"
         case assignedTo = "assigned_to"
     }
@@ -108,11 +108,11 @@ struct PaymentSummary: Codable, Equatable, Identifiable {
     let paid: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case vendor
-        case amount
+        case id = "id"
+        case vendor = "vendor"
+        case amount = "amount"
         case dueDate = "payment_date"
-        case paid
+        case paid = "paid"
     }
 }
 
@@ -128,10 +128,10 @@ struct ReminderMetrics: Codable, Equatable {
     let recentReminders: [ReminderSummary]
 
     enum CodingKeys: String, CodingKey {
-        case total
-        case active
-        case completed
-        case overdue
+        case total = "total"
+        case active = "active"
+        case completed = "completed"
+        case overdue = "overdue"
         case dueToday = "due_today"
         case dueThisWeek = "due_this_week"
         case recentReminders = "recent_reminders"
@@ -145,10 +145,10 @@ struct ReminderSummary: Codable, Equatable, Identifiable {
     let completed: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case reminderText = "reminder_text"
         case reminderDate = "reminder_date"
-        case completed
+        case completed = "completed"
     }
 }
 
@@ -168,7 +168,7 @@ struct TimelineMetrics: Codable, Equatable {
         case completedItems = "completed_items"
         case upcomingItems = "upcoming_items"
         case overdueItems = "overdue_items"
-        case milestones
+        case milestones = "milestones"
         case completedMilestones = "completed_milestones"
         case recentItems = "recent_items"
     }
@@ -182,11 +182,11 @@ struct TimelineItemSummary: Codable, Equatable, Identifiable {
     let completed: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case type
-        case date
-        case completed
+        case id = "id"
+        case title = "title"
+        case type = "type"
+        case date = "date"
+        case completed = "completed"
     }
 }
 
@@ -206,7 +206,7 @@ struct GuestMetrics: Codable, Equatable {
         case rsvpYes = "rsvp_yes"
         case rsvpNo = "rsvp_no"
         case rsvpPending = "rsvp_pending"
-        case attended
+        case attended = "attended"
         case mealSelections = "meal_selections"
         case recentRsvps = "recent_rsvps"
     }
@@ -219,7 +219,7 @@ struct GuestSummary: Codable, Equatable, Identifiable {
     let mealSelection: String?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case guestName = "guest_name"
         case rsvpStatus = "rsvp_status"
         case mealSelection = "meal_selection"
@@ -253,10 +253,10 @@ struct VendorSummary: Codable, Equatable, Identifiable {
     let status: String?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case vendorName = "vendor_name"
         case vendorType = "vendor_type"
-        case status
+        case status = "status"
     }
 }
 
@@ -271,9 +271,9 @@ struct DocumentMetrics: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case totalDocuments = "total_documents"
-        case invoices
-        case contracts
-        case other
+        case invoices = "invoices"
+        case contracts = "contracts"
+        case other = "other"
         case recentDocuments = "recent_documents"
     }
 }
@@ -285,7 +285,7 @@ struct DocumentSummary: Codable, Equatable, Identifiable {
     let uploadedAt: Date
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case documentName = "document_name"
         case documentType = "document_type"
         case uploadedAt = "uploaded_at"
@@ -305,10 +305,10 @@ struct BudgetMetrics: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case totalBudget = "total_budget"
-        case spent
-        case remaining
+        case spent = "spent"
+        case remaining = "remaining"
         case percentageUsed = "percentage_used"
-        case categories
+        case categories = "categories"
         case overBudgetCategories = "over_budget_categories"
         case recentExpenses = "recent_expenses"
     }
@@ -321,9 +321,9 @@ struct ExpenseSummary: Codable, Equatable, Identifiable {
     let expenseDate: Date
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case expenseName = "expense_name"
-        case amount
+        case amount = "amount"
         case expenseDate = "expense_date"
     }
 }
@@ -353,10 +353,10 @@ struct GiftSummary: Codable, Equatable, Identifiable {
     let thanked: Bool
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case giftDescription = "gift_description"
         case giftValue = "gift_value"
-        case thanked
+        case thanked = "thanked"
     }
 }
 
@@ -384,9 +384,9 @@ struct NoteSummary: Codable, Equatable, Identifiable {
     let createdAt: Date
 
     enum CodingKeys: String, CodingKey {
-        case id
-        case title
-        case content
+        case id = "id"
+        case title = "title"
+        case content = "content"
         case relatedType = "related_type"
         case createdAt = "created_at"
     }

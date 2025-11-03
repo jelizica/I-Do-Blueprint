@@ -134,7 +134,9 @@ extension BudgetStoreV2 {
         // Proportional unlink: remove the specified item from the expense's allocation set,
         // then rebalance the remaining items proportionally by their budgeted amounts.
         guard let expenseUUID = UUID(uuidString: expenseId) else {
-            throw BudgetError.updateFailed(underlying: NSError(domain: "BudgetStoreV2", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid expense UUID"]))
+            let errorInfo = [NSLocalizedDescriptionKey: "Invalid expense UUID"]
+            let error = NSError(domain: "BudgetStoreV2", code: -1, userInfo: errorInfo)
+            throw BudgetError.updateFailed(underlying: error)
         }
 
         do {

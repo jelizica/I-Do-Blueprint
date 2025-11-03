@@ -308,11 +308,11 @@ struct MilestoneRow: View {
 // MARK: - Filter and Sort Options
 
 enum MilestoneFilter: String, CaseIterable {
-    case all
-    case upcoming
-    case past
-    case completed
-    case incomplete
+    case all = "all"
+    case upcoming = "upcoming"
+    case past = "past"
+    case completed = "completed"
+    case incomplete = "incomplete"
 
     var displayName: String {
         switch self {
@@ -326,10 +326,10 @@ enum MilestoneFilter: String, CaseIterable {
 }
 
 enum MilestoneSortOrder: String, CaseIterable {
-    case dateAscending
-    case dateDescending
-    case nameAscending
-    case nameDescending
+    case dateAscending = "dateAscending"
+    case dateDescending = "dateDescending"
+    case nameAscending = "nameAscending"
+    case nameDescending = "nameDescending"
 
     var displayName: String {
         switch self {

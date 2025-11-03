@@ -22,14 +22,14 @@ struct MoneyOwed: Identifiable, Codable, Sendable, Equatable {
     var updatedAt: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case toPerson = "to_person"
-        case amount
-        case reason
+        case amount = "amount"
+        case reason = "reason"
         case dueDate = "due_date"
-        case priority
-        case notes
+        case priority = "priority"
+        case notes = "notes"
         case isPaid = "is_paid"
         case createdAt = "created_at"
         case updatedAt = "updated_at"

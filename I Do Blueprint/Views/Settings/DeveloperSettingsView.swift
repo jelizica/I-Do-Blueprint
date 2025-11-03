@@ -26,9 +26,24 @@ struct DeveloperSettingsView: View {
             Form {
                 // MARK: - Configuration Diagnostics (read-only)
                 Section {
-                    diagnosticsRow(icon: "bolt.fill", title: "SUPABASE_URL", present: configSummary?.supabaseURLPresent == true, valid: configSummary?.supabaseURLValid == true)
-                    diagnosticsRow(icon: "key.fill", title: "SUPABASE_ANON_KEY", present: configSummary?.supabaseAnonKeyPresent == true, valid: true)
-                    diagnosticsRow(icon: "antenna.radiowaves.left.and.right", title: "SENTRY_DSN", present: configSummary?.sentryDSNPresent == true, valid: configSummary?.sentryDSNValid == true)
+                    diagnosticsRow(
+                        icon: "bolt.fill",
+                        title: "SUPABASE_URL",
+                        present: configSummary?.supabaseURLPresent == true,
+                        valid: configSummary?.supabaseURLValid == true
+                    )
+                    diagnosticsRow(
+                        icon: "key.fill",
+                        title: "SUPABASE_ANON_KEY",
+                        present: configSummary?.supabaseAnonKeyPresent == true,
+                        valid: true
+                    )
+                    diagnosticsRow(
+                        icon: "antenna.radiowaves.left.and.right",
+                        title: "SENTRY_DSN",
+                        present: configSummary?.sentryDSNPresent == true,
+                        valid: configSummary?.sentryDSNValid == true
+                    )
 
                     HStack {
                         Button("Re-run Validation") {
@@ -39,10 +54,18 @@ struct DeveloperSettingsView: View {
                         Spacer()
 
                         if let summary = configSummary {
-                            let allGood = summary.supabaseURLPresent && summary.supabaseURLValid && summary.supabaseAnonKeyPresent && summary.sentryDSNPresent && summary.sentryDSNValid
-                            Image(systemName: allGood ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                            let allGood = summary.supabaseURLPresent
+                                && summary.supabaseURLValid
+                                && summary.supabaseAnonKeyPresent
+                                && summary.sentryDSNPresent
+                                && summary.sentryDSNValid
+                            let iconName = allGood ? "checkmark.seal.fill" : "exclamationmark.triangle.fill"
+                            let helpText = allGood
+                                ? "All configuration looks valid"
+                                : "One or more configuration items require attention"
+                            Image(systemName: iconName)
                                 .foregroundColor(allGood ? .green : .orange)
-                                .help(allGood ? "All configuration looks valid" : "One or more configuration items require attention")
+                                .help(helpText)
                         }
                     }
                 } header: {

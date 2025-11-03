@@ -479,7 +479,7 @@ struct VisualPlanningSearchView: View {
     }
 
     enum ResultType: String, CaseIterable {
-        case all
+        case all = "all"
         case moodBoards = "mood_boards"
         case colorPalettes = "color_palettes"
         case seatingCharts = "seating_charts"

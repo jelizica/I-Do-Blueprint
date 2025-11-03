@@ -5,6 +5,8 @@
 //  Enhanced guest management interface matching modern design
 //
 
+// swiftlint:disable file_length
+
 import SwiftUI
 
 struct GuestListViewV3: View {

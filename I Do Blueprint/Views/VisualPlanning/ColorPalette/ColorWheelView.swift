@@ -150,14 +150,21 @@ struct ColorWheelView: View {
 
 // MARK: - Color Extensions
 
+struct HSBComponents {
+    let hue: Double
+    let saturation: Double
+    let brightness: Double
+    let alpha: Double
+}
+
 extension Color {
-    var hsbComponents: (hue: Double, saturation: Double, brightness: Double, alpha: Double) {
+    var hsbComponents: HSBComponents {
         let nsColor = NSColor(self)
 
         // Convert to RGB colorspace first to avoid crashes with dynamic/catalog colors
         guard let rgbColor = nsColor.usingColorSpace(.deviceRGB) else {
             // Fallback to default values if conversion fails
-            return (hue: 0, saturation: 0, brightness: 1, alpha: 1)
+            return HSBComponents(hue: 0, saturation: 0, brightness: 1, alpha: 1)
         }
 
         var hue: CGFloat = 0
@@ -167,7 +174,7 @@ extension Color {
 
         rgbColor.getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
 
-        return (
+        return HSBComponents(
             hue: Double(hue),
             saturation: Double(saturation),
             brightness: Double(brightness),

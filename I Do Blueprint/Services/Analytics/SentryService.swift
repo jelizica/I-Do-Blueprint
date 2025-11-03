@@ -94,8 +94,7 @@ final class SentryService {
 
             // Configure before send callback to add custom context
             options.beforeSend = { [weak self] event in
-                self?.enrichEvent(event)
-                event
+                return self?.enrichEvent(event) ?? event
             }
 
             // Configure before breadcrumb callback

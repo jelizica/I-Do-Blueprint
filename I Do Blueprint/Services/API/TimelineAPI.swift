@@ -69,10 +69,12 @@ class TimelineAPI {
             let createdAt: String?
 
             enum CodingKeys: String, CodingKey {
-                case id, vendor, notes
+                case id = "id"
+                case vendor = "vendor"
+                case notes = "notes"
                 case paymentDate = "payment_date"
                 case paymentAmount = "payment_amount"
-                case paid
+                case paid = "paid"
                 case vendorType = "vendor_type"
                 case coupleId = "couple_id"
                 case createdAt = "created_at"
@@ -179,12 +181,12 @@ class TimelineAPI {
             let updatedAt: String?
 
             enum CodingKeys: String, CodingKey {
-                case id
+                case id = "id"
                 case expenseName = "expense_name"
-                case amount
+                case amount = "amount"
                 case expenseDate = "expense_date"
                 case paymentStatus = "payment_status"
-                case notes
+                case notes = "notes"
                 case coupleId = "couple_id"
                 case createdAt = "created_at"
                 case updatedAt = "updated_at"
@@ -261,7 +263,7 @@ class TimelineAPI {
             let updatedAt: String
 
             enum CodingKeys: String, CodingKey {
-                case id
+                case id = "id"
                 case vendorName = "vendor_name"
                 case vendorType = "vendor_type"
                 case isBooked = "is_booked"
@@ -341,7 +343,7 @@ class TimelineAPI {
             let updatedAt: String
 
             enum CodingKeys: String, CodingKey {
-                case id
+                case id = "id"
                 case firstName = "first_name"
                 case lastName = "last_name"
                 case rsvpStatus = "rsvp_status"
@@ -436,12 +438,12 @@ class TimelineAPI {
 
             enum CodingKeys: String, CodingKey {
                 case coupleId = "couple_id"
-                case title
+                case title = "title"
                 case itemType = "item_type"
                 case itemDate = "item_date"
-                case completed
+                case completed = "completed"
                 case relatedId = "related_id"
-                case description
+                case description = "description"
             }
         }
 
@@ -481,12 +483,12 @@ class TimelineAPI {
             let description: String?
 
             enum CodingKeys: String, CodingKey {
-                case title
+                case title = "title"
                 case itemType = "item_type"
                 case itemDate = "item_date"
-                case completed
+                case completed = "completed"
                 case relatedId = "related_id"
-                case description
+                case description = "description"
             }
         }
 
@@ -579,9 +581,9 @@ class TimelineAPI {
                 case coupleId = "couple_id"
                 case milestoneName = "milestone_name"
                 case milestoneDate = "milestone_date"
-                case completed
-                case description
-                case color
+                case completed = "completed"
+                case description = "description"
+                case color = "color"
             }
         }
 
@@ -619,9 +621,9 @@ class TimelineAPI {
             enum CodingKeys: String, CodingKey {
                 case milestoneName = "milestone_name"
                 case milestoneDate = "milestone_date"
-                case completed
-                case description
-                case color
+                case completed = "completed"
+                case description = "description"
+                case color = "color"
             }
         }
 

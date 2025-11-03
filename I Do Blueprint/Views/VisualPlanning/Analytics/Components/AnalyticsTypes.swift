@@ -10,10 +10,10 @@ import SwiftUI
 // MARK: - Time Frame
 
 enum TimeFrame: String, CaseIterable {
-    case day
-    case week
-    case month
-    case quarter
+    case day = "day"
+    case week = "week"
+    case month = "month"
+    case quarter = "quarter"
 
     var displayName: String {
         switch self {

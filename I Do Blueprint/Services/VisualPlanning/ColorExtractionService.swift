@@ -631,10 +631,10 @@ class ColorExtractionService: ObservableObject {
 // MARK: - Supporting Types
 
 enum ColorExtractionAlgorithm: String, CaseIterable {
-    case vibrant
-    case quantization
-    case clustering
-    case dominant
+    case vibrant = "vibrant"
+    case quantization = "quantization"
+    case clustering = "clustering"
+    case dominant = "dominant"
 
     var displayName: String {
         switch self {

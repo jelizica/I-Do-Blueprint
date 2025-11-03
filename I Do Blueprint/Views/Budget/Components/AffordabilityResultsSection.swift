@@ -117,7 +117,10 @@ struct AffordabilityResultsSection: View {
                 Image(systemName: "info.circle")
                     .foregroundStyle(AppColors.Budget.allocated)
 
-                Text("This calculation includes payments already made, projected monthly savings, and additional contributions from gifts and external sources.")
+                Text("""
+                    This calculation includes payments already made, projected monthly savings, \
+                    and additional contributions from gifts and external sources.
+                    """)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineLimit(3)

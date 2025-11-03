@@ -26,13 +26,13 @@ struct Presence: Identifiable, Codable, Sendable, Hashable {
     var metadata: [String: String]
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case coupleId = "couple_id"
         case userId = "user_id"
         case sessionId = "session_id"
-        case status
+        case status = "status"
         case currentView = "current_view"
         case currentResourceType = "current_resource_type"
         case currentResourceId = "current_resource_id"
@@ -40,7 +40,7 @@ struct Presence: Identifiable, Codable, Sendable, Hashable {
         case editingResourceType = "editing_resource_type"
         case editingResourceId = "editing_resource_id"
         case lastHeartbeat = "last_heartbeat"
-        case metadata
+        case metadata = "metadata"
     }
 
     /// Check if presence is stale (no heartbeat in last 5 minutes)
@@ -56,9 +56,9 @@ struct Presence: Identifiable, Codable, Sendable, Hashable {
 
 /// Presence status
 enum PresenceStatus: String, Codable, Sendable {
-    case online
-    case away
-    case offline
+    case online = "online"
+    case away = "away"
+    case offline = "offline"
 }
 
 // MARK: - Test Helpers

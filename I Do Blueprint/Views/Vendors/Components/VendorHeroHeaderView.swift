@@ -119,9 +119,10 @@ struct VendorHeroHeaderView: View {
                                         showingImagePicker = true
                                     }) {
                                         VStack(spacing: 4) {
-                                            Image(systemName: selectedLogoImage != nil || vendor.imageUrl != nil ? "photo.badge.arrow.down" : "photo.badge.plus")
+                                            let hasImage = selectedLogoImage != nil || vendor.imageUrl != nil
+                                            Image(systemName: hasImage ? "photo.badge.arrow.down" : "photo.badge.plus")
                                                 .font(.system(size: 20))
-                                            Text(selectedLogoImage != nil || vendor.imageUrl != nil ? "Change" : "Upload")
+                                            Text(hasImage ? "Change" : "Upload")
                                                 .font(.system(size: 10, weight: .medium))
                                         }
                                         .foregroundColor(AppColors.textPrimary)

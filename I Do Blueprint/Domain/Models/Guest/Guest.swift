@@ -11,15 +11,15 @@ import AppKit
 
 // RSVP status ordering for consistent sorting across the application
 enum RSVPStatus: String, CaseIterable, Codable {
-    case attending
-    case confirmed
-    case maybe
-    case pending
-    case invited
+    case attending = "attending"
+    case confirmed = "confirmed"
+    case maybe = "maybe"
+    case pending = "pending"
+    case invited = "invited"
     case saveTheDateSent = "save_the_date_sent"
     case invitationSent = "invitation_sent"
-    case reminded
-    case declined
+    case reminded = "reminded"
+    case declined = "declined"
     case noResponse = "no_response"
 
     var displayName: String {
@@ -48,9 +48,9 @@ enum RSVPStatus: String, CaseIterable, Codable {
 }
 
 enum InvitedBy: String, CaseIterable, Codable {
-    case bride1
-    case bride2
-    case both
+    case bride1 = "bride1"
+    case bride2 = "bride2"
+    case both = "both"
 
     var displayName: String {
         switch self {
@@ -84,9 +84,9 @@ enum InvitedBy: String, CaseIterable, Codable {
 }
 
 enum PreferredContactMethod: String, CaseIterable, Codable {
-    case email
-    case phone
-    case mail
+    case email = "email"
+    case phone = "phone"
+    case mail = "mail"
 
     var displayName: String {
         switch self {
@@ -149,13 +149,13 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
 
     // Custom coding keys to match database column names
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case firstName = "first_name"
         case lastName = "last_name"
-        case email
-        case phone
+        case email = "email"
+        case phone = "phone"
         case guestGroupId = "guest_group_id"
         case relationshipToCouple = "relationship_to_couple"
         case invitedBy = "invited_by"
@@ -174,10 +174,10 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
         case preferredContactMethod = "preferred_contact_method"
         case addressLine1 = "address_line1"
         case addressLine2 = "address_line2"
-        case city
-        case state
+        case city = "city"
+        case state = "state"
         case zipCode = "zip_code"
-        case country
+        case country = "country"
         case invitationNumber = "invitation_number"
         case isWeddingParty = "is_wedding_party"
         case weddingPartyRole = "wedding_party_role"
@@ -185,7 +185,7 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
         case coupleId = "couple_id"
         case mealOption = "meal_option"
         case giftReceived = "gift_received"
-        case notes
+        case notes = "notes"
         case hairDone = "hair_done"
         case makeupDone = "makeup_done"
     }
@@ -218,10 +218,10 @@ struct GuestGroup: Identifiable, Codable, Hashable, Sendable {
     var notes: String?
 
     enum GroupType: String, CaseIterable, Codable {
-        case family
-        case friends
-        case work
-        case other
+        case family = "family"
+        case friends = "friends"
+        case work = "work"
+        case other = "other"
 
         var displayName: String {
             switch self {
@@ -234,12 +234,12 @@ struct GuestGroup: Identifiable, Codable, Hashable, Sendable {
     }
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case groupName = "group_name"
         case groupType = "group_type"
-        case notes
+        case notes = "notes"
     }
 }
 

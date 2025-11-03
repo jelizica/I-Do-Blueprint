@@ -36,27 +36,27 @@ struct WeddingTask: Codable, Equatable, Identifiable {
     var budgetCategory: BudgetCategorySummary?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case taskName = "task_name"
-        case description
+        case description = "description"
         case budgetCategoryId = "budget_category_id"
-        case priority
+        case priority = "priority"
         case dueDate = "due_date"
         case startDate = "start_date"
         case assignedTo = "assigned_to"
         case vendorId = "vendor_id"
-        case status
+        case status = "status"
         case dependsOnTaskId = "depends_on_task_id"
         case estimatedHours = "estimated_hours"
         case costEstimate = "cost_estimate"
-        case notes
+        case notes = "notes"
         case milestoneId = "milestone_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
-        case subtasks
-        case milestone
-        case vendor
+        case subtasks = "subtasks"
+        case milestone = "milestone"
+        case vendor = "vendor"
         case budgetCategory = "budget_category"
     }
 }
@@ -65,8 +65,8 @@ enum TaskStatus: String, Codable, CaseIterable {
     case notStarted = "not_started"
     case inProgress = "in_progress"
     case onHold = "on_hold"
-    case completed
-    case cancelled
+    case completed = "completed"
+    case cancelled = "cancelled"
 
     var displayName: String {
         switch self {
@@ -90,10 +90,10 @@ enum TaskStatus: String, Codable, CaseIterable {
 }
 
 enum WeddingTaskPriority: String, Codable, CaseIterable {
-    case low
-    case medium
-    case high
-    case urgent
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+    case urgent = "urgent"
 
     var displayName: String {
         rawValue.capitalized
@@ -122,12 +122,12 @@ struct Subtask: Codable, Equatable, Identifiable {
     var updatedAt: Date
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case taskId = "task_id"
         case subtaskName = "subtask_name"
-        case status
+        case status = "status"
         case assignedTo = "assigned_to"
-        case notes
+        case notes = "notes"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -141,7 +141,7 @@ struct BudgetCategorySummary: Codable, Equatable, Identifiable {
     let parentCategoryId: UUID?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case categoryName = "category_name"
         case parentCategoryId = "parent_category_id"
     }
@@ -167,18 +167,18 @@ struct TaskInsertData: Codable {
 
     enum CodingKeys: String, CodingKey {
         case taskName = "task_name"
-        case description
+        case description = "description"
         case budgetCategoryId = "budget_category_id"
-        case priority
+        case priority = "priority"
         case dueDate = "due_date"
         case startDate = "start_date"
         case assignedTo = "assigned_to"
         case vendorId = "vendor_id"
-        case status
+        case status = "status"
         case dependsOnTaskId = "depends_on_task_id"
         case estimatedHours = "estimated_hours"
         case costEstimate = "cost_estimate"
-        case notes
+        case notes = "notes"
         case milestoneId = "milestone_id"
     }
 }
@@ -191,8 +191,8 @@ struct SubtaskInsertData: Codable {
 
     enum CodingKeys: String, CodingKey {
         case subtaskName = "subtask_name"
-        case status
+        case status = "status"
         case assignedTo = "assigned_to"
-        case notes
+        case notes = "notes"
     }
 }

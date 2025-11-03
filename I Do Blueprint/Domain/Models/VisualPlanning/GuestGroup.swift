@@ -158,19 +158,19 @@ struct SeatingGuestRelationship: Identifiable, Codable, Equatable, Hashable {
 }
 
 enum RelationshipType: String, Codable, CaseIterable {
-    case spouse
-    case partner
-    case family
-    case sibling
-    case parent
-    case child
-    case friend
-    case bestFriend
-    case colleague
-    case business
-    case mustSitTogether
-    case preferTogether
-    case keepApart
+    case spouse = "spouse"
+    case partner = "partner"
+    case family = "family"
+    case sibling = "sibling"
+    case parent = "parent"
+    case child = "child"
+    case friend = "friend"
+    case bestFriend = "bestFriend"
+    case colleague = "colleague"
+    case business = "business"
+    case mustSitTogether = "mustSitTogether"
+    case preferTogether = "preferTogether"
+    case keepApart = "keepApart"
 
     var displayName: String {
         switch self {

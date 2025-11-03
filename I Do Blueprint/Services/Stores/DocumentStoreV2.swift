@@ -5,6 +5,8 @@
 //  New architecture version of document management using repository pattern
 //
 
+// swiftlint:disable file_length
+
 import Combine
 import Dependencies
 import Foundation
@@ -526,7 +528,7 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
         }
     }
 
-    var documentStats: (total: Int, images: Int, pdfs: Int, contracts: Int, invoices: Int, totalSize: Int64) {
+    var documentStats: DocumentStats {
         let total = documents.count
         let images = documents.filter(\.isImage).count
         let pdfs = documents.filter(\.isPDF).count
@@ -534,8 +536,27 @@ class DocumentStoreV2: ObservableObject, CacheableStore {
         let invoices = documents.filter { $0.documentType == .invoice }.count
         let totalSize = documents.reduce(0) { $0 + $1.fileSize }
 
-        return (total, images, pdfs, contracts, invoices, totalSize)
+        return DocumentStats(
+            total: total,
+            images: images,
+            pdfs: pdfs,
+            contracts: contracts,
+            invoices: invoices,
+            totalSize: totalSize
+        )
     }
+}
+
+struct DocumentStats {
+    let total: Int
+    let images: Int
+    let pdfs: Int
+    let contracts: Int
+    let invoices: Int
+    let totalSize: Int64
+}
+
+extension DocumentStoreV2 {
 
     // MARK: - Additional Methods for View Compatibility
 

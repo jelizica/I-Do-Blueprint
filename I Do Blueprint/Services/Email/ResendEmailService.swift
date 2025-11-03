@@ -162,16 +162,18 @@ final class ResendEmailService: ObservableObject {
         #endif
     }
 
+    // MARK: - Helpers
+
+    private func formatExpiryDate(_ date: Date) -> String {
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: date, relativeTo: Date())
+    }
+
     // MARK: - HTML Template
 
-    private func generateInvitationHTML(
-        inviterName: String,
-        coupleName: String,
-        role: String,
-        invitationURL: String,
-        expiryDescription: String
-    ) -> String {
-        """
+    // swiftlint:disable line_length
+    private static let invitationHTMLTemplate = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -258,20 +260,20 @@ final class ResendEmailService: ObservableObject {
 
                 <p>Hi there!</p>
 
-                <p><strong>\(inviterName)</strong> has invited you to collaborate on <strong>\(coupleName)'s wedding planning</strong> using I Do Blueprint.</p>
+                <p><strong>{{INVITER_NAME}}</strong> has invited you to collaborate on <strong>{{COUPLE_NAME}}'s wedding planning</strong> using I Do Blueprint.</p>
 
                 <div class="invitation-details">
-                    <p><strong>Your Role:</strong> \(role)</p>
-                    <p><strong>Couple:</strong> \(coupleName)</p>
-                    <p><strong>Invited By:</strong> \(inviterName)</p>
+                    <p><strong>Your Role:</strong> {{ROLE}}</p>
+                    <p><strong>Couple:</strong> {{COUPLE_NAME}}</p>
+                    <p><strong>Invited By:</strong> {{INVITER_NAME}}</p>
                 </div>
 
                 <center>
-                    <a href="\(invitationURL)" class="cta-button">Accept Invitation</a>
+                    <a href="{{INVITATION_URL}}" class="cta-button">Accept Invitation</a>
                 </center>
 
                 <div class="expiry-notice">
-                    ⏰ <strong>Note:</strong> This invitation expires \(expiryDescription).
+                    ⏰ <strong>Note:</strong> This invitation expires {{EXPIRY_DESCRIPTION}}.
                 </div>
 
                 <p>I Do Blueprint is a comprehensive wedding planning app that helps couples organize every detail of their special day. As a collaborator, you'll be able to:</p>
@@ -294,14 +296,37 @@ final class ResendEmailService: ObservableObject {
         </body>
         </html>
         """
+    // swiftlint:enable line_length
+
+    private static func escapeHTML(_ input: String) -> String {
+        var result = input
+        result = result.replacingOccurrences(of: "&", with: "&amp;")
+        result = result.replacingOccurrences(of: "<", with: "&lt;")
+        result = result.replacingOccurrences(of: ">", with: "&gt;")
+        result = result.replacingOccurrences(of: "\"", with: "&quot;")
+        result = result.replacingOccurrences(of: "'", with: "&#39;")
+        return result
     }
 
-    // MARK: - Helpers
+    private func generateInvitationHTML(
+        inviterName: String,
+        coupleName: String,
+        role: String,
+        invitationURL: String,
+        expiryDescription: String
+    ) -> String {
+        let safeInviter = Self.escapeHTML(inviterName)
+        let safeCouple = Self.escapeHTML(coupleName)
+        let safeRole = Self.escapeHTML(role)
+        let safeURL = Self.escapeHTML(invitationURL)
+        let safeExpiry = Self.escapeHTML(expiryDescription)
 
-    private func formatExpiryDate(_ date: Date) -> String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
+        return Self.invitationHTMLTemplate
+            .replacingOccurrences(of: "{{INVITER_NAME}}", with: safeInviter)
+            .replacingOccurrences(of: "{{COUPLE_NAME}}", with: safeCouple)
+            .replacingOccurrences(of: "{{ROLE}}", with: safeRole)
+            .replacingOccurrences(of: "{{INVITATION_URL}}", with: safeURL)
+            .replacingOccurrences(of: "{{EXPIRY_DESCRIPTION}}", with: safeExpiry)
     }
 }
 

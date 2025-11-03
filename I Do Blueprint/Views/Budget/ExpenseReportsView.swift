@@ -242,10 +242,10 @@ struct ExpenseItem {
 
 enum PaymentStatusOption: String, CaseIterable {
     case all = "All"
-    case paid
-    case pending
-    case overdue
-    case cancelled
+    case paid = "paid"
+    case pending = "pending"
+    case overdue = "overdue"
+    case cancelled = "cancelled"
 
     var displayName: String {
         switch self {
@@ -266,10 +266,10 @@ struct FilterState {
 }
 
 enum DateRange: String, CaseIterable {
-    case all
-    case last30
-    case last90
-    case thisYear
+    case all = "all"
+    case last30 = "last30"
+    case last90 = "last90"
+    case thisYear = "thisYear"
 
     var displayName: String {
         switch self {
@@ -313,9 +313,9 @@ enum SortDirection {
 }
 
 enum ReportTab: String, CaseIterable {
-    case overview
-    case charts
-    case table
+    case overview = "overview"
+    case charts = "charts"
+    case table = "table"
 
     var displayName: String {
         switch self {

@@ -22,10 +22,10 @@ struct CoupleMembership: Codable, Identifiable, Sendable {
     let weddingDate: Date?
 
     enum CodingKeys: String, CodingKey {
-        case id
+        case id = "id"
         case coupleId = "couple_id"
         case userId = "user_id"
-        case role
+        case role = "role"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case partner1Name = "partner1_name"
