@@ -10,9 +10,9 @@ import SwiftUI
 // MARK: - Expense Linking Components
 
 extension ExpenseLinkingView {
-    
+
     // MARK: Header Section
-    
+
     var headerSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Select expenses to allocate to this budget item")
@@ -46,9 +46,9 @@ extension ExpenseLinkingView {
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-    
+
     // MARK: Search Section
-    
+
     var searchSection: some View {
         HStack {
             Image(systemName: "magnifyingglass")
@@ -63,9 +63,9 @@ extension ExpenseLinkingView {
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
-    
+
     // MARK: Filter Section
-    
+
     var filterSection: some View {
         HStack {
             Toggle("Hide already linked expenses", isOn: $hideLinkedExpenses)
@@ -86,9 +86,9 @@ extension ExpenseLinkingView {
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
-    
+
     // MARK: Selection Summary
-    
+
     var selectionSummary: some View {
         HStack {
             Button(action: toggleSelectAll) {
@@ -118,9 +118,9 @@ extension ExpenseLinkingView {
         .background(Color(NSColor.controlBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 8))
     }
-    
+
     // MARK: Expenses List
-    
+
     var expensesList: some View {
         VStack(spacing: 8) {
             if filteredExpenses.isEmpty {
@@ -133,9 +133,9 @@ extension ExpenseLinkingView {
             }
         }
     }
-    
+
     // MARK: Allocation Preview
-    
+
     var allocationPreview: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Allocation Method")
@@ -241,9 +241,9 @@ extension ExpenseLinkingView {
             .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
-    
+
     // MARK: Empty State
-    
+
     var emptyStateView: some View {
         VStack(spacing: 12) {
             Image(systemName: "doc.text.magnifyingglass")
@@ -260,9 +260,9 @@ extension ExpenseLinkingView {
         .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity)
     }
-    
+
     // MARK: Error View
-    
+
     func errorView(_ message: String) -> some View {
         HStack {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -280,9 +280,9 @@ extension ExpenseLinkingView {
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding()
     }
-    
+
     // MARK: Footer Section
-    
+
     var footerSection: some View {
         HStack {
             if let progress = linkingProgress {

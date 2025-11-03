@@ -16,7 +16,7 @@ struct StatItem: Identifiable {
     let color: Color
     let trend: Trend?
     let accessibilityLabel: String?
-    
+
     init(
         icon: String,
         label: String,
@@ -32,13 +32,13 @@ struct StatItem: Identifiable {
         self.trend = trend
         self.accessibilityLabel = accessibilityLabel
     }
-    
+
     /// Trend indicator for statistical changes
     enum Trend {
         case up(String)
         case down(String)
         case neutral
-        
+
         var icon: String {
             switch self {
             case .up: return "arrow.up.right"
@@ -46,7 +46,7 @@ struct StatItem: Identifiable {
             case .neutral: return "minus"
             }
         }
-        
+
         var color: Color {
             switch self {
             case .up: return AppColors.success
@@ -54,7 +54,7 @@ struct StatItem: Identifiable {
             case .neutral: return AppColors.textSecondary
             }
         }
-        
+
         var text: String {
             switch self {
             case .up(let value), .down(let value):
@@ -63,7 +63,7 @@ struct StatItem: Identifiable {
                 return "No change"
             }
         }
-        
+
         var accessibilityDescription: String {
             switch self {
             case .up(let value):
@@ -75,7 +75,7 @@ struct StatItem: Identifiable {
             }
         }
     }
-    
+
     /// Computed accessibility label combining all information
     var fullAccessibilityLabel: String {
         let base = accessibilityLabel ?? "\(label): \(value)"
@@ -99,7 +99,7 @@ extension StatItem {
             accessibilityLabel: "Total guests: \(count)"
         )
     }
-    
+
     static func guestConfirmed(count: Int, total: Int) -> StatItem {
         StatItem(
             icon: "checkmark.circle.fill",
@@ -109,7 +109,7 @@ extension StatItem {
             accessibilityLabel: "Confirmed guests: \(count) out of \(total)"
         )
     }
-    
+
     static func guestPending(count: Int) -> StatItem {
         StatItem(
             icon: "clock.fill",
@@ -119,7 +119,7 @@ extension StatItem {
             accessibilityLabel: "Pending responses: \(count)"
         )
     }
-    
+
     static func guestDeclined(count: Int) -> StatItem {
         StatItem(
             icon: "xmark.circle.fill",
@@ -129,7 +129,7 @@ extension StatItem {
             accessibilityLabel: "Declined guests: \(count)"
         )
     }
-    
+
     /// Vendor statistics
     static func vendorTotal(count: Int) -> StatItem {
         StatItem(
@@ -140,7 +140,7 @@ extension StatItem {
             accessibilityLabel: "Total vendors: \(count)"
         )
     }
-    
+
     static func vendorBooked(count: Int) -> StatItem {
         StatItem(
             icon: "checkmark.seal.fill",
@@ -150,7 +150,7 @@ extension StatItem {
             accessibilityLabel: "Booked vendors: \(count)"
         )
     }
-    
+
     static func vendorPending(count: Int) -> StatItem {
         StatItem(
             icon: "clock.fill",
@@ -160,7 +160,7 @@ extension StatItem {
             accessibilityLabel: "Pending vendors: \(count)"
         )
     }
-    
+
     static func vendorContacted(count: Int) -> StatItem {
         StatItem(
             icon: "envelope.fill",
@@ -170,7 +170,7 @@ extension StatItem {
             accessibilityLabel: "Contacted vendors: \(count)"
         )
     }
-    
+
     /// Budget statistics
     static func budgetTotal(amount: Double, currency: String = "$") -> StatItem {
         StatItem(
@@ -181,7 +181,7 @@ extension StatItem {
             accessibilityLabel: "Total budget: \(currency)\(String(format: "%.2f", amount))"
         )
     }
-    
+
     static func budgetSpent(amount: Double, total: Double, currency: String = "$") -> StatItem {
         let percentage = total > 0 ? (amount / total) * 100 : 0
         return StatItem(
@@ -192,7 +192,7 @@ extension StatItem {
             accessibilityLabel: "Spent: \(currency)\(String(format: "%.2f", amount)), \(String(format: "%.1f", percentage))% of budget"
         )
     }
-    
+
     static func budgetRemaining(amount: Double, currency: String = "$") -> StatItem {
         StatItem(
             icon: "banknote.fill",
@@ -202,7 +202,7 @@ extension StatItem {
             accessibilityLabel: "Remaining budget: \(currency)\(String(format: "%.2f", amount))"
         )
     }
-    
+
     /// Task statistics
     static func taskTotal(count: Int) -> StatItem {
         StatItem(
@@ -213,7 +213,7 @@ extension StatItem {
             accessibilityLabel: "Total tasks: \(count)"
         )
     }
-    
+
     static func taskCompleted(count: Int, total: Int) -> StatItem {
         let percentage = total > 0 ? (Double(count) / Double(total)) * 100 : 0
         return StatItem(
@@ -224,7 +224,7 @@ extension StatItem {
             accessibilityLabel: "Completed tasks: \(count) out of \(total), \(String(format: "%.0f", percentage))% complete"
         )
     }
-    
+
     static func taskOverdue(count: Int) -> StatItem {
         StatItem(
             icon: "exclamationmark.triangle.fill",

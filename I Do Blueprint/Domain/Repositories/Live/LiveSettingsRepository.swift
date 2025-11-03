@@ -14,7 +14,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     init() {
         // No initialization needed - we'll get the client when needed
     }
-    
+
     private func getClient() async throws -> SupabaseClient {
         // Prefer immediate client if already available to avoid unnecessary waits
         if let c = await MainActor.run(resultType: SupabaseClient?.self, body: { SupabaseManager.shared.safeClient }) {
@@ -29,7 +29,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     func fetchSettings() async throws -> CoupleSettings {
         logger.info("🔍 Starting fetchSettings query...")
         let overallStart = Date()
-        
+
         struct SettingsRow: Decodable {
             let id: UUID
             let couple_id: UUID
@@ -54,25 +54,25 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             logger.debug("✅ Got tenantId in \(String(format: "%.2f", tTenant))s")
 
             logger.info("📍 Fetching settings for couple_id: \(tenantId.uuidString)")
-            
+
             logger.debug("Building query...")
             let query = client
                 .from("couple_settings")
                 .select("*")
                 .eq("couple_id", value: tenantId)
                 .limit(1)
-            
+
             logger.debug("Executing query...")
             let tQueryStart = Date()
             let rows: [SettingsRow] = try await query.execute().value
             let tQuery = Date().timeIntervalSince(tQueryStart)
             logger.info("✅ Query executed in \(String(format: "%.2f", tQuery))s, got \(rows.count) rows")
-            
+
             guard let row = rows.first else {
                 logger.error("❌ No settings found for couple_id: \(tenantId.uuidString)")
                 throw NSError(domain: "SettingsRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "No settings found for this couple"])
             }
-            
+
             logger.info("✅ Settings loaded successfully - wedding date: '\(row.settings.global.weddingDate)'")
             logger.info("✅ Custom meal options from DB: \(row.settings.guests.customMealOptions)")
 
@@ -116,7 +116,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             }
 
             let client = try await getClient()
-            
+
             // Get tenant ID (couple_id) from thread-safe context
             let tenantId = try await TenantContextProvider.shared.requireTenantId()
 
@@ -127,7 +127,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
 
             // Deep merge partial settings into current settings
             let mergedSettings = deepMerge(current: currentSettings, updates: partialSettings)
-            
+
             logger.debug("updateSettings - Merged settings tax rates: \(mergedSettings.budget.taxRates.count)")
 
             struct SettingsUpdate: Encodable {
@@ -135,7 +135,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             }
 
             logger.debug("updateSettings - Attempting to update database...")
-            
+
             // Update the settings
             let response: [SettingsRow] = try await client
                 .from("couple_settings")
@@ -146,7 +146,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 .value
 
             logger.debug("updateSettings - Update returned \(response.count) rows")
-            
+
             guard let firstResult = response.first else {
                 logger.error("updateSettings - No rows returned from update")
                 throw SettingsError.updateFailed(underlying: NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "No settings row found for this couple"]))
@@ -182,29 +182,29 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     func updateBudgetSettings(_ settings: BudgetSettings) async throws {
         logger.debug("updateBudgetSettings called")
         logger.debug("Tax rates count: \(settings.taxRates.count)")
-        
+
         // Convert BudgetSettings to dictionary for proper merging
         let encoder = JSONEncoder()
         encoder.keyEncodingStrategy = .convertToSnakeCase
         let data = try encoder.encode(settings)
-        
+
         logger.debug("Encoded budget settings data")
-        
+
         guard let budgetDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
             logger.error("Failed to convert to dictionary")
             throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert BudgetSettings to dictionary"])
         }
-        
+
         logger.debug("Budget dict keys: \(budgetDict.keys.joined(separator: ", "))")
         if let taxRates = budgetDict["tax_rates"] as? [[String: Any]] {
             logger.debug("Tax rates in dict: \(taxRates.count)")
         } else {
             logger.warning("No tax_rates in dict or wrong type")
         }
-        
+
         let payload: [String: Any] = ["budget": budgetDict]
         _ = try await updateSettings(payload)
-        
+
         logger.info("Budget settings updated successfully")
     }
 
@@ -301,7 +301,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 .single()
                 .execute()
                 .value
-            
+
             logger.info("Created custom vendor category: \(name)")
             return category
         } catch {
@@ -350,7 +350,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 .single()
                 .execute()
                 .value
-            
+
             logger.info("Updated custom vendor category: \(id)")
             return category
         } catch {
@@ -376,7 +376,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 .delete()
                 .eq("id", value: id)
                 .execute()
-            
+
             logger.info("Deleted custom vendor category: \(id)")
         } catch {
             logger.error("Failed to delete custom vendor category", error: error)
@@ -433,20 +433,20 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
             .rpc("reset_user_data", params: params)
             .execute()
     }
-    
+
     // MARK: - Account Deletion
-    
+
     func deleteAccount() async throws {
         logger.info("🗑️ Starting complete account deletion process")
-        
+
         do {
             let client = try await getClient()
-            
+
             // Get current user ID from SupabaseManager
             let userId = await MainActor.run {
                 SupabaseManager.shared.currentUser?.id
             }
-            
+
             guard let userId = userId else {
                 logger.error("No user logged in - cannot delete account")
                 throw NSError(
@@ -455,22 +455,22 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                     userInfo: [NSLocalizedDescriptionKey: "No user logged in"]
                 )
             }
-            
+
             logger.info("Deleting account for user: \(userId.uuidString)")
-            
+
             // Step 1: Call database function to delete all data
             logger.debug("Step 1: Calling database function to delete all data")
-            
+
             let params: [String: UUID] = ["user_id_to_delete": userId]
             try await client
                 .rpc("delete_user_account", params: params)
                 .execute()
-            
+
             logger.info("✅ Database cleanup completed")
-            
+
             // Step 2: Delete the auth user via Edge Function
             logger.debug("Step 2: Deleting auth user via Edge Function")
-            
+
             do {
                 try await deleteAuthUser(userId: userId, client: client)
                 logger.info("✅ Auth user deleted")
@@ -479,23 +479,23 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 // User data is already deleted, so we'll sign them out
                 logger.warning("⚠️ Failed to delete auth user (will sign out anyway): \(error.localizedDescription)")
             }
-            
+
             // Step 3: Sign out
             try await client.auth.signOut()
             logger.info("✅ User signed out")
-            
+
             // Step 4: Clear local session
             await MainActor.run {
                 SessionManager.shared.clearSession()
             }
             logger.info("✅ Local session cleared")
-            
+
             // Step 5: Clear caches
             await RepositoryCache.shared.clearAll()
             logger.info("✅ Caches cleared")
-            
+
             logger.info("🎉 Account deletion completed successfully")
-            
+
         } catch {
             logger.error("❌ Account deletion failed", error: error)
             throw SettingsError.accountDeletionFailed(underlying: error)
@@ -582,7 +582,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         logger.debug("mergeBudgetSettings called")
         logger.debug("Current tax rates: \(current.taxRates.count)")
         logger.debug("Updates keys: \(updates.keys.joined(separator: ", "))")
-        
+
         var merged = current
         if let totalBudget = updates["total_budget"] as? Double { merged.totalBudget = totalBudget }
         if let baseBudget = updates["base_budget"] as? Double { merged.baseBudget = baseBudget }
@@ -595,7 +595,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         if let autoCategorize = updates["auto_categorize"] as? Bool { merged.autoCategorize = autoCategorize }
         if let paymentReminders = updates["payment_reminders"] as? Bool { merged.paymentReminders = paymentReminders }
         if let notes = updates["notes"] as? String { merged.notes = notes }
-        
+
         // Handle tax_rates array
         if let taxRatesArray = updates["tax_rates"] as? [[String: Any]] {
             logger.debug("Found tax_rates array with \(taxRatesArray.count) items")
@@ -615,7 +615,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
         } else {
             logger.warning("No tax_rates found in updates or wrong type")
         }
-        
+
         return merged
     }
 
@@ -690,23 +690,23 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     private func mergeLinksSettings(current: LinksSettings, updates _: [String: Any]) -> LinksSettings {
         current
     }
-    
+
     // MARK: - Auth User Deletion
-    
+
     /// Delete auth user via Edge Function
     private func deleteAuthUser(userId: UUID, client: SupabaseClient) async throws {
         struct DeleteUserRequest: Encodable {
             let userId: String
         }
-        
+
         struct DeleteUserResponse: Decodable {
             let success: Bool
             let message: String?
             let error: String?
         }
-        
+
         let request = DeleteUserRequest(userId: userId.uuidString)
-        
+
         // Get Supabase configuration from Config.plist
         guard let configPath = Bundle.main.path(forResource: "Config", ofType: "plist"),
               let config = NSDictionary(contentsOfFile: configPath),
@@ -718,10 +718,10 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 userInfo: [NSLocalizedDescriptionKey: "Supabase configuration not available"]
             )
         }
-        
+
         // Build the Edge Function URL
         let functionUrl = "\(supabaseURLString)/functions/v1/delete-auth-user"
-        
+
         guard let url = URL(string: functionUrl) else {
             throw NSError(
                 domain: "SettingsRepository",
@@ -729,7 +729,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 userInfo: [NSLocalizedDescriptionKey: "Invalid Edge Function URL"]
             )
         }
-        
+
         // Get the auth token
         guard let session = try? await client.auth.session else {
             throw NSError(
@@ -738,18 +738,18 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 userInfo: [NSLocalizedDescriptionKey: "No active session"]
             )
         }
-        
+
         var urlRequest = URLRequest(url: url)
         urlRequest.httpMethod = "POST"
         urlRequest.setValue("Bearer \(session.accessToken)", forHTTPHeaderField: "Authorization")
         urlRequest.setValue(anonKey, forHTTPHeaderField: "apikey")
         urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        
+
         let encoder = JSONEncoder()
         urlRequest.httpBody = try encoder.encode(request)
-        
+
         let (data, response) = try await URLSession.shared.data(for: urlRequest)
-        
+
         guard let httpResponse = response as? HTTPURLResponse else {
             throw NSError(
                 domain: "SettingsRepository",
@@ -757,7 +757,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 userInfo: [NSLocalizedDescriptionKey: "Invalid response from Edge Function"]
             )
         }
-        
+
         if httpResponse.statusCode != 200 {
             let decoder = JSONDecoder()
             if let errorResponse = try? decoder.decode(DeleteUserResponse.self, from: data) {
@@ -774,7 +774,7 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
                 )
             }
         }
-        
+
         logger.debug("Auth user deletion Edge Function returned success")
     }
 }

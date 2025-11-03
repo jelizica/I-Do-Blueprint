@@ -173,7 +173,7 @@ enum AppColors {
     }
 
     // MARK: - Feature-Specific Colors
-    
+
     /// Dashboard-specific colors for bento grid design
     /// These colors create a bold, modern aesthetic with high contrast
     /// All colors meet WCAG AA standards (4.5:1 contrast ratio)
@@ -221,7 +221,7 @@ enum AppColors {
         /// Contrast: 4.86:1 with white text (WCAG AA compliant)
         static let taskProgressCard = Color.fromHex("4A7C59")
     }
-    
+
     /// Budget-specific colors for financial tracking
     enum Budget {
         /// Income/money received - use for positive cash flow
@@ -236,7 +236,7 @@ enum AppColors {
         static let overBudget = AppColors.error
         /// Under budget indicator - use when spending is below budget
         static let underBudget = AppColors.success
-        
+
         /// Category tints for dashboard & charts
         enum CategoryTint {
             static let venue = Color.fromHex("ED4999")
@@ -247,7 +247,7 @@ enum AppColors {
             static let other = AppColors.textSecondary
         }
     }
-    
+
     /// Guest-specific colors for RSVP and guest management
     /// All colors meet WCAG AA standards (4.5:1 contrast ratio)
     enum Guest {
@@ -267,7 +267,7 @@ enum AppColors {
         /// Using system purple for guaranteed WCAG AA compliance
         static let plusOne = Color(nsColor: .systemPurple)
     }
-    
+
     /// Vendor-specific colors for vendor management
     /// All colors meet WCAG AA standards (4.5:1 contrast ratio)
     enum Vendor {
@@ -286,7 +286,7 @@ enum AppColors {
         /// Contract signed - use for vendors with signed contracts
         /// Contrast: 6.57:1 on light background (WCAG AA compliant)
         static let contract = Color.fromHex("10B981")
-        
+
         /// Tints for vendor types used in UI badges/avatars
         enum TypeTint {
             static let photography = Color.fromHex("FBE5F0")
@@ -296,7 +296,7 @@ enum AppColors {
             static let generic = AppColors.cardBackground
         }
     }
-    
+
     /// Avatar-specific colors for Visual Planning and fallbacks
     enum Avatar {
         static let lavender = Color.fromHex("D9D1F2")

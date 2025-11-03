@@ -24,35 +24,35 @@ struct UserCollaboration: Identifiable, Codable, Sendable {
     let invitedAt: Date
     let acceptedAt: Date?
     let lastSeenAt: Date?
-    
+
     // MARK: - Computed Properties
-    
+
     /// Whether this collaboration is active
     var isActive: Bool {
         status == .active
     }
-    
+
     /// Whether this collaboration is pending acceptance
     var isPending: Bool {
         status == .pending
     }
-    
+
     /// Days since invitation was sent
     var daysSinceInvitation: Int {
         Calendar.current.dateComponents([.day], from: invitedAt, to: Date()).day ?? 0
     }
-    
+
     /// Formatted wedding date string
     var formattedWeddingDate: String {
         guard let weddingDate = weddingDate else {
             return "Date TBD"
         }
-        
+
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         return formatter.string(from: weddingDate)
     }
-    
+
     /// Relative time since invitation (e.g., "2 days ago")
     var relativeInvitationTime: String {
         let formatter = RelativeDateTimeFormatter()

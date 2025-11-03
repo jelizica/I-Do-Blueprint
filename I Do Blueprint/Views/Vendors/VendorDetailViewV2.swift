@@ -19,21 +19,21 @@ struct VendorDetailViewV2: View {
     @State private var selectedTab = 0
     @State private var currentVendor: Vendor
     @State private var isSavingLogo = false
-    
+
     // Financial data
     @State private var expenses: [Expense] = []
     @State private var payments: [PaymentSchedule] = []
     @State private var isLoadingFinancials = false
     @State private var financialLoadError: Error?
-    
+
     // Documents data
     @State private var documents: [Document] = []
     @State private var isLoadingDocuments = false
     @State private var documentLoadError: Error?
-    
+
     @Dependency(\.budgetRepository) var budgetRepository
     @Dependency(\.documentRepository) var documentRepository
-    
+
     init(vendor: Vendor, vendorStore: VendorStoreV2, onExportToggle: ((Bool) async -> Void)? = nil) {
         self.vendor = vendor
         self.vendorStore = vendorStore
@@ -108,38 +108,38 @@ struct VendorDetailViewV2: View {
             }
         }
     }
-    
+
     // MARK: - Data Loading
-    
+
     private func loadDocuments() async {
         isLoadingDocuments = true
         documentLoadError = nil
-        
+
         do {
             documents = try await documentRepository.fetchDocuments(vendorId: Int(vendor.id))
         } catch {
             documentLoadError = error
             AppLogger.ui.error("Error loading documents for vendor \(vendor.id)", error: error)
         }
-        
+
         isLoadingDocuments = false
     }
-    
+
     private func loadFinancialData() async {
         isLoadingFinancials = true
         financialLoadError = nil
-        
+
         do {
             async let expensesTask = budgetRepository.fetchExpensesByVendor(vendorId: vendor.id)
             async let paymentsTask = budgetRepository.fetchPaymentSchedulesByVendor(vendorId: vendor.id)
-            
+
             expenses = try await expensesTask
             payments = try await paymentsTask
         } catch {
             financialLoadError = error
             AppLogger.ui.error("Error loading financial data for vendor \(vendor.id)", error: error)
         }
-        
+
         isLoadingFinancials = false
     }
 
@@ -216,7 +216,7 @@ struct VendorDetailViewV2: View {
                 VStack(spacing: Spacing.md) {
                     ProgressView()
                         .scaleEffect(1.5)
-                    
+
                     Text("Loading financial data...")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
@@ -231,26 +231,26 @@ struct VendorDetailViewV2: View {
                             icon: "banknote.fill",
                             color: AppColors.Vendor.booked
                         )
-                        
+
                         HStack {
                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                 Text("Total Quote")
                                     .font(Typography.caption)
                                     .foregroundColor(AppColors.textSecondary)
-                                
+
                                 Text(quotedAmount.formatted(.currency(code: "USD")))
                                     .font(.system(size: 28, weight: .bold))
                                     .foregroundColor(AppColors.primary)
                             }
-                            
+
                             Spacer()
-                            
+
                             if let budgetCategory = currentVendor.budgetCategoryName {
                                 VStack(alignment: .trailing, spacing: Spacing.xs) {
                                     Text("Category")
                                         .font(Typography.caption)
                                         .foregroundColor(AppColors.textSecondary)
-                                    
+
                                     Text(budgetCategory)
                                         .font(.system(size: 15))
                                         .foregroundColor(AppColors.textPrimary)
@@ -266,12 +266,12 @@ struct VendorDetailViewV2: View {
                         )
                     }
                 }
-                
+
                 // Expenses Section
                 if !expenses.isEmpty {
                     VendorExpensesSection(expenses: expenses, payments: payments)
                 }
-                
+
                 // Payments Section
                 if !payments.isEmpty {
                     VendorPaymentsSection(payments: payments)
@@ -306,7 +306,7 @@ struct VendorDetailViewV2: View {
                 VStack(spacing: Spacing.md) {
                     ProgressView()
                         .scaleEffect(1.5)
-                    
+
                     Text("Loading documents...")
                         .font(Typography.caption)
                         .foregroundColor(AppColors.textSecondary)
@@ -372,24 +372,24 @@ struct VendorDetailViewV2: View {
     private var hasFinancialInfo: Bool {
         currentVendor.quotedAmount != nil
     }
-    
+
     private var hasAnyFinancialInfo: Bool {
         currentVendor.quotedAmount != nil || !expenses.isEmpty || !payments.isEmpty
     }
-    
+
     // MARK: - Logo Upload
-    
+
     private func handleLogoUpdate(_ logoImage: NSImage?) async {
         isSavingLogo = true
-        
+
         do {
             // Get Supabase client
             guard let supabase = SupabaseManager.shared.client else {
                 throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
             }
-            
+
             var updatedVendor = currentVendor
-            
+
             if let logoImage = logoImage {
                 // Convert NSImage to PNG data
                 guard let tiffData = logoImage.tiffRepresentation,
@@ -399,13 +399,13 @@ struct VendorDetailViewV2: View {
                     isSavingLogo = false
                     return
                 }
-                
+
                 // Generate unique filename with vendor ID
                 let fileName = "vendor_\(currentVendor.id)_\(UUID().uuidString).png"
                 let filePath = fileName
-                
+
                 AppLogger.ui.info("Uploading logo to Supabase Storage: \(filePath)")
-                
+
                 // Upload to Supabase Storage with retry
                 try await RepositoryNetwork.withRetry(timeout: 30) {
                     try await supabase.storage
@@ -420,14 +420,14 @@ struct VendorDetailViewV2: View {
                             )
                         )
                 }
-                
+
                 // Get public URL for the uploaded file
                 let publicURL = try supabase.storage
                     .from("vendor-profile-pics")
                     .getPublicURL(path: filePath)
-                
+
                 updatedVendor.imageUrl = publicURL.absoluteString
-                
+
                 AppLogger.ui.info("Logo uploaded successfully: \(publicURL.absoluteString)")
             } else {
                 // Remove logo - delete from storage if exists
@@ -446,14 +446,14 @@ struct VendorDetailViewV2: View {
                         // Continue anyway to remove the URL from database
                     }
                 }
-                
+
                 updatedVendor.imageUrl = nil
                 AppLogger.ui.info("Logo removed for vendor: \(currentVendor.vendorName)")
             }
-            
+
             // Update vendor in the store
             await vendorStore.updateVendor(updatedVendor)
-            
+
             // Wait for store to reload and get the updated vendor from the store
             // This ensures the database update is reflected
             if let refreshedVendor = vendorStore.vendors.first(where: { $0.id == currentVendor.id }) {
@@ -471,10 +471,10 @@ struct VendorDetailViewV2: View {
                 "vendorId": String(currentVendor.id)
             ])
         }
-        
+
         isSavingLogo = false
     }
-    
+
     /// Extract storage path from Supabase public URL
     private func extractStoragePath(from url: URL) -> String? {
         // Example URL: https://project.supabase.co/storage/v1/object/public/vendor-profile-pics/file.png

@@ -5,13 +5,13 @@ struct ExpenseCardView: View {
     let expense: Expense
     let onEdit: () -> Void
     let onDelete: () -> Void
-    
+
     @EnvironmentObject var budgetStore: BudgetStoreV2
-    
+
     private var category: BudgetCategory? {
         budgetStore.categories.first { $0.id == expense.budgetCategoryId }
     }
-    
+
     private var statusColor: Color {
         switch expense.paymentStatus {
         case .paid: AppColors.Budget.income
@@ -22,7 +22,7 @@ struct ExpenseCardView: View {
         case .refunded: AppColors.Budget.allocated
         }
     }
-    
+
     private var approvalStatusColor: Color {
         switch (expense.approvalStatus ?? "pending").lowercased() {
         case "approved": AppColors.Budget.income
@@ -31,7 +31,7 @@ struct ExpenseCardView: View {
         default: .gray
         }
     }
-    
+
     var body: some View {
         Button(action: onEdit) {
             VStack(alignment: .leading, spacing: 12) {
@@ -42,7 +42,7 @@ struct ExpenseCardView: View {
                             .font(.title2)
                             .fontWeight(.bold)
                             .foregroundColor(.primary)
-                        
+
                         HStack(spacing: 8) {
                             // Payment Status Badge
                             Text(expense.paymentStatus.displayName)
@@ -53,7 +53,7 @@ struct ExpenseCardView: View {
                                 .background(statusColor.opacity(0.2))
                                 .foregroundColor(statusColor)
                                 .clipShape(Capsule())
-                            
+
                             // Approval Status Badge
                             Text((expense.approvalStatus ?? "Pending").capitalized)
                                 .font(.caption)
@@ -65,9 +65,9 @@ struct ExpenseCardView: View {
                                 .clipShape(Capsule())
                         }
                     }
-                    
+
                     Spacer()
-                    
+
                     // Menu button
                     Menu {
                         Button("Edit", action: onEdit)
@@ -82,7 +82,7 @@ struct ExpenseCardView: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
-                
+
                 // Expense Name
                 Text(expense.expenseName)
                     .font(.headline)
@@ -90,7 +90,7 @@ struct ExpenseCardView: View {
                     .foregroundColor(.primary)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
-                
+
                 // Category info
                 if let category {
                     HStack(spacing: 6) {
@@ -102,7 +102,7 @@ struct ExpenseCardView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 // Date and Payment Method
                 HStack {
                     HStack(spacing: 4) {
@@ -113,9 +113,9 @@ struct ExpenseCardView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
-                    
+
                     Spacer()
-                    
+
                     HStack(spacing: 4) {
                         Image(systemName: paymentMethodIcon(expense.paymentMethod ?? "credit_card"))
                             .font(.caption)
@@ -125,7 +125,7 @@ struct ExpenseCardView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                
+
                 // Notes preview (if available)
                 if let notes = expense.notes, !notes.isEmpty {
                     HStack {
@@ -150,7 +150,7 @@ struct ExpenseCardView: View {
         }
         .buttonStyle(PlainButtonStyle())
     }
-    
+
     private func paymentMethodIcon(_ method: String) -> String {
         switch method.lowercased() {
         case "credit_card": "creditcard"
@@ -163,7 +163,7 @@ struct ExpenseCardView: View {
         default: "dollarsign.circle"
         }
     }
-    
+
     private func paymentMethodDisplayName(_ method: String) -> String {
         switch method.lowercased() {
         case "credit_card": "Credit Card"

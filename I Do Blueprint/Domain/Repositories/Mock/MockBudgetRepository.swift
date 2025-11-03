@@ -102,7 +102,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         expenses.removeAll { $0.id == id }
     }
-    
+
     func fetchExpensesByVendor(vendorId: Int64) async throws -> [Expense] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -138,7 +138,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         paymentSchedules.removeAll { $0.id == id }
     }
-    
+
     func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -180,7 +180,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
 
     var budgetDevelopmentScenarios: [SavedScenario] = []
     var budgetDevelopmentItems: [BudgetItem] = []
-    
+
     func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int) {
         // Upsert scenario
         if let idx = budgetDevelopmentScenarios.firstIndex(where: { $0.id == scenario.id }) {
@@ -369,11 +369,11 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         // Mock implementation - in real implementation this would set scenario_id to null
     }
-    
+
     // MARK: - Expense Allocations
-    
+
     private var expenseAllocations: [ExpenseAllocation] = []
-    
+
     func fetchExpenseAllocations(scenarioId: String, budgetItemId: String) async throws -> [ExpenseAllocation] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -387,7 +387,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         return expenseAllocations.filter { $0.scenarioId == scenarioId }
     }
-    
+
     func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -413,7 +413,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         expenseAllocations.removeAll { $0.expenseId == expenseId.uuidString && $0.scenarioId == scenarioId }
         expenseAllocations.append(contentsOf: newAllocations)
     }
-    
+
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -422,24 +422,24 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
             budgetDevelopmentItems[index].linkedGiftOwedId = giftId.uuidString
         }
     }
-    
+
     // MARK: - Gift Received Operations
-    
+
     var giftsReceived: [GiftReceived] = []
-    
+
     func fetchGiftsReceived() async throws -> [GiftReceived] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         return giftsReceived
     }
-    
+
     func createGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         giftsReceived.append(gift)
         return gift
     }
-    
+
     func updateGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -448,30 +448,30 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         }
         return gift
     }
-    
+
     func deleteGiftReceived(id: UUID) async throws {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         giftsReceived.removeAll { $0.id == id }
     }
-    
+
     // MARK: - Money Owed Operations
-    
+
     var moneyOwed: [MoneyOwed] = []
-    
+
     func fetchMoneyOwed() async throws -> [MoneyOwed] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         return moneyOwed
     }
-    
+
     func createMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
         moneyOwed.append(money)
         return money
     }
-    
+
     func updateMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -480,7 +480,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         }
         return money
     }
-    
+
     func deleteMoneyOwed(id: UUID) async throws {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -509,11 +509,11 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         giftsAndOwed.removeAll()
         expenseAllocations.removeAll()
     }
-    
+
     // MARK: - Primary Budget Scenario
-    
+
     var primaryBudgetScenario: BudgetDevelopmentScenario?
-    
+
     func fetchPrimaryBudgetScenario() async throws -> BudgetDevelopmentScenario? {
         if shouldThrowError { throw errorToThrow }
         return primaryBudgetScenario

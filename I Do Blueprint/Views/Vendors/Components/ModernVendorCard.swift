@@ -139,7 +139,7 @@ struct ModernVendorCard: View {
                     Label("Edit", systemImage: "pencil")
                 }
             }
-            
+
             if onDelete != nil {
                 Divider()
                 Button(role: .destructive) {
@@ -182,7 +182,7 @@ struct ModernVendorCard: View {
         }
         return parts.joined(separator: ", ")
     }
-    
+
     /// Load vendor image asynchronously from URL
     private func loadVendorImage() async {
         guard let imageUrl = vendor.imageUrl,
@@ -190,7 +190,7 @@ struct ModernVendorCard: View {
             loadedImage = nil
             return
         }
-        
+
         do {
             let (data, _) = try await URLSession.shared.data(from: url)
             if let nsImage = NSImage(data: data) {

@@ -17,7 +17,7 @@ struct ImportPreview {
     let totalRows: Int
     let fileName: String
     let fileType: FileType
-    
+
     enum FileType: String {
         case csv = "CSV"
         case xlsx = "XLSX"
@@ -28,13 +28,13 @@ struct ImportValidationResult {
     let isValid: Bool
     let errors: [ImportError]
     let warnings: [ImportWarning]
-    
+
     struct ImportError {
         let row: Int
         let column: String
         let message: String
     }
-    
+
     struct ImportWarning {
         let row: Int
         let column: String
@@ -53,13 +53,13 @@ struct ColumnMapping {
 @MainActor
 final class FileImportService {
     private let logger = AppLogger.general
-    
+
     // MARK: - CSV Parsing
-    
+
     /// Parse CSV file and return preview
     func parseCSV(from url: URL) async throws -> ImportPreview {
         logger.info("Parsing CSV file: \(url.lastPathComponent)")
-        
+
         // Start accessing security-scoped resource
         let accessing = url.startAccessingSecurityScopedResource()
         defer {
@@ -67,23 +67,23 @@ final class FileImportService {
                 url.stopAccessingSecurityScopedResource()
             }
         }
-        
+
         do {
             let content = try String(contentsOf: url, encoding: .utf8)
             let lines = content.components(separatedBy: .newlines)
                 .filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
-            
+
             guard !lines.isEmpty else {
                 throw FileImportError.emptyFile
             }
-            
+
             // Parse headers
             let headers = parseCSVLine(lines[0])
-            
+
             // Parse rows (limit preview to first 100 rows)
             let dataLines = Array(lines.dropFirst().prefix(100))
             let rows = dataLines.map { parseCSVLine($0) }
-            
+
             let preview = ImportPreview(
                 headers: headers,
                 rows: rows,
@@ -91,22 +91,22 @@ final class FileImportService {
                 fileName: url.lastPathComponent,
                 fileType: .csv
             )
-            
+
             logger.info("CSV parsed successfully: \(headers.count) columns, \(preview.totalRows) rows")
             return preview
-            
+
         } catch {
             logger.error("Failed to parse CSV", error: error)
             throw FileImportError.parsingFailed(underlying: error)
         }
     }
-    
+
     /// Parse a single CSV line handling quotes and commas
     private func parseCSVLine(_ line: String) -> [String] {
         var fields: [String] = []
         var currentField = ""
         var insideQuotes = false
-        
+
         for char in line {
             if char == "\"" {
                 insideQuotes.toggle()
@@ -117,19 +117,19 @@ final class FileImportService {
                 currentField.append(char)
             }
         }
-        
+
         // Add the last field
         fields.append(currentField.trimmingCharacters(in: .whitespaces))
-        
+
         return fields
     }
-    
+
     // MARK: - XLSX Parsing
-    
+
     /// Parse XLSX file and return preview
     func parseXLSX(from url: URL) async throws -> ImportPreview {
         logger.info("Parsing XLSX file: \(url.lastPathComponent)")
-        
+
         // Start accessing security-scoped resource
         let accessing = url.startAccessingSecurityScopedResource()
         defer {
@@ -137,7 +137,7 @@ final class FileImportService {
                 url.stopAccessingSecurityScopedResource()
             }
         }
-        
+
         do {
             // Open XLSX file
             guard let file = XLSXFile(filepath: url.path) else {
@@ -147,38 +147,38 @@ final class FileImportService {
                     userInfo: [NSLocalizedDescriptionKey: "Failed to open XLSX file"]
                 ))
             }
-            
+
             // Get worksheet paths
             let worksheetPaths = try file.parseWorksheetPaths()
             guard let firstPath = worksheetPaths.first else {
                 throw FileImportError.emptyFile
             }
-            
+
             // Parse first worksheet
             let worksheet = try file.parseWorksheet(at: firstPath)
-            
+
             // Parse shared strings (for text cells)
             let sharedStrings = try file.parseSharedStrings()
-            
+
             // Extract rows
             guard let rows = worksheet.data?.rows else {
                 throw FileImportError.emptyFile
             }
-            
+
             // Convert to string arrays
             var headers: [String] = []
             var dataRows: [[String]] = []
-            
+
             for (index, row) in rows.enumerated() {
                 let rowData = extractRowData(row: row, sharedStrings: sharedStrings)
-                
+
                 if index == 0 {
                     headers = rowData
                 } else if index <= 100 { // Limit preview to 100 rows
                     dataRows.append(rowData)
                 }
             }
-            
+
             let preview = ImportPreview(
                 headers: headers,
                 rows: dataRows,
@@ -186,52 +186,52 @@ final class FileImportService {
                 fileName: url.lastPathComponent,
                 fileType: .xlsx
             )
-            
+
             logger.info("XLSX parsed successfully: \(headers.count) columns, \(preview.totalRows) rows")
             return preview
-            
+
         } catch {
             logger.error("Failed to parse XLSX", error: error)
             throw FileImportError.parsingFailed(underlying: error)
         }
     }
-    
+
     /// Extract row data from Excel row
     private func extractRowData(row: Row, sharedStrings: SharedStrings?) -> [String] {
         var rowData: [String] = []
-        
+
         // Get all cells in the row
         let cells = row.cells
-        
+
         logger.debug("Extracting row with \(cells.count) cells, sharedStrings available: \(sharedStrings != nil)")
-        
+
         // Track column index to handle empty cells
         var currentColumn = 0
-        
+
         for cell in cells {
             // Get column reference (e.g., "A", "B", "C")
             let columnRef = cell.reference.column.value
             let columnIndex = columnLetterToIndex(columnRef)
-            
+
             logger.debug("Cell \(columnRef): type=\(String(describing: cell.type)), value=\(String(describing: cell.value))")
-            
+
             // Fill in empty cells if there's a gap
             while currentColumn < columnIndex {
                 rowData.append("")
                 currentColumn += 1
             }
-            
+
             // Extract cell value
             let cellValue = extractCellValue(cell: cell, sharedStrings: sharedStrings)
             logger.debug("Extracted value for \(columnRef): '\(cellValue)'")
             rowData.append(cellValue)
             currentColumn += 1
         }
-        
+
         logger.debug("Row data: \(rowData)")
         return rowData
     }
-    
+
     /// Extract value from Excel cell
     private func extractCellValue(cell: Cell, sharedStrings: SharedStrings?) -> String {
         // Check for inline string FIRST (used by some Excel generators like openpyxl)
@@ -240,7 +240,7 @@ final class FileImportService {
             logger.debug("Extracted inline string: '\(text)'")
             return text
         }
-        
+
         // Check if it's a shared string reference
         if cell.type == .sharedString,
            let value = cell.value,
@@ -252,7 +252,7 @@ final class FileImportService {
             logger.debug("Extracted shared string at index \(index): '\(text)'")
             return text
         }
-        
+
         // Check if it has a value
         if let value = cell.value {
             // Check if it's a date (Excel serial number)
@@ -261,14 +261,14 @@ final class FileImportService {
                 formatter.dateFormat = "yyyy-MM-dd"
                 return formatter.string(from: dateValue)
             }
-            
+
             // Return raw value (numbers, formulas evaluated to values)
             return value
         }
-        
+
         return ""
     }
-    
+
     /// Convert Excel column letter to zero-based index
     /// Examples: A=0, B=1, Z=25, AA=26, AB=27
     private func columnLetterToIndex(_ letter: String) -> Int {
@@ -278,9 +278,9 @@ final class FileImportService {
         }
         return index - 1
     }
-    
+
     // MARK: - Validation
-    
+
     /// Validate import data against column mappings
     func validateImport(
         preview: ImportPreview,
@@ -288,11 +288,11 @@ final class FileImportService {
     ) -> ImportValidationResult {
         var errors: [ImportValidationResult.ImportError] = []
         var warnings: [ImportValidationResult.ImportWarning] = []
-        
+
         // Check required columns are mapped
         let mappedColumns = Set(mappings.map { $0.sourceColumn })
         let requiredMappings = mappings.filter { $0.isRequired }
-        
+
         for required in requiredMappings {
             if !mappedColumns.contains(required.sourceColumn) {
                 errors.append(.init(
@@ -302,11 +302,11 @@ final class FileImportService {
                 ))
             }
         }
-        
+
         // Validate each row
         for (index, row) in preview.rows.enumerated() {
             let rowNumber = index + 2 // +2 because row 1 is headers, and we're 0-indexed
-            
+
             // Check row has correct number of columns
             if row.count != preview.headers.count {
                 errors.append(.init(
@@ -316,7 +316,7 @@ final class FileImportService {
                 ))
                 continue
             }
-            
+
             // Validate required fields are not empty
             for mapping in requiredMappings {
                 if let columnIndex = preview.headers.firstIndex(of: mapping.sourceColumn) {
@@ -330,7 +330,7 @@ final class FileImportService {
                     }
                 }
             }
-            
+
             // Validate email format if email column exists
             if let emailMapping = mappings.first(where: { $0.targetField == "email" }),
                let columnIndex = preview.headers.firstIndex(of: emailMapping.sourceColumn) {
@@ -343,7 +343,7 @@ final class FileImportService {
                     ))
                 }
             }
-            
+
             // Validate phone format if phone column exists
             if let phoneMapping = mappings.first(where: { $0.targetField == "phone" }),
                let columnIndex = preview.headers.firstIndex(of: phoneMapping.sourceColumn) {
@@ -357,32 +357,32 @@ final class FileImportService {
                 }
             }
         }
-        
+
         return ImportValidationResult(
             isValid: errors.isEmpty,
             errors: errors,
             warnings: warnings
         )
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func isValidEmail(_ email: String) -> Bool {
         let emailRegex = "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,64}"
         let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
         return emailPredicate.evaluate(with: email)
     }
-    
+
     private func isValidPhone(_ phone: String) -> Bool {
         // Basic phone validation - at least 10 digits
         let digits = phone.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()
         return digits.count >= 10
     }
-    
+
     /// Parse boolean value from string (supports yes/no, true/false, 1/0, y/n)
     func parseBoolean(_ value: String) -> Bool? {
         let normalized = value.lowercased().trimmingCharacters(in: .whitespaces)
-        
+
         switch normalized {
         case "true", "yes", "y", "1", "t":
             return true
@@ -392,12 +392,12 @@ final class FileImportService {
             return nil
         }
     }
-    
+
     /// Parse date from string (supports multiple formats)
     func parseDate(_ value: String) -> Date? {
         let trimmed = value.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return nil }
-        
+
         let dateFormatters: [DateFormatter] = [
             {
                 let formatter = DateFormatter()
@@ -425,23 +425,23 @@ final class FileImportService {
                 return formatter
             }()
         ]
-        
+
         for formatter in dateFormatters {
             if let date = formatter.date(from: trimmed) {
                 return date
             }
         }
-        
+
         return nil
     }
-    
+
     /// Parse integer from string
     func parseInteger(_ value: String) -> Int? {
         let trimmed = value.trimmingCharacters(in: .whitespaces)
         guard !trimmed.isEmpty else { return nil }
         return Int(trimmed)
     }
-    
+
     /// Parse numeric/decimal value from string (for currency, coordinates, etc.)
     func parseNumeric(_ value: String) -> Double? {
         let trimmed = value.trimmingCharacters(in: .whitespaces)
@@ -450,22 +450,22 @@ final class FileImportService {
         guard !trimmed.isEmpty else { return nil }
         return Double(trimmed)
     }
-    
+
     /// Validate and normalize RSVP status
     func parseRSVPStatus(_ value: String) -> String? {
         let normalized = value.lowercased().trimmingCharacters(in: .whitespaces)
-        
+
         let validStatuses = [
             "attending", "confirmed", "maybe", "pending", "invited",
             "save_the_date_sent", "invitation_sent", "reminded",
             "declined", "no_response"
         ]
-        
+
         // Direct match
         if validStatuses.contains(normalized) {
             return normalized
         }
-        
+
         // Fuzzy matching
         switch normalized {
         case "yes", "accept", "accepted", "coming":
@@ -484,11 +484,11 @@ final class FileImportService {
             return nil
         }
     }
-    
+
     /// Validate and normalize invited_by value
     func parseInvitedBy(_ value: String) -> String? {
         let normalized = value.lowercased().trimmingCharacters(in: .whitespaces)
-        
+
         switch normalized {
         case "bride1", "partner1", "partner 1", "p1":
             return "bride1"
@@ -500,11 +500,11 @@ final class FileImportService {
             return nil
         }
     }
-    
+
     /// Validate and normalize preferred contact method
     func parsePreferredContactMethod(_ value: String) -> String? {
         let normalized = value.lowercased().trimmingCharacters(in: .whitespaces)
-        
+
         switch normalized {
         case "email", "e-mail", "electronic":
             return "email"
@@ -516,31 +516,31 @@ final class FileImportService {
             return nil
         }
     }
-    
+
     /// Infer column mappings based on header names with comprehensive pattern matching
     func inferMappings(headers: [String], targetFields: [String]) -> [ColumnMapping] {
         var mappings: [ColumnMapping] = []
         var usedHeaders = Set<String>()
-        
+
         logger.info("Inferring mappings for \(headers.count) headers: \(headers)")
-        
+
         for header in headers {
             guard !usedHeaders.contains(header) else { continue }
-            
+
             // Skip empty headers
             guard !header.trimmingCharacters(in: .whitespaces).isEmpty else {
                 logger.warning("Skipping empty header")
                 continue
             }
-            
+
             let normalizedHeader = header.lowercased()
                 .trimmingCharacters(in: .whitespaces)
                 .replacingOccurrences(of: "_", with: "")
                 .replacingOccurrences(of: "-", with: "")
                 .replacingOccurrences(of: " ", with: "")
-            
+
             logger.debug("Normalized header '\(header)' -> '\(normalizedHeader)'")
-            
+
             // Try to match with target fields using pattern matching
             if let matchedField = matchHeaderToField(normalizedHeader: normalizedHeader, targetFields: targetFields) {
                 logger.info("Mapped '\(header)' -> '\(matchedField)'")
@@ -554,11 +554,11 @@ final class FileImportService {
                 logger.warning("No match found for header '\(header)' (normalized: '\(normalizedHeader)')")
             }
         }
-        
+
         logger.info("Created \(mappings.count) mappings")
         return mappings
     }
-    
+
     /// Match a normalized header to a target field using pattern matching
     private func matchHeaderToField(normalizedHeader: String, targetFields: [String]) -> String? {
         // Define mapping patterns for common variations
@@ -615,19 +615,19 @@ final class FileImportService {
             "includeInExport": ["includeinexport", "export", "include", "exportflag"],
             "imageUrl": ["imageurl", "image", "photo", "picture", "logo"]
         ]
-        
+
         // Try exact match first
         for field in targetFields {
             let normalizedField = field.lowercased()
                 .replacingOccurrences(of: "_", with: "")
                 .replacingOccurrences(of: "-", with: "")
                 .replacingOccurrences(of: " ", with: "")
-            
+
             if normalizedHeader == normalizedField {
                 return field
             }
         }
-        
+
         // Try pattern matching
         for (field, variations) in patterns {
             if targetFields.contains(field) {
@@ -638,22 +638,22 @@ final class FileImportService {
                 }
             }
         }
-        
+
         return nil
     }
-    
+
     private func isRequiredField(_ field: String) -> Bool {
         // Define required fields based on import type
         // Guest required fields
         let guestRequiredFields = ["firstName", "lastName"]
         // Vendor required fields
         let vendorRequiredFields = ["vendorName"]
-        
+
         return guestRequiredFields.contains(field) || vendorRequiredFields.contains(field)
     }
-    
+
     // MARK: - Guest Conversion
-    
+
     /// Convert CSV rows to Guest objects using column mappings
     func convertToGuests(
         preview: ImportPreview,
@@ -662,14 +662,14 @@ final class FileImportService {
     ) -> [Guest] {
         var guests: [Guest] = []
         let now = Date()
-        
+
         logger.info("Converting guests: \(preview.rows.count) rows, \(mappings.count) mappings")
         logger.info("Mappings: \(mappings.map { "\($0.sourceColumn) -> \($0.targetField)" }.joined(separator: ", "))")
-        
+
         for row in preview.rows {
             // Skip rows with wrong column count
             guard row.count == preview.headers.count else { continue }
-            
+
             // Extract values using mappings
             var values: [String: String] = [:]
             for mapping in mappings {
@@ -677,7 +677,7 @@ final class FileImportService {
                     values[mapping.targetField] = row[columnIndex]
                 }
             }
-            
+
             // Required fields
             guard let firstName = values["firstName"]?.trimmingCharacters(in: .whitespaces),
                   !firstName.isEmpty,
@@ -685,7 +685,7 @@ final class FileImportService {
                   !lastName.isEmpty else {
                 continue
             }
-            
+
             // Parse RSVP status
             let rsvpStatusString = values["rsvpStatus"] ?? ""
             let rsvpStatus: RSVPStatus
@@ -695,7 +695,7 @@ final class FileImportService {
             } else {
                 rsvpStatus = .pending
             }
-            
+
             // Parse invited_by
             let invitedByString = values["invitedBy"] ?? ""
             let invitedBy: InvitedBy?
@@ -705,7 +705,7 @@ final class FileImportService {
             } else {
                 invitedBy = nil
             }
-            
+
             // Parse preferred contact method
             let contactMethodString = values["preferredContactMethod"] ?? ""
             let preferredContactMethod: PreferredContactMethod?
@@ -715,7 +715,7 @@ final class FileImportService {
             } else {
                 preferredContactMethod = nil
             }
-            
+
             // Create guest object
             let guest = Guest(
                 id: UUID(),
@@ -758,16 +758,16 @@ final class FileImportService {
                 hairDone: parseBoolean(values["hairDone"] ?? "") ?? false,
                 makeupDone: parseBoolean(values["makeupDone"] ?? "") ?? false
             )
-            
+
             guests.append(guest)
         }
-        
+
         logger.info("Converted \(guests.count) guests from CSV")
         return guests
     }
-    
+
     // MARK: - Vendor Conversion
-    
+
     /// Convert CSV rows to Vendor objects using column mappings
     /// Note: Vendor ID is Int64 and auto-generated by database, so we don't set it here
     func convertToVendors(
@@ -777,11 +777,11 @@ final class FileImportService {
     ) -> [VendorImportData] {
         var vendors: [VendorImportData] = []
         let now = Date()
-        
+
         for row in preview.rows {
             // Skip rows with wrong column count
             guard row.count == preview.headers.count else { continue }
-            
+
             // Extract values using mappings
             var values: [String: String] = [:]
             for mapping in mappings {
@@ -789,13 +789,13 @@ final class FileImportService {
                     values[mapping.targetField] = row[columnIndex]
                 }
             }
-            
+
             // Required field
             guard let vendorName = values["vendorName"]?.trimmingCharacters(in: .whitespaces),
                   !vendorName.isEmpty else {
                 continue
             }
-            
+
             // Create vendor import data object
             let vendorData = VendorImportData(
                 vendorName: vendorName,
@@ -823,10 +823,10 @@ final class FileImportService {
                 latitude: values["latitude"].flatMap { parseNumeric($0) },
                 longitude: values["longitude"].flatMap { parseNumeric($0) }
             )
-            
+
             vendors.append(vendorData)
         }
-        
+
         logger.info("Converted \(vendors.count) vendors from CSV")
         return vendors
     }
@@ -880,7 +880,7 @@ enum FileImportError: Error, LocalizedError {
     case xlsxNotSupported
     case invalidFileType
     case fileAccessDenied
-    
+
     var errorDescription: String? {
         switch self {
         case .emptyFile:

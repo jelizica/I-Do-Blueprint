@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Mood Board Helpers
 
 extension MoodBoardListView {
-    
+
     var filteredMoodBoards: [MoodBoard] {
         var boards = visualPlanningStore.moodBoards
 

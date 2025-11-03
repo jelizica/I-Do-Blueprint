@@ -52,7 +52,7 @@ extension DependencyValues {
         get { self[CollaborationRepositoryKey.self] }
         set { self[CollaborationRepositoryKey.self] = newValue }
     }
-    
+
     /// Access the presence repository dependency
     /// - In production: Returns LivePresenceRepository with Supabase
     /// - In tests: Returns MockPresenceRepository with in-memory storage
@@ -61,7 +61,7 @@ extension DependencyValues {
         get { self[PresenceRepositoryKey.self] }
         set { self[PresenceRepositoryKey.self] = newValue }
     }
-    
+
     /// Access the activity feed repository dependency
     /// - In production: Returns LiveActivityFeedRepository with Supabase
     /// - In tests: Returns MockActivityFeedRepository with in-memory storage

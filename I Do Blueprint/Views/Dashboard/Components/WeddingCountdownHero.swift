@@ -10,7 +10,7 @@ import SwiftUI
 struct WeddingCountdownHero: View {
     let weddingDate: Date?
     let daysUntil: Int
-    
+
     var body: some View {
         ZStack {
             // Background with gradient and pattern
@@ -40,7 +40,7 @@ struct WeddingCountdownHero: View {
                             lineWidth: 1
                         )
                 )
-            
+
             VStack(spacing: Spacing.xl) {
                 // Icons
                 HStack(spacing: Spacing.sm) {
@@ -53,12 +53,12 @@ struct WeddingCountdownHero: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                    
+
                     Image(systemName: "sparkles")
                         .font(.system(size: 24))
                         .foregroundColor(Color.fromHex( "A855F7"))
                 }
-                
+
                 // Title
                 Text("Our Wedding Journey")
                     .font(.system(size: 48, weight: .bold, design: .rounded))
@@ -74,14 +74,14 @@ struct WeddingCountdownHero: View {
                         )
                     )
                     .multilineTextAlignment(.center)
-                
+
                 // Subtitle
                 if let weddingDate = weddingDate {
                     Text(formattedWeddingDate(weddingDate))
                         .font(Typography.title3)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 // Countdown Card
                 VStack(spacing: Spacing.md) {
                     Text("\(daysUntil)")
@@ -93,7 +93,7 @@ struct WeddingCountdownHero: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                    
+
                     Text("Days Until Forever")
                         .font(Typography.bodyLarge)
                         .foregroundColor(AppColors.textSecondary)
@@ -109,7 +109,7 @@ struct WeddingCountdownHero: View {
         }
         .frame(height: 400)
     }
-    
+
     private func formattedWeddingDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM d, yyyy"

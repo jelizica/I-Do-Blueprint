@@ -27,7 +27,7 @@ final class ErrorHandlingTests: XCTestCase {
         await MainActor.run {
             handler.handle(urlError, context: ctx)
         }
-        
+
         // Verify state was published
         let published = await MainActor.run { handler.currentError }
         XCTAssertNotNil(published)

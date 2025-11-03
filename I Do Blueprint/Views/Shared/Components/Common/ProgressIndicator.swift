@@ -14,7 +14,7 @@ struct ProgressBar: View {
     let backgroundColor: Color
     let height: CGFloat
     let showPercentage: Bool
-    
+
     init(
         value: Double,
         color: Color = .blue,
@@ -28,7 +28,7 @@ struct ProgressBar: View {
         self.height = height
         self.showPercentage = showPercentage
     }
-    
+
     var body: some View {
         VStack(alignment: .trailing, spacing: 4) {
             GeometryReader { geometry in
@@ -37,7 +37,7 @@ struct ProgressBar: View {
                     RoundedRectangle(cornerRadius: height / 2)
                         .fill(backgroundColor)
                         .frame(height: height)
-                    
+
                     // Progress
                     RoundedRectangle(cornerRadius: height / 2)
                         .fill(color)
@@ -46,7 +46,7 @@ struct ProgressBar: View {
                 }
             }
             .frame(height: height)
-            
+
             if showPercentage {
                 Text("\(Int(value * 100))%")
                     .font(Typography.caption)
@@ -66,7 +66,7 @@ struct CircularProgress: View {
     let lineWidth: CGFloat
     let size: CGFloat
     let showPercentage: Bool
-    
+
     init(
         value: Double,
         color: Color = .blue,
@@ -80,13 +80,13 @@ struct CircularProgress: View {
         self.size = size
         self.showPercentage = showPercentage
     }
-    
+
     var body: some View {
         ZStack {
             // Background circle
             Circle()
                 .stroke(color.opacity(0.2), lineWidth: lineWidth)
-            
+
             // Progress circle
             Circle()
                 .trim(from: 0, to: value)
@@ -99,14 +99,14 @@ struct CircularProgress: View {
                 )
                 .rotationEffect(.degrees(-90))
                 .animation(AnimationStyle.spring, value: value)
-            
+
             // Percentage text
             if showPercentage {
                 VStack(spacing: 2) {
                     Text("\(Int(value * 100))")
                         .font(.system(size: size * 0.3, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Text("%")
                         .font(.system(size: size * 0.15, weight: .medium))
                         .foregroundColor(AppColors.textSecondary)
@@ -125,13 +125,13 @@ struct StepProgress: View {
     let currentStep: Int
     let totalSteps: Int
     let color: Color
-    
+
     init(currentStep: Int, totalSteps: Int, color: Color = .blue) {
         self.currentStep = currentStep
         self.totalSteps = totalSteps
         self.color = color
     }
-    
+
     var body: some View {
         HStack(spacing: 8) {
             ForEach(1...totalSteps, id: \.self) { step in
@@ -143,7 +143,7 @@ struct StepProgress: View {
                             .stroke(color, lineWidth: step == currentStep ? 2 : 0)
                             .frame(width: 16, height: 16)
                     )
-                
+
                 if step < totalSteps {
                     Rectangle()
                         .fill(step < currentStep ? color : color.opacity(0.2))
@@ -162,13 +162,13 @@ struct LabeledStepProgress: View {
     let steps: [String]
     let currentStep: Int
     let color: Color
-    
+
     init(steps: [String], currentStep: Int, color: Color = .blue) {
         self.steps = steps
         self.currentStep = currentStep
         self.color = color
     }
-    
+
     var body: some View {
         VStack(spacing: Spacing.md) {
             // Progress line
@@ -194,7 +194,7 @@ struct LabeledStepProgress: View {
                                 }
                             }
                         )
-                    
+
                     if index < steps.count - 1 {
                         Rectangle()
                             .fill(index < currentStep ? color : color.opacity(0.2))
@@ -203,7 +203,7 @@ struct LabeledStepProgress: View {
                     }
                 }
             }
-            
+
             // Step labels
             HStack {
                 ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
@@ -230,19 +230,19 @@ struct LabeledStepProgress: View {
                 .font(Typography.bodySmall)
             ProgressBar(value: 0.25, color: .blue)
         }
-        
+
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("50% Complete")
                 .font(Typography.bodySmall)
             ProgressBar(value: 0.5, color: .green, showPercentage: true)
         }
-        
+
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("75% Complete")
                 .font(Typography.bodySmall)
             ProgressBar(value: 0.75, color: .orange, height: 12)
         }
-        
+
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("100% Complete")
                 .font(Typography.bodySmall)
@@ -279,13 +279,13 @@ struct LabeledStepProgress: View {
             currentStep: 0,
             color: .blue
         )
-        
+
         LabeledStepProgress(
             steps: ["Details", "Guests", "Vendors", "Review"],
             currentStep: 2,
             color: .blue
         )
-        
+
         LabeledStepProgress(
             steps: ["Details", "Guests", "Vendors", "Review"],
             currentStep: 3,

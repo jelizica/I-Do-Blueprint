@@ -11,7 +11,7 @@ struct CollaboratorListView: View {
     @Environment(\.collaborationStore) private var store
     @State private var showingInviteSheet = false
     @State private var selectedCollaborator: Collaborator?
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -21,16 +21,16 @@ struct CollaboratorListView: View {
                 onInvite: { showingInviteSheet = true }
             )
             .disabled(!store.canInvite)
-            
+
             Divider()
-            
+
             // Content
             Group {
                 switch store.loadingState {
                 case .idle, .loading:
                     ProgressView("Loading collaborators...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    
+
                 case .loaded:
                     if store.collaborators.isEmpty {
                         EmptyCollaboratorsView(
@@ -43,7 +43,7 @@ struct CollaboratorListView: View {
                             selectedCollaborator: $selectedCollaborator
                         )
                     }
-                    
+
                 case .error(let error):
                     ErrorStateView(
                         error: error,
@@ -81,23 +81,23 @@ struct CollaboratorHeaderView: View {
     let activeCount: Int
     let pendingCount: Int
     let onInvite: () -> Void
-    
+
     var body: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(activeCount) Active")
                     .font(.headline)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 if pendingCount > 0 {
                     Text("\(pendingCount) Pending")
                         .font(.caption)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
+
             Spacer()
-            
+
             Button(action: onInvite) {
                 Label("Invite", systemImage: "person.badge.plus")
                     .font(.body)
@@ -114,7 +114,7 @@ struct CollaboratorHeaderView: View {
 struct CollaboratorListContent: View {
     @ObservedObject var store: CollaborationStoreV2
     @Binding var selectedCollaborator: Collaborator?
-    
+
     var body: some View {
         List {
             if !store.activeCollaborators.isEmpty {
@@ -132,7 +132,7 @@ struct CollaboratorListContent: View {
                     }
                 }
             }
-            
+
             if !store.pendingInvitations.isEmpty {
                 Section("Pending Invitations") {
                     ForEach(store.pendingInvitations) { collaborator in
@@ -161,7 +161,7 @@ struct CollaboratorRow: View {
     let role: CollaborationRole?
     let canManage: Bool
     var isPending: Bool = false
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Avatar
@@ -173,20 +173,20 @@ struct CollaboratorRow: View {
                         .font(.headline)
                         .foregroundColor(AppColors.textPrimary)
                 )
-            
+
             // Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(collaborator.name)
                     .font(.body)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 HStack(spacing: 8) {
                     if let role = role {
                         Text(role.roleName.displayName)
                             .font(.caption)
                             .foregroundColor(AppColors.textSecondary)
                     }
-                    
+
                     if isPending {
                         Text("• Pending")
                             .font(.caption)
@@ -194,9 +194,9 @@ struct CollaboratorRow: View {
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             if canManage {
                 Image(systemName: "chevron.right")
                     .font(.caption)
@@ -214,7 +214,7 @@ struct CollaboratorRow: View {
 struct EmptyCollaboratorsView: View {
     let canInvite: Bool
     let onInvite: () -> Void
-    
+
     var body: some View {
         SharedEmptyStateView(
             icon: "person.2",
@@ -235,7 +235,7 @@ extension View {
                 if isPresented.wrappedValue {
                     VStack {
                         Spacer()
-                        
+
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundColor(AppColors.success)

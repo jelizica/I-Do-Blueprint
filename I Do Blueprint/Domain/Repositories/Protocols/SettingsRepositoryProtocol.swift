@@ -42,9 +42,9 @@ protocol SettingsRepositoryProtocol: Sendable {
 
     func formatPhoneNumbers() async throws -> PhoneFormatResult
     func resetData(keepBudgetSandbox: Bool, keepAffordability: Bool, keepCategories: Bool) async throws
-    
+
     // MARK: - Account Deletion
-    
+
     /// Delete the entire user account and all associated data
     ///
     /// This is a destructive operation that:

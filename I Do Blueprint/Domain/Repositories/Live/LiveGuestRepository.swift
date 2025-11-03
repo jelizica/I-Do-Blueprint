@@ -13,13 +13,13 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
     private let supabase: SupabaseClient?
     private let logger = AppLogger.repository
     private let cacheStrategy = GuestCacheStrategy()
-    
+
     // SessionManager for tenant scoping
     private let sessionManager: SessionManager
-    
+
     // In-flight request de-duplication
     private var inFlightGuests: [UUID: Task<[Guest], Error>] = [:]
-    
+
     init(supabase: SupabaseClient? = nil, sessionManager: SessionManager = .shared) {
         self.supabase = supabase
         self.sessionManager = sessionManager
@@ -30,7 +30,7 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
         supabase = SupabaseManager.shared.client
         sessionManager = .shared
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
@@ -95,7 +95,7 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             throw GuestError.fetchFailed(underlying: error)
         }
     }
-    
+
     // DEFERRED (2025-01): Guest pagination blocked by Swift Sendable conformance issues
     //
     // The PaginatedResult<T> type requires Sendable conformance, but Guest model
@@ -148,10 +148,10 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             responseRate: responseRate)
 
         let duration = Date().timeIntervalSince(startTime)
-        
+
         // ✅ Cache the result
         await RepositoryCache.shared.set(cacheKey, value: stats, ttl: 60)
-        
+
         // ✅ Record performance
         await PerformanceMonitor.shared.recordOperation("fetchGuestStats", duration: duration)
 
@@ -180,10 +180,10 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             await cacheStrategy.invalidate(for: .guestCreated(tenantId: tenantId))
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("createGuest", duration: duration)
-            
+
             logger.info("Created guest in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "createGuest", outcome: .success, duration: duration)
 
@@ -223,10 +223,10 @@ await SentryService.shared.captureError(error, context: [
             await cacheStrategy.invalidate(for: .guestUpdated(tenantId: tenantId))
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("updateGuest", duration: duration)
-            
+
             logger.info("Updated guest in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "updateGuest", outcome: .success, duration: duration)
 
@@ -262,10 +262,10 @@ await SentryService.shared.captureError(error, context: [
             await RepositoryCache.shared.remove("guest_stats_\(tenantId.uuidString)")
 
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("deleteGuest", duration: duration)
-            
+
             logger.info("Deleted guest in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "deleteGuest", outcome: .success, duration: duration)
         } catch {
@@ -294,20 +294,20 @@ await SentryService.shared.captureError(error, context: [
                 guest.phone?.contains(query) == true
         }
     }
-    
+
     func importGuests(_ guests: [Guest]) async throws -> [Guest] {
         guard !guests.isEmpty else {
             logger.info("No guests to import")
             return []
         }
-        
+
         do {
             let client = try getClient()
             let tenantId = try await getTenantId()
             let startTime = Date()
-            
+
             logger.info("Importing \(guests.count) guests...")
-            
+
             // Ensure all guests have the correct couple_id
             var guestsToImport = guests
             for index in guestsToImport.indices {
@@ -355,7 +355,7 @@ await SentryService.shared.captureError(error, context: [
                 )
                 guestsToImport[index] = guest
             }
-            
+
             // Batch insert with retry
             let imported: [Guest] = try await RepositoryNetwork.withRetry {
                 try await client
@@ -365,19 +365,19 @@ await SentryService.shared.captureError(error, context: [
                     .execute()
                     .value
             }
-            
+
             // ✅ Invalidate tenant-scoped cache
             await RepositoryCache.shared.remove("guests_\(tenantId.uuidString)")
             await RepositoryCache.shared.remove("guest_stats_\(tenantId.uuidString)")
-            
+
             let duration = Date().timeIntervalSince(startTime)
-            
+
             // ✅ Record performance
             await PerformanceMonitor.shared.recordOperation("importGuests", duration: duration)
-            
+
             logger.info("Imported \(imported.count) guests in \(String(format: "%.2f", duration))s")
             AnalyticsService.trackNetwork(operation: "importGuests", outcome: .success, duration: duration)
-            
+
             return imported
         } catch {
             logger.error("Failed to import guests", error: error)

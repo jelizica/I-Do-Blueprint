@@ -10,9 +10,9 @@ import Foundation
 // MARK: - Expense Linking Actions
 
 extension ExpenseLinkingView {
-    
+
     // MARK: Load Data
-    
+
     func loadExpenses() async {
         isLoading = true
         errorMessage = nil
@@ -49,9 +49,9 @@ extension ExpenseLinkingView {
             }
         }
     }
-    
+
     // MARK: Filter
-    
+
     func filterExpenses() {
         var filtered = expenses
 
@@ -72,9 +72,9 @@ extension ExpenseLinkingView {
 
         filteredExpenses = filtered
     }
-    
+
     // MARK: Selection
-    
+
     func toggleExpenseSelection(_ expense: Expense) {
         if selectedExpenses.contains(expense.id) {
             selectedExpenses.remove(expense.id)
@@ -82,7 +82,7 @@ extension ExpenseLinkingView {
             selectedExpenses.insert(expense.id)
         }
     }
-    
+
     func toggleSelectAll() {
         let available = availableExpenses
         if selectedExpenses.count == available.count {
@@ -93,9 +93,9 @@ extension ExpenseLinkingView {
             selectedExpenses = Set(available.map(\.id))
         }
     }
-    
+
     // MARK: Link Expenses
-    
+
     func linkExpenses() {
         guard let scenario = activeScenario,
               !selectedExpenses.isEmpty else {

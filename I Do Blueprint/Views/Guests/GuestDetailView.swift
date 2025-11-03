@@ -407,10 +407,10 @@ struct GuestDetailView: View {
             }
             .alert("Delete Guest", isPresented: $showingDeleteAlert) {
                 Button("Delete", role: .destructive) {
-                                        
+
                     // Capture just the ID to avoid memory corruption
                     let guestId = guest.id
-                    
+
                     // Post notification with the guest ID instead of using closures
                                         NotificationCenter.default.post(
                         name: .deleteGuest,

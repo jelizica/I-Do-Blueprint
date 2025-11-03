@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GuestNotesTab: View {
     let guest: Guest
-    
+
     var body: some View {
         VStack(spacing: Spacing.xxxl) {
             if let notes = guest.notes, !notes.isEmpty {
@@ -19,11 +19,11 @@ struct GuestNotesTab: View {
                     Image(systemName: "note.text")
                         .font(.system(size: 48))
                         .foregroundColor(.secondary)
-                    
+
                     Text("No Notes")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    
+
                     Text("Add notes to keep track of important details about this guest.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)

@@ -18,7 +18,7 @@ struct BudgetDevelopmentScenario: Identifiable, Codable, Equatable {
     var isPrimary: Bool
     let createdAt: Date
     var updatedAt: Date?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case coupleId = "couple_id"

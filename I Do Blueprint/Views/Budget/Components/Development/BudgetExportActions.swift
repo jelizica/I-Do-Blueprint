@@ -10,15 +10,15 @@ import Foundation
 // MARK: - Budget Export Actions
 
 extension BudgetDevelopmentView {
-    
+
     // MARK: Tax Rate
-    
+
     func handleAddCustomTaxRate() {
         showingTaxRateDialog = false
     }
-    
+
     // MARK: Local Export
-    
+
     func exportBudgetAsJSON() {
         exportHelper.exportAsJSON(
             budgetName: budgetName,
@@ -27,7 +27,7 @@ extension BudgetDevelopmentView {
             totalTax: totalTax,
             totalWithTax: totalWithTax)
     }
-    
+
     func exportBudgetAsCSV() {
         exportHelper.exportAsCSV(
             budgetName: budgetName,
@@ -37,9 +37,9 @@ extension BudgetDevelopmentView {
             totalWithTax: totalWithTax,
             weddingEvents: budgetStore.weddingEvents)
     }
-    
+
     // MARK: Google Export
-    
+
     func signInToGoogle() async {
         do {
             try await googleIntegration.authManager.authenticate()
@@ -48,7 +48,7 @@ extension BudgetDevelopmentView {
             logger.error("Failed to sign in to Google", error: error)
         }
     }
-    
+
     func exportToGoogleDrive() async {
         do {
             try await exportHelper.exportToGoogleDrive(
@@ -63,7 +63,7 @@ extension BudgetDevelopmentView {
             logger.error("Failed to upload to Google Drive", error: error)
         }
     }
-    
+
     func exportToGoogleSheets() async {
         do {
             _ = try await exportHelper.exportToGoogleSheets(

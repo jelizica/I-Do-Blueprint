@@ -11,7 +11,7 @@ import SwiftUI
 /// Unified empty state view with icon, title, message, and optional action button
 struct UnifiedEmptyStateView: View {
     let config: EmptyStateConfig
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             // Icon
@@ -19,14 +19,14 @@ struct UnifiedEmptyStateView: View {
                 .font(.system(size: 64))
                 .foregroundColor(AppColors.textTertiary)
                 .accessibilityHidden(true)
-            
+
             // Text content
             VStack(spacing: Spacing.sm) {
                 Text(config.title)
                     .font(Typography.title2)
                     .foregroundColor(AppColors.textPrimary)
                     .accessibleHeading(level: 2)
-                
+
                 Text(config.message)
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
@@ -34,7 +34,7 @@ struct UnifiedEmptyStateView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, Spacing.lg)
-            
+
             // Optional action button
             if let action = config.action {
                 Button(action: action.handler) {

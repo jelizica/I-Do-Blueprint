@@ -122,7 +122,7 @@ class TasksAPI {
 
     func createSubtask(taskId: UUID, data: SubtaskInsertData) async throws -> Subtask {
         let client = try getClient()
-        
+
         // Create a subtask insert struct
         struct SubtaskInsert: Encodable {
             let taskId: String
@@ -160,7 +160,7 @@ class TasksAPI {
 
     func updateSubtask(_ id: UUID, data: SubtaskInsertData) async throws -> Subtask {
         let client = try getClient()
-        
+
         // Create a subtask update struct
         struct SubtaskUpdate: Encodable {
             let subtaskName: String

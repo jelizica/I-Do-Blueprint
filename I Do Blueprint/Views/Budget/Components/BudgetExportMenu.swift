@@ -3,30 +3,30 @@ import SwiftUI
 /// Menu for exporting budget in various formats
 struct BudgetExportMenu: View {
     @Binding var uploading: Bool
-    
+
     let isGoogleAuthenticated: Bool
-    
+
     let onExportJSON: () -> Void
     let onExportCSV: () -> Void
     let onExportToGoogleDrive: () async -> Void
     let onExportToGoogleSheets: () async -> Void
     let onSignInToGoogle: () async -> Void
     let onSignOutFromGoogle: () -> Void
-    
+
     var body: some View {
         Menu {
             Section("Local Export") {
                 Button(action: onExportJSON) {
                     Label("Export as JSON", systemImage: "doc.text")
                 }
-                
+
                 Button(action: onExportCSV) {
                     Label("Export as CSV", systemImage: "tablecells")
                 }
             }
-            
+
             Divider()
-            
+
             Section("Google Export") {
                 if isGoogleAuthenticated {
                     Button(action: {
@@ -37,7 +37,7 @@ struct BudgetExportMenu: View {
                         Label("Export to Google Drive", systemImage: "cloud.fill")
                     }
                     .disabled(uploading)
-                    
+
                     Button(action: {
                         Task {
                             await onExportToGoogleSheets()
@@ -46,9 +46,9 @@ struct BudgetExportMenu: View {
                         Label("Export to Google Sheets", systemImage: "tablecells.fill")
                     }
                     .disabled(uploading)
-                    
+
                     Divider()
-                    
+
                     Button(action: onSignOutFromGoogle) {
                         Label("Sign Out from Google", systemImage: "person.crop.circle.badge.xmark")
                     }

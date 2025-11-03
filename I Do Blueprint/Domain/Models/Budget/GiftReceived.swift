@@ -19,7 +19,7 @@ struct GiftReceived: Identifiable, Codable, Sendable, Equatable {
     var isThankYouSent: Bool
     let createdAt: Date
     var updatedAt: Date?
-    
+
     enum CodingKeys: String, CodingKey {
         case id
         case coupleId = "couple_id"
@@ -32,7 +32,7 @@ struct GiftReceived: Identifiable, Codable, Sendable, Equatable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
-    
+
     init(
         id: UUID = UUID(),
         coupleId: UUID,
@@ -66,7 +66,7 @@ enum GiftType: String, CaseIterable, Codable, Sendable {
     case gift = "Gift"
     case giftCard = "Gift Card"
     case other = "Other"
-    
+
     var displayName: String {
         rawValue
     }

@@ -10,7 +10,7 @@ import SwiftUI
 struct DashboardViewV3: View {
     private let logger = AppLogger.ui
     @EnvironmentObject private var appStores: AppStores
-    
+
     // Convenience accessors
     private var budgetStore: BudgetStoreV2 { appStores.budget }
     private var vendorStore: VendorStoreV2 { appStores.vendor }
@@ -22,7 +22,7 @@ struct DashboardViewV3: View {
 
     @State private var isLoading = false
     @State private var hasLoaded = false
-    
+
     // Quick action modals
     @State private var showingTaskModal = false
     @State private var showingNoteModal = false
@@ -42,7 +42,7 @@ struct DashboardViewV3: View {
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
-                
+
                 ScrollView {
                     VStack(spacing: Spacing.xl) {
                         // Quick Actions Bar
@@ -52,13 +52,13 @@ struct DashboardViewV3: View {
                             showingEventModal: $showingEventModal,
                             showingGuestModal: $showingGuestModal
                         )
-                        
+
                         // Hero Section
                         WeddingCountdownHero(
                             weddingDate: weddingDate,
                             daysUntil: daysUntilWedding
                         )
-                        
+
                         // Key Metrics Row
                         if hasLoaded {
                             HStack(spacing: Spacing.md) {
@@ -69,10 +69,10 @@ struct DashboardViewV3: View {
                                     icon: "dollarsign.circle.fill",
                                     color: budgetColor
                                 )
-                                
+
                                 let guests = guestStore.guests
                                 let yesCount = guests.filter { $0.rsvpStatus == .attending || $0.rsvpStatus == .confirmed }.count
-                                
+
                                 MetricCard(
                                     title: "Guests RSVP'd",
                                     value: Double(yesCount),
@@ -81,9 +81,9 @@ struct DashboardViewV3: View {
                                     icon: "person.2.fill",
                                     color: AppColors.Guest.confirmed
                                 )
-                                
+
                                 let completedCount = taskStore.tasks.filter { $0.status == .completed }.count
-                                
+
                                 MetricCard(
                                     title: "Tasks Done",
                                     value: Double(completedCount),
@@ -92,9 +92,9 @@ struct DashboardViewV3: View {
                                     icon: "checkmark.circle.fill",
                                     color: AppColors.success
                                 )
-                                
+
                                 let bookedCount = vendorStore.vendors.filter { $0.isBooked == true }.count
-                                
+
                                 MetricCard(
                                     title: "Vendors Booked",
                                     value: Double(bookedCount),
@@ -105,7 +105,7 @@ struct DashboardViewV3: View {
                                 )
                             }
                         }
-                        
+
                         // Overview Content
                         if hasLoaded {
                             VStack(spacing: Spacing.lg) {
@@ -113,25 +113,25 @@ struct DashboardViewV3: View {
                                 HStack(spacing: Spacing.lg) {
                                     BudgetOverviewCard(store: budgetStore)
                                         .frame(maxWidth: .infinity)
-                                    
+
                                     RSVPOverviewCard(store: guestStore)
                                         .frame(maxWidth: .infinity)
                                 }
-                                
+
                                 // Vendors & Tasks Row
                                 HStack(spacing: Spacing.lg) {
                                     VendorStatusCard(store: vendorStore)
                                         .frame(maxWidth: .infinity)
-                                    
+
                                     TaskProgressCard(store: taskStore)
                                         .frame(maxWidth: .infinity)
                                 }
-                                
+
                                 // Timeline & Activity Row
                                 HStack(spacing: Spacing.lg) {
                                     TimelineMilestonesCard(store: timelineStore)
                                         .frame(maxWidth: .infinity)
-                                    
+
                                     RecentActivityCard(
                                         budgetStore: budgetStore,
                                         guestStore: guestStore,
@@ -153,7 +153,7 @@ struct DashboardViewV3: View {
                             ProgressView()
                                 .scaleEffect(0.8)
                         }
-                        
+
                         Button {
                             Task { await loadDashboardData() }
                         } label: {
@@ -212,30 +212,30 @@ struct DashboardViewV3: View {
             }
         }
     }
-    
+
     // MARK: - Computed Properties
-    
+
     private var weddingDate: Date? {
-        guard hasLoaded else { 
+        guard hasLoaded else {
             logger.debug("Not loaded yet, returning nil for wedding date")
-            return nil 
+            return nil
         }
-        
+
         let dateString = settingsStore.settings.global.weddingDate
-        guard !dateString.isEmpty else { 
+        guard !dateString.isEmpty else {
             logger.debug("Wedding date string is empty")
-            return nil 
+            return nil
         }
-        
+
         logger.debug("Wedding date string from settings: \(dateString)")
-        
+
         // Try ISO8601 format first
         let iso8601Formatter = ISO8601DateFormatter()
         if let date = iso8601Formatter.date(from: dateString) {
             logger.debug("Parsed wedding date (ISO8601): \(date)")
             return date
         }
-        
+
         // Try standard date format
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd"
@@ -243,33 +243,33 @@ struct DashboardViewV3: View {
             logger.debug("Parsed wedding date (yyyy-MM-dd): \(date)")
             return date
         }
-        
+
         // Try with time component
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         if let date = dateFormatter.date(from: dateString) {
             logger.debug("Parsed wedding date (with time): \(date)")
             return date
         }
-        
+
         logger.error("Failed to parse wedding date: \(dateString)")
         return nil
     }
-    
+
     private var daysUntilWedding: Int {
-        guard let weddingDate = weddingDate else { 
+        guard let weddingDate = weddingDate else {
             logger.debug("No wedding date, returning 0")
-            return 0 
+            return 0
         }
-        
+
         let calendar = Calendar.current
         let now = calendar.startOfDay(for: Date())
         let wedding = calendar.startOfDay(for: weddingDate)
         let days = calendar.dateComponents([.day], from: now, to: wedding).day ?? 0
-        
+
         logger.debug("Days calculation: now=\(now), wedding=\(wedding), days=\(days)")
         return days
     }
-    
+
     private var budgetColor: Color {
         guard hasLoaded else { return AppColors.textSecondary }
         let percentage = budgetStore.percentageSpent
@@ -281,20 +281,20 @@ struct DashboardViewV3: View {
             return AppColors.success
         }
     }
-    
+
     // MARK: - Data Loading
-    
+
     private func loadDashboardData() async {
         guard !hasLoaded else {
             logger.info("Already loaded, skipping")
             return
         }
-        
+
         isLoading = true
         defer { isLoading = false }
-        
+
         logger.debug("Starting to load all data...")
-        
+
         // Load data from all stores in parallel
         async let budgetLoad = budgetStore.loadBudgetData()
         async let vendorsLoad = vendorStore.loadVendors()
@@ -303,12 +303,12 @@ struct DashboardViewV3: View {
         async let settingsLoad = settingsStore.loadSettings()
         async let timelineLoad = timelineStore.loadTimelineItems()
         async let documentsLoad = documentStore.loadDocuments()
-        
+
         // Wait for all to complete
         _ = await (budgetLoad, vendorsLoad, guestsLoad, tasksLoad, settingsLoad, timelineLoad, documentsLoad)
-        
+
         logger.info("All data loaded successfully")
-        
+
         // Set hasLoaded AFTER all data is loaded to prevent accessing stores during updates
         hasLoaded = true
     }

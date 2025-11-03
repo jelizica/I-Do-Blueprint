@@ -9,7 +9,7 @@ struct BudgetDevelopmentView: View {
     @EnvironmentObject var settingsStore: SettingsStoreV2
     @StateObject var googleIntegration = GoogleIntegrationManager()
     @StateObject var exportHelper = BudgetExportHelper()
-    
+
     // Core state
     @State var budgetItems: [BudgetItem] = []
     @State var savedScenarios: [SavedScenario] = []
@@ -20,33 +20,33 @@ struct BudgetDevelopmentView: View {
     @State var loading = true
     @State var saving = false
     @State var uploading = false
-    
+
     // Track newly created items that need to be saved
     @State var newlyCreatedItemIds: Set<String> = []
-    
+
     // Track items that need to be deleted from database
     @State var itemsToDelete: Set<String> = []
-    
+
     let logger = AppLogger.ui
-    
+
     // UI state
     @State var newCategoryNames: [String: String] = [:]
     @State var newSubcategoryNames: [String: String] = [:]
     @State var newEventNames: [String: String] = [:]
     @State var expandedCategories: Set<String> = Set()
-    
+
     // Dialogs
     @State var showingTaxRateDialog = false
     @State var showingRenameDialog = false
     @State var showingDuplicateDialog = false
     @State var showingDeleteDialog = false
-    
+
     // Dialog data
     @State var customTaxRateData = CustomTaxRateData()
     @State var renameScenarioData = ScenarioDialogData()
     @State var duplicateScenarioData = ScenarioDialogData()
     @State var deleteScenarioData = ScenarioDialogData()
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Configuration header
@@ -87,7 +87,7 @@ struct BudgetDevelopmentView: View {
                     showingTaxRateDialog = true
                 }
             )
-            
+
             ScrollView {
                 VStack(spacing: 24) {
                     // Budget summary cards
@@ -96,7 +96,7 @@ struct BudgetDevelopmentView: View {
                         totalTax: totalTax,
                         totalWithTax: totalWithTax
                     )
-                    
+
                     // Budget items table
                     BudgetItemsTable(
                         budgetItems: $budgetItems,
@@ -113,7 +113,7 @@ struct BudgetDevelopmentView: View {
                         onAddEvent: handleNewEventName,
                         responsibleOptions: personOptions
                     )
-                    
+
                     // Summary sections
                     if !budgetItems.isEmpty {
                         BudgetSummaryBreakdowns(

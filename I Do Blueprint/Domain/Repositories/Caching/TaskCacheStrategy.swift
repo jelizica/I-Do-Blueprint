@@ -9,7 +9,7 @@ import Foundation
 
 actor TaskCacheStrategy: CacheInvalidationStrategy {
     private let cache = RepositoryCache.shared
-    
+
     func invalidate(for operation: CacheOperation) async {
         switch operation {
         case .taskCreated(let tenantId, let taskId),
@@ -21,7 +21,7 @@ actor TaskCacheStrategy: CacheInvalidationStrategy {
         default: break
         }
     }
-    
+
     private func invalidateTaskCaches(tenantId: UUID, taskId: UUID) async {
         let id = tenantId.uuidString
         await cache.remove("tasks_\(id)")

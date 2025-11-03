@@ -12,7 +12,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
     var progress: OnboardingProgress?
     var shouldThrowError = false
     var errorToThrow: OnboardingError = .fetchFailed(underlying: NSError(domain: "MockError", code: 1))
-    
+
     // Track method calls for verification
     var fetchCalled = false
     var saveCalled = false
@@ -20,7 +20,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
     var completeCalled = false
     var deleteCalled = false
     var isCompletedCalled = false
-    
+
     func fetchOnboardingProgress() async throws -> OnboardingProgress? {
         fetchCalled = true
         if shouldThrowError {
@@ -28,7 +28,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
         }
         return progress
     }
-    
+
     func saveOnboardingProgress(_ progress: OnboardingProgress) async throws -> OnboardingProgress {
         saveCalled = true
         if shouldThrowError {
@@ -37,7 +37,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
         self.progress = progress
         return progress
     }
-    
+
     func updateOnboardingProgress(_ progress: OnboardingProgress) async throws -> OnboardingProgress {
         updateCalled = true
         if shouldThrowError {
@@ -46,7 +46,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
         self.progress = progress
         return progress
     }
-    
+
     func completeOnboarding() async throws -> OnboardingProgress {
         completeCalled = true
         if shouldThrowError {
@@ -60,7 +60,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
         self.progress = currentProgress
         return currentProgress
     }
-    
+
     func deleteOnboardingProgress() async throws {
         deleteCalled = true
         if shouldThrowError {
@@ -68,7 +68,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
         }
         progress = nil
     }
-    
+
     func isOnboardingCompleted() async throws -> Bool {
         isCompletedCalled = true
         if shouldThrowError {
@@ -76,7 +76,7 @@ class MockOnboardingRepository: OnboardingRepositoryProtocol {
         }
         return progress?.isCompleted ?? false
     }
-    
+
     // Helper methods for testing
     func reset() {
         progress = nil

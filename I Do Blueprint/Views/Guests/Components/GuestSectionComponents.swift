@@ -12,7 +12,7 @@ import SwiftUI
 struct QuickInfoSection: View {
     let guest: Guest
     @EnvironmentObject var settingsStore: SettingsStoreV2
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             SectionHeaderV2(
@@ -20,7 +20,7 @@ struct QuickInfoSection: View {
                 icon: "info.circle.fill",
                 color: .blue
             )
-            
+
             LazyVGrid(
                 columns: [
                     GridItem(.flexible()),
@@ -36,7 +36,7 @@ struct QuickInfoSection: View {
                         color: .purple
                     )
                 }
-                
+
                 if let invitationNumber = guest.invitationNumber {
                     QuickInfoCard(
                         icon: "number",
@@ -45,7 +45,7 @@ struct QuickInfoSection: View {
                         color: .orange
                     )
                 }
-                
+
                 if let table = guest.tableAssignment {
                     QuickInfoCard(
                         icon: "tablecells",
@@ -54,7 +54,7 @@ struct QuickInfoSection: View {
                         color: .cyan
                     )
                 }
-                
+
                 QuickInfoCard(
                     icon: guest.plusOneAllowed ? "person.badge.plus" : "person",
                     title: "Plus One",
@@ -71,7 +71,7 @@ struct QuickInfoCard: View {
     let title: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
@@ -80,11 +80,11 @@ struct QuickInfoCard: View {
                     .foregroundColor(color)
                 Spacer()
             }
-            
+
             Text(value)
                 .font(Typography.numberMedium)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text(title)
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
@@ -109,7 +109,7 @@ struct QuickInfoCard: View {
 
 struct VisualContactSection: View {
     let guest: Guest
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             SectionHeaderV2(
@@ -117,7 +117,7 @@ struct VisualContactSection: View {
                 icon: "envelope.circle.fill",
                 color: .blue
             )
-            
+
             VStack(spacing: Spacing.sm) {
                 if let email = guest.email {
                     GuestContactRow(
@@ -127,7 +127,7 @@ struct VisualContactSection: View {
                         color: .blue
                     )
                 }
-                
+
                 if let phone = guest.phone {
                     GuestContactRow(
                         icon: "phone.fill",
@@ -136,7 +136,7 @@ struct VisualContactSection: View {
                         color: .green
                     )
                 }
-                
+
                 if let addressLine1 = guest.addressLine1 {
                     let fullAddress = [
                         addressLine1,
@@ -145,7 +145,7 @@ struct VisualContactSection: View {
                         guest.state,
                         guest.zipCode
                     ].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: ", ")
-                    
+
                     GuestContactRow(
                         icon: "mappin.circle.fill",
                         label: "Address",
@@ -163,7 +163,7 @@ struct GuestContactRow: View {
     let label: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: Spacing.lg) {
             // Icon circle
@@ -171,25 +171,25 @@ struct GuestContactRow: View {
                 Circle()
                     .fill(color.opacity(0.15))
                     .frame(width: 48, height: 48)
-                
+
                 Image(systemName: icon)
                     .font(.title3)
                     .foregroundColor(color)
             }
-            
+
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(label)
                     .font(Typography.caption)
                     .foregroundColor(AppColors.textSecondary)
                     .textCase(.uppercase)
                     .tracking(0.5)
-                
+
                 Text(value)
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textPrimary)
                     .lineLimit(2)
             }
-            
+
             Spacer()
         }
         .padding(Spacing.lg)
@@ -205,7 +205,7 @@ struct GuestContactRow: View {
 
 struct VisualEventDetailsSection: View {
     let guest: Guest
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             SectionHeaderV2(
@@ -213,7 +213,7 @@ struct VisualEventDetailsSection: View {
                 icon: "calendar.circle.fill",
                 color: .purple
             )
-            
+
             VStack(spacing: Spacing.sm) {
                 EventDetailCard(
                     icon: "music.note.house.fill",
@@ -221,14 +221,14 @@ struct VisualEventDetailsSection: View {
                     value: guest.attendingCeremony ? "Attending" : "Not Attending",
                     color: guest.attendingCeremony ? .green : .gray
                 )
-                
+
                 EventDetailCard(
                     icon: "party.popper.fill",
                     title: "Reception",
                     value: guest.attendingReception ? "Attending" : "Not Attending",
                     color: guest.attendingReception ? .green : .gray
                 )
-                
+
                 if guest.isWeddingParty {
                     EventDetailCard(
                         icon: "star.circle.fill",
@@ -247,7 +247,7 @@ struct EventDetailCard: View {
     let title: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: Spacing.lg) {
             Image(systemName: icon)
@@ -258,19 +258,19 @@ struct EventDetailCard: View {
                     Circle()
                         .fill(color.opacity(0.15))
                 )
-            
+
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(title)
                     .font(Typography.subheading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Text(value)
                     .font(Typography.caption)
                     .foregroundColor(color)
             }
-            
+
             Spacer()
-            
+
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(color)
                 .font(.title3)
@@ -288,7 +288,7 @@ struct EventDetailCard: View {
 
 struct VisualPreferencesSection: View {
     let guest: Guest
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             SectionHeaderV2(
@@ -296,7 +296,7 @@ struct VisualPreferencesSection: View {
                 icon: "fork.knife.circle.fill",
                 color: .brown
             )
-            
+
             VStack(spacing: Spacing.sm) {
                 if let mealOption = guest.mealOption, !mealOption.isEmpty {
                     PreferenceCard(
@@ -306,7 +306,7 @@ struct VisualPreferencesSection: View {
                         color: .brown
                     )
                 }
-                
+
                 if let dietary = guest.dietaryRestrictions, !dietary.isEmpty {
                     PreferenceCard(
                         icon: "leaf.fill",
@@ -325,7 +325,7 @@ struct PreferenceCard: View {
     let title: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(spacing: Spacing.sm) {
@@ -335,7 +335,7 @@ struct PreferenceCard: View {
                     .font(Typography.subheading)
                     .foregroundColor(AppColors.textPrimary)
             }
-            
+
             Text(value)
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
@@ -359,7 +359,7 @@ struct PreferenceCard: View {
 
 struct VisualNotesSection: View {
     let notes: String
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             SectionHeaderV2(
@@ -367,7 +367,7 @@ struct VisualNotesSection: View {
                 icon: "note.text",
                 color: .gray
             )
-            
+
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text(notes)
                     .font(Typography.bodyRegular)
@@ -405,20 +405,20 @@ struct SectionHeaderV2: View {
     let title: String
     let icon: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundColor(color)
-            
+
             Text(title)
                 .font(Typography.title3)
                 .fontWeight(.bold)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Spacer()
-            
+
             // Decorative line
             Rectangle()
                 .fill(

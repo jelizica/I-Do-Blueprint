@@ -4,17 +4,17 @@ import SwiftUI
 struct ScenarioManagementBar: View {
     @Binding var selectedScenario: String
     @Binding var saving: Bool
-    
+
     let savedScenarios: [SavedScenario]
     let currentScenarioId: String?
-    
+
     let onSaveScenario: () async -> Void
     let onLoadScenario: (String) async -> Void
     let onSetPrimaryScenario: (String) async -> Void
     let onShowRenameDialog: (String, String) -> Void
     let onShowDuplicateDialog: (String, String) -> Void
     let onShowDeleteDialog: (String, String) -> Void
-    
+
     var body: some View {
         HStack(spacing: 16) {
             // Scenario Selector
@@ -38,7 +38,7 @@ struct ScenarioManagementBar: View {
                     await onLoadScenario(newValue)
                 }
             }
-            
+
             // Save Button
             Button(action: {
                 Task {
@@ -62,7 +62,7 @@ struct ScenarioManagementBar: View {
             }
             .disabled(saving)
             .buttonStyle(PlainButtonStyle())
-            
+
             // Scenario Actions Menu
             if selectedScenario != "new", let scenario = savedScenarios.first(where: { $0.id == selectedScenario }) {
                 Menu {
@@ -72,19 +72,19 @@ struct ScenarioManagementBar: View {
                         }
                     }
                     .disabled(scenario.isPrimary)
-                    
+
                     Divider()
-                    
+
                     Button("Rename") {
                         onShowRenameDialog(scenario.id, scenario.scenarioName)
                     }
-                    
+
                     Button("Duplicate") {
                         onShowDuplicateDialog(scenario.id, scenario.scenarioName)
                     }
-                    
+
                     Divider()
-                    
+
                     Button("Delete", role: .destructive) {
                         onShowDeleteDialog(scenario.id, scenario.scenarioName)
                     }

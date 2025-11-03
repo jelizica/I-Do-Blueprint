@@ -15,7 +15,7 @@ struct ListSection<Content: View>: View {
     let color: Color
     let footer: String?
     let content: Content
-    
+
     init(
         title: String,
         count: Int? = nil,
@@ -31,7 +31,7 @@ struct ListSection<Content: View>: View {
         self.footer = footer
         self.content = content()
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -41,10 +41,10 @@ struct ListSection<Content: View>: View {
                 icon: icon,
                 color: color
             )
-            
+
             // Content
             content
-            
+
             // Footer
             if let footer = footer {
                 Text(footer)
@@ -65,7 +65,7 @@ struct CollapsibleListSection<Content: View>: View {
     let count: Int?
     let content: Content
     @State private var isExpanded: Bool
-    
+
     init(
         title: String,
         count: Int? = nil,
@@ -77,7 +77,7 @@ struct CollapsibleListSection<Content: View>: View {
         self.content = content()
         self._isExpanded = State(initialValue: isExpandedByDefault)
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
@@ -86,7 +86,7 @@ struct CollapsibleListSection<Content: View>: View {
                 count: count,
                 isExpanded: $isExpanded
             )
-            
+
             // Content
             if isExpanded {
                 content
@@ -104,7 +104,7 @@ struct CardListSection<Content: View>: View {
     let subtitle: String?
     let action: ListHeader.ActionConfig?
     let content: Content
-    
+
     init(
         title: String,
         subtitle: String? = nil,
@@ -116,7 +116,7 @@ struct CardListSection<Content: View>: View {
         self.action = action
         self.content = content()
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
@@ -125,9 +125,9 @@ struct CardListSection<Content: View>: View {
                     Text(title)
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     Spacer()
-                    
+
                     if let action = action {
                         Button(action: action.handler) {
                             HStack(spacing: 4) {
@@ -144,16 +144,16 @@ struct CardListSection<Content: View>: View {
                         .buttonStyle(.plain)
                     }
                 }
-                
+
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
             }
-            
+
             Divider()
-            
+
             // Content
             content
         }
@@ -187,7 +187,7 @@ struct CardListSection<Content: View>: View {
                     }
                 }
             }
-            
+
             ListSection(
                 title: "Pending Responses",
                 count: 25,
@@ -230,7 +230,7 @@ struct CardListSection<Content: View>: View {
                     Divider()
                 }
             }
-            
+
             CollapsibleListSection(
                 title: "Pending",
                 count: 25,
@@ -272,7 +272,7 @@ struct CardListSection<Content: View>: View {
                 }
             }
         }
-        
+
         CardListSection(
             title: "Quick Actions"
         ) {
@@ -283,7 +283,7 @@ struct CardListSection<Content: View>: View {
                     color: .blue,
                     action: {}
                 )
-                
+
                 CompactActionCard(
                     icon: "building.2.badge.plus",
                     title: "Add Vendor",

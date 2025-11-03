@@ -13,9 +13,9 @@ struct SearchBar: View {
     @Binding var text: String
     let placeholder: String
     let onSubmit: (() -> Void)?
-    
+
     @FocusState private var isFocused: Bool
-    
+
     init(
         text: Binding<String>,
         placeholder: String = "Search...",
@@ -25,13 +25,13 @@ struct SearchBar: View {
         self.placeholder = placeholder
         self.onSubmit = onSubmit
     }
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(AppColors.textSecondary)
                 .font(.body)
-            
+
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .focused($isFocused)
@@ -40,7 +40,7 @@ struct SearchBar: View {
                 }
                 .accessibilityLabel("Search")
                 .accessibilityHint(placeholder)
-            
+
             if !text.isEmpty {
                 Button(action: {
                     text = ""
@@ -70,10 +70,10 @@ struct SearchBar: View {
 struct CompactSearchBar: View {
     @Binding var text: String
     let placeholder: String
-    
+
     @FocusState private var isFocused: Bool
     @State private var isExpanded = false
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             if isExpanded {
@@ -81,12 +81,12 @@ struct CompactSearchBar: View {
                     Image(systemName: "magnifyingglass")
                         .foregroundColor(AppColors.textSecondary)
                         .font(.callout)
-                    
+
                     TextField(placeholder, text: $text)
                         .textFieldStyle(.plain)
                         .focused($isFocused)
                         .frame(width: 200)
-                    
+
                     if !text.isEmpty {
                         Button(action: {
                             text = ""
@@ -136,12 +136,12 @@ struct CompactSearchBar: View {
             text: .constant(""),
             placeholder: "Search guests..."
         )
-        
+
         SearchBar(
             text: .constant("John"),
             placeholder: "Search guests..."
         )
-        
+
         SearchBar(
             text: .constant(""),
             placeholder: "Search vendors...",

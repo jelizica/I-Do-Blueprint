@@ -5,18 +5,18 @@ struct ExpenseExportOptionsView: View {
     @Environment(\.dismiss) private var dismiss
     let expenses: [Expense]
     let categories: [BudgetCategory]
-    
+
     @State private var isExporting = false
     @State private var exportError: Error?
     private let exportService = BudgetExportService.shared
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 20) {
                 Text("Export Options")
                     .font(.title2)
                     .fontWeight(.bold)
-                
+
                 VStack(spacing: 16) {
                     ExportOptionButton(
                         title: "Export as PDF",
@@ -42,7 +42,7 @@ struct ExpenseExportOptionsView: View {
                             isExporting = false
                         }
                     }
-                    
+
                     ExportOptionButton(
                         title: "Export as CSV",
                         description: "Export raw data for spreadsheet analysis",
@@ -67,7 +67,7 @@ struct ExpenseExportOptionsView: View {
                             isExporting = false
                         }
                     }
-                    
+
                     ExportOptionButton(
                         title: "Share Report",
                         description: "Share via email or messaging",
@@ -94,7 +94,7 @@ struct ExpenseExportOptionsView: View {
                     }
                 }
                 .disabled(isExporting)
-                
+
                 Spacer()
             }
             .padding()
@@ -117,7 +117,7 @@ struct ExportOptionButton: View {
     let icon: String
     let color: Color
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
             HStack(spacing: 16) {
@@ -125,19 +125,19 @@ struct ExportOptionButton: View {
                     .foregroundColor(color)
                     .font(.title2)
                     .frame(width: 24)
-                
+
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.headline)
                         .foregroundColor(.primary)
-                    
+
                     Text(description)
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Image(systemName: "chevron.right")
                     .foregroundStyle(.tertiary)
                     .font(.caption)

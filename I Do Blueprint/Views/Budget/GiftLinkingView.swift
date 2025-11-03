@@ -344,7 +344,7 @@ struct GiftLinkingView: View {
                 do {
                     // Fetch all budget items for this scenario
                     let budgetItems = try await budgetRepository.fetchBudgetDevelopmentItems(scenarioId: scenario.id)
-                    
+
                     // Extract linked gift IDs
                     linkedGiftIds = Set(budgetItems.compactMap { item -> UUID? in
                         guard let giftIdString = item.linkedGiftOwedId else {
@@ -352,7 +352,7 @@ struct GiftLinkingView: View {
                         }
                         return UUID(uuidString: giftIdString)
                     })
-                    
+
                                     } catch {
                     logger.error("Failed to fetch linked gift IDs", error: error)
                     // Continue with empty set on error

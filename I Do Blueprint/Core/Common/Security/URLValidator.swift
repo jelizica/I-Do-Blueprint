@@ -9,37 +9,37 @@ import Foundation
 
 /// Validates URLs for security before network requests
 struct URLValidator {
-    
+
     // MARK: - Allowed Schemes
-    
+
     /// Schemes that are allowed for network requests
     private static let allowedSchemes: Set<String> = ["https", "http"]
-    
+
     /// Schemes that are explicitly blocked for security reasons
     private static let blockedSchemes: Set<String> = [
         "file", "ftp", "sftp", "ssh", "telnet", "gopher", "ldap", "dict",
         "data", "javascript", "vbscript", "about"
     ]
-    
+
     // MARK: - Blocked Hosts (SSRF Prevention)
-    
+
     /// Hosts that are blocked to prevent SSRF attacks
     private static let blockedHosts: Set<String> = [
         // Localhost variations
         "localhost", "127.0.0.1", "::1", "0.0.0.0",
-        
+
         // Metadata services (Cloud)
         "169.254.169.254",  // AWS/Azure/GCP metadata service
         "metadata.google.internal",
         "metadata",
-        
+
         // Link-local addresses
         "169.254.0.0",
-        
+
         // Broadcast addresses
         "255.255.255.255"
     ]
-    
+
     /// Private IP range prefixes that should be blocked
     private static let privateIPPrefixes: [String] = [
         "192.168.",  // Private network
@@ -50,9 +50,9 @@ struct URLValidator {
         "172.24.", "172.25.", "172.26.", "172.27.",
         "172.28.", "172.29.", "172.30.", "172.31."
     ]
-    
+
     // MARK: - Validation
-    
+
     /// Validate URL for security before use
     /// - Parameter url: The URL to validate
     /// - Throws: URLValidationError if the URL is not safe to use
@@ -61,51 +61,51 @@ struct URLValidator {
         guard let scheme = url.scheme?.lowercased() else {
             throw URLValidationError.missingScheme
         }
-        
+
         // Check for blocked schemes first
         if blockedSchemes.contains(scheme) {
             throw URLValidationError.blockedScheme(scheme)
         }
-        
+
         // Check if scheme is in allowed list
         guard allowedSchemes.contains(scheme) else {
             throw URLValidationError.unsupportedScheme(scheme)
         }
-        
+
         // 2. Check host
         guard let host = url.host?.lowercased() else {
             throw URLValidationError.missingHost
         }
-        
+
         // Block dangerous hosts
         if blockedHosts.contains(host) {
             throw URLValidationError.blockedHost(host)
         }
-        
+
         // Block private IP ranges
         for prefix in privateIPPrefixes {
             if host.starts(with: prefix) {
                 throw URLValidationError.privateIPRange(host)
             }
         }
-        
+
         // 3. Check for suspicious patterns
-        
+
         // User info in URL (e.g., http://user:pass@example.com)
         if url.user != nil || url.password != nil {
             throw URLValidationError.suspiciousPattern("user credentials in URL")
         }
-        
+
         // Check for @ symbol in host (potential URL confusion attack)
         if host.contains("@") {
             throw URLValidationError.suspiciousPattern("@ symbol in host")
         }
-        
+
         // Check for multiple slashes (potential path traversal)
         if url.absoluteString.contains("//") && !url.absoluteString.hasPrefix("\(scheme)://") {
             throw URLValidationError.suspiciousPattern("multiple slashes")
         }
-        
+
         // 4. Port validation (optional - restrict to standard ports)
         if let port = url.port {
             let allowedPorts: Set<Int> = [80, 443, 8080, 8443]
@@ -113,19 +113,19 @@ struct URLValidator {
                 throw URLValidationError.blockedPort(port)
             }
         }
-        
+
         // 5. Check for encoded characters that might bypass filters
         let urlString = url.absoluteString
         if urlString.contains("%00") {  // Null byte
             throw URLValidationError.suspiciousPattern("null byte encoding")
         }
-        
+
         // Check for double encoding attempts
         if urlString.contains("%25") {  // Encoded %
             throw URLValidationError.suspiciousPattern("double encoding detected")
         }
     }
-    
+
     /// Validate URL string and return validated URL
     /// - Parameter urlString: The URL string to validate
     /// - Returns: Validated URL
@@ -137,7 +137,7 @@ struct URLValidator {
         try validate(url)
         return url
     }
-    
+
     /// Check if a URL is safe without throwing
     /// - Parameter url: The URL to check
     /// - Returns: true if the URL is safe, false otherwise
@@ -164,7 +164,7 @@ enum URLValidationError: LocalizedError {
     case blockedPort(Int)
     case suspiciousPattern(String)
     case invalidURLString(String)
-    
+
     var errorDescription: String? {
         switch self {
         case .missingScheme:
@@ -187,7 +187,7 @@ enum URLValidationError: LocalizedError {
             return "Invalid URL string: \(string)"
         }
     }
-    
+
     var recoverySuggestion: String? {
         switch self {
         case .unsupportedScheme, .blockedScheme:
@@ -213,7 +213,7 @@ extension URL {
     var isSafe: Bool {
         URLValidator.isSafe(self)
     }
-    
+
     /// Validate this URL for security
     /// - Throws: URLValidationError if the URL is not safe
     func validateSecurity() throws {

@@ -10,7 +10,7 @@ import SwiftUI
 struct HeroHeaderView: View {
     let guest: Guest
     var onEdit: (() -> Void)? = nil
-    
+
     var body: some View {
         ZStack(alignment: .bottom) {
             // Background gradient
@@ -24,13 +24,13 @@ struct HeroHeaderView: View {
                 endPoint: .bottom
             )
             .frame(height: 280)
-            
+
             // Decorative pattern overlay
             GeometryReader { geometry in
                 Path { path in
                     let width = geometry.size.width
                     let height: CGFloat = 280
-                    
+
                     // Diagonal lines pattern
                     for i in stride(from: -100, to: Int(width) + 100, by: 30) {
                         path.move(to: CGPoint(x: CGFloat(i), y: 0))
@@ -40,7 +40,7 @@ struct HeroHeaderView: View {
                 .stroke(guest.rsvpStatus.color.opacity(0.05), lineWidth: 1)
             }
             .frame(height: 280)
-            
+
             // Profile content
             VStack(spacing: Spacing.lg) {
                 // Avatar with decorative ring
@@ -59,7 +59,7 @@ struct HeroHeaderView: View {
                             lineWidth: 3
                         )
                         .frame(width: 128, height: 128)
-                    
+
                     // Avatar circle
                     Circle()
                         .fill(
@@ -80,13 +80,13 @@ struct HeroHeaderView: View {
                         )
                         .shadow(color: guest.rsvpStatus.color.opacity(0.3), radius: 15, y: 5)
                 }
-                
+
                 // Name and status
                 VStack(spacing: Spacing.sm) {
                     Text(guest.fullName)
                         .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundColor(AppColors.textPrimary)
-                    
+
                     HStack(spacing: Spacing.sm) {
                         Image(systemName: guest.rsvpStatus.iconName)
                             .font(.caption)

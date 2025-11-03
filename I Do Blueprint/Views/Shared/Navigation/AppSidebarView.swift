@@ -20,7 +20,7 @@ struct AppSidebarView: View {
                     .environmentObject(appStores)
                     .listRowInsets(EdgeInsets(top: 8, leading: 8, bottom: 8, trailing: 8))
             }
-            
+
             // Overview
             Section("Overview") {
                 SidebarItem(
@@ -36,7 +36,7 @@ struct AppSidebarView: View {
                 SidebarItem(tab: .vendors, icon: "building.2.fill", title: "Vendors")
                 SidebarItem(tab: .timeline, icon: "calendar", title: "Timeline")
             }
-            
+
             // Collaboration
             Section("Collaboration") {
                 SidebarItem(tab: .collaboration, icon: "person.2.fill", title: "Team")

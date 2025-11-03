@@ -20,27 +20,27 @@ class VendorStoreV2: ObservableObject, CacheableStore {
     @Published var successMessage = ""
 
     @Dependency(\.vendorRepository) var repository
-    
+
     // MARK: - Cache Management
     var lastLoadTime: Date?
     let cacheValidityDuration: TimeInterval = 600 // 10 minutes (slow-changing)
-    
+
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
     private var addTask: Task<Void, Never>?
     private var updateTask: Task<Void, Never>?
     private var deleteTask: Task<Void, Never>?
-    
+
     // MARK: - Computed Properties for Backward Compatibility
-    
+
     var vendors: [Vendor] {
         loadingState.data ?? []
     }
-    
+
     var isLoading: Bool {
         loadingState.isLoading
     }
-    
+
     var error: VendorError? {
         if case .error(let err) = loadingState {
             return err as? VendorError ?? .fetchFailed(underlying: err)
@@ -53,7 +53,7 @@ class VendorStoreV2: ObservableObject, CacheableStore {
     func loadVendors(force: Bool = false) async {
         // Cancel any previous load task
         loadTask?.cancel()
-        
+
         // Create new load task
         loadTask = Task { @MainActor in
             // Use cached data if still valid
@@ -61,24 +61,24 @@ class VendorStoreV2: ObservableObject, CacheableStore {
                 AppLogger.ui.debug("Using cached vendor data (age: \(Int(cacheAge()))s)")
                 return
             }
-            
+
             guard loadingState.isIdle || loadingState.hasError || force else { return }
-            
+
             loadingState = .loading
             let startTime = Date()
 
             do {
                 try Task.checkCancellation()
-                
+
                 async let vendorsResult = repository.fetchVendors()
                 async let statsResult = repository.fetchVendorStats()
 
                 // Parallel fetch
                 let fetchedVendors = try await vendorsResult
                 let fetchedStats = try await statsResult
-                
+
                 try Task.checkCancellation()
-                
+
                 vendorStats = fetchedStats
                 loadingState = .loaded(fetchedVendors)
                 lastLoadTime = Date()
@@ -97,7 +97,7 @@ class VendorStoreV2: ObservableObject, CacheableStore {
                 loadingState = .error(VendorError.fetchFailed(underlying: error))
             }
         }
-        
+
         await loadTask?.value
     }
 
@@ -112,27 +112,27 @@ class VendorStoreV2: ObservableObject, CacheableStore {
             category: "vendor",
             data: ["vendorName": vendor.vendorName]
         )
-        
+
         let startTime = Date()
-        
+
         do {
             let created = try await repository.createVendor(vendor)
-            
+
             // Update loaded state with new vendor
             if case .loaded(var currentVendors) = loadingState {
                 currentVendors.append(created)
                 loadingState = .loaded(currentVendors)
             }
-            
+
             // Refresh stats
             vendorStats = try await repository.fetchVendorStats()
-            
+
             // Invalidate cache due to mutation
             invalidateCache()
-            
+
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.info("Added vendor '\(vendor.vendorName)' in \(duration)s")
-            
+
             // Show success feedback
             HapticFeedback.itemAdded()
             showSuccess("Vendor added successfully")
@@ -157,13 +157,13 @@ class VendorStoreV2: ObservableObject, CacheableStore {
                 "vendorName": vendor.vendorName
             ]
         )
-        
+
         // Optimistic update
         guard case .loaded(var currentVendors) = loadingState,
               let index = currentVendors.firstIndex(where: { $0.id == vendor.id }) else {
             return
         }
-        
+
         let original = currentVendors[index]
         currentVendors[index] = vendor
         loadingState = .loaded(currentVendors)
@@ -171,7 +171,7 @@ class VendorStoreV2: ObservableObject, CacheableStore {
 
         do {
             let updated = try await repository.updateVendor(vendor)
-            
+
             if case .loaded(var vendors) = loadingState,
                let idx = vendors.firstIndex(where: { $0.id == vendor.id }) {
                 vendors[idx] = updated
@@ -186,7 +186,7 @@ class VendorStoreV2: ObservableObject, CacheableStore {
 
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.info("Updated vendor '\(vendor.vendorName)' in \(duration)s")
-            
+
             showSuccess("Vendor updated successfully")
         } catch {
             // Rollback on error
@@ -219,13 +219,13 @@ class VendorStoreV2: ObservableObject, CacheableStore {
                 "vendorName": vendor.vendorName
             ]
         )
-        
+
         // Optimistic delete
         guard case .loaded(var currentVendors) = loadingState,
               let index = currentVendors.firstIndex(where: { $0.id == vendor.id }) else {
             return
         }
-        
+
         let removed = currentVendors.remove(at: index)
         loadingState = .loaded(currentVendors)
         let startTime = Date()
@@ -241,7 +241,7 @@ class VendorStoreV2: ObservableObject, CacheableStore {
 
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.info("Deleted vendor '\(vendor.vendorName)' in \(duration)s")
-            
+
             showSuccess("Vendor deleted successfully")
         } catch {
             // Rollback on error
@@ -287,28 +287,28 @@ class VendorStoreV2: ObservableObject, CacheableStore {
             totalCost: 0,
             averageRating: 0)
     }
-    
+
     // MARK: - Retry Helper
-    
+
     func retryLoad() async {
         await loadVendors()
     }
-    
+
     // MARK: - Private Helpers
-    
+
     private func showSuccess(_ message: String) {
         successMessage = message
         showSuccessToast = true
-        
+
         // Auto-hide after 3 seconds
         Task {
             try? await Task.sleep(nanoseconds: 3_000_000_000)
             showSuccessToast = false
         }
     }
-    
+
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         // Cancel in-flight tasks to avoid race conditions during tenant switch
@@ -316,7 +316,7 @@ class VendorStoreV2: ObservableObject, CacheableStore {
         addTask?.cancel()
         updateTask?.cancel()
         deleteTask?.cancel()
-        
+
         // Reset state and invalidate cache
         loadingState = .idle
         vendorStats = nil

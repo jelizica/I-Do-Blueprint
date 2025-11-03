@@ -3,12 +3,12 @@ import SwiftUI
 /// Payment type selector component for choosing between individual, monthly, interval, and cyclical payments
 struct PaymentTypeSelector: View {
     @Binding var selectedType: PaymentType
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Payment Type")
                 .font(.headline)
-            
+
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                 ForEach(PaymentType.allCases, id: \.self) { type in
                     Button(action: {
@@ -18,7 +18,7 @@ struct PaymentTypeSelector: View {
                             Image(systemName: type.icon)
                                 .font(.title2)
                                 .foregroundColor(selectedType == type ? .white : AppColors.Budget.allocated)
-                            
+
                             Text(type.displayName)
                                 .font(.subheadline)
                                 .fontWeight(.medium)

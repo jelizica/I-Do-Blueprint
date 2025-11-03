@@ -15,7 +15,7 @@ class DocumentsAPI {
     init(supabase: SupabaseClient? = SupabaseManager.shared.client) {
         self.supabase = supabase
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable

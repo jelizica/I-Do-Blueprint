@@ -10,7 +10,7 @@ import Combine
 
 struct WeddingDetailsView: View {
     @Environment(\.onboardingStore) private var store
-    
+
     @State private var partner1Name: String = ""
     @State private var partner1Nickname: String = ""
     @State private var partner2Name: String = ""
@@ -23,14 +23,14 @@ struct WeddingDetailsView: View {
     @State private var showDatePicker = false
     @State private var weddingEvents: [OnboardingWeddingEvent] = []
     @State private var validationTask: Task<Void, Never>?
-    
+
     // Computed property for validation
     private var isValid: Bool {
         !partner1Name.trimmingCharacters(in: .whitespaces).isEmpty &&
         !partner2Name.trimmingCharacters(in: .whitespaces).isEmpty &&
         (isDateTBD || weddingDate != nil) // Date required unless TBD
     }
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: Spacing.xl) {
@@ -51,22 +51,22 @@ struct WeddingDetailsView: View {
             saveDetails()
         }
     }
-    
+
     // MARK: - View Sections
-    
+
     private var headerSection: some View {
         VStack(spacing: Spacing.sm) {
             Text("Wedding Details")
                 .font(Typography.title1)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Tell us about your special day")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
         }
         .padding(.top, Spacing.xl)
     }
-    
+
     private var formSection: some View {
         VStack(spacing: Spacing.lg) {
             partnerNamesSection
@@ -74,7 +74,7 @@ struct WeddingDetailsView: View {
             weddingDateSection
             Divider().padding(.vertical, Spacing.sm)
             venueSection
-            
+
             // Show optional fields only in guided mode
             if store.selectedMode == .guided {
                 Divider().padding(.vertical, Spacing.sm)
@@ -88,11 +88,11 @@ struct WeddingDetailsView: View {
         .padding(.horizontal, Spacing.xl)
         .padding(.bottom, Spacing.xxl)
     }
-    
+
     private var partnerNamesSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             FormSectionHeader(title: "Partners", isRequired: true)
-            
+
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 FormTextField(
                     title: "Partner 1 Full Name",
@@ -100,7 +100,7 @@ struct WeddingDetailsView: View {
                     placeholder: "Enter first partner's full name",
                     isRequired: true
                 )
-                
+
                 FormTextField(
                     title: "Partner 1 Nickname (Optional)",
                     text: $partner1Nickname,
@@ -108,7 +108,7 @@ struct WeddingDetailsView: View {
                     isRequired: false
                 )
             }
-            
+
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 FormTextField(
                     title: "Partner 2 Full Name",
@@ -116,7 +116,7 @@ struct WeddingDetailsView: View {
                     placeholder: "Enter second partner's full name",
                     isRequired: true
                 )
-                
+
                 FormTextField(
                     title: "Partner 2 Nickname (Optional)",
                     text: $partner2Nickname,
@@ -126,22 +126,22 @@ struct WeddingDetailsView: View {
             }
         }
     }
-    
+
     private var weddingDateSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
                 FormSectionHeader(title: "Wedding Date", isRequired: !isDateTBD)
-                
+
                 Spacer()
-                
+
                 Toggle("Date TBD", isOn: $isDateTBD)
                     .toggleStyle(.checkbox)
                     .help("Check if wedding date is to be determined")
             }
-            
+
             if !isDateTBD {
                 datePickerButton
-                
+
                 if showDatePicker {
                     datePicker
                 }
@@ -156,18 +156,18 @@ struct WeddingDetailsView: View {
             }
         }
     }
-    
+
     private var datePickerButton: some View {
         Button(action: { showDatePicker.toggle() }) {
             HStack {
                 let dateText = weddingDate.map { formatDate($0) } ?? "Select date"
                 let textColor = weddingDate == nil ? AppColors.textSecondary : AppColors.textPrimary
-                
+
                 Text(dateText)
                     .foregroundColor(textColor)
-                
+
                 Spacer()
-                
+
                 Image(systemName: "calendar")
                     .foregroundColor(AppColors.primary)
             }
@@ -180,7 +180,7 @@ struct WeddingDetailsView: View {
         .accessibilityValue(weddingDate.map { formatDate($0) } ?? "Not selected")
         .accessibilityHint("Tap to select a date")
     }
-    
+
     private var datePicker: some View {
         let defaultDate = Date().addingTimeInterval(365 * 24 * 60 * 60)
         let binding = Binding<Date>(
@@ -190,7 +190,7 @@ struct WeddingDetailsView: View {
                 updateStoreForValidation()
             }
         )
-        
+
         return DatePicker(
             "Select Date",
             selection: binding,
@@ -202,11 +202,11 @@ struct WeddingDetailsView: View {
         .background(AppColors.cardBackground)
         .cornerRadius(8)
     }
-    
+
     private var venueSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             FormSectionHeader(title: "Venue", isRequired: false)
-            
+
             FormTextField(
                 title: "Venue Name",
                 text: $venue,
@@ -215,11 +215,11 @@ struct WeddingDetailsView: View {
             )
         }
     }
-    
+
     private var weddingStyleSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             FormSectionHeader(title: "Wedding Style", isRequired: false)
-            
+
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.md) {
                 ForEach(WeddingStyle.allCases, id: \.self) { style in
                     WeddingStyleCard(
@@ -231,15 +231,15 @@ struct WeddingDetailsView: View {
             }
         }
     }
-    
+
     private var weddingEventsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             FormSectionHeader(title: "Wedding Events (Optional)", isRequired: false)
-            
+
             Text("Configure your ceremony and reception details")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             if weddingEvents.isEmpty {
                 Button(action: initializeDefaultEvents) {
                     HStack {
@@ -261,11 +261,11 @@ struct WeddingDetailsView: View {
             }
         }
     }
-    
+
     private var guestCountSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             FormSectionHeader(title: "Estimated Guest Count", isRequired: false)
-            
+
             FormTextField(
                 title: "Number of Guests",
                 text: $estimatedGuestCount,
@@ -274,9 +274,9 @@ struct WeddingDetailsView: View {
             )
         }
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func loadExistingData() {
         let details = store.weddingDetails
         partner1Name = details.partner1Name
@@ -292,31 +292,31 @@ struct WeddingDetailsView: View {
             estimatedGuestCount = "\(count)"
         }
     }
-    
+
     private func initializeDefaultEvents() {
         weddingEvents = [
             .defaultCeremony(),
             .defaultReception()
         ]
     }
-    
+
     /// Schedule a debounced validation update to avoid triggering during view updates
     private func scheduleValidationUpdate() {
         // Cancel any pending validation
         validationTask?.cancel()
-        
+
         // Schedule new validation task with debounce
         validationTask = Task { @MainActor in
             // Small delay to ensure we're outside the view update cycle
             try? await Task.sleep(nanoseconds: 50_000_000) // 50ms debounce
-            
+
             guard !Task.isCancelled else { return }
-            
+
             // Now safe to update store
             updateStoreForValidation()
         }
     }
-    
+
     private func updateStoreForValidation() {
         // Update the full details object in the store for real-time validation
         let details = WeddingDetails(
@@ -331,11 +331,11 @@ struct WeddingDetailsView: View {
             estimatedGuestCount: Int(estimatedGuestCount),
             weddingEvents: weddingEvents
         )
-        
+
         // Update store's weddingDetails for validation
         store.weddingDetails = details
     }
-    
+
     private func saveDetails() {
         // Create the complete details object
         let details = WeddingDetails(
@@ -350,13 +350,13 @@ struct WeddingDetailsView: View {
             estimatedGuestCount: Int(estimatedGuestCount),
             weddingEvents: weddingEvents
         )
-        
+
         // Save to store
         Task {
             await store.saveWeddingDetails(details)
         }
     }
-    
+
     private func formatDate(_ date: Date?) -> String {
         guard let date else { return "Select date" }
         let formatter = DateFormatter()
@@ -370,14 +370,14 @@ struct WeddingDetailsView: View {
 struct FormSectionHeader: View {
     let title: String
     let isRequired: Bool
-    
+
     var body: some View {
         HStack(spacing: Spacing.xs) {
             Text(title)
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             if isRequired {
                 Text("*")
                     .font(Typography.bodyLarge)
@@ -394,7 +394,7 @@ struct FormTextField: View {
     @Binding var text: String
     let placeholder: String
     let isRequired: Bool
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             TextField(placeholder, text: $text)
@@ -414,14 +414,14 @@ struct WeddingStyleCard: View {
     let style: WeddingStyle
     let isSelected: Bool
     let onSelect: () -> Void
-    
+
     var body: some View {
         Button(action: onSelect) {
             VStack(spacing: Spacing.sm) {
                 Image(systemName: style.icon)
                     .font(.system(size: 32))
                     .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
-                
+
                 Text(style.displayName)
                     .font(Typography.bodySmall)
                     .foregroundColor(isSelected ? AppColors.primary : AppColors.textPrimary)
@@ -465,14 +465,14 @@ struct WeddingEventCard: View {
     @Binding var event: OnboardingWeddingEvent
     let weddingDate: Date?
     @State private var showDatePicker = false
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
                 TextField("Event Name", text: $event.eventName)
                     .font(Typography.bodyLarge)
                     .fontWeight(.semibold)
-                
+
                 if event.isMainEvent {
                     Text("Main Event")
                         .font(Typography.caption)
@@ -483,14 +483,14 @@ struct WeddingEventCard: View {
                         .cornerRadius(4)
                 }
             }
-            
+
             TextField("Venue Location (Optional)", text: $event.venueLocation)
                 .font(Typography.bodyRegular)
                 .textFieldStyle(.plain)
                 .padding(Spacing.sm)
                 .background(AppColors.background)
                 .cornerRadius(4)
-            
+
             HStack(spacing: Spacing.md) {
                 Button(action: { showDatePicker.toggle() }) {
                     HStack {
@@ -501,7 +501,7 @@ struct WeddingEventCard: View {
                     .foregroundColor(event.eventDate == nil ? AppColors.textSecondary : AppColors.textPrimary)
                 }
                 .buttonStyle(.plain)
-                
+
                 TextField("Time (e.g., 3:00 PM)", text: $event.eventTime)
                     .font(Typography.bodySmall)
                     .textFieldStyle(.plain)
@@ -509,7 +509,7 @@ struct WeddingEventCard: View {
                     .background(AppColors.background)
                     .cornerRadius(4)
             }
-            
+
             if showDatePicker {
                 DatePicker(
                     "Event Date",
@@ -531,7 +531,7 @@ struct WeddingEventCard: View {
         .background(AppColors.cardBackground)
         .cornerRadius(8)
     }
-    
+
     private func formatDate(_ date: Date) -> String {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium

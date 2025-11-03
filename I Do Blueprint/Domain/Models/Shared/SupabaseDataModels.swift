@@ -567,22 +567,22 @@ struct GuestDTO: Codable {
         guard let guestId = UUID(uuidString: id) else {
             throw ConversionError.invalidUUID(id)
         }
-        
+
         guard let coupleId = UUID(uuidString: couple_id) else {
             throw ConversionError.invalidUUID(couple_id)
         }
-        
+
         // Parse dates
         let formatter = ISO8601DateFormatter()
         let createdDate = formatter.date(from: created_at) ?? Date()
         let updatedDate = formatter.date(from: updated_at) ?? Date()
-        
+
         // Parse RSVP status
         let rsvpStatus = RSVPStatus(rawValue: rsvp_status) ?? .pending
-        
+
         // Parse table assignment
         let tableNumber: Int? = table_assignment.flatMap { Int($0) }
-        
+
         // Create Guest instance with all required fields
         return Guest(
             id: guestId,
@@ -626,7 +626,7 @@ struct GuestDTO: Codable {
             makeupDone: false
         )
     }
-    
+
     /// Converts GuestDTO to Guest model, returning nil on failure
     /// - Returns: Guest model instance or nil if conversion fails
     func toGuestOrNil() -> Guest? {

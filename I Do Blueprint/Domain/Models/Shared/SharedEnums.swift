@@ -79,7 +79,7 @@ enum StyleCategory: String, CaseIterable, Codable, Hashable {
     var iconName: String {
         icon
     }
-    
+
     /// Suggested color palette for this wedding style
     var suggestedColors: [Color] {
         switch self {

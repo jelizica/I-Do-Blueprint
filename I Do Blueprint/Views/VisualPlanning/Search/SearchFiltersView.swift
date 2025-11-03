@@ -11,30 +11,30 @@ struct SearchFiltersView: View {
     @Binding var filters: SearchFilters
     let onApply: () -> Void
     let onDismiss: () -> Void
-    
+
     @State private var localFilters: SearchFilters
     @State private var selectedDateRangeOption: DateRangeOption = .allTime
     @State private var customStartDate = Date()
     @State private var customEndDate = Date()
     @State private var showingColorPicker = false
     @State private var newColorToAdd: Color = .blue
-    
+
     private let logger = AppLogger.ui
-    
+
     init(filters: Binding<SearchFilters>, onApply: @escaping () -> Void, onDismiss: @escaping () -> Void) {
         self._filters = filters
         self.onApply = onApply
         self.onDismiss = onDismiss
         self._localFilters = State(initialValue: filters.wrappedValue)
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
             headerSection
-            
+
             Divider()
-            
+
             // Filters
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.xl) {
@@ -46,9 +46,9 @@ struct SearchFiltersView: View {
                 }
                 .padding()
             }
-            
+
             Divider()
-            
+
             // Footer
             footerSection
         }
@@ -57,17 +57,17 @@ struct SearchFiltersView: View {
             initializeDateRange()
         }
     }
-    
+
     // MARK: - Header
-    
+
     private var headerSection: some View {
         HStack {
             Text("Search Filters")
                 .font(Typography.heading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Spacer()
-            
+
             Button(action: onDismiss) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(AppColors.textSecondary)
@@ -78,15 +78,15 @@ struct SearchFiltersView: View {
         }
         .padding()
     }
-    
+
     // MARK: - Type Filters
-    
+
     private var typeFiltersSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Content Types")
                 .font(Typography.subheading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 ForEach(VisualPlanningType.allCases, id: \.self) { type in
                     Toggle(isOn: Binding(
@@ -103,7 +103,7 @@ struct SearchFiltersView: View {
                             Image(systemName: type.icon)
                                 .foregroundColor(AppColors.primary)
                                 .frame(width: 20)
-                            
+
                             Text(type.rawValue)
                                 .font(Typography.bodyRegular)
                                 .foregroundColor(AppColors.textPrimary)
@@ -119,15 +119,15 @@ struct SearchFiltersView: View {
                 .fill(Color(NSColor.controlBackgroundColor))
         )
     }
-    
+
     // MARK: - Date Range
-    
+
     private var dateRangeSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Date Range")
                 .font(Typography.subheading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Picker("Date Range", selection: $selectedDateRangeOption) {
                 ForEach(DateRangeOption.allCases, id: \.self) { option in
                     Text(option.displayName).tag(option)
@@ -137,7 +137,7 @@ struct SearchFiltersView: View {
             .onChange(of: selectedDateRangeOption) { _, newValue in
                 updateDateRange(for: newValue)
             }
-            
+
             if selectedDateRangeOption == .custom {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
                     HStack {
@@ -145,17 +145,17 @@ struct SearchFiltersView: View {
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                             .frame(width: 50, alignment: .leading)
-                        
+
                         DatePicker("", selection: $customStartDate, displayedComponents: .date)
                             .labelsHidden()
                     }
-                    
+
                     HStack {
                         Text("To:")
                             .font(Typography.caption)
                             .foregroundColor(AppColors.textSecondary)
                             .frame(width: 50, alignment: .leading)
-                        
+
                         DatePicker("", selection: $customEndDate, displayedComponents: .date)
                             .labelsHidden()
                     }
@@ -169,15 +169,15 @@ struct SearchFiltersView: View {
                 .fill(Color(NSColor.controlBackgroundColor))
         )
     }
-    
+
     // MARK: - Style Filters
-    
+
     private var styleFiltersSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Wedding Seasons")
                 .font(Typography.subheading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.sm) {
                 ForEach(WeddingSeason.allCases, id: \.self) { season in
                     Toggle(isOn: Binding(
@@ -207,18 +207,18 @@ struct SearchFiltersView: View {
                 .fill(Color(NSColor.controlBackgroundColor))
         )
     }
-    
+
     // MARK: - Color Filters
-    
+
     private var colorFiltersSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
                 Text("Colors")
                     .font(Typography.subheading)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
-                
+
                 Button(action: { showingColorPicker = true }) {
                     HStack(spacing: 4) {
                         Image(systemName: "plus.circle.fill")
@@ -229,7 +229,7 @@ struct SearchFiltersView: View {
                 }
                 .buttonStyle(.plain)
             }
-            
+
             if localFilters.colors.isEmpty {
                 Text("No color filters applied")
                     .font(Typography.caption)
@@ -247,7 +247,7 @@ struct SearchFiltersView: View {
                                     Circle()
                                         .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
                                 )
-                            
+
                             Button(action: {
                                 localFilters.colors.remove(at: index)
                             }) {
@@ -281,15 +281,15 @@ struct SearchFiltersView: View {
             }
         }
     }
-    
+
     // MARK: - Additional Options
-    
+
     private var additionalOptionsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Additional Options")
                 .font(Typography.subheading)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Toggle(isOn: $localFilters.favoritesOnly) {
                     HStack(spacing: Spacing.sm) {
@@ -301,7 +301,7 @@ struct SearchFiltersView: View {
                     }
                 }
                 .toggleStyle(.checkbox)
-                
+
                 Toggle(isOn: $localFilters.showTemplatesOnly) {
                     HStack(spacing: Spacing.sm) {
                         Image(systemName: "doc.on.doc")
@@ -312,7 +312,7 @@ struct SearchFiltersView: View {
                     }
                 }
                 .toggleStyle(.checkbox)
-                
+
                 Toggle(isOn: $localFilters.finalizedOnly) {
                     HStack(spacing: Spacing.sm) {
                         Image(systemName: "checkmark.seal.fill")
@@ -331,9 +331,9 @@ struct SearchFiltersView: View {
                 .fill(Color(NSColor.controlBackgroundColor))
         )
     }
-    
+
     // MARK: - Footer
-    
+
     private var footerSection: some View {
         HStack(spacing: Spacing.md) {
             Button("Reset All") {
@@ -341,20 +341,20 @@ struct SearchFiltersView: View {
             }
             .buttonStyle(.bordered)
             .disabled(!hasActiveFilters)
-            
+
             Spacer()
-            
+
             Text("\(activeFilterCount) active filter\(activeFilterCount == 1 ? "" : "s")")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             Spacer()
-            
+
             Button("Cancel") {
                 onDismiss()
             }
             .buttonStyle(.bordered)
-            
+
             Button("Apply Filters") {
                 applyFilters()
             }
@@ -363,9 +363,9 @@ struct SearchFiltersView: View {
         }
         .padding()
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func initializeDateRange() {
         if let dateRange = localFilters.dateRange {
             customStartDate = dateRange.lowerBound
@@ -373,10 +373,10 @@ struct SearchFiltersView: View {
             selectedDateRangeOption = .custom
         }
     }
-    
+
     private func updateDateRange(for option: DateRangeOption) {
         let now = Date()
-        
+
         switch option {
         case .allTime:
             localFilters.dateRange = nil
@@ -390,24 +390,24 @@ struct SearchFiltersView: View {
             localFilters.dateRange = customStartDate ... customEndDate
         }
     }
-    
+
     private func resetFilters() {
         localFilters = SearchFilters(tenantId: localFilters.tenantId)
         selectedDateRangeOption = .allTime
         logger.info("Reset all search filters")
     }
-    
+
     private func applyFilters() {
         // Update custom date range if selected
         if selectedDateRangeOption == .custom {
             localFilters.dateRange = customStartDate ... customEndDate
         }
-        
+
         filters = localFilters
         logger.info("Applied search filters: \(activeFilterCount) active")
         onApply()
     }
-    
+
     private var hasActiveFilters: Bool {
         !localFilters.styleCategories.isEmpty ||
         !localFilters.seasons.isEmpty ||
@@ -417,7 +417,7 @@ struct SearchFiltersView: View {
         localFilters.finalizedOnly ||
         localFilters.dateRange != nil
     }
-    
+
     private var activeFilterCount: Int {
         var count = 0
         count += localFilters.styleCategories.count
@@ -429,7 +429,7 @@ struct SearchFiltersView: View {
         if localFilters.dateRange != nil { count += 1 }
         return count
     }
-    
+
     private func seasonIcon(for season: WeddingSeason) -> String {
         switch season {
         case .spring: return "leaf"
@@ -447,7 +447,7 @@ enum VisualPlanningType: String, CaseIterable {
     case colorPalettes = "Color Palettes"
     case seatingCharts = "Seating Charts"
     case stylePreferences = "Style Preferences"
-    
+
     var icon: String {
         switch self {
         case .moodBoards: return "photo.on.rectangle.angled"
@@ -456,7 +456,7 @@ enum VisualPlanningType: String, CaseIterable {
         case .stylePreferences: return "star.square"
         }
     }
-    
+
     var styleCategory: StyleCategory {
         // Map to existing StyleCategory - using a default for now
         // This would need to be adjusted based on actual StyleCategory enum
@@ -470,7 +470,7 @@ enum DateRangeOption: String, CaseIterable {
     case lastMonth = "Last Month"
     case lastYear = "Last Year"
     case custom = "Custom"
-    
+
     var displayName: String {
         rawValue
     }
@@ -482,22 +482,22 @@ struct SearchColorPickerSheet: View {
     @Binding var selectedColor: Color
     let onAdd: () -> Void
     let onCancel: () -> Void
-    
+
     var body: some View {
         VStack(spacing: Spacing.lg) {
             Text("Add Color Filter")
                 .font(Typography.heading)
-            
+
             ColorPicker("Select Color", selection: $selectedColor, supportsOpacity: false)
                 .labelsHidden()
                 .frame(width: 200, height: 200)
-            
+
             HStack(spacing: Spacing.md) {
                 Button("Cancel") {
                     onCancel()
                 }
                 .buttonStyle(.bordered)
-                
+
                 Button("Add Color") {
                     onAdd()
                 }

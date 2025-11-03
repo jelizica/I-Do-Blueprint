@@ -52,9 +52,9 @@ import Foundation
 /// try await repository.updateGuest(updated)
 /// ```
 protocol GuestRepositoryProtocol: Sendable {
-    
+
     // MARK: - Fetch Operations
-    
+
     /// Fetches all guests for the current couple
     ///
     /// Returns guests sorted by creation date (newest first).
@@ -63,8 +63,8 @@ protocol GuestRepositoryProtocol: Sendable {
     /// - Returns: Array of guest records
     /// - Throws: Repository errors if fetch fails or tenant context is missing
     func fetchGuests() async throws -> [Guest]
-    
-        
+
+
     /// Fetches guest statistics for the current couple
     ///
     /// Calculates aggregate statistics including:
@@ -77,9 +77,9 @@ protocol GuestRepositoryProtocol: Sendable {
     /// - Returns: Guest statistics object
     /// - Throws: Repository errors if fetch fails
     func fetchGuestStats() async throws -> GuestStats
-    
+
     // MARK: - Create, Update, Delete Operations
-    
+
     /// Creates a new guest record
     ///
     /// The guest will be automatically associated with the current couple's tenant ID.
@@ -89,7 +89,7 @@ protocol GuestRepositoryProtocol: Sendable {
     /// - Returns: The created guest with server-assigned ID and timestamps
     /// - Throws: Repository errors if creation fails, validation errors, or duplicate email
     func createGuest(_ guest: Guest) async throws -> Guest
-    
+
     /// Updates an existing guest record
     ///
     /// Updates the guest and sets the `updatedAt` timestamp.
@@ -99,7 +99,7 @@ protocol GuestRepositoryProtocol: Sendable {
     /// - Returns: The updated guest with new timestamp
     /// - Throws: Repository errors if update fails, guest not found, or unauthorized
     func updateGuest(_ guest: Guest) async throws -> Guest
-    
+
     /// Deletes a guest record
     ///
     /// Permanently removes the guest from the database.
@@ -108,9 +108,9 @@ protocol GuestRepositoryProtocol: Sendable {
     /// - Parameter id: The UUID of the guest to delete
     /// - Throws: Repository errors if deletion fails, guest not found, or unauthorized
     func deleteGuest(id: UUID) async throws
-    
+
     // MARK: - Search Operations
-    
+
     /// Searches guests by query string
     ///
     /// Searches across multiple fields:
@@ -124,9 +124,9 @@ protocol GuestRepositoryProtocol: Sendable {
     /// - Returns: Array of matching guests
     /// - Throws: Repository errors if search fails
     func searchGuests(query: String) async throws -> [Guest]
-    
+
     // MARK: - Batch Import Operations
-    
+
     /// Imports multiple guests in a single batch operation
     ///
     /// Performs a batch insert of guest records with proper error handling.

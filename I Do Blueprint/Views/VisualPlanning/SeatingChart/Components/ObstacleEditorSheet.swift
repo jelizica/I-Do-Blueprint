@@ -11,7 +11,7 @@ struct ObstacleEditorSheet: View {
     @Binding var obstacle: VenueObstacle
     let onSave: (VenueObstacle) -> Void
     let onDismiss: () -> Void
-    
+
     @State private var name: String
     @State private var obstacleType: ObstacleType
     @State private var positionX: String
@@ -21,7 +21,7 @@ struct ObstacleEditorSheet: View {
     @State private var isMovable: Bool
     @State private var showValidationError = false
     @State private var validationMessage = ""
-    
+
     init(
         obstacle: Binding<VenueObstacle>,
         onSave: @escaping (VenueObstacle) -> Void,
@@ -30,7 +30,7 @@ struct ObstacleEditorSheet: View {
         _obstacle = obstacle
         self.onSave = onSave
         self.onDismiss = onDismiss
-        
+
         // Initialize state from obstacle
         _name = State(initialValue: obstacle.wrappedValue.name)
         _obstacleType = State(initialValue: obstacle.wrappedValue.obstacleType)
@@ -40,7 +40,7 @@ struct ObstacleEditorSheet: View {
         _height = State(initialValue: String(format: "%.0f", obstacle.wrappedValue.size.height))
         _isMovable = State(initialValue: obstacle.wrappedValue.isMovable)
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -50,14 +50,14 @@ struct ObstacleEditorSheet: View {
                         .font(Typography.title2)
                         .foregroundColor(AppColors.textPrimary)
                         .accessibleHeading(level: 1)
-                    
+
                     Text("Configure obstacle properties")
                         .font(Typography.bodySmall)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
+
                 Spacer()
-                
+
                 HStack(spacing: Spacing.md) {
                     Button("Cancel") {
                         onDismiss()
@@ -67,7 +67,7 @@ struct ObstacleEditorSheet: View {
                         label: "Cancel editing",
                         hint: "Discards changes and closes the editor"
                     )
-                    
+
                     Button("Save") {
                         saveChanges()
                     }
@@ -80,9 +80,9 @@ struct ObstacleEditorSheet: View {
                 }
             }
             .padding(Spacing.lg)
-            
+
             Divider()
-            
+
             HStack(spacing: Spacing.lg) {
                 // Left: Properties Form
                 VStack(alignment: .leading, spacing: 0) {
@@ -94,9 +94,9 @@ struct ObstacleEditorSheet: View {
                                     .font(Typography.heading)
                                     .foregroundColor(AppColors.textPrimary)
                                     .accessibleHeading(level: 2)
-                                
+
                                 Divider()
-                                
+
                                 VStack(alignment: .leading, spacing: Spacing.lg) {
                                     // Name
                                     VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -105,7 +105,7 @@ struct ObstacleEditorSheet: View {
                                             .fontWeight(.semibold)
                                             .foregroundColor(AppColors.textSecondary)
                                             .textCase(.uppercase)
-                                        
+
                                         TextField("Element name", text: $name)
                                             .textFieldStyle(.roundedBorder)
                                             .accessibleFormField(
@@ -114,9 +114,9 @@ struct ObstacleEditorSheet: View {
                                                 isRequired: true
                                             )
                                     }
-                                    
+
                                     Divider()
-                                    
+
                                     // Type
                                     VStack(alignment: .leading, spacing: Spacing.xs) {
                                         Text("Type")
@@ -124,7 +124,7 @@ struct ObstacleEditorSheet: View {
                                             .fontWeight(.semibold)
                                             .foregroundColor(AppColors.textSecondary)
                                             .textCase(.uppercase)
-                                        
+
                                         Picker("Type", selection: $obstacleType) {
                                             ForEach(ObstacleType.allCases, id: \.self) { type in
                                                 HStack {
@@ -144,9 +144,9 @@ struct ObstacleEditorSheet: View {
                                             isMovable = newType != .wall && newType != .column
                                         }
                                     }
-                                    
+
                                     Divider()
-                                    
+
                                     // Position
                                     VStack(alignment: .leading, spacing: Spacing.xs) {
                                         Text("Position")
@@ -154,7 +154,7 @@ struct ObstacleEditorSheet: View {
                                             .fontWeight(.semibold)
                                             .foregroundColor(AppColors.textSecondary)
                                             .textCase(.uppercase)
-                                        
+
                                         HStack(spacing: Spacing.md) {
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("X")
@@ -168,7 +168,7 @@ struct ObstacleEditorSheet: View {
                                                         hint: "Horizontal position in pixels"
                                                     )
                                             }
-                                            
+
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("Y")
                                                     .font(Typography.caption)
@@ -183,9 +183,9 @@ struct ObstacleEditorSheet: View {
                                             }
                                         }
                                     }
-                                    
+
                                     Divider()
-                                    
+
                                     // Size
                                     VStack(alignment: .leading, spacing: Spacing.xs) {
                                         Text("Size")
@@ -193,7 +193,7 @@ struct ObstacleEditorSheet: View {
                                             .fontWeight(.semibold)
                                             .foregroundColor(AppColors.textSecondary)
                                             .textCase(.uppercase)
-                                        
+
                                         HStack(spacing: Spacing.md) {
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("Width")
@@ -208,7 +208,7 @@ struct ObstacleEditorSheet: View {
                                                         isRequired: true
                                                     )
                                             }
-                                            
+
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("Height")
                                                     .font(Typography.caption)
@@ -224,9 +224,9 @@ struct ObstacleEditorSheet: View {
                                             }
                                         }
                                     }
-                                    
+
                                     Divider()
-                                    
+
                                     // Movable Toggle
                                     Toggle(isOn: $isMovable) {
                                         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -241,8 +241,8 @@ struct ObstacleEditorSheet: View {
                                     .disabled(obstacleType == .wall || obstacleType == .column)
                                     .accessibleFormField(
                                         label: "Movable toggle",
-                                        hint: obstacleType == .wall || obstacleType == .column 
-                                            ? "Walls and columns cannot be moved" 
+                                        hint: obstacleType == .wall || obstacleType == .column
+                                            ? "Walls and columns cannot be moved"
                                             : "Toggle whether this element can be repositioned"
                                     )
                                 }
@@ -267,9 +267,9 @@ struct ObstacleEditorSheet: View {
                     }
                 }
                 .frame(width: 320)
-                
+
                 Divider()
-                
+
                 // Right: Preview
                 VStack(alignment: .leading, spacing: Spacing.lg) {
                     Text("Preview")
@@ -278,7 +278,7 @@ struct ObstacleEditorSheet: View {
                         .padding(.horizontal, Spacing.lg)
                         .padding(.top, Spacing.lg)
                         .accessibleHeading(level: 2)
-                    
+
                     ZStack {
                         // Canvas background
                         RoundedRectangle(cornerRadius: CornerRadius.md)
@@ -287,13 +287,13 @@ struct ObstacleEditorSheet: View {
                                 RoundedRectangle(cornerRadius: CornerRadius.md)
                                     .stroke(AppColors.border, lineWidth: 1)
                             )
-                        
+
                         // Preview obstacle
                         if let previewWidth = Double(width),
                            let previewHeight = Double(height),
                            previewWidth > 0,
                            previewHeight > 0 {
-                            
+
                             VStack(spacing: Spacing.sm) {
                                 // Obstacle shape
                                 RoundedRectangle(cornerRadius: CornerRadius.sm)
@@ -311,14 +311,14 @@ struct ObstacleEditorSheet: View {
                                             Image(systemName: obstacleType.icon)
                                                 .font(.system(size: 24))
                                                 .foregroundColor(obstacleType.defaultColor)
-                                            
+
                                             Text(name.isEmpty ? "Unnamed" : name)
                                                 .font(Typography.caption)
                                                 .foregroundColor(AppColors.textPrimary)
                                                 .lineLimit(1)
                                         }
                                     )
-                                
+
                                 // Dimensions label
                                 Text("\(Int(previewWidth)) × \(Int(previewHeight)) px")
                                     .font(Typography.caption)
@@ -329,7 +329,7 @@ struct ObstacleEditorSheet: View {
                                 Image(systemName: "exclamationmark.triangle")
                                     .font(.system(size: 40))
                                     .foregroundColor(AppColors.textSecondary)
-                                
+
                                 Text("Invalid dimensions")
                                     .font(Typography.bodySmall)
                                     .foregroundColor(AppColors.textSecondary)
@@ -341,7 +341,7 @@ struct ObstacleEditorSheet: View {
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("Obstacle preview")
                     .accessibilityValue("Shows how the \(obstacleType.displayName) will appear on the seating chart")
-                    
+
                     // Validation Error
                     if showValidationError {
                         HStack(spacing: Spacing.sm) {
@@ -367,9 +367,9 @@ struct ObstacleEditorSheet: View {
         }
         .frame(minWidth: 800, minHeight: 600)
     }
-    
+
     // MARK: - Validation
-    
+
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty &&
         Double(width) ?? 0 > 0 &&
@@ -377,47 +377,47 @@ struct ObstacleEditorSheet: View {
         Double(positionX) != nil &&
         Double(positionY) != nil
     }
-    
+
     private func validate() -> Bool {
         if name.trimmingCharacters(in: .whitespaces).isEmpty {
             validationMessage = "Name is required"
             showValidationError = true
             return false
         }
-        
+
         guard let widthValue = Double(width), widthValue > 0 else {
             validationMessage = "Width must be greater than zero"
             showValidationError = true
             return false
         }
-        
+
         guard let heightValue = Double(height), heightValue > 0 else {
             validationMessage = "Height must be greater than zero"
             showValidationError = true
             return false
         }
-        
+
         guard Double(positionX) != nil else {
             validationMessage = "Invalid X position"
             showValidationError = true
             return false
         }
-        
+
         guard Double(positionY) != nil else {
             validationMessage = "Invalid Y position"
             showValidationError = true
             return false
         }
-        
+
         showValidationError = false
         return true
     }
-    
+
     // MARK: - Actions
-    
+
     private func saveChanges() {
         guard validate() else { return }
-        
+
         var updatedObstacle = obstacle
         updatedObstacle.name = name.trimmingCharacters(in: .whitespaces)
         updatedObstacle.obstacleType = obstacleType
@@ -430,7 +430,7 @@ struct ObstacleEditorSheet: View {
             height: Double(height) ?? 0
         )
         updatedObstacle.isMovable = isMovable
-        
+
         onSave(updatedObstacle)
     }
 }
@@ -444,7 +444,7 @@ struct ObstacleEditorSheet: View {
         size: CGSize(width: 200, height: 80),
         type: .bar
     )
-    
+
     return ObstacleEditorSheet(
         obstacle: $obstacle,
         onSave: { _ in },

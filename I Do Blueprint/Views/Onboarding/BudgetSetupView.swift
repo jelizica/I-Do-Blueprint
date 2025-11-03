@@ -10,13 +10,13 @@ import SwiftUI
 struct BudgetSetupView: View {
     @State private var totalBudget: String = ""
     @State private var selectedCategories: Set<String> = []
-    
+
     private let defaultCategories = [
         "Venue", "Catering", "Photography", "Videography",
         "Florist", "Music/DJ", "Attire", "Invitations",
         "Decorations", "Transportation", "Favors", "Other"
     ]
-    
+
     var body: some View {
         ScrollView {
             VStack(spacing: Spacing.xl) {
@@ -24,7 +24,7 @@ struct BudgetSetupView: View {
                 budgetInputSection
                 categoriesSection
                 noteSection
-                
+
                 Spacer()
             }
             .padding(.horizontal, Spacing.xl)
@@ -32,19 +32,19 @@ struct BudgetSetupView: View {
         }
         .background(AppColors.background)
     }
-    
+
     // MARK: - View Sections
-    
+
     private var headerSection: some View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: "dollarsign.circle.fill")
                 .font(.system(size: 60))
                 .foregroundColor(AppColors.primary)
-            
+
             Text("Budget Setup")
                 .font(Typography.title1)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Set up your wedding budget and select categories to track")
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textSecondary)
@@ -52,19 +52,19 @@ struct BudgetSetupView: View {
         }
         .padding(.top, Spacing.xl)
     }
-    
+
     private var budgetInputSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Total Budget (Optional)")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             HStack {
                 Text("$")
                     .font(Typography.bodyLarge)
                     .foregroundColor(AppColors.textSecondary)
-                
+
                 TextField("Enter total budget", text: $totalBudget)
                     .textFieldStyle(.plain)
                     .font(Typography.bodyRegular)
@@ -72,24 +72,24 @@ struct BudgetSetupView: View {
             .padding(Spacing.md)
             .background(AppColors.cardBackground)
             .cornerRadius(8)
-            
+
             Text("You can set this later or adjust it anytime")
                 .font(Typography.caption)
                 .foregroundColor(AppColors.textSecondary)
         }
     }
-    
+
     private var categoriesSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Budget Categories")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
                 .foregroundColor(AppColors.textPrimary)
-            
+
             Text("Select categories you want to track")
                 .font(Typography.bodySmall)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.md) {
                 ForEach(defaultCategories, id: \.self) { category in
                     CategoryToggle(
@@ -107,7 +107,7 @@ struct BudgetSetupView: View {
             }
         }
     }
-    
+
     private var noteSection: some View {
         Text("Note: Full budget wizard with category allocations and detailed setup will be available in the main budget section after onboarding.")
             .font(Typography.bodySmall)
@@ -125,17 +125,17 @@ struct CategoryToggle: View {
     let category: String
     let isSelected: Bool
     let onToggle: () -> Void
-    
+
     var body: some View {
         Button(action: onToggle) {
             HStack {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
-                
+
                 Text(category)
                     .font(Typography.bodySmall)
                     .foregroundColor(AppColors.textPrimary)
-                
+
                 Spacer()
             }
             .padding(Spacing.md)

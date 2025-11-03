@@ -135,7 +135,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         expenses.removeAll(where: { $0.id == id })
     }
-    
+
     func fetchExpensesByVendor(vendorId: Int64) async throws -> [Expense] {
         if shouldThrowError { throw errorToThrow }
         return expenses.filter { $0.vendorId == vendorId }
@@ -159,7 +159,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         paymentSchedules.removeAll(where: { $0.id == id })
     }
-    
+
     func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
         if shouldThrowError { throw errorToThrow }
         return paymentSchedules.filter { $0.vendorId == vendorId }
@@ -286,33 +286,33 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         return gift
     }
-    
+
     func createGiftOrOwed(_ gift: GiftOrOwed) async throws -> GiftOrOwed {
         if shouldThrowError { throw errorToThrow }
         giftsAndOwed.append(gift)
         return gift
     }
-    
+
     func deleteGiftOrOwed(id: UUID) async throws {
         if shouldThrowError { throw errorToThrow }
         giftsAndOwed.removeAll(where: { $0.id == id })
     }
-    
+
     // MARK: - Gift Received Operations
-    
+
     var giftsReceived: [GiftReceived] = []
-    
+
     func fetchGiftsReceived() async throws -> [GiftReceived] {
         if shouldThrowError { throw errorToThrow }
         return giftsReceived
     }
-    
+
     func createGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
         if shouldThrowError { throw errorToThrow }
         giftsReceived.append(gift)
         return gift
     }
-    
+
     func updateGiftReceived(_ gift: GiftReceived) async throws -> GiftReceived {
         if shouldThrowError { throw errorToThrow }
         if let index = giftsReceived.firstIndex(where: { $0.id == gift.id }) {
@@ -320,27 +320,27 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         }
         return gift
     }
-    
+
     func deleteGiftReceived(id: UUID) async throws {
         if shouldThrowError { throw errorToThrow }
         giftsReceived.removeAll(where: { $0.id == id })
     }
-    
+
     // MARK: - Money Owed Operations
-    
+
     var moneyOwed: [MoneyOwed] = []
-    
+
     func fetchMoneyOwed() async throws -> [MoneyOwed] {
         if shouldThrowError { throw errorToThrow }
         return moneyOwed
     }
-    
+
     func createMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
         if shouldThrowError { throw errorToThrow }
         moneyOwed.append(money)
         return money
     }
-    
+
     func updateMoneyOwed(_ money: MoneyOwed) async throws -> MoneyOwed {
         if shouldThrowError { throw errorToThrow }
         if let index = moneyOwed.firstIndex(where: { $0.id == money.id }) {
@@ -348,21 +348,21 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         }
         return money
     }
-    
+
     func deleteMoneyOwed(id: UUID) async throws {
         if shouldThrowError { throw errorToThrow }
         moneyOwed.removeAll(where: { $0.id == id })
     }
-    
+
     // MARK: - Expense Allocations
-    
+
     var expenseAllocations: [ExpenseAllocation] = []
-    
+
     func fetchExpenseAllocations(scenarioId: String, budgetItemId: String) async throws -> [ExpenseAllocation] {
         if shouldThrowError { throw errorToThrow }
         return expenseAllocations.filter { $0.scenarioId == scenarioId && $0.budgetItemId == budgetItemId }
     }
-    
+
     func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation {
         if shouldThrowError { throw errorToThrow }
         expenseAllocations.append(allocation)
@@ -384,13 +384,13 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         expenseAllocations.removeAll { $0.expenseId == expenseId.uuidString && $0.scenarioId == scenarioId }
         expenseAllocations.append(contentsOf: newAllocations)
     }
-    
+
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
         if shouldThrowError { throw errorToThrow }
     }
-    
+
     var primaryBudgetScenario: BudgetDevelopmentScenario?
-    
+
     func fetchPrimaryBudgetScenario() async throws -> BudgetDevelopmentScenario? {
         if shouldThrowError { throw errorToThrow }
         return primaryBudgetScenario
@@ -910,7 +910,7 @@ class MockVendorRepository: VendorRepositoryProtocol {
             vendor: vendors.first(where: { $0.id == id })!
         )
     }
-    
+
     func fetchVendorTypes() async throws -> [VendorType] {
         if shouldThrowError { throw errorToThrow }
         return vendorTypes
@@ -1048,17 +1048,17 @@ class MockCollaborationRepository: CollaborationRepositoryProtocol {
     var permissions: [String: Bool] = [:]
     var shouldThrowError = false
     var errorToThrow: CollaborationError = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
-    
+
     func fetchCollaborators() async throws -> [Collaborator] {
         if shouldThrowError { throw errorToThrow }
         return collaborators
     }
-    
+
     func fetchRoles() async throws -> [CollaborationRole] {
         if shouldThrowError { throw errorToThrow }
         return roles
     }
-    
+
     func fetchCollaborator(id: UUID) async throws -> Collaborator {
         if shouldThrowError { throw errorToThrow }
         guard let collaborator = collaborators.first(where: { $0.id == id }) else {
@@ -1066,19 +1066,19 @@ class MockCollaborationRepository: CollaborationRepositoryProtocol {
         }
         return collaborator
     }
-    
+
     func fetchCurrentUserCollaborator() async throws -> Collaborator? {
         if shouldThrowError { throw errorToThrow }
         return currentUserCollaborator
     }
-    
+
     func inviteCollaborator(email: String, roleId: UUID, displayName: String?) async throws -> Collaborator {
         if shouldThrowError { throw errorToThrow }
         let collaborator = Collaborator.makeTest(email: email, displayName: displayName, status: .pending)
         collaborators.append(collaborator)
         return collaborator
     }
-    
+
     func acceptInvitation(id: UUID) async throws -> Collaborator {
         if shouldThrowError { throw errorToThrow }
         guard let index = collaborators.firstIndex(where: { $0.id == id }) else {
@@ -1090,7 +1090,7 @@ class MockCollaborationRepository: CollaborationRepositoryProtocol {
         collaborators[index] = collaborator
         return collaborator
     }
-    
+
     func updateCollaboratorRole(id: UUID, roleId: UUID) async throws -> Collaborator {
         if shouldThrowError { throw errorToThrow }
         guard let index = collaborators.firstIndex(where: { $0.id == id }) else {
@@ -1101,27 +1101,27 @@ class MockCollaborationRepository: CollaborationRepositoryProtocol {
         collaborators[index] = collaborator
         return collaborator
     }
-    
+
     func removeCollaborator(id: UUID) async throws {
         if shouldThrowError { throw errorToThrow }
         collaborators.removeAll(where: { $0.id == id })
     }
-    
+
     func hasPermission(_ permission: String) async throws -> Bool {
         if shouldThrowError { throw errorToThrow }
         return permissions[permission] ?? false
     }
-    
+
     func getCurrentUserRole() async throws -> RoleName? {
         if shouldThrowError { throw errorToThrow }
         return currentUserRole
     }
-    
+
     func fetchInvitationByToken(_ token: String) async throws -> InvitationDetails {
         if shouldThrowError { throw errorToThrow }
         throw CollaborationError.invitationNotFound
     }
-    
+
     func createOwnerCollaborator(
         coupleId: UUID,
         userId: UUID,
@@ -1129,12 +1129,12 @@ class MockCollaborationRepository: CollaborationRepositoryProtocol {
         displayName: String?
     ) async throws -> Collaborator {
         if shouldThrowError { throw errorToThrow }
-        
+
         // Check if already exists (idempotency)
         if let existing = collaborators.first(where: { $0.coupleId == coupleId && $0.userId == userId }) {
             return existing
         }
-        
+
         // Create owner collaborator
         let ownerRole = roles.first(where: { $0.roleName == .owner })
         let collaborator = Collaborator.makeTest(
@@ -1158,12 +1158,12 @@ class MockPresenceRepository: PresenceRepositoryProtocol {
     var presenceRecords: [Presence] = []
     var shouldThrowError = false
     var errorToThrow: PresenceError = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
-    
+
     func fetchActivePresence() async throws -> [Presence] {
         if shouldThrowError { throw errorToThrow }
         return presenceRecords.filter { !$0.isStale }
     }
-    
+
     func trackPresence(
         status: PresenceStatus,
         currentView: String?,
@@ -1175,7 +1175,7 @@ class MockPresenceRepository: PresenceRepositoryProtocol {
         presenceRecords.append(presence)
         return presence
     }
-    
+
     func updateEditingState(
         isEditing: Bool,
         resourceType: String?,
@@ -1192,7 +1192,7 @@ class MockPresenceRepository: PresenceRepositoryProtocol {
         presenceRecords[index] = presence
         return presence
     }
-    
+
     func sendHeartbeat() async throws -> Presence {
         if shouldThrowError { throw errorToThrow }
         guard let index = presenceRecords.firstIndex(where: { !$0.isStale }) else {
@@ -1203,7 +1203,7 @@ class MockPresenceRepository: PresenceRepositoryProtocol {
         presenceRecords[index] = presence
         return presence
     }
-    
+
     func stopTracking() async throws {
         if shouldThrowError { throw errorToThrow }
         if let index = presenceRecords.firstIndex(where: { !$0.isStale }) {
@@ -1212,7 +1212,7 @@ class MockPresenceRepository: PresenceRepositoryProtocol {
             presenceRecords[index] = presence
         }
     }
-    
+
     func cleanupStalePresence() async throws {
         if shouldThrowError { throw errorToThrow }
         presenceRecords.removeAll(where: { $0.isStale })
@@ -1225,34 +1225,34 @@ class MockActivityFeedRepository: ActivityFeedRepositoryProtocol {
     var activities: [ActivityEvent] = []
     var shouldThrowError = false
     var errorToThrow: ActivityFeedError = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
-    
+
     func fetchActivities(limit: Int, offset: Int) async throws -> [ActivityEvent] {
         if shouldThrowError { throw errorToThrow }
         let start = min(offset, activities.count)
         let end = min(offset + limit, activities.count)
         return Array(activities[start..<end])
     }
-    
+
     func fetchActivities(actionType: ActionType, limit: Int) async throws -> [ActivityEvent] {
         if shouldThrowError { throw errorToThrow }
         return activities.filter { $0.actionType == actionType }.prefix(limit).map { $0 }
     }
-    
+
     func fetchActivities(resourceType: ResourceType, limit: Int) async throws -> [ActivityEvent] {
         if shouldThrowError { throw errorToThrow }
         return activities.filter { $0.resourceType == resourceType }.prefix(limit).map { $0 }
     }
-    
+
     func fetchActivities(actorId: UUID, limit: Int) async throws -> [ActivityEvent] {
         if shouldThrowError { throw errorToThrow }
         return activities.filter { $0.actorId == actorId }.prefix(limit).map { $0 }
     }
-    
+
     func fetchUnreadCount() async throws -> Int {
         if shouldThrowError { throw errorToThrow }
         return activities.filter { !$0.isRead }.count
     }
-    
+
     func markAsRead(id: UUID) async throws -> ActivityEvent {
         if shouldThrowError { throw errorToThrow }
         guard let index = activities.firstIndex(where: { $0.id == id }) else {
@@ -1263,7 +1263,7 @@ class MockActivityFeedRepository: ActivityFeedRepositoryProtocol {
         activities[index] = activity
         return activity
     }
-    
+
     func markAllAsRead() async throws -> Int {
         if shouldThrowError { throw errorToThrow }
         let unreadCount = activities.filter { !$0.isRead }.count
@@ -1272,20 +1272,20 @@ class MockActivityFeedRepository: ActivityFeedRepositoryProtocol {
         }
         return unreadCount
     }
-    
+
     func fetchActivityStats() async throws -> ActivityStats {
         if shouldThrowError { throw errorToThrow }
         var activitiesByAction: [ActionType: Int] = [:]
         var activitiesByResource: [ResourceType: Int] = [:]
-        
+
         for activity in activities {
             activitiesByAction[activity.actionType, default: 0] += 1
             activitiesByResource[activity.resourceType, default: 0] += 1
         }
-        
+
         let oneDayAgo = Date().addingTimeInterval(-86400)
         let recentCount = activities.filter { $0.createdAt > oneDayAgo }.count
-        
+
         return ActivityStats(
             totalActivities: activities.count,
             activitiesByAction: activitiesByAction,

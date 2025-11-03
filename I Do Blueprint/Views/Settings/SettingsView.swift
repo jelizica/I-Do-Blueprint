@@ -60,7 +60,7 @@ struct SettingsView: View {
     @State private var selectedSection: SettingsSection = .global
     @State private var showDeveloperSettings = false
     @State private var tapCount = 0
-    
+
     private var store: SettingsStoreV2 {
         appStores.settings
     }

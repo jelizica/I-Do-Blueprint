@@ -9,7 +9,7 @@ import SwiftUI
 
 struct GuestPreferencesTab: View {
     let guest: Guest
-    
+
     var body: some View {
         VStack(spacing: Spacing.xxxl) {
             if hasMealOrDietary {
@@ -19,11 +19,11 @@ struct GuestPreferencesTab: View {
                     Image(systemName: "heart.circle")
                         .font(.system(size: 48))
                         .foregroundColor(.secondary)
-                    
+
                     Text("No Preferences Set")
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    
+
                     Text("Add meal preferences and dietary restrictions for this guest.")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
@@ -34,7 +34,7 @@ struct GuestPreferencesTab: View {
             }
         }
     }
-    
+
     private var hasMealOrDietary: Bool {
         if let mealOption = guest.mealOption, !mealOption.isEmpty {
             return true

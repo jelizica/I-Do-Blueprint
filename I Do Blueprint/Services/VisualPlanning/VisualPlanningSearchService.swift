@@ -565,7 +565,7 @@ struct SavedSearch: Codable, Identifiable {
     let filters: SearchFilters
     let createdAt: Date
     let lastUsed: Date?
-    
+
     init(name: String, query: String, filters: SearchFilters, createdAt: Date, lastUsed: Date? = nil) {
         self.name = name
         self.query = query

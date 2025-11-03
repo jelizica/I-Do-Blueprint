@@ -35,21 +35,21 @@ enum RepositoryNetwork {
                 group.addTask {
                     try await operation()
                 }
-                
+
                 // Add timeout task
                 group.addTask {
                     try await Task.sleep(nanoseconds: UInt64(timeout * 1_000_000_000))
                     throw NetworkError.timeout
                 }
-                
+
                 // Return first result (either success or timeout)
                 guard let result = try await group.next() else {
                     throw NetworkError.timeout
                 }
-                
+
                 // Cancel remaining tasks
                 group.cancelAll()
-                
+
                 return result
             }
         }

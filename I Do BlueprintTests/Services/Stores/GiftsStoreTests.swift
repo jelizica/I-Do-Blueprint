@@ -18,7 +18,7 @@ final class GiftsStoreTests: XCTestCase {
     override func setUp() async throws {
         mockRepository = MockBudgetRepository()
         coupleId = UUID()
-        
+
         // Initialize store with mock repository
         store = await withDependencies {
             $0.budgetRepository = mockRepository

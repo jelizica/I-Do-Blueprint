@@ -11,12 +11,12 @@ struct ExpenseReportsView: View {
     @State private var searchText = ""
     @State private var isExporting = false
     @State private var exportError: Error?
-    
+
     private let itemsPerPage = 10
     private let exportService = BudgetExportService.shared
-    
+
     // MARK: - Computed Properties
-    
+
     private var transformedExpenses: [ExpenseItem] {
         budgetStore.expenses.map { expense in
             let category = budgetStore.categories.first { $0.id == expense.budgetCategoryId }
@@ -32,10 +32,10 @@ struct ExpenseReportsView: View {
                 notes: expense.notes)
         }
     }
-    
+
     private var filteredExpenses: [ExpenseItem] {
         var filtered = transformedExpenses
-        
+
         // Apply search filter
         if !searchText.isEmpty {
             filtered = filtered.filter { expense in
@@ -44,33 +44,33 @@ struct ExpenseReportsView: View {
                     expense.category.localizedCaseInsensitiveContains(searchText)
             }
         }
-        
+
         // Apply category filter
         if filters.category != "All" {
             filtered = filtered.filter { $0.category == filters.category }
         }
-        
+
         // Apply vendor filter
         if filters.vendor != "All" {
             filtered = filtered.filter { $0.vendor == filters.vendor }
         }
-        
+
         // Apply payment status filter
         if filters.paymentStatus != "All" {
             filtered = filtered.filter { $0.paymentStatus.rawValue == filters.paymentStatus.lowercased() }
         }
-        
+
         // Apply date range filter
         if filters.dateRange != .all {
             filtered = filtered.filter { expense in
                 filters.dateRange.contains(expense.date)
             }
         }
-        
+
         // Apply sorting
         filtered.sort { lhs, rhs in
             let ascending = sortConfig.direction == .asc
-            
+
             switch sortConfig.key {
             case .date:
                 return ascending ? lhs.date < rhs.date : lhs.date > rhs.date
@@ -84,34 +84,34 @@ struct ExpenseReportsView: View {
                 return ascending ? lhs.amount < rhs.amount : lhs.amount > rhs.amount
             }
         }
-        
+
         return filtered
     }
-    
+
     private var paginatedExpenses: [ExpenseItem] {
         let startIndex = (currentPage - 1) * itemsPerPage
         let endIndex = min(startIndex + itemsPerPage, filteredExpenses.count)
         return Array(filteredExpenses[startIndex ..< endIndex])
     }
-    
+
     private var totalPages: Int {
         max(1, Int(ceil(Double(filteredExpenses.count) / Double(itemsPerPage))))
     }
-    
+
     private var statistics: ExpenseStatistics {
         calculateStatistics()
     }
-    
+
     private var categoryOptions: [String] {
         let categories = Array(Set(transformedExpenses.map(\.category))).sorted()
         return ["All"] + categories
     }
-    
+
     private var vendorOptions: [String] {
         let vendors = Array(Set(transformedExpenses.map(\.vendor))).sorted()
         return ["All"] + vendors
     }
-    
+
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -120,29 +120,29 @@ struct ExpenseReportsView: View {
                     ExpenseReportsHeader(
                         onExport: { showingExportOptions = true },
                         onRefresh: { await budgetStore.refreshBudgetData() })
-                    
+
                     // Filters
                     ExpenseReportsFilters(
                         searchText: $searchText,
                         filters: $filters,
                         categoryOptions: categoryOptions,
                         vendorOptions: vendorOptions)
-                    
+
                     // Statistics Cards
                     ExpenseStatisticsCards(statistics: statistics)
-                    
+
                     // Tabs
                     TabView(selection: $selectedTab) {
                         ExpenseReportsOverviewTab(
                             selectedTab: $selectedTab,
                             statistics: statistics)
                             .tag(ReportTab.overview)
-                        
+
                         ExpenseReportsChartsTab(
                             selectedTab: $selectedTab,
                             statistics: statistics)
                             .tag(ReportTab.charts)
-                        
+
                         ExpenseReportsTableTab(
                             selectedTab: $selectedTab,
                             sortConfig: $sortConfig,
@@ -169,51 +169,51 @@ struct ExpenseReportsView: View {
                 }
         }
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func calculateStatistics() -> ExpenseStatistics {
         let totalExpenses = filteredExpenses.reduce(0) { $0 + $1.amount }
         let transactionCount = filteredExpenses.count
         let averageAmount = transactionCount > 0 ? totalExpenses / Double(transactionCount) : 0
-        
+
         // Category breakdown
         let categoryTotals = Dictionary(grouping: filteredExpenses, by: { $0.category })
             .mapValues { expenses in expenses.reduce(0) { $0 + $1.amount } }
-        
+
         let categoryData = categoryTotals.map { name, amount in
             let color = budgetStore.categories.first { $0.categoryName == name }?.color ?? "#3B82F6"
             return CategoryData(name: name, amount: amount, color: color)
         }.sorted { $0.amount > $1.amount }
-        
+
         let topCategory = categoryData.first ?? CategoryData(name: "None", amount: 0, color: "#3B82F6")
-        
+
         // Vendor breakdown
         let vendorTotals = Dictionary(grouping: filteredExpenses, by: { $0.vendor })
             .mapValues { expenses in expenses.reduce(0) { $0 + $1.amount } }
-        
+
         let vendorData = vendorTotals.map { name, amount in
             VendorData(name: name, amount: amount)
         }.sorted { $0.amount > $1.amount }
-        
+
         // Monthly data
         let monthlyTotals = Dictionary(grouping: filteredExpenses) { expense in
             Calendar.current.dateInterval(of: .month, for: expense.date)?.start ?? expense.date
         }.mapValues { expenses in
             expenses.reduce(0) { $0 + $1.amount }
         }
-        
+
         let monthlyData = monthlyTotals.map { date, amount in
             MonthlyData(month: date, amount: amount)
         }.sorted { $0.month < $1.month }
-        
+
         // Status counts
         let statusCounts = StatusCounts(
             paid: filteredExpenses.filter { $0.paymentStatus == .paid }.count,
             pending: filteredExpenses.filter { $0.paymentStatus == .pending }.count,
             overdue: filteredExpenses.filter { $0.paymentStatus == .overdue }.count,
             cancelled: filteredExpenses.filter { $0.paymentStatus == .cancelled }.count)
-        
+
         return ExpenseStatistics(
             totalExpenses: totalExpenses,
             transactionCount: transactionCount,
@@ -246,7 +246,7 @@ enum PaymentStatusOption: String, CaseIterable {
     case pending
     case overdue
     case cancelled
-    
+
     var displayName: String {
         switch self {
         case .all: "All"
@@ -270,7 +270,7 @@ enum DateRange: String, CaseIterable {
     case last30
     case last90
     case thisYear
-    
+
     var displayName: String {
         switch self {
         case .all: "All Time"
@@ -279,11 +279,11 @@ enum DateRange: String, CaseIterable {
         case .thisYear: "This Year"
         }
     }
-    
+
     func contains(_ date: Date) -> Bool {
         let calendar = Calendar.current
         let now = Date()
-        
+
         switch self {
         case .all:
             return true
@@ -316,7 +316,7 @@ enum ReportTab: String, CaseIterable {
     case overview
     case charts
     case table
-    
+
     var displayName: String {
         switch self {
         case .overview: "Overview"
@@ -358,7 +358,7 @@ struct StatusCounts {
     let pending: Int
     let overdue: Int
     let cancelled: Int
-    
+
     func count(for status: PaymentStatus) -> Int {
         switch status {
         case .paid: paid

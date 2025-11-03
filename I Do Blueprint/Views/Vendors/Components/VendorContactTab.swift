@@ -11,7 +11,7 @@ struct VendorContactTab: View {
     let vendor: Vendor
     @Binding var editedVendor: Vendor
     let isEditing: Bool
-    
+
     var body: some View {
         VStack(spacing: 16) {
             if let phone = vendor.phoneNumber {
@@ -21,7 +21,7 @@ struct VendorContactTab: View {
                     value: phone,
                     action: { URL(string: "tel:\(phone)") })
             }
-            
+
             if let email = vendor.email {
                 ContactRow(
                     icon: "envelope.fill",
@@ -29,7 +29,7 @@ struct VendorContactTab: View {
                     value: email,
                     action: { URL(string: "mailto:\(email)") })
             }
-            
+
             if let website = vendor.website {
                 ContactRow(
                     icon: "globe",

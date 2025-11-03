@@ -12,12 +12,12 @@ struct ErrorStateView: View {
     private let logger = AppLogger.ui
     let error: Error
     let onRetry: (() -> Void)?
-    
+
     init(error: Error, onRetry: (() -> Void)? = nil) {
         self.error = error
         self.onRetry = onRetry
     }
-    
+
     var body: some View {
         VStack(spacing: Spacing.xl) {
             // Error icon
@@ -25,14 +25,14 @@ struct ErrorStateView: View {
                 .font(.system(size: 64))
                 .foregroundColor(AppColors.error)
                 .accessibilityHidden(true)
-            
+
             // Error message
             VStack(spacing: Spacing.sm) {
                 Text("Something Went Wrong")
                     .font(Typography.title2)
                     .foregroundColor(AppColors.textPrimary)
                     .accessibleHeading(level: 2)
-                
+
                 Text(error.localizedDescription)
                     .font(Typography.bodyRegular)
                     .foregroundColor(AppColors.textSecondary)
@@ -40,7 +40,7 @@ struct ErrorStateView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(.horizontal, Spacing.lg)
-            
+
             // Retry button
             if let onRetry = onRetry {
                 Button(action: onRetry) {
@@ -66,22 +66,22 @@ struct ErrorStateView: View {
 struct InlineErrorView: View {
     let message: String
     let onRetry: (() -> Void)?
-    
+
     init(message: String, onRetry: (() -> Void)? = nil) {
         self.message = message
         self.onRetry = onRetry
     }
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "exclamationmark.circle.fill")
                 .foregroundColor(AppColors.error)
                 .accessibilityHidden(true)
-            
+
             Text(message)
                 .font(Typography.bodySmall)
                 .foregroundColor(AppColors.textSecondary)
-            
+
             if let onRetry = onRetry {
                 Button("Retry", action: onRetry)
                     .font(Typography.bodySmall)
@@ -100,25 +100,25 @@ struct InlineErrorView: View {
 struct ErrorBannerView: View {
     let message: String
     let onDismiss: (() -> Void)?
-    
+
     init(message: String, onDismiss: (() -> Void)? = nil) {
         self.message = message
         self.onDismiss = onDismiss
     }
-    
+
     var body: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "exclamationmark.circle.fill")
                 .foregroundColor(AppColors.error)
                 .accessibilityHidden(true)
-            
+
             Text(message)
                 .font(Typography.bodySmall)
                 .foregroundColor(AppColors.textPrimary)
                 .lineLimit(2)
-            
+
             Spacer()
-            
+
             if let onDismiss = onDismiss {
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
@@ -181,7 +181,7 @@ struct ErrorBannerView: View {
             }
         )
         .padding()
-        
+
         Spacer()
     }
 }
@@ -192,12 +192,12 @@ struct ErrorBannerView: View {
             message: "Network error occurred",
             onDismiss: {}
         )
-        
+
         InlineErrorView(
             message: "Failed to load guests",
             onRetry: {}
         )
-        
+
         Spacer()
     }
     .padding()

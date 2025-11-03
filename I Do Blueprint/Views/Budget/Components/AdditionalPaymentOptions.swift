@@ -5,20 +5,20 @@ struct AdditionalPaymentOptions: View {
     @Binding var enableReminders: Bool
     @Binding var notes: String
     @FocusState.Binding var focusedField: AddPaymentScheduleView.FocusedField?
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Additional Options")
                 .font(.headline)
-            
+
             VStack(spacing: 12) {
                 Toggle("Enable Reminders", isOn: $enableReminders)
-                
+
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Notes (Optional)")
                         .font(.subheadline)
                         .fontWeight(.medium)
-                    
+
                     TextField("Enter any additional notes...", text: $notes, axis: .vertical)
                         .textFieldStyle(.roundedBorder)
                         .lineLimit(3 ... 6)
@@ -35,7 +35,7 @@ struct AdditionalPaymentOptions: View {
 
 #Preview {
     @FocusState var focusedField: AddPaymentScheduleView.FocusedField?
-    
+
     return AdditionalPaymentOptions(
         enableReminders: .constant(true),
         notes: .constant(""),

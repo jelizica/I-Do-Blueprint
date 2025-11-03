@@ -12,11 +12,11 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
     private let client: SupabaseClient?
     private let logger = AppLogger.repository
     private let cacheStrategy = TimelineCacheStrategy()
-    
+
     init(client: SupabaseClient? = SupabaseManager.shared.client) {
         self.client = client
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let client = client else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable

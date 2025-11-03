@@ -4,10 +4,10 @@ import SwiftUI
 struct ExpenseReportsFilters: View {
     @Binding var searchText: String
     @Binding var filters: FilterState
-    
+
     let categoryOptions: [String]
     let vendorOptions: [String]
-    
+
     var body: some View {
         VStack(spacing: 16) {
             HStack {
@@ -17,7 +17,7 @@ struct ExpenseReportsFilters: View {
                     .font(.headline)
                 Spacer()
             }
-            
+
             VStack(spacing: 12) {
                 // Search
                 HStack {
@@ -26,7 +26,7 @@ struct ExpenseReportsFilters: View {
                     TextField("Search expenses...", text: $searchText)
                         .textFieldStyle(.roundedBorder)
                 }
-                
+
                 // Filter pickers
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 2), spacing: 12) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -40,7 +40,7 @@ struct ExpenseReportsFilters: View {
                         }
                         .pickerStyle(.menu)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Vendor")
                             .font(.caption)
@@ -52,7 +52,7 @@ struct ExpenseReportsFilters: View {
                         }
                         .pickerStyle(.menu)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Payment Status")
                             .font(.caption)
@@ -64,7 +64,7 @@ struct ExpenseReportsFilters: View {
                         }
                         .pickerStyle(.menu)
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Date Range")
                             .font(.caption)

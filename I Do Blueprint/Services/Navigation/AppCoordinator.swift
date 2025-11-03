@@ -254,7 +254,7 @@ class AppCoordinator: ObservableObject {
             do {
                 // Prefetch invitation details
                 let details = try await InvitationService.shared.fetchInvitation(token: token)
-                
+
                 // Navigate to collaboration tab and present with preloaded details
                 selectedTab = .collaboration
                 present(.acceptInvitation(token: token, details: details))

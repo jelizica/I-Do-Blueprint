@@ -13,20 +13,20 @@ import Combine
 @MainActor
 class AuthContext: ObservableObject {
     static let shared = AuthContext()
-    
+
     @Published private(set) var currentUserId: UUID?
     @Published private(set) var currentUserEmail: String?
     @Published private(set) var currentCoupleId: UUID?
     @Published private(set) var isAuthenticated: Bool = false
-    
+
     private let sessionManager = SessionManager.shared
     private let supabaseManager = SupabaseManager.shared
     private var cancellables = Set<AnyCancellable>()
-    
+
     private init() {
         // Initialize from session
         refresh()
-        
+
         // Observe authentication state changes
         supabaseManager.$isAuthenticated
             .sink { [weak self] _ in
@@ -36,11 +36,11 @@ class AuthContext: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
+
     /// Refresh auth context from session
     func refresh() {
         isAuthenticated = supabaseManager.isAuthenticated
-        
+
         if isAuthenticated {
             currentCoupleId = sessionManager.getTenantId()
             currentUserId = supabaseManager.currentUserId
@@ -66,7 +66,7 @@ class AuthContext: ObservableObject {
             }
         }
     }
-    
+
     /// Get current couple ID or throw error
     func requireCoupleId() throws -> UUID {
         guard let coupleId = currentCoupleId else {
@@ -74,7 +74,7 @@ class AuthContext: ObservableObject {
         }
         return coupleId
     }
-    
+
     /// Get current user ID or throw error
     func requireUserId() throws -> UUID {
         guard let userId = currentUserId else {
@@ -82,7 +82,7 @@ class AuthContext: ObservableObject {
         }
         return userId
     }
-    
+
     /// Get current user email or throw error
     func requireUserEmail() throws -> String {
         guard let email = currentUserEmail else {
@@ -96,7 +96,7 @@ enum AuthContextError: LocalizedError {
     case noCoupleId
     case noUserId
     case noUserEmail
-    
+
     var errorDescription: String? {
         switch self {
         case .noCoupleId:

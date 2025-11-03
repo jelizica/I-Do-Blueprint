@@ -9,7 +9,7 @@ import Foundation
 
 actor BudgetCacheStrategy: CacheInvalidationStrategy {
     private let cache = RepositoryCache.shared
-    
+
     func invalidate(for operation: CacheOperation) async {
         switch operation {
         case .categoryCreated, .categoryUpdated, .categoryDeleted:
@@ -20,12 +20,12 @@ actor BudgetCacheStrategy: CacheInvalidationStrategy {
             break
         }
     }
-    
+
     private func invalidateCategoryCaches() async {
         await cache.remove("budget_categories")
         await cache.remove("budget_summary")
     }
-    
+
     private func invalidateExpenseCaches(tenantId: UUID) async {
         let id = tenantId.uuidString
         await cache.remove("expenses_\(id)")

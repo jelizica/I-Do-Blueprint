@@ -27,22 +27,22 @@ final class SentryService {
     // MARK: - Initialization
 
     private init() {}
-    
+
     // MARK: - Configuration
-    
+
     /// Initialize Sentry SDK with configuration from AppConfig (with Config.plist fallback)
     func configure() {
         guard !isInitialized else {
             logger.warning("Sentry already initialized")
             return
         }
-        
+
         let dsn = AppConfig.getSentryDSN()
         guard !dsn.isEmpty else {
             logger.error("Sentry DSN not found in AppConfig")
             return
         }
-        
+
         SentrySDK.start { options in
             options.dsn = dsn
 
@@ -104,13 +104,13 @@ final class SentryService {
                 return breadcrumb
             }
         }
-        
+
         isInitialized = true
         logger.info("Sentry initialized successfully")
     }
-    
+
     // MARK: - Error Capture
-    
+
     /// Capture an error with optional context
     /// - Parameters:
     ///   - error: The error to capture
@@ -125,7 +125,7 @@ final class SentryService {
             logger.warning("Sentry not initialized, cannot capture error")
             return
         }
-        
+
         // Add context if provided
         if let context = context {
             SentrySDK.configureScope { scope in
@@ -134,15 +134,15 @@ final class SentryService {
                 }
             }
         }
-        
+
         // Capture the error
         let eventId = SentrySDK.capture(error: error) { scope in
             scope.setLevel(level)
         }
-        
+
         logger.info("Error captured with Sentry - eventId: \(eventId)")
     }
-    
+
     /// Capture a message with optional context
     /// - Parameters:
     ///   - message: The message to capture
@@ -157,7 +157,7 @@ final class SentryService {
             logger.warning("Sentry not initialized, cannot capture message")
             return
         }
-        
+
         // Add context if provided
         if let context = context {
             SentrySDK.configureScope { scope in
@@ -166,17 +166,17 @@ final class SentryService {
                 }
             }
         }
-        
+
         // Capture the message
         let eventId = SentrySDK.capture(message: message) { scope in
             scope.setLevel(level)
         }
-        
+
         logger.info("Message captured with Sentry - eventId: \(eventId)")
     }
-    
+
     // MARK: - User Context
-    
+
     /// Set user context for error tracking
     /// - Parameters:
     ///   - userId: User identifier
@@ -184,25 +184,25 @@ final class SentryService {
     ///   - username: Username (optional)
     func setUser(userId: String, email: String? = nil, username: String? = nil) {
         guard isInitialized else { return }
-        
+
         let user = User(userId: userId)
         user.email = email
         user.username = username
-        
+
         SentrySDK.setUser(user)
         logger.debug("Sentry user context set - userId: \(userId)")
     }
-    
+
     /// Clear user context
     func clearUser() {
         guard isInitialized else { return }
-        
+
         SentrySDK.setUser(nil)
         logger.debug("Sentry user context cleared")
     }
-    
+
     // MARK: - Breadcrumbs
-    
+
     /// Add a breadcrumb for debugging context
     /// - Parameters:
     ///   - message: Breadcrumb message
@@ -216,16 +216,16 @@ final class SentryService {
         data: [String: Any]? = nil
     ) {
         guard isInitialized else { return }
-        
+
         let crumb = Breadcrumb()
         crumb.message = message
         crumb.category = category
         crumb.level = level
         crumb.data = data
-        
+
         SentrySDK.addBreadcrumb(crumb)
     }
-    
+
     // MARK: - Performance Monitoring
 
     /// Start a performance transaction
@@ -288,11 +288,11 @@ final class SentryService {
         }
         return try await block()
     }
-    
+
     // MARK: - Private Helpers
-    
+
     // Note: loadDSN() method removed - now using AppConfig.getSentryDSN() directly
-    
+
     /// Enrich event with additional context before sending
     nonisolated private func enrichEvent(_ event: Event) -> Event {
         // Add app-specific context
@@ -300,13 +300,13 @@ final class SentryService {
             "name": "I Do Blueprint",
             "platform": "macOS"
         ]
-        
+
         // Add device context
         event.context?["device"] = [
             "model": ProcessInfo.processInfo.hostName,
             "os_version": ProcessInfo.processInfo.operatingSystemVersionString
         ]
-        
+
         return event
     }
 }

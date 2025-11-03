@@ -73,7 +73,7 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
         supabase = SupabaseManager.shared.client
         cache = RepositoryCache()
     }
-    
+
     private func getClient() throws -> SupabaseClient {
         guard let supabase = supabase else {
             throw SupabaseManager.shared.configurationError ?? ConfigurationError.configFileUnreadable
@@ -117,7 +117,7 @@ actor LiveCoupleRepository: CoupleRepositoryProtocol {
                     case updatedAt = "updated_at"
                     case coupleProfiles = "couple_profiles"
                 }
-                
+
                 struct CoupleProfileNested: Codable {
                     let partner1Name: String
                     let partner2Name: String?

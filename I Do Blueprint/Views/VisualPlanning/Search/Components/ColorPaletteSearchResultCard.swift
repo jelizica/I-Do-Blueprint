@@ -11,16 +11,16 @@ struct ColorPaletteSearchResultCard: View {
     private let logger = AppLogger.ui
     let palette: ColorPalette
     let onSelect: () -> Void
-    
+
     @State private var isHovered = false
-    
+
     var body: some View {
         Button(action: onSelect) {
             VStack(alignment: .leading, spacing: 0) {
                 // Color swatches preview
                 colorSwatchesPreview
                     .frame(height: 120)
-                
+
                 // Info section
                 VStack(alignment: .leading, spacing: 8) {
                     // Title
@@ -28,7 +28,7 @@ struct ColorPaletteSearchResultCard: View {
                         .font(.headline)
                         .lineLimit(2)
                         .foregroundColor(.primary)
-                    
+
                     // Description
                     if let description = palette.description, !description.isEmpty {
                         Text(description)
@@ -36,7 +36,7 @@ struct ColorPaletteSearchResultCard: View {
                             .foregroundColor(.secondary)
                             .lineLimit(2)
                     }
-                    
+
                     // Metadata row
                     HStack(spacing: 12) {
                         // Color count
@@ -47,9 +47,9 @@ struct ColorPaletteSearchResultCard: View {
                                 .font(.caption2)
                         }
                         .foregroundColor(.blue)
-                        
+
                         Spacer()
-                        
+
                         // Default badge
                         if palette.isDefault {
                             HStack(spacing: 4) {
@@ -61,7 +61,7 @@ struct ColorPaletteSearchResultCard: View {
                             .foregroundColor(.orange)
                         }
                     }
-                    
+
                     // Date
                     Text(palette.updatedAt.formatted(date: .abbreviated, time: .omitted))
                         .font(.caption2)
@@ -84,9 +84,9 @@ struct ColorPaletteSearchResultCard: View {
             isHovered = hovering
         }
     }
-    
+
     // MARK: - Color Swatches Preview
-    
+
     private var colorSwatchesPreview: some View {
         GeometryReader { geometry in
             if palette.colors.isEmpty {
@@ -101,12 +101,12 @@ struct ColorPaletteSearchResultCard: View {
             }
         }
     }
-    
+
     private func colorSwatch(hexColor: String) -> some View {
         ZStack {
             if let color = Color(hex: hexColor) {
                 color
-                
+
                 // Show hex value on hover
                 if isHovered {
                     VStack {
@@ -131,13 +131,13 @@ struct ColorPaletteSearchResultCard: View {
             }
         }
     }
-    
+
     private var emptyPaletteView: some View {
         VStack(spacing: 8) {
             Image(systemName: "paintpalette")
                 .font(.system(size: 32))
                 .foregroundColor(.secondary)
-            
+
             Text("No Colors")
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -145,19 +145,19 @@ struct ColorPaletteSearchResultCard: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppColors.textSecondary.opacity(0.1))
     }
-    
+
     // MARK: - Helper Methods
-    
+
     private func contrastColor(for hexColor: String) -> Color {
         guard let color = Color(hex: hexColor) else { return .white }
-        
+
         // Convert to NSColor to get RGB components
         let nsColor = NSColor(color)
         guard let rgb = nsColor.usingColorSpace(.deviceRGB) else { return .white }
-        
+
         // Calculate relative luminance
         let luminance = 0.299 * rgb.redComponent + 0.587 * rgb.greenComponent + 0.114 * rgb.blueComponent
-        
+
         // Return white for dark colors, black for light colors
         return luminance > 0.5 ? .black : .white
     }
@@ -170,7 +170,7 @@ struct ColorPaletteSearchResultCard: View {
         description: "Soft and romantic pink tones perfect for a spring wedding",
         isDefault: true
     )
-    
+
     ColorPaletteSearchResultCard(palette: samplePalette) {
         // TODO: Implement action - print("Selected palette")
     }
