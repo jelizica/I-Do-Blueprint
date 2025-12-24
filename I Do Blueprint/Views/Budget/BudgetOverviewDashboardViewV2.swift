@@ -351,10 +351,7 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private func handleScenarioChange(_ scenarioId: String) async {
-        // Guard against feedback loops
-        guard selectedScenarioId != scenarioId else { return }
-
-        selectedScenarioId = scenarioId
+        // Reset filters and search when scenario changes
         activeFilters = []
         searchQuery = ""
         debouncedSearchQuery = ""
