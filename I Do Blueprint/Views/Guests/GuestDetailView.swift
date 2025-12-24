@@ -8,6 +8,7 @@
 import SwiftUI
 
 extension Notification.Name {
+    static let addGuest = Notification.Name("addGuest")
     static let deleteGuest = Notification.Name("deleteGuest")
     static let updateGuest = Notification.Name("updateGuest")
 }

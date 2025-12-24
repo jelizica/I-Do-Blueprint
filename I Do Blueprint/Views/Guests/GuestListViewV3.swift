@@ -153,7 +153,7 @@ struct GuestListViewV3: View {
                 await guestStore.addGuest(newGuest)
             }
             #if os(macOS)
-            .frame(minWidth: 500, maxWidth: 600, minHeight: 500, maxHeight: 650)
+            .frame(width: 900, height: 750)
             #endif
         }
         .sheet(isPresented: $showingImport) {

@@ -17,8 +17,20 @@ class GuestStoreV2: ObservableObject, CacheableStore {
     @Published private(set) var guestStats: GuestStats?
     @Published private(set) var filteredGuests: [Guest] = []
 
+    /// Monotonically increasing token that changes whenever the guest list reloads.
+    /// Views can observe this to trigger explicit re-renders when needed.
+    @Published private(set) var guestListVersion: Int = 0
+
     @Published var showSuccessToast = false
     @Published var successMessage = ""
+
+    // MARK: - Reactive Stats
+    @Published private(set) var totalGuestsCount: Int = 0
+    @Published private(set) var attendingCount: Int = 0
+    @Published private(set) var pendingCount: Int = 0
+    @Published private(set) var declinedCount: Int = 0
+    @Published private(set) var acceptanceRate: Double = 0
+    @Published private(set) var weeklyChange: Int = 0
 
     // MARK: - Cache Management
     var lastLoadTime: Date?
@@ -31,6 +43,11 @@ class GuestStoreV2: ObservableObject, CacheableStore {
     private var addTask: Task<Void, Never>?
     private var updateTask: Task<Void, Never>?
     private var deleteTask: Task<Void, Never>?
+    
+    // ✅ Track current filter state to reapply filters when adding guests
+    private var currentSearchText: String = ""
+    private var currentSelectedStatus: RSVPStatus?
+    private var currentSelectedInvitedBy: InvitedBy?
 
     // MARK: - Computed Properties for Backward Compatibility
 
@@ -100,9 +117,21 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 // Main-thread updates
                 let t1 = Date()
                 guestStats = fetchedStats
-                filteredGuests = fetchedGuests
                 loadingState = .loaded(fetchedGuests)
                 lastLoadTime = Date()
+                recalculateStats()
+                
+                // Initialize filteredGuests only when no filters are active
+                // to avoid overlapping filter recomputations during view updates.
+                if currentSearchText.isEmpty &&
+                    currentSelectedStatus == nil &&
+                    currentSelectedInvitedBy == nil {
+                    filteredGuests = fetchedGuests
+                }
+                
+                // Bump version token so views can force a re-render of guest list UI.
+                guestListVersion &+= 1
+                
                 mainThreadAccumulated += Date().timeIntervalSince(t1)
             } catch is CancellationError {
                 // Don't treat cancellation as error - it's expected during tenant switch
@@ -156,17 +185,30 @@ class GuestStoreV2: ObservableObject, CacheableStore {
 
                 try Task.checkCancellation()
 
-                // Update loaded state with new guest
+                AppLogger.ui.debug("Guest created successfully: \(created.fullName). Updating in-memory guest list...")
+
+                // Optimistically insert the new guest into the loaded list
                 if case .loaded(var currentGuests) = loadingState {
-                    currentGuests.append(created)
+                    // Insert at the beginning to reflect most-recent-first ordering
+                    currentGuests.insert(created, at: 0)
                     loadingState = .loaded(currentGuests)
-                    filteredGuests = currentGuests
+                    recalculateStats()
+
+                    // Keep filteredGuests in sync with current filters
+                    if currentSearchText.isEmpty &&
+                        currentSelectedStatus == nil &&
+                        currentSelectedInvitedBy == nil {
+                        filteredGuests = currentGuests
+                    } else {
+                        filterGuests(
+                            searchText: currentSearchText,
+                            selectedStatus: currentSelectedStatus,
+                            selectedInvitedBy: currentSelectedInvitedBy
+                        )
+                    }
                 }
 
-                // Recalculate stats to include new guest
-                guestStats = try await repository.fetchGuestStats()
-
-                // Invalidate store cache since data changed
+                // Invalidate cache so the next explicit reload gets fresh data
                 invalidateCache()
 
                 // Show success feedback
@@ -235,6 +277,7 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                    let idx = guests.firstIndex(where: { $0.id == guest.id }) {
                     guests[idx] = updated
                     loadingState = .loaded(guests)
+                    recalculateStats()
                 }
 
                 // Update filtered list with server-confirmed data
@@ -320,6 +363,7 @@ class GuestStoreV2: ObservableObject, CacheableStore {
 
             let removed = currentGuests.remove(at: index)
             loadingState = .loaded(currentGuests)
+            recalculateStats()
 
             // Keep filtered list in sync
             if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == id }) {
@@ -391,6 +435,11 @@ class GuestStoreV2: ObservableObject, CacheableStore {
         searchText: String,
         selectedStatus: RSVPStatus?,
         selectedInvitedBy: InvitedBy?) {
+        // Track current filter state for reuse after reloads
+        currentSearchText = searchText
+        currentSelectedStatus = selectedStatus
+        currentSelectedInvitedBy = selectedInvitedBy
+        
         var filtered = loadingState.data ?? []
 
         // Search across name, email, and phone fields
@@ -413,8 +462,18 @@ class GuestStoreV2: ObservableObject, CacheableStore {
         }
 
         filteredGuests = filtered
+        AppLogger.ui.debug("Filtered guests: \(filtered.count) of \(guests.count) (search: '\(searchText)', status: \(selectedStatus?.displayName ?? "none"), invitedBy: \(selectedInvitedBy?.displayName(with: .default) ?? "none"))")
     }
-
+    
+    /// Clears all active filters and resets the filtered guests list to show all guests
+    func clearAllFilters() {
+        currentSearchText = ""
+        currentSelectedStatus = nil
+        currentSelectedInvitedBy = nil
+        filteredGuests = loadingState.data ?? []
+        AppLogger.ui.debug("All filters cleared. Showing all \(filteredGuests.count) guests")
+    }
+    
     // MARK: - Computed Properties
 
     var totalGuests: Int {
@@ -435,6 +494,24 @@ class GuestStoreV2: ObservableObject, CacheableStore {
         await loadGuestData()
     }
 
+    // MARK: - Stats Calculation
+
+    /// Recalculate all reactive stats based on current guest data
+    private func recalculateStats() {
+        let currentGuests = guests
+        
+        totalGuestsCount = currentGuests.count
+        attendingCount = currentGuests.filter { $0.rsvpStatus == .attending || $0.rsvpStatus == .confirmed }.count
+        declinedCount = currentGuests.filter { $0.rsvpStatus == .declined || $0.rsvpStatus == .noResponse }.count
+        pendingCount = totalGuestsCount - attendingCount - declinedCount
+        
+        acceptanceRate = totalGuestsCount > 0 ? Double(attendingCount) / Double(totalGuestsCount) : 0
+        
+        // Calculate guests added in the last 7 days
+        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
+        weeklyChange = currentGuests.filter { $0.createdAt > weekAgo }.count
+    }
+
     // MARK: - State Management
 
     /// Reset loaded state (for logout/tenant switch)
@@ -450,5 +527,13 @@ class GuestStoreV2: ObservableObject, CacheableStore {
         guestStats = nil
         filteredGuests = []
         lastLoadTime = nil
+        
+        // Reset stats
+        totalGuestsCount = 0
+        attendingCount = 0
+        pendingCount = 0
+        declinedCount = 0
+        acceptanceRate = 0
+        weeklyChange = 0
     }
 }

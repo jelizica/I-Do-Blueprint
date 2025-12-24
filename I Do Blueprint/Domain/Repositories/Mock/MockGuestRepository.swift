@@ -8,8 +8,8 @@
 import Foundation
 
 /// Mock implementation for testing
-@MainActor
-class MockGuestRepository: GuestRepositoryProtocol {
+/// Note: Not @MainActor to allow instantiation in DependencyKey static properties
+class MockGuestRepository: GuestRepositoryProtocol, @unchecked Sendable {
     // Storage
     var guests: [Guest] = []
     var guestStats: GuestStats?

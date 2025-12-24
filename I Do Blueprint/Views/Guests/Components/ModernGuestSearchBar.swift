@@ -13,6 +13,9 @@ struct ModernSearchBar: View {
     @Binding var selectedInvitedBy: InvitedBy?
     @Binding var groupByStatus: Bool
     @EnvironmentObject var settingsStore: SettingsStoreV2
+    
+    // Reference to guest store for clearing filters
+    var guestStore: GuestStoreV2?
 
     var filteredCount: Int = 0
     var totalCount: Int = 0
@@ -35,6 +38,12 @@ struct ModernSearchBar: View {
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
+                        // Explicitly notify store to clear search filter
+                        guestStore?.filterGuests(
+                            searchText: "",
+                            selectedStatus: selectedStatus,
+                            selectedInvitedBy: selectedInvitedBy
+                        )
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(AppColors.textSecondary)
@@ -161,9 +170,12 @@ struct ModernSearchBar: View {
 
                         // Clear all button
                         Button("Clear all") {
+                            // Clear all filter state
                             searchText = ""
                             selectedStatus = nil
                             selectedInvitedBy = nil
+                            // Notify store to reset filtered guests
+                            guestStore?.clearAllFilters()
                         }
                         .font(.caption)
                         .foregroundColor(AppColors.primary)

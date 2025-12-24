@@ -88,10 +88,6 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
         } catch {
             inFlightGuests[tenantId] = nil
             logger.error("Failed to fetch guests", error: error)
-            await SentryService.shared.captureError(error, context: [
-                "operation": "fetchGuests",
-                "repository": "LiveGuestRepository"
-            ])
             throw GuestError.fetchFailed(underlying: error)
         }
     }
@@ -190,11 +186,6 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             return created
         } catch {
             logger.error("Failed to create guest", error: error)
-await SentryService.shared.captureError(error, context: [
-                "operation": "createGuest",
-                "repository": "LiveGuestRepository",
-                "guestName": guest.fullName
-            ])
             throw GuestError.createFailed(underlying: error)
         }
     }
@@ -233,11 +224,6 @@ await SentryService.shared.captureError(error, context: [
             return result
         } catch {
             logger.error("Failed to update guest", error: error)
-await SentryService.shared.captureError(error, context: [
-                "operation": "updateGuest",
-                "repository": "LiveGuestRepository",
-                "guestId": guest.id.uuidString
-            ])
             throw GuestError.updateFailed(underlying: error)
         }
     }
@@ -270,11 +256,6 @@ await SentryService.shared.captureError(error, context: [
             AnalyticsService.trackNetwork(operation: "deleteGuest", outcome: .success, duration: duration)
         } catch {
             logger.error("Failed to delete guest", error: error)
-await SentryService.shared.captureError(error, context: [
-                "operation": "deleteGuest",
-                "repository": "LiveGuestRepository",
-                "guestId": id.uuidString
-            ])
             throw GuestError.deleteFailed(underlying: error)
         }
     }
@@ -381,11 +362,6 @@ await SentryService.shared.captureError(error, context: [
             return imported
         } catch {
             logger.error("Failed to import guests", error: error)
-await SentryService.shared.captureError(error, context: [
-                "operation": "importGuests",
-                "repository": "LiveGuestRepository",
-                "count": guests.count
-            ])
             throw GuestError.createFailed(underlying: error)
         }
     }

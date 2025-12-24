@@ -11,8 +11,21 @@ import Supabase
 import SwiftUI
 
 struct GuestListViewV2: View {
-    @EnvironmentObject private var guestStore: GuestStoreV2
-    @EnvironmentObject private var settingsStore: SettingsStoreV2
+    @Environment(\.appStores) private var appStores
+    
+    // ✅ CRITICAL: Use @ObservedObject to properly observe store changes
+    // This ensures SwiftUI subscribes to all @Published properties and updates the view
+    // when any of them change (loadingState, filteredGuests, guestStats, etc.)
+    @ObservedObject private var guestStore: GuestStoreV2
+    @ObservedObject private var settingsStore: SettingsStoreV2
+    
+    // Initialize stores from environment
+    init(appStores: AppStores? = nil) {
+        let stores = appStores ?? AppStores.shared
+        _guestStore = ObservedObject(initialValue: stores.guest)
+        _settingsStore = ObservedObject(initialValue: stores.settings)
+    }
+    
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
@@ -23,113 +36,120 @@ struct GuestListViewV2: View {
 
     var body: some View {
         NavigationStack {
-            mainContent
-            .navigationTitle("Wedding Guests")
-            .toolbar {
-                ToolbarItem(placement: .automatic) {
-                    Button {
-                        showingImport = true
-                    } label: {
-                        Label("Import CSV", systemImage: "square.and.arrow.down")
+            mainContent(guestStore: guestStore, settingsStore: settingsStore)
+                .navigationTitle("Wedding Guests")
+                .toolbar {
+                    ToolbarItem(placement: .automatic) {
+                        Button {
+                            showingImport = true
+                        } label: {
+                            Label("Import CSV", systemImage: "square.and.arrow.down")
+                        }
                     }
-                }
 
-                ToolbarItem(placement: .primaryAction) {
-                    Button {
-                        showingAddGuest = true
-                    } label: {
-                        Label("Add Guest", systemImage: "plus.circle.fill")
-                    }
-                    .keyboardShortcut("n", modifiers: .command)
-                    .buttonStyle(.borderedProminent)
-                }
-            }
-            .sheet(isPresented: $showingAddGuest) {
-                AddGuestView { newGuest in
-                    await addGuest(newGuest)
-                }
-                .frame(minWidth: 500, maxWidth: 600, minHeight: 500, maxHeight: 650)
-            }
-            .sheet(isPresented: $showingImport) {
-                GuestCSVImportView()
-                    .environmentObject(guestStore)
-                    .frame(minWidth: 700, maxWidth: 900, minHeight: 600, maxHeight: 800)
-            }
-            .successToast(isPresented: $guestStore.showSuccessToast, message: guestStore.successMessage)
-            .task {
-                await guestStore.loadGuestData()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .deleteGuest)) { notification in
-                if let guestIdString = notification.userInfo?["guestId"] as? String,
-                   let guestId = UUID(uuidString: guestIdString) {
-                    Task {
-                        await guestStore.deleteGuest(id: guestId)
-                        selectedGuest = nil
+                    ToolbarItem(placement: .primaryAction) {
+                        Button {
+                            showingAddGuest = true
+                        } label: {
+                            Label("Add Guest", systemImage: "plus.circle.fill")
+                        }
+                        .keyboardShortcut("n", modifiers: .command)
+                        .buttonStyle(.borderedProminent)
                     }
                 }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .updateGuest)) { notification in
-                if let updatedGuestData = notification.userInfo?["guest"] as? Data,
-                   let updatedGuest = try? JSONDecoder().decode(Guest.self, from: updatedGuestData) {
-                    Task {
-                        await guestStore.updateGuest(updatedGuest)
+                .sheet(isPresented: $showingAddGuest) {
+                    AddGuestView { newGuest in
+                        await addGuest(newGuest, guestStore: guestStore)
+                        showingAddGuest = false
                     }
+                    .frame(width: 900, height: 750)
                 }
-            }
-            .onChange(of: searchText) { _, _ in
-                guestStore.filterGuests(
-                    searchText: searchText,
-                    selectedStatus: selectedStatus,
-                    selectedInvitedBy: selectedInvitedBy
+                .sheet(isPresented: $showingImport) {
+                    GuestCSVImportView()
+                        .environmentObject(guestStore)
+                        .frame(minWidth: 700, maxWidth: 900, minHeight: 600, maxHeight: 800)
+                }
+                .successToast(
+                    isPresented: Binding(
+                        get: { guestStore.showSuccessToast },
+                        set: { guestStore.showSuccessToast = $0 }
+                    ),
+                    message: guestStore.successMessage
                 )
-            }
-            .onChange(of: selectedStatus) { _, _ in
-                guestStore.filterGuests(
-                    searchText: searchText,
-                    selectedStatus: selectedStatus,
-                    selectedInvitedBy: selectedInvitedBy
-                )
-            }
-            .onChange(of: selectedInvitedBy) { _, _ in
-                guestStore.filterGuests(
-                    searchText: searchText,
-                    selectedStatus: selectedStatus,
-                    selectedInvitedBy: selectedInvitedBy
-                )
-            }
-            .alert("Error", isPresented: Binding(
-                get: { guestStore.error != nil },
-                set: { _ in }
-            )) {
-                Button("OK") {}
-                if guestStore.error != nil {
-                    Button("Retry") {
+                .task {
+                    await guestStore.loadGuestData()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: .deleteGuest)) { notification in
+                    if let guestIdString = notification.userInfo?["guestId"] as? String,
+                       let guestId = UUID(uuidString: guestIdString) {
                         Task {
-                            await guestStore.retryLoad()
+                            await guestStore.deleteGuest(id: guestId)
+                            selectedGuest = nil
                         }
                     }
                 }
-            } message: {
-                if let error = guestStore.error {
-                    Text(error.errorDescription ?? "Unknown error")
+                .onReceive(NotificationCenter.default.publisher(for: .updateGuest)) { notification in
+                    if let updatedGuestData = notification.userInfo?["guest"] as? Data,
+                       let updatedGuest = try? JSONDecoder().decode(Guest.self, from: updatedGuestData) {
+                        Task {
+                            await guestStore.updateGuest(updatedGuest)
+                        }
+                    }
                 }
-            }
+                .onChange(of: searchText) { _, _ in
+                    guestStore.filterGuests(
+                        searchText: searchText,
+                        selectedStatus: selectedStatus,
+                        selectedInvitedBy: selectedInvitedBy
+                    )
+                }
+                .onChange(of: selectedStatus) { _, _ in
+                    guestStore.filterGuests(
+                        searchText: searchText,
+                        selectedStatus: selectedStatus,
+                        selectedInvitedBy: selectedInvitedBy
+                    )
+                }
+                .onChange(of: selectedInvitedBy) { _, _ in
+                    guestStore.filterGuests(
+                        searchText: searchText,
+                        selectedStatus: selectedStatus,
+                        selectedInvitedBy: selectedInvitedBy
+                    )
+                }
+                .alert("Error", isPresented: Binding(
+                    get: { guestStore.error != nil },
+                    set: { _ in }
+                )) {
+                    Button("OK") {}
+                    if guestStore.error != nil {
+                        Button("Retry") {
+                            Task {
+                                await guestStore.retryLoad()
+                            }
+                        }
+                    }
+                } message: {
+                    if let error = guestStore.error {
+                        Text(error.errorDescription ?? "Unknown error")
+                    }
+                }
         }
     }
 
     // MARK: - Subviews
 
-    private var mainContent: some View {
+    private func mainContent(guestStore: GuestStoreV2, settingsStore: SettingsStoreV2) -> some View {
         GeometryReader { geometry in
             HStack(spacing: 0) {
-                leftPanel(geometry: geometry)
+                leftPanel(geometry: geometry, guestStore: guestStore)
                 Divider()
-                rightPanel
+                rightPanel(guestStore: guestStore, settingsStore: settingsStore)
             }
         }
     }
 
-    private func leftPanel(geometry: GeometryProxy) -> some View {
+    private func leftPanel(geometry: GeometryProxy, guestStore: GuestStoreV2) -> some View {
         VStack(spacing: 0) {
             if let stats = guestStore.guestStats {
                 ModernStatsView(stats: stats)
@@ -143,6 +163,7 @@ struct GuestListViewV2: View {
                 selectedStatus: $selectedStatus,
                 selectedInvitedBy: $selectedInvitedBy,
                 groupByStatus: $groupByStatus,
+                guestStore: guestStore,
                 filteredCount: guestStore.filteredGuests.count,
                 totalCount: guestStore.guests.count
             )
@@ -151,7 +172,7 @@ struct GuestListViewV2: View {
 
             Divider()
 
-            guestListView
+            guestListView(guestStore: guestStore)
         }
         .frame(
             minWidth: ResponsiveLayout.minListPanelWidth,
@@ -160,7 +181,7 @@ struct GuestListViewV2: View {
         .background(AppColors.background)
     }
 
-    private var guestListView: some View {
+    private func guestListView(guestStore: GuestStoreV2) -> some View {
         Group {
             if groupByStatus {
                 GroupedGuestListView(
@@ -187,7 +208,7 @@ struct GuestListViewV2: View {
         }
     }
 
-    private var rightPanel: some View {
+    private func rightPanel(guestStore: GuestStoreV2, settingsStore: SettingsStoreV2) -> some View {
         Group {
             if let selectedGuestId = selectedGuest?.id,
                let guest = guestStore.guests.first(where: { $0.id == selectedGuestId }) {
@@ -201,7 +222,7 @@ struct GuestListViewV2: View {
     }
 
     @MainActor
-    private func addGuest(_ guest: Guest) async {
+    private func addGuest(_ guest: Guest, guestStore: GuestStoreV2) async {
         await guestStore.addGuest(guest)
     }
 }
@@ -228,6 +249,5 @@ extension RSVPStatus {
 
 #Preview {
     GuestListViewV2()
-        .environmentObject(GuestStoreV2())
-        .environmentObject(SettingsStoreV2())
+        .environment(\.appStores, AppStores.shared)
 }

@@ -91,7 +91,14 @@ struct GuestListView: View {
                     await addGuest(newGuest)
                 }
                 #if os(macOS)
-                .frame(minWidth: 500, maxWidth: 600, minHeight: 500, maxHeight: 650)
+                .frame(
+                    minWidth: 700,
+                    idealWidth: 900,
+                    maxWidth: .infinity,
+                    minHeight: 600,
+                    idealHeight: 750,
+                    maxHeight: .infinity
+                )
                 #endif
             }
             .task {

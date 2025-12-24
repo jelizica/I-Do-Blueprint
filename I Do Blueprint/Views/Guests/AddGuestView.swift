@@ -10,6 +10,8 @@ import SwiftUI
 struct AddGuestView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var settingsStore: SettingsStoreV2
+    @State private var showingError = false
+    @State private var errorMessage = ""
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var email = ""
@@ -19,8 +21,8 @@ struct AddGuestView: View {
     @State private var rsvpStatus: RSVPStatus = .pending
     @State private var plusOneAllowed = false
     @State private var plusOneName = ""
-    @State private var attendingCeremony = true
-    @State private var attendingReception = true
+    @State private var attendingCeremony = false
+    @State private var attendingReception = false
     @State private var dietaryRestrictions = ""
     @State private var accessibilityNeeds = ""
     @State private var mealOption = ""
@@ -40,13 +42,26 @@ struct AddGuestView: View {
     let onSave: (Guest) async -> Void
 
     var body: some View {
-        NavigationView {
-            VStack(spacing: 0) {
-                // Tab Content
-                TabView(selection: $selectedTab) {
-                    // Tab 1: Basic Info
-                    ScrollView {
-                        LazyVStack(spacing: 20) {
+        VStack(spacing: 0) {
+            // Header
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Add Guest")
+                    .font(.title2)
+                    .fontWeight(.bold)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .background(Color(nsColor: .controlBackgroundColor))
+
+            Divider()
+
+            // Tab Content
+            TabView(selection: $selectedTab) {
+                // Tab 1: Basic Info
+                ScrollView {
+                    HStack(alignment: .top, spacing: 24) {
+                        // Left Column
+                        VStack(spacing: 20) {
                             // Personal Information
                             GroupBox {
                                 VStack(alignment: .leading, spacing: 12) {
@@ -69,19 +84,29 @@ struct AddGuestView: View {
                             // Wedding Details
                             GroupBox {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    Picker("Invited By", selection: $invitedBy) {
-                                        ForEach(InvitedBy.allCases, id: \.self) { invitedBy in
-                                            Text(invitedBy.displayName(with: settingsStore.settings)).tag(invitedBy)
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("Invited By")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Picker("Invited By", selection: $invitedBy) {
+                                            ForEach(InvitedBy.allCases, id: \.self) { invitedBy in
+                                                Text(invitedBy.displayName(with: settingsStore.settings)).tag(invitedBy)
+                                            }
                                         }
+                                        .pickerStyle(.menu)
                                     }
-                                    .pickerStyle(.menu)
 
-                                    Picker("RSVP Status", selection: $rsvpStatus) {
-                                        ForEach(RSVPStatus.allCases, id: \.self) { status in
-                                            Text(status.displayName).tag(status)
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        Text("RSVP Status")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Picker("RSVP Status", selection: $rsvpStatus) {
+                                            ForEach(RSVPStatus.allCases, id: \.self) { status in
+                                                Text(status.displayName).tag(status)
+                                            }
                                         }
+                                        .pickerStyle(.menu)
                                     }
-                                    .pickerStyle(.menu)
                                 }
                                 .padding()
                             } label: {
@@ -89,6 +114,12 @@ struct AddGuestView: View {
                                     .font(.headline)
                             }
 
+                            Spacer()
+                        }
+                        .frame(maxWidth: .infinity, alignment: .top)
+
+                        // Right Column
+                        VStack(spacing: 20) {
                             // Attendance
                             GroupBox {
                                 VStack(alignment: .leading, spacing: 12) {
@@ -109,10 +140,14 @@ struct AddGuestView: View {
                                 Label("Attendance", systemImage: "calendar")
                                     .font(.headline)
                             }
+
+                            Spacer()
                         }
-                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .top)
                     }
-                    .tag(0)
+                    .padding()
+                }
+                .tag(0)
 
                     // Tab 2: Contact & Address
                     ScrollView {
@@ -208,11 +243,13 @@ struct AddGuestView: View {
                             // Dining Preferences
                             GroupBox {
                                 VStack(alignment: .leading, spacing: 12) {
-                                    TextField("Meal Option", text: $mealOption)
-                                        .textFieldStyle(.roundedBorder)
-                                    #if !os(macOS)
-                                        .textInputAutocapitalization(.words)
-                                    #endif
+                                    Picker("Meal Option", selection: $mealOption) {
+                                        Text("Not Selected").tag("")
+                                        ForEach(settingsStore.settings.guests.customMealOptions, id: \.self) { option in
+                                            Text(option).tag(option)
+                                        }
+                                    }
+                                    .pickerStyle(.menu)
 
                                     TextField("Dietary Restrictions", text: $dietaryRestrictions, axis: .vertical)
                                         .textFieldStyle(.roundedBorder)
@@ -309,53 +346,44 @@ struct AddGuestView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
                 #endif
 
-                // Segmented Control for Tab Navigation
-                Picker("Sections", selection: $selectedTab) {
-                    Text("Basic").tag(0)
-                    Text("Contact").tag(1)
-                    Text("Preferences").tag(2)
-                    Text("Additional").tag(3)
-                }
-                .pickerStyle(.segmented)
-                .padding()
+            // Segmented Control for Tab Navigation
+            Picker("Sections", selection: $selectedTab) {
+                Text("Basic").tag(0)
+                Text("Contact").tag(1)
+                Text("Preferences").tag(2)
+                Text("Additional").tag(3)
             }
-            .navigationTitle("Add Guest")
-            #if !os(macOS)
-                .navigationBarTitleDisplayMode(.inline)
-            #endif
-                .toolbar {
-                    #if os(macOS)
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                    }
+            .pickerStyle(.segmented)
+            .padding()
 
-                    ToolbarItem(placement: .primaryAction) {
-                        Button("Save") {
-                            Task {
-                                await saveGuest()
-                            }
-                        }
-                        .disabled(!isValidForm)
-                    }
-                    #else
-                    ToolbarItem(placement: .navigationBarLeading) {
-                        Button("Cancel") {
-                            dismiss()
-                        }
-                    }
+            Divider()
 
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Save") {
-                            Task {
-                                await saveGuest()
-                            }
-                        }
-                        .disabled(!isValidForm)
-                    }
-                    #endif
+            // Footer with buttons
+            HStack(spacing: 12) {
+                Spacer()
+                Button("Cancel") {
+                    dismiss()
                 }
+                .keyboardShortcut(.cancelAction)
+
+                Button("Save") {
+                    Task {
+                        await saveGuest()
+                    }
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+                .disabled(!isValidForm)
+            }
+            .padding()
+            .background(Color(nsColor: .controlBackgroundColor))
+        }
+        .alert("Cannot Save Guest", isPresented: $showingError) {
+            Button("OK", role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            Text(errorMessage)
         }
     }
 
@@ -366,6 +394,13 @@ struct AddGuestView: View {
 
     @MainActor
     private func saveGuest() async {
+        guard let coupleId = SessionManager.shared.getTenantId() else {
+            AppLogger.ui.error("Cannot save guest: No couple selected")
+            errorMessage = "Please select a couple before adding a guest. You can select a couple from the Settings."
+            showingError = true
+            return
+        }
+
         let newGuest = Guest(
             id: UUID(),
             createdAt: Date(),
@@ -404,14 +439,18 @@ struct AddGuestView: View {
             weddingPartyRole: weddingPartyRole.isEmpty ? nil : weddingPartyRole
                 .trimmingCharacters(in: .whitespacesAndNewlines),
             preparationNotes: nil,
-            coupleId: UUID(), // This should be set to the actual couple ID
+            coupleId: coupleId,
             mealOption: mealOption.isEmpty ? nil : mealOption.trimmingCharacters(in: .whitespacesAndNewlines),
             giftReceived: false,
             notes: notes.isEmpty ? nil : notes.trimmingCharacters(in: .whitespacesAndNewlines),
             hairDone: false,
             makeupDone: false)
 
+        // Wait for the save operation to complete before dismissing
+        // This ensures the store has updated before the modal closes
         await onSave(newGuest)
+        
+        // Dismiss once the store has finished updating
         dismiss()
     }
 }

@@ -18,6 +18,9 @@ struct GuestManagementViewV4: View {
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
     @State private var showingImportSheet = false
+    /// Local render token that forces the guest grid to rebuild when the store's
+    /// guestListVersion changes after a reload.
+    @State private var guestListRenderId: Int = 0
 
     private var settings: CoupleSettings {
         settingsStore.settings
@@ -58,33 +61,7 @@ struct GuestManagementViewV4: View {
     }
 
 
-    private var totalGuests: Int {
-        guestStore.guests.count
-    }
-
-    private var confirmedCount: Int {
-        guestStore.guests.filter { $0.rsvpStatus == .confirmed || $0.rsvpStatus == .attending }.count
-    }
-
-    private var pendingCount: Int {
-        guestStore.guests.filter { $0.rsvpStatus == .pending || $0.rsvpStatus == .invited }.count
-    }
-
-    private var declinedCount: Int {
-        guestStore.guests.filter { $0.rsvpStatus == .declined }.count
-    }
-
-    private var acceptanceRate: Double {
-        guard totalGuests > 0 else { return 0 }
-        return Double(confirmedCount) / Double(totalGuests)
-    }
-
-    private var weeklyChange: Int {
-        // Calculate guests added in the last 7 days
-        let weekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
-        return guestStore.guests.filter { $0.createdAt > weekAgo }.count
-    }
-
+    
     var body: some View {
         ZStack {
             AppGradients.appBackground
@@ -146,6 +123,10 @@ struct GuestManagementViewV4: View {
             )
         }
         .searchable(text: $searchText, placement: .automatic)
+        .onChange(of: guestStore.guestListVersion) { _ in
+            // Force the grid to rebuild when the underlying list reloads
+            guestListRenderId &+= 1
+        }
         .toolbar {
             ToolbarItemGroup {
                 Picker("RSVP", selection: $selectedStatus) {
@@ -255,38 +236,52 @@ struct GuestManagementViewV4: View {
     // MARK: - Stats Section
 
     private var statsSection: some View {
-        HStack(spacing: Spacing.lg) {
-            GuestManagementStatCard(
-                title: "Total Guests",
-                value: "\(totalGuests)",
-                subtitle: weeklyChange > 0 ? "+\(weeklyChange) this week" : nil,
-                subtitleColor: AppColors.success,
-                icon: "person.3.fill"
-            )
+        VStack(spacing: Spacing.lg) {
+            // Main Stats Row
+            HStack(spacing: Spacing.lg) {
+                GuestManagementStatCard(
+                    title: "Total Guests",
+                    value: "\(guestStore.totalGuestsCount)",
+                    subtitle: guestStore.weeklyChange > 0 ? "+\(guestStore.weeklyChange) this week" : nil,
+                    subtitleColor: AppColors.success,
+                    icon: "person.3.fill"
+                )
 
-            GuestManagementStatCard(
-                title: "Confirmed",
-                value: "\(confirmedCount)",
-                subtitle: "\(Int(acceptanceRate * 100))% acceptance",
-                subtitleColor: AppColors.success,
-                icon: "checkmark.circle.fill"
-            )
+                GuestManagementStatCard(
+                    title: "Acceptance Rate",
+                    value: "\(Int(guestStore.acceptanceRate * 100))%",
+                    subtitle: "\(guestStore.attendingCount) confirmed",
+                    subtitleColor: AppColors.success,
+                    icon: "checkmark.circle.fill"
+                )
+            }
 
-            GuestManagementStatCard(
-                title: "Pending",
-                value: "\(pendingCount)",
-                subtitle: "\(Int(Double(pendingCount) / Double(max(totalGuests, 1)) * 100))% pending",
-                subtitleColor: AppColors.warning,
-                icon: "clock.fill"
-            )
+            // Sub-sections Row
+            HStack(spacing: Spacing.lg) {
+                GuestManagementStatCard(
+                    title: "Attending",
+                    value: "\(guestStore.attendingCount)",
+                    subtitle: "Confirmed & Attending",
+                    subtitleColor: AppColors.success,
+                    icon: "checkmark.circle.fill"
+                )
 
-            GuestManagementStatCard(
-                title: "Declined",
-                value: "\(declinedCount)",
-                subtitle: "\(Int(Double(declinedCount) / Double(max(totalGuests, 1)) * 100))% declined",
-                subtitleColor: AppColors.error,
-                icon: "xmark.circle.fill"
-            )
+                GuestManagementStatCard(
+                    title: "Pending",
+                    value: "\(guestStore.pendingCount)",
+                    subtitle: "All other statuses",
+                    subtitleColor: AppColors.warning,
+                    icon: "clock.fill"
+                )
+
+                GuestManagementStatCard(
+                    title: "Declined",
+                    value: "\(guestStore.declinedCount)",
+                    subtitle: "Declined & No Response",
+                    subtitleColor: AppColors.error,
+                    icon: "xmark.circle.fill"
+                )
+            }
         }
     }
 
@@ -356,6 +351,7 @@ struct GuestManagementViewV4: View {
                             }
                     }
                 }
+                .id(guestListRenderId)
             }
         }
     }
@@ -598,7 +594,7 @@ Text(guest.fullName)
     private var statusBadge: some View {
         Group {
             switch guest.rsvpStatus {
-            case .confirmed, .attending:
+            case .confirmed:
                 Text("Confirmed")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.success)
@@ -606,8 +602,32 @@ Text(guest.fullName)
                     .padding(.vertical, Spacing.xs)
                     .background(AppColors.successLight)
                     .cornerRadius(9999)
-            case .pending, .invited:
+            case .attending:
+                Text("Attending")
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.success)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.successLight)
+                    .cornerRadius(9999)
+            case .pending:
                 Text("Pending")
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.warning)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.warningLight)
+                    .cornerRadius(9999)
+            case .maybe:
+                Text("Maybe")
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.warning)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.warningLight)
+                    .cornerRadius(9999)
+            case .invited:
+                Text("Invited")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.warning)
                     .padding(.horizontal, Spacing.md)
@@ -616,6 +636,14 @@ Text(guest.fullName)
                     .cornerRadius(9999)
             case .declined:
                 Text("Declined")
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.error)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.errorLight)
+                    .cornerRadius(9999)
+            case .noResponse:
+                Text("No Response")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.error)
                     .padding(.horizontal, Spacing.md)
