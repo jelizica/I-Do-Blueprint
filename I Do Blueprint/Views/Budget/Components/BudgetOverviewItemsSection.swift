@@ -10,6 +10,7 @@ import SwiftUI
 struct BudgetOverviewItemsSection: View {
     let filteredBudgetItems: [BudgetOverviewItem]
     let budgetItems: [BudgetOverviewItem]
+    @Binding var expandedFolderIds: Set<String>
     let viewMode: BudgetOverviewDashboardViewV2.ViewMode
     let onEditExpense: (String, String) -> Void
     let onRemoveExpense: (String, String) async -> Void
@@ -17,6 +18,32 @@ struct BudgetOverviewItemsSection: View {
     let onRemoveGift: (String) async -> Void
     let onAddExpense: (String) -> Void
     let onAddGift: (String) -> Void
+    
+    // Computed property to get only top-level items (no parent)
+    private var topLevelItems: [BudgetOverviewItem] {
+        filteredBudgetItems
+            .filter { $0.isTopLevel }
+            .sorted { $0.displayOrder < $1.displayOrder }
+    }
+    
+    // Get children of a folder
+    private func getChildren(of folderId: String) -> [BudgetOverviewItem] {
+        budgetItems
+            .filter { $0.parentFolderId == folderId }
+            .sorted { $0.displayOrder < $1.displayOrder }
+    }
+    
+    // Calculate aggregated totals for a folder
+    private func getFolderTotals(folderId: String) -> (budgeted: Double, spent: Double, effectiveSpent: Double) {
+        let children = getChildren(of: folderId)
+        return children.reduce((budgeted: 0.0, spent: 0.0, effectiveSpent: 0.0)) { accumulator, child in
+            (
+                budgeted: accumulator.budgeted + child.budgeted,
+                spent: accumulator.spent + child.spent,
+                effectiveSpent: accumulator.effectiveSpent + child.effectiveSpent
+            )
+        }
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -26,7 +53,7 @@ struct BudgetOverviewItemsSection: View {
 
                 Spacer()
 
-                Text("\(filteredBudgetItems.count) items")
+                Text("\(topLevelItems.count) items")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, Spacing.sm)
@@ -35,86 +62,260 @@ struct BudgetOverviewItemsSection: View {
                     .cornerRadius(8)
             }
 
-            if filteredBudgetItems.isEmpty {
+            if topLevelItems.isEmpty {
                 emptyStateView
             } else {
                 switch viewMode {
                 case .cards:
-                    LazyVGrid(
-                        columns: [
-                            GridItem(.adaptive(minimum: 280, maximum: 380), spacing: 16)
-                        ],
-                        spacing: 16
-                    ) {
-                        ForEach(filteredBudgetItems) { item in
-                            CircularProgressBudgetCard(
+                    cardsView
+                case .table:
+                    tableView
+                }
+            }
+        }
+    }
+    
+    private var cardsView: some View {
+        LazyVGrid(
+            columns: [
+                GridItem(.adaptive(minimum: 280, maximum: 380), spacing: 16)
+            ],
+            spacing: 16
+        ) {
+            ForEach(topLevelItems) { item in
+                if item.isFolder {
+                    // Folder card with aggregated totals
+                    folderCardView(item)
+                } else {
+                    // Regular item card
+                    regularItemCard(item)
+                }
+            }
+        }
+    }
+    
+    // Helper to create a budget item card with all closures configured
+    private func budgetItemCard(for item: BudgetOverviewItem) -> some View {
+        CircularProgressBudgetCard(
+            item: item,
+            onEditExpense: { _, expenseId in
+                onEditExpense(item.id, expenseId)
+            },
+            onRemoveExpense: { expenseIdFromCard, itemIdFromCard in
+                Task {
+                    await onRemoveExpense(expenseIdFromCard, itemIdFromCard)
+                }
+            },
+            onEditGift: { _, giftId in
+                onEditGift(item.id, giftId)
+            },
+            onRemoveGift: { _ in
+                Task {
+                    await onRemoveGift(item.id)
+                }
+            },
+            onAddExpense: { _ in onAddExpense(item.id) },
+            onAddGift: { _ in onAddGift(item.id) }
+        )
+    }
+    
+    private func regularItemCard(_ item: BudgetOverviewItem) -> some View {
+        budgetItemCard(for: item)
+    }
+    
+    @ViewBuilder
+    private func folderCardView(_ folder: BudgetOverviewItem) -> some View {
+        let totals = getFolderTotals(folderId: folder.id)
+        let isExpanded = expandedFolderIds.contains(folder.id)
+        let children = getChildren(of: folder.id)
+        
+        // Debug logging
+        let _ = print("🗂️ Folder '\(folder.itemName)' - ID: \(folder.id), isExpanded: \(isExpanded), children: \(children.count)")
+        
+        // Folder card
+        FolderBudgetCard(
+            folderName: folder.itemName,
+            budgeted: totals.budgeted,
+            spent: totals.spent,
+            effectiveSpent: totals.effectiveSpent,
+            childCount: children.count,
+            isExpanded: isExpanded,
+            onToggleExpand: {
+                print("🔄 Toggle folder '\(folder.itemName)' - Current state: \(isExpanded)")
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if isExpanded {
+                        expandedFolderIds.remove(folder.id)
+                        print("✅ Removed folder ID: \(folder.id)")
+                    } else {
+                        expandedFolderIds.insert(folder.id)
+                        print("✅ Added folder ID: \(folder.id)")
+                    }
+                    print("📊 expandedFolderIds now contains: \(expandedFolderIds)")
+                }
+            }
+        )
+        
+        // Child items appear inline in the grid when expanded
+        if isExpanded {
+            ForEach(children) { child in
+                budgetItemCard(for: child)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+    }
+    
+    private var tableView: some View {
+        VStack(spacing: 0) {
+            // Table header with flexible layout
+            HStack(spacing: 16) {
+                Text("Item")
+                    .frame(minWidth: 120, maxWidth: .infinity, alignment: .leading)
+                    .layoutPriority(2)
+                
+                Text("Category")
+                    .frame(minWidth: 80, maxWidth: 150, alignment: .leading)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .layoutPriority(1)
+                
+                Text("Budgeted")
+                    .frame(minWidth: 80, alignment: .trailing)
+                    .fixedSize()
+                
+                Text("Spent")
+                    .frame(minWidth: 80, alignment: .trailing)
+                    .fixedSize()
+                
+                Text("Remaining")
+                    .frame(minWidth: 80, alignment: .trailing)
+                    .fixedSize()
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .padding()
+            .background(Color(NSColor.controlBackgroundColor))
+
+            Divider()
+
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(topLevelItems) { item in
+                        if item.isFolder {
+                            folderTableRow(item)
+                        } else {
+                            BudgetTableRow(
                                 item: item,
-                                onEditExpense: { _, expenseId in
-                                    onEditExpense(item.id, expenseId)
+                                onAddExpense: {
+                                    onAddExpense(item.id)
                                 },
-                                onRemoveExpense: { expenseIdFromCard, itemIdFromCard in
+                                onAddGift: {
+                                    onAddGift(item.id)
+                                },
+                                onRemoveExpense: { expenseId in
                                     Task {
-                                        await onRemoveExpense(expenseIdFromCard, itemIdFromCard)
+                                        await onRemoveExpense(expenseId, item.id)
                                     }
                                 },
-                                onEditGift: { _, giftId in
-                                    onEditGift(item.id, giftId)
-                                },
-                                onRemoveGift: { _ in
+                                onRemoveGift: {
                                     Task {
                                         await onRemoveGift(item.id)
                                     }
+                                }
+                            )
+                            Divider()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private func folderTableRow(_ folder: BudgetOverviewItem) -> some View {
+        let totals = getFolderTotals(folderId: folder.id)
+        let isExpanded = expandedFolderIds.contains(folder.id)
+        let children = getChildren(of: folder.id)
+        
+        return VStack(spacing: 0) {
+            // Folder row
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if isExpanded {
+                        expandedFolderIds.remove(folder.id)
+                    } else {
+                        expandedFolderIds.insert(folder.id)
+                    }
+                }
+            }) {
+                HStack(spacing: 16) {
+                    HStack(spacing: 8) {
+                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Image(systemName: "folder.fill")
+                            .foregroundColor(.orange)
+                        Text(folder.itemName)
+                            .font(.system(size: 13, weight: .semibold))
+                    }
+                    .frame(width: 200, alignment: .leading)
+                    
+                    Text("FOLDER")
+                        .font(.caption2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.orange)
+                        .cornerRadius(4)
+                        .frame(width: 120, alignment: .leading)
+                    
+                    Text("$\(totals.budgeted, specifier: "%.2f")")
+                        .frame(width: 100, alignment: .trailing)
+                    
+                    Text("$\(totals.effectiveSpent, specifier: "%.2f")")
+                        .frame(width: 100, alignment: .trailing)
+                    
+                    Text("$\(totals.budgeted - totals.effectiveSpent, specifier: "%.2f")")
+                        .frame(width: 100, alignment: .trailing)
+                        .foregroundColor(totals.budgeted - totals.effectiveSpent >= 0 ? .green : .red)
+                    
+                    Spacer()
+                }
+                .padding()
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+            }
+            .buttonStyle(.plain)
+            
+            Divider()
+            
+            // Child rows (shown when expanded)
+            if isExpanded {
+                ForEach(children) { child in
+                    VStack(spacing: 0) {
+                        HStack(spacing: 16) {
+                            Spacer().frame(width: 20) // Indent
+                            BudgetTableRow(
+                                item: child,
+                                onAddExpense: {
+                                    onAddExpense(child.id)
                                 },
-                                onAddExpense: { _ in onAddExpense(item.id) },
-                                onAddGift: { _ in onAddGift(item.id) }
+                                onAddGift: {
+                                    onAddGift(child.id)
+                                },
+                                onRemoveExpense: { expenseId in
+                                    Task {
+                                        await onRemoveExpense(expenseId, child.id)
+                                    }
+                                },
+                                onRemoveGift: {
+                                    Task {
+                                        await onRemoveGift(child.id)
+                                    }
+                                }
                             )
                         }
-                    }
-                case .table:
-                    VStack(spacing: 0) {
-                        // Table header
-                        HStack(spacing: 16) {
-                            Text("Item").frame(width: 200, alignment: .leading)
-                            Text("Category").frame(width: 120, alignment: .leading)
-                            Text("Budgeted").frame(width: 100, alignment: .trailing)
-                            Text("Spent").frame(width: 100, alignment: .trailing)
-                            Text("Remaining").frame(width: 100, alignment: .trailing)
-                            Spacer()
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding()
-                        .background(Color(NSColor.controlBackgroundColor))
-
                         Divider()
-
-                        ScrollView {
-                            LazyVStack(spacing: 0) {
-                                ForEach(filteredBudgetItems) { item in
-                                    BudgetTableRow(
-                                        item: item,
-                                        onAddExpense: {
-                                            onAddExpense(item.id)
-                                        },
-                                        onAddGift: {
-                                            onAddGift(item.id)
-                                        },
-                                        onRemoveExpense: { expenseId in
-                                            Task {
-                                                await onRemoveExpense(expenseId, item.id)  // ✅ Fixed: correct parameter order
-                                            }
-                                        },
-                                        onRemoveGift: {
-                                            Task {
-                                                await onRemoveGift(item.id)
-                                            }
-                                        }
-                                    )
-                                    Divider()
-                                }
-                            }
-                        }
                     }
+                    .transition(.opacity.combined(with: .move(edge: .top)))
                 }
             }
         }

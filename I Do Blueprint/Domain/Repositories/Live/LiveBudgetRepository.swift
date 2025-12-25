@@ -1698,13 +1698,30 @@ await SentryService.shared.captureError(error, context: [
     func deleteBudgetDevelopmentItem(id: String) async throws {
         do {
             let client = try getClient()
+            
+            // Fetch the item first to get its scenarioId for proper cache invalidation
+            let items: [BudgetItem] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .select()
+                    .eq("id", value: id)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+            let scenarioId = items.first?.scenarioId
+            
             try await client
                 .from("budget_development_items")
                 .delete()
                 .eq("id", value: id)
                 .execute()
 
-            // Invalidate all item caches since we don't know which scenario
+            // Invalidate scenario-specific cache if we know the scenario
+            if let scenarioId = scenarioId {
+                await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
+            }
+            // Always invalidate global cache
             await RepositoryCache.shared.remove("budget_dev_items_all")
 
             // Log important mutation
@@ -2154,5 +2171,395 @@ await SentryService.shared.captureError(error, context: [
             logger.error("Primary budget scenario fetch failed after \(String(format: "%.2f", duration))s", error: error)
             throw error
         }
+    }
+
+    // MARK: - Folder Operations
+
+    func createFolder(name: String, scenarioId: String, parentFolderId: String?, displayOrder: Int) async throws -> BudgetItem {
+        do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            
+            let folder = BudgetItem.createFolder(
+                name: name,
+                scenarioId: scenarioId,
+                parentFolderId: parentFolderId,
+                displayOrder: displayOrder,
+                coupleId: tenantId.uuidString
+            )
+            
+            let created: BudgetItem = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .insert(folder)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            logger.info("Created folder: \(name)")
+            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
+            await RepositoryCache.shared.remove("budget_dev_items_all")
+            
+            return created
+        } catch {
+            logger.error("Failed to create folder", error: error)
+            throw BudgetError.createFailed(underlying: error)
+        }
+    }
+
+    func moveItemToFolder(itemId: String, targetFolderId: String?, displayOrder: Int) async throws {
+        do {
+            let client = try getClient()
+            
+            struct MoveUpdate: Codable {
+                let parentFolderId: String?
+                let displayOrder: Int
+                let updatedAt: Date
+                
+                enum CodingKeys: String, CodingKey {
+                    case parentFolderId = "parent_folder_id"
+                    case displayOrder = "display_order"
+                    case updatedAt = "updated_at"
+                }
+            }
+            
+            let update = MoveUpdate(
+                parentFolderId: targetFolderId,
+                displayOrder: displayOrder,
+                updatedAt: Date()
+            )
+            
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .update(update)
+                    .eq("id", value: itemId)
+                    .execute()
+            }
+            
+            logger.info("Moved item \(itemId) to folder \(targetFolderId ?? "root")")
+            await RepositoryCache.shared.remove("budget_dev_items_all")
+        } catch {
+            logger.error("Failed to move item to folder", error: error)
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws {
+        // Define struct outside loop to avoid repeated allocations
+        struct OrderUpdate: Codable {
+            let id: String
+            let displayOrder: Int
+            let updatedAt: Date
+
+            enum CodingKeys: String, CodingKey {
+                case id = "id"
+                case displayOrder = "display_order"
+                case updatedAt = "updated_at"
+            }
+        }
+        
+        do {
+            let client = try getClient()
+            let now = Date()
+            
+            // Collect all updates into a single array for batch operation
+            let updates = items.map { (itemId, order) in
+                OrderUpdate(id: itemId, displayOrder: order, updatedAt: now)
+            }
+            
+            // Perform single batch upsert instead of N separate updates
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .upsert(updates)
+                    .execute()
+            }
+
+            logger.info("Updated display order for \(items.count) items in single batch operation")
+            await RepositoryCache.shared.remove("budget_dev_items_all")
+        } catch {
+            logger.error("Failed to update display order", error: error)
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+
+
+    func toggleFolderExpansion(folderId: String, isExpanded: Bool) async throws {
+        do {
+            let client = try getClient()
+            
+            struct ExpansionUpdate: Codable {
+                let isExpanded: Bool
+                let updatedAt: Date
+                
+                enum CodingKeys: String, CodingKey {
+                    case isExpanded = "is_expanded"
+                    case updatedAt = "updated_at"
+                }
+            }
+            
+            let update = ExpansionUpdate(isExpanded: isExpanded, updatedAt: Date())
+            
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .update(update)
+                    .eq("id", value: folderId)
+                    .execute()
+            }
+            
+            logger.info("Toggled folder \(folderId) expansion to \(isExpanded)")
+        } catch {
+            logger.error("Failed to toggle folder expansion", error: error)
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    func fetchBudgetItemsHierarchical(scenarioId: String) async throws -> [BudgetItem] {
+        let cacheKey = "budget_items_hierarchical_\(scenarioId)"
+        
+        if let cached: [BudgetItem] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            return cached
+        }
+        
+        let client = try getClient()
+        
+        let items: [BudgetItem] = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("budget_development_items")
+                .select()
+                .eq("scenario_id", value: scenarioId)
+                .order("display_order", ascending: true)
+                .execute()
+                .value
+        }
+        
+        await RepositoryCache.shared.set(cacheKey, value: items)
+        logger.info("Fetched \(items.count) hierarchical items for scenario \(scenarioId)")
+        
+        return items
+    }
+
+    func calculateFolderTotals(folderId: String) async throws -> FolderTotals {
+    // Fetch the folder first to get its scenarioId
+    let client = try getClient()
+    let folders: [BudgetItem] = try await RepositoryNetwork.withRetry {
+    try await client
+    .from("budget_development_items")
+    .select()
+    .eq("id", value: folderId)
+    .eq("is_folder", value: true)
+    .limit(1)
+    .execute()
+    .value
+    }
+    
+    guard let folder = folders.first, let scenarioId = folder.scenarioId else {
+    throw BudgetError.fetchFailed(underlying: NSError(
+    domain: "LiveBudgetRepository",
+    code: -1,
+    userInfo: [NSLocalizedDescriptionKey: "Folder not found or missing scenarioId"]
+    ))
+    }
+    
+    // Now fetch all items for the correct scenario
+    let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+    
+    func getAllDescendants(of folderId: String) -> [BudgetItem] {
+    var result: [BudgetItem] = []
+    var queue = [folderId]
+    
+    while !queue.isEmpty {
+    let currentId = queue.removeFirst()
+    let children = items.filter { $0.parentFolderId == currentId && !$0.isFolder }
+    result.append(contentsOf: children)
+    
+    let childFolders = items.filter { $0.parentFolderId == currentId && $0.isFolder }
+    queue.append(contentsOf: childFolders.map { $0.id })
+    }
+    
+    return result
+    }
+    
+    let descendants = getAllDescendants(of: folderId)
+    let withoutTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
+    let tax = descendants.reduce(0) { $0 + ($1.vendorEstimateWithoutTax * $1.taxRate) }
+    let withTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithTax }
+    
+    return FolderTotals(withoutTax: withoutTax, tax: tax, withTax: withTax)
+    }
+
+    func canMoveItem(itemId: String, toFolder targetFolderId: String?) async throws -> Bool {
+    // Can't move to itself
+    if itemId == targetFolderId { return false }
+    
+    // If moving to root, always allowed
+    guard let targetFolderId = targetFolderId else { return true }
+    
+    // Fetch the item first to get its scenarioId
+    let client = try getClient()
+    let itemsToMove: [BudgetItem] = try await RepositoryNetwork.withRetry {
+    try await client
+    .from("budget_development_items")
+    .select()
+    .eq("id", value: itemId)
+    .limit(1)
+    .execute()
+    .value
+    }
+    
+    guard let item = itemsToMove.first, let scenarioId = item.scenarioId else {
+    throw BudgetError.fetchFailed(underlying: NSError(
+    domain: "LiveBudgetRepository",
+    code: -1,
+    userInfo: [NSLocalizedDescriptionKey: "Item not found or missing scenarioId"]
+    ))
+    }
+    
+    // Fetch all items for the correct scenario
+    let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+        
+        // Check if target is a folder
+        guard let targetFolder = items.first(where: { $0.id == targetFolderId }),
+              targetFolder.isFolder else {
+            return false
+        }
+        
+        // Check depth limit (max 3 levels)
+        func getDepth(of itemId: String) -> Int {
+            var depth = 0
+            var currentId: String? = itemId
+            
+            while let id = currentId,
+                  let item = items.first(where: { $0.id == id }),
+                  let parentId = item.parentFolderId {
+                depth += 1
+                currentId = parentId
+            }
+            
+            return depth
+        }
+        
+        let targetDepth = getDepth(of: targetFolderId)
+        if targetDepth >= 3 { return false }
+        
+        // Check for circular reference
+        var visited = Set<String>()
+        var currentId: String? = targetFolderId
+        
+        while let id = currentId {
+            if visited.contains(id) || id == itemId { return false }
+            visited.insert(id)
+            
+            guard let item = items.first(where: { $0.id == id }) else { break }
+            currentId = item.parentFolderId
+        }
+        
+        return true
+    }
+
+    func deleteFolder(folderId: String, deleteContents: Bool) async throws {
+    do {
+    let client = try getClient()
+    
+    // Fetch the folder first to get its scenarioId (needed for both branches)
+    let folders: [BudgetItem] = try await RepositoryNetwork.withRetry {
+    try await client
+    .from("budget_development_items")
+    .select()
+    .eq("id", value: folderId)
+    .eq("is_folder", value: true)
+    .limit(1)
+    .execute()
+    .value
+    }
+    
+    guard let folder = folders.first, let scenarioId = folder.scenarioId else {
+    throw BudgetError.deleteFailed(underlying: NSError(
+    domain: "LiveBudgetRepository",
+    code: -1,
+    userInfo: [NSLocalizedDescriptionKey: "Folder not found or missing scenarioId"]
+    ))
+    }
+    
+    if deleteContents {
+    // Delete folder and all descendant items recursively
+    // First, fetch all items in the scenario to build the hierarchy
+    let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+    
+    // Recursively collect all descendant IDs (folders and items)
+    func getAllDescendantIds(of parentId: String) -> [String] {
+    var result: [String] = []
+    let directChildren = items.filter { $0.parentFolderId == parentId }
+    
+    for child in directChildren {
+    result.append(child.id)
+    // If child is a folder, recursively get its descendants
+    if child.isFolder {
+    result.append(contentsOf: getAllDescendantIds(of: child.id))
+    }
+    }
+    
+    return result
+    }
+    
+    let descendantIds = getAllDescendantIds(of: folderId)
+    
+    // Delete all descendants first (if any)
+    if !descendantIds.isEmpty {
+    try await RepositoryNetwork.withRetry {
+    try await client
+    .from("budget_development_items")
+    .delete()
+    .in("id", values: descendantIds)
+    .execute()
+    }
+    logger.info("Deleted \(descendantIds.count) descendant items from folder \(folderId)")
+    }
+    
+    // Then delete the folder itself
+    try await RepositoryNetwork.withRetry {
+    try await client
+    .from("budget_development_items")
+    .delete()
+    .eq("id", value: folderId)
+    .execute()
+    }
+    
+    logger.info("Deleted folder \(folderId) and all contents")
+    } else {
+    // Move contents to parent, then delete folder
+    let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+    
+    let children = items.filter { $0.parentFolderId == folderId }
+    
+    // Move children to folder's parent
+    for child in children {
+    try await moveItemToFolder(itemId: child.id, targetFolderId: folder.parentFolderId, displayOrder: child.displayOrder)
+    }
+    
+    // Delete the folder
+    try await RepositoryNetwork.withRetry {
+    try await client
+    .from("budget_development_items")
+    .delete()
+    .eq("id", value: folderId)
+    .execute()
+    }
+    
+    logger.info("Deleted folder \(folderId), moved \(children.count) items to parent")
+    }
+    
+    // Invalidate caches with scenarioId
+    await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
+    await RepositoryCache.shared.remove("budget_dev_items_all")
+    } catch {
+    logger.error("Failed to delete folder", error: error)
+    throw BudgetError.deleteFailed(underlying: error)
+    }
     }
 }

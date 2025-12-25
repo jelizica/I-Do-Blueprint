@@ -518,4 +518,250 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         return primaryBudgetScenario
     }
+
+    // MARK: - Folder Operations
+
+    func createFolder(name: String, scenarioId: String, parentFolderId: String?, displayOrder: Int) async throws -> BudgetItem {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        let folder = BudgetItem.createFolder(
+            name: name,
+            scenarioId: scenarioId,
+            parentFolderId: parentFolderId,
+            displayOrder: displayOrder,
+            coupleId: UUID().uuidString
+        )
+        
+        budgetDevelopmentItems.append(folder)
+        return folder
+    }
+
+    func moveItemToFolder(itemId: String, targetFolderId: String?, displayOrder: Int) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        guard let index = budgetDevelopmentItems.firstIndex(where: { $0.id == itemId }) else {
+            throw NSError(domain: "MockBudgetRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Item not found"])
+        }
+        
+        var item = budgetDevelopmentItems[index]
+        item.parentFolderId = targetFolderId
+        item.displayOrder = displayOrder
+        budgetDevelopmentItems[index] = item
+    }
+
+    func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        // Fail fast: detect missing items before making any changes
+        let missingIds = items.map { $0.itemId }.filter { itemId in
+            !budgetDevelopmentItems.contains(where: { $0.id == itemId })
+        }
+        
+        if !missingIds.isEmpty {
+            let idsString = missingIds.joined(separator: ", ")
+            throw NSError(
+                domain: "MockBudgetRepository",
+                code: 404,
+                userInfo: [NSLocalizedDescriptionKey: "Item(s) not found: \(idsString)"]
+            )
+        }
+        
+        // All items exist, proceed with updates
+        for (itemId, order) in items {
+            if let index = budgetDevelopmentItems.firstIndex(where: { $0.id == itemId }) {
+                var item = budgetDevelopmentItems[index]
+                item.displayOrder = order
+                budgetDevelopmentItems[index] = item
+            }
+        }
+    }
+
+    func toggleFolderExpansion(folderId: String, isExpanded: Bool) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        // Verify item exists
+        guard let index = budgetDevelopmentItems.firstIndex(where: { $0.id == folderId }) else {
+            throw NSError(
+                domain: "MockBudgetRepository",
+                code: 404,
+                userInfo: [NSLocalizedDescriptionKey: "Item not found"]
+            )
+        }
+        
+        // Verify item is a folder
+        guard budgetDevelopmentItems[index].isFolder else {
+            throw NSError(
+                domain: "MockBudgetRepository",
+                code: 400,
+                userInfo: [NSLocalizedDescriptionKey: "Item is not a folder"]
+            )
+        }
+        
+        // Note: isExpanded is managed in the view layer, not persisted in the model
+        // This method validates the folder exists and is actually a folder, but doesn't persist state
+    }
+
+    func fetchBudgetItemsHierarchical(scenarioId: String) async throws -> [BudgetItem] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return budgetDevelopmentItems.filter { $0.scenarioId == scenarioId }.sorted { $0.displayOrder < $1.displayOrder }
+    }
+
+    func calculateFolderTotals(folderId: String) async throws -> FolderTotals {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        // Get all descendants of this folder
+        func getAllDescendants(of folderId: String) -> [BudgetItem] {
+            var result: [BudgetItem] = []
+            var queue = [folderId]
+            
+            while !queue.isEmpty {
+                let currentId = queue.removeFirst()
+                let children = budgetDevelopmentItems.filter { $0.parentFolderId == currentId && !$0.isFolder }
+                result.append(contentsOf: children)
+                
+                let childFolders = budgetDevelopmentItems.filter { $0.parentFolderId == currentId && $0.isFolder }
+                queue.append(contentsOf: childFolders.map { $0.id })
+            }
+            
+            return result
+        }
+        
+        let descendants = getAllDescendants(of: folderId)
+        let withoutTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
+        let tax = descendants.reduce(0) { $0 + ($1.vendorEstimateWithoutTax * $1.taxRate) }
+        let withTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithTax }
+        
+        return FolderTotals(withoutTax: withoutTax, tax: tax, withTax: withTax)
+    }
+
+    func canMoveItem(itemId: String, toFolder targetFolderId: String?) async throws -> Bool {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        // Can't move to itself
+        if itemId == targetFolderId { return false }
+        
+        // If moving to root, check if item's subtree would fit
+        if targetFolderId == nil {
+            let subtreeHeight = getSubtreeHeight(of: itemId)
+            // At root level (depth 0), item will be at depth 1, so: 1 + subtreeHeight <= 3
+            return 1 + subtreeHeight <= 3
+        }
+        
+        // Check if target is a folder
+        guard let targetFolder = budgetDevelopmentItems.first(where: { $0.id == targetFolderId }),
+              targetFolder.isFolder else {
+            return false
+        }
+        
+        // Check for circular reference (item is ancestor of target)
+        var visited = Set<String>()
+        var currentId: String? = targetFolderId
+        
+        while let id = currentId {
+            if visited.contains(id) || id == itemId { return false }
+            visited.insert(id)
+            
+            guard let item = budgetDevelopmentItems.first(where: { $0.id == id }) else { break }
+            currentId = item.parentFolderId
+        }
+        
+        // Calculate target depth (how deep the target folder is)
+        func getDepth(of itemId: String) -> Int {
+            var depth = 0
+            var currentId: String? = itemId
+            
+            while let id = currentId,
+                  let item = budgetDevelopmentItems.first(where: { $0.id == id }),
+                  let parentId = item.parentFolderId {
+                depth += 1
+                currentId = parentId
+            }
+            
+            return depth
+        }
+        
+        let targetDepth = getDepth(of: targetFolderId!)
+        
+        // Calculate subtree height of the item being moved
+        let subtreeHeight = getSubtreeHeight(of: itemId)
+        
+        // Validate combined depth: targetDepth + 1 (item becomes child) + subtreeHeight <= 3
+        // This ensures the deepest descendant won't exceed max depth
+        return targetDepth + 1 + subtreeHeight <= 3
+    }
+    
+    /// Calculates the maximum depth (height) of the subtree rooted at the given item
+    /// - Parameter itemId: The root item ID
+    /// - Returns: The height of the subtree (0 for leaf nodes, 1+ for nodes with children)
+    private func getSubtreeHeight(of itemId: String) -> Int {
+        // Get all direct children of this item
+        let children = budgetDevelopmentItems.filter { $0.parentFolderId == itemId }
+        
+        // If no children, height is 0
+        guard !children.isEmpty else { return 0 }
+        
+        // Recursively find the maximum height among all children
+        var maxChildHeight = 0
+        for child in children {
+            let childHeight = getSubtreeHeight(of: child.id)
+            maxChildHeight = max(maxChildHeight, childHeight)
+        }
+        
+        // Height is 1 (for this level) + max child height
+        return 1 + maxChildHeight
+    }
+
+    func deleteFolder(folderId: String, deleteContents: Bool) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        guard let folder = budgetDevelopmentItems.first(where: { $0.id == folderId }) else {
+            throw NSError(domain: "MockBudgetRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Folder not found"])
+        }
+        
+        // Verify item is a folder
+        guard folder.isFolder else {
+            throw NSError(
+                domain: "MockBudgetRepository",
+                code: 400,
+                userInfo: [NSLocalizedDescriptionKey: "Item is not a folder"]
+            )
+        }
+        
+        if deleteContents {
+            // Delete folder and all contents recursively
+            func deleteRecursively(folderId: String) {
+                let children = budgetDevelopmentItems.filter { $0.parentFolderId == folderId }
+                for child in children {
+                    if child.isFolder {
+                        deleteRecursively(folderId: child.id)
+                    }
+                    budgetDevelopmentItems.removeAll(where: { $0.id == child.id })
+                }
+            }
+            
+            deleteRecursively(folderId: folderId)
+            budgetDevelopmentItems.removeAll(where: { $0.id == folderId })
+        } else {
+            // Move contents to parent, then delete folder
+            let children = budgetDevelopmentItems.filter { $0.parentFolderId == folderId }
+            
+            for child in children {
+                if let index = budgetDevelopmentItems.firstIndex(where: { $0.id == child.id }) {
+                    var updatedChild = budgetDevelopmentItems[index]
+                    updatedChild.parentFolderId = folder.parentFolderId
+                    budgetDevelopmentItems[index] = updatedChild
+                }
+            }
+            
+            budgetDevelopmentItems.removeAll(where: { $0.id == folderId })
+        }
+    }
 }

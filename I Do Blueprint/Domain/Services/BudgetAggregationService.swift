@@ -70,7 +70,10 @@ actor BudgetAggregationService: BudgetAggregationServiceProtocol {
                     spent: totalSpent,
                     effectiveSpent: effectiveSpent,
                     expenses: expenseLinks,
-                    gifts: giftLinks
+                    gifts: giftLinks,
+                    isFolder: item.isFolder,
+                    parentFolderId: item.parentFolderId,
+                    displayOrder: item.displayOrder
                 )
             )
         }

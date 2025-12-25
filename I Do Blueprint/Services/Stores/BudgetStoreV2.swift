@@ -477,6 +477,273 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         }
     }
 
+    // MARK: - Folder Operations
+
+    /// Creates a new budget folder
+    /// - Parameters:
+    ///   - name: Folder display name
+    ///   - scenarioId: Scenario ID the folder belongs to
+    ///   - parentFolderId: Parent folder ID (nil for root level)
+    ///   - displayOrder: Display order within parent
+    /// - Returns: Created folder item
+    func createFolder(name: String, scenarioId: String, parentFolderId: String?, displayOrder: Int) async throws -> BudgetItem {
+        do {
+            let folder = try await repository.createFolder(
+                name: name,
+                scenarioId: scenarioId,
+                parentFolderId: parentFolderId,
+                displayOrder: displayOrder
+            )
+            
+            logger.info("Created folder: \(name) in scenario \(scenarioId)")
+            return folder
+        } catch {
+            logger.error("Error creating folder", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "createFolder",
+                    feature: "budget",
+                    metadata: ["folderName": name, "scenarioId": scenarioId]
+                )
+            )
+            throw BudgetError.createFailed(underlying: error)
+        }
+    }
+
+    /// Moves an item to a different folder
+    /// - Parameters:
+    ///   - itemId: Item/folder to move
+    ///   - targetFolderId: Destination folder (nil for root)
+    ///   - displayOrder: New display order
+    func moveItemToFolder(itemId: String, targetFolderId: String?, displayOrder: Int) async throws {
+        do {
+            try await repository.moveItemToFolder(
+                itemId: itemId,
+                targetFolderId: targetFolderId,
+                displayOrder: displayOrder
+            )
+            
+            logger.info("Moved item \(itemId) to folder \(targetFolderId ?? "root")")
+        } catch {
+            logger.error("Error moving item to folder", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "moveItemToFolder",
+                    feature: "budget",
+                    metadata: ["itemId": itemId, "targetFolderId": targetFolderId ?? "root"]
+                )
+            )
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    /// Updates display order for multiple items (drag-and-drop)
+    /// - Parameter items: Array of (itemId, displayOrder) tuples
+    func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws {
+        do {
+            try await repository.updateDisplayOrder(items: items)
+            logger.info("Updated display order for \(items.count) items")
+        } catch {
+            logger.error("Error updating display order", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "updateDisplayOrder",
+                    feature: "budget",
+                    metadata: ["itemCount": items.count]
+                )
+            )
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    /// Toggles folder expansion state
+    /// - Parameters:
+    ///   - folderId: Folder ID
+    ///   - isExpanded: New expansion state
+    func toggleFolderExpansion(folderId: String, isExpanded: Bool) async throws {
+        do {
+            try await repository.toggleFolderExpansion(folderId: folderId, isExpanded: isExpanded)
+            logger.info("Toggled folder \(folderId) expansion to \(isExpanded)")
+        } catch {
+            logger.error("Error toggling folder expansion", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "toggleFolderExpansion",
+                    feature: "budget",
+                    metadata: ["folderId": folderId, "isExpanded": isExpanded]
+                )
+            )
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    /// Fetches budget items with hierarchical structure
+    /// - Parameter scenarioId: Scenario ID to fetch
+    /// - Returns: Flat array of items with folder relationships
+    func fetchBudgetItemsHierarchical(scenarioId: String) async throws -> [BudgetItem] {
+        do {
+            let items = try await repository.fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+            logger.info("Fetched \(items.count) hierarchical items for scenario \(scenarioId)")
+            return items
+        } catch {
+            logger.error("Error fetching hierarchical items", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "fetchBudgetItemsHierarchical",
+                    feature: "budget",
+                    metadata: ["scenarioId": scenarioId]
+                )
+            )
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    /// Calculates folder totals using database function
+    /// - Parameter folderId: Folder ID
+    /// - Returns: FolderTotals struct with withoutTax, tax, withTax
+    func calculateFolderTotals(folderId: String) async throws -> FolderTotals {
+        do {
+            let totals = try await repository.calculateFolderTotals(folderId: folderId)
+            logger.info("Calculated totals for folder \(folderId): $\(totals.withTax)")
+            return totals
+        } catch {
+            logger.error("Error calculating folder totals", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "calculateFolderTotals",
+                    feature: "budget",
+                    metadata: ["folderId": folderId]
+                )
+            )
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    /// Validates if an item can be moved to a target folder
+    /// - Parameters:
+    ///   - itemId: Item to move
+    ///   - targetFolderId: Target folder
+    /// - Returns: True if move is valid
+    /// - Throws: Repository errors if validation fails due to database/network issues
+    func canMoveItem(itemId: String, toFolder targetFolderId: String?) async throws -> Bool {
+        do {
+            let canMove = try await repository.canMoveItem(itemId: itemId, toFolder: targetFolderId)
+            return canMove
+        } catch {
+            logger.error("Error validating move", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "canMoveItem",
+                    feature: "budget",
+                    metadata: ["itemId": itemId, "targetFolderId": targetFolderId ?? "root"]
+                )
+            )
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    /// Deletes a folder and optionally moves contents to parent
+    /// - Parameters:
+    ///   - folderId: Folder to delete
+    ///   - deleteContents: If true, delete all contents; if false, move to parent
+    func deleteFolder(folderId: String, deleteContents: Bool) async throws {
+        do {
+            try await repository.deleteFolder(folderId: folderId, deleteContents: deleteContents)
+            logger.info("Deleted folder \(folderId), contents \(deleteContents ? "deleted" : "moved to parent")")
+        } catch {
+            logger.error("Error deleting folder", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(
+                    operation: "deleteFolder",
+                    feature: "budget",
+                    metadata: ["folderId": folderId, "deleteContents": deleteContents]
+                )
+            )
+            throw BudgetError.deleteFailed(underlying: error)
+        }
+    }
+
+    // MARK: - Folder Helper Methods
+
+    /// Builds hierarchical structure from flat array of items
+    /// - Parameter items: Flat array of budget items
+    /// - Returns: Array of items at root level (parentFolderId == nil)
+    func getChildren(of folderId: String?, from items: [BudgetItem]) -> [BudgetItem] {
+        items.filter { $0.parentFolderId == folderId }.sorted { $0.displayOrder < $1.displayOrder }
+    }
+
+    /// Gets all descendant items of a folder (recursive)
+    /// - Parameters:
+    ///   - folderId: Folder ID
+    ///   - items: All items in scenario
+    /// - Returns: All descendant items (not folders)
+    func getAllDescendants(of folderId: String, from items: [BudgetItem]) -> [BudgetItem] {
+        var result: [BudgetItem] = []
+        var queue = [folderId]
+        
+        while !queue.isEmpty {
+            let currentId = queue.removeFirst()
+            let children = items.filter { $0.parentFolderId == currentId && !$0.isFolder }
+            result.append(contentsOf: children)
+            
+            // Add child folders to queue
+            let childFolders = items.filter { $0.parentFolderId == currentId && $0.isFolder }
+            queue.append(contentsOf: childFolders.map { $0.id })
+        }
+        
+        return result
+    }
+
+    /// Calculates folder totals locally (without database call)
+    /// - Parameters:
+    ///   - folderId: Folder ID
+    ///   - allItems: All items in scenario
+    /// - Returns: FolderTotals struct
+    func calculateLocalFolderTotals(folderId: String, allItems: [BudgetItem]) -> FolderTotals {
+        let descendants = getAllDescendants(of: folderId, from: allItems)
+        let withoutTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
+        let withTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithTax }
+        let tax = withTax - withoutTax
+        
+        return FolderTotals(withoutTax: withoutTax, tax: tax, withTax: withTax)
+    }
+
+    /// Gets the hierarchy level of an item (0 = root, 1 = first level, etc.)
+    /// - Parameters:
+    ///   - itemId: Item ID
+    ///   - allItems: All items in scenario
+    /// - Returns: Hierarchy level (0-based), or -1 if circular reference detected
+    func getHierarchyLevel(itemId: String, allItems: [BudgetItem]) -> Int {
+        var level = 0
+        var currentId: String? = itemId
+        var visited = Set<String>()
+        
+        while let id = currentId,
+              let item = allItems.first(where: { $0.id == id }),
+              let parentId = item.parentFolderId {
+            // Check for circular reference
+            if visited.contains(id) {
+                // Circular reference detected - return sentinel value
+                logger.error("Circular reference detected in folder hierarchy for item: \(itemId)")
+                return -1
+            }
+            visited.insert(id)
+            
+            level += 1
+            currentId = parentId
+        }
+        
+        return level
+    }
+
     // MARK: - State Management
 
     /// Reset loaded state (for logout/tenant switch)

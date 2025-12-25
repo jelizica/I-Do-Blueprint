@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct BudgetItemsTableView: View {
     @Binding var items: [BudgetItem]
@@ -9,7 +10,7 @@ struct BudgetItemsTableView: View {
     @Binding var newEventNames: [String: String]
 
     let onUpdateItem: (String, String, Any) -> Void
-    let onRemoveItem: (String) -> Void
+    let onRemoveItem: (String, FolderRowView.DeleteOption?) -> Void
     let onAddCategory: (String, String) async -> Void
     let onAddSubcategory: (String, String) async -> Void
     let onAddEvent: (String, String) -> Void
@@ -17,30 +18,38 @@ struct BudgetItemsTableView: View {
 
     @State private var activeDropdownItemId: String?
     @State private var buttonRects: [String: CGRect] = [:]
+    
+    // Drag and drop state
+    @State private var draggedItem: BudgetItem?
+    @State private var dropTargetId: String?
+    @State private var isDragging = false
+    
+    // Folder expansion state (managed in view layer, not persisted)
+    @State private var expandedFolderIds: Set<String> = []
+    
+    // Folder color coding
+    private let folderColors: [Color] = [
+        .blue, .purple, .green, .orange, .pink, .teal, .indigo, .mint
+    ]
+    
+    // MARK: - Computed Properties
+    
+    private var rootItems: [BudgetItem] {
+        items.filter { $0.parentFolderId == nil }
+            .sorted { $0.displayOrder < $1.displayOrder }
+    }
+    
+    private func getChildren(of folderId: String) -> [BudgetItem] {
+        items.filter { $0.parentFolderId == folderId }
+            .sorted { $0.displayOrder < $1.displayOrder }
+    }
 
     var body: some View {
         LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
             Section {
-                // Data rows
-                ForEach(items, id: \.id) { item in
-                    BudgetItemRowView(
-                        item: item,
-                        budgetStore: budgetStore,
-                        selectedTaxRate: selectedTaxRate,
-                        newCategoryNames: $newCategoryNames,
-                        newSubcategoryNames: $newSubcategoryNames,
-                        newEventNames: $newEventNames,
-                        onUpdateItem: onUpdateItem,
-                        onRemoveItem: onRemoveItem,
-                        onAddCategory: onAddCategory,
-                        onAddSubcategory: onAddSubcategory,
-                        onAddEvent: onAddEvent,
-                        onButtonRectChanged: { itemId, rect in
-                            buttonRects[itemId] = rect
-                        },
-                        responsibleOptions: responsibleOptions,
-                        activeDropdownItemId: $activeDropdownItemId)
-                        .padding(.vertical, Spacing.xs)
+                // Data rows - hierarchical display
+                ForEach(rootItems, id: \.id) { item in
+                    renderItemHierarchy(item, level: 0)
                 }
             } header: {
                 // Sticky header with title and column headers
@@ -109,6 +118,461 @@ struct BudgetItemsTableView: View {
                 }
             })
     }
+    
+    // MARK: - Hierarchical Rendering
+    
+    private func renderItemHierarchy(_ item: BudgetItem, level: Int) -> AnyView {
+        if item.isFolder {
+            return AnyView(
+                VStack(spacing: 0) {
+                    // Render folder
+                    FolderRowView(
+                        folder: item,
+                        level: level,
+                        allItems: items,
+                        isDragTarget: dropTargetId == item.id,
+                        isExpanded: expandedFolderIds.contains(item.id),
+                        onToggle: {
+                            toggleFolder(item)
+                        },
+                        onRename: { newName in
+                            onUpdateItem(item.id, "itemName", newName)
+                        },
+                        onRemove: { deleteOption in
+                            onRemoveItem(item.id, deleteOption)
+                        },
+                        onUpdateItem: onUpdateItem
+                    )
+                    .padding(.vertical, Spacing.xs)
+                    .opacity(draggedItem?.id == item.id ? 0.5 : 1.0)
+                    .onDrag {
+                        self.draggedItem = item
+                        self.isDragging = true
+                        return NSItemProvider(object: item.id as NSString)
+                    }
+                    .onDrop(of: [.text], delegate: FolderDropDelegate(
+                        folder: item,
+                        allItems: items,
+                        draggedItem: $draggedItem,
+                        dropTargetId: $dropTargetId,
+                        onDrop: { sourceItem in
+                            handleDrop(source: sourceItem, target: item)
+                        }
+                    ))
+                    
+                    // Render children if expanded
+                    if expandedFolderIds.contains(item.id) {
+                        ForEach(getChildren(of: item.id), id: \.id) { child in
+                            renderItemHierarchy(child, level: level + 1)
+                        }
+                    }
+                }
+            )
+        } else {
+            return AnyView(
+                // Render regular item with indentation
+                HStack(spacing: 0) {
+                    // Indentation
+                    if level > 0 {
+                        Color.clear
+                            .frame(width: CGFloat(level * 20))
+                    }
+                    
+                    BudgetItemRowView(
+                        item: item,
+                        budgetStore: budgetStore,
+                        selectedTaxRate: selectedTaxRate,
+                        newCategoryNames: $newCategoryNames,
+                        newSubcategoryNames: $newSubcategoryNames,
+                        newEventNames: $newEventNames,
+                        onUpdateItem: onUpdateItem,
+                        onRemoveItem: onRemoveItem,
+                        onAddCategory: onAddCategory,
+                        onAddSubcategory: onAddSubcategory,
+                        onAddEvent: onAddEvent,
+                        onButtonRectChanged: { itemId, rect in
+                            buttonRects[itemId] = rect
+                        },
+                        responsibleOptions: responsibleOptions,
+                        activeDropdownItemId: $activeDropdownItemId)
+                }
+                .padding(.vertical, Spacing.xs)
+                .opacity(draggedItem?.id == item.id ? 0.5 : 1.0)
+                .onDrag {
+                    self.draggedItem = item
+                    self.isDragging = true
+                    return NSItemProvider(object: item.id as NSString)
+                }
+            )
+        }
+    }
+    
+    private func toggleFolder(_ folder: BudgetItem) {
+        if expandedFolderIds.contains(folder.id) {
+            expandedFolderIds.remove(folder.id)
+        } else {
+            expandedFolderIds.insert(folder.id)
+        }
+    }
+    
+    // MARK: - Drag and Drop Handlers
+    
+    private func handleDrop(source: BudgetItem, target: BudgetItem) {
+        guard canMove(item: source, toFolder: target) else { return }
+        onUpdateItem(source.id, "parentFolderId", target.id)
+        draggedItem = nil
+        dropTargetId = nil
+        isDragging = false
+    }
+    
+    private func canMove(item: BudgetItem, toFolder folder: BudgetItem) -> Bool {
+        BudgetItemMoveValidator.canMove(item: item, toFolder: folder, allItems: items)
+    }
+}
+
+// MARK: - Budget Item Move Validator
+
+struct BudgetItemMoveValidator {
+    /// Validates whether an item can be moved to a target folder
+    /// - Parameters:
+    ///   - item: The item to move
+    ///   - toFolder: The target folder
+    ///   - allItems: All budget items for hierarchy traversal
+    /// - Returns: True if the move is valid, false otherwise
+    static func canMove(item: BudgetItem, toFolder: BudgetItem, allItems: [BudgetItem]) -> Bool {
+        // Cannot move item to itself
+        if item.id == toFolder.id { return false }
+        
+        // If moving a folder, ensure we're not moving it into one of its descendants
+        if item.isFolder {
+            var currentId: String? = toFolder.id
+            while let id = currentId {
+                if id == item.id { return false }
+                currentId = allItems.first(where: { $0.id == id })?.parentFolderId
+            }
+        }
+        
+        // Check folder depth limit (max 3 levels)
+        var depth = 0
+        var currentId: String? = toFolder.id
+        while let id = currentId {
+            depth += 1
+            if depth >= 3 { return false }
+            currentId = allItems.first(where: { $0.id == id })?.parentFolderId
+        }
+        
+        return true
+    }
+}
+
+// MARK: - Folder Drop Delegate
+
+struct FolderDropDelegate: DropDelegate {
+    let folder: BudgetItem
+    let allItems: [BudgetItem]
+    @Binding var draggedItem: BudgetItem?
+    @Binding var dropTargetId: String?
+    let onDrop: (BudgetItem) -> Void
+    
+    func validateDrop(info: DropInfo) -> Bool {
+        guard let draggedItem = draggedItem else { return false }
+        return canMove(item: draggedItem, toFolder: folder)
+    }
+    
+    func dropEntered(info: DropInfo) {
+        if validateDrop(info: info) { dropTargetId = folder.id }
+    }
+    
+    func dropExited(info: DropInfo) {
+        if dropTargetId == folder.id { dropTargetId = nil }
+    }
+    
+    func performDrop(info: DropInfo) -> Bool {
+        guard let draggedItem = draggedItem, validateDrop(info: info) else { return false }
+        onDrop(draggedItem)
+        dropTargetId = nil
+        return true
+    }
+    
+    private func canMove(item: BudgetItem, toFolder folder: BudgetItem) -> Bool {
+        BudgetItemMoveValidator.canMove(item: item, toFolder: folder, allItems: allItems)
+    }
+}
+
+// MARK: - Folder Row View
+
+struct FolderRowView: View {
+    let folder: BudgetItem
+    let level: Int
+    let allItems: [BudgetItem]
+    let isDragTarget: Bool
+    let isExpanded: Bool
+    let onToggle: () -> Void
+    let onRename: (String) -> Void
+    let onRemove: (DeleteOption) -> Void
+    let onUpdateItem: (String, String, Any) -> Void
+    
+    @State private var showingRenameDialog = false
+    @State private var showingDeleteDialog = false
+    @State private var showingColorPicker = false
+    @State private var newName = ""
+    @State private var deleteOption: DeleteOption = .moveToParent
+    @State private var isDropTarget = false
+    @State private var selectedColor: Color = .blue
+    @State private var cachedTotal: Double = 0.0
+    
+    enum DeleteOption {
+        case moveToParent
+        case deleteContents
+    }
+    
+    // Folder color coding
+    private let folderColors: [Color] = [
+        .blue, .purple, .green, .orange, .pink, .teal, .indigo, .mint
+    ]
+    
+    // Available folders for "Move to Folder" menu
+    private var availableFolders: [BudgetItem] {
+        allItems.filter { $0.isFolder && $0.id != folder.id && !isDescendant(of: folder.id, item: $0) }
+    }
+    
+    private func isDescendant(of folderId: String, item: BudgetItem) -> Bool {
+        var currentId: String? = item.parentFolderId
+        while let id = currentId {
+            if id == folderId { return true }
+            currentId = allItems.first(where: { $0.id == id })?.parentFolderId
+        }
+        return false
+    }
+    
+    private func getFolderLevel(_ targetFolder: BudgetItem) -> Int {
+        var level = 0
+        var currentId: String? = targetFolder.parentFolderId
+        while let id = currentId {
+            level += 1
+            currentId = allItems.first(where: { $0.id == id })?.parentFolderId
+        }
+        return level
+    }
+    
+    private func onMoveToFolder(_ targetFolderId: String?) {
+        if let targetId = targetFolderId {
+            onUpdateItem(folder.id, "parentFolderId", targetId)
+        } else {
+            onUpdateItem(folder.id, "parentFolderId", NSNull())
+        }
+    }
+    
+    private var folderColor: Color {
+        // Use hash of folder ID to consistently assign color
+        let hash = abs(folder.id.hashValue)
+        return folderColors[hash % folderColors.count]
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var folderTotal: Double {
+        cachedTotal
+    }
+    
+    private func calculateFolderTotal(folderId: String, allItems: [BudgetItem]) -> Double {
+        var total = 0.0
+        var queue = [folderId]
+        
+        while !queue.isEmpty {
+            let currentId = queue.removeFirst()
+            let children = allItems.filter { $0.parentFolderId == currentId }
+            
+            for child in children {
+                if child.isFolder {
+                    queue.append(child.id)
+                } else {
+                    total += child.vendorEstimateWithTax
+                }
+            }
+        }
+        
+        return total
+    }
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Indentation
+            if level > 0 {
+                Color.clear
+                    .frame(width: CGFloat(level * 20))
+            }
+            
+            // Expand/collapse button
+            Button(action: onToggle) {
+                Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.secondary)
+                    .frame(width: 20, height: 20)
+            }
+            .buttonStyle(.plain)
+            
+            // Folder icon with color coding
+            Image(systemName: isExpanded ? "folder.fill" : "folder")
+                .font(.system(size: 16))
+                .foregroundColor(folderColor)
+            
+            // Color indicator dot
+            Circle()
+                .fill(folderColor)
+                .frame(width: 8, height: 8)
+            
+            // Folder name
+            Text(folder.itemName)
+                .font(.headline)
+                .fontWeight(.semibold)
+            
+            Spacer()
+            
+            // Folder total with color-coded background
+            Text("Total: $\(String(format: "%.2f", folderTotal))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xs)
+                .background(folderColor.opacity(0.15))
+                .cornerRadius(4)
+            
+            // Actions menu
+            Menu {
+                Button {
+                    newName = folder.itemName
+                    showingRenameDialog = true
+                } label: {
+                    Label("Rename", systemImage: "pencil")
+                }
+                
+                Menu {
+                    Button {
+                        onMoveToFolder(nil)
+                    } label: {
+                        Label("Root Level", systemImage: "house")
+                    }
+                    .disabled(folder.parentFolderId == nil)
+                    
+                    if !availableFolders.isEmpty {
+                        Divider()
+                        
+                        ForEach(availableFolders, id: \.id) { targetFolder in
+                            Button {
+                                onMoveToFolder(targetFolder.id)
+                            } label: {
+                                HStack {
+                                    let folderLevel = getFolderLevel(targetFolder)
+                                    if folderLevel > 0 {
+                                        Text(String(repeating: "  ", count: folderLevel))
+                                            .font(.system(.caption, design: .monospaced))
+                                    }
+                                    Image(systemName: "folder")
+                                    Text(targetFolder.itemName)
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Label("Move to Folder", systemImage: "folder.badge.plus")
+                }
+                
+                Divider()
+                
+                Button(role: .destructive) {
+                    showingDeleteDialog = true
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .foregroundColor(.secondary)
+            }
+            .menuStyle(.borderlessButton)
+        }
+        .padding(.vertical, Spacing.sm)
+        .padding(.horizontal)
+        .background(
+            isDragTarget ?
+                Color.green.opacity(0.2) :
+                Color(NSColor.controlBackgroundColor).opacity(0.5)
+        )
+        .cornerRadius(8)
+        .overlay(
+            isDragTarget ?
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(Color.green, lineWidth: 2) :
+                nil
+        )
+        .sheet(isPresented: $showingRenameDialog) {
+            renameDialog
+        }
+        .alert("Delete Folder", isPresented: $showingDeleteDialog) {
+            deleteAlert
+        } message: {
+            Text("What would you like to do with the items in this folder?")
+        }
+        .onAppear {
+            cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: allItems)
+        }
+        .onChange(of: allItems.count) { _, _ in
+            cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: allItems)
+        }
+        .onChange(of: allItems.map { $0.id + String($0.vendorEstimateWithTax) }) { _, _ in
+            cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: allItems)
+        }
+    }
+    
+    // MARK: - Rename Dialog
+    
+    private var renameDialog: some View {
+        VStack(spacing: Spacing.lg) {
+            Text("Rename Folder")
+                .font(.headline)
+            
+            TextField("Folder Name", text: $newName)
+                .textFieldStyle(.roundedBorder)
+                .frame(width: 300)
+            
+            HStack(spacing: Spacing.md) {
+                Button("Cancel") {
+                    showingRenameDialog = false
+                    newName = ""
+                }
+                .keyboardShortcut(.cancelAction)
+                
+                Button("Rename") {
+                    let trimmedName = newName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmedName.isEmpty {
+                        onRename(trimmedName)
+                    }
+                    showingRenameDialog = false
+                    newName = ""
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(newName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            }
+        }
+        .padding(Spacing.xl)
+        .frame(width: 400)
+    }
+    
+    // MARK: - Delete Alert
+    
+    private var deleteAlert: some View {
+        Group {
+            Button("Move Items to Parent") {
+                onRemove(.moveToParent)
+            }
+            
+            Button("Delete All Contents", role: .destructive) {
+                onRemove(.deleteContents)
+            }
+            
+            Button("Cancel", role: .cancel) {}
+        }
+    }
 }
 
 struct BudgetItemRowView: View {
@@ -120,7 +584,7 @@ struct BudgetItemRowView: View {
     @Binding var newEventNames: [String: String]
 
     let onUpdateItem: (String, String, Any) -> Void
-    let onRemoveItem: (String) -> Void
+    let onRemoveItem: (String, FolderRowView.DeleteOption?) -> Void
     let onAddCategory: (String, String) async -> Void
     let onAddSubcategory: (String, String) async -> Void
     let onAddEvent: (String, String) -> Void
@@ -183,7 +647,7 @@ struct BudgetItemRowView: View {
 
             // Actions
             Button(action: {
-                onRemoveItem(item.id)
+                onRemoveItem(item.id, nil)
             }) {
                 Image(systemName: "trash")
                     .foregroundColor(.red)
@@ -505,7 +969,7 @@ struct EventDropdownView: View {
         newSubcategoryNames: .constant([:]),
         newEventNames: .constant([:]),
         onUpdateItem: { _, _, _ in },
-        onRemoveItem: { _ in },
+        onRemoveItem: { _, _ in },
         onAddCategory: { _, _ in },
         onAddSubcategory: { _, _ in },
         onAddEvent: { _, _ in },

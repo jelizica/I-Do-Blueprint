@@ -395,6 +395,185 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         return primaryBudgetScenario
     }
+
+    func fetchExpenseAllocationsForScenario(scenarioId: String) async throws -> [ExpenseAllocation] {
+        if shouldThrowError { throw errorToThrow }
+        return expenseAllocations.filter { $0.scenarioId == scenarioId }
+    }
+
+    func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int) {
+        if shouldThrowError { throw errorToThrow }
+        scenarios.append(scenario)
+        budgetItems.append(contentsOf: items)
+        return (scenario.id, items.count)
+    }
+
+    // MARK: - Folder Operations
+
+    func createFolder(name: String, scenarioId: String, parentFolderId: String?, displayOrder: Int) async throws -> BudgetItem {
+        if shouldThrowError { throw errorToThrow }
+        
+        let folder = BudgetItem.createFolder(
+            name: name,
+            scenarioId: scenarioId,
+            parentFolderId: parentFolderId,
+            displayOrder: displayOrder,
+            coupleId: UUID().uuidString
+        )
+        
+        budgetItems.append(folder)
+        return folder
+    }
+
+    func moveItemToFolder(itemId: String, targetFolderId: String?, displayOrder: Int) async throws {
+        if shouldThrowError { throw errorToThrow }
+        
+        guard let index = budgetItems.firstIndex(where: { $0.id == itemId }) else {
+            throw BudgetError.updateFailed(underlying: NSError(domain: "Test", code: -1, userInfo: [NSLocalizedDescriptionKey: "Item not found"]))
+        }
+        
+        var item = budgetItems[index]
+        item.parentFolderId = targetFolderId
+        item.displayOrder = displayOrder
+        budgetItems[index] = item
+    }
+
+    func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws {
+        if shouldThrowError { throw errorToThrow }
+        
+        for (itemId, order) in items {
+            if let index = budgetItems.firstIndex(where: { $0.id == itemId }) {
+                var item = budgetItems[index]
+                item.displayOrder = order
+                budgetItems[index] = item
+            }
+        }
+    }
+
+    func toggleFolderExpansion(folderId: String, isExpanded: Bool) async throws {
+        if shouldThrowError { throw errorToThrow }
+        
+        // isExpanded is now managed in the view layer, not persisted in the model
+        // This method is kept for protocol conformance but does nothing
+    }
+
+    func fetchBudgetItemsHierarchical(scenarioId: String) async throws -> [BudgetItem] {
+        if shouldThrowError { throw errorToThrow }
+        return budgetItems.filter { $0.scenarioId == scenarioId }.sorted { $0.displayOrder < $1.displayOrder }
+    }
+
+    func calculateFolderTotals(folderId: String) async throws -> FolderTotals {
+        if shouldThrowError { throw errorToThrow }
+        
+        // Get all descendants of this folder
+        func getAllDescendants(of folderId: String) -> [BudgetItem] {
+            var result: [BudgetItem] = []
+            var queue = [folderId]
+            
+            while !queue.isEmpty {
+                let currentId = queue.removeFirst()
+                let children = budgetItems.filter { $0.parentFolderId == currentId && !$0.isFolder }
+                result.append(contentsOf: children)
+                
+                let childFolders = budgetItems.filter { $0.parentFolderId == currentId && $0.isFolder }
+                queue.append(contentsOf: childFolders.map { $0.id })
+            }
+            
+            return result
+        }
+        
+        let descendants = getAllDescendants(of: folderId)
+        let withoutTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
+        let tax = descendants.reduce(0) { $0 + ($1.vendorEstimateWithoutTax * $1.taxRate) }
+        let withTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithTax }
+        
+        return FolderTotals(withoutTax: withoutTax, tax: tax, withTax: withTax)
+    }
+
+    func canMoveItem(itemId: String, toFolder targetFolderId: String?) async throws -> Bool {
+        if shouldThrowError { throw errorToThrow }
+        
+        // Can't move to itself
+        if itemId == targetFolderId { return false }
+        
+        // If moving to root, always allowed
+        guard let targetFolderId = targetFolderId else { return true }
+        
+        // Check if target is a folder
+        guard let targetFolder = budgetItems.first(where: { $0.id == targetFolderId }),
+              targetFolder.isFolder else {
+            return false
+        }
+        
+        // Check depth limit (max 3 levels)
+        func getDepth(of itemId: String) -> Int {
+            var depth = 0
+            var currentId: String? = itemId
+            
+            while let id = currentId,
+                  let item = budgetItems.first(where: { $0.id == id }),
+                  let parentId = item.parentFolderId {
+                depth += 1
+                currentId = parentId
+            }
+            
+            return depth
+        }
+        
+        let targetDepth = getDepth(of: targetFolderId)
+        if targetDepth >= 3 { return false }
+        
+        // Check for circular reference
+        var visited = Set<String>()
+        var currentId: String? = targetFolderId
+        
+        while let id = currentId {
+            if visited.contains(id) || id == itemId { return false }
+            visited.insert(id)
+            
+            guard let item = budgetItems.first(where: { $0.id == id }) else { break }
+            currentId = item.parentFolderId
+        }
+        
+        return true
+    }
+
+    func deleteFolder(folderId: String, deleteContents: Bool) async throws {
+        if shouldThrowError { throw errorToThrow }
+        
+        guard let folder = budgetItems.first(where: { $0.id == folderId }) else {
+            throw BudgetError.deleteFailed(underlying: NSError(domain: "Test", code: -1, userInfo: [NSLocalizedDescriptionKey: "Folder not found"]))
+        }
+        
+        if deleteContents {
+            // Delete folder and all contents recursively
+            func deleteRecursively(folderId: String) {
+                let children = budgetItems.filter { $0.parentFolderId == folderId }
+                for child in children {
+                    if child.isFolder {
+                        deleteRecursively(folderId: child.id)
+                    }
+                    budgetItems.removeAll(where: { $0.id == child.id })
+                }
+            }
+            
+            deleteRecursively(folderId: folderId)
+            budgetItems.removeAll(where: { $0.id == folderId })
+        } else {
+            // Move contents to parent, then delete folder
+            let children = budgetItems.filter { $0.parentFolderId == folderId }
+            
+            for child in children {
+                if let index = budgetItems.firstIndex(where: { $0.id == child.id }) {
+                    var updatedChild = budgetItems[index]
+                    updatedChild.parentFolderId = folder.parentFolderId
+                    budgetItems[index] = updatedChild
+                }
+            }
+            
+            budgetItems.removeAll(where: { $0.id == folderId })
+        }
+    }
 }
 
 // MARK: - Mock Task Repository

@@ -1,0 +1,70 @@
+--- Original
++++ Fixed
+@@ -2247,37 +2247,40 @@
+         }
+     }
+ 
+-    func updateDisplayOrder(items: [(itemId: String displayOrder: Int)]) async throws {
+-        do {
++    func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws {
++        // Define struct outside loop to avoid repeated allocations
++        struct OrderUpdate: Codable {
++            let id: String
++            let displayOrder: Int
++            let updatedAt: Date
++
++            enum CodingKeys: String, CodingKey {
++                case id = "id"
++                case displayOrder = "display_order"
++                case updatedAt = "updated_at"
++            }
++        }
++        
++        do {
+             let client = try getClient()
+-
+-            for (itemId order) in items {
+-                struct OrderUpdate: Codable {
+-                    let displayOrder: Int
+-                    let updatedAt: Date
+-
+-                    enum CodingKeys: String CodingKey {
+-                        case displayOrder = "display_order"
+-                        case updatedAt = "updated_at"
+-                    }
+-                }
+-
+-                let update = OrderUpdate(displayOrder: order updatedAt: Date())
+-
+-                try await RepositoryNetwork.withRetry {
+-                    try await client
+-                        .from("budget_development_items")
+-                        .update(update)
+-                        .eq("id" value: itemId)
+-                        .execute()
+-                }
++            let now = Date()
++            
++            // Collect all updates into a single array for batch operation
++            let updates = items.map { (itemId, order) in
++                OrderUpdate(id: itemId, displayOrder: order, updatedAt: now)
+             }
+-
+-            logger.info("Updated display order for \(items.count) items")
++            
++            // Perform single batch upsert instead of N separate updates
++            try await RepositoryNetwork.withRetry {
++                try await client
++                    .from("budget_development_items")
++                    .upsert(updates)
++                    .execute()
++            }
++
++            logger.info("Updated display order for \(items.count) items in single batch operation")
+             await RepositoryCache.shared.remove("budget_dev_items_all")
+         } catch {
+-            logger.error("Failed to update display order" error: error)
++            logger.error("Failed to update display order", error: error)
+             throw BudgetError.updateFailed(underlying: error)
+         }
+     }

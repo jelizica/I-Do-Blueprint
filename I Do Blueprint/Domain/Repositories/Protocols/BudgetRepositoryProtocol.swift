@@ -389,4 +389,286 @@ protocol BudgetRepositoryProtocol: Sendable {
     ///   - items: Items to insert for the scenario (can be empty)
     /// - Returns: The persisted scenario ID and number of items inserted
     func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int)
+
+    // MARK: - Folder Operations
+
+    /// Creates a new budget folder
+    /// - Parameters:
+    ///   - name: Folder display name
+    ///   - scenarioId: Scenario ID the folder belongs to
+    ///   - parentFolderId: Parent folder ID (nil for root level)
+    ///   - displayOrder: Display order within parent
+    /// - Returns: Created folder item
+    /// - Throws: Repository errors if creation fails or validation errors
+    func createFolder(name: String, scenarioId: String, parentFolderId: String?, displayOrder: Int) async throws -> BudgetItem
+
+    /// Moves an item or folder to a different parent folder
+    ///
+    /// When moving a folder, all of its children (items and subfolders) move with it,
+    /// preserving their relative hierarchical structure and displayOrder values within
+    /// the folder. The folder itself is assigned the specified displayOrder in its new
+    /// parent location.
+    ///
+    /// ## Circular Move Prevention
+    /// Moving a folder into one of its own descendants is **disallowed** and will result
+    /// in an error. The implementation must validate that the target folder is not:
+    /// - The item itself
+    /// - A descendant of the item being moved
+    /// - Part of a circular reference chain
+    ///
+    /// ## Example
+    /// ```
+    /// // Valid move: Move "Catering" folder to "Venue" folder
+    /// // Before:
+    /// //   Root
+    /// //   ├── Venue
+    /// //   └── Catering
+    /// //       └── Menu Items
+    /// //
+    /// // After moveItemToFolder(itemId: "catering-id", targetFolderId: "venue-id", displayOrder: 0):
+    /// //   Root
+    /// //   └── Venue
+    /// //       └── Catering (displayOrder: 0)
+    /// //           └── Menu Items (preserves original displayOrder)
+    ///
+    /// // Invalid move: Move "Venue" into its own child "Catering"
+    /// // This would create: Venue → Catering → Venue (circular reference)
+    /// // Throws: BudgetError.circularMove or BudgetError.invalidTarget
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - itemId: ID of the item or folder to move
+    ///   - targetFolderId: ID of the destination parent folder (nil for root level)
+    ///   - displayOrder: New display order within the target folder
+    ///
+    /// - Throws:
+    ///   - `BudgetError.circularMove`: When attempting to move a folder into one of its own descendants
+    ///   - `BudgetError.invalidTarget`: When the target folder is invalid or doesn't exist
+    ///   - `BudgetError.itemNotFound`: When the item to move doesn't exist
+    ///   - Repository errors for database/network failures
+    func moveItemToFolder(itemId: String, targetFolderId: String?, displayOrder: Int) async throws
+
+    /// Updates display order for multiple items (drag-and-drop)
+    /// - Parameter items: Array of (itemId, displayOrder) tuples
+    /// - Throws: Repository errors if update fails
+    func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws
+
+    /// Toggles folder expansion state
+    ///
+    /// This method updates the expansion state for a budget folder, controlling whether
+    /// its children are displayed in the UI. The implementation **must validate** that
+    /// the specified ID refers to an actual folder (item with `isFolder = true`) and
+    /// throw an error if it does not.
+    ///
+    /// ## Type Validation
+    /// The implementation is required to:
+    /// 1. Fetch the item with the specified ID
+    /// 2. Verify that `isFolder == true`
+    /// 3. Throw `BudgetError.notAFolder` if the item is not a folder
+    /// 4. Throw `BudgetError.itemNotFound` if the item doesn't exist
+    ///
+    /// ## Example
+    /// ```swift
+    /// // Valid: Toggle expansion for a folder
+    /// try await repository.toggleFolderExpansion(folderId: "folder-123", isExpanded: true)
+    ///
+    /// // Invalid: Attempt to toggle expansion for a regular item
+    /// try await repository.toggleFolderExpansion(folderId: "item-456", isExpanded: true)
+    /// // Throws: BudgetError.notAFolder("Cannot toggle expansion: item-456 is not a folder")
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - folderId: ID of the folder to update (must refer to an item with `isFolder = true`)
+    ///   - isExpanded: New expansion state (true = expanded, false = collapsed)
+    ///
+    /// - Throws:
+    ///   - `BudgetError.notAFolder`: When the ID refers to a non-folder item
+    ///   - `BudgetError.itemNotFound`: When no item exists with the specified ID
+    ///   - Repository errors for database/network failures
+    func toggleFolderExpansion(folderId: String, isExpanded: Bool) async throws
+
+    /// Fetches budget items with hierarchical structure
+    ///
+    /// Returns a flat array of all budget items (both folders and regular items) for the
+    /// specified scenario. The hierarchy is encoded in each item's properties rather than
+    /// in a nested structure.
+    ///
+    /// ## Hierarchy Representation
+    /// Each `BudgetItem` contains the following properties that define its position in the hierarchy:
+    /// - `parentFolderId: String?` - ID of the parent folder, or `nil` for root-level items
+    /// - `isFolder: Bool` - `true` for folders, `false` for regular items
+    /// - `displayOrder: Int` - Sort order within the parent folder (0-based)
+    ///
+    /// ## Ordering Guarantee
+    /// Items are returned in **no guaranteed order**. Callers must sort and group items
+    /// themselves to reconstruct the hierarchy. The array may contain items in any sequence.
+    ///
+    /// ## Reconstructing the Tree
+    /// To rebuild the hierarchical structure from the flat array:
+    ///
+    /// ```swift
+    /// let allItems = try await repository.fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+    ///
+    /// // 1. Group items by parent
+    /// let itemsByParent = Dictionary(grouping: allItems) { $0.parentFolderId }
+    ///
+    /// // 2. Get root-level items (parentFolderId == nil)
+    /// let rootItems = (itemsByParent[nil] ?? [])
+    ///     .sorted { $0.displayOrder < $1.displayOrder }
+    ///
+    /// // 3. For each folder, get its children recursively
+    /// func getChildren(of folderId: String) -> [BudgetItem] {
+    ///     return (itemsByParent[folderId] ?? [])
+    ///         .sorted { $0.displayOrder < $1.displayOrder }
+    /// }
+    ///
+    /// // 4. Render hierarchy
+    /// for rootItem in rootItems {
+    ///     renderItem(rootItem)
+    ///     if rootItem.isFolder {
+    ///         for child in getChildren(of: rootItem.id) {
+    ///             renderItem(child, indented: true)
+    ///         }
+    ///     }
+    /// }
+    /// ```
+    ///
+    /// ## Example Structure
+    /// ```
+    /// // Returned flat array (order not guaranteed):
+    /// [
+    ///   BudgetItem(id: "1", parentFolderId: nil, isFolder: true, displayOrder: 0, itemName: "Venue"),
+    ///   BudgetItem(id: "2", parentFolderId: "1", isFolder: false, displayOrder: 0, itemName: "Hall Rental"),
+    ///   BudgetItem(id: "3", parentFolderId: nil, isFolder: false, displayOrder: 1, itemName: "Rings"),
+    ///   BudgetItem(id: "4", parentFolderId: "1", isFolder: false, displayOrder: 1, itemName: "Chairs")
+    /// ]
+    ///
+    /// // Reconstructed hierarchy (after grouping and sorting):
+    /// Root
+    /// ├── Venue (folder, displayOrder: 0)
+    /// │   ├── Hall Rental (item, displayOrder: 0)
+    /// │   └── Chairs (item, displayOrder: 1)
+    /// └── Rings (item, displayOrder: 1)
+    /// ```
+    ///
+    /// - Parameter scenarioId: Scenario ID to fetch items for
+    /// - Returns: Flat array of all items with hierarchy encoded in properties
+    /// - Throws: Repository errors if fetch fails
+    func fetchBudgetItemsHierarchical(scenarioId: String) async throws -> [BudgetItem]
+
+    /// Calculates folder totals using database function
+    /// - Parameter folderId: Folder ID
+    /// - Returns: FolderTotals struct with withoutTax, tax, withTax
+    /// - Throws: Repository errors if calculation fails or folder not found
+    func calculateFolderTotals(folderId: String) async throws -> FolderTotals
+
+    /// Validates if an item can be moved to a target folder
+    ///
+    /// Performs comprehensive validation to determine whether a move operation would be valid
+    /// according to business rules, hierarchy constraints, and data integrity requirements.
+    /// Returns `true` if the move is allowed, `false` if it violates any rules.
+    ///
+    /// ## Validation Rules
+    /// The following conditions make a move **invalid** (returns `false`):
+    ///
+    /// ### 1. Circular Reference Prevention
+    /// - **Cannot move an item to itself**: `itemId == targetFolderId`
+    /// - **Cannot move a folder into its own descendants**: Would create a cycle in the hierarchy
+    /// - **Cannot move a folder into itself**: Direct self-reference
+    /// - Example: Moving "Venue" folder into its child "Catering" folder is forbidden
+    ///
+    /// ### 2. Target Validation
+    /// - **Target folder must exist**: If `targetFolderId` is non-nil, it must reference an existing item
+    /// - **Target must be a folder**: If `targetFolderId` is non-nil, the item must have `isFolder = true`
+    /// - **Target must be in same scenario**: Cannot move items across different budget scenarios
+    /// - Root-level moves (`targetFolderId = nil`) are always valid for target validation
+    ///
+    /// ### 3. Hierarchy Depth Limits
+    /// - **Maximum depth constraint**: Moving would not exceed maximum folder nesting depth (typically 3 levels)
+    /// - Depth is calculated from root to the deepest descendant after the move
+    ///
+    /// ### 4. Item Existence
+    /// - **Source item must exist**: The `itemId` must reference an existing budget item
+    /// - **Source item must be in current couple's context**: Multi-tenant isolation enforced
+    ///
+    /// ### 5. Cross-Context Prevention
+    /// - **Same couple/tenant**: Cannot move items between different couples' budgets
+    /// - **Same scenario**: Cannot move items between different budget scenarios
+    /// - All items must belong to the current authenticated couple
+    ///
+    /// ## Error Handling
+    /// This method throws errors for **system failures**, not validation failures:
+    /// - `BudgetError.itemNotFound`: When `itemId` doesn't exist (system error, not validation)
+    /// - `BudgetError.tenantContextMissing`: When no couple is authenticated
+    /// - Repository errors: For database/network failures during validation
+    ///
+    /// **Note**: Validation failures (circular references, invalid targets, etc.) return `false`,
+    /// they do **not** throw errors. Only use this method to check if a move is allowed before
+    /// attempting it with `moveItemToFolder`.
+    ///
+    /// ## Usage Example
+    /// ```swift
+    /// // Check if move is valid before attempting
+    /// let canMove = try await repository.canMoveItem(
+    ///     itemId: "catering-folder-id",
+    ///     toFolder: "venue-folder-id"
+    /// )
+    ///
+    /// if canMove {
+    ///     // Move is valid - proceed
+    ///     try await repository.moveItemToFolder(
+    ///         itemId: "catering-folder-id",
+    ///         targetFolderId: "venue-folder-id",
+    ///         displayOrder: 0
+    ///     )
+    /// } else {
+    ///     // Move is invalid - show error to user
+    ///     showError("Cannot move item to this location")
+    /// }
+    /// ```
+    ///
+    /// ## Validation Scenarios
+    /// ```
+    /// // ✅ Valid: Move item to different folder
+    /// canMoveItem(itemId: "item-1", toFolder: "folder-2") → true
+    ///
+    /// // ✅ Valid: Move item to root level
+    /// canMoveItem(itemId: "item-1", toFolder: nil) → true
+    ///
+    /// // ❌ Invalid: Move folder into itself
+    /// canMoveItem(itemId: "folder-1", toFolder: "folder-1") → false
+    ///
+    /// // ❌ Invalid: Move folder into its own child
+    /// // Hierarchy: Venue → Catering → Menu
+    /// canMoveItem(itemId: "venue-id", toFolder: "catering-id") → false
+    ///
+    /// // ❌ Invalid: Target is not a folder
+    /// canMoveItem(itemId: "item-1", toFolder: "item-2") → false
+    ///
+    /// // ❌ Invalid: Target doesn't exist
+    /// canMoveItem(itemId: "item-1", toFolder: "nonexistent-id") → false
+    ///
+    /// // ❌ Invalid: Would exceed depth limit
+    /// // Moving deep folder would create 4+ levels
+    /// canMoveItem(itemId: "deep-folder", toFolder: "level-3-folder") → false
+    /// ```
+    ///
+    /// - Parameters:
+    ///   - itemId: ID of the item to validate for moving
+    ///   - targetFolderId: ID of the destination folder, or `nil` for root level
+    ///
+    /// - Returns: `true` if the move is valid and allowed, `false` if it violates any validation rules
+    ///
+    /// - Throws:
+    ///   - `BudgetError.itemNotFound`: When the source item doesn't exist
+    ///   - `BudgetError.tenantContextMissing`: When no couple is authenticated
+    ///   - Repository errors for database/network failures during validation
+    func canMoveItem(itemId: String, toFolder targetFolderId: String?) async throws -> Bool
+
+    /// Deletes a folder and optionally moves contents to parent
+    /// - Parameters:
+    ///   - folderId: Folder to delete
+    ///   - deleteContents: If true, delete all contents; if false, move to parent
+    /// - Throws: Repository errors if deletion fails or folder not found
+    func deleteFolder(folderId: String, deleteContents: Bool) async throws
 }

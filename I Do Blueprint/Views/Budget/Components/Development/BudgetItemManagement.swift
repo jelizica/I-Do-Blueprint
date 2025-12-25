@@ -37,10 +37,57 @@ extension BudgetDevelopmentView {
             linkedExpenseId: nil,
             linkedGiftOwedId: nil,
             coupleId: coupleId.uuidString,
-            isTestData: false)
+            isTestData: false,
+            parentFolderId: nil,
+            isFolder: false,
+            displayOrder: 0)
 
         budgetItems.insert(newItem, at: 0)
         newlyCreatedItemIds.insert(newItem.id)
+    }
+    
+    // MARK: Add Folder
+    
+    func addFolder(name: String, parentFolderId: String?) {
+        // Validate folder name is not empty or whitespace-only
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            logger.error("Cannot add folder: name is empty")
+            return
+        }
+        
+        guard let coupleId = SessionManager.shared.getTenantId() else {
+            logger.error("Cannot add folder: No couple selected")
+            return
+        }
+        
+        guard let scenarioId = currentScenarioId else {
+            logger.error("Cannot add folder: No scenario selected")
+            return
+        }
+        
+        // Increment displayOrder of all items in the same parent folder
+        for index in budgetItems.indices {
+            if budgetItems[index].parentFolderId == parentFolderId {
+                budgetItems[index].displayOrder += 1
+            }
+        }
+        
+        // Create folder at the top (displayOrder = 0)
+        let newFolder = BudgetItem.createFolder(
+            name: name,
+            scenarioId: scenarioId,
+            parentFolderId: parentFolderId,
+            displayOrder: 0,
+            coupleId: coupleId.uuidString
+        )
+        
+        // Add to local array at the top to match displayOrder = 0 and addBudgetItem() behavior
+        budgetItems.insert(newFolder, at: 0)
+        
+        // Mark as newly created so it gets saved
+        newlyCreatedItemIds.insert(newFolder.id)
+        
+        logger.info("Created folder: \(name) at top of list")
     }
 
     // MARK: Update Item
@@ -70,6 +117,13 @@ extension BudgetDevelopmentView {
             item.personResponsible = value as? String ?? "Both"
         case "notes":
             item.notes = value as? String ?? ""
+        case "parentFolderId":
+            // Handle both String and NSNull for parentFolderId
+            if let folderId = value as? String {
+                item.parentFolderId = folderId
+            } else {
+                item.parentFolderId = nil
+            }
         default:
             break
         }
@@ -79,13 +133,63 @@ extension BudgetDevelopmentView {
 
     // MARK: Remove Item
 
-    func removeBudgetItem(_ id: String) {
+    func removeBudgetItem(_ id: String, deleteOption: FolderRowView.DeleteOption? = nil) {
+        // Check if this is a folder
+        guard let item = budgetItems.first(where: { $0.id == id }) else { return }
+        
+        if item.isFolder {
+            // Handle folder deletion based on the option
+            if let option = deleteOption {
+                switch option {
+                case .moveToParent:
+                    // Move all children to the folder's parent
+                    let parentFolderId = item.parentFolderId
+                    for index in budgetItems.indices {
+                        if budgetItems[index].parentFolderId == id {
+                            budgetItems[index].parentFolderId = parentFolderId
+                        }
+                    }
+                    
+                case .deleteContents:
+                    // Recursively delete all descendants
+                    var itemsToRemove = Set<String>()
+                    var queue = [id]
+                    
+                    while !queue.isEmpty {
+                        let currentId = queue.removeFirst()
+                        let children = budgetItems.filter { $0.parentFolderId == currentId }
+                        
+                        for child in children {
+                            itemsToRemove.insert(child.id)
+                            if child.isFolder {
+                                queue.append(child.id)
+                            }
+                        }
+                    }
+                    
+                    // Mark items for deletion or remove from newly created
+                    for itemId in itemsToRemove {
+                        if !newlyCreatedItemIds.contains(itemId) {
+                            itemsToDelete.insert(itemId)
+                        } else {
+                            newlyCreatedItemIds.remove(itemId)
+                        }
+                    }
+                    
+                    // Remove all descendants from local array
+                    budgetItems.removeAll { itemsToRemove.contains($0.id) }
+                }
+            }
+        }
+        
+        // Mark folder/item for deletion or remove from newly created
         if !newlyCreatedItemIds.contains(id) {
             itemsToDelete.insert(id)
         } else {
             newlyCreatedItemIds.remove(id)
         }
 
+        // Remove the folder/item itself from local array
         budgetItems.removeAll { $0.id == id }
     }
 

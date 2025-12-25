@@ -21,6 +21,9 @@ struct BudgetOverviewDashboardViewV2: View {
     @State private var loading = true
     @State private var error: String?
     @State private var isRefreshing = false
+    
+    // Folder expansion state
+    @State private var expandedFolderIds: Set<String> = []
 
     // Filter and search state
     @State private var activeFilters: [BudgetFilter] = []
@@ -92,6 +95,7 @@ struct BudgetOverviewDashboardViewV2: View {
             searchQuery = ""
             debouncedSearchQuery = ""
             activeFilters = []
+            expandedFolderIds = []
 
             // Reload data for new tenant with validation
             Task {
@@ -241,13 +245,16 @@ struct BudgetOverviewDashboardViewV2: View {
         BudgetOverviewItemsSection(
             filteredBudgetItems: filteredBudgetItems,
             budgetItems: budgetItems,
+            expandedFolderIds: $expandedFolderIds,
             viewMode: viewMode,
             onEditExpense: handleEditExpense,
             onRemoveExpense: handleUnlinkExpense,
             onEditGift: handleEditGift,
             onRemoveGift: handleUnlinkGift,
             onAddExpense: handleAddExpense,
-            onAddGift: handleAddGift)
+            onAddGift: handleAddGift
+        )
+        .animation(.easeInOut(duration: 0.2), value: expandedFolderIds)
     }
 
     // MARK: - Computed Properties
@@ -351,10 +358,11 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private func handleScenarioChange(_ scenarioId: String) async {
-        // Reset filters and search when scenario changes
+        // Reset filters, search, and folder expansion state when scenario changes
         activeFilters = []
         searchQuery = ""
         debouncedSearchQuery = ""
+        expandedFolderIds = []
         await refreshData()
     }
 

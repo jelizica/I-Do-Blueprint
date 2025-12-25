@@ -1201,11 +1201,127 @@ struct BudgetItem: Identifiable, Codable {
     var linkedGiftOwedId: String?
     var coupleId: String
     var isTestData: Bool?
+    
+    // Folder-related properties (backward-compatible with defaults)
+    var parentFolderId: String?
+    var isFolder: Bool
+    var displayOrder: Int
 
     // Computed properties for compatibility
     var eventNames: [String] {
         // This would need to be populated from actual event data
         []
+    }
+    
+    // Explicit memberwise initializer
+    init(
+        id: String,
+        scenarioId: String? = nil,
+        itemName: String,
+        category: String,
+        subcategory: String? = nil,
+        vendorEstimateWithoutTax: Double,
+        taxRate: Double,
+        vendorEstimateWithTax: Double,
+        personResponsible: String? = nil,
+        notes: String? = nil,
+        createdAt: Date? = nil,
+        updatedAt: Date? = nil,
+        eventId: String? = nil,
+        eventIds: [String]? = nil,
+        linkedExpenseId: String? = nil,
+        linkedGiftOwedId: String? = nil,
+        coupleId: String,
+        isTestData: Bool? = nil,
+        parentFolderId: String? = nil,
+        isFolder: Bool = false,
+        displayOrder: Int = 0
+    ) {
+        self.id = id
+        self.scenarioId = scenarioId
+        self.itemName = itemName
+        self.category = category
+        self.subcategory = subcategory
+        self.vendorEstimateWithoutTax = vendorEstimateWithoutTax
+        self.taxRate = taxRate
+        self.vendorEstimateWithTax = vendorEstimateWithTax
+        self.personResponsible = personResponsible
+        self.notes = notes
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.eventId = eventId
+        self.eventIds = eventIds
+        self.linkedExpenseId = linkedExpenseId
+        self.linkedGiftOwedId = linkedGiftOwedId
+        self.coupleId = coupleId
+        self.isTestData = isTestData
+        self.parentFolderId = parentFolderId
+        self.isFolder = isFolder
+        self.displayOrder = displayOrder
+    }
+    
+    /// Factory method for creating folders
+    static func createFolder(
+        name: String,
+        scenarioId: String,
+        parentFolderId: String? = nil,
+        displayOrder: Int = 0,
+        coupleId: String,
+        personResponsible: String = "Both",
+        isTestData: Bool = false
+    ) -> BudgetItem {
+        BudgetItem(
+            id: UUID().uuidString,
+            scenarioId: scenarioId,
+            itemName: name,
+            category: "",
+            subcategory: nil,
+            vendorEstimateWithoutTax: 0,
+            taxRate: 0,
+            vendorEstimateWithTax: 0,
+            personResponsible: personResponsible,
+            notes: nil,
+            createdAt: Date(),
+            updatedAt: Date(),
+            eventId: nil,
+            eventIds: [],
+            linkedExpenseId: nil,
+            linkedGiftOwedId: nil,
+            coupleId: coupleId,
+            isTestData: isTestData,
+            parentFolderId: parentFolderId,
+            isFolder: true,
+            displayOrder: displayOrder
+        )
+    }
+    
+    // Custom decoding for backward compatibility
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        id = try container.decode(String.self, forKey: .id)
+        scenarioId = try container.decodeIfPresent(String.self, forKey: .scenarioId)
+        itemName = try container.decode(String.self, forKey: .itemName)
+        category = try container.decode(String.self, forKey: .category)
+        subcategory = try container.decodeIfPresent(String.self, forKey: .subcategory)
+        vendorEstimateWithoutTax = try container.decode(Double.self, forKey: .vendorEstimateWithoutTax)
+        taxRate = try container.decode(Double.self, forKey: .taxRate)
+        vendorEstimateWithTax = try container.decode(Double.self, forKey: .vendorEstimateWithTax)
+        personResponsible = try container.decodeIfPresent(String.self, forKey: .personResponsible)
+        notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt)
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt)
+        eventId = try container.decodeIfPresent(String.self, forKey: .eventId)
+        eventIds = try container.decodeIfPresent([String].self, forKey: .eventIds)
+        linkedExpenseId = try container.decodeIfPresent(String.self, forKey: .linkedExpenseId)
+        linkedGiftOwedId = try container.decodeIfPresent(String.self, forKey: .linkedGiftOwedId)
+        coupleId = try container.decode(String.self, forKey: .coupleId)
+        isTestData = try container.decodeIfPresent(Bool.self, forKey: .isTestData)
+        
+        // Backward-compatible decoding with defaults for new properties
+        parentFolderId = try container.decodeIfPresent(String.self, forKey: .parentFolderId)
+        isFolder = try container.decodeIfPresent(Bool.self, forKey: .isFolder) ?? false
+        displayOrder = try container.decodeIfPresent(Int.self, forKey: .displayOrder) ?? 0
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -1227,6 +1343,9 @@ struct BudgetItem: Identifiable, Codable {
         case linkedGiftOwedId = "linked_gift_owed_id"
         case coupleId = "couple_id"
         case isTestData = "is_test_data"
+        case parentFolderId = "parent_folder_id"
+        case isFolder = "is_folder"
+        case displayOrder = "display_order"
     }
 }
 

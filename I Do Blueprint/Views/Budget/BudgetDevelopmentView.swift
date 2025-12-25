@@ -97,22 +97,49 @@ struct BudgetDevelopmentView: View {
                         totalWithTax: totalWithTax
                     )
 
-                    // Budget items table
-                    BudgetItemsTable(
-                        budgetItems: $budgetItems,
-                        newCategoryNames: $newCategoryNames,
-                        newSubcategoryNames: $newSubcategoryNames,
-                        newEventNames: $newEventNames,
-                        budgetStore: budgetStore,
-                        selectedTaxRate: selectedTaxRate,
-                        onAddItem: addBudgetItem,
-                        onUpdateItem: updateBudgetItem,
-                        onRemoveItem: removeBudgetItem,
-                        onAddCategory: handleNewCategoryName,
-                        onAddSubcategory: handleNewSubcategoryName,
-                        onAddEvent: handleNewEventName,
-                        responsibleOptions: personOptions
-                    )
+                    // Budget items table - only render if tenant ID is available
+                    if SessionManager.shared.currentTenantId != nil {
+                        BudgetItemsTable(
+                            budgetItems: $budgetItems,
+                            newCategoryNames: $newCategoryNames,
+                            newSubcategoryNames: $newSubcategoryNames,
+                            newEventNames: $newEventNames,
+                            budgetStore: budgetStore,
+                            selectedTaxRate: selectedTaxRate,
+                            currentScenarioId: currentScenarioId,
+                            coupleId: SessionManager.shared.currentTenantId!.uuidString,
+                            onAddItem: addBudgetItem,
+                            onUpdateItem: updateBudgetItem,
+                            onRemoveItem: removeBudgetItem,
+                            onAddCategory: handleNewCategoryName,
+                            onAddSubcategory: handleNewSubcategoryName,
+                            onAddEvent: handleNewEventName,
+                            onAddFolder: addFolder,
+                            responsibleOptions: personOptions
+                        )
+                    } else {
+                        // Error state when no tenant is selected
+                        VStack(spacing: 16) {
+                            Image(systemName: "exclamationmark.triangle")
+                                .font(.system(size: 48))
+                                .foregroundStyle(.orange)
+                            
+                            Text("No Wedding Selected")
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            
+                            Text("Please select your wedding couple to continue working on your budget.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: 400)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, Spacing.huge)
+                        .padding()
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .cornerRadius(12)
+                    }
 
                     // Summary sections
                     if !budgetItems.isEmpty {
