@@ -1858,7 +1858,9 @@ await SentryService.shared.captureError(error, context: [
 
     func fetchWeddingEvents() async throws -> [WeddingEvent] {
     do {
-    let cacheKey = "wedding_events"
+    // Get tenant ID for cache key
+    let tenantId = try await getTenantId()
+    let cacheKey = "wedding_events_\(tenantId.uuidString)"
 
     if let cached: [WeddingEvent] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
     return cached
@@ -1871,6 +1873,7 @@ await SentryService.shared.captureError(error, context: [
     try await client
     .from("wedding_events")
     .select()
+    .eq("couple_id", value: tenantId)
     .order("event_date", ascending: true)
     .execute()
     .value
@@ -1890,6 +1893,124 @@ await SentryService.shared.captureError(error, context: [
     logger.error("Failed to fetch wedding events", error: error)
     throw BudgetError.fetchFailed(underlying: error)
     }
+    }
+    
+    func createWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
+            let created: WeddingEvent = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("wedding_events")
+                    .insert(event)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Created wedding event: \(created.eventName)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("wedding_events_\(tenantId.uuidString)")
+            
+            return created
+        } catch {
+            logger.error("Failed to create wedding event", error: error)
+            throw BudgetError.createFailed(underlying: error)
+        }
+    }
+    
+    func updateWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
+            // Create new event with updated timestamp
+            let updatedEvent = WeddingEvent(
+                id: event.id,
+                eventName: event.eventName,
+                eventType: event.eventType,
+                eventDate: event.eventDate,
+                startTime: event.startTime,
+                endTime: event.endTime,
+                venueId: event.venueId,
+                venueName: event.venueName,
+                address: event.address,
+                city: event.city,
+                state: event.state,
+                zipCode: event.zipCode,
+                guestCount: event.guestCount,
+                budgetAllocated: event.budgetAllocated,
+                notes: event.notes,
+                isConfirmed: event.isConfirmed,
+                description: event.description,
+                eventOrder: event.eventOrder,
+                isMainEvent: event.isMainEvent,
+                venueLocation: event.venueLocation,
+                eventTime: event.eventTime,
+                coupleId: event.coupleId,
+                createdAt: event.createdAt,
+                updatedAt: Date()
+            )
+            
+            let result: WeddingEvent = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("wedding_events")
+                    .update(updatedEvent)
+                    .eq("id", value: updatedEvent.id)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Updated wedding event: \(result.eventName)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("wedding_events_\(tenantId.uuidString)")
+            
+            return result
+        } catch {
+            logger.error("Failed to update wedding event", error: error)
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+    
+    func deleteWeddingEvent(id: String) async throws {
+        do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+            
+            try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("wedding_events")
+                    .delete()
+                    .eq("id", value: id)
+                    .execute()
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            
+            // Log important mutation
+            logger.info("Deleted wedding event: \(id)")
+            
+            // Invalidate cache
+            await RepositoryCache.shared.remove("wedding_events_\(tenantId.uuidString)")
+        } catch {
+            logger.error("Failed to delete wedding event", error: error)
+            throw BudgetError.deleteFailed(underlying: error)
+        }
     }
 
     // MARK: - Expense Allocations

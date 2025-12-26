@@ -106,6 +106,7 @@ struct BudgetItemsTable: View {
                             Text(folder.itemName).tag(folder.id as String?)
                         }
                     }
+                    .pickerStyle(.menu)
                 }
             }
             .navigationTitle("Create Folder")

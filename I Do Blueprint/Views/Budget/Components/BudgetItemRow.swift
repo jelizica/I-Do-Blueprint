@@ -334,24 +334,35 @@ struct BudgetItemRow: View, Identifiable {
     }
     
     private var taxRateSelector: some View {
-        Picker("", selection: Binding(
+        Picker("", selection: Binding<Int64?>(
             get: {
+                // Find the closest matching tax rate
                 let closestRate = budgetStore.taxRates.min(by: {
                     abs(($0.taxRate * 100) - item.taxRate) < abs(($1.taxRate * 100) - item.taxRate)
                 })
-                return closestRate?.id ?? budgetStore.taxRates.first?.id ?? 0
+                // Return optional ID (nil if no tax rates available)
+                return closestRate?.id ?? budgetStore.taxRates.first?.id
             },
             set: { newId in
-                if let selectedRate = budgetStore.taxRates.first(where: { $0.id == newId }) {
-                    onUpdateItem(item.id, "taxRate", selectedRate.taxRate * 100)
+                // Only update if we have a valid ID and can find the rate
+                guard let newId = newId,
+                      let selectedRate = budgetStore.taxRates.first(where: { $0.id == newId }) else {
+                    return
                 }
+                onUpdateItem(item.id, "taxRate", selectedRate.taxRate * 100)
             })) {
-                ForEach(budgetStore.taxRates, id: \.id) { rate in
-                    Text("\(rate.region) (\(String(format: "%.2f", rate.taxRate * 100))%)").tag(rate.id)
+                // Show placeholder if no tax rates available
+                if budgetStore.taxRates.isEmpty {
+                    Text("No tax rates available").tag(nil as Int64?)
+                } else {
+                    ForEach(budgetStore.taxRates, id: \.id) { rate in
+                        Text("\(rate.region) (\(String(format: "%.2f", rate.taxRate * 100))%)").tag(rate.id as Int64?)
+                    }
                 }
             }
             .pickerStyle(.menu)
             .padding(.leading, -8)
+            .disabled(budgetStore.taxRates.isEmpty)
     }
     
     private var personSelector: some View {

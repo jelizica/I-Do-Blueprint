@@ -476,6 +476,55 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
             )
         }
     }
+    
+    // MARK: - Wedding Events Management
+    
+    /// Fetches all wedding events for the current couple
+    func fetchWeddingEvents() async throws -> [WeddingEvent] {
+        return try await repository.fetchWeddingEvents()
+    }
+    
+    /// Creates a new wedding event
+    func createWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        let createdEvent = try await repository.createWeddingEvent(event)
+        
+        // Update local state on main actor
+        await MainActor.run {
+            weddingEvents.append(createdEvent)
+            logger.info("Added wedding event to local state: \(createdEvent.eventName)")
+        }
+        
+        return createdEvent
+    }
+    
+    /// Updates an existing wedding event
+    func updateWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        let updatedEvent = try await repository.updateWeddingEvent(event)
+        
+        // Update local state on main actor
+        await MainActor.run {
+            if let index = weddingEvents.firstIndex(where: { $0.id == updatedEvent.id }) {
+                weddingEvents[index] = updatedEvent
+                logger.info("Updated wedding event in local state: \(updatedEvent.eventName)")
+            } else {
+                logger.warning("Updated event not found in local state, appending: \(updatedEvent.id)")
+                weddingEvents.append(updatedEvent)
+            }
+        }
+        
+        return updatedEvent
+    }
+    
+    /// Deletes a wedding event
+    func deleteWeddingEvent(id: String) async throws {
+        try await repository.deleteWeddingEvent(id: id)
+        
+        // Update local state on main actor
+        await MainActor.run {
+            weddingEvents.removeAll { $0.id == id }
+            logger.info("Removed wedding event from local state: \(id)")
+        }
+    }
 
     // MARK: - Folder Operations
 

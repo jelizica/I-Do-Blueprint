@@ -165,6 +165,7 @@ struct BudgetDevelopmentView: View {
                             expandedCategories: $expandedCategories,
                             eventBreakdown: eventBreakdown,
                             categoryBreakdown: categoryBreakdown,
+                            categoryItems: categoryItems,
                             personBreakdown: personBreakdown,
                             totalWithTax: totalWithTax,
                             responsibleOptions: personOptions

@@ -14,15 +14,15 @@ extension BudgetDevelopmentView {
     // MARK: Totals
 
     var totalWithoutTax: Double {
-        budgetItems.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
+        budgetItems.filter { !$0.isFolder }.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
     }
 
     var totalTax: Double {
-        budgetItems.reduce(0) { $0 + ($1.vendorEstimateWithTax - $1.vendorEstimateWithoutTax) }
+        budgetItems.filter { !$0.isFolder }.reduce(0) { $0 + ($1.vendorEstimateWithTax - $1.vendorEstimateWithoutTax) }
     }
 
     var totalWithTax: Double {
-        budgetItems.reduce(0) { $0 + $1.vendorEstimateWithTax }
+        budgetItems.filter { !$0.isFolder }.reduce(0) { $0 + $1.vendorEstimateWithTax }
     }
 
     // MARK: Breakdowns
@@ -30,7 +30,8 @@ extension BudgetDevelopmentView {
     var eventBreakdown: [String: Double] {
         var breakdown: [String: Double] = [:]
 
-        for item in budgetItems {
+        // Only include actual budget items, not folders
+        for item in budgetItems where !item.isFolder {
             let eventIds = item.eventIds ?? []
             let costPerEvent = !eventIds.isEmpty ? item.vendorEstimateWithTax / Double(eventIds.count) : 0
 
@@ -47,7 +48,8 @@ extension BudgetDevelopmentView {
     var categoryBreakdown: [String: (total: Double, subcategories: [String: Double])] {
         var breakdown: [String: (total: Double, subcategories: [String: Double])] = [:]
 
-        for item in budgetItems {
+        // Only include actual budget items, not folders
+        for item in budgetItems where !item.isFolder {
             guard !item.category.isEmpty else { continue }
 
             if breakdown[item.category] == nil {
@@ -62,6 +64,31 @@ extension BudgetDevelopmentView {
         }
 
         return breakdown
+    }
+    
+    var categoryItems: [String: [String: [BudgetItem]]] {
+        var items: [String: [String: [BudgetItem]]] = [:]
+        
+        // Only include actual budget items, not folders
+        for item in budgetItems where !item.isFolder {
+            guard !item.category.isEmpty else { continue }
+            
+            // Get or create category dictionary
+            if items[item.category] == nil {
+                items[item.category] = [:]
+            }
+            
+            // Get subcategory name (use "Other" if no subcategory)
+            let subcategory = item.subcategory?.isEmpty == false ? item.subcategory! : "Other"
+            
+            // Add item to subcategory array
+            if items[item.category]![subcategory] == nil {
+                items[item.category]![subcategory] = []
+            }
+            items[item.category]![subcategory]!.append(item)
+        }
+        
+        return items
     }
 
     var personOptions: [String] {
@@ -78,7 +105,8 @@ extension BudgetDevelopmentView {
         var breakdown: [String: Double] = [:]
         for key in personOptions { breakdown[key] = 0 }
 
-        for item in budgetItems {
+        // Only include actual budget items, not folders
+        for item in budgetItems where !item.isFolder {
             breakdown[item.personResponsible ?? "Both", default: 0] += item.vendorEstimateWithTax
         }
 

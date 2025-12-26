@@ -276,9 +276,26 @@ protocol BudgetRepositoryProtocol: Sendable {
     // MARK: - Wedding Event Operations
 
     /// Fetches all wedding events for the current couple
-    /// - Returns: Array of wedding events
+    /// - Returns: Array of wedding events, sorted by event date
     /// - Throws: Repository errors if fetch fails
     func fetchWeddingEvents() async throws -> [WeddingEvent]
+    
+    /// Creates a new wedding event
+    /// - Parameter event: The wedding event to create
+    /// - Returns: The created event with server-assigned timestamps
+    /// - Throws: Repository errors if creation fails or validation errors
+    func createWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent
+    
+    /// Updates an existing wedding event
+    /// - Parameter event: The event with updated values
+    /// - Returns: The updated event with new timestamp
+    /// - Throws: Repository errors if update fails or event not found
+    func updateWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent
+    
+    /// Deletes a wedding event
+    /// - Parameter id: The ID of the event to delete
+    /// - Throws: Repository errors if deletion fails or event not found
+    func deleteWeddingEvent(id: String) async throws
 
     // MARK: - Affordability Calculator Operations
 

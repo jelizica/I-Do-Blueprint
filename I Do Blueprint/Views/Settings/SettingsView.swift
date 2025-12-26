@@ -11,6 +11,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case global = "Global"
     case theme = "Theme"
     case budget = "Budget"
+    case weddingEvents = "Wedding Events"
     case tasks = "Tasks"
     case vendors = "Vendors"
     case vendorCategories = "Categories"
@@ -31,6 +32,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .global: "globe"
         case .theme: "paintpalette"
         case .budget: "dollarsign.circle"
+        case .weddingEvents: "calendar.badge.plus"
         case .tasks: "checklist"
         case .vendors: "person.2"
         case .vendorCategories: "star"
@@ -136,6 +138,8 @@ struct SettingsView: View {
             ThemeSettingsView(viewModel: store)
         case .budget:
             BudgetConfigSettingsView(viewModel: store)
+        case .weddingEvents:
+            WeddingEventsView()
         case .tasks:
             TasksSettingsView(viewModel: store)
         case .vendors:

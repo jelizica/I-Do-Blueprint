@@ -303,6 +303,28 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         return weddingEvents
     }
+    
+    func createWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        weddingEvents.append(event)
+        return event
+    }
+    
+    func updateWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        if let index = weddingEvents.firstIndex(where: { $0.id == event.id }) {
+            weddingEvents[index] = event
+        }
+        return event
+    }
+    
+    func deleteWeddingEvent(id: String) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        weddingEvents.removeAll(where: { $0.id == id })
+    }
 
     // MARK: - Affordability Scenarios
 

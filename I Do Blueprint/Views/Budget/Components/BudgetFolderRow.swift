@@ -184,7 +184,8 @@ struct BudgetFolderRow: View, Identifiable {
     // MARK: - Computed Properties
     
     private var folderColor: Color {
-        let hash = abs(folder.id.hashValue)
+        // Use deterministic hash (FNV-1a) instead of unstable hashValue
+        let hash = stableHash(of: folder.id)
         return folderColors[hash % folderColors.count]
     }
     
@@ -194,22 +195,75 @@ struct BudgetFolderRow: View, Identifiable {
     
     // MARK: - Helper Methods
     
+    /// Computes a stable, deterministic hash for a string using FNV-1a algorithm
+    /// - Parameter string: The string to hash
+    /// - Returns: A stable integer hash value
+    private func stableHash(of string: String) -> Int {
+        // FNV-1a hash algorithm (32-bit)
+        // This produces consistent results across app runs, unlike hashValue
+        var hash: UInt32 = 2166136261 // FNV offset basis
+        
+        for byte in string.utf8 {
+            hash ^= UInt32(byte)
+            hash = hash &* 16777619 // FNV prime (with overflow wrapping)
+        }
+        
+        return Int(hash)
+    }
+    
     private func isDescendant(of folderId: String, item: BudgetItem) -> Bool {
         var currentId: String? = item.parentFolderId
+        var visited = Set<String>()
+        let maxDepth = allItems.count // Safety limit to prevent infinite loops
+        var depth = 0
+        
         while let id = currentId {
+            // Check if we've found the target folder
             if id == folderId { return true }
+            
+            // Cycle detection: if we've seen this ID before, we have a circular reference
+            if visited.contains(id) {
+                return false
+            }
+            
+            // Depth limit: prevent infinite loops in case of data corruption
+            if depth >= maxDepth {
+                return false
+            }
+            
+            // Mark this ID as visited and continue traversal
+            visited.insert(id)
+            depth += 1
             currentId = allItems.first(where: { $0.id == id })?.parentFolderId
         }
+        
         return false
     }
     
     private func getFolderLevel(_ targetFolder: BudgetItem) -> Int {
         var level = 0
         var currentId: String? = targetFolder.parentFolderId
+        var visited = Set<String>()
+        let maxDepth = allItems.count // Safety limit to prevent infinite loops
+        
         while let id = currentId {
+            // Cycle detection: if we've seen this ID before, we have a circular reference
+            if visited.contains(id) {
+                // Return current level as best effort when circular reference detected
+                return level
+            }
+            
+            // Depth limit: prevent infinite loops in case of data corruption
+            if level >= maxDepth {
+                return level
+            }
+            
+            // Mark this ID as visited and continue traversal
+            visited.insert(id)
             level += 1
             currentId = allItems.first(where: { $0.id == id })?.parentFolderId
         }
+        
         return level
     }
     

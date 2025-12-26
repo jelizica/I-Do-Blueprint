@@ -50,6 +50,11 @@ extension BudgetDevelopmentView {
     }
 
     func loadScenario(_ scenarioId: String) async {
+        // Set loading state at the start
+        await MainActor.run {
+            isLoadingScenario = true
+        }
+        
         if scenarioId == "new" {
             await MainActor.run {
                 budgetItems = []
@@ -62,27 +67,14 @@ extension BudgetDevelopmentView {
         }
 
         if let scenario = savedScenarios.first(where: { $0.id == scenarioId }) {
-            // Set flag BEFORE loading items to skip expensive recalculations
-            await MainActor.run {
-                isLoadingScenario = true
-            }
-            
             let items = await budgetStore.loadBudgetDevelopmentItems(scenarioId: scenarioId)
 
             await MainActor.run {
                 budgetName = scenario.scenarioName
                 currentScenarioId = scenario.id
-                budgetItems = items  // This will trigger onChange, which resets isLoadingScenario
+                budgetItems = items
                 newlyCreatedItemIds.removeAll()
-                
-                // Ensure flag is reset even if onChange doesn't trigger (e.g., empty items)
-                // Use a small delay to allow onChange to process first
-                Task { @MainActor in
-                    try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-                    if isLoadingScenario {
-                        isLoadingScenario = false
-                    }
-                }
+                isLoadingScenario = false
             }
         } else {
             logger.warning("Scenario not found: \(scenarioId)")

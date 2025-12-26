@@ -116,6 +116,7 @@ struct BudgetConfigurationHeader: View {
                                 .tag(scenario.id)
                             }
                         }
+                        .pickerStyle(.menu)
                         .onChange(of: selectedScenario) {
                             Task { await onLoadScenario(selectedScenario) }
                         }
@@ -178,6 +179,7 @@ struct BudgetConfigurationHeader: View {
                                     .tag(rate.id as Int64?)
                             }
                         }
+                        .pickerStyle(.menu)
 
                         Button("Add Rate") {
                             onShowTaxRateDialog()

@@ -241,6 +241,25 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         return weddingEvents
     }
+    
+    func createWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        if shouldThrowError { throw errorToThrow }
+        weddingEvents.append(event)
+        return event
+    }
+    
+    func updateWeddingEvent(_ event: WeddingEvent) async throws -> WeddingEvent {
+        if shouldThrowError { throw errorToThrow }
+        if let index = weddingEvents.firstIndex(where: { $0.id == event.id }) {
+            weddingEvents[index] = event
+        }
+        return event
+    }
+    
+    func deleteWeddingEvent(id: String) async throws {
+        if shouldThrowError { throw errorToThrow }
+        weddingEvents.removeAll(where: { $0.id == id })
+    }
 
     func fetchAffordabilityScenarios() async throws -> [AffordabilityScenario] {
         if shouldThrowError { throw errorToThrow }

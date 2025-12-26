@@ -7,9 +7,12 @@ struct BudgetSummaryBreakdowns: View {
 
     let eventBreakdown: [String: Double]
     let categoryBreakdown: [String: (total: Double, subcategories: [String: Double])]
+    let categoryItems: [String: [String: [BudgetItem]]] // category -> subcategory -> items
     let personBreakdown: [String: Double]
     let totalWithTax: Double
     let responsibleOptions: [String]
+    
+    @State private var expandedSubcategories: Set<String> = []
 
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
@@ -79,17 +82,57 @@ struct BudgetSummaryBreakdowns: View {
                         if expandedCategories.contains(category),
                            let subcategories = categoryBreakdown[category]?.subcategories {
                             ForEach(Array(subcategories.keys.sorted()), id: \.self) { subcategory in
-                                HStack {
-                                    Text("• \(subcategory)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    // Subcategory header (clickable to expand/collapse)
+                                    Button(action: {
+                                        let subcategoryKey = "\(category)_\(subcategory)"
+                                        if expandedSubcategories.contains(subcategoryKey) {
+                                            expandedSubcategories.remove(subcategoryKey)
+                                        } else {
+                                            expandedSubcategories.insert(subcategoryKey)
+                                        }
+                                    }) {
+                                        HStack {
+                                            Image(systemName: expandedSubcategories.contains("\(category)_\(subcategory)") ? "chevron.down" : "chevron.right")
+                                                .font(.system(size: 8))
+                                                .foregroundStyle(.tertiary)
+                                            
+                                            Text(subcategory)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                            
+                                            Spacer()
+                                            
+                                            Text("$\(String(format: "%.0f", subcategories[subcategory] ?? 0))")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
                                         .padding(.leading, Spacing.lg)
-
-                                    Spacer()
-
-                                    Text("$\(String(format: "%.0f", subcategories[subcategory] ?? 0))")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("\(subcategory) subcategory, \(String(format: "%.0f", subcategories[subcategory] ?? 0)) dollars")
+                                    .accessibilityHint(expandedSubcategories.contains("\(category)_\(subcategory)") ? "Double tap to collapse items" : "Double tap to expand items")
+                                    
+                                    // Individual items under this subcategory
+                                    if expandedSubcategories.contains("\(category)_\(subcategory)"),
+                                       let items = categoryItems[category]?[subcategory] {
+                                        ForEach(items, id: \.id) { item in
+                                            HStack {
+                                                Text("  ◦ \(item.itemName)")
+                                                    .font(.system(size: 10))
+                                                    .foregroundStyle(.tertiary)
+                                                    .padding(.leading, Spacing.xl)
+                                                
+                                                Spacer()
+                                                
+                                                Text("$\(String(format: "%.0f", item.vendorEstimateWithTax))")
+                                                    .font(.system(size: 10))
+                                                    .foregroundStyle(.tertiary)
+                                            }
+                                            .accessibilityElement(children: .combine)
+                                            .accessibilityLabel("\(item.itemName), \(String(format: "%.0f", item.vendorEstimateWithTax)) dollars")
+                                        }
+                                    }
                                 }
                             }
                         }

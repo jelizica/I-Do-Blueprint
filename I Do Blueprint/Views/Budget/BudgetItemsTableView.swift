@@ -16,9 +16,7 @@ struct BudgetItemsTableView: View {
     let onAddEvent: (String, String) -> Void
     let responsibleOptions: [String]
 
-    @State private var activeDropdownItemId: String?
-    @State private var buttonRects: [String: CGRect] = [:]
-    
+        
     // Drag and drop state
     @State private var draggedItem: BudgetItem?
     @State private var dropTargetId: String?
@@ -98,25 +96,6 @@ struct BudgetItemsTableView: View {
                 .background(Color(NSColor.controlBackgroundColor))
             }
         }
-        .overlay(
-            // Event dropdown overlay
-            Group {
-                if let activeItemId = activeDropdownItemId,
-                   let activeItem = items.first(where: { $0.id == activeItemId }) {
-                    EventDropdownView(
-                        isPresented: .constant(true),
-                        selectedEventIds: activeItem.eventIds ?? [],
-                        weddingEvents: budgetStore.weddingEvents,
-                        onSelectionChanged: { eventIds in
-                            onUpdateItem(activeItemId, "eventIds", eventIds)
-                        },
-                        onDismiss: {
-                            activeDropdownItemId = nil
-                        },
-                        activeItemId: activeItemId,
-                        allItems: items)
-                }
-            })
     }
     
     // MARK: - Hierarchical Rendering
@@ -190,11 +169,7 @@ struct BudgetItemsTableView: View {
                         onAddCategory: onAddCategory,
                         onAddSubcategory: onAddSubcategory,
                         onAddEvent: onAddEvent,
-                        onButtonRectChanged: { itemId, rect in
-                            buttonRects[itemId] = rect
-                        },
-                        responsibleOptions: responsibleOptions,
-                        activeDropdownItemId: $activeDropdownItemId)
+                        responsibleOptions: responsibleOptions)
                 }
                 .padding(.vertical, Spacing.xs)
                 .opacity(draggedItem?.id == item.id ? 0.5 : 1.0)
@@ -320,7 +295,6 @@ struct FolderRowView: View {
     @State private var isDropTarget = false
     @State private var selectedColor: Color = .blue
     @State private var cachedTotal: Double = 0.0
-    @State private var hasCalculatedTotal = false
     
     enum DeleteOption {
         case moveToParent
@@ -525,7 +499,6 @@ struct FolderRowView: View {
         .onAppear {
             // Calculate total on appear
             cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: allItems)
-            hasCalculatedTotal = true
         }
         .onChange(of: allItems) { _, newItems in
             // Recalculate when items change (added, removed, or values updated)
@@ -598,15 +571,15 @@ struct BudgetItemRowView: View {
     let onAddCategory: (String, String) async -> Void
     let onAddSubcategory: (String, String) async -> Void
     let onAddEvent: (String, String) -> Void
-    let onButtonRectChanged: (String, CGRect) -> Void
     let responsibleOptions: [String]
-
-    @Binding var activeDropdownItemId: String?
     
     // Cached picker values to avoid recomputation on every render
     @State private var cachedTaxRateId: Int64?
     @State private var cachedCategoryName: String = ""
     @State private var cachedSubcategoryName: String = ""
+    
+    // Event selector popover state
+    @State private var showingEventPopover: Bool = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -680,11 +653,7 @@ struct BudgetItemRowView: View {
 
     private var eventSelector: some View {
         Button(action: {
-            if activeDropdownItemId == item.id {
-                activeDropdownItemId = nil
-            } else {
-                activeDropdownItemId = item.id
-            }
+            showingEventPopover.toggle()
         }) {
             HStack {
                 Text(eventDisplayText)
@@ -693,25 +662,29 @@ struct BudgetItemRowView: View {
                 Image(systemName: "chevron.down")
                     .font(.caption)
             }
+            .contentShape(Rectangle())
         }
-        .buttonStyle(.bordered)
-        .background(
-            // Only track geometry when dropdown is active for this item
-            Group {
-                if activeDropdownItemId == item.id {
-                    GeometryReader { geometry in
-                        Color.clear
-                            .onAppear {
-                                let rect = geometry.frame(in: .global)
-                                onButtonRectChanged(item.id, rect)
-                            }
-                            .onChange(of: geometry.frame(in: .global)) { _, newRect in
-                                onButtonRectChanged(item.id, newRect)
-                            }
+        .buttonStyle(.plain)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(6)
+        .popover(isPresented: $showingEventPopover, arrowEdge: .bottom) {
+            EventMultiSelectorPopover(
+                events: budgetStore.weddingEvents,
+                selectedEventIds: item.eventIds ?? [],
+                onToggleEvent: { eventId in
+                    var current = item.eventIds ?? []
+                    if let index = current.firstIndex(of: eventId) {
+                        current.remove(at: index)
+                    } else {
+                        current.append(eventId)
                     }
+                    onUpdateItem(item.id, "eventIds", current)
                 }
-            }
-        )
+            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var eventDisplayText: String {
@@ -821,11 +794,12 @@ struct BudgetItemRowView: View {
                 }
             } else {
                 Picker("", selection: Binding(
-                    get: { item.subcategory ?? "" },
+                    get: { cachedSubcategoryName.isEmpty ? (item.subcategory ?? "") : cachedSubcategoryName },
                     set: { newValue in
                         if newValue == "__new__" {
                             newSubcategoryNames[item.id] = ""
                         } else {
+                            cachedSubcategoryName = newValue
                             onUpdateItem(item.id, "subcategory", newValue)
                         }
                     })) {
@@ -842,6 +816,11 @@ struct BudgetItemRowView: View {
                     .pickerStyle(.menu)
                     .padding(.leading, -8)
                     .disabled(item.category.isEmpty)
+                    .onAppear {
+                        if cachedSubcategoryName.isEmpty {
+                            cachedSubcategoryName = item.subcategory ?? ""
+                        }
+                    }
             }
         }
     }
@@ -911,90 +890,48 @@ struct BudgetItemRowView: View {
     }
 }
 
-struct EventDropdownView: View {
-    @Binding var isPresented: Bool
+
+// MARK: - Event Multi-Selector Popover
+
+struct EventMultiSelectorPopover: View {
+    let events: [WeddingEventDB]
     let selectedEventIds: [String]
-    let weddingEvents: [WeddingEvent]
-    let onSelectionChanged: ([String]) -> Void
-    let onDismiss: () -> Void
-    let activeItemId: String
-    let allItems: [BudgetItem]
-
-    @State private var tempSelectedIds: Set<String> = Set()
-
-    private var rowIndex: Int {
-        allItems.firstIndex(where: { $0.id == activeItemId }) ?? 0
-    }
-
+    let onToggleEvent: (String) -> Void
+    
     var body: some View {
-        if isPresented {
-            // Full-screen overlay to catch outside taps
-            Color.clear
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    onDismiss()
-                }
-                .overlay(
-                    // Dropdown content positioned based on row index
-                    VStack(alignment: .leading, spacing: 4) {
-                        if weddingEvents.isEmpty {
-                            VStack(spacing: 8) {
-                                Text("No events configured")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .padding(Spacing.sm)
-                            }
-                        } else {
-                            ForEach(weddingEvents, id: \.id) { event in
-                                Button(action: {
-                                    if tempSelectedIds.contains(event.id) {
-                                        tempSelectedIds.remove(event.id)
-                                    } else {
-                                        tempSelectedIds.insert(event.id)
-                                    }
-                                    // Apply changes immediately
-                                    onSelectionChanged(Array(tempSelectedIds))
-                                }) {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: tempSelectedIds
-                                            .contains(event.id) ? "checkmark.circle.fill" : "circle")
-                                            .foregroundColor(tempSelectedIds.contains(event.id) ? .blue : .secondary)
-                                            .font(.system(size: 14))
-
-                                        Text(event.eventName)
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.primary)
-
-                                        Spacer()
-                                    }
-                                    .padding(.horizontal, Spacing.sm)
-                                    .padding(.vertical, Spacing.xs)
-                                    .contentShape(Rectangle())
-                                }
-                                .buttonStyle(.plain)
-                                .background(
-                                    Color.clear
-                                        .onHover { _ in
-                                            // Add hover effect if needed
-                                        })
-                            }
+        VStack(alignment: .leading, spacing: 0) {
+            if events.isEmpty {
+                Text("No events configured")
+                    .foregroundStyle(.secondary)
+                    .padding()
+            } else {
+                ForEach(Array(events.enumerated()), id: \.element.id) { index, event in
+                    Button(action: {
+                        onToggleEvent(event.id)
+                    }) {
+                        HStack {
+                            Image(systemName: selectedEventIds.contains(event.id) ? "checkmark.square.fill" : "square")
+                                .foregroundColor(selectedEventIds.contains(event.id) ? .accentColor : .secondary)
+                            
+                            Text(event.eventName)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
                         }
+                        .contentShape(Rectangle())
                     }
-                    .background(Color(NSColor.controlBackgroundColor))
-                    .cornerRadius(6)
-                    .shadow(color: AppColors.textPrimary.opacity(0.15), radius: 8, x: 0, y: 4)
-                    .frame(maxWidth: 200)
-                    .fixedSize()
-                    .offset(
-                        x: 150, // Fixed horizontal position
-                        y: -50 + CGFloat(rowIndex * 65) // Align with the button row
-                    ), alignment: .topLeading)
-                .zIndex(999) // High z-index to appear above everything
-                .onAppear {
-                    tempSelectedIds = Set(selectedEventIds)
+                    .buttonStyle(.plain)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    
+                    if index < events.count - 1 {
+                        Divider()
+                    }
                 }
+            }
         }
+        .frame(minWidth: 200, maxWidth: 300)
+        .padding(.vertical, 8)
     }
 }
 
