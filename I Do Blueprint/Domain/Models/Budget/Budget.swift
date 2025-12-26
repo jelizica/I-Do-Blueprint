@@ -1182,7 +1182,7 @@ struct EnhancedBudgetCategory {
 
 // MARK: - Budget Development Models
 
-struct BudgetItem: Identifiable, Codable {
+struct BudgetItem: Identifiable, Codable, Equatable {
     let id: String
     var scenarioId: String?
     var itemName: String
@@ -1206,6 +1206,12 @@ struct BudgetItem: Identifiable, Codable {
     var parentFolderId: String?
     var isFolder: Bool
     var displayOrder: Int
+    
+    // Cached folder totals (Phase 2 optimization)
+    var cachedTotalWithoutTax: Double?
+    var cachedTotalTax: Double?
+    var cachedTotalWithTax: Double?
+    var cachedTotalsUpdatedAt: Date?
 
     // Computed properties for compatibility
     var eventNames: [String] {
@@ -1235,7 +1241,11 @@ struct BudgetItem: Identifiable, Codable {
         isTestData: Bool? = nil,
         parentFolderId: String? = nil,
         isFolder: Bool = false,
-        displayOrder: Int = 0
+        displayOrder: Int = 0,
+        cachedTotalWithoutTax: Double? = nil,
+        cachedTotalTax: Double? = nil,
+        cachedTotalWithTax: Double? = nil,
+        cachedTotalsUpdatedAt: Date? = nil
     ) {
         self.id = id
         self.scenarioId = scenarioId
@@ -1258,6 +1268,10 @@ struct BudgetItem: Identifiable, Codable {
         self.parentFolderId = parentFolderId
         self.isFolder = isFolder
         self.displayOrder = displayOrder
+        self.cachedTotalWithoutTax = cachedTotalWithoutTax
+        self.cachedTotalTax = cachedTotalTax
+        self.cachedTotalWithTax = cachedTotalWithTax
+        self.cachedTotalsUpdatedAt = cachedTotalsUpdatedAt
     }
     
     /// Factory method for creating folders
@@ -1322,6 +1336,12 @@ struct BudgetItem: Identifiable, Codable {
         parentFolderId = try container.decodeIfPresent(String.self, forKey: .parentFolderId)
         isFolder = try container.decodeIfPresent(Bool.self, forKey: .isFolder) ?? false
         displayOrder = try container.decodeIfPresent(Int.self, forKey: .displayOrder) ?? 0
+        
+        // Phase 2: Cached folder totals (optional fields)
+        cachedTotalWithoutTax = try container.decodeIfPresent(Double.self, forKey: .cachedTotalWithoutTax)
+        cachedTotalTax = try container.decodeIfPresent(Double.self, forKey: .cachedTotalTax)
+        cachedTotalWithTax = try container.decodeIfPresent(Double.self, forKey: .cachedTotalWithTax)
+        cachedTotalsUpdatedAt = try container.decodeIfPresent(Date.self, forKey: .cachedTotalsUpdatedAt)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -1346,6 +1366,10 @@ struct BudgetItem: Identifiable, Codable {
         case parentFolderId = "parent_folder_id"
         case isFolder = "is_folder"
         case displayOrder = "display_order"
+        case cachedTotalWithoutTax = "cached_total_without_tax"
+        case cachedTotalTax = "cached_total_tax"
+        case cachedTotalWithTax = "cached_total_with_tax"
+        case cachedTotalsUpdatedAt = "cached_totals_updated_at"
     }
 }
 

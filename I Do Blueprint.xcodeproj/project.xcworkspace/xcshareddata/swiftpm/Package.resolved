@@ -1,5 +1,5 @@
 {
-  "originHash" : "3c74fcbb4223f4f66708d4b147d47c13bf81fa04a4b40322ea41bbf19bc2a4f0",
+  "originHash" : "20575d36d9324aa53ec4db66abb6b99419bf68aaf3dd1f699939804c2cc7d242",
   "pins" : [
     {
       "identity" : "appauth-ios",
@@ -141,8 +141,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftlang/swift-cmark",
       "state" : {
-        "revision" : "b97d09472e847a416629f026eceae0e2afcfad65",
-        "version" : "0.7.0"
+        "revision" : "5d9bdaa4228b381639fff09403e39a04926e2dbe",
+        "version" : "0.7.1"
       }
     },
     {

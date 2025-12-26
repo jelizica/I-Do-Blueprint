@@ -20,6 +20,7 @@ struct BudgetDevelopmentView: View {
     @State var loading = true
     @State var saving = false
     @State var uploading = false
+    @State var isLoadingScenario = false
 
     // Track newly created items that need to be saved
     @State var newlyCreatedItemIds: Set<String> = []
@@ -99,24 +100,41 @@ struct BudgetDevelopmentView: View {
 
                     // Budget items table - only render if tenant ID is available
                     if SessionManager.shared.currentTenantId != nil {
-                        BudgetItemsTable(
-                            budgetItems: $budgetItems,
-                            newCategoryNames: $newCategoryNames,
-                            newSubcategoryNames: $newSubcategoryNames,
-                            newEventNames: $newEventNames,
-                            budgetStore: budgetStore,
-                            selectedTaxRate: selectedTaxRate,
-                            currentScenarioId: currentScenarioId,
-                            coupleId: SessionManager.shared.currentTenantId!.uuidString,
-                            onAddItem: addBudgetItem,
-                            onUpdateItem: updateBudgetItem,
-                            onRemoveItem: removeBudgetItem,
-                            onAddCategory: handleNewCategoryName,
-                            onAddSubcategory: handleNewSubcategoryName,
-                            onAddEvent: handleNewEventName,
-                            onAddFolder: addFolder,
-                            responsibleOptions: personOptions
-                        )
+                        if isLoadingScenario {
+                            // Loading state with spinner
+                            VStack(spacing: Spacing.lg) {
+                                ProgressView()
+                                    .scaleEffect(1.5)
+                                    .progressViewStyle(.circular)
+                                
+                                Text("Loading scenario...")
+                                    .font(.seatingBody)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 300)
+                            .background(Color(NSColor.controlBackgroundColor))
+                            .cornerRadius(12)
+                        } else {
+                            BudgetItemsTable(
+                                budgetItems: $budgetItems,
+                                newCategoryNames: $newCategoryNames,
+                                newSubcategoryNames: $newSubcategoryNames,
+                                newEventNames: $newEventNames,
+                                budgetStore: budgetStore,
+                                selectedTaxRate: selectedTaxRate,
+                                currentScenarioId: currentScenarioId,
+                                coupleId: SessionManager.shared.currentTenantId!.uuidString,
+                                onAddItem: addBudgetItem,
+                                onUpdateItem: updateBudgetItem,
+                                onRemoveItem: removeBudgetItem,
+                                onAddCategory: handleNewCategoryName,
+                                onAddSubcategory: handleNewSubcategoryName,
+                                onAddEvent: handleNewEventName,
+                                onAddFolder: addFolder,
+                                responsibleOptions: personOptions
+                            )
+                        }
                     } else {
                         // Error state when no tenant is selected
                         VStack(spacing: 16) {

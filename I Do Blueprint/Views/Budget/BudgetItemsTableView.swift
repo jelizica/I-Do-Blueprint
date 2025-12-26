@@ -320,6 +320,7 @@ struct FolderRowView: View {
     @State private var isDropTarget = false
     @State private var selectedColor: Color = .blue
     @State private var cachedTotal: Double = 0.0
+    @State private var hasCalculatedTotal = false
     
     enum DeleteOption {
         case moveToParent
@@ -372,7 +373,15 @@ struct FolderRowView: View {
     // MARK: - Computed Properties
     
     private var folderTotal: Double {
-        cachedTotal
+        // Use database-cached total if available (Phase 2)
+        if let dbCachedTotal = folder.cachedTotalWithTax,
+           let updatedAt = folder.cachedTotalsUpdatedAt,
+           Date().timeIntervalSince(updatedAt) < 300 {
+            return dbCachedTotal
+        }
+        
+        // Fallback to cached calculation (computed once on appear)
+        return cachedTotal
     }
     
     private func calculateFolderTotal(folderId: String, allItems: [BudgetItem]) -> Double {
@@ -514,13 +523,14 @@ struct FolderRowView: View {
             Text("What would you like to do with the items in this folder?")
         }
         .onAppear {
+            // Calculate total on appear
             cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: allItems)
+            hasCalculatedTotal = true
         }
-        .onChange(of: allItems.count) { _, _ in
-            cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: allItems)
-        }
-        .onChange(of: allItems.map { $0.id + String($0.vendorEstimateWithTax) }) { _, _ in
-            cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: allItems)
+        .onChange(of: allItems) { _, newItems in
+            // Recalculate when items change (added, removed, or values updated)
+            // This is efficient because SwiftUI only triggers when the actual array changes
+            cachedTotal = calculateFolderTotal(folderId: folder.id, allItems: newItems)
         }
     }
     
@@ -592,6 +602,11 @@ struct BudgetItemRowView: View {
     let responsibleOptions: [String]
 
     @Binding var activeDropdownItemId: String?
+    
+    // Cached picker values to avoid recomputation on every render
+    @State private var cachedTaxRateId: Int64?
+    @State private var cachedCategoryName: String = ""
+    @State private var cachedSubcategoryName: String = ""
 
     var body: some View {
         HStack(spacing: 12) {
@@ -681,16 +696,22 @@ struct BudgetItemRowView: View {
         }
         .buttonStyle(.bordered)
         .background(
-            GeometryReader { geometry in
-                Color.clear
-                    .onAppear {
-                        let rect = geometry.frame(in: .global)
-                        onButtonRectChanged(item.id, rect)
+            // Only track geometry when dropdown is active for this item
+            Group {
+                if activeDropdownItemId == item.id {
+                    GeometryReader { geometry in
+                        Color.clear
+                            .onAppear {
+                                let rect = geometry.frame(in: .global)
+                                onButtonRectChanged(item.id, rect)
+                            }
+                            .onChange(of: geometry.frame(in: .global)) { _, newRect in
+                                onButtonRectChanged(item.id, newRect)
+                            }
                     }
-                    .onChange(of: geometry.frame(in: .global)) { _, newRect in
-                        onButtonRectChanged(item.id, newRect)
-                    }
-            })
+                }
+            }
+        )
     }
 
     private var eventDisplayText: String {
@@ -741,11 +762,12 @@ struct BudgetItemRowView: View {
                 }
             } else {
                 Picker("", selection: Binding(
-                    get: { item.category },
+                    get: { cachedCategoryName.isEmpty ? item.category : cachedCategoryName },
                     set: { newValue in
                         if newValue == "__new__" {
                             newCategoryNames[item.id] = ""
                         } else {
+                            cachedCategoryName = newValue
                             onUpdateItem(item.id, "category", newValue)
                         }
                     })) {
@@ -758,6 +780,11 @@ struct BudgetItemRowView: View {
                     }
                     .pickerStyle(.menu)
                     .padding(.leading, -8)
+                    .onAppear {
+                        if cachedCategoryName.isEmpty {
+                            cachedCategoryName = item.category
+                        }
+                    }
             }
         }
     }
@@ -822,13 +849,15 @@ struct BudgetItemRowView: View {
     private var taxRateSelector: some View {
         Picker("", selection: Binding(
             get: {
-                // Find closest matching tax rate ID (item.taxRate is stored as percentage, rate.taxRate is decimal)
-                let closestRate = budgetStore.taxRates.min(by: {
-                    abs(($0.taxRate * 100) - item.taxRate) < abs(($1.taxRate * 100) - item.taxRate)
-                })
-                return closestRate?.id ?? budgetStore.taxRates.first?.id ?? 0
+                // Use cached value if available
+                if let cached = cachedTaxRateId {
+                    return cached
+                }
+                // Fallback to first tax rate
+                return budgetStore.taxRates.first?.id ?? 0
             },
-            set: { newId in
+            set: { (newId: Int64) in
+                cachedTaxRateId = newId
                 if let selectedRate = budgetStore.taxRates.first(where: { $0.id == newId }) {
                     // Convert decimal to percentage for storage (0.0935 -> 9.35)
                     onUpdateItem(item.id, "taxRate", selectedRate.taxRate * 100)
@@ -840,6 +869,15 @@ struct BudgetItemRowView: View {
             }
             .pickerStyle(.menu)
             .padding(.leading, -8)
+            .onAppear {
+                // Compute and cache tax rate ID once on appear
+                if cachedTaxRateId == nil {
+                    let closestRate = budgetStore.taxRates.min(by: {
+                        abs(($0.taxRate * 100) - item.taxRate) < abs(($1.taxRate * 100) - item.taxRate)
+                    })
+                    cachedTaxRateId = closestRate?.id ?? budgetStore.taxRates.first?.id
+                }
+            }
     }
 
     private var personSelector: some View {
