@@ -274,6 +274,26 @@ struct AddPaymentScheduleView: View {
             return
         }
 
+        // Generate a single payment_plan_id for all payments in this plan
+        let paymentPlanId = UUID()
+        
+        // Determine the payment plan type based on the schedule
+        let planType: String
+        if schedule.count == 1 {
+            planType = "individual"
+        } else {
+            switch formData.paymentType {
+            case .individual:
+                planType = "installment"  // Multiple individual payments = installment plan
+            case .monthly:
+                planType = "simple-recurring"
+            case .interval:
+                planType = "interval-recurring"
+            case .cyclical:
+                planType = "cyclical-recurring"
+            }
+        }
+        
         // Create all payment schedules from the calculated schedule
         for (index, payment) in schedule.enumerated() {
             let isDeposit = payment.description.contains("Deposit") || payment.description.contains("Retainer")
@@ -300,7 +320,12 @@ struct AddPaymentScheduleView: View {
                 vendorId: selectedExpense?.vendorId,
                 isDeposit: isDeposit,
                 isRetainer: isRetainer,
-                createdAt: Date())
+                paymentOrder: index + 1,  // 1-based ordering
+                totalPaymentCount: schedule.count,
+                paymentPlanType: planType,
+                paymentPlanId: paymentPlanId,  // ✅ Assign the same plan ID to all payments
+                createdAt: Date(),
+                updatedAt: nil)
 
             onSave(paymentSchedule)
         }

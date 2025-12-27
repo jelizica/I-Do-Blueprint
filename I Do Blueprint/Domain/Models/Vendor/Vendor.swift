@@ -164,21 +164,183 @@ enum ContractStatus: String, Codable, CaseIterable {
 
 // MARK: - Filter and Sort Options
 
-enum VendorSortOption: String, CaseIterable {
-    case name = "name"
-    case category = "category"
-    case cost = "cost"
-    case rating = "rating"
-    case bookingDate = "booking_date"
+enum VendorSortOption: String, CaseIterable, Identifiable {
+    case nameAsc = "name_asc"
+    case nameDesc = "name_desc"
+    case typeAsc = "type_asc"
+    case typeDesc = "type_desc"
+    case costAsc = "cost_asc"
+    case costDesc = "cost_desc"
+    case dateAddedNewest = "date_added_newest"
+    case dateAddedOldest = "date_added_oldest"
+    case bookingDateNewest = "booking_date_newest"
+    case bookingDateOldest = "booking_date_oldest"
+    case bookingStatusBooked = "booking_status_booked"
+    case bookingStatusAvailable = "booking_status_available"
+
+    var id: String { rawValue }
 
     var displayName: String {
         switch self {
-        case .name: "Name"
-        case .category: "Category"
-        case .cost: "Cost"
-        case .rating: "Rating"
-        case .bookingDate: "Booking Date"
+        case .nameAsc: "Name (A-Z)"
+        case .nameDesc: "Name (Z-A)"
+        case .typeAsc: "Type (A-Z)"
+        case .typeDesc: "Type (Z-A)"
+        case .costAsc: "Cost (Low to High)"
+        case .costDesc: "Cost (High to Low)"
+        case .dateAddedNewest: "Recently Added"
+        case .dateAddedOldest: "Oldest First"
+        case .bookingDateNewest: "Recently Booked"
+        case .bookingDateOldest: "Earliest Booked"
+        case .bookingStatusBooked: "Booked First"
+        case .bookingStatusAvailable: "Available First"
         }
+    }
+
+    var iconName: String {
+        switch self {
+        case .nameAsc, .nameDesc: "textformat"
+        case .typeAsc, .typeDesc: "tag"
+        case .costAsc, .costDesc: "dollarsign.circle"
+        case .dateAddedNewest, .dateAddedOldest: "calendar.badge.plus"
+        case .bookingDateNewest, .bookingDateOldest: "calendar.badge.checkmark"
+        case .bookingStatusBooked, .bookingStatusAvailable: "checkmark.seal"
+        }
+    }
+
+    var groupLabel: String {
+        switch self {
+        case .nameAsc, .nameDesc: "Name"
+        case .typeAsc, .typeDesc: "Vendor Type"
+        case .costAsc, .costDesc: "Quoted Amount"
+        case .dateAddedNewest, .dateAddedOldest: "Date Added"
+        case .bookingDateNewest, .bookingDateOldest: "Booking Date"
+        case .bookingStatusBooked, .bookingStatusAvailable: "Booking Status"
+        }
+    }
+
+    /// Sort an array of vendors using this sort option
+    func sort(_ vendors: [Vendor]) -> [Vendor] {
+        switch self {
+        case .nameAsc:
+            return vendors.sorted { $0.vendorName.localizedCaseInsensitiveCompare($1.vendorName) == .orderedAscending }
+        case .nameDesc:
+            return vendors.sorted { $0.vendorName.localizedCaseInsensitiveCompare($1.vendorName) == .orderedDescending }
+        case .typeAsc:
+            return vendors.sorted { (v1, v2) in
+                let type1 = v1.vendorType ?? ""
+                let type2 = v2.vendorType ?? ""
+                if type1 == type2 {
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+                return type1.localizedCaseInsensitiveCompare(type2) == .orderedAscending
+            }
+        case .typeDesc:
+            return vendors.sorted { (v1, v2) in
+                let type1 = v1.vendorType ?? ""
+                let type2 = v2.vendorType ?? ""
+                if type1 == type2 {
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+                return type1.localizedCaseInsensitiveCompare(type2) == .orderedDescending
+            }
+        case .costAsc:
+            return vendors.sorted { (v1, v2) in
+                switch (v1.quotedAmount, v2.quotedAmount) {
+                case (.some(let cost1), .some(let cost2)):
+                    if cost1 == cost2 {
+                        return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                    }
+                    return cost1 < cost2
+                case (.some, .none):
+                    return true
+                case (.none, .some):
+                    return false
+                case (.none, .none):
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+            }
+        case .costDesc:
+            return vendors.sorted { (v1, v2) in
+                switch (v1.quotedAmount, v2.quotedAmount) {
+                case (.some(let cost1), .some(let cost2)):
+                    if cost1 == cost2 {
+                        return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                    }
+                    return cost1 > cost2
+                case (.some, .none):
+                    return true
+                case (.none, .some):
+                    return false
+                case (.none, .none):
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+            }
+        case .dateAddedNewest:
+            return vendors.sorted { $0.createdAt > $1.createdAt }
+        case .dateAddedOldest:
+            return vendors.sorted { $0.createdAt < $1.createdAt }
+        case .bookingDateNewest:
+            return vendors.sorted { (v1, v2) in
+                // Vendors with booking dates come first, sorted newest to oldest
+                // Vendors without booking dates come last
+                switch (v1.dateBooked, v2.dateBooked) {
+                case (.some(let date1), .some(let date2)):
+                    return date1 > date2
+                case (.some, .none):
+                    return true
+                case (.none, .some):
+                    return false
+                case (.none, .none):
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+            }
+        case .bookingDateOldest:
+            return vendors.sorted { (v1, v2) in
+                // Vendors with booking dates come first, sorted oldest to newest
+                // Vendors without booking dates come last
+                switch (v1.dateBooked, v2.dateBooked) {
+                case (.some(let date1), .some(let date2)):
+                    return date1 < date2
+                case (.some, .none):
+                    return true
+                case (.none, .some):
+                    return false
+                case (.none, .none):
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+            }
+        case .bookingStatusBooked:
+            return vendors.sorted { (v1, v2) in
+                let booked1 = v1.isBooked ?? false
+                let booked2 = v2.isBooked ?? false
+                if booked1 == booked2 {
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+                return booked1 && !booked2
+            }
+        case .bookingStatusAvailable:
+            return vendors.sorted { (v1, v2) in
+                let booked1 = v1.isBooked ?? false
+                let booked2 = v2.isBooked ?? false
+                if booked1 == booked2 {
+                    return v1.vendorName.localizedCaseInsensitiveCompare(v2.vendorName) == .orderedAscending
+                }
+                return !booked1 && booked2
+            }
+        }
+    }
+
+    /// Grouped sort options for UI display
+    static var grouped: [(String, [VendorSortOption])] {
+        [
+            ("Name", [.nameAsc, .nameDesc]),
+            ("Vendor Type", [.typeAsc, .typeDesc]),
+            ("Quoted Amount", [.costAsc, .costDesc]),
+            ("Date Added", [.dateAddedNewest, .dateAddedOldest]),
+            ("Booking Date", [.bookingDateNewest, .bookingDateOldest]),
+            ("Booking Status", [.bookingStatusBooked, .bookingStatusAvailable])
+        ]
     }
 }
 

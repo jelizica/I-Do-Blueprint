@@ -28,6 +28,8 @@ extension BudgetStoreV2 {
             // Store-level cache invalidation on mutation
             invalidateCache()
             logger.info("Added category: \(created.categoryName)" )
+            
+            // Removed forced refresh: rely on optimistic update and cache invalidation
         } catch {
             loadingState = .error(BudgetError.createFailed(underlying: error))
             await handleError(error, operation: "add category") { [weak self] in
@@ -60,6 +62,8 @@ extension BudgetStoreV2 {
             showSuccess("Category updated successfully")
             invalidateCache()
             logger.info("Updated category: \(updated.categoryName)")
+            
+            // Removed forced refresh: rely on optimistic update and cache invalidation
         } catch {
             // Rollback on error
             if case .loaded(var data) = loadingState,
@@ -90,6 +94,8 @@ extension BudgetStoreV2 {
             showSuccess("Category deleted successfully")
             invalidateCache()
             logger.info("Deleted category: \(removed.categoryName)")
+            
+            // Removed forced refresh: rely on optimistic update and cache invalidation
         } catch {
             // Rollback on error
             if case .loaded(var data) = loadingState {
@@ -151,6 +157,22 @@ extension BudgetStoreV2 {
     }
 
     // MARK: - Category Helper Methods
+    
+    /// Count linked budget development items for a category
+    /// Note: This is a synchronous method that returns 0 if budget items aren't loaded yet
+    /// Budget items are loaded separately from the primary scenario
+    func linkedBudgetItemsCount(for category: BudgetCategory) -> Int {
+        // Budget items link by category/subcategory name, not by ID
+        // They're only available when a primary scenario is loaded
+        guard let scenario = primaryScenario else {
+            return 0
+        }
+        
+        // For now, return 0 as budget items need to be fetched separately
+        // This would require async loading which isn't suitable for a computed property
+        // Consider loading budget items as part of loadBudgetData() if this feature is critical
+        return 0
+    }
 
     /// Calculate spent amount for a specific category
     func spentAmount(for categoryId: UUID) -> Double {

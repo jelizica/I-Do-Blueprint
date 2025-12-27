@@ -162,7 +162,7 @@ extension BudgetStoreV2 {
 
                 let totalBudgeted = remainingIds.compactMap { budgetById[$0] }.reduce(0, +)
                 let amount = allExpenses.first(where: { $0.id == expenseUUID })?.amount ?? 0
-                let coupleId = existing.first?.coupleId ?? items.first?.coupleId ?? ""
+                let coupleId = existing.first?.coupleId ?? items.first?.coupleId.uuidString ?? ""
                 let isTest = existing.first?.isTestData
 
                 var newAllocations: [ExpenseAllocation] = []

@@ -21,13 +21,19 @@ struct GroupedVendorListView: View {
 
     private var groupedVendors: [(String, [Vendor])] {
         let grouped = Dictionary(grouping: vendors) { vendor in
-            if vendor.isBooked == true {
+            if vendor.isArchived {
+                return "Archived"
+            } else if vendor.isBooked == true {
                 return "Booked"
             } else {
                 return "Available"
             }
         }
-        return grouped.sorted { $0.key < $1.key }
+        // Sort: Available, Booked, Archived
+        return grouped.sorted { lhs, rhs in
+            let order = ["Available": 0, "Booked": 1, "Archived": 2]
+            return (order[lhs.key] ?? 3) < (order[rhs.key] ?? 3)
+        }
     }
 
     var body: some View {

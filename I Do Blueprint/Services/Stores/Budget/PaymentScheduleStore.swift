@@ -11,6 +11,43 @@ import Dependencies
 import Foundation
 import SwiftUI
 
+// Dependency for expense status recalculation/notification
+private protocol PaymentScheduleChangeNotifying: Sendable {
+    func notifyPaymentScheduleChanged(expenseId: UUID) async throws
+}
+
+private enum PaymentScheduleChangeNotifierKey: DependencyKey {
+    // Default live implementation uses AppStores to update payment status
+    static let liveValue: any PaymentScheduleChangeNotifying = DefaultPaymentScheduleChangeNotifier()
+    static let testValue: any PaymentScheduleChangeNotifying = NoOpPaymentScheduleChangeNotifier()
+}
+
+extension DependencyValues {
+    fileprivate var paymentScheduleChangeNotifier: any PaymentScheduleChangeNotifying {
+        get { self[PaymentScheduleChangeNotifierKey.self] }
+        set { self[PaymentScheduleChangeNotifierKey.self] = newValue }
+    }
+}
+
+/// Default implementation that uses AppStores to update expense payment status
+private struct DefaultPaymentScheduleChangeNotifier: PaymentScheduleChangeNotifying {
+    private let logger = AppLogger.database
+
+    func notifyPaymentScheduleChanged(expenseId: UUID) async throws {
+        // Use AppStores to update the expense payment status
+        // This must be called on MainActor since BudgetStoreV2 is @MainActor
+        await AppStores.shared.budget.updateExpensePaymentStatus(expenseId: expenseId)
+        logger.info("Notified budget store to update payment status for expense: \(expenseId)")
+    }
+}
+
+/// No-op implementation for tests
+private struct NoOpPaymentScheduleChangeNotifier: PaymentScheduleChangeNotifying {
+    func notifyPaymentScheduleChanged(expenseId: UUID) async throws {
+        // No-op for tests
+    }
+}
+
 /// Store for managing payment schedules
 /// Handles CRUD operations for payment schedules with optimistic updates
 @MainActor
@@ -19,12 +56,15 @@ class PaymentScheduleStore: ObservableObject {
     // MARK: - Published State
 
     @Published private(set) var paymentSchedules: [PaymentSchedule] = []
+    @Published private(set) var paymentPlanSummaries: [PaymentPlanSummary] = []
+    @Published var showPlanView: Bool = false
     @Published var isLoading = false
     @Published var error: BudgetError?
 
     // MARK: - Dependencies
 
     @Dependency(\.budgetRepository) var repository
+    @Dependency(\.paymentScheduleChangeNotifier) private var notifier
     private let logger = AppLogger.database
 
     // MARK: - Computed Properties
@@ -75,6 +115,39 @@ class PaymentScheduleStore: ObservableObject {
         }
     }
 
+    /// Load payment plan summaries
+    func loadPaymentPlanSummaries() async {
+        isLoading = true
+        error = nil
+        
+        do {
+            paymentPlanSummaries = try await repository.fetchPaymentPlanSummaries()
+            logger.info("Loaded \(paymentPlanSummaries.count) payment plan summaries")
+        } catch {
+            self.error = .fetchFailed(underlying: error)
+            logger.error("Failed to load payment plan summaries", error: error)
+        }
+        
+        isLoading = false
+    }
+
+    /// Load a specific payment plan summary by expense ID
+    func loadPaymentPlanSummary(expenseId: UUID) async -> PaymentPlanSummary? {
+        do {
+            let summary = try await repository.fetchPaymentPlanSummary(expenseId: expenseId)
+            if let summary {
+                logger.info("Loaded payment plan summary for expense: \(expenseId)")
+            } else {
+                logger.info("No payment plan summary found for expense: \(expenseId)")
+            }
+            return summary
+        } catch {
+            self.error = .fetchFailed(underlying: error)
+            logger.error("Failed to load payment plan summary for expense: \(expenseId)", error: error)
+            return nil
+        }
+    }
+
     /// Add a new payment schedule
     func addPayment(_ schedule: PaymentSchedule) async {
         isLoading = true
@@ -87,6 +160,19 @@ class PaymentScheduleStore: ObservableObject {
 
             // Reload all payment schedules to ensure we have the latest data
             await loadPaymentSchedules()
+            
+            // Update expense payment status if linked to an expense
+            if let expenseId = created.expenseId {
+                do {
+                    try await notifier.notifyPaymentScheduleChanged(expenseId: expenseId)
+                } catch {
+                    // Notification failed: log and propagate as create failure by rolling back local append
+                    logger.error("Expense payment status notification failed after create", error: error)
+                    // Reload schedules from source of truth to avoid inconsistent state
+                    await loadPaymentSchedules()
+                    self.error = .updateFailed(underlying: error)
+                }
+            }
         } catch {
             self.error = .createFailed(underlying: error)
             logger.error("Error adding payment schedule", error: error)
@@ -110,6 +196,26 @@ class PaymentScheduleStore: ObservableObject {
             let updated = try await repository.updatePaymentSchedule(schedule)
             paymentSchedules[index] = updated
             logger.info("Updated payment schedule in database")
+            
+            // Update expense payment status if linked to an expense
+            if let expenseId = updated.expenseId {
+                do {
+                    try await notifier.notifyPaymentScheduleChanged(expenseId: expenseId)
+                } catch {
+                    // Compensating rollback: revert schedule to previous state both locally and remotely
+                    logger.error("Expense payment status notification failed after update; rolling back payment schedule", error: error)
+                    // Attempt to revert remotely to previousSchedule
+                    do {
+                        _ = try await repository.updatePaymentSchedule(previousSchedule)
+                        paymentSchedules[index] = previousSchedule
+                    } catch {
+                        // If rollback fails, reload from source of truth
+                        logger.error("Failed to rollback payment schedule after notifier failure", error: error)
+                        await loadPaymentSchedules()
+                    }
+                    self.error = .updateFailed(underlying: error)
+                }
+            }
         } catch {
             // Rollback on error
             paymentSchedules[index] = previousSchedule
@@ -126,10 +232,31 @@ class PaymentScheduleStore: ObservableObject {
         }
 
         let removed = paymentSchedules.remove(at: index)
+        let expenseId = removed.expenseId // Store before deletion
 
         do {
             try await repository.deletePaymentSchedule(id: id)
             logger.info("Deleted payment schedule")
+            
+            // Update expense payment status if it was linked to an expense
+            if let expenseId = expenseId {
+                do {
+                    try await notifier.notifyPaymentScheduleChanged(expenseId: expenseId)
+                } catch {
+                    // Compensating action: attempt to restore deleted schedule if notification fails
+                    logger.error("Expense payment status notification failed after delete; restoring schedule", error: error)
+                    // Try to recreate the schedule to maintain consistency
+                    do {
+                        let restored = try await repository.createPaymentSchedule(removed)
+                        paymentSchedules.insert(restored, at: min(index, paymentSchedules.count))
+                    } catch {
+                        logger.error("Failed to restore schedule after notifier failure", error: error)
+                        // As last resort, reload all schedules
+                        await loadPaymentSchedules()
+                    }
+                    self.error = .deleteFailed(underlying: error)
+                }
+            }
         } catch {
             // Rollback on error
             paymentSchedules.insert(removed, at: index)

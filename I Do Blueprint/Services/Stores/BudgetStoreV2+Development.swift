@@ -161,4 +161,20 @@ extension BudgetStoreV2 {
         
         return result
     }
+    
+    /// Update an existing budget development scenario
+    func updateBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
+        let updated = try await repository.updateBudgetDevelopmentScenario(scenario)
+        logger.info("Updated budget development scenario: \(updated.scenarioName)")
+        
+        // Invalidate cache for this scenario
+        await invalidateScenarioCache(scenarioId: updated.id)
+        
+        // Reload primary scenario if this was the primary
+        if updated.isPrimary {
+            await loadPrimaryScenario()
+        }
+        
+        return updated
+    }
 }

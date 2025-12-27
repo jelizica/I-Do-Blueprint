@@ -5,8 +5,7 @@ struct VendorListView: View {
     @EnvironmentObject private var vendorStore: VendorStoreV2
     @State private var searchText = ""
     @State private var selectedFilter: VendorFilterOption = .all
-    @State private var selectedSort: VendorSortOption = .name
-    @State private var sortAscending = true
+    @State private var selectedSort: VendorSortOption = .nameAsc
     @State private var showingAddVendor = false
     @State private var selectedVendor: Vendor?
 
@@ -33,24 +32,8 @@ struct VendorListView: View {
             return matchesSearch && matchesFilter
         }
 
-        // Apply sorting
-        return filtered.sorted { (vendor1: Vendor, vendor2: Vendor) -> Bool in
-            let comparison: Bool
-            switch selectedSort {
-            case .name:
-                comparison = vendor1.vendorName < vendor2.vendorName
-            case .category:
-                comparison = (vendor1.budgetCategoryName ?? "") < (vendor2.budgetCategoryName ?? "")
-            case .cost:
-                comparison = (vendor1.quotedAmount ?? 0) < (vendor2.quotedAmount ?? 0)
-            case .rating:
-                // Rating sort not available in list view - would need async fetch
-                comparison = vendor1.vendorName < vendor2.vendorName
-            case .bookingDate:
-                comparison = (vendor1.dateBooked ?? .distantPast) < (vendor2.dateBooked ?? .distantPast)
-            }
-            return sortAscending ? comparison : !comparison
-        }
+        // Apply sorting using the enum's built-in sort method
+        return selectedSort.sort(filtered)
     }
 
     var body: some View {
@@ -89,17 +72,12 @@ struct VendorListView: View {
                             Menu {
                                 ForEach(VendorSortOption.allCases, id: \.self) { option in
                                     Button(action: {
-                                        if selectedSort == option {
-                                            sortAscending.toggle()
-                                        } else {
-                                            selectedSort = option
-                                            sortAscending = true
-                                        }
+                                        selectedSort = option
                                     }) {
                                         HStack {
                                             Text(option.displayName)
                                             if selectedSort == option {
-                                                Image(systemName: sortAscending ? "arrow.up" : "arrow.down")
+                                                Image(systemName: "checkmark")
                                             }
                                         }
                                     }

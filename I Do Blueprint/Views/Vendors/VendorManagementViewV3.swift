@@ -16,9 +16,39 @@ struct VendorManagementViewV3: View {
     @State private var showingExportOptions = false
     @State private var showingAddVendor = false
     @State private var selectedVendor: Vendor?
+    @State private var searchText = ""
+    @State private var selectedFilter: VendorFilterOption = .all
+    @State private var selectedSort: VendorSortOption = .nameAsc
 
     private var vendorStore: VendorStoreV2 {
         appStores.vendor
+    }
+    
+    private var filteredAndSortedVendors: [Vendor] {
+        let filtered = vendorStore.vendors.filter { vendor in
+            // Apply search filter
+            let matchesSearch = searchText.isEmpty ||
+                vendor.vendorName.localizedCaseInsensitiveContains(searchText) ||
+                vendor.vendorType?.localizedCaseInsensitiveContains(searchText) == true ||
+                vendor.email?.localizedCaseInsensitiveContains(searchText) == true
+            
+            // Apply status filter
+            let matchesFilter: Bool = switch selectedFilter {
+            case .all:
+                !vendor.isArchived
+            case .available:
+                !(vendor.isBooked ?? false) && !vendor.isArchived
+            case .booked:
+                (vendor.isBooked ?? false) && !vendor.isArchived
+            case .archived:
+                vendor.isArchived
+            }
+            
+            return matchesSearch && matchesFilter
+        }
+        
+        // Apply sorting
+        return selectedSort.sort(filtered)
     }
 
     var body: some View {
@@ -32,6 +62,11 @@ struct VendorManagementViewV3: View {
                     .padding(.horizontal, Spacing.huge)
                     .padding(.top, Spacing.xxxl)
                     .padding(.bottom, Spacing.xxl)
+
+                // Search and Filter Section
+                searchAndFilterSection
+                    .padding(.horizontal, Spacing.huge)
+                    .padding(.bottom, Spacing.lg)
 
                 // Content Section
                 ScrollView {
@@ -173,6 +208,87 @@ struct VendorManagementViewV3: View {
         .frame(height: 68)
     }
 
+    // MARK: - Search and Filter Section
+    
+    private var searchAndFilterSection: some View {
+        HStack(spacing: Spacing.md) {
+            // Search Bar
+            HStack(spacing: Spacing.sm) {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(AppColors.textSecondary)
+                    .font(.system(size: 14))
+                
+                TextField("Search vendors...", text: $searchText)
+                    .textFieldStyle(.plain)
+                    .font(Typography.bodyRegular)
+                
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(AppColors.textSecondary)
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(AppColors.cardBackground)
+            .cornerRadius(8)
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(AppColors.borderLight, lineWidth: 0.5)
+            )
+            .frame(maxWidth: 400)
+            
+            // Filter Picker
+            Picker("Filter", selection: $selectedFilter) {
+                ForEach(VendorFilterOption.allCases, id: \.self) { option in
+                    Text(option.displayName).tag(option)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 300)
+            
+            Spacer()
+            
+            // Sort Menu
+            Menu {
+                ForEach(VendorSortOption.allCases, id: \.self) { option in
+                    Button {
+                        selectedSort = option
+                    } label: {
+                        HStack {
+                            Text(option.displayName)
+                            if selectedSort == option {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: Spacing.sm) {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .font(.system(size: 14))
+                    Text("Sort: \(selectedSort.displayName)")
+                        .font(Typography.bodyRegular)
+                }
+                .foregroundColor(AppColors.textPrimary)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
+                .background(AppColors.cardBackground)
+                .cornerRadius(8)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(AppColors.borderLight, lineWidth: 0.5)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     // MARK: - Vendor Grid Section
 
     private var vendorGridSection: some View {
@@ -185,11 +301,15 @@ struct VendorManagementViewV3: View {
                 ProgressView("Loading vendors...")
                     .frame(maxWidth: .infinity, maxHeight: 400)
 
-            case .loaded(let vendors):
-                if vendors.isEmpty {
-                    emptyStateView
+            case .loaded:
+                if filteredAndSortedVendors.isEmpty {
+                    if searchText.isEmpty && selectedFilter == .all {
+                        emptyStateView
+                    } else {
+                        noResultsView
+                    }
                 } else {
-                    vendorGrid(vendors: vendors)
+                    vendorGrid(vendors: filteredAndSortedVendors)
                 }
 
             case .error(let error):
@@ -208,7 +328,7 @@ struct VendorManagementViewV3: View {
             ],
             spacing: Spacing.lg
         ) {
-            ForEach(vendors.filter { !$0.isArchived }) { vendor in
+            ForEach(vendors) { vendor in
                 VendorCardV3(vendor: vendor)
                     .onTapGesture {
                         selectedVendor = vendor
@@ -241,6 +361,41 @@ struct VendorManagementViewV3: View {
                     .padding(.vertical, Spacing.md)
                     .background(AppColors.primary)
                     .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, maxHeight: 400)
+    }
+    
+    private var noResultsView: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 48))
+                .foregroundColor(AppColors.textSecondary)
+
+            Text("No Vendors Found")
+                .font(Typography.heading)
+                .foregroundColor(AppColors.textPrimary)
+
+            Text("Try adjusting your search or filters")
+                .font(Typography.bodySmall)
+                .foregroundColor(AppColors.textSecondary)
+
+            Button {
+                searchText = ""
+                selectedFilter = .all
+            } label: {
+                Text("Clear Filters")
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textPrimary)
+                    .padding(.horizontal, Spacing.xxl)
+                    .padding(.vertical, Spacing.md)
+                    .background(AppColors.cardBackground)
+                    .cornerRadius(8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(AppColors.borderLight, lineWidth: 0.5)
+                    )
             }
             .buttonStyle(.plain)
         }
@@ -411,21 +566,29 @@ struct VendorCardV3: View {
 
 private var statusBadge: some View {
         Group {
-            if vendor.isBooked == true {
-                Text("Booked")
+            if vendor.isArchived {
+                Text("Archived")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.error)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.xs)
                     .background(AppColors.errorLight)
                     .cornerRadius(9999)
-            } else {
-                Text("Available")
+            } else if vendor.isBooked == true {
+                Text("Booked")
                     .font(Typography.caption)
                     .foregroundColor(AppColors.success)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.xs)
                     .background(AppColors.successLight)
+                    .cornerRadius(9999)
+            } else {
+                Text("Available")
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.warning)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(AppColors.warningLight)
                     .cornerRadius(9999)
             }
         }

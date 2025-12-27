@@ -69,6 +69,18 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Throws: Repository errors if deletion fails or category not found
     func deleteCategory(id: UUID) async throws
 
+    /// Checks dependencies for a budget category before deletion
+    /// - Parameter id: The UUID of the category to check
+    /// - Returns: CategoryDependencies struct with counts and deletion status
+    /// - Throws: Repository errors if check fails or category not found
+    func checkCategoryDependencies(id: UUID) async throws -> CategoryDependencies
+
+    /// Batch deletes multiple budget categories
+    /// - Parameter ids: Array of category UUIDs to delete
+    /// - Returns: BatchDeleteResult with success/failure counts
+    /// - Throws: Repository errors if the batch delete operation fails (database, validation, or authorization errors)
+    func batchDeleteCategories(ids: [UUID]) async throws -> BatchDeleteResult
+
     // MARK: - Expense Operations
 
     /// Fetches all expenses for the current couple
@@ -128,6 +140,19 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Returns: Array of payment schedules linked to the vendor
     /// - Throws: Repository errors if fetch fails
     func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule]
+
+    // MARK: - Payment Plan Summary Operations
+
+    /// Fetches aggregated payment plan summaries for the current couple
+    /// - Returns: Array of payment plan summaries showing plan-level details
+    /// - Throws: Repository errors if fetch fails
+    func fetchPaymentPlanSummaries() async throws -> [PaymentPlanSummary]
+
+    /// Fetches a single payment plan summary by expense ID
+    /// - Parameter expenseId: The UUID of the expense/plan to fetch
+    /// - Returns: Optional payment plan summary, or nil if not found
+    /// - Throws: Repository errors if fetch fails
+    func fetchPaymentPlanSummary(expenseId: UUID) async throws -> PaymentPlanSummary?
 
     // MARK: - Gifts and Money Owed Operations
 

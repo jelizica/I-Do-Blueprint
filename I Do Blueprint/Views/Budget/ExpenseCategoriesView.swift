@@ -130,29 +130,29 @@ struct CategorySection: View {
 
     @State private var isExpanded = true
 
+    // Parent categories should only show sum of subcategories (not their own allocated amount)
     private var totalSpent: Double {
-        let parentSpent = budgetStore.spentAmount(for: parentCategory.id)
-        let subcategorySpent = subcategories.reduce(0) { total, subcategory in
+        subcategories.reduce(0) { total, subcategory in
             total + budgetStore.spentAmount(for: subcategory.id)
         }
-        return parentSpent + subcategorySpent
     }
 
     private var totalBudgeted: Double {
-        let parentBudget = parentCategory.allocatedAmount
-        let subcategoryBudget = subcategories.reduce(0) { total, subcategory in
+        subcategories.reduce(0) { total, subcategory in
             total + subcategory.allocatedAmount
         }
-        return parentBudget + subcategoryBudget
     }
 
     var body: some View {
         Section {
-            // Parent category
-            CategoryRowView(
+            // Parent category (folder) - clickable to expand/collapse
+            CategoryFolderRowView(
                 category: parentCategory,
-                spentAmount: budgetStore.spentAmount(for: parentCategory.id),
-                isParent: true,
+                subcategoryCount: subcategories.count,
+                totalSpent: totalSpent,
+                totalBudgeted: totalBudgeted,
+                isExpanded: $isExpanded,
+                budgetStore: budgetStore,
                 onEdit: onEdit,
                 onDelete: onDelete)
 
@@ -163,44 +163,180 @@ struct CategorySection: View {
                         category: subcategory,
                         spentAmount: budgetStore.spentAmount(for: subcategory.id),
                         isParent: false,
+                        budgetStore: budgetStore,
                         onEdit: onEdit,
                         onDelete: onDelete)
                         .padding(.leading, Spacing.xl)
                 }
             }
-
-            // Section summary if has subcategories
-            if !subcategories.isEmpty {
-                CategorySummaryRow(
-                    totalSpent: totalSpent,
-                    totalBudgeted: totalBudgeted,
-                    subcategoryCount: subcategories.count)
-                    .padding(.leading, Spacing.xl)
-            }
-        } header: {
-            if !subcategories.isEmpty {
-                Button(action: { isExpanded.toggle() }) {
-                    HStack {
-                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                            .font(.caption)
-                        Text("\(subcategories.count) subcategories")
-                            .font(.caption)
-                        Spacer()
-                    }
-                    .foregroundColor(.secondary)
-                }
-                .buttonStyle(PlainButtonStyle())
-            }
         }
     }
 }
 
-// MARK: - Category Row
+// MARK: - Folder Row (Parent Category)
+
+struct CategoryFolderRowView: View {
+    let category: BudgetCategory
+    let subcategoryCount: Int
+    let totalSpent: Double
+    let totalBudgeted: Double
+    @Binding var isExpanded: Bool
+    let budgetStore: BudgetStoreV2
+    let onEdit: (BudgetCategory) -> Void
+    let onDelete: (BudgetCategory) -> Void
+
+    private var utilizationPercentage: Double {
+        totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0
+    }
+
+    private var statusColor: Color {
+        if utilizationPercentage > 100 {
+            AppColors.Budget.overBudget
+        } else if utilizationPercentage > 80 {
+            AppColors.Budget.pending
+        } else {
+            AppColors.Budget.underBudget
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Expansion chevron
+            Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 12)
+
+            // Folder icon
+            Image(systemName: "folder.fill")
+                .font(.body)
+                .foregroundColor(Color(hex: category.color) ?? AppColors.Budget.allocated)
+
+            // Category details
+            VStack(alignment: .leading, spacing: 4) {
+                HStack {
+                    Text(category.categoryName)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+
+                    Text("(\(subcategoryCount) subcategories)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                if let description = category.description, !description.isEmpty {
+                    Text(description)
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
+                
+                // Linked budget items count
+                let linkedCount = budgetStore.linkedBudgetItemsCount(for: category)
+                if linkedCount > 0 {
+                    Text("\(linkedCount) linked budget item\(linkedCount == 1 ? "" : "s")")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                }
+
+                // Budget progress
+                if totalBudgeted > 0 {
+                    HStack(spacing: 8) {
+                        ProgressView(value: min(utilizationPercentage / 100, 1.0))
+                            .progressViewStyle(LinearProgressViewStyle(tint: statusColor))
+                            .frame(width: 100)
+
+                        Text("\(Int(utilizationPercentage))%")
+                            .font(.caption2)
+                            .foregroundColor(statusColor)
+                            .fontWeight(.medium)
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Budget information (sum of subcategories)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(NumberFormatter.currency.string(from: NSNumber(value: totalSpent)) ?? "$0")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(statusColor)
+
+                Text("of \(NumberFormatter.currency.string(from: NSNumber(value: totalBudgeted)) ?? "$0")")
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+            }
+
+            // Actions menu (only this part is clickable for editing)
+            Menu {
+                Button("Edit") {
+                    onEdit(category)
+                }
+
+                Button("Duplicate") {
+                    duplicateCategory()
+                }
+
+                Divider()
+
+                Button("Delete", role: .destructive) {
+                    onDelete(category)
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+                    .foregroundColor(.secondary)
+            }
+            .menuStyle(BorderlessButtonMenuStyle())
+            .highPriorityGesture(TapGesture().onEnded { _ in
+                // Intentionally no-op: consumes tap to prevent parent expansion
+            })
+        }
+        .padding(.vertical, Spacing.xs)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            // Toggle expansion when clicking anywhere except the menu
+            isExpanded.toggle()
+        }
+    }
+    
+    private func duplicateCategory() {
+        guard let coupleId = SessionManager.shared.getTenantId() else {
+            return
+        }
+        
+        let duplicatedCategory = BudgetCategory(
+            id: UUID(),
+            coupleId: coupleId,
+            categoryName: "Copy of \(category.categoryName)",
+            parentCategoryId: category.parentCategoryId,
+            allocatedAmount: category.allocatedAmount,
+            spentAmount: 0.0, // Reset spent amount for new category
+            typicalPercentage: category.typicalPercentage,
+            priorityLevel: category.priorityLevel,
+            isEssential: category.isEssential,
+            notes: category.notes,
+            forecastedAmount: category.forecastedAmount,
+            confidenceLevel: category.confidenceLevel,
+            lockedAllocation: category.lockedAllocation,
+            description: category.description,
+            createdAt: Date(),
+            updatedAt: nil
+        )
+        
+        Task {
+            await budgetStore.addCategory(duplicatedCategory)
+        }
+    }
+}
+
+// MARK: - Category Row (Subcategory)
 
 struct CategoryRowView: View {
     let category: BudgetCategory
     let spentAmount: Double
     let isParent: Bool
+    let budgetStore: BudgetStoreV2
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
 
@@ -220,30 +356,31 @@ struct CategoryRowView: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            // Category color indicator
-            Circle()
-                .fill(Color(hex: category.color) ?? AppColors.Budget.allocated)
-                .frame(width: 12, height: 12)
+            // Subcategory icon
+            Image(systemName: "doc.text.fill")
+                .font(.caption)
+                .foregroundColor(Color(hex: category.color) ?? AppColors.Budget.allocated)
+                .frame(width: 12)
 
             // Category details
             VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(category.categoryName)
-                        .font(isParent ? .subheadline : .caption)
-                        .fontWeight(isParent ? .semibold : .medium)
-
-                    if isParent {
-                        Image(systemName: "folder.fill")
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                    }
-                }
+                Text(category.categoryName)
+                    .font(.caption)
+                    .fontWeight(.medium)
 
                 if let description = category.description, !description.isEmpty {
                     Text(description)
                         .font(.caption2)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
+                }
+                
+                // Linked budget items count
+                let linkedCount = budgetStore.linkedBudgetItemsCount(for: category)
+                if linkedCount > 0 {
+                    Text("\(linkedCount) linked budget item\(linkedCount == 1 ? "" : "s")")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
                 }
 
                 // Budget progress
@@ -280,7 +417,7 @@ struct CategoryRowView: View {
                 }
 
                 Button("Duplicate") {
-                    // Duplicate category
+                    duplicateCategory()
                 }
 
                 Divider()
@@ -305,44 +442,37 @@ struct CategoryRowView: View {
             }
         }
     }
-}
-
-// MARK: - Category Summary Row
-
-struct CategorySummaryRow: View {
-    let totalSpent: Double
-    let totalBudgeted: Double
-    let subcategoryCount: Int
-
-    private var utilizationPercentage: Double {
-        totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0
-    }
-
-    var body: some View {
-        HStack {
-            Text("Total (\(subcategoryCount) subcategories)")
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundColor(.secondary)
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(NumberFormatter.currency.string(from: NSNumber(value: totalSpent)) ?? "$0")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-
-                Text("of \(NumberFormatter.currency.string(from: NSNumber(value: totalBudgeted)) ?? "$0")")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
-            }
+    
+    private func duplicateCategory() {
+        guard let coupleId = SessionManager.shared.getTenantId() else {
+            return
         }
-        .padding(.vertical, Spacing.xxs)
-        .padding(.horizontal, Spacing.sm)
-        .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
-        .clipShape(RoundedRectangle(cornerRadius: 4))
+        
+        let duplicatedCategory = BudgetCategory(
+            id: UUID(),
+            coupleId: coupleId,
+            categoryName: "Copy of \(category.categoryName)",
+            parentCategoryId: category.parentCategoryId,
+            allocatedAmount: category.allocatedAmount,
+            spentAmount: 0.0, // Reset spent amount for new category
+            typicalPercentage: category.typicalPercentage,
+            priorityLevel: category.priorityLevel,
+            isEssential: category.isEssential,
+            notes: category.notes,
+            forecastedAmount: category.forecastedAmount,
+            confidenceLevel: category.confidenceLevel,
+            lockedAllocation: category.lockedAllocation,
+            description: category.description,
+            createdAt: Date(),
+            updatedAt: nil
+        )
+        
+        Task {
+            await budgetStore.addCategory(duplicatedCategory)
+        }
     }
 }
+
 
 // MARK: - Add Category View
 

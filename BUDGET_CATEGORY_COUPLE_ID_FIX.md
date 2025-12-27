@@ -1,41 +1,31 @@
-# Budget Category Creation Fix - Couple ID Issue
+# Budget Category Couple ID Fix
 
-## Problem Summary
-
-When users attempted to create new budget categories or subcategories in the Budget Development scenario, they received an RLS (Row Level Security) policy violation error:
-
+## Issue
+Users were unable to create new budget categories or subcategories from the Budget Development page. The error was:
 ```
-Error: new row violates row-level security policy for table "budget_categories"
-PostgrestError(code: "42501", message: "new row violates row-level security policy for table \"budget_categories\"")
+new row violates row-level security policy for table "budget_categories"
 ```
 
 ## Root Cause
+When creating new `BudgetCategory` objects in `BudgetItemManagement.swift` and `AddBudgetCategoryView.swift`, the `coupleId` was being set to a **random UUID** instead of the current user's tenant ID:
 
-The issue was in the Swift code, not the database. Two files were creating `BudgetCategory` objects with **random UUIDs** for the `coupleId` field instead of using the actual tenant's couple ID:
-
-### Affected Files:
-1. **BudgetItemManagement.swift** - Budget Development view
-2. **AddBudgetCategoryView.swift** - Add Category modal
-
-### The Bug:
 ```swift
-// ❌ WRONG: Creates random UUID
+// ❌ WRONG - Creates a random UUID that doesn't match any collaborator record
 let newCategory = BudgetCategory(
     id: UUID(),
-    coupleId: UUID(),  // <-- This generates a random UUID!
+    coupleId: UUID(),  // This was the bug!
     categoryName: trimmedName,
-    // ... other fields
+    ...
 )
 ```
 
-This random UUID would never match any collaborator records in the database, causing the RLS policy to reject the insert operation.
+The RLS policy on `budget_categories` requires that the `couple_id` matches one of the user's active collaborator records. Since a random UUID was being used, the INSERT was always rejected.
 
-## The Fix
-
-Changed both files to use `SessionManager.shared.getTenantId()` to get the actual couple ID:
+## Solution
+Updated all places where `BudgetCategory` is created to use `SessionManager.shared.getTenantId()` to get the current user's couple ID:
 
 ```swift
-// ✅ CORRECT: Uses actual tenant ID
+// ✅ CORRECT - Uses the current tenant's couple ID
 guard let coupleId = SessionManager.shared.getTenantId() else {
     logger.error("Cannot create category: No couple selected")
     return
@@ -43,42 +33,26 @@ guard let coupleId = SessionManager.shared.getTenantId() else {
 
 let newCategory = BudgetCategory(
     id: UUID(),
-    coupleId: coupleId,  // <-- Uses actual couple ID
+    coupleId: coupleId,  // Now uses the correct couple ID
     categoryName: trimmedName,
-    // ... other fields
+    ...
 )
 ```
 
 ## Files Modified
 
-### 1. BudgetItemManagement.swift
-**Location:** `I Do Blueprint/Views/Budget/Components/Development/BudgetItemManagement.swift`
+### 1. `I Do Blueprint/Views/Budget/Components/Development/BudgetItemManagement.swift`
+- Fixed `handleNewCategoryName()` function
+- Fixed `handleNewSubcategoryName()` function
 
-**Changes:**
-- Fixed `handleNewCategoryName()` function to use actual couple ID
-- Fixed `handleNewSubcategoryName()` function to use actual couple ID
-- Added guard statements to check for valid tenant ID before creating categories
-- Added error logging when tenant ID is missing
+### 2. `I Do Blueprint/Views/Budget/AddBudgetCategoryView.swift`
+- Fixed `saveBudgetCategory()` function
 
-**Lines Changed:**
-- Line 119: Added guard statement and changed `coupleId: UUID()` to `coupleId: coupleId`
-- Line 161: Added guard statement and changed `coupleId: UUID()` to `coupleId: coupleId`
+## Files Already Correct
+- `I Do Blueprint/Views/Budget/ExpenseCategoriesView.swift` - Already using `SessionManager.shared.getTenantId()`
 
-### 2. AddBudgetCategoryView.swift
-**Location:** `I Do Blueprint/Views/Budget/AddBudgetCategoryView.swift`
-
-**Changes:**
-- Fixed `saveBudgetCategory()` function to use actual couple ID
-- Added guard statement to check for valid tenant ID
-- Added error logging when tenant ID is missing
-
-**Lines Changed:**
-- Line 217: Added guard statement and changed `coupleId: UUID()` to `coupleId: coupleId`
-
-## RLS Policy Status
-
-The RLS policy on `budget_categories` table is **correct** and working as designed:
-
+## RLS Policy Reference
+The INSERT policy on `budget_categories` requires:
 ```sql
 CREATE POLICY budget_categories_insert ON budget_categories
     FOR INSERT
@@ -94,122 +68,13 @@ CREATE POLICY budget_categories_insert ON budget_categories
     );
 ```
 
-This policy ensures that:
-1. User must be authenticated
-2. User must have an active collaborator record
-3. The `couple_id` in the new category must match a couple the user has access to
+This policy ensures users can only create categories for couples they are active collaborators for.
 
-The policy was correctly rejecting inserts with random UUIDs because those UUIDs didn't match any valid couple IDs.
+## Testing
+After this fix, users should be able to:
+1. Create new budget categories from the Budget Development page
+2. Create new subcategories from the Budget Development page
+3. Create categories from the Add Budget Category view
 
-## Build Verification
-
-✅ **Build Status: SUCCESS**
-
-The Xcode project was built successfully after applying the fixes:
-```
-** BUILD SUCCEEDED **
-```
-
-No compilation errors or warnings related to the changes.
-
-## Testing Checklist
-
-After applying this fix, verify:
-
-- [ ] User can create new top-level budget categories in Budget Development
-- [ ] User can create subcategories (with parent_category_id) in Budget Development
-- [ ] User can create categories from the Add Category modal
-- [ ] Error is logged if user somehow doesn't have a tenant ID
-- [ ] Categories are properly scoped to the user's couple
-- [ ] RLS policy continues to prevent unauthorized access
-
-## Related Code Patterns
-
-### ✅ Correct Pattern (Already Used Elsewhere)
-```swift
-// ExpenseCategoriesView.swift - CORRECT
-guard let coupleId = SessionManager.shared.getTenantId() else {
-    return
-}
-
-let category = BudgetCategory(
-    id: UUID(),
-    coupleId: coupleId,  // ✅ Uses actual tenant ID
-    // ...
-)
-```
-
-### ❌ Anti-Pattern (Now Fixed)
-```swift
-// WRONG - Don't do this!
-let category = BudgetCategory(
-    id: UUID(),
-    coupleId: UUID(),  // ❌ Random UUID
-    // ...
-)
-```
-
-## Prevention
-
-To prevent similar issues in the future:
-
-1. **Code Review**: Always check that `coupleId` uses `SessionManager.shared.getTenantId()`
-2. **Linting**: Consider adding a SwiftLint rule to detect `coupleId: UUID()`
-3. **Testing**: Add integration tests that verify RLS policies work correctly
-4. **Documentation**: Update best practices to emphasize proper tenant ID usage
-
-## Best Practices
-
-When creating any multi-tenant entity (Guest, Vendor, Task, etc.):
-
-```swift
-// 1. Always get tenant ID first
-guard let coupleId = SessionManager.shared.getTenantId() else {
-    logger.error("Cannot create entity: No couple selected")
-    return
-}
-
-// 2. Use it in the entity creation
-let entity = Entity(
-    id: UUID(),
-    coupleId: coupleId,  // ✅ Use the actual tenant ID
-    // ... other fields
-)
-
-// 3. Log the operation
-logger.info("Created entity for couple: \(coupleId)")
-```
-
-## Impact
-
-- **Severity**: High (blocking feature)
-- **Scope**: Budget category creation in 2 views
-- **Users Affected**: All users trying to create categories in Budget Development
-- **Data Impact**: None (no data corruption, just prevented creation)
-- **Migration Required**: No (code-only fix)
-- **Build Impact**: None (builds successfully)
-
-## References
-
-- **RLS Documentation**: `docs/database/RLS_POLICIES.md`
-- **Best Practices**: `best_practices.md` (Multi-Tenant Security Pattern)
-- **Previous Fix**: `BUDGET_CATEGORIES_SUBCATEGORY_FIX_SUMMARY.md` (RLS policy fix)
-- **Session Management**: `I Do Blueprint/Services/Auth/SessionManager.swift`
-- **Tenant Context**: `I Do Blueprint/Core/Common/Auth/TenantContext.swift`
-
-## Status
-
-- **Issue**: ✅ Fixed
-- **Root Cause**: ✅ Identified (random UUID instead of tenant ID)
-- **Code Changes**: ✅ Applied
-- **Build Verification**: ✅ Passed
-- **Testing**: ⏳ Pending user verification
-- **Documentation**: ✅ Complete
-
----
-
-**Date Fixed**: 2025-01-26  
-**Fixed By**: AI Assistant  
-**Build Status**: ✅ SUCCESS  
-**Breaking Changes**: None  
-**Deployment**: Code change only, no migration required
+## Date
+2025-12-26

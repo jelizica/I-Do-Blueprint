@@ -3,7 +3,7 @@ import Dependencies
 
 struct AddVendorView: View {
     private let logger = AppLogger.ui
-    let onSave: (Vendor) -> Void
+    let onSave: (Vendor) async -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Dependency(\.vendorRepository) var repository
@@ -349,7 +349,7 @@ struct AddVendorView: View {
             longitude: nil
         )
 
-        onSave(newVendor)
+        await onSave(newVendor)
 
         isSaving = false
         dismiss()

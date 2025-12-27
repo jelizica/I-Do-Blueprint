@@ -36,7 +36,7 @@ extension BudgetDevelopmentView {
             eventIds: [],
             linkedExpenseId: nil,
             linkedGiftOwedId: nil,
-            coupleId: coupleId.uuidString,
+            coupleId: coupleId,
             isTestData: false,
             parentFolderId: nil,
             isFolder: false,
@@ -78,7 +78,7 @@ extension BudgetDevelopmentView {
             scenarioId: scenarioId,
             parentFolderId: parentFolderId,
             displayOrder: 0,
-            coupleId: coupleId.uuidString
+            coupleId: coupleId
         )
         
         // Add to local array at the top to match displayOrder = 0 and addBudgetItem() behavior
@@ -205,9 +205,15 @@ extension BudgetDevelopmentView {
         }
 
         if existingCategory == nil {
+            // Get the current tenant's couple ID for RLS compliance
+            guard let coupleId = SessionManager.shared.getTenantId() else {
+                logger.error("Cannot create category: No couple selected")
+                return
+            }
+            
             let newCategory = BudgetCategory(
                 id: UUID(),
-                coupleId: UUID(),
+                coupleId: coupleId,
                 categoryName: trimmedName,
                 parentCategoryId: nil,
                 allocatedAmount: 0,
@@ -244,9 +250,15 @@ extension BudgetDevelopmentView {
         }
 
         if existingSubcategory == nil {
+            // Get the current tenant's couple ID for RLS compliance
+            guard let coupleId = SessionManager.shared.getTenantId() else {
+                logger.error("Cannot create subcategory: No couple selected")
+                return
+            }
+            
             let newSubcategory = BudgetCategory(
                 id: UUID(),
-                coupleId: UUID(),
+                coupleId: coupleId,
                 categoryName: trimmedName,
                 parentCategoryId: parentCategory.id,
                 allocatedAmount: 0,

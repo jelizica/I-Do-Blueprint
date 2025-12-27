@@ -29,7 +29,7 @@ actor BudgetAllocationService: BudgetAllocationServiceProtocol {
         let totalBudgeted = keys.compactMap { budgetById[$0] }.reduce(0, +)
 
         // 4) Build new allocation set using proportional weights (fallback: 100% to target item)
-        let coupleId = existing.first?.coupleId ?? items.first?.coupleId ?? ""
+        let coupleId = existing.first?.coupleId ?? items.first?.coupleId.uuidString ?? ""
         let isTest = existing.first?.isTestData
         let amount = expense.amount
 

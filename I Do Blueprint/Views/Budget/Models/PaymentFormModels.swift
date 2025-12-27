@@ -21,10 +21,10 @@ enum PaymentType: String, CaseIterable {
 
     var databaseValue: String {
         switch self {
-        case .individual: "single"
+        case .individual: "individual"
         case .monthly: "monthly"
-        case .interval: "custom"
-        case .cyclical: "custom"
+        case .interval: "interval"
+        case .cyclical: "cyclical"
         }
     }
 
@@ -34,6 +34,89 @@ enum PaymentType: String, CaseIterable {
         case .monthly: "calendar.circle.fill"
         case .interval: "timer.circle.fill"
         case .cyclical: "repeat.circle.fill"
+        }
+    }
+    
+    // MARK: - Backward Compatibility
+    
+    /// Initialize from database value with backward compatibility for legacy values
+    /// Handles migration from old format:
+    /// - "single" -> .individual
+    /// - "custom" -> .interval (default) or .cyclical (if varying amounts detected)
+    init?(fromDatabaseValue value: String) {
+        switch value.lowercased() {
+        // New canonical values
+        case "individual":
+            self = .individual
+        case "monthly":
+            self = .monthly
+        case "interval":
+            self = .interval
+        case "cyclical":
+            self = .cyclical
+            
+        // Legacy value mappings (backward compatibility)
+        case "single":
+            // Old "single" maps to new "individual"
+            self = .individual
+            
+        case "custom":
+            // Old "custom" defaults to "interval"
+            // Note: Ambiguous records should be resolved via migration
+            // This provides a safe fallback for any unmigrated data
+            self = .interval
+            
+        // Handle deposit/retainer as individual payments
+        case "deposit", "retainer":
+            self = .individual
+            
+        default:
+            return nil
+        }
+    }
+    
+    /// All valid database values (new and legacy)
+    static var allDatabaseValues: [String] {
+        return [
+            // New canonical values
+            "individual", "monthly", "interval", "cyclical",
+            // Legacy values (for backward compatibility)
+            "single", "custom",
+            // Special types
+            "deposit", "retainer"
+        ]
+    }
+    
+    /// Check if a database value is a legacy value that needs migration
+    static func isLegacyValue(_ value: String) -> Bool {
+        return ["single", "custom"].contains(value.lowercased())
+    }
+    
+    /// Get migration suggestion for a legacy value
+    /// - Parameter value: The legacy database value
+    /// - Parameter context: Additional context for disambiguation (e.g., payment count, amount uniformity)
+    /// - Returns: Suggested PaymentType for migration
+    static func migrationSuggestion(
+        for value: String,
+        paymentCount: Int? = nil,
+        hasUniformAmounts: Bool? = nil
+    ) -> PaymentType {
+        switch value.lowercased() {
+        case "single":
+            return .individual
+            
+        case "custom":
+            // Use context to disambiguate
+            if let count = paymentCount, count == 1 {
+                return .individual
+            } else if let uniform = hasUniformAmounts, uniform {
+                return .interval
+            } else {
+                return .cyclical
+            }
+            
+        default:
+            return .individual
         }
     }
 }

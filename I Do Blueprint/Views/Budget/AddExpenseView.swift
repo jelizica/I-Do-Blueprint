@@ -56,17 +56,15 @@ struct AddExpenseView: View {
                         }
                         .padding(.leading, Spacing.lg)
 
-                    Picker("Category", selection: $selectedCategoryId) {
-                        Text("Select Category").tag(nil as UUID?)
-                        ForEach(categories, id: \.id) { category in
-                            HStack {
-                                Circle()
-                                    .fill(Color(hex: category.color) ?? AppColors.Budget.allocated)
-                                    .frame(width: 12, height: 12)
-                                Text(category.categoryName)
-                            }
-                            .tag(category.id as UUID?)
-                        }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Category")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        HierarchicalCategoryPicker(
+                            categories: categories,
+                            selectedCategoryId: $selectedCategoryId
+                        )
                     }
                 }
 

@@ -23,6 +23,13 @@ struct ModernVendorStatsView: View {
                     accessibilityLabel: "Available vendors: \(stats.available)"
                 ),
                 StatItem(
+                    icon: "archivebox.fill",
+                    label: "Archived",
+                    value: "\(stats.archived)",
+                    color: AppColors.textSecondary,
+                    accessibilityLabel: "Archived vendors: \(stats.archived)"
+                ),
+                StatItem(
                     icon: "dollarsign.circle.fill",
                     label: "Total Cost",
                     value: "$\(Int(stats.totalCost))",
@@ -30,7 +37,7 @@ struct ModernVendorStatsView: View {
                     accessibilityLabel: "Total vendor cost: $\(Int(stats.totalCost))"
                 )
             ],
-            columns: 2
+            columns: 3
         )
     }
 }

@@ -161,10 +161,12 @@ struct PaymentEditModal: View {
                         Text("Type")
                             .frame(width: 100, alignment: .leading)
                         Picker("Payment Type", selection: Binding(
-                            get: { editedPayment.paymentType ?? "one_time" },
+                            get: { editedPayment.paymentType ?? "individual" },
                             set: { editedPayment.paymentType = $0 })) {
-                            Text("One Time").tag("one_time")
+                            Text("Individual").tag("individual")
                             Text("Monthly").tag("monthly")
+                            Text("Interval").tag("interval")
+                            Text("Cyclical").tag("cyclical")
                             Text("Deposit").tag("deposit")
                             Text("Retainer").tag("retainer")
                         }
@@ -276,7 +278,7 @@ struct PaymentEditModal: View {
         notes: "Sample payment notes",
         vendorType: "Photography",
         paid: false,
-        paymentType: "deposit",
+        paymentType: "individual",  // ✅ Valid DB constraint value
         customAmount: nil,
         billingFrequency: nil,
         autoRenew: false,

@@ -13,6 +13,7 @@ struct BudgetConfigSettingsView: View {
     @State private var editingTaxRate: SettingsTaxRate?
     @State private var newTaxRateName = ""
     @State private var newTaxRateValue = ""
+    @State private var showingCategoryManagement = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -83,6 +84,28 @@ struct BudgetConfigSettingsView: View {
                         .padding()
                     }
 
+                    // Budget Categories Link
+                    GroupBox(label: Text("Budget Categories").font(.headline)) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Manage your budget categories and subcategories for expense organization.")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            
+                            Button(action: { showingCategoryManagement = true }) {
+                                HStack {
+                                    Image(systemName: "folder.fill")
+                                    Text("Manage Categories")
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding()
+                    }
+                    
                     // Budget Notes
                     GroupBox(label: Text("Budget Notes").font(.headline)) {
                         TextEditor(text: $viewModel.localSettings.budget.notes)
@@ -183,6 +206,19 @@ struct BudgetConfigSettingsView: View {
                     editingTaxRate = nil
                 })
         }
+        .sheet(isPresented: $showingCategoryManagement) {
+            NavigationStack {
+                BudgetCategoriesSettingsView()
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Done") {
+                                showingCategoryManagement = false
+                            }
+                        }
+                    }
+            }
+            .frame(minWidth: 700, minHeight: 600)
+        }
     }
 
     private func calculateTotalBudget() -> Double {
@@ -193,7 +229,7 @@ struct BudgetConfigSettingsView: View {
     }
 
     private func addTaxRate() {
-        guard !newTaxRateName.isEmpty, let rateValue = Double(newTaxRateValue), rateValue > 0 else {
+        guard !newTaxRateName.isEmpty, let rateValue = Double(newTaxRateValue), rateValue >= 0 else {
             return
         }
 
@@ -366,7 +402,7 @@ struct EditTaxRateSheet: View {
                     .keyboardShortcut(.cancelAction)
 
                 Button("Save") {
-                    if let newRate = Double(rateValue) {
+                    if let newRate = Double(rateValue), newRate >= 0 {
                         let updatedRate = SettingsTaxRate(
                             id: rate.id,
                             name: name,

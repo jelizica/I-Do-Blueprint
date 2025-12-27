@@ -163,75 +163,10 @@ struct BudgetSummary: Identifiable, Codable {
         includesEngagementRings = try container.decode(Bool.self, forKey: .includesEngagementRings)
         engagementRingAmount = try container.decode(Double.self, forKey: .engagementRingAmount)
 
-        // Custom date decoding
-        weddingDate = try Self.decodeDateIfPresent(from: container, forKey: .weddingDate)
-        createdAt = try Self.decodeDate(from: container, forKey: .createdAt)
-        updatedAt = try Self.decodeDateIfPresent(from: container, forKey: .updatedAt)
-    }
-
-    // Helper methods for date decoding
-    private static func decodeDate(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date {
-        if let date = try? container.decode(Date.self, forKey: key) {
-            return date
-        }
-
-        let dateString = try container.decode(String.self, forKey: key)
-        return try parseDate(from: dateString)
-    }
-
-    private static func decodeDateIfPresent(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date? {
-        if let date = try? container.decodeIfPresent(Date.self, forKey: key) {
-            return date
-        }
-
-        guard let dateString = try container.decodeIfPresent(String.self, forKey: key) else {
-            return nil
-        }
-
-        return try parseDate(from: dateString)
-    }
-
-    private static func parseDate(from dateString: String) throws -> Date {
-        // Try different date formats
-        let formatters = [
-            ISO8601DateFormatter(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-                return formatter
-            }()
-        ]
-
-        for formatter in formatters {
-            if let iso8601Formatter = formatter as? ISO8601DateFormatter {
-                if let date = iso8601Formatter.date(from: dateString) {
-                    return date
-                }
-            } else if let dateFormatter = formatter as? DateFormatter {
-                if let date = dateFormatter.date(from: dateString) {
-                    return date
-                }
-            }
-        }
-
-        throw DecodingError.dataCorrupted(
-            DecodingError.Context(
-                codingPath: [],
-                debugDescription: "Unable to parse date: \(dateString)"))
+        // Custom date decoding using shared DateDecodingHelpers (refactored from duplicated code)
+        weddingDate = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .weddingDate)
+        createdAt = try DateDecodingHelpers.decodeDate(from: container, forKey: .createdAt)
+        updatedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .updatedAt)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -362,74 +297,9 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         lockedAllocation = try container.decode(Bool.self, forKey: .lockedAllocation)
         description = try container.decodeIfPresent(String.self, forKey: .description)
 
-        // Custom date decoding
-        createdAt = try Self.decodeDate(from: container, forKey: .createdAt)
-        updatedAt = try Self.decodeDateIfPresent(from: container, forKey: .updatedAt)
-    }
-
-    // Helper methods for date decoding
-    private static func decodeDate(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date {
-        if let date = try? container.decode(Date.self, forKey: key) {
-            return date
-        }
-
-        let dateString = try container.decode(String.self, forKey: key)
-        return try parseDate(from: dateString)
-    }
-
-    private static func decodeDateIfPresent(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date? {
-        if let date = try? container.decodeIfPresent(Date.self, forKey: key) {
-            return date
-        }
-
-        guard let dateString = try container.decodeIfPresent(String.self, forKey: key) else {
-            return nil
-        }
-
-        return try parseDate(from: dateString)
-    }
-
-    private static func parseDate(from dateString: String) throws -> Date {
-        // Try different date formats
-        let formatters = [
-            ISO8601DateFormatter(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-                return formatter
-            }()
-        ]
-
-        for formatter in formatters {
-            if let iso8601Formatter = formatter as? ISO8601DateFormatter {
-                if let date = iso8601Formatter.date(from: dateString) {
-                    return date
-                }
-            } else if let dateFormatter = formatter as? DateFormatter {
-                if let date = dateFormatter.date(from: dateString) {
-                    return date
-                }
-            }
-        }
-
-        throw DecodingError.dataCorrupted(
-            DecodingError.Context(
-                codingPath: [],
-                debugDescription: "Unable to parse date: \(dateString)"))
+        // Custom date decoding using shared DateDecodingHelpers (refactored from duplicated code)
+        createdAt = try DateDecodingHelpers.decodeDate(from: container, forKey: .createdAt)
+        updatedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .updatedAt)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -583,76 +453,11 @@ struct Expense: Identifiable, Codable {
         invoiceDocumentUrl = try container.decodeIfPresent(String.self, forKey: .invoiceDocumentUrl)
         isTestData = try container.decode(Bool.self, forKey: .isTestData)
 
-        // Custom date decoding
-        expenseDate = try Self.decodeDate(from: container, forKey: .expenseDate)
-        approvedAt = try Self.decodeDateIfPresent(from: container, forKey: .approvedAt)
-        createdAt = try Self.decodeDate(from: container, forKey: .createdAt)
-        updatedAt = try Self.decodeDateIfPresent(from: container, forKey: .updatedAt)
-    }
-
-    // Helper methods for date decoding
-    private static func decodeDate(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date {
-        if let date = try? container.decode(Date.self, forKey: key) {
-            return date
-        }
-
-        let dateString = try container.decode(String.self, forKey: key)
-        return try parseDate(from: dateString)
-    }
-
-    private static func decodeDateIfPresent(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date? {
-        if let date = try? container.decodeIfPresent(Date.self, forKey: key) {
-            return date
-        }
-
-        guard let dateString = try container.decodeIfPresent(String.self, forKey: key) else {
-            return nil
-        }
-
-        return try parseDate(from: dateString)
-    }
-
-    private static func parseDate(from dateString: String) throws -> Date {
-        // Try different date formats
-        let formatters = [
-            ISO8601DateFormatter(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-                return formatter
-            }()
-        ]
-
-        for formatter in formatters {
-            if let iso8601Formatter = formatter as? ISO8601DateFormatter {
-                if let date = iso8601Formatter.date(from: dateString) {
-                    return date
-                }
-            } else if let dateFormatter = formatter as? DateFormatter {
-                if let date = dateFormatter.date(from: dateString) {
-                    return date
-                }
-            }
-        }
-
-        throw DecodingError.dataCorrupted(
-            DecodingError.Context(
-                codingPath: [],
-                debugDescription: "Unable to parse date: \(dateString)"))
+        // Custom date decoding using shared DateDecodingHelpers (refactored from duplicated code)
+        expenseDate = try DateDecodingHelpers.decodeDate(from: container, forKey: .expenseDate)
+        approvedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .approvedAt)
+        createdAt = try DateDecodingHelpers.decodeDate(from: container, forKey: .createdAt)
+        updatedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .updatedAt)
     }
 
     private enum CodingKeys: String, CodingKey {
@@ -703,6 +508,7 @@ struct PaymentSchedule: Identifiable, Codable {
     var paymentOrder: Int?
     var totalPaymentCount: Int?
     var paymentPlanType: String?
+    var paymentPlanId: UUID?
     var createdAt: Date
     var updatedAt: Date?
 
@@ -762,6 +568,7 @@ struct PaymentSchedule: Identifiable, Codable {
         paymentOrder: Int? = nil,
         totalPaymentCount: Int? = nil,
         paymentPlanType: String? = nil,
+        paymentPlanId: UUID? = nil,
         createdAt: Date,
         updatedAt: Date? = nil) {
         self.id = id
@@ -787,109 +594,17 @@ struct PaymentSchedule: Identifiable, Codable {
         self.paymentOrder = paymentOrder
         self.totalPaymentCount = totalPaymentCount
         self.paymentPlanType = paymentPlanType
+        self.paymentPlanId = paymentPlanId
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
 
-    // Custom decoding to handle different date formats
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
+    // Custom decoding moved to PaymentSchedule+Migration.swift extension
+    // This allows for legacy payment_type migration logic
+    // The extension provides init(from:) with migration support
 
-        id = try container.decode(Int64.self, forKey: .id)
-        coupleId = try container.decode(UUID.self, forKey: .coupleId)
-        vendor = try container.decode(String.self, forKey: .vendor)
-        paymentAmount = try container.decode(Double.self, forKey: .paymentAmount)
-        notes = try container.decodeIfPresent(String.self, forKey: .notes)
-        vendorType = try container.decodeIfPresent(String.self, forKey: .vendorType)
-        paid = try container.decode(Bool.self, forKey: .paid)
-        paymentType = try container.decodeIfPresent(String.self, forKey: .paymentType)
-        customAmount = try container.decodeIfPresent(Double.self, forKey: .customAmount)
-        billingFrequency = try container.decodeIfPresent(String.self, forKey: .billingFrequency)
-        autoRenew = try container.decode(Bool.self, forKey: .autoRenew)
-        reminderEnabled = try container.decode(Bool.self, forKey: .reminderEnabled)
-        reminderDaysBefore = try container.decodeIfPresent(Int.self, forKey: .reminderDaysBefore)
-        priorityLevel = try container.decodeIfPresent(String.self, forKey: .priorityLevel)
-        expenseId = try container.decodeIfPresent(UUID.self, forKey: .expenseId)
-        vendorId = try container.decodeIfPresent(Int64.self, forKey: .vendorId)
-        isDeposit = try container.decode(Bool.self, forKey: .isDeposit)
-        isRetainer = try container.decode(Bool.self, forKey: .isRetainer)
-        paymentOrder = try container.decodeIfPresent(Int.self, forKey: .paymentOrder)
-        totalPaymentCount = try container.decodeIfPresent(Int.self, forKey: .totalPaymentCount)
-        paymentPlanType = try container.decodeIfPresent(String.self, forKey: .paymentPlanType)
-
-        // Custom date decoding
-        paymentDate = try Self.decodeDate(from: container, forKey: .paymentDate)
-        startDate = try Self.decodeDateIfPresent(from: container, forKey: .startDate)
-        createdAt = try Self.decodeDate(from: container, forKey: .createdAt)
-        updatedAt = try Self.decodeDateIfPresent(from: container, forKey: .updatedAt)
-    }
-
-    // Helper methods for date decoding (reuse same logic as Expense)
-    private static func decodeDate(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date {
-        if let date = try? container.decode(Date.self, forKey: key) {
-            return date
-        }
-
-        let dateString = try container.decode(String.self, forKey: key)
-        return try parseDate(from: dateString)
-    }
-
-    private static func decodeDateIfPresent(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date? {
-        if let date = try? container.decodeIfPresent(Date.self, forKey: key) {
-            return date
-        }
-
-        guard let dateString = try container.decodeIfPresent(String.self, forKey: key) else {
-            return nil
-        }
-
-        return try parseDate(from: dateString)
-    }
-
-    private static func parseDate(from dateString: String) throws -> Date {
-        // Try different date formats
-        let formatters = [
-            ISO8601DateFormatter(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-                return formatter
-            }()
-        ]
-
-        for formatter in formatters {
-            if let iso8601Formatter = formatter as? ISO8601DateFormatter {
-                if let date = iso8601Formatter.date(from: dateString) {
-                    return date
-                }
-            } else if let dateFormatter = formatter as? DateFormatter {
-                if let date = dateFormatter.date(from: dateString) {
-                    return date
-                }
-            }
-        }
-
-        throw DecodingError.dataCorrupted(
-            DecodingError.Context(
-                codingPath: [],
-                debugDescription: "Unable to parse date: \(dateString)"))
-    }
-
-    private enum CodingKeys: String, CodingKey {
+    // CodingKeys is internal (not private) so it can be shared with PaymentSchedule+Migration.swift
+    enum CodingKeys: String, CodingKey {
         case id = "id"
         case coupleId = "couple_id"
         case vendor = "vendor"
@@ -913,6 +628,7 @@ struct PaymentSchedule: Identifiable, Codable {
         case paymentOrder = "payment_order"
         case totalPaymentCount = "total_payment_count"
         case paymentPlanType = "payment_plan_type"
+        case paymentPlanId = "payment_plan_id"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
@@ -1199,7 +915,7 @@ struct BudgetItem: Identifiable, Codable, Equatable {
     var eventIds: [String]?
     var linkedExpenseId: String?
     var linkedGiftOwedId: String?
-    var coupleId: String
+    var coupleId: UUID
     var isTestData: Bool?
     
     // Folder-related properties (backward-compatible with defaults)
@@ -1237,7 +953,7 @@ struct BudgetItem: Identifiable, Codable, Equatable {
         eventIds: [String]? = nil,
         linkedExpenseId: String? = nil,
         linkedGiftOwedId: String? = nil,
-        coupleId: String,
+        coupleId: UUID,
         isTestData: Bool? = nil,
         parentFolderId: String? = nil,
         isFolder: Bool = false,
@@ -1280,7 +996,7 @@ struct BudgetItem: Identifiable, Codable, Equatable {
         scenarioId: String,
         parentFolderId: String? = nil,
         displayOrder: Int = 0,
-        coupleId: String,
+        coupleId: UUID,
         personResponsible: String = "Both",
         isTestData: Bool = false
     ) -> BudgetItem {
@@ -1329,7 +1045,7 @@ struct BudgetItem: Identifiable, Codable, Equatable {
         eventIds = try container.decodeIfPresent([String].self, forKey: .eventIds)
         linkedExpenseId = try container.decodeIfPresent(String.self, forKey: .linkedExpenseId)
         linkedGiftOwedId = try container.decodeIfPresent(String.self, forKey: .linkedGiftOwedId)
-        coupleId = try container.decode(String.self, forKey: .coupleId)
+        coupleId = try container.decode(UUID.self, forKey: .coupleId)
         isTestData = try container.decodeIfPresent(Bool.self, forKey: .isTestData)
         
         // Backward-compatible decoding with defaults for new properties
@@ -1382,7 +1098,7 @@ struct SavedScenario: Identifiable, Codable {
     var totalTax: Double?
     var totalWithTax: Double?
     var isPrimary: Bool
-    var coupleId: String
+    var coupleId: UUID  // ✅ Changed from String to UUID
     var isTestData: Bool
 
     private enum CodingKeys: String, CodingKey {
@@ -1396,6 +1112,31 @@ struct SavedScenario: Identifiable, Codable {
         case isPrimary = "is_primary"
         case coupleId = "couple_id"
         case isTestData = "is_test_data"
+    }
+    
+    // Explicit initializer for creating scenarios
+    init(
+        id: String,
+        scenarioName: String,
+        createdAt: Date,
+        updatedAt: Date,
+        totalWithoutTax: Double? = nil,
+        totalTax: Double? = nil,
+        totalWithTax: Double? = nil,
+        isPrimary: Bool,
+        coupleId: UUID,
+        isTestData: Bool
+    ) {
+        self.id = id
+        self.scenarioName = scenarioName
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.totalWithoutTax = totalWithoutTax
+        self.totalTax = totalTax
+        self.totalWithTax = totalWithTax
+        self.isPrimary = isPrimary
+        self.coupleId = coupleId
+        self.isTestData = isTestData
     }
 }
 
@@ -1517,10 +1258,10 @@ struct AffordabilityScenario: Identifiable, Codable {
         isPrimary = try container.decode(Bool.self, forKey: .isPrimary)
         coupleId = try container.decode(UUID.self, forKey: .coupleId)
 
-        // Handle dates
-        createdAt = try Self.decodeDate(from: container, forKey: .createdAt)
-        updatedAt = try Self.decodeDateIfPresent(from: container, forKey: .updatedAt)
-        calculationStartDate = try Self.decodeDateIfPresent(from: container, forKey: .calculationStartDate)
+        // Handle dates using shared DateDecodingHelpers (refactored from duplicated code)
+        createdAt = try DateDecodingHelpers.decodeDate(from: container, forKey: .createdAt)
+        updatedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .updatedAt)
+        calculationStartDate = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .calculationStartDate)
 
         // Handle numeric fields that might come as strings from Supabase
         if let p1String = try? container.decode(String.self, forKey: .partner1Monthly) {
@@ -1534,71 +1275,6 @@ struct AffordabilityScenario: Identifiable, Codable {
         } else {
             partner2Monthly = try container.decode(Double.self, forKey: .partner2Monthly)
         }
-    }
-
-    // Helper methods for date decoding
-    private static func decodeDate(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date {
-        if let date = try? container.decode(Date.self, forKey: key) {
-            return date
-        }
-
-        let dateString = try container.decode(String.self, forKey: key)
-        return try parseDate(from: dateString)
-    }
-
-    private static func decodeDateIfPresent(
-        from container: KeyedDecodingContainer<CodingKeys>,
-        forKey key: CodingKeys) throws -> Date? {
-        if let date = try? container.decodeIfPresent(Date.self, forKey: key) {
-            return date
-        }
-
-        guard let dateString = try container.decodeIfPresent(String.self, forKey: key) else {
-            return nil
-        }
-
-        return try parseDate(from: dateString)
-    }
-
-    private static func parseDate(from dateString: String) throws -> Date {
-        // Try different date formats
-        let formatters = [
-            ISO8601DateFormatter(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSS"
-                return formatter
-            }(),
-            {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-                return formatter
-            }()
-        ]
-
-        for formatter in formatters {
-            if let iso8601Formatter = formatter as? ISO8601DateFormatter {
-                if let date = iso8601Formatter.date(from: dateString) {
-                    return date
-                }
-            } else if let dateFormatter = formatter as? DateFormatter {
-                if let date = dateFormatter.date(from: dateString) {
-                    return date
-                }
-            }
-        }
-
-        throw DecodingError.dataCorrupted(
-            DecodingError.Context(
-                codingPath: [],
-                debugDescription: "Invalid date format: \(dateString)"))
     }
 
     init(
@@ -1666,59 +1342,10 @@ struct ContributionItem: Identifiable, Codable {
             amount = try container.decode(Double.self, forKey: .amount)
         }
 
-        // Handle dates with custom parsing
-        contributionDate = try Self.decodeDate(from: container, forKey: .contributionDate)
-        createdAt = try Self.decodeDateIfPresent(from: container, forKey: .createdAt)
-        updatedAt = try Self.decodeDateIfPresent(from: container, forKey: .updatedAt)
-    }
-
-    private static func decodeDate(from container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) throws -> Date {
-        let dateString = try container.decode(String.self, forKey: key)
-        return try parseDate(from: dateString)
-    }
-
-    private static func decodeDateIfPresent(from container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) throws -> Date? {
-        guard let dateString = try container.decodeIfPresent(String.self, forKey: key) else {
-            return nil
-        }
-        return try parseDate(from: dateString)
-    }
-
-    private static func parseDate(from dateString: String) throws -> Date {
-        // Try ISO8601 format first (handles timezone)
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        if let date = isoFormatter.date(from: dateString) {
-            return date
-        }
-
-        // Try without fractional seconds
-        isoFormatter.formatOptions = [.withInternetDateTime]
-        if let date = isoFormatter.date(from: dateString) {
-            return date
-        }
-
-        // Try DateFormatter formats
-        let formats = [
-            "yyyy-MM-dd",
-            "yyyy-MM-dd'T'HH:mm:ss.SSSSSS",
-            "yyyy-MM-dd'T'HH:mm:ss",
-            "yyyy-MM-dd'T'HH:mm:ss.SSSxxxxx"  // With timezone
-        ]
-
-        for format in formats {
-            let formatter = DateFormatter()
-            formatter.dateFormat = format
-            formatter.locale = Locale(identifier: "en_US_POSIX")
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
-        }
-
-        throw DecodingError.dataCorrupted(
-            DecodingError.Context(
-                codingPath: [],
-                debugDescription: "Invalid date format: \(dateString)"))
+        // Handle dates using shared DateDecodingHelpers (refactored from duplicated code)
+        contributionDate = try DateDecodingHelpers.decodeDate(from: container, forKey: .contributionDate)
+        createdAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .createdAt)
+        updatedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .updatedAt)
     }
 
     init(

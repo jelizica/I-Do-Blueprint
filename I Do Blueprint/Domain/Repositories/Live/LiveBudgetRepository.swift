@@ -41,6 +41,19 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         try await TenantContextProvider.shared.requireTenantId()
     }
 
+    /// Ensures a valid auth session exists before making authenticated requests
+    /// This is critical for POST/PUT/DELETE operations that require JWT tokens
+    private func ensureValidSession() async throws {
+        let client = try getClient()
+        do {
+            let session = try await client.auth.session
+            logger.debug("✅ Valid session confirmed: user=\(session.user.id)")
+        } catch {
+            logger.error("❌ No valid auth session available", error: error)
+            throw BudgetError.createFailed(underlying: error)
+        }
+    }
+
     // MARK: - Budget Summary
 
     func fetchBudgetSummary() async throws -> BudgetSummary? {
@@ -150,8 +163,14 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func createCategory(_ category: BudgetCategory) async throws -> BudgetCategory {
         do {
             let client = try getClient()
+            
+            // Verify auth session exists before making authenticated request
+            let session = try await client.auth.session
+            logger.info("✅ Auth session exists: user=\(session.user.id)")
+            
             let startTime = Date()
 
+            // Supabase client automatically includes JWT in Authorization header
             let created: BudgetCategory = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("budget_categories")
@@ -249,6 +268,159 @@ await SentryService.shared.captureError(error, context: [
             ])
             throw BudgetError.deleteFailed(underlying: error)
         }
+    }
+
+    func checkCategoryDependencies(id: UUID) async throws -> CategoryDependencies {
+        do {
+            let client = try getClient()
+            let tenantId = try await getTenantId()
+            let startTime = Date()
+
+            // Fetch the category first to get its name
+            let categories: [BudgetCategory] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_categories")
+                    .select()
+                    .eq("id", value: id)
+                    .eq("couple_id", value: tenantId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            guard let category = categories.first else {
+                throw BudgetError.fetchFailed(underlying: NSError(
+                    domain: "LiveBudgetRepository",
+                    code: 404,
+                    userInfo: [NSLocalizedDescriptionKey: "Category not found"]
+                ))
+            }
+
+            // Fetch expenses linked to this category
+            let expenses: [Expense] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("expenses")
+                    .select()
+                    .eq("budget_category_id", value: id)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+                    .value
+            }
+
+            // Fetch subcategories
+            let subcategories: [BudgetCategory] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_categories")
+                    .select()
+                    .eq("parent_category_id", value: id)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+                    .value
+            }
+
+            // Fetch tasks linked to this category
+            struct TaskBasic: Codable {
+                let id: UUID
+            }
+            let tasks: [TaskBasic] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("wedding_tasks")
+                    .select("id")
+                    .eq("budget_category_id", value: id)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+                    .value
+            }
+
+            // Fetch vendors linked to this category
+            struct VendorBasic: Codable {
+                let id: Int64
+            }
+            let vendors: [VendorBasic] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("vendor_information")
+                    .select("id")
+                    .eq("budget_category_id", value: id)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+                    .value
+            }
+
+            // Fetch budget development items using this category name
+            // Use two separate safe queries to avoid string interpolation injection
+            struct BudgetItemBasic: Codable {
+                let id: String
+                let category: String?
+                let subcategory: String?
+            }
+            
+            // Query 1: Items where category matches
+            let categoryItems: [BudgetItemBasic] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .select("id, category, subcategory")
+                    .eq("category", value: category.categoryName)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+                    .value
+            }
+            
+            // Query 2: Items where subcategory matches
+            let subcategoryItems: [BudgetItemBasic] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_items")
+                    .select("id, category, subcategory")
+                    .eq("subcategory", value: category.categoryName)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+                    .value
+            }
+            
+            // Merge results and deduplicate by id
+            let allItems = categoryItems + subcategoryItems
+            let uniqueItemsDict = Dictionary(uniqueKeysWithValues: allItems.map { ($0.id, $0) })
+            let budgetItems = Array(uniqueItemsDict.values)
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Checked dependencies for category '\(category.categoryName)' in \(String(format: "%.2f", duration))s")
+
+            return CategoryDependencies(
+                categoryId: id,
+                categoryName: category.categoryName,
+                expenseCount: expenses.count,
+                budgetItemCount: budgetItems.count,
+                subcategoryCount: subcategories.count,
+                taskCount: tasks.count,
+                vendorCount: vendors.count
+            )
+        } catch {
+            logger.error("Failed to check category dependencies", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "checkCategoryDependencies",
+                "repository": "LiveBudgetRepository",
+                "categoryId": id.uuidString
+            ])
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    func batchDeleteCategories(ids: [UUID]) async throws -> BatchDeleteResult {
+        var succeeded: [UUID] = []
+        var failed: [(UUID, BatchDeleteResult.SendableErrorWrapper)] = []
+
+        for id in ids {
+            do {
+                try await deleteCategory(id: id)
+                succeeded.append(id)
+            } catch {
+                failed.append((id, BatchDeleteResult.SendableErrorWrapper(error)))
+                logger.warning("Failed to delete category \(id) in batch: \(error.localizedDescription)")
+            }
+        }
+
+        logger.info("Batch delete completed: \(succeeded.count) succeeded, \(failed.count) failed")
+
+        return BatchDeleteResult(succeeded: succeeded, failed: failed)
     }
 
     // MARK: - Expenses
@@ -652,6 +824,7 @@ await SentryService.shared.captureError(error, context: [
                 let paymentOrder: Int?
                 let totalPaymentCount: Int?
                 let paymentPlanType: String?
+                let paymentPlanId: UUID?  // ✅ Added payment_plan_id
                 let createdAt: Date
                 let updatedAt: Date?
 
@@ -678,6 +851,7 @@ await SentryService.shared.captureError(error, context: [
                     case paymentOrder = "payment_order"
                     case totalPaymentCount = "total_payment_count"
                     case paymentPlanType = "payment_plan_type"
+                    case paymentPlanId = "payment_plan_id"  // ✅ Added payment_plan_id
                     case createdAt = "created_at"
                     case updatedAt = "updated_at"
                 }
@@ -706,6 +880,7 @@ await SentryService.shared.captureError(error, context: [
                 paymentOrder: schedule.paymentOrder,
                 totalPaymentCount: schedule.totalPaymentCount,
                 paymentPlanType: schedule.paymentPlanType,
+                paymentPlanId: schedule.paymentPlanId,  // ✅ Include payment_plan_id
                 createdAt: schedule.createdAt,
                 updatedAt: schedule.updatedAt
             )
@@ -739,13 +914,130 @@ await SentryService.shared.captureError(error, context: [
             let client = try getClient()
             let startTime = Date()
 
-            var updated = schedule
-            updated.updatedAt = Date()
+            // Create update struct with only the fields that should be updated
+            // This prevents sending invalid values for constrained fields
+            struct PaymentScheduleUpdate: Codable {
+                let vendor: String
+                let paymentDate: Date
+                let paymentAmount: Double
+                let notes: String?
+                let vendorType: String?
+                let paid: Bool
+                let paymentType: String?  // Must be: 'individual', 'monthly', 'interval', 'cyclical', 'deposit', 'retainer', or null
+                let customAmount: Double?
+                let billingFrequency: String?  // Must be: 'monthly', 'quarterly', 'yearly', or null
+                let autoRenew: Bool
+                let startDate: Date?
+                let reminderEnabled: Bool
+                let reminderDaysBefore: Int?
+                let priorityLevel: String?  // Must be: 'high', 'medium', 'low', or null
+                let expenseId: UUID?
+                let vendorId: Int64?
+                let isDeposit: Bool
+                let isRetainer: Bool
+                let paymentOrder: Int?
+                let totalPaymentCount: Int?
+                let paymentPlanType: String?
+                let updatedAt: Date
+
+                enum CodingKeys: String, CodingKey {
+                    case vendor = "vendor"
+                    case paymentDate = "payment_date"
+                    case paymentAmount = "payment_amount"
+                    case notes = "notes"
+                    case vendorType = "vendor_type"
+                    case paid = "paid"
+                    case paymentType = "payment_type"
+                    case customAmount = "custom_amount"
+                    case billingFrequency = "billing_frequency"
+                    case autoRenew = "auto_renew"
+                    case startDate = "start_date"
+                    case reminderEnabled = "reminder_enabled"
+                    case reminderDaysBefore = "reminder_days_before"
+                    case priorityLevel = "priority_level"
+                    case expenseId = "expense_id"
+                    case vendorId = "vendor_id"
+                    case isDeposit = "is_deposit"
+                    case isRetainer = "is_retainer"
+                    case paymentOrder = "payment_order"
+                    case totalPaymentCount = "total_payment_count"
+                    case paymentPlanType = "payment_plan_type"
+                    case updatedAt = "updated_at"
+                }
+            }
+
+            // Validate and normalize paymentType to ensure it matches the check constraint
+            // Valid types: 'individual', 'monthly', 'interval', 'cyclical', 'deposit', 'retainer'
+            let validPaymentType: String?
+            if let type = schedule.paymentType {
+                let normalized = type.lowercased()
+                if ["individual", "monthly", "interval", "cyclical", "deposit", "retainer"].contains(normalized) {
+                    validPaymentType = normalized
+                } else {
+                    logger.warning("Invalid payment_type '\(type)' - setting to null. Valid types: individual, monthly, interval, cyclical, deposit, retainer")
+                    validPaymentType = nil
+                }
+            } else {
+                validPaymentType = nil
+            }
+
+            // Validate and normalize billingFrequency
+            let validBillingFrequency: String?
+            if let freq = schedule.billingFrequency {
+                let normalized = freq.lowercased()
+                if ["monthly", "quarterly", "yearly"].contains(normalized) {
+                    validBillingFrequency = normalized
+                } else {
+                    logger.warning("Invalid billing_frequency '\(freq)' - setting to 'monthly'")
+                    validBillingFrequency = "monthly"
+                }
+            } else {
+                validBillingFrequency = "monthly"  // Default value from schema
+            }
+
+            // Validate and normalize priorityLevel
+            let validPriorityLevel: String?
+            if let priority = schedule.priorityLevel {
+                let normalized = priority.lowercased()
+                if ["high", "medium", "low"].contains(normalized) {
+                    validPriorityLevel = normalized
+                } else {
+                    logger.warning("Invalid priority_level '\(priority)' - setting to null")
+                    validPriorityLevel = nil
+                }
+            } else {
+                validPriorityLevel = nil
+            }
+
+            let updateData = PaymentScheduleUpdate(
+                vendor: schedule.vendor,
+                paymentDate: schedule.paymentDate,
+                paymentAmount: schedule.paymentAmount,
+                notes: schedule.notes,
+                vendorType: schedule.vendorType,
+                paid: schedule.paid,
+                paymentType: validPaymentType,
+                customAmount: schedule.customAmount,
+                billingFrequency: validBillingFrequency,
+                autoRenew: schedule.autoRenew,
+                startDate: schedule.startDate,
+                reminderEnabled: schedule.reminderEnabled,
+                reminderDaysBefore: schedule.reminderDaysBefore,
+                priorityLevel: validPriorityLevel,
+                expenseId: schedule.expenseId,
+                vendorId: schedule.vendorId,
+                isDeposit: schedule.isDeposit,
+                isRetainer: schedule.isRetainer,
+                paymentOrder: schedule.paymentOrder,
+                totalPaymentCount: schedule.totalPaymentCount,
+                paymentPlanType: schedule.paymentPlanType,
+                updatedAt: Date()
+            )
 
             let result: PaymentSchedule = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("payment_plans")
-                    .update(updated)
+                    .update(updateData)
                     .eq("id", value: String(schedule.id))
                     .select()
                     .single()
@@ -762,7 +1054,7 @@ await SentryService.shared.captureError(error, context: [
 
             return result
         } catch {
-            logger.error("Failed to update payment schedule", error: error)
+            logger.error("Failed to update payment schedule: \(error.localizedDescription)", error: error)
             throw BudgetError.updateFailed(underlying: error)
         }
     }
@@ -827,6 +1119,85 @@ await SentryService.shared.captureError(error, context: [
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Vendor payment schedules fetch failed after \(String(format: "%.2f", duration))s", error: error)
             throw error
+        }
+    }
+
+    // MARK: - Payment Plan Summaries
+
+    func fetchPaymentPlanSummaries() async throws -> [PaymentPlanSummary] {
+        let tenantId = try await getTenantId()
+        let cacheKey = "payment_plan_summaries_\(tenantId.uuidString)"
+        
+        if let cached: [PaymentPlanSummary] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: payment plan summaries (\(cached.count) items)")
+            return cached
+        }
+        
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let summaries: [PaymentPlanSummary] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("payment_plan_summaries")
+                    .select()
+                    .eq("couple_id", value: tenantId)
+                    .order("vendor", ascending: true)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Fetched \(summaries.count) payment plan summaries in \(String(format: "%.2f", duration))s")
+            
+            await RepositoryCache.shared.set(cacheKey, value: summaries, ttl: 60)
+            return summaries
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Payment plan summaries fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    func fetchPaymentPlanSummary(expenseId: UUID) async throws -> PaymentPlanSummary? {
+        let tenantId = try await getTenantId()
+        let cacheKey = "payment_plan_summary_\(expenseId.uuidString)"
+        
+        if let cached: PaymentPlanSummary = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: payment plan summary for expense \(expenseId)")
+            return cached
+        }
+        
+        let client = try getClient()
+        let startTime = Date()
+        
+        do {
+            let summaries: [PaymentPlanSummary] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("payment_plan_summaries")
+                    .select()
+                    .eq("expense_id", value: expenseId)
+                    .eq("couple_id", value: tenantId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+            
+            let duration = Date().timeIntervalSince(startTime)
+            let summary = summaries.first
+            
+            if let summary {
+                logger.info("Fetched payment plan summary for expense \(expenseId) in \(String(format: "%.2f", duration))s")
+                await RepositoryCache.shared.set(cacheKey, value: summary, ttl: 60)
+            } else {
+                logger.info("No payment plan summary found for expense \(expenseId)")
+            }
+            
+            return summary
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Payment plan summary fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            throw BudgetError.fetchFailed(underlying: error)
         }
     }
 
@@ -1581,23 +1952,30 @@ await SentryService.shared.captureError(error, context: [
     func updateBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
         do {
             let client = try getClient()
-            let result: SavedScenario = try await client
-                .from("budget_development_scenarios")
-                .update(scenario)
-                .eq("id", value: scenario.id)
-                .select()
-                .single()
-                .execute()
-                .value
+            
+            logger.debug("Updating scenario: \(scenario.id), isPrimary: \(scenario.isPrimary), coupleId: \(scenario.coupleId)")
+            
+            let result: SavedScenario = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("budget_development_scenarios")
+                    .update(scenario)
+                    .eq("id", value: scenario.id)
+                    .eq("couple_id", value: scenario.coupleId)  // ✅ Use scenario's coupleId for proper filtering
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
 
-            await RepositoryCache.shared.remove("budget_dev_scenarios")
+            await RepositoryCache.shared.remove("budget_dev_scenarios_\(scenario.coupleId.uuidString)")
+            await RepositoryCache.shared.remove("primary_budget_scenario_\(scenario.coupleId.uuidString)")
 
             // Log important mutation
-            logger.info("Updated budget development scenario: \(result.scenarioName)")
+            logger.info("Updated budget development scenario: \(result.scenarioName), isPrimary: \(result.isPrimary)")
 
             return result
         } catch {
-            logger.error("Failed to update budget development scenario", error: error)
+            logger.error("Failed to update budget development scenario: \(error.localizedDescription)", error: error)
             throw BudgetError.updateFailed(underlying: error)
         }
     }
@@ -2306,7 +2684,7 @@ await SentryService.shared.captureError(error, context: [
                 scenarioId: scenarioId,
                 parentFolderId: parentFolderId,
                 displayOrder: displayOrder,
-                coupleId: tenantId.uuidString
+                coupleId: tenantId
             )
             
             let created: BudgetItem = try await RepositoryNetwork.withRetry {

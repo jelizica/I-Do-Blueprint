@@ -104,7 +104,7 @@ extension BudgetDevelopmentView {
             totalTax: totalTax,
             totalWithTax: totalWithTax,
             isPrimary: false,
-            coupleId: coupleId.uuidString,
+            coupleId: coupleId,  // ✅ Pass UUID directly
             isTestData: false)
 
         do {
@@ -135,10 +135,10 @@ extension BudgetDevelopmentView {
                 currentScenarioId = persistedScenarioId
             }
 
-            // Update scenario IDs for all items locally
-            for index in budgetItems.indices {
-                budgetItems[index].scenarioId = persistedScenarioId
-            }
+            // Reload the scenario from the database to ensure we have the latest data
+            // This is critical for ensuring tax rates and other fields are properly reflected
+            await loadScenario(persistedScenarioId)
+            
             newlyCreatedItemIds.removeAll()
 
             logger.info("Successfully saved scenario and \(insertedCount) budget items to database")
@@ -171,12 +171,49 @@ extension BudgetDevelopmentView {
     // MARK: Scenario Operations
 
     func setPrimaryScenario(_ scenarioId: String) async {
-        for index in savedScenarios.indices {
-            savedScenarios[index].isPrimary = false
+        // Capture original primary for potential rollback
+        let originalPrimaryIndex = savedScenarios.firstIndex(where: { $0.isPrimary })
+
+        // Find the index of the scenario to make primary
+        guard let index = savedScenarios.firstIndex(where: { $0.id == scenarioId }) else {
+            logger.warning("Cannot set primary scenario: scenario not found: \(scenarioId)")
+            // Restore original primary if exists (defensive)
+            if let originalIndex = originalPrimaryIndex {
+                savedScenarios[originalIndex].isPrimary = true
+            }
+            return
         }
 
-        if let index = savedScenarios.firstIndex(where: { $0.id == scenarioId }) {
-            savedScenarios[index].isPrimary = true
+        // If the selected is already primary, nothing to do
+        if originalPrimaryIndex == index {
+            return
+        }
+
+        // Update local state: mark previous primary false and new one true
+        if let originalIndex = originalPrimaryIndex {
+            savedScenarios[originalIndex].isPrimary = false
+        }
+        savedScenarios[index].isPrimary = true
+
+        // Persist only the changed scenarios to the database
+        do {
+            // Update only the affected scenarios
+            if let originalIndex = originalPrimaryIndex, originalIndex != index {
+                _ = try await budgetStore.updateBudgetDevelopmentScenario(savedScenarios[originalIndex])
+            }
+            _ = try await budgetStore.updateBudgetDevelopmentScenario(savedScenarios[index])
+
+            logger.info("Successfully set primary scenario: \(savedScenarios[index].scenarioName)")
+        } catch {
+            logger.error("Failed to set primary scenario", error: error)
+
+            // Restore original primary state on error
+            if let originalIndex = originalPrimaryIndex {
+                // Revert the two affected entries
+                savedScenarios[originalIndex].isPrimary = true
+            }
+            // Ensure the new index is not primary
+            savedScenarios[index].isPrimary = false
         }
 
         await budgetStore.refresh()

@@ -12,6 +12,8 @@ struct AddBudgetCategoryView: View {
     @State private var selectedColor = "#3B82F6"
     @State private var isEssential = false
     @State private var selectedTemplate: CategoryTemplate?
+    @State private var showErrorAlert = false
+    @State private var errorMessage = ""
 
     // Common budget category templates
     private let categoryTemplates: [CategoryTemplate] = [
@@ -224,6 +226,9 @@ struct AddBudgetCategoryView: View {
                 }
             }
         }
+        .alert(errorMessage, isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) { }
+        }
     }
 
     private func selectTemplate(_ template: CategoryTemplate) {
@@ -239,10 +244,19 @@ struct AddBudgetCategoryView: View {
 
     private func saveBudgetCategory() {
         guard let amount = Double(allocatedAmount) else { return }
+        
+        // Get the current tenant's couple ID for RLS compliance
+        guard let coupleId = SessionManager.shared.getTenantId() else {
+            let msg = "No couple selected"
+            logger.error("Cannot create category: \(msg)")
+            errorMessage = msg
+            showErrorAlert = true
+            return
+        }
 
         let newCategory = BudgetCategory(
             id: UUID(),
-            coupleId: UUID(), // This should come from current user/couple context
+            coupleId: coupleId,
             categoryName: categoryName.trimmingCharacters(in: .whitespacesAndNewlines),
             parentCategoryId: nil,
             allocatedAmount: amount,

@@ -11,6 +11,7 @@ struct ModernVendorSearchBar: View {
     @Binding var searchText: String
     @Binding var selectedFilter: VendorFilterOption
     @Binding var selectedCategory: String?
+    @Binding var selectedSortOption: VendorSortOption
     @Binding var groupByStatus: Bool
 
     var filteredCount: Int = 0
@@ -53,6 +54,7 @@ struct ModernVendorSearchBar: View {
 
             // Filters Row
             HStack(spacing: Spacing.sm) {
+                // Filter Menu
                 Menu {
                     ForEach(VendorFilterOption.allCases, id: \.self) { filter in
                         Button {
@@ -71,6 +73,38 @@ struct ModernVendorSearchBar: View {
                     .font(Typography.bodySmall)
                 }
                 .buttonStyle(.bordered)
+
+                // Sort Menu
+                Menu {
+                    ForEach(VendorSortOption.grouped, id: \.0) { group in
+                        Section(group.0) {
+                            ForEach(group.1) { option in
+                                Button {
+                                    selectedSortOption = option
+                                } label: {
+                                    HStack {
+                                        Label(option.displayName, systemImage: option.iconName)
+                                        if selectedSortOption == option {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(AppColors.primary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.up.arrow.down")
+                        Text(selectedSortOption.groupLabel)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                    .font(Typography.bodySmall)
+                }
+                .buttonStyle(.bordered)
+                .help("Sort vendors")
 
                 Spacer()
 

@@ -74,11 +74,15 @@ struct ExpenseTrackerEditView: View {
                 }
 
                 Section("Category & Vendor") {
-                    Picker("Category", selection: $selectedCategoryId) {
-                        Text("Select Category").tag(nil as UUID?)
-                        ForEach(budgetStore.categories) { category in
-                            Text(category.categoryName).tag(category.id as UUID?)
-                        }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Category")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        
+                        HierarchicalCategoryPicker(
+                            categories: budgetStore.categories,
+                            selectedCategoryId: $selectedCategoryId
+                        )
                     }
                     .help("Budget category for this expense")
 

@@ -145,6 +145,22 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         return paymentSchedules.filter { $0.vendorId == vendorId }
     }
 
+    // MARK: - Payment Plan Summaries
+
+    var paymentPlanSummaries: [PaymentPlanSummary] = []
+
+    func fetchPaymentPlanSummaries() async throws -> [PaymentPlanSummary] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return paymentPlanSummaries
+    }
+
+    func fetchPaymentPlanSummary(expenseId: UUID) async throws -> PaymentPlanSummary? {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return paymentPlanSummaries.first { $0.expenseId == expenseId }
+    }
+
     // MARK: - Gifts and Owed
 
     func fetchGiftsAndOwed() async throws -> [GiftOrOwed] {
@@ -552,7 +568,7 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
             scenarioId: scenarioId,
             parentFolderId: parentFolderId,
             displayOrder: displayOrder,
-            coupleId: UUID().uuidString
+            coupleId: UUID()
         )
         
         budgetDevelopmentItems.append(folder)
@@ -785,5 +801,61 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
             
             budgetDevelopmentItems.removeAll(where: { $0.id == folderId })
         }
+    }
+    
+    // MARK: - Category Dependencies
+    
+    var categoryDependencies: [UUID: CategoryDependencies] = [:]
+    var shouldFailDelete: [UUID: Bool] = [:]
+    
+    func checkCategoryDependencies(id: UUID) async throws -> CategoryDependencies {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        // Return stored dependencies if available
+        if let deps = categoryDependencies[id] {
+            return deps
+        }
+        
+        // Otherwise return empty dependencies (can delete)
+        guard let category = categories.first(where: { $0.id == id }) else {
+            throw NSError(domain: "MockBudgetRepository", code: 404, userInfo: [NSLocalizedDescriptionKey: "Category not found"])
+        }
+        
+        return CategoryDependencies(
+            categoryId: id,
+            categoryName: category.categoryName,
+            expenseCount: 0,
+            budgetItemCount: 0,
+            subcategoryCount: 0,
+            taskCount: 0,
+            vendorCount: 0
+        )
+    }
+    
+    func batchDeleteCategories(ids: [UUID]) async throws -> BatchDeleteResult {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        
+        var succeeded: [UUID] = []
+        var failed: [(UUID, BatchDeleteResult.SendableErrorWrapper)] = []
+
+        for id in ids {
+            // Check if this category should fail
+            if shouldFailDelete[id] == true {
+                let error = NSError(
+                    domain: "MockBudgetRepository",
+                    code: 409,
+                    userInfo: [NSLocalizedDescriptionKey: "Category has dependencies"]
+                )
+                failed.append((id, BatchDeleteResult.SendableErrorWrapper(error)))
+            } else {
+                // Delete the category
+                categories.removeAll { $0.id == id }
+                succeeded.append(id)
+            }
+        }
+        
+        return BatchDeleteResult(succeeded: succeeded, failed: failed)
     }
 }

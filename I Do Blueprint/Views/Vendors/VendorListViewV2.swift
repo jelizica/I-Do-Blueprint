@@ -18,6 +18,7 @@ struct VendorListViewV2: View {
     @State private var searchText = ""
     @State private var selectedFilter: VendorFilterOption = .all
     @State private var selectedCategory: String?
+    @State private var selectedSortOption: VendorSortOption = .nameAsc
     @State private var showingAddVendor = false
     @State private var selectedVendorId: Int64?
     @State private var groupByStatus = true
@@ -49,8 +50,9 @@ struct VendorListViewV2: View {
                             searchText: $searchText,
                             selectedFilter: $selectedFilter,
                             selectedCategory: $selectedCategory,
+                            selectedSortOption: $selectedSortOption,
                             groupByStatus: $groupByStatus,
-                            filteredCount: filteredVendors.count,
+                            filteredCount: filteredAndSortedVendors.count,
                             totalCount: vendorStore.vendors.filter { !$0.isArchived }.count
                         )
                         .padding(.horizontal, Spacing.md)
@@ -61,7 +63,7 @@ struct VendorListViewV2: View {
                         // Vendor List with grouping option
                         if groupByStatus {
                             GroupedVendorListView(
-                                vendors: filteredVendors,
+                                vendors: filteredAndSortedVendors,
                                 totalCount: vendorStore.vendors.filter { !$0.isArchived }.count,
                                 isLoading: vendorStore.isLoading,
                                 isSearching: !searchText.isEmpty,
@@ -82,7 +84,7 @@ struct VendorListViewV2: View {
                             )
                         } else {
                             ModernVendorListView(
-                                vendors: filteredVendors,
+                                vendors: filteredAndSortedVendors,
                                 totalCount: vendorStore.vendors.filter { !$0.isArchived }.count,
                                 isLoading: vendorStore.isLoading,
                                 isSearching: !searchText.isEmpty,
@@ -246,8 +248,8 @@ struct VendorListViewV2: View {
         }
     }
 
-    private var filteredVendors: [Vendor] {
-        vendorStore.vendors.filter { vendor in
+    private var filteredAndSortedVendors: [Vendor] {
+        let filtered = vendorStore.vendors.filter { vendor in
             let matchesSearch = searchText.isEmpty ||
                 vendor.vendorName.localizedCaseInsensitiveContains(searchText) ||
                 vendor.vendorType?.localizedCaseInsensitiveContains(searchText) == true
@@ -264,6 +266,9 @@ struct VendorListViewV2: View {
 
             return matchesSearch && matchesFilter && matchesCategory
         }
+        
+        // Apply sorting
+        return selectedSortOption.sort(filtered)
     }
 }
 

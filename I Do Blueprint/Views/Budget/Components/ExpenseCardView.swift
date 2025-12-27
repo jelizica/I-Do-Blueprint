@@ -31,6 +31,23 @@ struct ExpenseCardView: View {
         default: .gray
         }
     }
+    
+    /// Only show approval status badge if it's meaningful (not nil/pending, or explicitly set to something other than pending)
+    private var shouldShowApprovalStatus: Bool {
+        guard let approvalStatus = expense.approvalStatus else {
+            return false // Don't show if nil
+        }
+        
+        let normalizedStatus = approvalStatus.lowercased()
+        
+        // Don't show if it's "pending" (redundant with payment status)
+        if normalizedStatus == "pending" {
+            return false
+        }
+        
+        // Show if it's approved, denied, or any other meaningful status
+        return true
+    }
 
     var body: some View {
         Button(action: onEdit) {
@@ -54,15 +71,17 @@ struct ExpenseCardView: View {
                                 .foregroundColor(statusColor)
                                 .clipShape(Capsule())
 
-                            // Approval Status Badge
-                            Text((expense.approvalStatus ?? "Pending").capitalized)
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .padding(.horizontal, Spacing.sm)
-                                .padding(.vertical, Spacing.xxs)
-                                .background(approvalStatusColor.opacity(0.2))
-                                .foregroundColor(approvalStatusColor)
-                                .clipShape(Capsule())
+                            // Approval Status Badge (only show if meaningful)
+                            if shouldShowApprovalStatus {
+                                Text((expense.approvalStatus ?? "Pending").capitalized)
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .padding(.horizontal, Spacing.sm)
+                                    .padding(.vertical, Spacing.xxs)
+                                    .background(approvalStatusColor.opacity(0.2))
+                                    .foregroundColor(approvalStatusColor)
+                                    .clipShape(Capsule())
+                            }
                         }
                     }
 

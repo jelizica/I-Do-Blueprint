@@ -8,6 +8,63 @@
 import Foundation
 import Supabase
 
+// MARK: - Insert Data Structure
+
+/// Data structure for inserting vendors without the auto-generated id field
+private struct VendorInsertData: Encodable {
+    let vendorName: String
+    let vendorType: String?
+    let vendorCategoryId: String?
+    let contactName: String?
+    let phoneNumber: String?
+    let email: String?
+    let website: String?
+    let notes: String?
+    let quotedAmount: Double?
+    let imageUrl: String?
+    let isBooked: Bool?
+    let dateBooked: Date?
+    let budgetCategoryId: UUID?
+    let coupleId: UUID
+    let isArchived: Bool
+    let includeInExport: Bool
+    let streetAddress: String?
+    let streetAddress2: String?
+    let city: String?
+    let state: String?
+    let postalCode: String?
+    let country: String?
+    let latitude: Double?
+    let longitude: Double?
+
+    private enum CodingKeys: String, CodingKey {
+        case vendorName = "vendor_name"
+        case vendorType = "vendor_type"
+        case vendorCategoryId = "vendor_category_id"
+        case contactName = "contact_name"
+        case phoneNumber = "phone_number"
+        case email = "email"
+        case website = "website"
+        case notes = "notes"
+        case quotedAmount = "quoted_amount"
+        case imageUrl = "image_url"
+        case isBooked = "is_booked"
+        case dateBooked = "date_booked"
+        case budgetCategoryId = "budget_category_id"
+        case coupleId = "couple_id"
+        case isArchived = "is_archived"
+        case includeInExport = "include_in_export"
+        case streetAddress = "street_address"
+        case streetAddress2 = "street_address_2"
+        case city = "city"
+        case state = "state"
+        case postalCode = "postal_code"
+        case country = "country"
+        case latitude = "latitude"
+        case longitude = "longitude"
+    }
+}
+
 /// Production implementation of VendorRepositoryProtocol
 actor LiveVendorRepository: VendorRepositoryProtocol {
     private let supabase: SupabaseClient?
@@ -156,10 +213,38 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             let tenantId = try await getTenantId()
             let startTime = Date()
 
+            // Create insert data without the id field - database will auto-generate it
+            let insertData = VendorInsertData(
+                vendorName: vendor.vendorName,
+                vendorType: vendor.vendorType,
+                vendorCategoryId: vendor.vendorCategoryId,
+                contactName: vendor.contactName,
+                phoneNumber: vendor.phoneNumber,
+                email: vendor.email,
+                website: vendor.website,
+                notes: vendor.notes,
+                quotedAmount: vendor.quotedAmount,
+                imageUrl: vendor.imageUrl,
+                isBooked: vendor.isBooked,
+                dateBooked: vendor.dateBooked,
+                budgetCategoryId: vendor.budgetCategoryId,
+                coupleId: tenantId,
+                isArchived: vendor.isArchived,
+                includeInExport: vendor.includeInExport,
+                streetAddress: vendor.streetAddress,
+                streetAddress2: vendor.streetAddress2,
+                city: vendor.city,
+                state: vendor.state,
+                postalCode: vendor.postalCode,
+                country: vendor.country,
+                latitude: vendor.latitude,
+                longitude: vendor.longitude
+            )
+
             let created: Vendor = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("vendor_information")
-                    .insert(vendor)
+                    .insert(insertData)
                     .select()
                     .single()
                     .execute()
@@ -584,64 +669,7 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
             logger.info("Starting import of \(vendors.count) vendors for couple: \(tenantId.uuidString)")
 
-            // Convert VendorImportData to database-compatible format
-            // Note: We need to convert to a format that Supabase can insert
-            // The database will auto-generate the ID (Int64)
-            struct VendorInsertData: Encodable {
-                let vendorName: String
-                let vendorType: String?
-                let vendorCategoryId: String?
-                let contactName: String?
-                let phoneNumber: String?
-                let email: String?
-                let website: String?
-                let notes: String?
-                let quotedAmount: Double?
-                let imageUrl: String?
-                let isBooked: Bool?
-                let dateBooked: Date?
-                let budgetCategoryId: UUID?
-                let coupleId: UUID
-                let isArchived: Bool
-                let includeInExport: Bool
-                let streetAddress: String?
-                let streetAddress2: String?
-                let city: String?
-                let state: String?
-                let postalCode: String?
-                let country: String?
-                let latitude: Double?
-                let longitude: Double?
-
-                private enum CodingKeys: String, CodingKey {
-                    case vendorName = "vendor_name"
-                    case vendorType = "vendor_type"
-                    case vendorCategoryId = "vendor_category_id"
-                    case contactName = "contact_name"
-                    case phoneNumber = "phone_number"
-                    case email = "email"
-                    case website = "website"
-                    case notes = "notes"
-                    case quotedAmount = "quoted_amount"
-                    case imageUrl = "image_url"
-                    case isBooked = "is_booked"
-                    case dateBooked = "date_booked"
-                    case budgetCategoryId = "budget_category_id"
-                    case coupleId = "couple_id"
-                    case isArchived = "is_archived"
-                    case includeInExport = "include_in_export"
-                    case streetAddress = "street_address"
-                    case streetAddress2 = "street_address_2"
-                    case city = "city"
-                    case state = "state"
-                    case postalCode = "postal_code"
-                    case country = "country"
-                    case latitude = "latitude"
-                    case longitude = "longitude"
-                }
-            }
-
-            // Convert import data to insert format
+            // Convert import data to insert format (uses file-level VendorInsertData struct)
             let insertData = vendors.map { vendor in
                 VendorInsertData(
                     vendorName: vendor.vendorName,
