@@ -35,3 +35,6 @@ I Do Blueprint/Config.plist
 .env.*
 !.env.example
 coverage.json
+
+# AI/code review tool configs
+.coderabbit.yaml
