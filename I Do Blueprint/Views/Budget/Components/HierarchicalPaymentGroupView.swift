@@ -12,6 +12,9 @@ struct HierarchicalPaymentGroupView: View {
     let group: PaymentPlanGroup
     let paymentSchedules: [PaymentSchedule]
     let onTogglePaidStatus: (PaymentSchedule) -> Void
+    let onUpdate: (PaymentSchedule) -> Void
+    let onDelete: (PaymentSchedule) -> Void
+    let getVendorName: (Int64?) -> String?
     
     @State private var isGroupExpanded: Bool = false
     @State private var expandedPlanIds: Set<UUID> = []
@@ -35,7 +38,10 @@ struct HierarchicalPaymentGroupView: View {
                             onToggle: {
                                 togglePlanExpansion(planId: plan.id)
                             },
-                            onTogglePaidStatus: onTogglePaidStatus
+                            onTogglePaidStatus: onTogglePaidStatus,
+                            onUpdate: onUpdate,
+                            onDelete: onDelete,
+                            getVendorName: getVendorName
                         )
                         .padding(.horizontal, Spacing.md)
                     }
@@ -229,7 +235,10 @@ struct HierarchicalPaymentGroupView_Previews: PreviewProvider {
             HierarchicalPaymentGroupView(
                 group: testGroup,
                 paymentSchedules: [],
-                onTogglePaidStatus: { _ in }
+                onTogglePaidStatus: { _ in },
+                onUpdate: { _ in },
+                onDelete: { _ in },
+                getVendorName: { _ in "Test Vendor" }
             )
         }
         .padding()

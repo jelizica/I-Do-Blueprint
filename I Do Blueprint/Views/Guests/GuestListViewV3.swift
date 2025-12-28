@@ -95,12 +95,25 @@ struct GuestListViewV3: View {
                 if guestStore.isLoading {
                     LoadingView(message: "Loading guests...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else if guestStore.filteredGuests.isEmpty {
+                } else if guestStore.guests.isEmpty {
+                    // True empty state - no guests at all
                     EmptyGuestListView()
+                } else if filteredGuests.isEmpty {
+                    // Filtered out - guests exist but none match filters
+                    EmptyFilteredGuestView(
+                        hasSearchText: !searchText.isEmpty,
+                        hasStatusFilter: selectedStatus != nil,
+                        hasInvitedByFilter: selectedInvitedBy != nil,
+                        onClearFilters: {
+                            searchText = ""
+                            selectedStatus = nil
+                            selectedInvitedBy = nil
+                        }
+                    )
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 8) {
-                            ForEach(guestStore.filteredGuests) { guest in
+                            ForEach(filteredGuests) { guest in
                                 SimpleGuestCard(
                                     guest: guest,
                                     isSelected: selectedGuest?.id == guest.id
@@ -171,26 +184,19 @@ struct GuestListViewV3: View {
                 await guestStore.loadGuestData()
             }
         }
-        .onChange(of: searchText) { _, _ in
-            guestStore.filterGuests(
-                searchText: searchText,
-                selectedStatus: selectedStatus,
-                selectedInvitedBy: selectedInvitedBy
-            )
-        }
-        .onChange(of: selectedStatus) { _, _ in
-            guestStore.filterGuests(
-                searchText: searchText,
-                selectedStatus: selectedStatus,
-                selectedInvitedBy: selectedInvitedBy
-            )
-        }
-        .onChange(of: selectedInvitedBy) { _, _ in
-            guestStore.filterGuests(
-                searchText: searchText,
-                selectedStatus: selectedStatus,
-                selectedInvitedBy: selectedInvitedBy
-            )
+    }
+    
+    // MARK: - Computed Filtering
+    
+    private var filteredGuests: [Guest] {
+        guestStore.guests.filter { guest in
+            let matchesSearch = searchText.isEmpty ||
+                guest.fullName.localizedCaseInsensitiveContains(searchText) ||
+                guest.email?.localizedCaseInsensitiveContains(searchText) == true ||
+                guest.phone?.localizedCaseInsensitiveContains(searchText) == true
+            let matchesStatus = selectedStatus == nil || guest.rsvpStatus == selectedStatus
+            let matchesInvitedBy = selectedInvitedBy == nil || guest.invitedBy == selectedInvitedBy
+            return matchesSearch && matchesStatus && matchesInvitedBy
         }
     }
 }
@@ -894,6 +900,74 @@ struct EmptyGuestSelectionView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(NSColor.windowBackgroundColor))
+    }
+}
+
+// MARK: - Empty Filtered Guest View
+
+struct EmptyFilteredGuestView: View {
+    let hasSearchText: Bool
+    let hasStatusFilter: Bool
+    let hasInvitedByFilter: Bool
+    let onClearFilters: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "line.3.horizontal.decrease.circle")
+                .font(.system(size: 64))
+                .foregroundColor(.secondary.opacity(0.5))
+            
+            VStack(spacing: 8) {
+                Text("No guests match your filters")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.primary)
+                
+                Text(filterDescription)
+                    .font(.system(size: 14))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, Spacing.xl)
+            }
+            
+            Button(action: onClearFilters) {
+                HStack(spacing: 8) {
+                    Image(systemName: "xmark.circle.fill")
+                    Text("Clear All Filters")
+                }
+                .font(.system(size: 14, weight: .medium))
+                .padding(.horizontal, Spacing.lg)
+                .padding(.vertical, Spacing.md)
+                .background(Color.blue)
+                .foregroundColor(.white)
+                .cornerRadius(8)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(NSColor.windowBackgroundColor))
+    }
+    
+    private var filterDescription: String {
+        var activeFilters: [String] = []
+        
+        if hasSearchText {
+            activeFilters.append("search text")
+        }
+        if hasStatusFilter {
+            activeFilters.append("RSVP status")
+        }
+        if hasInvitedByFilter {
+            activeFilters.append("invited by")
+        }
+        
+        if activeFilters.isEmpty {
+            return "Try adjusting your filters"
+        } else if activeFilters.count == 1 {
+            return "Try adjusting your \(activeFilters[0]) filter"
+        } else {
+            let last = activeFilters.removeLast()
+            return "Try adjusting your \(activeFilters.joined(separator: ", ")) and \(last) filters"
+        }
     }
 }
 

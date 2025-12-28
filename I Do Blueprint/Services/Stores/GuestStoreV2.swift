@@ -15,7 +15,6 @@ import SwiftUI
 class GuestStoreV2: ObservableObject, CacheableStore {
     @Published var loadingState: LoadingState<[Guest]> = .idle
     @Published private(set) var guestStats: GuestStats?
-    @Published private(set) var filteredGuests: [Guest] = []
 
     /// Monotonically increasing token that changes whenever the guest list reloads.
     /// Views can observe this to trigger explicit re-renders when needed.
@@ -43,11 +42,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
     private var addTask: Task<Void, Never>?
     private var updateTask: Task<Void, Never>?
     private var deleteTask: Task<Void, Never>?
-    
-    // ✅ Track current filter state to reapply filters when adding guests
-    private var currentSearchText: String = ""
-    private var currentSelectedStatus: RSVPStatus?
-    private var currentSelectedInvitedBy: InvitedBy?
 
     // MARK: - Computed Properties for Backward Compatibility
 
@@ -121,14 +115,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 lastLoadTime = Date()
                 recalculateStats()
                 
-                // Initialize filteredGuests only when no filters are active
-                // to avoid overlapping filter recomputations during view updates.
-                if currentSearchText.isEmpty &&
-                    currentSelectedStatus == nil &&
-                    currentSelectedInvitedBy == nil {
-                    filteredGuests = fetchedGuests
-                }
-                
                 // Bump version token so views can force a re-render of guest list UI.
                 guestListVersion &+= 1
                 
@@ -193,19 +179,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                     currentGuests.insert(created, at: 0)
                     loadingState = .loaded(currentGuests)
                     recalculateStats()
-
-                    // Keep filteredGuests in sync with current filters
-                    if currentSearchText.isEmpty &&
-                        currentSelectedStatus == nil &&
-                        currentSelectedInvitedBy == nil {
-                        filteredGuests = currentGuests
-                    } else {
-                        filterGuests(
-                            searchText: currentSearchText,
-                            selectedStatus: currentSelectedStatus,
-                            selectedInvitedBy: currentSelectedInvitedBy
-                        )
-                    }
                 }
 
                 // Invalidate cache so the next explicit reload gets fresh data
@@ -260,11 +233,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
             currentGuests[index] = guest
             loadingState = .loaded(currentGuests)
 
-            // Keep filtered list in sync with main list
-            if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                filteredGuests[filteredIndex] = guest
-            }
-
             do {
                 try Task.checkCancellation()
 
@@ -278,11 +246,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                     guests[idx] = updated
                     loadingState = .loaded(guests)
                     recalculateStats()
-                }
-
-                // Update filtered list with server-confirmed data
-                if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                    filteredGuests[filteredIndex] = updated
                 }
 
                 // Recalculate guest statistics after update
@@ -299,9 +262,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                     guests[idx] = original
                     loadingState = .loaded(guests)
                 }
-                if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                    filteredGuests[filteredIndex] = original
-                }
                 AppLogger.ui.debug("GuestStoreV2.updateGuest: Operation cancelled")
             } catch let error as URLError where error.code == .cancelled {
                 // Revert optimistic update on cancellation
@@ -310,9 +270,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                     guests[idx] = original
                     loadingState = .loaded(guests)
                 }
-                if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                    filteredGuests[filteredIndex] = original
-                }
                 AppLogger.ui.debug("GuestStoreV2.updateGuest: Operation cancelled (URLError)")
             } catch {
                 // Revert optimistic update if server request fails
@@ -320,9 +277,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                    let idx = guests.firstIndex(where: { $0.id == guest.id }) {
                     guests[idx] = original
                     loadingState = .loaded(guests)
-                }
-                if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == guest.id }) {
-                    filteredGuests[filteredIndex] = original
                 }
                 loadingState = .error(GuestError.updateFailed(underlying: error))
                 ErrorHandler.shared.handle(
@@ -365,11 +319,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
             loadingState = .loaded(currentGuests)
             recalculateStats()
 
-            // Keep filtered list in sync
-            if let filteredIndex = filteredGuests.firstIndex(where: { $0.id == id }) {
-                filteredGuests.remove(at: filteredIndex)
-            }
-
             do {
                 try Task.checkCancellation()
 
@@ -390,7 +339,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 if case .loaded(var guests) = loadingState {
                     guests.insert(removed, at: index)
                     loadingState = .loaded(guests)
-                    filteredGuests = guests
                 }
                 AppLogger.ui.debug("GuestStoreV2.deleteGuest: Operation cancelled")
             } catch let error as URLError where error.code == .cancelled {
@@ -398,7 +346,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 if case .loaded(var guests) = loadingState {
                     guests.insert(removed, at: index)
                     loadingState = .loaded(guests)
-                    filteredGuests = guests
                 }
                 AppLogger.ui.debug("GuestStoreV2.deleteGuest: Operation cancelled (URLError)")
             } catch {
@@ -406,7 +353,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 if case .loaded(var guests) = loadingState {
                     guests.insert(removed, at: index)
                     loadingState = .loaded(guests)
-                    filteredGuests = guests
                 }
                 loadingState = .error(GuestError.deleteFailed(underlying: error))
                 ErrorHandler.shared.handle(
@@ -423,57 +369,7 @@ class GuestStoreV2: ObservableObject, CacheableStore {
         await deleteTask?.value
     }
 
-    func searchGuests(query: String) async {
-        do {
-            filteredGuests = try await repository.searchGuests(query: query)
-        } catch {
-            loadingState = .error(GuestError.fetchFailed(underlying: error))
-        }
-    }
-
-    func filterGuests(
-        searchText: String,
-        selectedStatus: RSVPStatus?,
-        selectedInvitedBy: InvitedBy?) {
-        // Track current filter state for reuse after reloads
-        currentSearchText = searchText
-        currentSelectedStatus = selectedStatus
-        currentSelectedInvitedBy = selectedInvitedBy
         
-        var filtered = loadingState.data ?? []
-
-        // Search across name, email, and phone fields
-        if !searchText.isEmpty {
-            filtered = filtered.filter { guest in
-                guest.fullName.localizedCaseInsensitiveContains(searchText) ||
-                    guest.email?.localizedCaseInsensitiveContains(searchText) == true ||
-                    guest.phone?.contains(searchText) == true
-            }
-        }
-
-        // Filter by RSVP status (attending, pending, declined)
-        if let status = selectedStatus {
-            filtered = filtered.filter { $0.rsvpStatus == status }
-        }
-
-        // Filter by which side invited the guest (bride/groom/both)
-        if let invitedBy = selectedInvitedBy {
-            filtered = filtered.filter { $0.invitedBy == invitedBy }
-        }
-
-        filteredGuests = filtered
-        AppLogger.ui.debug("Filtered guests: \(filtered.count) of \(guests.count) (search: '\(searchText)', status: \(selectedStatus?.displayName ?? "none"), invitedBy: \(selectedInvitedBy?.displayName(with: .default) ?? "none"))")
-    }
-    
-    /// Clears all active filters and resets the filtered guests list to show all guests
-    func clearAllFilters() {
-        currentSearchText = ""
-        currentSelectedStatus = nil
-        currentSelectedInvitedBy = nil
-        filteredGuests = loadingState.data ?? []
-        AppLogger.ui.debug("All filters cleared. Showing all \(filteredGuests.count) guests")
-    }
-    
     // MARK: - Computed Properties
 
     var totalGuests: Int {
@@ -525,7 +421,6 @@ class GuestStoreV2: ObservableObject, CacheableStore {
         // Reset state and invalidate cache
         loadingState = .idle
         guestStats = nil
-        filteredGuests = []
         lastLoadTime = nil
         
         // Reset stats

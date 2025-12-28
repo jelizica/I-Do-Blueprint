@@ -14,6 +14,11 @@ struct ExpandablePaymentPlanCardView: View {
     let isExpanded: Bool
     let onToggle: () -> Void
     let onTogglePaidStatus: (PaymentSchedule) -> Void
+    let onUpdate: (PaymentSchedule) -> Void
+    let onDelete: (PaymentSchedule) -> Void
+    let getVendorName: (Int64?) -> String?
+    
+    @State private var showingDetailModal = false
     
     private var planPayments: [PaymentSchedule] {
         paymentSchedules
@@ -33,157 +38,187 @@ struct ExpandablePaymentPlanCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Payment Plan Summary (always visible)
-            Button(action: onToggle) {
-                HStack(spacing: Spacing.sm) {
-                    // Expansion chevron
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .foregroundColor(AppColors.textSecondary)
-                        .font(.caption)
-                        .frame(width: 20)
-                        .accessibilityHidden(true)
-                    
-                    // Plan summary content
-                    VStack(alignment: .leading, spacing: Spacing.md) {
-                        // Header with vendor name and status icon
-                        HStack {
-                            VStack(alignment: .leading, spacing: Spacing.xs) {
-                                Text(plan.vendor)
-                                    .font(Typography.heading)
-                                    .foregroundColor(AppColors.textPrimary)
-                                
-                                Text(plan.planTypeDisplay)
-                                    .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: plan.statusIcon)
-                                .foregroundColor(plan.planStatus.color)
-                                .font(.title2)
-                                .accessibilityLabel("\(plan.planStatus.displayName) status")
-                        }
+            VStack(alignment: .leading, spacing: 0) {
+                // Tappable summary area with visual feedback
+                Button(action: onToggle) {
+                    HStack(spacing: Spacing.sm) {
+                        // Expansion chevron
+                        Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                            .foregroundColor(AppColors.textSecondary)
+                            .font(.caption)
+                            .frame(width: 20)
+                            .accessibilityHidden(true)
                         
-                        // Progress Bar
-                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                        // Plan summary content
+                        VStack(alignment: .leading, spacing: Spacing.md) {
+                            // Header with vendor name and status icon
                             HStack {
-                                Text(plan.progressText)
-                                    .font(Typography.caption)
-                                    .foregroundColor(AppColors.textPrimary)
-                                
-                                Spacer()
-                                
-                                Text("\(Int(plan.percentPaid))% paid")
-                                    .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
-                            }
-                            
-                            ProgressView(value: plan.percentPaid, total: 100)
-                                .tint(plan.planStatus.color)
-                                .accessibilityLabel("Payment progress: \(Int(plan.percentPaid)) percent complete")
-                        }
-                        
-                        // Financial Summary
-                        HStack(spacing: Spacing.lg) {
-                            VStack(alignment: .leading, spacing: Spacing.xs) {
-                                Text("Total")
-                                    .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
-                                
-                                Text(plan.totalAmount, format: .currency(code: "USD"))
-                                    .font(Typography.subheading)
-                                    .fontWeight(.semibold)
-                                    .foregroundColor(AppColors.textPrimary)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: Spacing.xs) {
-                                Text("Paid")
-                                    .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
-                                
-                                Text(plan.amountPaid, format: .currency(code: "USD"))
-                                    .font(Typography.subheading)
-                                    .foregroundColor(.green)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: Spacing.xs) {
-                                Text("Remaining")
-                                    .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
-                                
-                                Text(plan.amountRemaining, format: .currency(code: "USD"))
-                                    .font(Typography.subheading)
-                                    .foregroundColor(.orange)
-                            }
-                        }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("Total: \(plan.totalAmount, format: .currency(code: "USD")), Paid: \(plan.amountPaid, format: .currency(code: "USD")), Remaining: \(plan.amountRemaining, format: .currency(code: "USD"))")
-                        
-                        // Next Payment or Overdue Status
-                        if plan.isOverdue {
-                            HStack(spacing: Spacing.sm) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundColor(.red)
-                                
-                                Text("\(plan.overdueCount) payment\(plan.overdueCount == 1 ? "" : "s") overdue")
-                                    .font(Typography.caption)
-                                    .foregroundColor(.red)
-                                
-                                if plan.overdueAmount > 0 {
-                                    Text("(\(plan.overdueAmount, format: .currency(code: "USD")))")
-                                        .font(Typography.caption)
-                                        .foregroundColor(.red)
-                                }
-                            }
-                            .padding(.vertical, Spacing.xs)
-                            .padding(.horizontal, Spacing.sm)
-                            .background(Color.red.opacity(0.1))
-                            .cornerRadius(CornerRadius.sm)
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("Overdue: \(plan.overdueCount) payment\(plan.overdueCount == 1 ? "" : "s"), \(plan.overdueAmount, format: .currency(code: "USD"))")
-                        } else if let nextDate = plan.nextPaymentDate, let nextAmount = plan.nextPaymentAmount {
-                            HStack(spacing: Spacing.sm) {
-                                Image(systemName: "calendar")
-                                    .foregroundColor(.blue)
-                                
-                                Text("Next: \(nextAmount, format: .currency(code: "USD")) on \(nextDate, format: .dateTime.month().day())")
-                                    .font(Typography.caption)
-                                    .foregroundColor(AppColors.textPrimary)
-                                
-                                if let daysUntil = plan.daysUntilNextPayment {
-                                    Text("(\(daysUntil) day\(daysUntil == 1 ? "" : "s"))")
+                                VStack(alignment: .leading, spacing: Spacing.xs) {
+                                    Text(plan.vendor)
+                                        .font(Typography.heading)
+                                        .foregroundColor(AppColors.textPrimary)
+                                    
+                                    Text(plan.planTypeDisplay)
                                         .font(Typography.caption)
                                         .foregroundColor(AppColors.textSecondary)
                                 }
-                            }
-                            .padding(.vertical, Spacing.xs)
-                            .padding(.horizontal, Spacing.sm)
-                            .background(Color.blue.opacity(0.1))
-                            .cornerRadius(CornerRadius.sm)
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("Next payment: \(nextAmount, format: .currency(code: "USD")) on \(nextDate, format: .dateTime.month().day().year())")
-                        } else if plan.planStatus == .completed {
-                            HStack(spacing: Spacing.sm) {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .foregroundColor(.green)
                                 
-                                Text("All payments completed")
-                                    .font(Typography.caption)
-                                    .foregroundColor(.green)
+                                Spacer()
+                                
+                                Image(systemName: plan.statusIcon)
+                                    .foregroundColor(plan.planStatus.color)
+                                    .font(.title2)
+                                    .accessibilityLabel("\(plan.planStatus.displayName) status")
                             }
-                            .padding(.vertical, Spacing.xs)
-                            .padding(.horizontal, Spacing.sm)
-                            .background(Color.green.opacity(0.1))
-                            .cornerRadius(CornerRadius.sm)
-                            .accessibilityLabel("All payments completed")
+                            
+                            // Progress Bar
+                            VStack(alignment: .leading, spacing: Spacing.xs) {
+                                HStack {
+                                    Text(plan.progressText)
+                                        .font(Typography.caption)
+                                        .foregroundColor(AppColors.textPrimary)
+                                    
+                                    Spacer()
+                                    
+                                    Text("\(Int(plan.percentPaid))% paid")
+                                        .font(Typography.caption)
+                                        .foregroundColor(AppColors.textSecondary)
+                                }
+                                
+                                ProgressView(value: plan.percentPaid, total: 100)
+                                    .tint(plan.planStatus.color)
+                                    .accessibilityLabel("Payment progress: \(Int(plan.percentPaid)) percent complete")
+                            }
+                            
+                            // Financial Summary
+                            HStack(spacing: Spacing.lg) {
+                                VStack(alignment: .leading, spacing: Spacing.xs) {
+                                    Text("Total")
+                                        .font(Typography.caption)
+                                        .foregroundColor(AppColors.textSecondary)
+                                    
+                                    Text(plan.totalAmount, format: .currency(code: "USD"))
+                                        .font(Typography.subheading)
+                                        .fontWeight(.semibold)
+                                        .foregroundColor(AppColors.textPrimary)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: Spacing.xs) {
+                                    Text("Paid")
+                                        .font(Typography.caption)
+                                        .foregroundColor(AppColors.textSecondary)
+                                    
+                                    Text(plan.amountPaid, format: .currency(code: "USD"))
+                                        .font(Typography.subheading)
+                                        .foregroundColor(.green)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: Spacing.xs) {
+                                    Text("Remaining")
+                                        .font(Typography.caption)
+                                        .foregroundColor(AppColors.textSecondary)
+                                    
+                                    Text(plan.amountRemaining, format: .currency(code: "USD"))
+                                        .font(Typography.subheading)
+                                        .foregroundColor(.orange)
+                                }
+                            }
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Total: \(plan.totalAmount, format: .currency(code: "USD")), Paid: \(plan.amountPaid, format: .currency(code: "USD")), Remaining: \(plan.amountRemaining, format: .currency(code: "USD"))")
+                            
+                            // Next Payment or Overdue Status
+                            if plan.isOverdue {
+                                HStack(spacing: Spacing.sm) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundColor(.red)
+                                    
+                                    Text("\(plan.overdueCount) payment\(plan.overdueCount == 1 ? "" : "s") overdue")
+                                        .font(Typography.caption)
+                                        .foregroundColor(.red)
+                                    
+                                    if plan.overdueAmount > 0 {
+                                        Text("(\(plan.overdueAmount, format: .currency(code: "USD")))")
+                                            .font(Typography.caption)
+                                            .foregroundColor(.red)
+                                    }
+                                }
+                                .padding(.vertical, Spacing.xs)
+                                .padding(.horizontal, Spacing.sm)
+                                .background(Color.red.opacity(0.1))
+                                .cornerRadius(CornerRadius.sm)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Overdue: \(plan.overdueCount) payment\(plan.overdueCount == 1 ? "" : "s"), \(plan.overdueAmount, format: .currency(code: "USD"))")
+                            } else if let nextDate = plan.nextPaymentDate, let nextAmount = plan.nextPaymentAmount {
+                                HStack(spacing: Spacing.sm) {
+                                    Image(systemName: "calendar")
+                                        .foregroundColor(.blue)
+                                    
+                                    Text("Next: \(nextAmount, format: .currency(code: "USD")) on \(nextDate, format: .dateTime.month().day())")
+                                        .font(Typography.caption)
+                                        .foregroundColor(AppColors.textPrimary)
+                                    
+                                    if let daysUntil = plan.daysUntilNextPayment {
+                                        Text("(\(daysUntil) day\(daysUntil == 1 ? "" : "s"))")
+                                            .font(Typography.caption)
+                                            .foregroundColor(AppColors.textSecondary)
+                                    }
+                                }
+                                .padding(.vertical, Spacing.xs)
+                                .padding(.horizontal, Spacing.sm)
+                                .background(Color.blue.opacity(0.1))
+                                .cornerRadius(CornerRadius.sm)
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Next payment: \(nextAmount, format: .currency(code: "USD")) on \(nextDate, format: .dateTime.month().day().year())")
+                            } else if plan.planStatus == .completed {
+                                HStack(spacing: Spacing.sm) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                    
+                                    Text("All payments completed")
+                                        .font(Typography.caption)
+                                        .foregroundColor(.green)
+                                }
+                                .padding(.vertical, Spacing.xs)
+                                .padding(.horizontal, Spacing.sm)
+                                .background(Color.green.opacity(0.1))
+                                .cornerRadius(CornerRadius.sm)
+                                .accessibilityLabel("All payments completed")
+                            }
                         }
                     }
+                    .padding(Spacing.md)
                 }
-                .padding(Spacing.md)
+                .buttonStyle(PaymentPlanSummaryButtonStyle())
+                .accessibilityLabel("Payment plan for \(plan.vendor)")
+                .accessibilityHint(isExpanded ? "Tap to collapse and hide individual payments" : "Tap to expand and view individual payments")
+                
+                // View/Edit Plan Button (sibling, not nested)
+                HStack {
+                    Spacer()
+                    
+                    Button(action: {
+                        showingDetailModal = true
+                    }) {
+                        HStack(spacing: Spacing.xs) {
+                            Image(systemName: "doc.text.magnifyingglass")
+                                .font(.caption)
+                            
+                            Text("View/Edit Plan")
+                                .font(Typography.caption)
+                        }
+                        .foregroundColor(.blue)
+                        .padding(.vertical, Spacing.xs)
+                        .padding(.horizontal, Spacing.sm)
+                        .background(Color.blue.opacity(0.1))
+                        .cornerRadius(CornerRadius.sm)
+                    }
+                    .buttonStyle(.plain)
+                    .help("View plan details and edit individual payments")
+                    .accessibilityLabel("View or edit payment plan details")
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.bottom, Spacing.md)
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Payment plan for \(plan.vendor)")
-            .accessibilityHint(isExpanded ? "Tap to collapse and hide individual payments" : "Tap to expand and view individual payments")
             
             // Individual Payments (shown when expanded)
             if isExpanded {
@@ -245,6 +280,39 @@ struct ExpandablePaymentPlanCardView: View {
         .background(Color(NSColor.controlBackgroundColor))
         .cornerRadius(CornerRadius.md)
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+        .sheet(isPresented: $showingDetailModal) {
+            PaymentPlanDetailModal(
+                plan: plan,
+                paymentSchedules: paymentSchedules,
+                onUpdate: onUpdate,
+                onDelete: onDelete,
+                getVendorName: getVendorName
+            )
+        }
+    }
+}
+
+// MARK: - Custom Button Style for Summary
+
+private struct PaymentPlanSummaryButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(
+                Color(NSColor.controlBackgroundColor)
+                    .cornerRadius(CornerRadius.md)
+            )
+            .overlay(
+                (configuration.isPressed ? Color.black.opacity(0.1) : Color.clear)
+                    .cornerRadius(CornerRadius.md)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(
+                        configuration.isPressed ? AppColors.primary.opacity(0.5) : Color.clear,
+                        lineWidth: 2
+                    )
+            )
+            .contentShape(Rectangle())
     }
 }
 
@@ -319,7 +387,10 @@ struct ExpandablePaymentPlanCardView_Previews: PreviewProvider {
                 paymentSchedules: [],
                 isExpanded: false,
                 onToggle: {},
-                onTogglePaidStatus: { _ in }
+                onTogglePaidStatus: { _ in },
+                onUpdate: { _ in },
+                onDelete: { _ in },
+                getVendorName: { _ in "Test Vendor" }
             )
             
             // Expanded state
@@ -328,7 +399,10 @@ struct ExpandablePaymentPlanCardView_Previews: PreviewProvider {
                 paymentSchedules: [],
                 isExpanded: true,
                 onToggle: {},
-                onTogglePaidStatus: { _ in }
+                onTogglePaidStatus: { _ in },
+                onUpdate: { _ in },
+                onDelete: { _ in },
+                getVendorName: { _ in "Test Vendor" }
             )
         }
         .padding()

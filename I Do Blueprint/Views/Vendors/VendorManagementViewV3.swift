@@ -63,16 +63,20 @@ struct VendorManagementViewV3: View {
                     .padding(.top, Spacing.xxxl)
                     .padding(.bottom, Spacing.xxl)
 
-                // Search and Filter Section
-                searchAndFilterSection
-                    .padding(.horizontal, Spacing.huge)
-                    .padding(.bottom, Spacing.lg)
-
                 // Content Section
                 ScrollView {
-                    vendorGridSection
-                        .padding(.horizontal, Spacing.huge)
-                        .padding(.bottom, Spacing.huge)
+                    VStack(spacing: Spacing.xl) {
+                        // Stats Cards
+                        statsSection
+
+                        // Search and Filter Section
+                        searchAndFilterSection
+
+                        // Vendor Grid
+                        vendorGridSection
+                    }
+                    .padding(.horizontal, Spacing.huge)
+                    .padding(.bottom, Spacing.huge)
                 }
             }
         }
@@ -208,84 +212,177 @@ struct VendorManagementViewV3: View {
         .frame(height: 68)
     }
 
+    // MARK: - Stats Section
+    
+    private var statsSection: some View {
+        VStack(spacing: Spacing.lg) {
+            // Main Stats Row
+            HStack(spacing: Spacing.lg) {
+                VendorManagementStatCard(
+                    title: "Total Vendors",
+                    value: "\(vendorStore.vendors.filter { !$0.isArchived }.count)",
+                    subtitle: nil,
+                    subtitleColor: AppColors.success,
+                    icon: "building.2.fill"
+                )
+
+                VendorManagementStatCard(
+                    title: "Total Quoted",
+                    value: formatCurrency(vendorStore.vendors.filter { !$0.isArchived }.reduce(0) { $0 + ($1.quotedAmount ?? 0) }),
+                    subtitle: "from all vendors",
+                    subtitleColor: AppColors.textSecondary,
+                    icon: "dollarsign.circle.fill"
+                )
+            }
+
+            // Sub-sections Row
+            HStack(spacing: Spacing.lg) {
+                VendorManagementStatCard(
+                    title: "Booked",
+                    value: "\(vendorStore.vendors.filter { $0.isBooked == true && !$0.isArchived }.count)",
+                    subtitle: "Confirmed vendors",
+                    subtitleColor: AppColors.success,
+                    icon: "checkmark.seal.fill"
+                )
+
+                VendorManagementStatCard(
+                    title: "Available",
+                    value: "\(vendorStore.vendors.filter { $0.isBooked != true && !$0.isArchived }.count)",
+                    subtitle: "Still considering",
+                    subtitleColor: AppColors.warning,
+                    icon: "clock.fill"
+                )
+
+                VendorManagementStatCard(
+                    title: "Archived",
+                    value: "\(vendorStore.vendors.filter { $0.isArchived }.count)",
+                    subtitle: "No longer needed",
+                    subtitleColor: AppColors.textSecondary,
+                    icon: "archivebox.fill"
+                )
+            }
+        }
+    }
+    
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.currencyCode = "USD"
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
+    }
+
     // MARK: - Search and Filter Section
     
     private var searchAndFilterSection: some View {
-        HStack(spacing: Spacing.md) {
-            // Search Bar
+        VStack(spacing: Spacing.md) {
+            // Single Row: Search + Filter Toggles + Sort + Clear
             HStack(spacing: Spacing.sm) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(AppColors.textSecondary)
-                    .font(.system(size: 14))
-                
-                TextField("Search vendors...", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(Typography.bodyRegular)
-                
-                if !searchText.isEmpty {
+                // Search Field
+                HStack(spacing: Spacing.sm) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(AppColors.textSecondary)
+                        .font(.body)
+
+                    TextField("Search vendors...", text: $searchText)
+                        .textFieldStyle(.plain)
+
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(Spacing.sm)
+                .frame(width: 200)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(AppColors.cardBackground)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .stroke(AppColors.border, lineWidth: 1)
+                        )
+                )
+
+                // Filter Toggle Buttons (Blue - Primary)
+                ForEach(VendorFilterOption.allCases, id: \.self) { filter in
                     Button {
-                        searchText = ""
+                        selectedFilter = filter
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(AppColors.textSecondary)
-                            .font(.system(size: 14))
+                        Text(filter.displayName)
+                            .font(Typography.bodySmall)
+                            .padding(.horizontal, Spacing.md)
+                            .padding(.vertical, Spacing.sm)
                     }
                     .buttonStyle(.plain)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .fill(selectedFilter == filter ? AppColors.primary : AppColors.cardBackground)
+                    )
+                    .foregroundColor(selectedFilter == filter ? .white : AppColors.textPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .stroke(selectedFilter == filter ? AppColors.primary : AppColors.border, lineWidth: 1)
+                    )
                 }
-            }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
-            .background(AppColors.cardBackground)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.borderLight, lineWidth: 0.5)
-            )
-            .frame(maxWidth: 400)
-            
-            // Filter Picker
-            Picker("Filter", selection: $selectedFilter) {
-                ForEach(VendorFilterOption.allCases, id: \.self) { option in
-                    Text(option.displayName).tag(option)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 300)
-            
-            Spacer()
-            
-            // Sort Menu
-            Menu {
-                ForEach(VendorSortOption.allCases, id: \.self) { option in
-                    Button {
-                        selectedSort = option
-                    } label: {
-                        HStack {
-                            Text(option.displayName)
-                            if selectedSort == option {
-                                Image(systemName: "checkmark")
+
+                Spacer()
+
+                // Sort Menu
+                Menu {
+                    ForEach(VendorSortOption.grouped, id: \.0) { group in
+                        Section(group.0) {
+                            ForEach(group.1) { option in
+                                Button {
+                                    selectedSort = option
+                                } label: {
+                                    HStack {
+                                        Label(option.displayName, systemImage: option.iconName)
+                                        if selectedSort == option {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(AppColors.primary)
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.up.arrow.down")
+                        Text(selectedSort.groupLabel)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                    .font(Typography.bodySmall)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
                 }
-            } label: {
-                HStack(spacing: Spacing.sm) {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .font(.system(size: 14))
-                    Text("Sort: \(selectedSort.displayName)")
-                        .font(Typography.bodyRegular)
+                .buttonStyle(.bordered)
+                .help("Sort vendors")
+
+                // Clear Filters
+                if selectedFilter != .all || !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                        selectedFilter = .all
+                    } label: {
+                        Text("Clear")
+                            .font(Typography.bodySmall)
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundColor(AppColors.primary)
                 }
-                .foregroundColor(AppColors.textPrimary)
-                .padding(.horizontal, Spacing.md)
-                .padding(.vertical, Spacing.sm)
-                .background(AppColors.cardBackground)
-                .cornerRadius(8)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(AppColors.borderLight, lineWidth: 0.5)
-                )
             }
-            .buttonStyle(.plain)
+            .padding(Spacing.lg)
+            .background(AppColors.cardBackground)
+            .cornerRadius(CornerRadius.lg)
+            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
         }
     }
 
@@ -709,6 +806,49 @@ struct AddVendorSheet: View {
             await vendorStore.addVendor(vendor)
             dismiss()
         }
+    }
+}
+
+// MARK: - Vendor Management Stat Card
+
+private struct VendorManagementStatCard: View {
+    let title: String
+    let value: String
+    let subtitle: String?
+    let subtitleColor: Color
+    let icon: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(title)
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+
+                    Text(value)
+                        .font(Typography.displayMedium)
+                        .foregroundColor(AppColors.textPrimary)
+
+                    if let subtitle = subtitle {
+                        Text(subtitle)
+                            .font(Typography.caption)
+                            .foregroundColor(subtitleColor)
+                    }
+                }
+
+                Spacer()
+
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .foregroundColor(AppColors.primary.opacity(0.2))
+            }
+        }
+        .padding(Spacing.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(AppColors.cardBackground)
+        .cornerRadius(CornerRadius.lg)
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
 }
 

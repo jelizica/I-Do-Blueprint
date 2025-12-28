@@ -11,10 +11,11 @@ struct ModernSearchBar: View {
     @Binding var searchText: String
     @Binding var selectedStatus: RSVPStatus?
     @Binding var selectedInvitedBy: InvitedBy?
+    @Binding var selectedSortOption: GuestSortOption
     @Binding var groupByStatus: Bool
     @EnvironmentObject var settingsStore: SettingsStoreV2
     
-    // Reference to guest store for clearing filters
+    // Optional reference to guest store (kept for compatibility but not used for filtering)
     var guestStore: GuestStoreV2?
 
     var filteredCount: Int = 0
@@ -23,91 +24,122 @@ struct ModernSearchBar: View {
     private var hasActiveFilters: Bool {
         selectedStatus != nil || selectedInvitedBy != nil || !searchText.isEmpty
     }
+    
+    // Define the main RSVP status filters we want to show as toggles
+    private let mainStatusFilters: [RSVPStatus?] = [nil, .attending, .pending, .declined]
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            // Search Field
+            // Single Row: Search + Status Toggles + Invited By Toggles + Sort + View Toggle + Clear
             HStack(spacing: Spacing.sm) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(AppColors.textSecondary)
-                    .font(.body)
+                // Search Field
+                HStack(spacing: Spacing.sm) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(AppColors.textSecondary)
+                        .font(.body)
 
-                TextField("Search by name, email...", text: $searchText)
-                    .textFieldStyle(.plain)
+                    TextField("Search guests...", text: $searchText)
+                        .textFieldStyle(.plain)
 
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                        // Explicitly notify store to clear search filter
-                        guestStore?.filterGuests(
-                            searchText: "",
-                            selectedStatus: selectedStatus,
-                            selectedInvitedBy: selectedInvitedBy
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(Spacing.sm)
+                .frame(width: 200)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(AppColors.cardBackground)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .stroke(AppColors.border, lineWidth: 1)
                         )
+                )
+
+                // RSVP Status Toggle Buttons
+                ForEach(mainStatusFilters, id: \.self) { status in
+                    Button {
+                        selectedStatus = status
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(AppColors.textSecondary)
+                        Text(status?.displayName ?? "All Status")
+                            .font(Typography.bodySmall)
+                            .padding(.horizontal, Spacing.md)
+                            .padding(.vertical, Spacing.sm)
                     }
                     .buttonStyle(.plain)
-                }
-            }
-            .padding(Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(AppColors.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(AppColors.border, lineWidth: 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .fill(selectedStatus == status ? AppColors.primary : AppColors.cardBackground)
                     )
-            )
-
-            // Filters Row
-            HStack(spacing: Spacing.sm) {
-                Menu {
-                    Button("All Status") {
-                        selectedStatus = nil
-                    }
-                    Divider()
-                    ForEach(RSVPStatus.allCases, id: \.self) { status in
-                        Button {
-                            selectedStatus = status
-                        } label: {
-                            Label(status.displayName, systemImage: status.iconName)
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                        Text(selectedStatus?.displayName ?? "All Status")
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
-                    }
-                    .font(Typography.bodySmall)
+                    .foregroundColor(selectedStatus == status ? .white : AppColors.textPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .stroke(selectedStatus == status ? AppColors.primary : AppColors.border, lineWidth: 1)
+                    )
                 }
-                .buttonStyle(.bordered)
 
-                Menu {
-                    Button("All Guests") {
-                        selectedInvitedBy = nil
+                // Invited By Toggle Buttons
+                ForEach([nil] + InvitedBy.allCases, id: \.self) { invitedBy in
+                    Button {
+                        selectedInvitedBy = invitedBy
+                    } label: {
+                        Text(invitedBy?.displayName(with: settingsStore.settings) ?? "All Guests")
+                            .font(Typography.bodySmall)
+                            .padding(.horizontal, Spacing.md)
+                            .padding(.vertical, Spacing.sm)
+                            .lineLimit(1)
                     }
-                    Divider()
-                    ForEach(InvitedBy.allCases, id: \.self) { invitedBy in
-                        Button(invitedBy.displayName(with: settingsStore.settings)) {
-                            selectedInvitedBy = invitedBy
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "person.2")
-                        Text(selectedInvitedBy?.displayName(with: settingsStore.settings) ?? "All Guests")
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
-                    }
-                    .font(Typography.bodySmall)
+                    .buttonStyle(.plain)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .fill(selectedInvitedBy == invitedBy ? AppColors.primary : AppColors.cardBackground)
+                    )
+                    .foregroundColor(selectedInvitedBy == invitedBy ? .white : AppColors.textPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .stroke(selectedInvitedBy == invitedBy ? AppColors.primary : AppColors.border, lineWidth: 1)
+                    )
                 }
-                .buttonStyle(.bordered)
 
                 Spacer()
+
+                // Sort Menu
+                Menu {
+                    ForEach(GuestSortOption.grouped, id: \.0) { group in
+                        Section(group.0) {
+                            ForEach(group.1) { option in
+                                Button {
+                                    selectedSortOption = option
+                                } label: {
+                                    HStack {
+                                        Label(option.displayName, systemImage: option.iconName)
+                                        if selectedSortOption == option {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(AppColors.primary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.up.arrow.down")
+                        Text(selectedSortOption.groupLabel)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                    .font(Typography.bodySmall)
+                }
+                .buttonStyle(.bordered)
+                .help("Sort guests")
 
                 // Group Toggle
                 Button {
@@ -120,8 +152,9 @@ struct ModernSearchBar: View {
                 .help(groupByStatus ? "List View" : "Group View")
 
                 // Clear Filters
-                if selectedStatus != nil || selectedInvitedBy != nil {
+                if selectedStatus != nil || selectedInvitedBy != nil || !searchText.isEmpty {
                     Button {
+                        searchText = ""
                         selectedStatus = nil
                         selectedInvitedBy = nil
                     } label: {
@@ -170,12 +203,10 @@ struct ModernSearchBar: View {
 
                         // Clear all button
                         Button("Clear all") {
-                            // Clear all filter state
+                            // Clear all filter state (filtering is computed in view)
                             searchText = ""
                             selectedStatus = nil
                             selectedInvitedBy = nil
-                            // Notify store to reset filtered guests
-                            guestStore?.clearAllFilters()
                         }
                         .font(.caption)
                         .foregroundColor(AppColors.primary)

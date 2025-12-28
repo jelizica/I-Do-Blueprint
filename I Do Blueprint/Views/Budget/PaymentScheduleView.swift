@@ -103,20 +103,18 @@ struct PaymentScheduleView: View {
     private var filterView: some View {
         VStack(spacing: 12) {
             // View mode toggle
-            HStack {
+            HStack(spacing: 12) {
                 Text("View")
-                    .font(.caption)
+                    .font(.system(size: 13))
                     .foregroundColor(.secondary)
-                
-                Spacer()
                 
                 Picker("View Mode", selection: $showPlanView) {
                     Text("Individual").tag(false)
                     Text("Plans").tag(true)
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 200)
                 .labelsHidden()
+                .frame(maxWidth: .infinity)
                 .onChange(of: showPlanView) { newValue in
                     if newValue {
                         Task {
@@ -126,65 +124,57 @@ struct PaymentScheduleView: View {
                 }
             }
             
-            // Grouping strategy picker (only show in plan view)
-            if showPlanView {
-                HStack {
-                    Text("Group By")
-                        .font(.caption)
+            // Filter/Group By picker (shown for both views)
+            HStack(spacing: 12) {
+                HStack(spacing: 4) {
+                    Text(showPlanView ? "Group By" : "Filter")
+                        .font(.system(size: 13))
                         .foregroundColor(.secondary)
                     
-                    Button(action: { showGroupingInfo = true }) {
-                        Image(systemName: "info.circle")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    if showPlanView {
+                        Button(action: { showGroupingInfo = true }) {
+                            Image(systemName: "info.circle")
+                                .font(.system(size: 13))
+                                .foregroundColor(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                        .popover(isPresented: $showGroupingInfo) {
+                            GroupingInfoView()
+                                .frame(width: 320)
+                                .padding()
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .popover(isPresented: $showGroupingInfo) {
-                        GroupingInfoView()
-                            .frame(width: 320)
-                            .padding()
-                    }
-                    
-                    Spacer()
-                    
+                }
+                
+                if showPlanView {
                     Picker("Group By", selection: $groupingStrategy) {
                         ForEach(PaymentPlanGroupingStrategy.allCases, id: \.self) { strategy in
                             Label(strategy.displayName, systemImage: strategy.icon).tag(strategy)
                         }
                     }
                     .pickerStyle(.segmented)
-                    .frame(width: 280)
                     .labelsHidden()
+                    .frame(maxWidth: .infinity)
                     .onChange(of: groupingStrategy) { _ in
                         Task {
                             await loadPaymentPlanSummaries()
                         }
                     }
-                }
-            }
-            
-            // Filter picker (only show for individual view)
-            if !showPlanView {
-                HStack {
-                    Text("Filter")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                }
-                
-                Picker("Filter", selection: $selectedFilterOption) {
-                    ForEach(PaymentFilterOption.allCases, id: \.self) { option in
-                        Text(option.displayName).tag(option)
+                } else {
+                    Picker("Filter", selection: $selectedFilterOption) {
+                        ForEach(PaymentFilterOption.allCases, id: \.self) { option in
+                            Text(option.displayName).tag(option)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity)
                 }
-                .pickerStyle(.segmented)
-                .labelsHidden()
             }
         }
-        .padding(.horizontal)
-        .padding(.bottom)
-        .background(Color(NSColor.controlBackgroundColor))
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.md)
+        .background(Color(NSColor.windowBackgroundColor))
     }
 
     @ViewBuilder
@@ -264,7 +254,18 @@ struct PaymentScheduleView: View {
                                     Task {
                                         await budgetStore.updatePaymentSchedule(schedule)
                                     }
-                                }
+                                },
+                                onUpdate: { schedule in
+                                    Task {
+                                        await budgetStore.updatePaymentSchedule(schedule)
+                                    }
+                                },
+                                onDelete: { schedule in
+                                    Task {
+                                        await budgetStore.deletePaymentSchedule(id: schedule.id)
+                                    }
+                                },
+                                getVendorName: getVendorNameById
                             )
                             .padding(.horizontal)
                         }
@@ -290,7 +291,18 @@ struct PaymentScheduleView: View {
                                     Task {
                                         await budgetStore.updatePaymentSchedule(schedule)
                                     }
-                                }
+                                },
+                                onUpdate: { schedule in
+                                    Task {
+                                        await budgetStore.updatePaymentSchedule(schedule)
+                                    }
+                                },
+                                onDelete: { schedule in
+                                    Task {
+                                        await budgetStore.deletePaymentSchedule(id: schedule.id)
+                                    }
+                                },
+                                getVendorName: getVendorNameById
                             )
                             .padding(.horizontal)
                         }
@@ -384,14 +396,7 @@ struct PaymentScheduleView: View {
                     await budgetStore.addPaymentSchedule(newPaymentSchedule)
                 }
             },
-            getVendorName: { vendorId in
-                // Look up vendor name from vendors list using vendor_id
-                guard let vendorId = vendorId else { return nil }
-
-                // Access vendors from VendorStoreV2 through AppStores
-                let vendors = AppStores.shared.vendor.vendors
-                return vendors.first(where: { $0.id == vendorId })?.vendorName
-            }
+            getVendorName: getVendorNameById
         )
         #if os(macOS)
         .frame(minWidth: 1000, maxWidth: 1200, minHeight: 600, maxHeight: 650)
@@ -419,6 +424,28 @@ struct PaymentScheduleView: View {
 
     private func getExpenseForPayment(_ payment: PaymentSchedule) -> Expense? {
         budgetStore.expenses.first { $0.id == payment.expenseId }
+    }
+    
+    /// Helper to resolve vendor name with consistent priority:
+    /// 1. expense.vendorName (if available)
+    /// 2. payment.vendor (if not empty)
+    /// 3. AppStores vendor lookup (by vendorId)
+    private func getVendorNameById(_ vendorId: Int64?) -> String? {
+        // First try to get vendor name from the payment's expense
+        if let payment = budgetStore.paymentSchedules.first(where: { $0.vendorId == vendorId }),
+           let expense = budgetStore.expenses.first(where: { $0.id == payment.expenseId }),
+           let vendorName = expense.vendorName, !vendorName.isEmpty {
+            return vendorName
+        }
+        // Fall back to payment's vendor field
+        if let payment = budgetStore.paymentSchedules.first(where: { $0.vendorId == vendorId }),
+           !payment.vendor.isEmpty {
+            return payment.vendor
+        }
+        // Finally fall back to AppStores lookup
+        guard let vendorId = vendorId else { return nil }
+        let vendors = AppStores.shared.vendor.vendors
+        return vendors.first(where: { $0.id == vendorId })?.vendorName
     }
     
     private func loadPaymentPlanSummaries() async {

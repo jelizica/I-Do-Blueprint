@@ -191,6 +191,108 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
     }
 }
 
+// MARK: - Sort Options
+
+enum GuestSortOption: String, CaseIterable, Identifiable {
+    case nameAsc = "name_asc"
+    case nameDesc = "name_desc"
+    case rsvpStatusAttending = "rsvp_status_attending"
+    case rsvpStatusPending = "rsvp_status_pending"
+    case dateAddedNewest = "date_added_newest"
+    case dateAddedOldest = "date_added_oldest"
+    case tableNumber = "table_number"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .nameAsc: "Name (A-Z)"
+        case .nameDesc: "Name (Z-A)"
+        case .rsvpStatusAttending: "Attending First"
+        case .rsvpStatusPending: "Pending First"
+        case .dateAddedNewest: "Recently Added"
+        case .dateAddedOldest: "Oldest First"
+        case .tableNumber: "Table Number"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .nameAsc, .nameDesc: "textformat"
+        case .rsvpStatusAttending, .rsvpStatusPending: "checkmark.seal"
+        case .dateAddedNewest, .dateAddedOldest: "calendar.badge.plus"
+        case .tableNumber: "tablecells"
+        }
+    }
+
+    var groupLabel: String {
+        switch self {
+        case .nameAsc, .nameDesc: "Name"
+        case .rsvpStatusAttending, .rsvpStatusPending: "RSVP Status"
+        case .dateAddedNewest, .dateAddedOldest: "Date Added"
+        case .tableNumber: "Table"
+        }
+    }
+
+    /// Sort an array of guests using this sort option
+    func sort(_ guests: [Guest]) -> [Guest] {
+        switch self {
+        case .nameAsc:
+            return guests.sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedAscending }
+        case .nameDesc:
+            return guests.sorted { $0.fullName.localizedCaseInsensitiveCompare($1.fullName) == .orderedDescending }
+        case .rsvpStatusAttending:
+            return guests.sorted { (g1, g2) in
+                let attending1 = g1.rsvpStatus == .attending || g1.rsvpStatus == .confirmed
+                let attending2 = g2.rsvpStatus == .attending || g2.rsvpStatus == .confirmed
+                if attending1 == attending2 {
+                    return g1.fullName.localizedCaseInsensitiveCompare(g2.fullName) == .orderedAscending
+                }
+                return attending1 && !attending2
+            }
+        case .rsvpStatusPending:
+            return guests.sorted { (g1, g2) in
+                let pending1 = g1.rsvpStatus == .pending || g1.rsvpStatus == .invited
+                let pending2 = g2.rsvpStatus == .pending || g2.rsvpStatus == .invited
+                if pending1 == pending2 {
+                    return g1.fullName.localizedCaseInsensitiveCompare(g2.fullName) == .orderedAscending
+                }
+                return pending1 && !pending2
+            }
+        case .dateAddedNewest:
+            return guests.sorted { $0.createdAt > $1.createdAt }
+        case .dateAddedOldest:
+            return guests.sorted { $0.createdAt < $1.createdAt }
+        case .tableNumber:
+            return guests.sorted { (g1, g2) in
+                switch (g1.tableAssignment, g2.tableAssignment) {
+                case (.some(let table1), .some(let table2)):
+                    if table1 == table2 {
+                        return g1.fullName.localizedCaseInsensitiveCompare(g2.fullName) == .orderedAscending
+                    }
+                    return table1 < table2
+                case (.some, .none):
+                    return true
+                case (.none, .some):
+                    return false
+                case (.none, .none):
+                    return g1.fullName.localizedCaseInsensitiveCompare(g2.fullName) == .orderedAscending
+                }
+            }
+        }
+    }
+
+    /// Grouped sort options for UI display
+    static var grouped: [(String, [GuestSortOption])] {
+        [
+            ("Name", [.nameAsc, .nameDesc]),
+            ("RSVP Status", [.rsvpStatusAttending, .rsvpStatusPending]),
+            ("Date Added", [.dateAddedNewest, .dateAddedOldest]),
+            ("Table", [.tableNumber])
+        ]
+    }
+}
+
 // Guest statistics for dashboard
 struct GuestStats: Codable, Equatable, Sendable {
     let totalGuests: Int

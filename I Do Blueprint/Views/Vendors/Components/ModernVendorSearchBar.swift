@@ -23,56 +23,61 @@ struct ModernVendorSearchBar: View {
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            // Search Field
+            // Single Row: Search + Filter Toggles + Sort + View Toggle + Clear
             HStack(spacing: Spacing.sm) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(AppColors.textSecondary)
-                    .font(.body)
+                // Search Field
+                HStack(spacing: Spacing.sm) {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(AppColors.textSecondary)
+                        .font(.body)
 
-                TextField("Search by name, category...", text: $searchText)
-                    .textFieldStyle(.plain)
+                    TextField("Search vendors...", text: $searchText)
+                        .textFieldStyle(.plain)
 
-                if !searchText.isEmpty {
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(Spacing.sm)
+                .frame(width: 200)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(AppColors.cardBackground)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .stroke(AppColors.border, lineWidth: 1)
+                        )
+                )
+
+                // Filter Toggle Buttons
+                ForEach(VendorFilterOption.allCases, id: \.self) { filter in
                     Button {
-                        searchText = ""
+                        selectedFilter = filter
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(AppColors.textSecondary)
+                        Text(filter.displayName)
+                            .font(Typography.bodySmall)
+                            .padding(.horizontal, Spacing.md)
+                            .padding(.vertical, Spacing.sm)
                     }
                     .buttonStyle(.plain)
-                }
-            }
-            .padding(Spacing.md)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(AppColors.cardBackground)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(AppColors.border, lineWidth: 1)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .fill(selectedFilter == filter ? AppColors.primary : AppColors.cardBackground)
                     )
-            )
-
-            // Filters Row
-            HStack(spacing: Spacing.sm) {
-                // Filter Menu
-                Menu {
-                    ForEach(VendorFilterOption.allCases, id: \.self) { filter in
-                        Button {
-                            selectedFilter = filter
-                        } label: {
-                            Label(filter.displayName, systemImage: filter.iconName)
-                        }
-                    }
-                } label: {
-                    HStack {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                        Text(selectedFilter.displayName)
-                        Image(systemName: "chevron.down")
-                            .font(.caption)
-                    }
-                    .font(Typography.bodySmall)
+                    .foregroundColor(selectedFilter == filter ? .white : AppColors.textPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .stroke(selectedFilter == filter ? AppColors.primary : AppColors.border, lineWidth: 1)
+                    )
                 }
-                .buttonStyle(.bordered)
+
+                Spacer()
 
                 // Sort Menu
                 Menu {
@@ -106,8 +111,6 @@ struct ModernVendorSearchBar: View {
                 .buttonStyle(.bordered)
                 .help("Sort vendors")
 
-                Spacer()
-
                 // Group Toggle
                 Button {
                     groupByStatus.toggle()
@@ -119,8 +122,9 @@ struct ModernVendorSearchBar: View {
                 .help(groupByStatus ? "List View" : "Group View")
 
                 // Clear Filters
-                if selectedFilter != .all || selectedCategory != nil {
+                if hasActiveFilters {
                     Button {
+                        searchText = ""
                         selectedFilter = .all
                         selectedCategory = nil
                     } label: {

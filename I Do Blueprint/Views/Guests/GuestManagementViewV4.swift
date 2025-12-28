@@ -17,7 +17,9 @@ struct GuestManagementViewV4: View {
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
+    @State private var selectedSortOption: GuestSortOption = .nameAsc
     @State private var showingImportSheet = false
+    @State private var showingExportSheet = false
     /// Local render token that forces the guest grid to rebuild when the store's
     /// guestListVersion changes after a reload.
     @State private var guestListRenderId: Int = 0
@@ -96,55 +98,32 @@ struct GuestManagementViewV4: View {
             GuestCSVImportView()
                 .environmentObject(guestStore)
         }
+        .sheet(isPresented: $showingExportSheet) {
+            GuestExportView(
+                guests: filteredAndSortedGuests,
+                settings: settings,
+                onExportSuccessful: { fileURL, format in
+                    // Open the exported file
+                    GuestExportService.shared.openFile(fileURL)
+                    
+                    // Show success alert
+                    GuestExportService.shared.showExportSuccessAlert(
+                        format: format,
+                        fileURL: fileURL
+                    ) { _ in
+                        // Alert dismissed
+                    }
+                }
+            )
+        }
         .task {
             if guestStore.loadingState.isIdle {
                 await guestStore.loadGuestData()
             }
         }
-        .onChange(of: searchText) { newValue in
-            guestStore.filterGuests(
-                searchText: newValue,
-                selectedStatus: selectedStatus,
-                selectedInvitedBy: selectedInvitedBy
-            )
-        }
-        .onChange(of: selectedStatus) { _ in
-            guestStore.filterGuests(
-                searchText: searchText,
-                selectedStatus: selectedStatus,
-                selectedInvitedBy: selectedInvitedBy
-            )
-        }
-        .onChange(of: selectedInvitedBy) { _ in
-            guestStore.filterGuests(
-                searchText: searchText,
-                selectedStatus: selectedStatus,
-                selectedInvitedBy: selectedInvitedBy
-            )
-        }
-        .searchable(text: $searchText, placement: .automatic)
-        .onChange(of: guestStore.guestListVersion) { _ in
+                .onChange(of: guestStore.guestListVersion) { _ in
             // Force the grid to rebuild when the underlying list reloads
             guestListRenderId &+= 1
-        }
-        .toolbar {
-            ToolbarItemGroup {
-                Picker("RSVP", selection: $selectedStatus) {
-                    Text("Any").tag(RSVPStatus?.none)
-                    ForEach(RSVPStatus.allCases, id: \.self) { status in
-                        Text(status.displayName).tag(RSVPStatus?.some(status))
-                    }
-                }
-                .pickerStyle(.menu)
-
-                Picker("Invited By", selection: $selectedInvitedBy) {
-                    Text("Any").tag(InvitedBy?.none)
-                    ForEach(InvitedBy.allCases, id: \.self) { who in
-                        Text(who.displayName(with: settings)).tag(InvitedBy?.some(who))
-                    }
-                }
-                .pickerStyle(.menu)
-            }
         }
     }
 
@@ -288,36 +267,138 @@ struct GuestManagementViewV4: View {
     // MARK: - Search and Filters Section
 
     private var searchAndFiltersSection: some View {
-        // Inline search UI removed in favor of native .searchable & toolbar pickers
-        Group {
-            if selectedStatus != nil || selectedInvitedBy != nil {
+        VStack(spacing: Spacing.md) {
+            // Single Row: Search + Status Toggles + Invited By Toggles + Sort + Clear
+            HStack(spacing: Spacing.sm) {
+                // Search Field
                 HStack(spacing: Spacing.sm) {
-                    if let status = selectedStatus {
-                        GuestFilterChip(
-                            title: status.displayName,
-                            onRemove: { selectedStatus = nil }
-                        )
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(AppColors.textSecondary)
+                        .font(.body)
+
+                    TextField("Search guests...", text: $searchText)
+                        .textFieldStyle(.plain)
+
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(AppColors.textSecondary)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    if let invitedBy = selectedInvitedBy {
-                        GuestFilterChip(
-                            title: invitedBy.displayName(with: settings),
-                            onRemove: { selectedInvitedBy = nil }
+                }
+                .padding(Spacing.sm)
+                .frame(width: 200)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(AppColors.cardBackground)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .stroke(AppColors.border, lineWidth: 1)
                         )
-                    }
-                    Spacer()
-                    Button("Clear Filters") {
-                        selectedStatus = nil
-                        selectedInvitedBy = nil
+                )
+
+                // RSVP Status Toggle Buttons (Blue - Primary)
+                ForEach([nil, RSVPStatus.attending, RSVPStatus.pending, RSVPStatus.declined], id: \.self) { status in
+                    Button {
+                        selectedStatus = status
+                    } label: {
+                        Text(status?.displayName ?? "All Status")
+                            .font(Typography.bodySmall)
+                            .padding(.horizontal, Spacing.md)
+                            .padding(.vertical, Spacing.sm)
                     }
                     .buttonStyle(.plain)
-                    .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .fill(selectedStatus == status ? AppColors.primary : AppColors.cardBackground)
+                    )
+                    .foregroundColor(selectedStatus == status ? .white : AppColors.textPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .stroke(selectedStatus == status ? AppColors.primary : AppColors.border, lineWidth: 1)
+                    )
                 }
-                .padding(Spacing.lg)
-                .background(AppColors.cardBackground)
-                .cornerRadius(CornerRadius.lg)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+
+                // Invited By Toggle Buttons (Teal - Different color to differentiate)
+                ForEach([nil] + InvitedBy.allCases, id: \.self) { invitedBy in
+                    Button {
+                        selectedInvitedBy = invitedBy
+                    } label: {
+                        Text(invitedBy?.displayName(with: settings) ?? "All Guests")
+                            .font(Typography.bodySmall)
+                            .padding(.horizontal, Spacing.md)
+                            .padding(.vertical, Spacing.sm)
+                            .lineLimit(1)
+                    }
+                    .buttonStyle(.plain)
+                    .background(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .fill(selectedInvitedBy == invitedBy ? Color.teal : AppColors.cardBackground)
+                    )
+                    .foregroundColor(selectedInvitedBy == invitedBy ? .white : AppColors.textPrimary)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.pill)
+                            .stroke(selectedInvitedBy == invitedBy ? Color.teal : AppColors.border, lineWidth: 1)
+                    )
+                }
+
+                Spacer()
+
+                // Sort Menu
+                Menu {
+                    ForEach(GuestSortOption.grouped, id: \.0) { group in
+                        Section(group.0) {
+                            ForEach(group.1) { option in
+                                Button {
+                                    selectedSortOption = option
+                                } label: {
+                                    HStack {
+                                        Label(option.displayName, systemImage: option.iconName)
+                                        if selectedSortOption == option {
+                                            Spacer()
+                                            Image(systemName: "checkmark")
+                                                .foregroundColor(AppColors.primary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.up.arrow.down")
+                        Text(selectedSortOption.groupLabel)
+                        Image(systemName: "chevron.down")
+                            .font(.caption)
+                    }
+                    .font(Typography.bodySmall)
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
+                }
+                .buttonStyle(.bordered)
+                .help("Sort guests")
+
+                // Clear Filters
+                if selectedStatus != nil || selectedInvitedBy != nil || !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                        selectedStatus = nil
+                        selectedInvitedBy = nil
+                    } label: {
+                        Text("Clear")
+                            .font(Typography.bodySmall)
+                    }
+                    .buttonStyle(.borderless)
+                    .foregroundColor(AppColors.primary)
+                }
             }
+            .padding(Spacing.lg)
+            .background(AppColors.cardBackground)
+            .cornerRadius(CornerRadius.lg)
+            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
         }
     }
 
@@ -335,7 +416,7 @@ struct GuestManagementViewV4: View {
                         await guestStore.retryLoad()
                     }
                 }
-            } else if guestStore.filteredGuests.isEmpty {
+            } else if filteredAndSortedGuests.isEmpty {
                 emptyStateView
             } else {
                 LazyVGrid(columns: [
@@ -344,7 +425,7 @@ struct GuestManagementViewV4: View {
                     GridItem(.flexible(), spacing: Spacing.lg),
                     GridItem(.flexible(), spacing: Spacing.lg)
                 ], spacing: Spacing.lg) {
-                    ForEach(guestStore.filteredGuests, id: \.id) { guest in
+                    ForEach(filteredAndSortedGuests, id: \.id) { guest in
                         GuestCardV4(guest: guest, settings: settings)
                             .onTapGesture {
                                 coordinator.present(.editGuest(guest))
@@ -407,8 +488,56 @@ struct GuestManagementViewV4: View {
     // MARK: - Helper Functions
 
     private func exportGuestList() {
-        // Export functionality will be implemented
         AppLogger.ui.info("Export guest list requested")
+        showingExportSheet = true
+    }
+    
+    // MARK: - Computed Filtering (Vendor-style)
+    
+    private var filteredAndSortedGuests: [Guest] {
+        let filtered = guestStore.guests.filter { guest in
+            // Search across name, email, and phone fields
+            let matchesSearch = searchText.isEmpty ||
+                guest.fullName.localizedCaseInsensitiveContains(searchText) ||
+                guest.email?.localizedCaseInsensitiveContains(searchText) == true ||
+                guest.phone?.contains(searchText) == true
+            
+            // Filter by RSVP status with grouped logic:
+            // - Attending = attending + confirmed
+            // - Declined = declined + noResponse
+            // - Pending = everything else
+            let matchesStatus: Bool
+            if let status = selectedStatus {
+                switch status {
+                case .attending:
+                    // Attending includes both attending and confirmed
+                    matchesStatus = guest.rsvpStatus == .attending || guest.rsvpStatus == .confirmed
+                case .declined:
+                    // Declined includes both declined and noResponse
+                    matchesStatus = guest.rsvpStatus == .declined || guest.rsvpStatus == .noResponse
+                case .pending:
+                    // Pending is everything else (not attending, confirmed, declined, or noResponse)
+                    matchesStatus = guest.rsvpStatus != .attending && 
+                                   guest.rsvpStatus != .confirmed && 
+                                   guest.rsvpStatus != .declined && 
+                                   guest.rsvpStatus != .noResponse
+                default:
+                    // For any other status, match exactly
+                    matchesStatus = guest.rsvpStatus == status
+                }
+            } else {
+                // No filter selected, show all
+                matchesStatus = true
+            }
+            
+            // Filter by which side invited the guest (bride/groom/both)
+            let matchesInvitedBy = selectedInvitedBy == nil || guest.invitedBy == selectedInvitedBy
+            
+            return matchesSearch && matchesStatus && matchesInvitedBy
+        }
+        
+        // Apply sorting
+        return selectedSortOption.sort(filtered)
     }
 }
 

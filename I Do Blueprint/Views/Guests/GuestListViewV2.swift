@@ -29,10 +29,20 @@ struct GuestListViewV2: View {
     @State private var searchText = ""
     @State private var selectedStatus: RSVPStatus?
     @State private var selectedInvitedBy: InvitedBy?
+    @State private var selectedSortOption: GuestSortOption = .nameAsc
     @State private var showingAddGuest = false
     @State private var showingImport = false
     @State private var selectedGuest: Guest?
     @State private var groupByStatus = true
+    
+    // Memoized filtered and sorted guests to avoid recomputation on every render
+    @State private var cachedFilteredGuests: [Guest] = []
+    
+    // Debounce task for search text to avoid filtering on every keystroke
+    @State private var searchDebounceTask: Task<Void, Never>?
+    
+    // Filter task to cancel stale filtering operations
+    @State private var filterTask: Task<Void, Never>?
 
     var body: some View {
         NavigationStack {
@@ -79,6 +89,44 @@ struct GuestListViewV2: View {
                 .task {
                     await guestStore.loadGuestData()
                 }
+                .onAppear {
+                    updateFilteredGuests()
+                }
+                .onDisappear {
+                    // Cancel any in-flight tasks to prevent leaks and stale updates
+                    searchDebounceTask?.cancel()
+                    searchDebounceTask = nil
+                    filterTask?.cancel()
+                    filterTask = nil
+                }
+                .onChange(of: searchText) { _ in
+                    // Cancel any existing debounce task
+                    searchDebounceTask?.cancel()
+                    
+                    // Create new debounced task
+                    searchDebounceTask = Task {
+                        // Wait 250ms before filtering
+                        try? await Task.sleep(nanoseconds: 250_000_000)
+                        
+                        // Check if task was cancelled
+                        guard !Task.isCancelled else { return }
+                        
+                        // Update on main actor
+                        await updateFilteredGuests()
+                    }
+                }
+                .onChange(of: selectedStatus) { _ in
+                    updateFilteredGuests()
+                }
+                .onChange(of: selectedInvitedBy) { _ in
+                    updateFilteredGuests()
+                }
+                .onChange(of: selectedSortOption) { _ in
+                    updateFilteredGuests()
+                }
+                .onChange(of: guestStore.guests) { _ in
+                    updateFilteredGuests()
+                }
                 .onReceive(NotificationCenter.default.publisher(for: .deleteGuest)) { notification in
                     if let guestIdString = notification.userInfo?["guestId"] as? String,
                        let guestId = UUID(uuidString: guestIdString) {
@@ -96,28 +144,7 @@ struct GuestListViewV2: View {
                         }
                     }
                 }
-                .onChange(of: searchText) { _, _ in
-                    guestStore.filterGuests(
-                        searchText: searchText,
-                        selectedStatus: selectedStatus,
-                        selectedInvitedBy: selectedInvitedBy
-                    )
-                }
-                .onChange(of: selectedStatus) { _, _ in
-                    guestStore.filterGuests(
-                        searchText: searchText,
-                        selectedStatus: selectedStatus,
-                        selectedInvitedBy: selectedInvitedBy
-                    )
-                }
-                .onChange(of: selectedInvitedBy) { _, _ in
-                    guestStore.filterGuests(
-                        searchText: searchText,
-                        selectedStatus: selectedStatus,
-                        selectedInvitedBy: selectedInvitedBy
-                    )
-                }
-                .alert("Error", isPresented: Binding(
+                                .alert("Error", isPresented: Binding(
                     get: { guestStore.error != nil },
                     set: { _ in }
                 )) {
@@ -162,9 +189,10 @@ struct GuestListViewV2: View {
                 searchText: $searchText,
                 selectedStatus: $selectedStatus,
                 selectedInvitedBy: $selectedInvitedBy,
+                selectedSortOption: $selectedSortOption,
                 groupByStatus: $groupByStatus,
                 guestStore: guestStore,
-                filteredCount: guestStore.filteredGuests.count,
+                filteredCount: cachedFilteredGuests.count,
                 totalCount: guestStore.guests.count
             )
             .padding(.horizontal, Spacing.md)
@@ -185,7 +213,7 @@ struct GuestListViewV2: View {
         Group {
             if groupByStatus {
                 GroupedGuestListView(
-                    guests: guestStore.filteredGuests,
+                    guests: cachedFilteredGuests,
                     isLoading: guestStore.isLoading,
                     selectedGuest: $selectedGuest,
                     onRefresh: {
@@ -194,7 +222,7 @@ struct GuestListViewV2: View {
                 )
             } else {
                 ModernGuestListView(
-                    guests: guestStore.filteredGuests,
+                    guests: cachedFilteredGuests,
                     totalCount: guestStore.guests.count,
                     isLoading: guestStore.isLoading,
                     isSearching: !searchText.isEmpty,
@@ -204,6 +232,60 @@ struct GuestListViewV2: View {
                         await guestStore.loadGuestData()
                     }
                 )
+            }
+        }
+    }
+    
+    // MARK: - Memoized Filtering and Sorting
+    
+    /// Updates the cached filtered guests only when dependencies change
+    /// This prevents recomputation on every SwiftUI render cycle
+    /// Performs heavy computation off main actor using structured concurrency
+    private func updateFilteredGuests() {
+        // Cancel any existing filter task to prevent race conditions
+        filterTask?.cancel()
+        
+        // Capture parameters (immutable snapshots)
+        let guests = guestStore.guests
+        let search = searchText
+        let status = selectedStatus
+        let invitedBy = selectedInvitedBy
+        let sortOption = selectedSortOption
+        
+        // Create new filter task with user-initiated priority
+        filterTask = Task(priority: .userInitiated) {
+            // Check for cancellation before starting
+            guard !Task.isCancelled else { return }
+            
+            // Perform heavy filtering off main actor
+            let filtered = guests.filter { guest in
+                // Search across name, email, and phone fields
+                let matchesSearch = search.isEmpty ||
+                    guest.fullName.localizedCaseInsensitiveContains(search) ||
+                    guest.email?.localizedCaseInsensitiveContains(search) == true ||
+                    guest.phone?.localizedCaseInsensitiveContains(search) == true
+                
+                // Filter by RSVP status (attending, pending, declined)
+                let matchesStatus = status == nil || guest.rsvpStatus == status
+                
+                // Filter by which side invited the guest (bride/groom/both)
+                let matchesInvitedBy = invitedBy == nil || guest.invitedBy == invitedBy
+                
+                return matchesSearch && matchesStatus && matchesInvitedBy
+            }
+            
+            // Check for cancellation after filtering, before sorting
+            guard !Task.isCancelled else { return }
+            
+            // Apply sorting
+            let sorted = sortOption.sort(filtered)
+            
+            // Check for cancellation after sorting, before updating UI
+            guard !Task.isCancelled else { return }
+            
+            // Update UI-bound state on main actor
+            await MainActor.run {
+                cachedFilteredGuests = sorted
             }
         }
     }

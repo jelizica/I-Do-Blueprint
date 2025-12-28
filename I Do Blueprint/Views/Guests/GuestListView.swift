@@ -47,7 +47,7 @@ struct GuestListView: View {
 
                     // Guest List
                     GuestListContentView(
-                        guests: guestStore.filteredGuests,
+                        guests: filteredGuests,
                         isLoading: guestStore.isLoading,
                         selectedGuest: $selectedGuest,
                         onRefresh: {
@@ -121,25 +121,7 @@ struct GuestListView: View {
                     }
                 }
             }
-            .onChange(of: searchText) { _, _ in
-                guestStore.filterGuests(
-                    searchText: searchText,
-                    selectedStatus: selectedStatus,
-                    selectedInvitedBy: selectedInvitedBy)
-            }
-            .onChange(of: selectedStatus) { _, _ in
-                guestStore.filterGuests(
-                    searchText: searchText,
-                    selectedStatus: selectedStatus,
-                    selectedInvitedBy: selectedInvitedBy)
-            }
-            .onChange(of: selectedInvitedBy) { _, _ in
-                guestStore.filterGuests(
-                    searchText: searchText,
-                    selectedStatus: selectedStatus,
-                    selectedInvitedBy: selectedInvitedBy)
-            }
-            .alert("Error", isPresented: Binding(
+                        .alert("Error", isPresented: Binding(
                 get: { guestStore.error != nil },
                 set: { _ in }
             )) {
@@ -159,6 +141,20 @@ struct GuestListView: View {
         }
     }
 
+    // MARK: - Computed Filtering
+    
+    private var filteredGuests: [Guest] {
+        guestStore.guests.filter { guest in
+            let matchesSearch = searchText.isEmpty ||
+                guest.fullName.localizedCaseInsensitiveContains(searchText) ||
+                guest.email?.localizedCaseInsensitiveContains(searchText) == true ||
+                guest.phone?.contains(searchText) == true
+            let matchesStatus = selectedStatus == nil || guest.rsvpStatus == selectedStatus
+            let matchesInvitedBy = selectedInvitedBy == nil || guest.invitedBy == selectedInvitedBy
+            return matchesSearch && matchesStatus && matchesInvitedBy
+        }
+    }
+    
     // MARK: - Data Operations
 
     @MainActor
