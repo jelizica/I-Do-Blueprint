@@ -118,6 +118,13 @@ struct TaskCard: View {
         }
     }
 
+    // MARK: - Computed Properties
+
+    /// User's configured timezone - single source of truth for date operations
+    private var userTimezone: TimeZone {
+        DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+    }
+
     // MARK: - Priority Badge
 
     private var priorityBadge: some View {
@@ -150,14 +157,15 @@ struct TaskCard: View {
     // MARK: - Due Date Badge
 
     private func dueDateBadge(_ date: Date) -> some View {
-        let isOverdue = date < Date() && task.status != .completed
-        let daysUntil = Calendar.current.dateComponents([.day], from: Date(), to: date).day ?? 0
+        // Use user's timezone for date calculations
+        let daysUntil = DateFormatting.daysBetween(from: Date(), to: date, in: userTimezone)
+        let isOverdue = daysUntil < 0 && task.status != .completed
 
         return HStack(spacing: 4) {
             Image(systemName: isOverdue ? "exclamationmark.triangle.fill" : "calendar")
                 .font(.caption2)
 
-            Text(dueDateText(date, daysUntil: daysUntil, isOverdue: isOverdue))
+            Text(dueDateText(date, daysUntil: daysUntil, isOverdue: isOverdue, timezone: userTimezone))
                 .font(.caption2)
                 .fontWeight(.medium)
         }
@@ -169,7 +177,7 @@ struct TaskCard: View {
         .foregroundColor(dueDateColor(isOverdue: isOverdue, daysUntil: daysUntil))
     }
 
-    private func dueDateText(_ date: Date, daysUntil: Int, isOverdue: Bool) -> String {
+    private func dueDateText(_ date: Date, daysUntil: Int, isOverdue: Bool, timezone: TimeZone) -> String {
         if isOverdue {
             return "Overdue"
         } else if daysUntil == 0 {
@@ -179,9 +187,7 @@ struct TaskCard: View {
         } else if daysUntil < 7 {
             return "\(daysUntil)d"
         } else {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMM d"
-            return formatter.string(from: date)
+            return DateFormatting.formatDate(date, format: "MMM d", timezone: timezone)
         }
     }
 

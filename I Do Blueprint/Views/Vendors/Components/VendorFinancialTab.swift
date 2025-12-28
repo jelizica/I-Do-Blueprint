@@ -60,20 +60,21 @@ struct VendorFinancialTab: View {
     }
 
     private func formatDate(_ dateString: String) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        if let date = formatter.date(from: dateString) {
-            formatter.dateStyle = .medium
-            return formatter.string(from: date)
+        // Parse from database (UTC)
+        guard let date = DateFormatting.parseDateFromDatabase(dateString) else {
+            // Log parse failure for debugging
+            AppLogger.ui.error("Failed to parse date string from database: '\(dateString)' for vendor '\(vendor.vendorName)' (ID: \(vendor.id))")
+            return "Invalid Date" // Return clear placeholder instead of raw database string
         }
-
-        return dateString
+        
+        // Format in user's timezone
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        return DateFormatting.formatDateMedium(date, timezone: userTimezone)
     }
 
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+        // Use user's timezone for date formatting
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        return DateFormatting.formatDateMedium(date, timezone: userTimezone)
     }
 }

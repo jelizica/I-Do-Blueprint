@@ -15,6 +15,9 @@ struct TaskProgressCard: View {
     }
 
     var body: some View {
+        // Compute timezone once for all task rows
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
             HStack {
@@ -65,7 +68,7 @@ struct TaskProgressCard: View {
 
                 // Task Rows
                 ForEach(recentTasks) { task in
-                    TaskRow(task: task)
+                    TaskRow(task: task, userTimezone: userTimezone)
 
                     if task.id != recentTasks.last?.id {
                         Divider()
@@ -88,6 +91,7 @@ struct TaskProgressCard: View {
 
 struct TaskRow: View {
     let task: WeddingTask
+    let userTimezone: TimeZone
 
     var body: some View {
         HStack {
@@ -117,9 +121,10 @@ struct TaskRow: View {
     }
 
     private func formattedDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: date)
+        // Note: Task due dates are stored as DATE (calendar dates) in the database,
+        // not timestamps. The timezone is used only for formatting consistency with
+        // the user's locale, not for timezone conversion of the actual date value.
+        return DateFormatting.formatDate(date, format: "MMM d, yyyy", timezone: userTimezone)
     }
 }
 

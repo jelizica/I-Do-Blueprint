@@ -12,9 +12,30 @@ struct AllMilestonesView: View {
     let onSelectMilestone: (Milestone) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.appStores) private var appStores
     @State private var selectedFilter: MilestoneFilter = .all
     @State private var sortOrder: MilestoneSortOrder = .dateAscending
     @State private var searchQuery = ""
+    @State private var userTimezone: TimeZone = TimeZone(identifier: "America/Los_Angeles") ?? TimeZone.current
+
+    // Cached prototype DateFormatter for month-year parsing (thread confinement via copy per use)
+    private static let monthYearFormatterPrototype: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
+    }()
+
+    // Factory to get a formatter configured for a specific timezone by copying the prototype
+    private func monthYearFormatter(for timezone: TimeZone) -> DateFormatter {
+        let formatter = DateFormatter()
+        formatter.dateFormat = Self.monthYearFormatterPrototype.dateFormat
+        formatter.locale = Self.monthYearFormatterPrototype.locale
+        formatter.calendar = Self.monthYearFormatterPrototype.calendar
+        formatter.timeZone = timezone
+        return formatter
+    }
 
     var body: some View {
         NavigationStack {
@@ -47,6 +68,12 @@ struct AllMilestonesView: View {
                         Image(systemName: "plus")
                     }
                 }
+            }
+            .onAppear {
+                updateTimezone()
+            }
+            .onChange(of: appStores.settings.settings.global.timezone) { _ in
+                updateTimezone()
             }
         }
     }
@@ -106,6 +133,7 @@ struct AllMilestonesView: View {
                     ForEach(group.value) { milestone in
                         MilestoneRow(
                             milestone: milestone,
+                            userTimezone: userTimezone,
                             onTap: {
                                 onSelectMilestone(milestone)
                             },
@@ -142,6 +170,13 @@ struct AllMilestonesView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
+    // MARK: - Helper Methods
+    
+    /// Update the cached timezone from settings
+    private func updateTimezone() {
+        userTimezone = DateFormatting.userTimeZone(from: appStores.settings.settings)
+    }
+
     // MARK: - Computed Properties
 
     private var filteredAndSortedMilestones: [Milestone] {
@@ -155,14 +190,21 @@ struct AllMilestonesView: View {
             }
         }
 
-        // Apply status filter
+        // Apply status filter with timezone-aware date comparisons
         switch selectedFilter {
         case .all:
             break
         case .upcoming:
-            milestones = milestones.filter { !$0.completed && $0.milestoneDate >= Date() }
+            // Use timezone-aware comparison: milestone is upcoming if it's today or in the future
+            milestones = milestones.filter { milestone in
+                !milestone.completed && 
+                DateFormatting.daysBetween(from: Date(), to: milestone.milestoneDate, in: userTimezone) >= 0
+            }
         case .past:
-            milestones = milestones.filter { $0.milestoneDate < Date() }
+            // Use timezone-aware comparison: milestone is past if it was before today
+            milestones = milestones.filter { milestone in
+                DateFormatting.daysBetween(from: Date(), to: milestone.milestoneDate, in: userTimezone) < 0
+            }
         case .completed:
             milestones = milestones.filter { $0.completed }
         case .incomplete:
@@ -185,15 +227,14 @@ struct AllMilestonesView: View {
     }
 
     private var groupedMilestones: [(key: String, value: [Milestone])] {
+        // Use user's timezone for month grouping
         let grouped = Dictionary(grouping: filteredAndSortedMilestones) { milestone in
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM yyyy"
-            return formatter.string(from: milestone.milestoneDate)
+            DateFormatting.formatDate(milestone.milestoneDate, format: "MMMM yyyy", timezone: userTimezone)
         }
 
         return grouped.sorted { first, second in
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM yyyy"
+            // Reuse cached formatter settings, only adjust timezone per-use
+            let formatter = monthYearFormatter(for: userTimezone)
 
             guard let firstDate = formatter.date(from: first.key),
                   let secondDate = formatter.date(from: second.key) else {
@@ -209,6 +250,7 @@ struct AllMilestonesView: View {
 
 struct MilestoneRow: View {
     let milestone: Milestone
+    let userTimezone: TimeZone
     let onTap: () -> Void
     let onToggleCompletion: () -> Void
 
@@ -285,11 +327,8 @@ struct MilestoneRow: View {
     }
 
     private func daysUntilText() -> String? {
-        let calendar = Calendar.current
-        let now = Date()
-        let components = calendar.dateComponents([.day], from: now, to: milestone.milestoneDate)
-
-        guard let days = components.day else { return nil }
+        // Use user's timezone for day calculations
+        let days = DateFormatting.daysBetween(from: Date(), to: milestone.milestoneDate, in: userTimezone)
 
         if days == 0 {
             return "Today"
@@ -350,12 +389,11 @@ enum MilestoneSortOrder: String, CaseIterable {
     }
 }
 
-// MARK: - Helper Functions
-
-private func formatDate(_ date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .medium
-    return formatter.string(from: date)
+extension MilestoneRow {
+    private func formatDate(_ date: Date) -> String {
+        // Use injected timezone for date formatting
+        return DateFormatting.formatDateMedium(date, timezone: userTimezone)
+    }
 }
 
 // MARK: - Preview

@@ -272,6 +272,14 @@ struct HorizontalTimelineGraph: View {
     @State private var scrollPosition: CGFloat = 0
     @State private var hoveredId: UUID?
 
+    /// User's calendar configured with their timezone - single source of truth for date operations
+    private var userCalendar: Calendar {
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        var calendar = Calendar.current
+        calendar.timeZone = userTimezone
+        return calendar
+    }
+
     private var allDates: [Date] {
         let itemDates = items.map { $0.itemDate }
         let milestoneDates = milestones.map { $0.milestoneDate }
@@ -361,14 +369,16 @@ struct HorizontalTimelineGraph: View {
         let range = dateRange
         var markers: [(date: Date, label: String)] = []
 
-        let calendar = Calendar.current
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM yyyy"
+        // Use user's timezone for month markers
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        var calendar = Calendar.current
+        calendar.timeZone = userTimezone
 
         var currentDate = calendar.date(from: calendar.dateComponents([.year, .month], from: range.start))!
 
         while currentDate <= range.end {
-            markers.append((date: currentDate, label: formatter.string(from: currentDate)))
+            let label = DateFormatting.formatDate(currentDate, format: "MMM yyyy", timezone: userTimezone)
+            markers.append((date: currentDate, label: label))
             currentDate = calendar.date(byAdding: .month, value: 1, to: currentDate)!
         }
 
@@ -419,11 +429,13 @@ struct HorizontalTimelineGraph: View {
     }
 
     private func isMilestone(_ date: Date) -> Bool {
-        milestones.contains { Calendar.current.isDate($0.milestoneDate, inSameDayAs: date) }
+        // Use cached user calendar for date comparisons
+        return milestones.contains { userCalendar.isDate($0.milestoneDate, inSameDayAs: date) }
     }
 
     private func milestoneForDate(_ date: Date) -> Milestone? {
-        milestones.first { Calendar.current.isDate($0.milestoneDate, inSameDayAs: date) }
+        // Use cached user calendar for date comparisons
+        return milestones.first { userCalendar.isDate($0.milestoneDate, inSameDayAs: date) }
     }
 }
 

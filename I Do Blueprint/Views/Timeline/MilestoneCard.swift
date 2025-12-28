@@ -112,16 +112,19 @@ struct MilestoneCard: View {
         }
     }
 
+    /// User's configured timezone - single source of truth for all date operations
+    private var userTimeZone: TimeZone {
+        DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+    }
+
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: date)
+        // Use user's timezone for date formatting
+        return DateFormatting.formatDate(date, format: "MMM d, yyyy", timezone: userTimeZone)
     }
 
     private func daysUntilText() -> String? {
-        let now = Date()
-        let calendar = Calendar.current
-        let days = calendar.dateComponents([.day], from: now, to: milestone.milestoneDate).day ?? 0
+        // Use user's timezone for day calculations
+        let days = DateFormatting.daysBetween(from: Date(), to: milestone.milestoneDate, in: userTimeZone)
 
         if milestone.completed {
             return "Completed"

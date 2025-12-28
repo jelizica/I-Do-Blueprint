@@ -62,7 +62,8 @@ struct DashboardViewV4: View {
                                     weddingDate: weddingDate,
                                     daysUntil: daysUntilWedding,
                                     partner1Name: partner1DisplayName,
-                                    partner2Name: partner2DisplayName
+                                    partner2Name: partner2DisplayName,
+                                    userTimezone: userTimezone
                                 )
                             } else {
                                 // Hero skeleton (full-width)
@@ -117,8 +118,8 @@ struct DashboardViewV4: View {
                         LazyVGrid(columns: columns, alignment: .center, spacing: Spacing.lg) {
                             if effectiveHasLoaded {
                                 // Main cards
-                                BudgetOverviewCardV4(store: budgetStore, vendorStore: vendorStore)
-                                TaskProgressCardV4(store: taskStore)
+                                BudgetOverviewCardV4(store: budgetStore, vendorStore: vendorStore, userTimezone: userTimezone)
+                                TaskProgressCardV4(store: taskStore, userTimezone: userTimezone)
                                 GuestResponsesCardV4(store: guestStore)
                                 VendorStatusCardV4(store: vendorStore)
 
@@ -215,10 +216,8 @@ struct DashboardViewV4: View {
                             }
                         }
                         .padding(.horizontal, Spacing.xxl)
-                        .padding(.bottom, Spacing.xxl)
                     }
-                    .padding(.top, Spacing.xxl)
-
+                    
                     // Full-width Quick Actions row
                     Group {
                         if effectiveHasLoaded {
@@ -249,6 +248,8 @@ struct DashboardViewV4: View {
                         }
                     }
                 }
+                .padding(.top, Spacing.xxl)
+                .padding(.bottom, Spacing.xxl)
             }
             .navigationTitle("")
             .toolbar {
@@ -283,6 +284,11 @@ struct DashboardViewV4: View {
     }
 
     // MARK: - Computed Properties
+    
+    /// User's configured timezone for display
+    private var userTimezone: TimeZone {
+        DateFormatting.userTimeZone(from: settingsStore.settings)
+    }
 
     private var weddingDate: Date? {
         guard hasLoaded else { return nil }
@@ -290,23 +296,15 @@ struct DashboardViewV4: View {
         let dateString = settingsStore.settings.global.weddingDate
         guard !dateString.isEmpty else { return nil }
 
-        let iso8601Formatter = ISO8601DateFormatter()
-        if let date = iso8601Formatter.date(from: dateString) {
-            return date
-        }
-
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateFormat = "yyyy-MM-dd"
-        return dateFormatter.date(from: dateString)
+        // Parse date from database (timezone-agnostic YYYY-MM-DD format)
+        return DateFormatting.parseDateFromDatabase(dateString)
     }
 
     private var daysUntilWedding: Int {
         guard let weddingDate = weddingDate else { return 0 }
 
-        let calendar = Calendar.current
-        let now = calendar.startOfDay(for: Date())
-        let wedding = calendar.startOfDay(for: weddingDate)
-        return calendar.dateComponents([.day], from: now, to: wedding).day ?? 0
+        // Calculate days in user's timezone (not device timezone)
+        return DateFormatting.daysBetween(from: Date(), to: weddingDate, in: userTimezone)
     }
 
     // Partner Names - Use nicknames if available, otherwise full names
@@ -488,6 +486,7 @@ private struct WeddingCountdownCard: View {
     let daysUntil: Int
     let partner1Name: String
     let partner2Name: String
+    let userTimezone: TimeZone
 
     private var weddingTitle: String {
         if !partner1Name.isEmpty && !partner2Name.isEmpty {
@@ -551,9 +550,8 @@ private struct WeddingCountdownCard: View {
     }
 
     private func formatWeddingDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM d, yyyy"
-        return formatter.string(from: date)
+        // Use injected timezone for consistent dependency injection
+        return DateFormatting.formatDateLong(date, timezone: userTimezone)
     }
 }
 
@@ -615,6 +613,7 @@ private struct DashboardMetricCard: View {
 private struct BudgetOverviewCardV4: View {
     @ObservedObject var store: BudgetStoreV2
     @ObservedObject var vendorStore: VendorStoreV2
+    let userTimezone: TimeZone
 
     private var totalBudget: Double {
         guard let primaryScenario = store.primaryScenario else {
@@ -639,7 +638,10 @@ private struct BudgetOverviewCardV4: View {
     }
 
     private var paymentsThisMonth: [PaymentSchedule] {
-        let calendar = Calendar.current
+        // Use injected timezone to determine "this month"
+        var calendar = Calendar.current
+        calendar.timeZone = userTimezone
+        
         let now = Date()
         let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
         let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
@@ -714,7 +716,7 @@ private struct BudgetOverviewCardV4: View {
                         .foregroundColor(AppColors.textPrimary)
 
                     ForEach(paymentsThisMonth.prefix(5)) { payment in
-                        PaymentDueRow(payment: payment, vendorStore: vendorStore)
+                        PaymentDueRow(payment: payment, vendorStore: vendorStore, userTimezone: userTimezone)
                     }
                 }
             }
@@ -739,6 +741,7 @@ private struct BudgetOverviewCardV4: View {
 private struct PaymentDueRow: View {
     let payment: PaymentSchedule
     @ObservedObject var vendorStore: VendorStoreV2
+    let userTimezone: TimeZone
 
     private var vendorName: String {
         guard let vendorId = payment.vendorId else {
@@ -782,9 +785,8 @@ private struct PaymentDueRow: View {
     }
 
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d"
-        return formatter.string(from: date)
+        // Format in injected timezone
+        return DateFormatting.formatDate(date, format: "MMM d", timezone: userTimezone)
     }
 
     private func formatAmount(_ amount: Double) -> String {
@@ -924,6 +926,7 @@ private struct BudgetCategoryRow: View {
 
 private struct TaskProgressCardV4: View {
     @ObservedObject var store: TaskStoreV2
+    let userTimezone: TimeZone
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
@@ -944,7 +947,7 @@ private struct TaskProgressCardV4: View {
             // Recent Tasks
             VStack(spacing: Spacing.md) {
                 ForEach(store.tasks.prefix(5)) { task in
-                    DashboardTaskRow(task: task)
+                    DashboardTaskRow(task: task, userTimezone: userTimezone)
                 }
             }
 
@@ -964,6 +967,7 @@ private struct TaskProgressCardV4: View {
 
 private struct DashboardTaskRow: View {
     let task: WeddingTask
+    let userTimezone: TimeZone
 
     var body: some View {
         HStack(spacing: Spacing.md) {
@@ -986,7 +990,9 @@ private struct DashboardTaskRow: View {
     }
 
     private func dueDateText(_ date: Date) -> String {
-        let calendar = Calendar.current
+        // Use injected timezone for relative date calculations
+        var calendar = Calendar.current
+        calendar.timeZone = userTimezone
         let now = Date()
 
         if calendar.isDateInToday(date) {
@@ -994,7 +1000,7 @@ private struct DashboardTaskRow: View {
         } else if calendar.isDateInTomorrow(date) {
             return "Due tomorrow"
         } else {
-            let days = calendar.dateComponents([.day], from: now, to: date).day ?? 0
+            let days = DateFormatting.daysBetween(from: now, to: date, in: userTimezone)
             if days > 0 {
                 return "Due in \(days) days"
             } else {
@@ -1004,9 +1010,8 @@ private struct DashboardTaskRow: View {
     }
 
     private func dueDateColor(_ date: Date) -> Color {
-        let calendar = Calendar.current
-        let now = Date()
-        let days = calendar.dateComponents([.day], from: now, to: date).day ?? 0
+        // Use injected timezone for day calculations
+        let days = DateFormatting.daysBetween(from: Date(), to: date, in: userTimezone)
 
         if days < 0 {
             return AppColors.error

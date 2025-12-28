@@ -79,7 +79,7 @@ struct GlobalSettings: Codable, Equatable {
             currency: "USD",
             weddingDate: "",
             isWeddingDateTBD: false,
-            timezone: "America/New_York",
+            timezone: "America/Los_Angeles",
             partner1FullName: "Partner 1",
             partner1Nickname: "",
             partner2FullName: "Partner 2",

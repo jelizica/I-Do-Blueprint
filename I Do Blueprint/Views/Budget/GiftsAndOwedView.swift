@@ -229,11 +229,11 @@ struct GiftOrOwedRowView: View {
 
                     // Date information
                     if let expectedDate = giftOrOwed.expectedDate, giftOrOwed.status == .pending {
-                        Text("Expected: \(formatDate(expectedDate))")
+                        Text("Expected: \(formatDateInUserTimezone(expectedDate))")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     } else if let receivedDate = giftOrOwed.receivedDate {
-                        Text("Received: \(formatDate(receivedDate))")
+                        Text("Received: \(formatDateInUserTimezone(receivedDate))")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -261,10 +261,10 @@ struct GiftOrOwedRowView: View {
 
 // MARK: - Helper Functions
 
-private func formatDate(_ date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .medium
-    return formatter.string(from: date)
+private func formatDateInUserTimezone(_ date: Date) -> String {
+    // Use user's timezone for date formatting
+    let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+    return DateFormatting.formatDateMedium(date, timezone: userTimezone)
 }
 
 #Preview {

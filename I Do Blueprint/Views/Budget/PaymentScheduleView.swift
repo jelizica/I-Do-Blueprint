@@ -20,7 +20,16 @@ struct PaymentScheduleView: View {
     @State private var loadError: String?
     @State private var showErrorAlert = false
 
+    /// User's configured timezone - single source of truth for date operations
+    private var userTimezone: TimeZone {
+        DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+    }
+
     var filteredPayments: [PaymentSchedule] {
+        // Use user's timezone for date comparisons
+        var calendar = Calendar.current
+        calendar.timeZone = userTimezone
+        
         let filtered = budgetStore.paymentSchedules.filter { payment in
             switch selectedFilterOption {
             case .all:
@@ -30,12 +39,10 @@ struct PaymentScheduleView: View {
             case .overdue:
                 return payment.paymentDate < Date() && !payment.paid
             case .thisWeek:
-                let calendar = Calendar.current
                 let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
                 let endOfWeek = calendar.dateInterval(of: .weekOfYear, for: Date())?.end ?? Date()
                 return payment.paymentDate >= startOfWeek && payment.paymentDate <= endOfWeek
             case .thisMonth:
-                let calendar = Calendar.current
                 let startOfMonth = calendar.dateInterval(of: .month, for: Date())?.start ?? Date()
                 let endOfMonth = calendar.dateInterval(of: .month, for: Date())?.end ?? Date()
                 return payment.paymentDate >= startOfMonth && payment.paymentDate <= endOfMonth
@@ -404,14 +411,14 @@ struct PaymentScheduleView: View {
     }
 
     private var groupedPayments: [(key: String, value: [PaymentSchedule])] {
+        // Use user's timezone for month grouping
         let grouped = Dictionary(grouping: filteredPayments) { payment in
-            let formatter = DateFormatter()
-            formatter.dateFormat = "MMMM yyyy"
-            return formatter.string(from: payment.paymentDate)
+            DateFormatting.formatDate(payment.paymentDate, format: "MMMM yyyy", timezone: userTimezone)
         }
         return grouped.sorted { first, second in
             let formatter = DateFormatter()
             formatter.dateFormat = "MMMM yyyy"
+            formatter.timeZone = userTimezone
 
             guard let firstDate = formatter.date(from: first.key),
                   let secondDate = formatter.date(from: second.key) else {
@@ -624,7 +631,7 @@ struct PaymentScheduleRowView: View {
                         .foregroundColor(.secondary)
 
                     HStack {
-                        Text("Due: \(formatDate(payment.paymentDate))")
+                        Text("Due: \(formatDateInUserTimezone(payment.paymentDate))")
                             .font(.caption)
                             .foregroundColor(.secondary)
 
@@ -743,10 +750,17 @@ enum PaymentFilterOption: String, CaseIterable {
 
 // MARK: - Helper Functions
 
-private func formatDate(_ date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .medium
-    return formatter.string(from: date)
+private func formatDateInUserTimezone(_ date: Date) -> String {
+    // Use user's timezone for date formatting
+    let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+    return DateFormatting.formatDateMedium(date, timezone: userTimezone)
+}
+
+extension PaymentScheduleView {
+    /// Helper to format dates using the view's cached timezone
+    private func formatDate(_ date: Date) -> String {
+        DateFormatting.formatDateMedium(date, timezone: userTimezone)
+    }
 }
 
 #Preview {

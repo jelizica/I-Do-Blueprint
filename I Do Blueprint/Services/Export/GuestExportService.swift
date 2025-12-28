@@ -499,9 +499,9 @@ class GuestExportService {
     // MARK: - Utilities
 
     private var dateStamp: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date())
+        // Use user's timezone for export timestamp
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        return DateFormatting.formatDate(Date(), format: "yyyy-MM-dd", timezone: userTimezone)
     }
 }
 

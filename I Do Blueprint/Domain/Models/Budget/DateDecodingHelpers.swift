@@ -11,6 +11,11 @@ import Foundation
 /// Shared namespace for date decoding utilities used across Budget models
 enum DateDecodingHelpers {
     
+    // MARK: - Constants
+    
+    /// Offset of 12 hours (noon) in seconds used to prevent day shifting for date-only strings
+    private static let noonOffsetSeconds: TimeInterval = 12 * 60 * 60
+    
     // MARK: - Cached Date Formatters (Thread-Safe)
     
     /// Static cached formatters - created once and reused
@@ -18,6 +23,19 @@ enum DateDecodingHelpers {
     private static let iso8601Formatter = ISO8601DateFormatter()
     
     private static let dateOnlyFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        // IMPORTANT: Use a fixed timezone for date-only strings to prevent day shifting
+        // When parsing "2025-12-01" we want it to represent Dec 1st regardless of user timezone
+        // Using noon UTC ensures the date displays correctly in all timezones from UTC-12 to UTC+14
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        return formatter
+    }()
+    
+    /// Formatter specifically for date-only strings that should not shift days
+    /// Uses noon time to ensure the date displays correctly in any timezone
+    private static let dateOnlyNoonFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -43,7 +61,6 @@ enum DateDecodingHelpers {
     
     /// Static array of formatters to avoid repeated allocations
     private static let dateFormatters: [DateFormatter] = [
-        dateOnlyFormatter,
         microsecondFormatter,
         secondFormatter
     ]
@@ -106,8 +123,22 @@ enum DateDecodingHelpers {
             return date
         }
         
+        // Check if this is a date-only string (YYYY-MM-DD format)
+        // These need special handling to prevent timezone day-shifting
+        let isDateOnly = dateString.count == 10 && dateString.contains("-") && !dateString.contains("T")
+        
         // For DateFormatter instances, serialize access through the queue
         return try formatterQueue.sync {
+            // For date-only strings, parse and add 12 hours to prevent day shifting
+            // This ensures "2025-12-01" displays as Dec 1 in any timezone from UTC-12 to UTC+14
+            if isDateOnly {
+                if let date = dateOnlyFormatter.date(from: dateString) {
+                    // Add 12 hours (noon UTC) to prevent the date from shifting
+                    // when displayed in timezones behind UTC (like PST which is UTC-8)
+                    return date.addingTimeInterval(noonOffsetSeconds)
+                }
+            }
+            
             // Try different date formats using cached static formatters array
             for formatter in dateFormatters {
                 if let date = formatter.date(from: dateString) {

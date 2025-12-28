@@ -190,7 +190,7 @@ struct PaymentRecordView: View {
 
         // Add payment notes to existing notes
         if !notes.isEmpty {
-            let paymentNote = "Payment on \(formatDate(paymentDate)): \(notes)"
+            let paymentNote = "Payment on \(formatDateInUserTimezone(paymentDate)): \(notes)"
             if let existingNotes = updatedExpense.notes {
                 updatedExpense.notes = "\(existingNotes)\n\(paymentNote)"
             } else {
@@ -201,14 +201,12 @@ struct PaymentRecordView: View {
         onSave(updatedExpense)
         dismiss()
     }
-}
-
-// MARK: - Helper Functions
-
-private func formatDate(_ date: Date) -> String {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    return formatter.string(from: date)
+    
+    private func formatDateInUserTimezone(_ date: Date) -> String {
+        // Use user's timezone for date formatting
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        return DateFormatting.formatDateShort(date, timezone: userTimezone)
+    }
 }
 
 #Preview {

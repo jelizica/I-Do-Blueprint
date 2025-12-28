@@ -49,21 +49,23 @@ struct VendorContractTab: View {
         }
     }
 
+    /// User's configured timezone - single source of truth for date formatting
+    private var userTimezone: TimeZone {
+        DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+    }
+
     private func formatDate(_ dateString: String) -> String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-
-        if let date = formatter.date(from: dateString) {
-            formatter.dateStyle = .medium
-            return formatter.string(from: date)
+        // Parse from database (UTC)
+        guard let date = DateFormatting.parseDateFromDatabase(dateString) else {
+            return dateString // Return original string if parsing fails
         }
-
-        return dateString
+        
+        // Format in user's timezone
+        return DateFormatting.formatDateMedium(date, timezone: userTimezone)
     }
 
     private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
+        // Use user's timezone for date formatting
+        return DateFormatting.formatDateMedium(date, timezone: userTimezone)
     }
 }

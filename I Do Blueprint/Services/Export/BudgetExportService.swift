@@ -43,14 +43,13 @@ struct BudgetExpenseExportData: Codable {
     let vendor: String
     let notes: String
 
-    init(expense: Expense, categoryName: String) {
+    init(expense: Expense, categoryName: String, userTimezone: TimeZone) {
         self.categoryName = categoryName
         self.description = expense.expenseName
         self.amount = String(format: "$%.2f", expense.amount)
 
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-        self.date = dateFormatter.string(from: expense.expenseDate)
+        // Use provided timezone for export date formatting
+        self.date = DateFormatting.formatDateMedium(expense.expenseDate, timezone: userTimezone)
 
         self.paymentMethod = expense.paymentMethod ?? "N/A"
         self.vendor = expense.vendorName ?? "N/A"
@@ -94,6 +93,7 @@ enum BudgetExportError: LocalizedError {
     case noExpensesToExport
     case exportFailed(Error)
     case fileCreationFailed
+    case pdfGenerationFailed
 
     var errorDescription: String? {
         switch self {
@@ -103,6 +103,8 @@ enum BudgetExportError: LocalizedError {
             return "Export failed: \(error.localizedDescription)"
         case .fileCreationFailed:
             return "Failed to create export file"
+        case .pdfGenerationFailed:
+            return "PDF generation failed: The generated PDF data is empty"
         }
     }
 }
@@ -115,10 +117,12 @@ class BudgetExportService {
 
     private init() {}
 
-    private var dateStamp: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter.string(from: Date())
+    /// Generates a timestamp string for export operations.
+    /// - Note: This should not be called directly. Use the timestamp parameter in export methods.
+    private func generateDateStamp() -> String {
+        // Use user's timezone for export timestamp
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+        return DateFormatting.formatDate(Date(), format: "yyyy-MM-dd", timezone: userTimezone)
     }
 
     // MARK: - Main Export Method
@@ -133,19 +137,25 @@ class BudgetExportService {
             throw BudgetExportError.noExpensesToExport
         }
 
+        // Generate timestamp once at export start to ensure consistency
+        let timestamp = generateDateStamp()
+        
+        // Compute user timezone once for all expense data
+        let userTimezone = DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
+
         // Create lookup dictionary for category names
         let categoryDict = Dictionary(uniqueKeysWithValues: categories.map { ($0.id, $0.categoryName) })
 
         let exportData = expenses.map { expense in
             let categoryName = categoryDict[expense.categoryId] ?? "Uncategorized"
-            return BudgetExpenseExportData(expense: expense, categoryName: categoryName)
+            return BudgetExpenseExportData(expense: expense, categoryName: categoryName, userTimezone: userTimezone)
         }
 
         switch format {
         case .csv:
-            return try await exportToCSV(exportData, fileName: fileName)
+            return try await exportToCSV(exportData, fileName: fileName, timestamp: timestamp)
         case .pdf:
-            return try await exportToPDF(exportData, expenses: expenses, categories: categories, fileName: fileName)
+            return try await exportToPDF(exportData, expenses: expenses, categories: categories, fileName: fileName, timestamp: timestamp)
         }
     }
 
@@ -153,7 +163,8 @@ class BudgetExportService {
 
     private func exportToCSV(
         _ exportData: [BudgetExpenseExportData],
-        fileName: String?
+        fileName: String?,
+        timestamp: String
     ) async throws -> URL {
         var csvContent = BudgetExpenseExportData.csvHeader + "\n"
 
@@ -163,7 +174,7 @@ class BudgetExportService {
 
         let fileManager = FileManager.default
         let tempDir = fileManager.temporaryDirectory
-        let actualFileName = fileName ?? "ExpenseReport_\(dateStamp)"
+        let actualFileName = fileName ?? "ExpenseReport_\(timestamp)"
         let fileURL = tempDir.appendingPathComponent("\(actualFileName).csv")
 
         try csvContent.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -177,17 +188,25 @@ class BudgetExportService {
         _ exportData: [BudgetExpenseExportData],
         expenses: [Expense],
         categories: [BudgetCategory],
-        fileName: String?
+        fileName: String?,
+        timestamp: String
     ) async throws -> URL {
-        let pdfData = generatePDFData(for: exportData, expenses: expenses, categories: categories)
+        let pdfData = generatePDFData(for: exportData, expenses: expenses, categories: categories, timestamp: timestamp)
+
+        // Validate that PDF generation succeeded
+        guard !pdfData.isEmpty else {
+            AppLogger.ui.error("PDF generation failed: Generated PDF data is empty")
+            throw BudgetExportError.pdfGenerationFailed
+        }
 
         let fileManager = FileManager.default
         let tempDir = fileManager.temporaryDirectory
-        let actualFileName = fileName ?? "ExpenseReport_\(dateStamp)"
+        let actualFileName = fileName ?? "ExpenseReport_\(timestamp)"
         let fileURL = tempDir.appendingPathComponent("\(actualFileName).pdf")
 
         try pdfData.write(to: fileURL)
 
+        AppLogger.ui.info("Successfully exported PDF to \(fileURL.path)")
         return fileURL
     }
 
@@ -196,7 +215,8 @@ class BudgetExportService {
     private func generatePDFData(
         for exportData: [BudgetExpenseExportData],
         expenses: [Expense],
-        categories: [BudgetCategory]
+        categories: [BudgetCategory],
+        timestamp: String
     ) -> Data {
         let document = PDFDocument(format: .usLetter)
         document.layout.margin = NSEdgeInsets(top: 30, left: 30, bottom: 30, right: 30)
@@ -215,7 +235,7 @@ class BudgetExportService {
 
         // Date
         document.add(.contentCenter, textObject: PDFSimpleText(
-            text: "Generated on \(dateStamp)",
+            text: "Generated on \(timestamp)",
             style: PDFTextStyle(
                 name: "Date",
                 font: NSFont.systemFont(ofSize: 12),

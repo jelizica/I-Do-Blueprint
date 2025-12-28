@@ -274,7 +274,7 @@ struct OnboardingDefaultSettings: Codable, Equatable {
 
     init(
         currency: String = "USD",
-        timezone: String = TimeZone.current.identifier,
+        timezone: String = "America/Los_Angeles",
         themePreferences: ThemeSettings? = nil,
         budgetPreferences: BudgetPreferences? = nil,
         notificationPreferences: NotificationPreferences? = nil,
