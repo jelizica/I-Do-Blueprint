@@ -28,6 +28,8 @@ Packages/**/.build/**
 
 # Tooling caches
 .chunkhound/
+__pycache__/
+*.pyc
 
 # App config (do not commit real secrets)
 I Do Blueprint/Config.plist
@@ -39,9 +41,10 @@ coverage.json
 # AI/code review tool configs
 .coderabbit.yaml
 
-# Development configuration files
-docker-compose.yml
-mcp.json
+# IDE
+.vscode/
+.idea/
+*.swiftpm/
 
 # Build logs
 build.log

@@ -6,7 +6,7 @@
 
 **Domain:** Wedding planning and event management  
 **Platform:** macOS (SwiftUI)  
-**Architecture:** MVVM with Repository Pattern, Dependency Injection  
+**Architecture:** MVVM with Repository Pattern, Domain Services, Dependency Injection  
 **Backend:** Supabase (PostgreSQL with Row Level Security)
 
 ---
@@ -18,7 +18,7 @@
 ```
 I Do Blueprint/
 ├── App/                          # Application entry point and root views
-│   ├── ContentView.swift
+│   ├── AppDelegate.swift
 │   ├── My_Wedding_Planning_AppApp.swift
 │   └── RootFlowView.swift
 ├── Core/                         # Core infrastructure (auth, storage, utilities)
@@ -26,9 +26,12 @@ I Do Blueprint/
 │   │   ├── Analytics/           # ErrorTracker, performance monitoring
 │   │   ├── Auth/                # Authentication helpers
 │   │   ├── Common/              # AppStores, DependencyValues
-│   │   └── Errors/              # Domain-specific error types
+│   │   ├── Errors/              # Domain-specific error types (AppError, ErrorHandler)
+│   │   ├── Security/            # Security utilities
+│   │   └── Storage/             # Storage utilities
+│   ├── Configuration/           # App configuration
 │   ├── Extensions/              # Swift type extensions
-│   └── Utilities/               # Core utilities
+│   └── Security/                # Security infrastructure
 ├── Design/                       # Design system and accessibility
 │   ├── DesignSystem.swift       # Complete design system
 │   ├── ColorPalette.swift       # WCAG-compliant color definitions
@@ -40,58 +43,104 @@ I Do Blueprint/
 │   │   ├── Guest/
 │   │   ├── Task/
 │   │   ├── Vendor/
+│   │   ├── Collaboration/       # Collaborator, ActivityEvent, Presence
+│   │   ├── Settings/
+│   │   ├── Onboarding/
 │   │   └── Shared/
-│   └── Repositories/            # Data access layer
-│       ├── Protocols/           # Repository interfaces
-│       ├── Live/                # Production implementations (Supabase)
-│       ├── Mock/                # Test implementations
-│       ���── RepositoryCache.swift # Generic caching infrastructure
+│   ├── Repositories/            # Data access layer
+│   │   ├── Protocols/           # Repository interfaces
+│   │   ├── Live/                # Production implementations (Supabase)
+│   │   ├── Mock/                # Test implementations
+│   │   ├── Caching/             # Cache invalidation strategies
+│   │   │   ├── CacheInvalidationStrategy.swift
+│   │   │   ├── CacheOperation.swift
+│   │   │   ├── GuestCacheStrategy.swift
+│   │   │   ├── BudgetCacheStrategy.swift
+│   │   │   ├── VendorCacheStrategy.swift
+│   │   │   ├── TaskCacheStrategy.swift
+│   │   │   ├── TimelineCacheStrategy.swift
+│   │   │   └── DocumentCacheStrategy.swift
+│   │   └── RepositoryCache.swift # Generic caching infrastructure
+│   └── Services/                # Domain services (business logic)
+│       ├── Protocols/           # Service interfaces
+│       ├── BudgetAggregationService.swift
+│       ├── BudgetAllocationService.swift
+│       └── ExpensePaymentStatusService.swift
 ├── Services/                     # Application services
 │   ├── Stores/                  # State management (V2 pattern)
 │   │   ├── Budget/              # BudgetStoreV2, AffordabilityStore, etc.
+│   │   ├── ActivityFeedStoreV2.swift
+│   │   ├── BudgetStoreV2.swift
+│   │   ├── CacheableStore.swift # Store-level caching protocol
+│   │   ├── CollaborationStoreV2.swift
+│   │   ├── DocumentStoreV2.swift
 │   │   ├── GuestStoreV2.swift
+│   │   ├── NotesStoreV2.swift
+│   │   ├── OnboardingStoreV2.swift
+│   │   ├── PresenceStoreV2.swift
+│   │   ├── SettingsStoreV2.swift
+│   │   ├── StoreErrorHandling.swift # Consistent error handling extension
+│   │   ├── TaskStoreV2.swift
+│   │   ├── TimelineStoreV2.swift
 │   │   ├── VendorStoreV2.swift
-│   │   └── TaskStoreV2.swift
+│   │   └── VisualPlanningStoreV2.swift
 │   ├── API/                     # API clients
 │   ├── Auth/                    # SessionManager, authentication
+│   ├── Avatar/                  # Avatar generation service
+│   ├── Collaboration/           # InvitationService
+│   ├── Email/                   # ResendEmailService for invitations
+│   ├── Export/                  # Google Sheets export
+│   ├── Import/                  # FileImportService (CSV/XLSX parsing)
+│   ├── Integration/             # SecureAPIKeyManager, external integrations
+│   ├── Loaders/                 # PostOnboardingLoader
+│   ├── Navigation/              # Navigation coordination
+│   ├── Realtime/                # CollaborationRealtimeManager
 │   ├── Storage/                 # SupabaseClient, data persistence
 │   ├── Analytics/               # SentryService, CacheWarmer, PerformanceOptimizationService
-│   ├── Export/                  # Google Sheets export
-│   ├── Integration/             # SecureAPIKeyManager, external integrations
-│   └── Navigation/              # Navigation coordination
+│   ├── UI/                      # UI services (AlertPresenter)
+│   └── VisualPlanning/          # Visual planning services
 ├── Utilities/                    # Shared utilities
 │   ├── Logging/                 # AppLogger, structured logging
 │   ├── Validation/              # Input validation
+│   ├── DateFormatting.swift     # Timezone-aware date formatting
 │   ├── NetworkRetry.swift       # Retry logic with exponential backoff
 │   ├── HapticFeedback.swift     # Haptic feedback utilities
 │   └── AccessibilityExtensions.swift
 ├── Views/                        # UI layer organized by feature
+│   ├── Auth/
 │   ├── Budget/
+│   ├── Collaboration/           # Invitation acceptance, collaborator management
 │   ├── Dashboard/
-│   ├── Guests/
-│   ├── Tasks/
-│   ├── Vendors/
 │   ├── Documents/
-│   ├── Timeline/
-│   ├── VisualPlanning/
+│   ├── Guests/
+│   ├── Notes/
+│   ├── Onboarding/              # Multi-step onboarding flow
 │   ├── Settings/
-│   └── Shared/                  # Reusable components
+│   ├── Shared/                  # Reusable components, ErrorPresenter
+│   ├── Tasks/
+│   ├── Timeline/
+│   ├── Vendors/
+│   └── VisualPlanning/
 ├── Resources/                    # Assets, localizations, Lottie files
 │   ├── Assets.xcassets/
-│   ├── Localizations/
-│   └── Lottie/
+│   ├── Lottie/
+│   └── Sample files (CSV/XLSX)
 └── Config.plist                  # API keys and configuration
 ```
 
 ### Key Architectural Principles
 
 - **Feature-based organization**: Views, models, and logic grouped by feature domain
-- **Separation of concerns**: Clear boundaries between UI (Views), State (Stores), Business Logic (Repositories), and Data (Models)
+- **Separation of concerns**: Clear boundaries between UI (Views), State (Stores), Business Logic (Domain Services), Data Access (Repositories), and Data (Models)
 - **Repository pattern**: All data access goes through repository protocols for testability
+- **Domain Services layer**: Complex business logic separated from repositories (aggregation, allocation calculations)
+- **Strategy-based cache invalidation**: Per-domain cache strategies for maintainable cache management
 - **Dependency injection**: Using Swift's `@Dependency` macro for loose coupling
 - **V2 naming convention**: New architecture stores use `V2` suffix (e.g., `BudgetStoreV2`)
 - **Actor-based caching**: Thread-safe caching with `RepositoryCache` actor
 - **Multi-tenant security**: All data scoped by `couple_id` with Row Level Security (RLS)
+- **Real-time collaboration**: Supabase Realtime for presence and activity feeds
+- **Timezone-aware date handling**: Centralized `DateFormatting` utility respecting user preferences
 
 ---
 
@@ -108,6 +157,7 @@ I Do BlueprintTests/
 ├── Accessibility/               # Accessibility compliance tests
 │   └── ColorAccessibilityTests.swift
 ├── Core/
+│   ├── Errors/                 # Error handling tests
 │   ├── AppStoresTests.swift
 │   ├── SingletonTypeTests.swift
 │   └── URLValidatorTests.swift
@@ -122,6 +172,7 @@ I Do BlueprintTests/
 │   └── RepositoryNetworkTests.swift
 ├── Helpers/
 │   ├── MockRepositories.swift  # Mock implementations for testing
+│   ├── MockOnboardingRepository.swift
 │   └── ModelBuilders.swift     # Test data builders
 ├── Integration/                # Integration tests
 └── Performance/                # Performance benchmarks
@@ -145,6 +196,7 @@ I Do BlueprintUITests/
 6. **UI flow tests**: Test complete user workflows (e.g., budget creation flow)
 7. **Performance testing**: Test cache hit rates, query performance, memory usage
 8. **Security testing**: Verify RLS policies, multi-tenant isolation
+9. **Cache strategy testing**: Test cache invalidation per domain
 
 ### Test Naming Conventions
 
@@ -227,6 +279,7 @@ let expensesResult = try await expenses
 - Use `UUID` for identifiers (never convert to string for queries)
 - Use `Codable` for serialization
 - Use `LocalizedError` for user-facing errors
+- Implement `AppError` protocol for comprehensive error handling
 
 ### Naming Conventions
 
@@ -236,12 +289,15 @@ let expensesResult = try await expenses
 - **Models**: `{EntityName}.swift` (e.g., `Guest.swift`, `Expense.swift`)
 - **Protocols**: `{Purpose}Protocol.swift` (e.g., `GuestRepositoryProtocol.swift`)
 - **Extensions**: `{Type}+{Purpose}.swift` (e.g., `Color+Hex.swift`)
+- **Services**: `{Feature}Service.swift` (e.g., `BudgetAggregationService.swift`)
+- **Strategies**: `{Domain}CacheStrategy.swift` (e.g., `GuestCacheStrategy.swift`)
 
 #### Classes/Structs
 - **Views**: `{Feature}{Purpose}View` (e.g., `DashboardProgressCard`)
 - **Stores**: `{Feature}StoreV2` (e.g., `BudgetStoreV2`)
 - **Models**: PascalCase nouns (e.g., `Guest`, `BudgetCategory`)
 - **Protocols**: `{Purpose}Protocol` (e.g., `GuestRepositoryProtocol`)
+- **Services**: `{Feature}Service` (e.g., `BudgetAggregationService`)
 
 #### Variables/Properties
 - **camelCase** for all variables and properties
@@ -291,6 +347,18 @@ func fetchGuests() async throws -> [Guest]
 
 ### Error Handling
 
+#### AppError Protocol
+```swift
+public protocol AppError: LocalizedError {
+    var errorCode: String { get }
+    var userMessage: String { get }
+    var technicalDetails: String { get }
+    var recoveryOptions: [ErrorRecoveryOption] { get }
+    var severity: ErrorSeverity { get }
+    var shouldReport: Bool { get }
+}
+```
+
 #### Custom Error Types
 ```swift
 enum BudgetError: Error, LocalizedError {
@@ -312,26 +380,25 @@ enum BudgetError: Error, LocalizedError {
 }
 ```
 
+#### Centralized Error Handling
+```swift
+// Use ErrorHandler for centralized error management
+ErrorHandler.shared.handle(error, context: ErrorContext(
+    operation: "loadBudgetData",
+    feature: "budget"
+))
+
+// Use StoreErrorHandling extension for consistent store error handling
+await handleError(error, operation: "createGuest", context: ["guestName": guest.fullName])
+```
+
 #### Error Propagation
 - Throw errors from repositories
-- Catch and handle in stores
+- Catch and handle in stores using `handleError` extension
 - Update loading state on errors
 - Log errors with `AppLogger`
 - Capture errors with `SentryService`
-
-```swift
-do {
-    let created = try await repository.createCategory(category)
-    logger.info("Added category: \(created.categoryName)")
-} catch {
-    loadingState = .error(BudgetError.createFailed(underlying: error))
-    logger.error("Error adding category", error: error)
-    SentryService.shared.captureError(error, context: [
-        "operation": "createCategory",
-        "categoryName": category.categoryName
-    ])
-}
-```
+- Present user-facing errors with `AlertPresenter`
 
 ---
 
@@ -350,20 +417,18 @@ protocol GuestRepositoryProtocol: Sendable {
     func deleteGuest(id: UUID) async throws
 }
 
-// 2. Implement live version
+// 2. Implement live version with cache strategy
 class LiveGuestRepository: GuestRepositoryProtocol {
     private let supabase: SupabaseClient
     private let logger = AppLogger.database
+    private let cacheStrategy = GuestCacheStrategy()
     
     func fetchGuests() async throws -> [Guest] {
-        // Check cache first
         let cacheKey = "guests_\(tenantId.uuidString)"
         if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-            logger.info("Cache hit: guests")
             return cached
         }
         
-        // Fetch from Supabase
         let guests: [Guest] = try await supabase.database
             .from("guest_list")
             .select()
@@ -372,322 +437,329 @@ class LiveGuestRepository: GuestRepositoryProtocol {
             .execute()
             .value
         
-        // Cache the results
         await RepositoryCache.shared.set(cacheKey, value: guests, ttl: 60)
         return guests
     }
-}
-
-// 3. Implement mock version
-class MockGuestRepository: GuestRepositoryProtocol {
-    var guests: [Guest] = []
-    var shouldThrowError = false
     
-    func fetchGuests() async throws -> [Guest] {
-        if shouldThrowError {
-            throw NSError(domain: "MockError", code: 1)
+    func createGuest(_ guest: Guest) async throws -> Guest {
+        let created = try await createInDatabase(guest)
+        // Use cache strategy for invalidation
+        await cacheStrategy.invalidate(for: .guestCreated(tenantId: tenantId))
+        return created
+    }
+}
+```
+
+### Domain Services Pattern
+
+Separate complex business logic from repositories:
+
+```swift
+// Domain services are actors for thread safety
+actor BudgetAggregationService {
+    private let repository: BudgetRepositoryProtocol
+    
+    init(repository: BudgetRepositoryProtocol) {
+        self.repository = repository
+    }
+    
+    /// Aggregates data needed by budget overview screens
+    func fetchBudgetOverview(scenarioId: String) async throws -> [BudgetOverviewItem] {
+        let items = try await repository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
+        let expenses = try await repository.fetchExpenses()
+        let gifts = try await repository.fetchGiftsAndOwed()
+        
+        // Complex aggregation logic here
+        return buildOverviewItems(items: items, expenses: expenses, gifts: gifts)
+    }
+}
+
+// Usage in repository (delegation pattern)
+class LiveBudgetRepository: BudgetRepositoryProtocol {
+    private lazy var aggregationService = BudgetAggregationService(repository: self)
+    
+    func fetchBudgetOverview(scenarioId: String) async throws -> [BudgetOverviewItem] {
+        let cacheKey = "budget_overview_\(scenarioId)"
+        if let cached: [BudgetOverviewItem] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            return cached
         }
-        return guests
+        
+        let overview = try await aggregationService.fetchBudgetOverview(scenarioId: scenarioId)
+        await RepositoryCache.shared.set(cacheKey, value: overview, ttl: 60)
+        return overview
+    }
+}
+```
+
+### Cache Invalidation Strategy Pattern
+
+Use per-domain strategies for maintainable cache management:
+
+```swift
+// Define operations that trigger cache invalidation
+enum CacheOperation {
+    case guestCreated(tenantId: UUID)
+    case guestUpdated(tenantId: UUID)
+    case guestDeleted(tenantId: UUID)
+    case guestBulkImport(tenantId: UUID)
+    // ... other operations
+}
+
+// Implement strategy per domain
+actor GuestCacheStrategy: CacheInvalidationStrategy {
+    func invalidate(for operation: CacheOperation) async {
+        switch operation {
+        case .guestCreated(let tenantId),
+             .guestUpdated(let tenantId),
+             .guestDeleted(let tenantId),
+             .guestBulkImport(let tenantId):
+            let idString = tenantId.uuidString
+            await RepositoryCache.shared.remove("guests_\(idString)")
+            await RepositoryCache.shared.remove("guest_stats_\(idString)")
+            await RepositoryCache.shared.remove("guest_count_\(idString)")
+            await RepositoryCache.shared.remove("guest_groups_\(idString)")
+            await RepositoryCache.shared.remove("guest_rsvp_summary_\(idString)")
+        default:
+            break
+        }
+    }
+}
+```
+
+### CacheableStore Protocol
+
+Store-level caching with TTL:
+
+```swift
+protocol CacheableStore: AnyObject {
+    var lastLoadTime: Date? { get set }
+    var cacheValidityDuration: TimeInterval { get }
+    func isCacheValid() -> Bool
+    func invalidateCache()
+}
+
+extension CacheableStore {
+    func isCacheValid() -> Bool {
+        guard let last = lastLoadTime else { return false }
+        return Date().timeIntervalSince(last) < cacheValidityDuration
+    }
+    
+    func invalidateCache() {
+        lastLoadTime = nil
     }
 }
 
-// 4. Register with dependency system
-private enum GuestRepositoryKey: DependencyKey {
-    static let liveValue: any GuestRepositoryProtocol = LiveRepositories.guest
-    static let testValue: any GuestRepositoryProtocol = MockGuestRepository()
-}
-
-extension DependencyValues {
-    var guestRepository: any GuestRepositoryProtocol {
-        get { self[GuestRepositoryKey.self] }
-        set { self[GuestRepositoryKey.self] = newValue }
-    }
-}
-
-// 5. Use in stores
+// Usage in store
 @MainActor
-class GuestStoreV2: ObservableObject {
-    @Dependency(\.guestRepository) var repository
+class GuestStoreV2: ObservableObject, CacheableStore {
+    var lastLoadTime: Date?
+    var cacheValidityDuration: TimeInterval { 60 } // 60 seconds
     
-    func loadGuests() async {
-        do {
-            let guests = try await repository.fetchGuests()
-            // Update state
-        } catch {
-            // Handle error
-        }
+    func loadGuests(force: Bool = false) async {
+        guard force || !isCacheValid() else { return }
+        // Load data...
+        lastLoadTime = Date()
     }
 }
 ```
 
-### Caching Pattern
+### Timezone-Aware Date Formatting
 
-Use `RepositoryCache` actor for thread-safe caching:
+Always use `DateFormatting` for consistent timezone handling:
 
 ```swift
-// In repository
-func fetchGuests() async throws -> [Guest] {
-    let cacheKey = "guests_\(tenantId.uuidString)"
-    
-    // Check cache first (60 second TTL)
-    if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-        logger.info("Cache hit: guests (\(cached.count) items)")
-        return cached
-    }
-    
-    // Fetch from database
-    let guests = try await fetchFromDatabase()
-    
-    // Cache the results
-    await RepositoryCache.shared.set(cacheKey, value: guests, ttl: 60)
-    return guests
-}
+// Get user's timezone from settings
+let userTimezone = DateFormatting.userTimeZone(from: settingsStore.settings)
 
-// Invalidate cache on mutations
-func createGuest(_ guest: Guest) async throws -> Guest {
-    let created = try await createInDatabase(guest)
-    
-    // Invalidate tenant-scoped cache
-    await RepositoryCache.shared.remove("guests_\(tenantId.uuidString)")
-    await RepositoryCache.shared.remove("guest_stats_\(tenantId.uuidString)")
-    
-    return created
-}
+// Format for display (uses user's timezone)
+let displayDate = DateFormatting.formatDateMedium(date, timezone: userTimezone)
+let relativeDate = DateFormatting.formatRelativeDate(date, timezone: userTimezone)
+
+// Format for database (always UTC)
+let dbDate = DateFormatting.formatForDatabase(date)
+let dbTimestamp = DateFormatting.formatDateTimeForDatabase(date)
+
+// Parse from database (assumes UTC)
+let parsedDate = DateFormatting.parseDateFromDatabase(dateString)
+
+// Calculate days between dates (timezone-aware)
+let daysUntil = DateFormatting.daysBetween(from: Date(), to: weddingDate, in: userTimezone)
 ```
 
-### Network Retry Pattern
+### Real-time Collaboration Pattern
 
-Use `NetworkRetry` for resilient network operations:
+Use `CollaborationRealtimeManager` for real-time features:
 
 ```swift
-// Simple retry
-let guests = try await NetworkRetry.withRetry {
-    try await repository.fetchGuests()
+// Connect to realtime channels
+await CollaborationRealtimeManager.shared.connect(coupleId: coupleId)
+
+// Listen for collaborator changes
+CollaborationRealtimeManager.shared.onCollaboratorChange { change in
+    switch change.changeType {
+    case .insert:
+        // Handle new collaborator
+    case .update:
+        // Handle collaborator update
+    case .delete:
+        // Handle collaborator removal
+    }
 }
 
-// Retry with custom configuration
-let config = RetryConfiguration(
-    maxAttempts: 5,
-    baseDelay: 1.0,
-    maxDelay: 10.0,
-    jitterFactor: 0.3
+// Listen for activity events
+CollaborationRealtimeManager.shared.onActivityChange { activity in
+    // Update activity feed
+}
+
+// Disconnect when done
+await CollaborationRealtimeManager.shared.disconnect()
+```
+
+### File Import Pattern
+
+Use `FileImportService` for CSV/XLSX imports:
+
+```swift
+let importService = FileImportService()
+
+// Parse file
+let preview = try await importService.parseCSV(from: fileURL)
+// or
+let preview = try await importService.parseXLSX(from: fileURL)
+
+// Infer column mappings
+let mappings = importService.inferMappings(
+    headers: preview.headers,
+    targetFields: Guest.importableFields
 )
 
-let data = try await NetworkRetry.withRetry(config: config) {
-    try await repository.fetchLargeDataset()
+// Validate import
+let validation = importService.validateImport(preview: preview, mappings: mappings)
+if !validation.isValid {
+    // Handle errors
 }
 
-// Retry with timeout
-let result = try await NetworkRetry.withRetryAndTimeout(
-    timeoutSeconds: 30
-) {
-    try await repository.fetchData()
-}
-```
-
-### Loading State Pattern
-
-Use `LoadingState<T>` enum for async operations:
-
-```swift
-enum LoadingState<T> {
-    case idle
-    case loading
-    case loaded(T)
-    case error(Error)
-    
-    var isLoading: Bool {
-        if case .loading = self { return true }
-        return false
-    }
-    
-    var data: T? {
-        if case .loaded(let data) = self { return data }
-        return nil
-    }
-}
-
-// Usage in stores
-@Published var loadingState: LoadingState<BudgetData> = .idle
-
-func loadData() async {
-    loadingState = .loading
-    do {
-        let data = try await repository.fetchData()
-        loadingState = .loaded(data)
-    } catch {
-        loadingState = .error(error)
-        SentryService.shared.captureError(error)
-    }
-}
-```
-
-### Optimistic Updates with Rollback
-
-```swift
-func updateCategory(_ category: BudgetCategory) async {
-    // 1. Optimistic update
-    guard case .loaded(var budgetData) = loadingState,
-          let index = budgetData.categories.firstIndex(where: { $0.id == category.id }) else {
-        return
-    }
-    
-    let original = budgetData.categories[index]
-    budgetData.categories[index] = category
-    loadingState = .loaded(budgetData)
-    
-    // 2. Attempt server update
-    do {
-        let updated = try await repository.updateCategory(category)
-        // Update with server response
-    } catch {
-        // 3. Rollback on error
-        if case .loaded(var data) = loadingState,
-           let idx = data.categories.firstIndex(where: { $0.id == category.id }) {
-            data.categories[idx] = original
-            loadingState = .loaded(data)
-        }
-        logger.error("Error updating category, rolled back", error: error)
-        SentryService.shared.captureError(error, context: ["operation": "updateCategory"])
-    }
-}
-```
-
-### Sentry Integration Pattern
-
-Use `SentryService` for error tracking and performance monitoring:
-
-```swift
-// Error tracking
-do {
-    try await performOperation()
-} catch {
-    SentryService.shared.captureError(error, context: [
-        "operation": "createVendor",
-        "vendorType": vendor.type
-    ])
-    throw error
-}
-
-// Performance monitoring
-let result = await SentryService.shared.measureAsync(
-    name: "load_budget_data",
-    operation: "data.fetch"
-) {
-    try await repository.fetchBudgetData()
-}
-
-// Breadcrumbs for debugging
-SentryService.shared.addBreadcrumb(
-    message: "User navigated to vendor detail",
-    category: "navigation",
-    data: ["vendorId": vendor.id.uuidString]
-)
-
-// Track user actions
-SentryService.shared.trackAction(
-    "create_expense",
-    category: "budget",
-    metadata: ["amount": expense.amount]
+// Convert to domain objects
+let guests = importService.convertToGuests(
+    preview: preview,
+    mappings: mappings,
+    coupleId: coupleId
 )
 ```
 
-### Store Composition
+### Store Error Handling Extension
 
-Break large stores into smaller, focused stores:
+Consistent error handling across all stores:
 
 ```swift
-@MainActor
-class BudgetStoreV2: ObservableObject {
-    // Composed stores
-    let affordability: AffordabilityStore
-    let payments: PaymentScheduleStore
-    let gifts: GiftsStore
-    
-    init() {
-        self.payments = PaymentScheduleStore()
-        self.gifts = GiftsStore()
-        self.affordability = AffordabilityStore(
-            paymentSchedulesProvider: { [weak payments] in
-                payments?.paymentSchedules ?? []
-            }
+extension ObservableObject where Self: AnyObject {
+    @MainActor
+    func handleError(
+        _ error: Error,
+        operation: String,
+        context: [String: Any]? = nil,
+        retry: (() async -> Void)? = nil
+    ) async {
+        // Log technical error
+        AppLogger.database.error("Error in \(operation)", error: error)
+        
+        // Capture to Sentry
+        SentryService.shared.captureError(error, context: context ?? [:])
+        
+        // Show user-facing error with retry option
+        await AlertPresenter.shared.showUserFacingError(
+            UserFacingError.from(error),
+            retryAction: retry
         )
     }
+}
+
+// Usage in store
+func createGuest(_ guest: Guest) async {
+    do {
+        let created = try await repository.createGuest(guest)
+        showSuccess("Guest added successfully")
+    } catch {
+        await handleError(error, operation: "createGuest", context: [
+            "guestName": guest.fullName
+        ]) { [weak self] in
+            await self?.createGuest(guest) // Retry
+        }
+    }
+}
+```
+
+### Post-Onboarding Loading Pattern
+
+Sequence data loading with progress updates:
+
+```swift
+@MainActor
+final class PostOnboardingLoader: ObservableObject {
+    @Published private(set) var progress: Double = 0.0
+    @Published private(set) var currentMessage: String = "Preparing..."
+    @Published private(set) var isFinished: Bool = false
     
-    // Delegate properties
-    var paymentSchedules: [PaymentSchedule] {
-        payments.paymentSchedules
+    func start(appStores: AppStores, settingsStore: SettingsStoreV2) async {
+        let steps: [(String, () async -> Void)] = [
+            ("Loading settings...", { await settingsStore.loadSettings(force: true) }),
+            ("Loading guests...", { await appStores.guest.loadGuestData() }),
+            ("Loading vendors...", { await appStores.vendor.loadVendors() }),
+            ("Loading tasks...", { await appStores.task.loadTasks() }),
+            ("Loading budget...", { await appStores.budget.loadBudgetData() })
+        ]
+        
+        for (index, (message, action)) in steps.enumerated() {
+            currentMessage = message
+            await action()
+            progress = Double(index + 1) / Double(steps.count)
+        }
+        
+        isFinished = true
     }
 }
 ```
 
 ### Store Access Patterns
 
-**CRITICAL**: Never create new store instances in views. Always use the `AppStores` singleton to prevent memory explosion and state synchronization issues.
+**CRITICAL**: Never create new store instances in views. Always use the `AppStores` singleton.
 
 #### ✅ Correct Patterns
 
-**Option 1: Environment Access (Preferred)**
 ```swift
+// Option 1: Environment Access (Preferred)
 struct SettingsView: View {
     @Environment(\.appStores) private var appStores
     
     private var store: SettingsStoreV2 {
         appStores.settings
     }
-    
-    var body: some View {
-        // Use store
-    }
 }
-```
 
-**Option 2: Direct Environment Store Access**
-```swift
+// Option 2: Direct Environment Store Access
 struct BudgetView: View {
     @Environment(\.budgetStore) private var store
-    
-    var body: some View {
-        // Use store
-    }
 }
-```
 
-**Option 3: Pass Store as Parameter**
-```swift
+// Option 3: Pass Store as Parameter
 struct BudgetDetailView: View {
     @ObservedObject var budgetStore: BudgetStoreV2
-    
-    var body: some View {
-        // Use budgetStore
-    }
 }
 
-// Parent view passes singleton store
-BudgetDetailView(budgetStore: appStores.budget)
-```
-
-**Option 4: Direct Singleton Access (Last Resort)**
-```swift
+// Option 4: Direct Singleton Access (Last Resort)
 struct QuickAccessView: View {
     private var store: SettingsStoreV2 {
         AppStores.shared.settings
-    }
-    
-    var body: some View {
-        // Use store
     }
 }
 ```
 
 #### ❌ Anti-Patterns to Avoid
 
-**NEVER create new store instances:**
 ```swift
 // ❌ BAD: Creates duplicate store instance
 struct SettingsView: View {
     @StateObject private var store = SettingsStoreV2()
-    // This wastes memory and creates state sync issues!
 }
 
 // ❌ BAD: Creates new instance on each access
@@ -697,22 +769,6 @@ struct BudgetView: View {
     }
 }
 ```
-
-#### Memory Impact
-
-Each store instance loads full datasets:
-- **BudgetStoreV2**: ~500KB-2MB (categories, expenses, scenarios)
-- **GuestStoreV2**: ~200KB-1MB (guest list, RSVP data)
-- **VendorStoreV2**: ~300KB-1MB (vendor list, contracts)
-
-Creating duplicate instances can waste **1-5MB per view** that creates stores.
-
-#### When to Use Each Pattern
-
-1. **Environment Access**: Use for root views and views that need multiple stores
-2. **Direct Environment Store**: Use for views that only need one specific store
-3. **Pass as Parameter**: Use for child views that receive store from parent
-4. **Direct Singleton**: Use sparingly, only when environment is not available
 
 #### Available Environment Stores
 
@@ -728,46 +784,6 @@ Creating duplicate instances can waste **1-5MB per view** that creates stores.
 @Environment(\.visualPlanningStore) private var visualPlanningStore
 ```
 
-### Design System Usage
-
-Always use design system constants:
-
-```swift
-// ✅ Good
-Text("Hello")
-    .font(Typography.heading)
-    .foregroundColor(AppColors.textPrimary)
-    .padding(Spacing.lg)
-
-// ❌ Bad
-Text("Hello")
-    .font(.system(size: 18, weight: .semibold))
-    .foregroundColor(.black)
-    .padding(16)
-```
-
-### Accessibility Modifiers
-
-Use semantic accessibility modifiers:
-
-```swift
-Button("Save") {
-    save()
-}
-.accessibleActionButton(
-    label: "Save budget category",
-    hint: "Saves the current category and returns to the list"
-)
-
-Text(guest.fullName)
-    .accessibleListItem(
-        label: guest.fullName,
-        hint: "Tap to view guest details",
-        value: guest.rsvpStatus.rawValue,
-        isSelected: selectedGuest?.id == guest.id
-    )
-```
-
 ### UUID Handling Best Practices
 
 #### Core Principles
@@ -776,8 +792,6 @@ Text(guest.fullName)
 2. **Minimize string conversions** - Only convert when absolutely necessary
 3. **Understand case sensitivity** - Swift returns uppercase, PostgreSQL stores lowercase
 4. **Cache string representations** - Reuse converted strings when needed multiple times
-
-#### Database Queries
 
 ```swift
 // ✅ GOOD: Pass UUID directly to Supabase
@@ -788,290 +802,17 @@ let guests: [Guest] = try await supabase.database
     .execute()
     .value
 
-// ❌ BAD: Converting to string (unnecessary and causes case issues)
-let guests: [Guest] = try await supabase.database
-    .from("guest_list")
-    .select()
-    .eq("couple_id", value: tenantId.uuidString) // Don't do this!
-    .execute()
-    .value
-```
+// ❌ BAD: Converting to string
+.eq("couple_id", value: tenantId.uuidString) // Don't do this!
 
-**Why this matters:**
-- Supabase Swift client supports UUID types natively
-- PostgreSQL UUID type is case-insensitive for comparisons
-- Converting to string adds unnecessary overhead
-- String conversion can cause case mismatch bugs in dictionary operations
-
-#### Cache Keys
-
-```swift
 // ✅ GOOD: Convert once for cache operations
 let tenantIdString = tenantId.uuidString
-let cacheKey = "guests_\(tenantIdString)"
+await cache.remove("guests_\(tenantIdString)")
+await cache.remove("stats_\(tenantIdString)")
 
-if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-    return cached
-}
-
-let guests = try await fetchFromDatabase()
-await RepositoryCache.shared.set(cacheKey, value: guests, ttl: 60)
-
-// Invalidate with same string
-await RepositoryCache.shared.remove(cacheKey)
-
-// ❌ BAD: Converting multiple times
-await RepositoryCache.shared.remove("guests_\(tenantId.uuidString)")
-await RepositoryCache.shared.remove("guest_stats_\(tenantId.uuidString)")
-await RepositoryCache.shared.remove("guest_count_\(tenantId.uuidString)")
-```
-
-**Performance impact:**
-- Each `.uuidString` call creates a new string allocation
-- Reusing the string reduces memory pressure
-- Especially important in hot paths (cache invalidation, logging)
-
-#### Case Sensitivity and Dictionary Operations
-
-**Important:** Swift's `UUID.uuidString` returns **UPPERCASE**, but PostgreSQL stores UUIDs as **lowercase**.
-
-```swift
-// ⚠️ CASE MISMATCH SCENARIO
-// Swift UUID: "A1B2C3D4-E5F6-7890-ABCD-EF1234567890"
-// PostgreSQL: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-
-// ✅ GOOD: Normalize at dictionary creation (Swift UUID → lowercase)
-var allocationsByItem: [String: [Allocation]] = [:]
-for allocation in allocations {
-    let itemId = allocation.budgetItemId.uuidString.lowercased()
-    allocationsByItem[itemId, default: []].append(allocation)
-}
-
-// ✅ GOOD: Lookup with database string (already lowercase)
-let itemAllocations = allocationsByItem[item.id] ?? []
-
-// ❌ BAD: Normalizing at lookup (redundant if key already normalized)
-let itemAllocations = allocationsByItem[item.id.lowercased()] ?? []
-
-// ❌ BAD: Not normalizing when mixing Swift UUIDs with DB strings
-var dict: [String: Data] = [:]
-dict[swiftUUID.uuidString] = data // Uppercase key
-let value = dict[dbString] // Lowercase lookup - FAILS!
-```
-
-**When to use `.lowercased()`:**
-- ✅ Creating dictionary keys from Swift UUIDs that will be looked up with DB strings
-- ✅ Comparing Swift UUID strings with PostgreSQL UUID strings
-- ❌ Database queries (PostgreSQL handles case-insensitivity)
-- ❌ Dictionary lookups when keys are already normalized
-- ❌ Cache keys (consistency is more important than case)
-
-#### Logging and Debugging
-
-```swift
-// ✅ GOOD: Convert once for logging context
-let guestIdString = guest.id.uuidString
-logger.info("Processing guest: \(guestIdString)")
-SentryService.shared.addBreadcrumb(
-    message: "Guest updated",
-    data: ["guestId": guestIdString]
-)
-
-// ❌ BAD: Converting multiple times
-logger.info("Processing guest: \(guest.id.uuidString)")
-logger.debug("Guest details: \(guest.id.uuidString)")
-SentryService.shared.addBreadcrumb(
-    message: "Guest updated",
-    data: ["guestId": guest.id.uuidString]
-)
-```
-
-#### Test Data Generation
-
-```swift
-// ✅ GOOD: Use UUID directly in models
-let testGuest = Guest(
-    id: UUID(), // Generate UUID directly
-    coupleId: testCoupleId,
-    fullName: "Test Guest"
-)
-
-// ✅ GOOD: Factory methods for test data
-extension Guest {
-    static func makeTest(
-        id: UUID = UUID(),
-        coupleId: UUID = UUID(),
-        fullName: String = "Test Guest"
-    ) -> Guest {
-        Guest(id: id, coupleId: coupleId, fullName: fullName)
-    }
-}
-
-// ❌ BAD: Unnecessary string conversion in tests
-let testGuest = Guest(
-    id: UUID(uuidString: UUID().uuidString)!, // Pointless conversion
-    coupleId: testCoupleId,
-    fullName: "Test Guest"
-)
-```
-
-#### Common Patterns
-
-**Pattern 1: Repository with Caching**
-```swift
-func fetchGuests() async throws -> [Guest] {
-    // Convert once for cache key
-    let cacheKey = "guests_\(tenantId.uuidString)"
-    
-    if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-        return cached
-    }
-    
-    // Pass UUID directly to query
-    let guests: [Guest] = try await supabase.database
-        .from("guest_list")
-        .select()
-        .eq("couple_id", value: tenantId) // ✅ UUID type
-        .execute()
-        .value
-    
-    await RepositoryCache.shared.set(cacheKey, value: guests, ttl: 60)
-    return guests
-}
-```
-
-**Pattern 2: Cache Invalidation**
-```swift
-func createGuest(_ guest: Guest) async throws -> Guest {
-    let created = try await createInDatabase(guest)
-    
-    // Convert once, reuse for multiple invalidations
-    let tenantIdString = tenantId.uuidString
-    await RepositoryCache.shared.remove("guests_\(tenantIdString)")
-    await RepositoryCache.shared.remove("guest_stats_\(tenantIdString)")
-    await RepositoryCache.shared.remove("guest_count_\(tenantIdString)")
-    
-    return created
-}
-```
-
-**Pattern 3: Dictionary Operations with Mixed Sources**
-```swift
-// Scenario: Matching Swift UUIDs with PostgreSQL UUID strings
-func fetchBudgetOverview() async throws -> [BudgetItem] {
-    let items = try await fetchBudgetItems() // Returns items with id: String (lowercase from DB)
-    let allocations = try await fetchAllocations() // Returns allocations with budgetItemId: UUID (Swift)
-    
-    // Create dictionary with normalized keys (Swift UUID → lowercase)
-    var allocationsByItem: [String: [Allocation]] = [:]
-    for allocation in allocations {
-        let itemId = allocation.budgetItemId.uuidString.lowercased() // ✅ Normalize here
-        allocationsByItem[itemId, default: []].append(allocation)
-    }
-    
-    // Lookup with database strings (already lowercase)
-    return items.map { item in
-        let itemAllocations = allocationsByItem[item.id] ?? [] // ✅ No normalization needed
-        return BudgetItem(item: item, allocations: itemAllocations)
-    }
-}
-```
-
-#### Performance Checklist
-
-- [ ] Pass UUIDs directly to Supabase queries (not `.uuidString`)
-- [ ] Convert UUID to string once per operation, reuse the string
-- [ ] Use `.lowercased()` only when mixing Swift UUIDs with DB strings in dictionaries
-- [ ] Avoid repeated `.uuidString` calls in loops
-- [ ] Cache string representations for frequently accessed UUIDs
-- [ ] Profile hot paths to identify unnecessary conversions
-
-#### Common Mistakes
-
-1. **Converting for database queries** ❌
-   ```swift
-   .eq("id", value: id.uuidString) // Don't do this
-   ```
-
-2. **Repeated conversions in cache operations** ❌
-   ```swift
-   await cache.remove("key_\(id.uuidString)")
-   await cache.remove("key2_\(id.uuidString)")
-   await cache.remove("key3_\(id.uuidString)")
-   ```
-
-3. **Not normalizing dictionary keys** ❌
-   ```swift
-   dict[swiftUUID.uuidString] = value // Uppercase
-   let result = dict[dbString] // Lowercase - won't match!
-   ```
-
-4. **Over-normalizing** ❌
-   ```swift
-   dict[dbString.lowercased()] = value // Already lowercase!
-   ```
-
-#### Migration Guide
-
-If you find code with unnecessary UUID conversions:
-
-**Before:**
-```swift
-let guests: [Guest] = try await supabase.database
-    .from("guest_list")
-    .select()
-    .eq("couple_id", value: tenantId.uuidString.lowercased())
-    .execute()
-    .value
-```
-
-**After:**
-```swift
-let guests: [Guest] = try await supabase.database
-    .from("guest_list")
-    .select()
-    .eq("couple_id", value: tenantId) // ✅ Pass UUID directly
-    .execute()
-    .value
-```
-
-**Before:**
-```swift
-await cache.remove("guests_\(id.uuidString)")
-await cache.remove("stats_\(id.uuidString)")
-await cache.remove("count_\(id.uuidString)")
-```
-
-**After:**
-```swift
-let idString = id.uuidString
-await cache.remove("guests_\(idString)")
-await cache.remove("stats_\(idString)")
-await cache.remove("count_\(idString)")
-```
-
----
-
-### Multi-Tenant Security Pattern
-
-Always scope queries by `couple_id`:
-
-```swift
-// ✅ Good: Pass UUID directly
-let guests: [Guest] = try await supabase.database
-    .from("guest_list")
-    .select()
-    .eq("couple_id", value: tenantId) // UUID type
-    .execute()
-    .value
-
-// ❌ Bad: Converting to string causes case mismatch
-let guests: [Guest] = try await supabase.database
-    .from("guest_list")
-    .select()
-    .eq("couple_id", value: tenantId.uuidString) // Returns uppercase!
-    .execute()
-    .value
+// ✅ GOOD: Normalize for dictionary keys when mixing sources
+let itemId = allocation.budgetItemId.uuidString.lowercased()
+allocationsByItem[itemId, default: []].append(allocation)
 ```
 
 ---
@@ -1082,35 +823,37 @@ let guests: [Guest] = try await supabase.database
 
 1. **Use dependency injection** for all external dependencies
 2. **Log all data operations** with `AppLogger` (category-specific loggers)
-3. **Handle errors gracefully** with proper error types and user feedback
+3. **Handle errors gracefully** with `handleError` extension and `ErrorHandler`
 4. **Use MARK comments** to organize code sections
 5. **Follow the repository pattern** for all data access
-6. **Use LoadingState enum** for async operations
-7. **Implement optimistic updates** with rollback for better UX
-8. **Use design system constants** (AppColors, Typography, Spacing)
-9. **Add accessibility labels** to all interactive elements
-10. **Test with mock repositories** for unit tests
-11. **Use async/await** for asynchronous operations
-12. **Document public APIs** with DocStrings
-13. **Use strong typing** and avoid `Any` when possible
-14. **Conform to Sendable** for types crossing actor boundaries
-15. **Use @MainActor** for UI-related classes
-16. **Cache frequently accessed data** with `RepositoryCache`
-17. **Use NetworkRetry** for resilient network operations
-18. **Track errors with Sentry** for production monitoring
-19. **Pass UUIDs directly** to Supabase queries (not strings)
-20. **Invalidate caches** on data mutations
-21. **Use security-scoped resources** for file access
-22. **Validate all external URLs** before use
-23. **Clear sensitive data** from memory after use
-24. **Test RLS policies** for multi-tenant isolation
+6. **Use Domain Services** for complex business logic
+7. **Use cache invalidation strategies** per domain
+8. **Use LoadingState enum** for async operations
+9. **Implement optimistic updates** with rollback for better UX
+10. **Use design system constants** (AppColors, Typography, Spacing)
+11. **Add accessibility labels** to all interactive elements
+12. **Test with mock repositories** for unit tests
+13. **Use async/await** for asynchronous operations
+14. **Document public APIs** with DocStrings
+15. **Use strong typing** and avoid `Any` when possible
+16. **Conform to Sendable** for types crossing actor boundaries
+17. **Use @MainActor** for UI-related classes
+18. **Cache frequently accessed data** with `RepositoryCache`
+19. **Use NetworkRetry** for resilient network operations
+20. **Track errors with Sentry** for production monitoring
+21. **Pass UUIDs directly** to Supabase queries (not strings)
+22. **Use DateFormatting** for all date display and storage
+23. **Use security-scoped resources** for file access
+24. **Validate all external URLs** before use
+25. **Test RLS policies** for multi-tenant isolation
+26. **Use CacheableStore** for store-level caching
 
 ### ❌ Don'ts
 
 1. **Don't access Supabase directly** from views or stores (use repositories)
 2. **Don't use hardcoded colors** (use AppColors)
 3. **Don't use hardcoded spacing** (use Spacing constants)
-4. **Don't ignore errors** (always log and handle)
+4. **Don't ignore errors** (always log and handle with `handleError`)
 5. **Don't use completion handlers** (prefer async/await)
 6. **Don't create singletons** without careful consideration
 7. **Don't skip accessibility** labels and hints
@@ -1130,7 +873,9 @@ let guests: [Guest] = try await supabase.database
 21. **Don't skip Sentry integration** for production code
 22. **Don't use mutable search_path** in database functions
 23. **Don't expose data across tenants** (always filter by `couple_id`)
-24. **Don't skip security-scoped resource handling** for file operations
+24. **Don't use TimeZone.current** for display (use user's configured timezone)
+25. **Don't store dates in local timezone** in database (always UTC)
+26. **Don't scatter cache invalidation** (use cache strategies)
 
 ---
 
@@ -1140,19 +885,22 @@ let guests: [Guest] = try await supabase.database
 
 - **SwiftUI** - UI framework
 - **Combine** - Reactive programming (for @Published)
-- **Supabase** - Backend as a service (database, auth, storage)
+- **Supabase** - Backend as a service (database, auth, storage, realtime)
 - **Dependencies** - Dependency injection framework (Point-Free)
 - **OSLog** - Structured logging
 - **Sentry** - Error tracking and performance monitoring
+- **CoreXLSX** - Excel file parsing for imports
 
 ### Key Libraries
 
 - **SupabaseClient** - Supabase Swift client
+- **Realtime** - Supabase Realtime for collaboration
 - **SentrySDK** - Sentry error tracking
 - **SentrySwiftUI** - Sentry SwiftUI integration
 - **GoogleAuthManager** - Google OAuth integration
 - **GoogleDriveManager** - Google Drive integration
 - **GoogleSheetsManager** - Google Sheets export
+- **Resend** - Email service for invitations
 
 ### Development Tools
 
@@ -1161,6 +909,7 @@ let guests: [Guest] = try await supabase.database
 - **XCTest** - Testing framework
 - **Instruments** - Performance profiling
 - **Sentry Dashboard** - Error monitoring and analytics
+- **SwiftLint** - Code linting
 
 ### Project Setup
 
@@ -1181,6 +930,7 @@ let guests: [Guest] = try await supabase.database
 - **Supabase URL and Anon Key** required
 - **Sentry DSN** required for error tracking
 - **Google OAuth Client ID** required for Google integration
+- **Resend API Key** optional (embedded key available for shared service)
 - **Multi-tenant setup** - Each couple has a unique tenant ID (`couple_id`)
 
 ---
@@ -1194,31 +944,38 @@ let guests: [Guest] = try await supabase.database
 - Use `@Published` for observable state
 - Use `@Dependency` for injecting repositories
 - Follow the V2 store pattern (see `BudgetStoreV2.swift`)
+- Implement `CacheableStore` for store-level caching
+- Use `handleError` extension for consistent error handling
 
 #### Data Flow
+```
+[UI] ──> Stores ──> Repositories (CRUD, cache, network)
+                     │
+                     └──> Domain Services (business rules)
+                               │
+                               └──> Repositories (helper reads/writes)
+```
+
 1. **View** → calls method on **Store**
 2. **Store** → calls method on **Repository**
 3. **Repository** → checks **Cache** first
-4. **Repository** → makes API call to **Supabase** (if cache miss)
-5. **Repository** → caches result and returns data to **Store**
-6. **Store** → updates `@Published` properties
-7. **View** → automatically re-renders
+4. **Repository** → delegates to **Domain Service** for complex logic (if needed)
+5. **Repository** → makes API call to **Supabase** (if cache miss)
+6. **Repository** → uses **Cache Strategy** to invalidate on mutations
+7. **Repository** → caches result and returns data to **Store**
+8. **Store** → updates `@Published` properties
+9. **View** → automatically re-renders
 
 #### Loading States
 Always use the `LoadingState<T>` pattern:
 ```swift
 @Published var loadingState: LoadingState<Data> = .idle
 
-// In view
 switch store.loadingState {
-case .idle:
-    Text("Tap to load")
-case .loading:
-    ProgressView()
-case .loaded(let data):
-    DataView(data: data)
-case .error(let error):
-    ErrorView(error: error)
+case .idle: Text("Tap to load")
+case .loading: ProgressView()
+case .loaded(let data): DataView(data: data)
+case .error(let error): ErrorView(error: error)
 }
 ```
 
@@ -1226,57 +983,33 @@ case .error(let error):
 Use category-specific loggers:
 ```swift
 private let logger = AppLogger.database
-
 logger.info("Operation succeeded")
 logger.error("Operation failed", error: error)
 logger.debug("Debug info") // Only in DEBUG builds
 ```
 
-#### Error Tracking
-Always capture errors with Sentry in production code:
+#### Timezone Handling
+Always use `DateFormatting` utilities:
 ```swift
-do {
-    try await performOperation()
-} catch {
-    logger.error("Operation failed", error: error)
-    SentryService.shared.captureError(error, context: [
-        "operation": "operationName",
-        "additionalContext": "value"
-    ])
-    throw error
-}
+// Display: Use user's timezone
+let userTimezone = DateFormatting.userTimeZone(from: settings)
+let formatted = DateFormatting.formatDateMedium(date, timezone: userTimezone)
+
+// Database: Always UTC
+let dbString = DateFormatting.formatForDatabase(date)
+let parsed = DateFormatting.parseDateFromDatabase(dbString)
 ```
 
-#### Caching
-Use `RepositoryCache` for frequently accessed data:
+#### Cache Invalidation
+Use domain-specific cache strategies:
 ```swift
-// Check cache first
-let cacheKey = "resource_\(tenantId.uuidString)"
-if let cached: [Resource] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
-    return cached
-}
-
-// Fetch and cache
-let data = try await fetchFromDatabase()
-await RepositoryCache.shared.set(cacheKey, value: data, ttl: 60)
-
-// Invalidate on mutations
-await RepositoryCache.shared.remove(cacheKey)
-```
-
-#### Network Resilience
-Use `NetworkRetry` for all network operations:
-```swift
-let data = try await NetworkRetry.withRetry {
-    try await repository.fetchData()
+// In repository mutation
+func createGuest(_ guest: Guest) async throws -> Guest {
+    let created = try await createInDatabase(guest)
+    await cacheStrategy.invalidate(for: .guestCreated(tenantId: tenantId))
+    return created
 }
 ```
-
-#### Accessibility
-- All colors must meet WCAG AA standards (4.5:1 contrast ratio)
-- Use semantic color names from `AppColors`
-- Add accessibility labels to all interactive elements
-- Test with VoiceOver
 
 #### Multi-Tenancy
 - All data is scoped by `couple_id` (tenant ID)
@@ -1285,47 +1018,52 @@ let data = try await NetworkRetry.withRetry {
 - Always pass UUID directly to queries (not `.uuidString`)
 - RLS policies enforce security at database level
 
-#### Security
-- Use `(SELECT auth.uid())` in RLS policies (not `auth.uid()`)
-- Set `search_path = ''` in database functions
-- Validate all external URLs before use
-- Use security-scoped resources for file access
-- Clear sensitive data from memory
-- Enable leaked password protection
-- Support multiple MFA options
+#### RLS Policy Pattern
+All multi-tenant tables use a single `FOR ALL` policy:
+```sql
+CREATE POLICY "couples_manage_own_{resource}"
+  ON {table_name}
+  FOR ALL
+  USING (couple_id = get_user_couple_id())
+  WITH CHECK (couple_id = get_user_couple_id());
+```
 
-#### Performance
-- Use `async let` for parallel operations
-- Implement caching in repositories when appropriate
-- Use `RepositoryCache` for frequently accessed data
-- Monitor with `PerformanceOptimizationService`
-- Track cache hit rates and query performance
-- Optimize RLS policies for performance
-- Add indexes on foreign keys
-- Remove unused indexes
+#### Real-time Collaboration
+- Use `CollaborationRealtimeManager` for presence and activity
+- Connect on app launch, disconnect on logout
+- Handle reconnection with exponential backoff
+- Use Supabase Realtime channels per couple
 
-#### Error Handling
-- Create domain-specific error types (e.g., `BudgetError`, `GuestError`)
-- Always log errors with context
-- Update loading state on errors
-- Show user-friendly error messages
-- Capture errors with Sentry for production monitoring
-
-#### Testing
-- Write tests for all stores using mock repositories
-- Use `.makeTest()` factory methods for test data
-- Test error cases and edge cases
-- Run accessibility tests before committing
-- Test cache behavior (hits, misses, invalidation)
-- Test RLS policies for multi-tenant isolation
-- Test network retry logic
-
-#### Code Organization
-- Keep views under 300 lines (break into components)
-- Keep stores focused on single domain
-- Use MARK comments for organization
-- Group related functionality together
-- Extract reusable components to `Views/Shared/`
+#### When Adding New Features
+1. Create domain model in `Domain/Models/{Feature}/`
+2. Create repository protocol in `Domain/Repositories/Protocols/`
+3. Implement live repository in `Domain/Repositories/Live/`
+   - Add caching with `RepositoryCache`
+   - Add cache strategy in `Domain/Repositories/Caching/`
+   - Add retry logic with `NetworkRetry`
+   - Add error tracking with `SentryService`
+4. (Optional) Create domain service in `Domain/Services/` for complex logic
+5. Implement mock repository in `I Do BlueprintTests/Helpers/MockRepositories.swift`
+6. Register repository in `Core/Common/Common/DependencyValues.swift`
+7. Create store in `Services/Stores/{Feature}StoreV2.swift`
+   - Use `LoadingState<T>` pattern
+   - Implement `CacheableStore` if needed
+   - Use `handleError` extension
+   - Add Sentry tracking
+8. Create views in `Views/{Feature}/`
+   - Use design system constants
+   - Add accessibility labels
+   - Keep views under 300 lines
+9. Add tests in `I Do BlueprintTests/Services/Stores/`
+   - Test with mock repositories
+   - Test error cases
+   - Test cache behavior
+10. Add database migration if needed
+    - Enable RLS on new tables
+    - Add `couple_id` column for multi-tenancy
+    - Create RLS policy: `FOR ALL USING (couple_id = get_user_couple_id())`
+    - Add indexes on foreign keys
+11. Update this document with new patterns
 
 #### Common Pitfalls
 1. **Forgetting @MainActor** on stores → runtime crashes
@@ -1340,65 +1078,14 @@ let data = try await NetworkRetry.withRetry {
 10. **Skipping Sentry integration** → production issues go unnoticed
 11. **Using `auth.uid()` directly** → RLS performance issues
 12. **Not using NetworkRetry** → poor network resilience
-
-#### When Adding New Features
-1. Create domain model in `Domain/Models/{Feature}/`
-2. Create repository protocol in `Domain/Repositories/Protocols/`
-3. Implement live repository in `Domain/Repositories/Live/`
-   - Add caching with `RepositoryCache`
-   - Add retry logic with `NetworkRetry`
-   - Add error tracking with `SentryService`
-4. Implement mock repository in `I Do BlueprintTests/Helpers/MockRepositories.swift`
-5. Register repository in `Core/Common/Common/DependencyValues.swift`
-6. Create store in `Services/Stores/{Feature}StoreV2.swift`
-   - Use `LoadingState<T>` pattern
-   - Add error handling
-   - Add Sentry tracking
-7. Create views in `Views/{Feature}/`
-   - Use design system constants
-   - Add accessibility labels
-   - Keep views under 300 lines
-8. Add tests in `I Do BlueprintTests/Services/Stores/`
-   - Test with mock repositories
-   - Test error cases
-   - Test cache behavior
-9. Add database migration if needed
-   - Enable RLS on new tables
-   - Add `couple_id` column for multi-tenancy
-   - Create RLS policy: `FOR ALL USING (couple_id = get_user_couple_id())`
-   - Add indexes on foreign keys
-10. Update this document with new patterns
-
-#### Database Best Practices
-- **RLS Policies**: Use `(SELECT auth.uid())` not `auth.uid()`
-- **Functions**: Set `search_path = ''` for security
-- **Indexes**: Add on foreign keys, remove unused ones
-- **Multi-tenancy**: Always filter by `couple_id`
-- **UUID Queries**: Pass UUID directly, not `.uuidString`
-- **Migrations**: Test thoroughly before deploying
-- **Performance**: Monitor query execution time
-- **Security**: Test RLS policies for tenant isolation
-
-#### File Operations
-- Use `Data(contentsOf:)` for local files (not URLSession)
-- Handle security-scoped resources with `startAccessingSecurityScopedResource()`
-- Always call `stopAccessingSecurityScopedResource()` in defer block
-- Log file operations for debugging
-- Handle file access errors gracefully
-
-#### Monitoring & Analytics
-- Track errors with Sentry
-- Monitor cache hit rates
-- Track query performance
-- Monitor memory usage
-- Track user actions with breadcrumbs
-- Use performance transactions for slow operations
-- Set up alerts for critical errors
+13. **Using TimeZone.current** → inconsistent date display
+14. **Scattering cache invalidation** → missed invalidations
+15. **Creating store instances in views** → memory explosion
 
 ---
 
-**Last Updated:** January 2025  
-**Architecture Version:** V2 (Repository Pattern with Caching & Monitoring)  
+**Last Updated:** December 2025  
+**Architecture Version:** V2 (Repository Pattern with Domain Services, Cache Strategies & Monitoring)  
 **Swift Version:** 5.9+  
 **Platform:** macOS 13.0+  
 **Backend:** Supabase (PostgreSQL with RLS)  
