@@ -38,3 +38,12 @@ coverage.json
 
 # AI/code review tool configs
 .coderabbit.yaml
+
+# Development configuration files
+docker-compose.yml
+mcp.json
+
+# Build logs
+build.log
+build_log.txt
+*.log
