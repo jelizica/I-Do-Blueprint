@@ -11,7 +11,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case global = "Global"
     case theme = "Theme"
     case budget = "Budget"
-    case weddingEvents = "Wedding Events"
     case tasks = "Tasks"
     case vendors = "Vendors"
     case vendorCategories = "Categories"
@@ -32,7 +31,6 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .global: "globe"
         case .theme: "paintpalette"
         case .budget: "dollarsign.circle"
-        case .weddingEvents: "calendar.badge.plus"
         case .tasks: "checklist"
         case .vendors: "person.2"
         case .vendorCategories: "star"
@@ -55,13 +53,36 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         default: .accentColor
         }
     }
+    
+    var hasSubsections: Bool {
+        switch self {
+        case .global: true
+        default: false
+        }
+    }
+}
+
+enum GlobalSubsection: String, CaseIterable, Identifiable {
+    case overview = "Overview"
+    case weddingEvents = "Wedding Events"
+    
+    var id: String { rawValue }
+    
+    var icon: String {
+        switch self {
+        case .overview: "info.circle"
+        case .weddingEvents: "calendar.badge.plus"
+        }
+    }
 }
 
 struct SettingsView: View {
     @Environment(\.appStores) private var appStores
     @State private var selectedSection: SettingsSection = .global
+    @State private var selectedGlobalSubsection: GlobalSubsection = .overview
     @State private var showDeveloperSettings = false
     @State private var tapCount = 0
+    @State private var expandedSections: Set<SettingsSection> = [.global]
 
     private var store: SettingsStoreV2 {
         appStores.settings
@@ -70,13 +91,59 @@ struct SettingsView: View {
     var body: some View {
         NavigationSplitView {
             // Sidebar
-            List(SettingsSection.allCases, selection: $selectedSection) { section in
-                NavigationLink(value: section) {
-                    Label {
-                        Text(section.rawValue)
-                    } icon: {
-                        Image(systemName: section.icon)
-                            .foregroundColor(section.color)
+            List(selection: $selectedSection) {
+                ForEach(SettingsSection.allCases) { section in
+                    if section.hasSubsections {
+                        DisclosureGroup(
+                            isExpanded: Binding(
+                                get: { expandedSections.contains(section) },
+                                set: { isExpanded in
+                                    if isExpanded {
+                                        expandedSections.insert(section)
+                                    } else {
+                                        expandedSections.remove(section)
+                                    }
+                                }
+                            )
+                        ) {
+                            ForEach(GlobalSubsection.allCases) { subsection in
+                                Button(action: {
+                                    selectedSection = section
+                                    selectedGlobalSubsection = subsection
+                                }) {
+                                    Label {
+                                        Text(subsection.rawValue)
+                                    } icon: {
+                                        Image(systemName: subsection.icon)
+                                            .foregroundColor(.accentColor)
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                .padding(.leading, 20)
+                                .background(
+                                    selectedSection == section && selectedGlobalSubsection == subsection
+                                        ? Color.accentColor.opacity(0.1)
+                                        : Color.clear
+                                )
+                                .cornerRadius(6)
+                            }
+                        } label: {
+                            Label {
+                                Text(section.rawValue)
+                            } icon: {
+                                Image(systemName: section.icon)
+                                    .foregroundColor(section.color)
+                            }
+                        }
+                    } else {
+                        NavigationLink(value: section) {
+                            Label {
+                                Text(section.rawValue)
+                            } icon: {
+                                Image(systemName: section.icon)
+                                    .foregroundColor(section.color)
+                            }
+                        }
                     }
                 }
             }
@@ -119,7 +186,11 @@ struct SettingsView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .navigationTitle(selectedSection.rawValue)
+            .navigationTitle(
+                selectedSection == .global 
+                    ? "Global - \(selectedGlobalSubsection.rawValue)"
+                    : selectedSection.rawValue
+            )
         }
         .task {
             await store.loadSettings()
@@ -133,13 +204,16 @@ struct SettingsView: View {
     private var sectionContent: some View {
         switch selectedSection {
         case .global:
-            GlobalSettingsView(viewModel: store)
+            switch selectedGlobalSubsection {
+            case .overview:
+                GlobalSettingsView(viewModel: store)
+            case .weddingEvents:
+                WeddingEventsView()
+            }
         case .theme:
             ThemeSettingsView(viewModel: store)
         case .budget:
             BudgetConfigSettingsView(viewModel: store)
-        case .weddingEvents:
-            WeddingEventsView()
         case .tasks:
             TasksSettingsView(viewModel: store)
         case .vendors:

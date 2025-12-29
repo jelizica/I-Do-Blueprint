@@ -27,7 +27,7 @@ struct BudgetCategoriesSettingsView: View {
     }
     
     private var filteredCategories: [BudgetCategory] {
-        let categories = budgetStore.categories
+        let categories = budgetStore.categoryStore.categories
         
         let searchFiltered = searchText.isEmpty ? categories : categories.filter { category in
             category.categoryName.localizedCaseInsensitiveContains(searchText)
@@ -47,8 +47,8 @@ struct BudgetCategoriesSettingsView: View {
     // Batch delete helpers
     private var selectedDeletableCount: Int {
         selectedCategories.filter { id in
-            budgetStore.categories.first(where: { $0.id == id })
-                .map { budgetStore.canDeleteCategory($0) } ?? false
+            budgetStore.categoryStore.categories.first(where: { $0.id == id })
+                .map { budgetStore.categoryStore.canDeleteCategory($0) } ?? false
         }.count
     }
     
@@ -163,7 +163,7 @@ struct BudgetCategoriesSettingsView: View {
         .task {
             await budgetStore.loadBudgetData(force: false)
             // Load dependency information for delete validation
-            await budgetStore.loadCategoryDependencies()
+            await budgetStore.categoryStore.loadCategoryDependencies()
         }
         .sheet(isPresented: $showingAddCategory) {
             SettingsAddCategoryView(budgetStore: budgetStore)
@@ -173,18 +173,18 @@ struct BudgetCategoriesSettingsView: View {
         }
         .alert("Delete Category", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
-            if let category = categoryToDelete, budgetStore.canDeleteCategory(category) {
+            if let category = categoryToDelete, budgetStore.categoryStore.canDeleteCategory(category) {
                 Button("Delete", role: .destructive) {
                     Task {
-                        await budgetStore.deleteCategory(id: category.id)
+                        try? await budgetStore.categoryStore.deleteCategory(id: category.id)
                         // Reload dependencies after deletion
-                        await budgetStore.loadCategoryDependencies()
+                        await budgetStore.categoryStore.loadCategoryDependencies()
                     }
                 }
             }
         } message: {
             if let category = categoryToDelete {
-                if let warning = budgetStore.getDependencyWarning(for: category) {
+                if let warning = budgetStore.categoryStore.getDependencyWarning(for: category) {
                     Text("Cannot delete '\(category.categoryName)':\n\n\(warning)\n\nPlease remove these dependencies first.")
                 } else {
                     Text("Are you sure you want to delete '\(category.categoryName)'? This action cannot be undone.")
@@ -199,7 +199,7 @@ struct BudgetCategoriesSettingsView: View {
                     batchDeleteResult = result
                     
                     // Reload dependencies after batch deletion
-                    await budgetStore.loadCategoryDependencies()
+                    await budgetStore.categoryStore.loadCategoryDependencies()
                     
                     selectedCategories.removeAll()
                     selectionMode = false
@@ -347,7 +347,7 @@ struct SettingsFolderRow: View {
                 }
                 
                 // Dependency badges
-                if let deps = budgetStore.categoryDependencies[category.id] {
+                if let deps = budgetStore.categoryStore.categoryDependencies[category.id] {
                     HStack(spacing: 8) {
                         if deps.expenseCount > 0 {
                             Label("\(deps.expenseCount) expense\(deps.expenseCount == 1 ? "" : "s")", 
@@ -471,7 +471,7 @@ struct SettingsCategoryRow: View {
                 }
                 
                 // Dependency badges
-                if let deps = budgetStore.categoryDependencies[category.id] {
+                if let deps = budgetStore.categoryStore.categoryDependencies[category.id] {
                     HStack(spacing: 8) {
                         if deps.expenseCount > 0 {
                             Label("\(deps.expenseCount) expense\(deps.expenseCount == 1 ? "" : "s")", 
@@ -622,7 +622,7 @@ struct SettingsAddCategoryView: View {
             updatedAt: nil)
         
         Task {
-            await budgetStore.addCategory(category)
+            try? await budgetStore.categoryStore.addCategory(category)
             dismiss()
         }
     }
@@ -678,7 +678,7 @@ struct SettingsEditCategoryView: View {
                 
                 if category.parentCategoryId == nil {
                     Section("Information") {
-                        let subcategoryCount = budgetStore.categories.filter { $0.parentCategoryId == category.id }.count
+                        let subcategoryCount = budgetStore.categoryStore.categories.filter { $0.parentCategoryId == category.id }.count
                         HStack {
                             Text("Subcategories")
                             Spacer()
@@ -711,7 +711,7 @@ struct SettingsEditCategoryView: View {
         updatedCategory.description = description.isEmpty ? nil : description
         
         Task {
-            await budgetStore.updateCategory(updatedCategory)
+            try? await budgetStore.categoryStore.updateCategory(updatedCategory)
             dismiss()
         }
     }

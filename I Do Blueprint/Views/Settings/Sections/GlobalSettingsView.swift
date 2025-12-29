@@ -145,49 +145,7 @@ struct GlobalSettingsView: View {
                         .frame(maxWidth: 250)
                 }
             }
-
-            // Wedding Events
-            GroupBox(label: Text("Wedding Events").font(.headline)) {
-                if viewModel.localSettings.global.weddingEvents.isEmpty {
-                    Text("No events configured")
-                        .foregroundColor(.secondary)
-                        .padding()
-                } else {
-                    ForEach(viewModel.localSettings.global.weddingEvents) { event in
-                        WeddingEventRow(event: event)
-                    }
-                }
-            }
         }
-    }
-}
-
-struct WeddingEventRow: View {
-    let event: SettingsWeddingEvent
-
-    var body: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(event.eventName)
-                    .font(.headline)
-                if event.isMainEvent {
-                    Text("Main Event")
-                        .font(.caption)
-                        .foregroundColor(.blue)
-                }
-            }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 4) {
-                Text(event.eventDate)
-                    .font(.subheadline)
-                Text(event.eventTime)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        }
-        .padding(.vertical, Spacing.sm)
     }
 }
 
