@@ -7,6 +7,16 @@
 //  - Implements optimistic updates for better UX
 //  - Includes automatic rollback on errors
 //
+//  ARCHITECTURE:
+//  BudgetStoreV2 is a composition root that owns and coordinates 6 feature-specific sub-stores.
+//  Views should access sub-stores directly for domain-specific operations:
+//    - budgetStore.affordability.loadScenarios()
+//    - budgetStore.payments.addPayment(schedule)
+//    - budgetStore.categoryStore.addCategory(category)
+//    - budgetStore.expenseStore.addExpense(expense)
+//    - budgetStore.gifts.loadGiftsData()
+//    - budgetStore.development.loadBudgetDevelopmentItems(scenarioId:)
+//
 
 import Combine
 import Dependencies
@@ -18,15 +28,33 @@ import SwiftUI
 class BudgetStoreV2: ObservableObject, CacheableStore {
 
     // MARK: - Composed Stores
+    // These stores are publicly accessible for direct use in views
+    // Views should call methods on these stores directly rather than through delegation
+    // Note: Using `var` to allow SwiftUI bindings via `$budgetStore.affordability.property`
 
     /// Affordability calculator store - manages scenarios and contributions
-    let affordability: AffordabilityStore
+    /// Access directly: `budgetStore.affordability.loadScenarios()`
+    public var affordability: AffordabilityStore
 
     /// Payment schedule store - manages payment schedules
-    let payments: PaymentScheduleStore
+    /// Access directly: `budgetStore.payments.addPayment(schedule)`
+    public var payments: PaymentScheduleStore
 
     /// Gifts store - manages gifts and money owed
-    let gifts: GiftsStore
+    /// Access directly: `budgetStore.gifts.loadGiftsData()`
+    public var gifts: GiftsStore
+    
+    /// Expense store - manages expenses
+    /// Access directly: `budgetStore.expenseStore.addExpense(expense)`
+    public var expenseStore: ExpenseStoreV2
+    
+    /// Category store - manages budget categories
+    /// Access directly: `budgetStore.categoryStore.addCategory(category)`
+    public var categoryStore: CategoryStoreV2
+    
+    /// Budget development store - manages scenarios, items, and folders
+    /// Access directly: `budgetStore.development.loadBudgetDevelopmentItems(scenarioId:)`
+    public var development: BudgetDevelopmentStoreV2
 
     // MARK: - Published State
 
@@ -77,6 +105,9 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         // Initialize composed stores
         self.payments = PaymentScheduleStore()
         self.gifts = GiftsStore()
+        self.expenseStore = ExpenseStoreV2()
+        self.categoryStore = CategoryStoreV2()
+        self.development = BudgetDevelopmentStoreV2()
 
         // Initialize affordability store with payment schedule provider
         self.affordability = AffordabilityStore(paymentSchedulesProvider: { [weak payments] in
@@ -94,6 +125,18 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         }.store(in: &cancellables)
 
         affordability.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }.store(in: &cancellables)
+        
+        expenseStore.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }.store(in: &cancellables)
+        
+        categoryStore.objectWillChange.sink { [weak self] _ in
+            self?.objectWillChange.send()
+        }.store(in: &cancellables)
+        
+        development.objectWillChange.sink { [weak self] _ in
             self?.objectWillChange.send()
         }.store(in: &cancellables)
 
@@ -188,6 +231,9 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
                 // Load data into composed stores (async work not counted toward main-thread)
                 await payments.loadPaymentSchedules()
                 await gifts.loadGiftsData()
+                
+                // Update category store with loaded categories
+                categoryStore.updateCategories(categoriesResult)
 
                 // Load primary budget scenario (may touch main-thread briefly)
                 let t2 = Date()
@@ -269,21 +315,6 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         await loadBudgetData(force: true)
     }
 
-    @available(*, deprecated, message: "Use refresh() instead")
-    func refreshData() async {
-        await refresh()
-    }
-
-    @available(*, deprecated, message: "Use refresh() instead")
-    func refreshBudgetData() async {
-        await refresh()
-    }
-
-    @available(*, deprecated, message: "Use refresh() instead")
-    func loadCashFlowData() async {
-        await refresh()
-    }
-
     // MARK: - Tax Rates
 
     /// Load tax rates from settings
@@ -308,718 +339,26 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         await loadBudgetData(force: true)
     }
 
-    // MARK: - Payment Aliases for Compatibility (Delegate to PaymentScheduleStore)
-
-    func addPayment(_ payment: PaymentSchedule) async {
-        await payments.addPayment(payment)
-    }
-
-    func deletePayment(_ payment: PaymentSchedule) async {
-        await payments.deletePayment(payment)
-    }
-
-    func updatePayment(_ payment: PaymentSchedule) async {
-        await payments.updatePayment(payment)
-    }
-
-    func addPaymentSchedule(_ schedule: PaymentSchedule) async {
-        await payments.addPayment(schedule)
-    }
-
-    func updatePaymentSchedule(_ schedule: PaymentSchedule) async {
-        await payments.updatePayment(schedule)
-    }
-
-    func deletePaymentSchedule(id: Int64) async {
-        await payments.deletePayment(id: id)
-    }
+    // MARK: - Payment Plan Summaries
     
     /// Fetch payment plan summaries with grouping strategy
+    /// Delegates to PaymentScheduleStore
     /// - Parameter groupBy: Strategy for grouping payments (default: by expense)
     /// - Returns: Array of payment plan summaries grouped according to strategy
     func fetchPaymentPlanSummaries(
         groupBy strategy: PaymentPlanGroupingStrategy = .byExpense
     ) async throws -> [PaymentPlanSummary] {
-        switch strategy {
-        case .byPlanId:
-            return try await fetchPaymentPlanSummariesByPlanId()
-        case .byExpense:
-            return try await fetchPaymentPlanSummariesByExpense()
-        case .byVendor:
-            return try await fetchPaymentPlanSummariesByVendor()
-        }
+        return try await payments.fetchPaymentPlanSummaries(groupBy: strategy, expenses: expenseStore.expenses)
     }
     
     /// Fetch hierarchical payment plan groups (for vendor/expense grouping)
+    /// Delegates to PaymentScheduleStore
     /// - Parameter groupBy: Strategy for grouping payments
     /// - Returns: Array of hierarchical groups containing multiple plans
     func fetchPaymentPlanGroups(
         groupBy strategy: PaymentPlanGroupingStrategy
     ) async throws -> [PaymentPlanGroup] {
-        switch strategy {
-        case .byPlanId:
-            // For "By Plan ID", no grouping needed - return empty array
-            return []
-        case .byExpense:
-            return try await fetchPaymentPlanGroupsByExpense()
-        case .byVendor:
-            return try await fetchPaymentPlanGroupsByVendor()
-        }
-    }
-    
-    // MARK: - Payment Plan Grouping Methods
-    
-    /// Group payments by their original payment_plan_id (original behavior)
-    private func fetchPaymentPlanSummariesByPlanId() async throws -> [PaymentPlanSummary] {
-        // Call existing database view or query for backward compatibility
-        return try await repository.fetchPaymentPlanSummaries()
-    }
-    
-    /// Group all payments for the same expense together
-    private func fetchPaymentPlanSummariesByExpense() async throws -> [PaymentPlanSummary] {
-        // Get all payments
-        let allPayments = payments.paymentSchedules
-        
-        // Group by expense_id
-        let groupedByExpense = Dictionary(grouping: allPayments) { payment in
-            payment.expenseId
-        }
-        
-        // Create aggregated summaries for each expense
-        var summaries: [PaymentPlanSummary] = []
-        
-        for (expenseId, paymentsGroup) in groupedByExpense {
-            guard let expenseId = expenseId else { continue }
-            
-            // Sort payments by date
-            let sortedPayments = paymentsGroup.sorted { $0.paymentDate < $1.paymentDate }
-            
-            // Calculate aggregates
-            let totalAmount = sortedPayments.reduce(0) { $0 + $1.paymentAmount }
-            let amountPaid = sortedPayments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
-            let amountRemaining = totalAmount - amountPaid
-            let percentPaid = totalAmount > 0 ? (amountPaid / totalAmount) * 100 : 0
-            
-            let paymentsCompleted = Int64(sortedPayments.filter { $0.paid }.count)
-            let paymentsRemaining = Int64(sortedPayments.count) - paymentsCompleted
-            
-            let allPaid = sortedPayments.allSatisfy { $0.paid }
-            let anyPaid = sortedPayments.contains { $0.paid }
-            
-            // Find deposits
-            let deposits = sortedPayments.filter { $0.isDeposit }
-            let depositAmount = deposits.reduce(0) { $0 + $1.paymentAmount }
-            let depositCount = Int64(deposits.count)
-            
-            // Find next payment
-            let nextPayment = sortedPayments.first { !$0.paid && $0.paymentDate >= Date() }
-            let nextPaymentDate = nextPayment?.paymentDate
-            let nextPaymentAmount = nextPayment?.paymentAmount
-            
-            // Calculate days until next payment
-            var daysUntilNextPayment: Int?
-            if let nextDate = nextPaymentDate {
-                let calendar = Calendar.current
-                let days = calendar.dateComponents([.day], from: Date(), to: nextDate).day
-                daysUntilNextPayment = days
-            }
-            
-            // Find overdue payments
-            let overduePayments = sortedPayments.filter { !$0.paid && $0.paymentDate < Date() }
-            let overdueCount = Int64(overduePayments.count)
-            let overdueAmount = overduePayments.reduce(0) { $0 + $1.paymentAmount }
-            
-            // Determine plan status
-            let planStatus: PaymentPlanSummary.PlanStatus
-            if allPaid {
-                planStatus = .completed
-            } else if overdueCount > 0 {
-                planStatus = .overdue
-            } else if anyPaid {
-                planStatus = .inProgress
-            } else {
-                planStatus = .pending
-            }
-            
-            // Determine plan type based on payment pattern
-            let planType = determinePlanType(for: sortedPayments)
-            
-            // Get vendor info from first payment
-            guard let firstPayment = sortedPayments.first else { continue }
-            
-            // Combine notes from all payments
-            let notes = sortedPayments.compactMap { $0.notes }.filter { !$0.isEmpty }
-            let combinedNotes = notes.isEmpty ? nil : notes.joined(separator: " | ")
-            
-            // Create summary using expense_id as the plan ID for grouping
-            let summary = PaymentPlanSummary(
-                paymentPlanId: expenseId, // Use expense ID as plan ID
-                expenseId: expenseId,
-                coupleId: firstPayment.coupleId,
-                vendor: firstPayment.vendor,
-                vendorId: firstPayment.vendorId ?? 0,
-                vendorType: firstPayment.vendorType,
-                paymentType: planType.rawValue,
-                paymentPlanType: planType.rawValue,
-                planTypeDisplay: planType.displayName,
-                totalPayments: sortedPayments.count,
-                firstPaymentDate: firstPayment.paymentDate,
-                lastPaymentDate: sortedPayments.last!.paymentDate,
-                depositDate: deposits.first?.paymentDate,
-                totalAmount: totalAmount,
-                amountPaid: amountPaid,
-                amountRemaining: amountRemaining,
-                depositAmount: depositAmount,
-                percentPaid: percentPaid,
-                actualPaymentCount: Int64(sortedPayments.count),
-                paymentsCompleted: paymentsCompleted,
-                paymentsRemaining: paymentsRemaining,
-                depositCount: depositCount,
-                allPaid: allPaid,
-                anyPaid: anyPaid,
-                hasDeposit: !deposits.isEmpty,
-                hasRetainer: sortedPayments.contains { $0.isRetainer },
-                planStatus: planStatus,
-                nextPaymentDate: nextPaymentDate,
-                nextPaymentAmount: nextPaymentAmount,
-                daysUntilNextPayment: daysUntilNextPayment,
-                overdueCount: overdueCount,
-                overdueAmount: overdueAmount,
-                combinedNotes: combinedNotes,
-                planCreatedAt: firstPayment.createdAt,
-                planUpdatedAt: sortedPayments.compactMap { $0.updatedAt ?? $0.createdAt }.max()
-            )
-            
-            summaries.append(summary)
-        }
-        
-        // Sort by next payment date (soonest first), then by vendor name
-        return summaries.sorted { lhs, rhs in
-            if let lhsNext = lhs.nextPaymentDate, let rhsNext = rhs.nextPaymentDate {
-                return lhsNext < rhsNext
-            } else if lhs.nextPaymentDate != nil {
-                return true
-            } else if rhs.nextPaymentDate != nil {
-                return false
-            } else {
-                return lhs.vendor < rhs.vendor
-            }
-        }
-    }
-    
-    /// Group all payments for the same vendor together
-    private func fetchPaymentPlanSummariesByVendor() async throws -> [PaymentPlanSummary] {
-        // Get all payments
-        let allPayments = payments.paymentSchedules
-        
-        // Group by vendor_id
-        let groupedByVendor = Dictionary(grouping: allPayments) { payment in
-            payment.vendorId
-        }
-        
-        // Create aggregated summaries for each vendor
-        var summaries: [PaymentPlanSummary] = []
-        
-        for (vendorId, paymentsGroup) in groupedByVendor {
-            guard let vendorId = vendorId else { continue }
-            
-            // Sort payments by date
-            let sortedPayments = paymentsGroup.sorted { $0.paymentDate < $1.paymentDate }
-            
-            // Calculate aggregates (same as byExpense)
-            let totalAmount = sortedPayments.reduce(0) { $0 + $1.paymentAmount }
-            let amountPaid = sortedPayments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
-            let amountRemaining = totalAmount - amountPaid
-            let percentPaid = totalAmount > 0 ? (amountPaid / totalAmount) * 100 : 0
-            
-            let paymentsCompleted = Int64(sortedPayments.filter { $0.paid }.count)
-            let paymentsRemaining = Int64(sortedPayments.count) - paymentsCompleted
-            
-            let allPaid = sortedPayments.allSatisfy { $0.paid }
-            let anyPaid = sortedPayments.contains { $0.paid }
-            
-            // Find deposits
-            let deposits = sortedPayments.filter { $0.isDeposit }
-            let depositAmount = deposits.reduce(0) { $0 + $1.paymentAmount }
-            let depositCount = Int64(deposits.count)
-            
-            // Find next payment
-            let nextPayment = sortedPayments.first { !$0.paid && $0.paymentDate >= Date() }
-            let nextPaymentDate = nextPayment?.paymentDate
-            let nextPaymentAmount = nextPayment?.paymentAmount
-            
-            // Calculate days until next payment
-            var daysUntilNextPayment: Int?
-            if let nextDate = nextPaymentDate {
-                let calendar = Calendar.current
-                let days = calendar.dateComponents([.day], from: Date(), to: nextDate).day
-                daysUntilNextPayment = days
-            }
-            
-            // Find overdue payments
-            let overduePayments = sortedPayments.filter { !$0.paid && $0.paymentDate < Date() }
-            let overdueCount = Int64(overduePayments.count)
-            let overdueAmount = overduePayments.reduce(0) { $0 + $1.paymentAmount }
-            
-            // Determine plan status
-            let planStatus: PaymentPlanSummary.PlanStatus
-            if allPaid {
-                planStatus = .completed
-            } else if overdueCount > 0 {
-                planStatus = .overdue
-            } else if anyPaid {
-                planStatus = .inProgress
-            } else {
-                planStatus = .pending
-            }
-            
-            // Determine plan type
-            let planType = determinePlanType(for: sortedPayments)
-            
-            // Get vendor info from first payment
-            guard let firstPayment = sortedPayments.first else { continue }
-            
-            // Combine notes
-            let notes = sortedPayments.compactMap { $0.notes }.filter { !$0.isEmpty }
-            let combinedNotes = notes.isEmpty ? nil : notes.joined(separator: " | ")
-            
-            // Use first expense_id or generate a synthetic ID
-            let syntheticPlanId = firstPayment.expenseId ?? UUID()
-            
-            // Create summary
-            let summary = PaymentPlanSummary(
-                paymentPlanId: syntheticPlanId,
-                expenseId: syntheticPlanId,
-                coupleId: firstPayment.coupleId,
-                vendor: firstPayment.vendor,
-                vendorId: vendorId,
-                vendorType: firstPayment.vendorType,
-                paymentType: planType.rawValue,
-                paymentPlanType: planType.rawValue,
-                planTypeDisplay: planType.displayName,
-                totalPayments: sortedPayments.count,
-                firstPaymentDate: firstPayment.paymentDate,
-                lastPaymentDate: sortedPayments.last!.paymentDate,
-                depositDate: deposits.first?.paymentDate,
-                totalAmount: totalAmount,
-                amountPaid: amountPaid,
-                amountRemaining: amountRemaining,
-                depositAmount: depositAmount,
-                percentPaid: percentPaid,
-                actualPaymentCount: Int64(sortedPayments.count),
-                paymentsCompleted: paymentsCompleted,
-                paymentsRemaining: paymentsRemaining,
-                depositCount: depositCount,
-                allPaid: allPaid,
-                anyPaid: anyPaid,
-                hasDeposit: !deposits.isEmpty,
-                hasRetainer: sortedPayments.contains { $0.isRetainer },
-                planStatus: planStatus,
-                nextPaymentDate: nextPaymentDate,
-                nextPaymentAmount: nextPaymentAmount,
-                daysUntilNextPayment: daysUntilNextPayment,
-                overdueCount: overdueCount,
-                overdueAmount: overdueAmount,
-                combinedNotes: combinedNotes,
-                planCreatedAt: firstPayment.createdAt,
-                planUpdatedAt: sortedPayments.compactMap { $0.updatedAt ?? $0.createdAt }.max()
-            )
-            
-            summaries.append(summary)
-        }
-        
-        // Sort by vendor name
-        return summaries.sorted { $0.vendor < $1.vendor }
-    }
-    
-    /// Determine plan type from payment pattern
-    private func determinePlanType(for payments: [PaymentSchedule]) -> PaymentPlanType {
-        if payments.count == 1 {
-            return .individual
-        }
-        
-        // Check if all payments have same amount (excluding deposits)
-        let nonDepositPayments = payments.filter { !$0.isDeposit }
-        
-        guard !nonDepositPayments.isEmpty else {
-            return .installment
-        }
-        
-        let amounts = Set(nonDepositPayments.map { $0.paymentAmount })
-        
-        if amounts.count == 1 {
-            // Check if monthly intervals
-            let sortedDates = nonDepositPayments.map { $0.paymentDate }.sorted()
-            var isMonthly = true
-            
-            for i in 1..<sortedDates.count {
-                let interval = Calendar.current.dateComponents([.month], from: sortedDates[i-1], to: sortedDates[i]).month ?? 0
-                if interval != 1 {
-                    isMonthly = false
-                    break
-                }
-            }
-            
-            return isMonthly ? .simpleRecurring : .intervalRecurring
-        } else {
-            return .installment
-        }
-    }
-    
-    // MARK: - Hierarchical Grouping Methods
-    
-    /// Group payments hierarchically by expense
-    /// Returns groups where each expense contains multiple payment plans
-    private func fetchPaymentPlanGroupsByExpense() async throws -> [PaymentPlanGroup] {
-        let allPayments = payments.paymentSchedules
-        
-        // First group by expense_id
-        let groupedByExpense = Dictionary(grouping: allPayments) { $0.expenseId }
-        
-        var groups: [PaymentPlanGroup] = []
-        
-        for (expenseId, expensePayments) in groupedByExpense {
-            guard let expenseId = expenseId else { continue }
-            
-            // Within each expense, group by payment_plan_id
-            let groupedByPlan = Dictionary(grouping: expensePayments) { $0.paymentPlanId }
-            
-            // Create a PaymentPlanSummary for each plan within this expense
-            var plansForExpense: [PaymentPlanSummary] = []
-            
-            for (planId, planPayments) in groupedByPlan {
-                guard let planId = planId else { continue }
-                
-                let sortedPayments = planPayments.sorted { $0.paymentDate < $1.paymentDate }
-                guard let firstPayment = sortedPayments.first else { continue }
-                
-                // Calculate aggregates for this specific plan
-                let summary = createPaymentPlanSummary(
-                    from: sortedPayments,
-                    planId: planId,
-                    expenseId: expenseId
-                )
-                
-                plansForExpense.append(summary)
-            }
-            
-            // Sort plans by next payment date
-            plansForExpense.sort { lhs, rhs in
-                if let lhsNext = lhs.nextPaymentDate, let rhsNext = rhs.nextPaymentDate {
-                    return lhsNext < rhsNext
-                } else if lhs.nextPaymentDate != nil {
-                    return true
-                } else if rhs.nextPaymentDate != nil {
-                    return false
-                } else {
-                    return lhs.firstPaymentDate < rhs.firstPaymentDate
-                }
-            }
-            
-            // Get expense name from first payment
-            guard let firstPayment = expensePayments.first else { continue }
-            let expenseName = expenses.first(where: { $0.id == expenseId })?.expenseName ?? firstPayment.vendor
-            
-            // Create group
-            let group = PaymentPlanGroup(
-                id: expenseId,
-                groupName: expenseName,
-                groupType: .expense(expenseId: expenseId),
-                plans: plansForExpense
-            )
-            
-            groups.append(group)
-        }
-        
-        // Sort groups by name
-        return groups.sorted { $0.groupName < $1.groupName }
-    }
-    
-    /// Group payments hierarchically by vendor
-    /// Returns groups where each vendor contains multiple payment plans
-    private func fetchPaymentPlanGroupsByVendor() async throws -> [PaymentPlanGroup] {
-        let allPayments = payments.paymentSchedules
-        
-        // First group by vendor_id
-        let groupedByVendor = Dictionary(grouping: allPayments) { $0.vendorId }
-        
-        var groups: [PaymentPlanGroup] = []
-        
-        for (vendorId, vendorPayments) in groupedByVendor {
-            guard let vendorId = vendorId else { continue }
-            
-            // Within each vendor, group by payment_plan_id
-            let groupedByPlan = Dictionary(grouping: vendorPayments) { $0.paymentPlanId }
-            
-            // Create a PaymentPlanSummary for each plan within this vendor
-            var plansForVendor: [PaymentPlanSummary] = []
-            
-            for (planId, planPayments) in groupedByPlan {
-                guard let planId = planId else { continue }
-                
-                let sortedPayments = planPayments.sorted { $0.paymentDate < $1.paymentDate }
-                guard let firstPayment = sortedPayments.first else { continue }
-                
-                // Use expense_id from first payment, or generate synthetic ID
-                let expenseId = firstPayment.expenseId ?? UUID()
-                
-                // Calculate aggregates for this specific plan
-                let summary = createPaymentPlanSummary(
-                    from: sortedPayments,
-                    planId: planId,
-                    expenseId: expenseId
-                )
-                
-                plansForVendor.append(summary)
-            }
-            
-            // Sort plans by next payment date
-            plansForVendor.sort { lhs, rhs in
-                if let lhsNext = lhs.nextPaymentDate, let rhsNext = rhs.nextPaymentDate {
-                    return lhsNext < rhsNext
-                } else if lhs.nextPaymentDate != nil {
-                    return true
-                } else if rhs.nextPaymentDate != nil {
-                    return false
-                } else {
-                    return lhs.firstPaymentDate < rhs.firstPaymentDate
-                }
-            }
-            
-            // Get vendor name from first payment
-            guard let firstPayment = vendorPayments.first else { continue }
-            let vendorName = firstPayment.vendor
-            
-            // Create group
-            let group = PaymentPlanGroup(
-                id: UUID(), // Generate unique ID for vendor group
-                groupName: vendorName,
-                groupType: .vendor(vendorId: vendorId),
-                plans: plansForVendor
-            )
-            
-            groups.append(group)
-        }
-        
-        // Sort groups by name
-        return groups.sorted { $0.groupName < $1.groupName }
-    }
-    
-    /// Helper method to create a PaymentPlanSummary from a list of payments
-    private func createPaymentPlanSummary(
-        from payments: [PaymentSchedule],
-        planId: UUID,
-        expenseId: UUID
-    ) -> PaymentPlanSummary {
-        let totalAmount = payments.reduce(0) { $0 + $1.paymentAmount }
-        let amountPaid = payments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
-        let amountRemaining = totalAmount - amountPaid
-        let percentPaid = totalAmount > 0 ? (amountPaid / totalAmount) * 100 : 0
-        
-        let paymentsCompleted = Int64(payments.filter { $0.paid }.count)
-        let paymentsRemaining = Int64(payments.count) - paymentsCompleted
-        
-        let allPaid = payments.allSatisfy { $0.paid }
-        let anyPaid = payments.contains { $0.paid }
-        
-        let deposits = payments.filter { $0.isDeposit }
-        let depositAmount = deposits.reduce(0) { $0 + $1.paymentAmount }
-        let depositCount = Int64(deposits.count)
-        
-        let nextPayment = payments.first { !$0.paid && $0.paymentDate >= Date() }
-        let nextPaymentDate = nextPayment?.paymentDate
-        let nextPaymentAmount = nextPayment?.paymentAmount
-        
-        var daysUntilNextPayment: Int?
-        if let nextDate = nextPaymentDate {
-            let calendar = Calendar.current
-            let days = calendar.dateComponents([.day], from: Date(), to: nextDate).day
-            daysUntilNextPayment = days
-        }
-        
-        let overduePayments = payments.filter { !$0.paid && $0.paymentDate < Date() }
-        let overdueCount = Int64(overduePayments.count)
-        let overdueAmount = overduePayments.reduce(0) { $0 + $1.paymentAmount }
-        
-        let planStatus: PaymentPlanSummary.PlanStatus
-        if allPaid {
-            planStatus = .completed
-        } else if overdueCount > 0 {
-            planStatus = .overdue
-        } else if anyPaid {
-            planStatus = .inProgress
-        } else {
-            planStatus = .pending
-        }
-        
-        let planType = determinePlanType(for: payments)
-        
-        guard let firstPayment = payments.first else {
-            fatalError("Cannot create summary from empty payments array")
-        }
-        
-        let notes = payments.compactMap { $0.notes }.filter { !$0.isEmpty }
-        let combinedNotes = notes.isEmpty ? nil : notes.joined(separator: " | ")
-        
-        return PaymentPlanSummary(
-            paymentPlanId: planId,
-            expenseId: expenseId,
-            coupleId: firstPayment.coupleId,
-            vendor: firstPayment.vendor,
-            vendorId: firstPayment.vendorId ?? 0,
-            vendorType: firstPayment.vendorType,
-            paymentType: planType.rawValue,
-            paymentPlanType: planType.rawValue,
-            planTypeDisplay: planType.displayName,
-            totalPayments: payments.count,
-            firstPaymentDate: firstPayment.paymentDate,
-            lastPaymentDate: payments.last!.paymentDate,
-            depositDate: deposits.first?.paymentDate,
-            totalAmount: totalAmount,
-            amountPaid: amountPaid,
-            amountRemaining: amountRemaining,
-            depositAmount: depositAmount,
-            percentPaid: percentPaid,
-            actualPaymentCount: Int64(payments.count),
-            paymentsCompleted: paymentsCompleted,
-            paymentsRemaining: paymentsRemaining,
-            depositCount: depositCount,
-            allPaid: allPaid,
-            anyPaid: anyPaid,
-            hasDeposit: !deposits.isEmpty,
-            hasRetainer: payments.contains { $0.isRetainer },
-            planStatus: planStatus,
-            nextPaymentDate: nextPaymentDate,
-            nextPaymentAmount: nextPaymentAmount,
-            daysUntilNextPayment: daysUntilNextPayment,
-            overdueCount: overdueCount,
-            overdueAmount: overdueAmount,
-            combinedNotes: combinedNotes,
-            planCreatedAt: firstPayment.createdAt,
-            planUpdatedAt: payments.compactMap { $0.updatedAt ?? $0.createdAt }.max()
-        )
-    }
-
-    // MARK: - Affordability Calculator Methods (Delegate to AffordabilityStore)
-
-    /// Load affordability scenarios - delegates to AffordabilityStore
-    func loadAffordabilityScenarios() async {
-        await affordability.loadScenarios()
-    }
-
-    /// Load affordability contributions - delegates to AffordabilityStore
-    func loadAffordabilityContributions(scenarioId: UUID) async {
-        await affordability.loadContributions(scenarioId: scenarioId)
-    }
-
-    /// Save affordability scenario - delegates to AffordabilityStore
-    func saveAffordabilityScenario(_ scenario: AffordabilityScenario) async {
-        await affordability.saveScenario(scenario)
-    }
-
-    /// Delete affordability scenario - delegates to AffordabilityStore
-    func deleteAffordabilityScenario(id: UUID) async {
-        await affordability.deleteScenario(id: id)
-    }
-
-    /// Save affordability contribution - delegates to AffordabilityStore
-    func saveAffordabilityContribution(_ contribution: ContributionItem) async {
-        await affordability.saveContribution(contribution)
-    }
-
-    /// Delete affordability contribution - delegates to AffordabilityStore
-    func deleteAffordabilityContribution(id: UUID, scenarioId: UUID) async {
-        await affordability.deleteContribution(id: id, scenarioId: scenarioId)
-    }
-
-    /// Link gifts to scenario - delegates to AffordabilityStore
-    func linkGiftsToScenario(giftIds: [UUID], scenarioId: UUID) async {
-        await affordability.linkGiftsToScenario(giftIds: giftIds, scenarioId: scenarioId)
-    }
-
-    /// Unlink gift from scenario - delegates to AffordabilityStore
-    func unlinkGiftFromScenario(giftId: UUID, scenarioId: UUID) async {
-        await affordability.unlinkGiftFromScenario(giftId: giftId, scenarioId: scenarioId)
-    }
-
-    /// Set wedding date - delegates to AffordabilityStore
-    func setWeddingDate(_ dateString: String) {
-        affordability.setWeddingDate(dateString)
-    }
-
-    /// Select scenario - delegates to AffordabilityStore
-    func selectScenario(_ scenario: AffordabilityScenario) {
-        affordability.selectScenario(scenario)
-    }
-
-    /// Reset editing state - delegates to AffordabilityStore
-    func resetEditingState() {
-        affordability.resetEditingState()
-    }
-
-    /// Save changes - delegates to AffordabilityStore
-    func saveChanges() async {
-        await affordability.saveChanges()
-    }
-
-    /// Create scenario - delegates to AffordabilityStore
-    func createScenario(name: String) async {
-        await affordability.createScenario(name: name)
-    }
-
-    /// Delete scenario - delegates to AffordabilityStore
-    func deleteScenario(_ scenario: AffordabilityScenario) async {
-        await affordability.deleteScenario(scenario)
-    }
-
-    /// Add contribution - delegates to AffordabilityStore
-    func addContribution(name: String, amount: Double, type: ContributionType, date: Date?) async {
-        await affordability.addContribution(name: name, amount: amount, type: type, date: date)
-    }
-
-    /// Delete contribution - delegates to AffordabilityStore
-    func deleteContribution(_ contribution: ContributionItem) async {
-        await affordability.deleteContribution(contribution)
-    }
-
-    /// Load available gifts - delegates to AffordabilityStore
-    func loadAvailableGifts() async {
-        await affordability.loadAvailableGifts()
-    }
-
-    /// Link gifts - delegates to AffordabilityStore
-    func linkGifts(giftIds: [UUID]) async {
-        await affordability.linkGifts(giftIds: giftIds)
-    }
-
-    /// Update gift - delegates to AffordabilityStore
-    func updateGift(_ gift: GiftOrOwed) async {
-        await affordability.updateGift(gift)
-    }
-
-    /// Start editing gift - delegates to AffordabilityStore
-    func startEditingGift(contributionId: UUID) async {
-        await affordability.startEditingGift(contributionId: contributionId)
-    }
-
-    /// Mark field changed - delegates to AffordabilityStore
-    func markFieldChanged() {
-        affordability.markFieldChanged()
-    }
-
-    /// Load scenarios (alias) - delegates to AffordabilityStore
-    func loadScenarios() async {
-        await affordability.loadScenarios()
-    }
-
-    /// Load contributions (alias) - delegates to AffordabilityStore
-    func loadContributions() async {
-        await affordability.loadContributions()
-    }
-
-    /// Load payment schedules - delegates to PaymentScheduleStore
-    func loadPaymentSchedules() async {
-        await payments.loadPaymentSchedules()
+        return try await payments.fetchPaymentPlanGroups(groupBy: strategy, expenses: expenseStore.expenses)
     }
 
     // MARK: - Primary Budget Scenario
@@ -1046,101 +385,20 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         }
     }
     
-    // MARK: - Category Dependency Management
+    // MARK: - Batch Category Operations
     
-    /// Category dependencies cache (for delete validation)
-    @Published var categoryDependencies: [UUID: CategoryDependencies] = [:]
-    
-    /// Load dependency information for all categories
-    func loadCategoryDependencies() async {
-        guard case .loaded(let budgetData) = loadingState else {
-            logger.warning("Cannot load category dependencies: budget data not loaded")
-            return
-        }
-        
-        let start = Date()
-        var loadedCount = 0
-        
-        for category in budgetData.categories {
-            do {
-                let deps = try await repository.checkCategoryDependencies(id: category.id)
-                categoryDependencies[category.id] = deps
-                loadedCount += 1
-            } catch {
-                logger.error("Failed to load dependencies for category \(category.id)", error: error)
-                ErrorHandler.shared.handle(
-                    error,
-                    context: ErrorContext(
-                        operation: "loadCategoryDependencies",
-                        feature: "budget",
-                        metadata: ["categoryId": category.id.uuidString]
-                    )
-                )
-            }
-        }
-        
-        let duration = Date().timeIntervalSince(start)
-        logger.info("Loaded dependencies for \(loadedCount)/\(budgetData.categories.count) categories in \(String(format: "%.2f", duration))s")
-    }
-    
-    /// Check if a category can be deleted (has no dependencies)
-    func canDeleteCategory(_ category: BudgetCategory) -> Bool {
-        // Conservative default: if dependency info is missing, do not allow deletion
-        categoryDependencies[category.id]?.canDelete ?? false
-    }
-    
-    /// Get user-friendly warning message for category with dependencies
-    func getDependencyWarning(for category: BudgetCategory) -> String? {
-        guard let deps = categoryDependencies[category.id], !deps.canDelete else {
-            return nil
-        }
-        return deps.blockingReasons.joined(separator: "\n")
-    }
-    
-    /// Batch delete multiple categories
+    /// Batch delete multiple categories - delegates to CategoryStoreV2
     /// - Parameter ids: Array of category IDs to delete
     /// - Returns: Result with succeeded and failed deletions
     func batchDeleteCategories(ids: [UUID]) async -> BatchDeleteResult {
-        let start = Date()
+        let result = await categoryStore.batchDeleteCategories(ids: ids)
         
-        do {
-            let result = try await repository.batchDeleteCategories(ids: ids)
-            
-            // Invalidate cache and reload if any succeeded
-            if !result.succeeded.isEmpty {
-                await loadBudgetData(force: true)
-                
-                // Clear dependencies for deleted categories
-                for id in result.succeeded {
-                    categoryDependencies.removeValue(forKey: id)
-                }
-            }
-            
-            let duration = Date().timeIntervalSince(start)
-            logger.info("Batch deleted \(result.successCount)/\(result.totalAttempted) categories in \(String(format: "%.2f", duration))s")
-            
-            if result.failureCount > 0 {
-                logger.warning("Failed to delete \(result.failureCount) categories")
-            }
-            
-            return result
-        } catch {
-            logger.error("Batch delete failed", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "batchDeleteCategories",
-                    feature: "budget",
-                    metadata: ["categoryCount": ids.count]
-                )
-            )
-            
-            // Return empty result on complete failure (wrap errors for Sendable)
-            let wrapped = ids.map { (id: UUID) -> (UUID, BatchDeleteResult.SendableErrorWrapper) in
-                (id, BatchDeleteResult.SendableErrorWrapper(error))
-            }
-            return BatchDeleteResult(succeeded: [], failed: wrapped)
+        // Reload budget data if any succeeded
+        if !result.succeeded.isEmpty {
+            await loadBudgetData(force: true)
         }
+        
+        return result
     }
     
     // MARK: - Wedding Events Management
@@ -1192,273 +450,6 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         }
     }
 
-    // MARK: - Folder Operations
-
-    /// Creates a new budget folder
-    /// - Parameters:
-    ///   - name: Folder display name
-    ///   - scenarioId: Scenario ID the folder belongs to
-    ///   - parentFolderId: Parent folder ID (nil for root level)
-    ///   - displayOrder: Display order within parent
-    /// - Returns: Created folder item
-    func createFolder(name: String, scenarioId: String, parentFolderId: String?, displayOrder: Int) async throws -> BudgetItem {
-        do {
-            let folder = try await repository.createFolder(
-                name: name,
-                scenarioId: scenarioId,
-                parentFolderId: parentFolderId,
-                displayOrder: displayOrder
-            )
-            
-            logger.info("Created folder: \(name) in scenario \(scenarioId)")
-            return folder
-        } catch {
-            logger.error("Error creating folder", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "createFolder",
-                    feature: "budget",
-                    metadata: ["folderName": name, "scenarioId": scenarioId]
-                )
-            )
-            throw BudgetError.createFailed(underlying: error)
-        }
-    }
-
-    /// Moves an item to a different folder
-    /// - Parameters:
-    ///   - itemId: Item/folder to move
-    ///   - targetFolderId: Destination folder (nil for root)
-    ///   - displayOrder: New display order
-    func moveItemToFolder(itemId: String, targetFolderId: String?, displayOrder: Int) async throws {
-        do {
-            try await repository.moveItemToFolder(
-                itemId: itemId,
-                targetFolderId: targetFolderId,
-                displayOrder: displayOrder
-            )
-            
-            logger.info("Moved item \(itemId) to folder \(targetFolderId ?? "root")")
-        } catch {
-            logger.error("Error moving item to folder", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "moveItemToFolder",
-                    feature: "budget",
-                    metadata: ["itemId": itemId, "targetFolderId": targetFolderId ?? "root"]
-                )
-            )
-            throw BudgetError.updateFailed(underlying: error)
-        }
-    }
-
-    /// Updates display order for multiple items (drag-and-drop)
-    /// - Parameter items: Array of (itemId, displayOrder) tuples
-    func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws {
-        do {
-            try await repository.updateDisplayOrder(items: items)
-            logger.info("Updated display order for \(items.count) items")
-        } catch {
-            logger.error("Error updating display order", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "updateDisplayOrder",
-                    feature: "budget",
-                    metadata: ["itemCount": items.count]
-                )
-            )
-            throw BudgetError.updateFailed(underlying: error)
-        }
-    }
-
-    /// Toggles folder expansion state
-    /// - Parameters:
-    ///   - folderId: Folder ID
-    ///   - isExpanded: New expansion state
-    func toggleFolderExpansion(folderId: String, isExpanded: Bool) async throws {
-        do {
-            try await repository.toggleFolderExpansion(folderId: folderId, isExpanded: isExpanded)
-            logger.info("Toggled folder \(folderId) expansion to \(isExpanded)")
-        } catch {
-            logger.error("Error toggling folder expansion", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "toggleFolderExpansion",
-                    feature: "budget",
-                    metadata: ["folderId": folderId, "isExpanded": isExpanded]
-                )
-            )
-            throw BudgetError.updateFailed(underlying: error)
-        }
-    }
-
-    /// Fetches budget items with hierarchical structure
-    /// - Parameter scenarioId: Scenario ID to fetch
-    /// - Returns: Flat array of items with folder relationships
-    func fetchBudgetItemsHierarchical(scenarioId: String) async throws -> [BudgetItem] {
-        do {
-            let items = try await repository.fetchBudgetItemsHierarchical(scenarioId: scenarioId)
-            logger.info("Fetched \(items.count) hierarchical items for scenario \(scenarioId)")
-            return items
-        } catch {
-            logger.error("Error fetching hierarchical items", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "fetchBudgetItemsHierarchical",
-                    feature: "budget",
-                    metadata: ["scenarioId": scenarioId]
-                )
-            )
-            throw BudgetError.fetchFailed(underlying: error)
-        }
-    }
-
-    /// Calculates folder totals using database function
-    /// - Parameter folderId: Folder ID
-    /// - Returns: FolderTotals struct with withoutTax, tax, withTax
-    func calculateFolderTotals(folderId: String) async throws -> FolderTotals {
-        do {
-            let totals = try await repository.calculateFolderTotals(folderId: folderId)
-            logger.info("Calculated totals for folder \(folderId): $\(totals.withTax)")
-            return totals
-        } catch {
-            logger.error("Error calculating folder totals", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "calculateFolderTotals",
-                    feature: "budget",
-                    metadata: ["folderId": folderId]
-                )
-            )
-            throw BudgetError.fetchFailed(underlying: error)
-        }
-    }
-
-    /// Validates if an item can be moved to a target folder
-    /// - Parameters:
-    ///   - itemId: Item to move
-    ///   - targetFolderId: Target folder
-    /// - Returns: True if move is valid
-    /// - Throws: Repository errors if validation fails due to database/network issues
-    func canMoveItem(itemId: String, toFolder targetFolderId: String?) async throws -> Bool {
-        do {
-            let canMove = try await repository.canMoveItem(itemId: itemId, toFolder: targetFolderId)
-            return canMove
-        } catch {
-            logger.error("Error validating move", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "canMoveItem",
-                    feature: "budget",
-                    metadata: ["itemId": itemId, "targetFolderId": targetFolderId ?? "root"]
-                )
-            )
-            throw BudgetError.fetchFailed(underlying: error)
-        }
-    }
-
-    /// Deletes a folder and optionally moves contents to parent
-    /// - Parameters:
-    ///   - folderId: Folder to delete
-    ///   - deleteContents: If true, delete all contents; if false, move to parent
-    func deleteFolder(folderId: String, deleteContents: Bool) async throws {
-        do {
-            try await repository.deleteFolder(folderId: folderId, deleteContents: deleteContents)
-            logger.info("Deleted folder \(folderId), contents \(deleteContents ? "deleted" : "moved to parent")")
-        } catch {
-            logger.error("Error deleting folder", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "deleteFolder",
-                    feature: "budget",
-                    metadata: ["folderId": folderId, "deleteContents": deleteContents]
-                )
-            )
-            throw BudgetError.deleteFailed(underlying: error)
-        }
-    }
-
-    // MARK: - Folder Helper Methods
-
-    /// Builds hierarchical structure from flat array of items
-    /// - Parameter items: Flat array of budget items
-    /// - Returns: Array of items at root level (parentFolderId == nil)
-    func getChildren(of folderId: String?, from items: [BudgetItem]) -> [BudgetItem] {
-        items.filter { $0.parentFolderId == folderId }.sorted { $0.displayOrder < $1.displayOrder }
-    }
-
-    /// Gets all descendant items of a folder (recursive)
-    /// - Parameters:
-    ///   - folderId: Folder ID
-    ///   - items: All items in scenario
-    /// - Returns: All descendant items (not folders)
-    func getAllDescendants(of folderId: String, from items: [BudgetItem]) -> [BudgetItem] {
-        var result: [BudgetItem] = []
-        var queue = [folderId]
-        
-        while !queue.isEmpty {
-            let currentId = queue.removeFirst()
-            let children = items.filter { $0.parentFolderId == currentId && !$0.isFolder }
-            result.append(contentsOf: children)
-            
-            // Add child folders to queue
-            let childFolders = items.filter { $0.parentFolderId == currentId && $0.isFolder }
-            queue.append(contentsOf: childFolders.map { $0.id })
-        }
-        
-        return result
-    }
-
-    /// Calculates folder totals locally (without database call)
-    /// - Parameters:
-    ///   - folderId: Folder ID
-    ///   - allItems: All items in scenario
-    /// - Returns: FolderTotals struct
-    func calculateLocalFolderTotals(folderId: String, allItems: [BudgetItem]) -> FolderTotals {
-        let descendants = getAllDescendants(of: folderId, from: allItems)
-        let withoutTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
-        let withTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithTax }
-        let tax = withTax - withoutTax
-        
-        return FolderTotals(withoutTax: withoutTax, tax: tax, withTax: withTax)
-    }
-
-    /// Gets the hierarchy level of an item (0 = root, 1 = first level, etc.)
-    /// - Parameters:
-    ///   - itemId: Item ID
-    ///   - allItems: All items in scenario
-    /// - Returns: Hierarchy level (0-based), or -1 if circular reference detected
-    func getHierarchyLevel(itemId: String, allItems: [BudgetItem]) -> Int {
-        var level = 0
-        var currentId: String? = itemId
-        var visited = Set<String>()
-        
-        while let id = currentId,
-              let item = allItems.first(where: { $0.id == id }),
-              let parentId = item.parentFolderId {
-            // Check for circular reference
-            if visited.contains(id) {
-                // Circular reference detected - return sentinel value
-                logger.error("Circular reference detected in folder hierarchy for item: \(itemId)")
-                return -1
-            }
-            visited.insert(id)
-            
-            level += 1
-            currentId = parentId
-        }
-        
-        return level
-    }
-
     // MARK: - State Management
 
     /// Reset loaded state (for logout/tenant switch)
@@ -1484,5 +475,8 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         payments.resetLoadedState()
         gifts.resetLoadedState()
         affordability.resetLoadedState()
+        expenseStore.resetLoadedState()
+        categoryStore.resetLoadedState()
+        development.resetLoadedState()
     }
 }

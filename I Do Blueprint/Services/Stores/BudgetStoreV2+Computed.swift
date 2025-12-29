@@ -18,15 +18,8 @@ extension BudgetStoreV2 {
         loadingState.data?.summary
     }
 
-    /// Categories from loading state
-    var categories: [BudgetCategory] {
-        loadingState.data?.categories ?? []
-    }
-
-    /// Expenses from loading state
-    var expenses: [Expense] {
-        loadingState.data?.expenses ?? []
-    }
+    // NOTE: Convenience mirrors like `categories` and `expenses` have been removed.
+    // Use `categoryStore.categories` and `expenseStore.expenses` directly instead.
 
     /// Loading state indicator
     var isLoading: Bool {
@@ -155,12 +148,18 @@ extension BudgetStoreV2 {
 
     /// Total amount spent across all expenses
     var totalSpent: Double {
-        expenses.reduce(0) { $0 + $1.amount }
+        if case .loaded(let data) = loadingState {
+            return data.expenses.reduce(0) { $0 + $1.amount }
+        }
+        return 0
     }
 
     /// Total amount allocated across all categories
     var totalAllocated: Double {
-        categories.reduce(0) { $0 + $1.allocatedAmount }
+        if case .loaded(let data) = loadingState {
+            return data.categories.reduce(0) { $0 + $1.allocatedAmount }
+        }
+        return 0
     }
 
     /// Actual total budget (from summary or allocated)
@@ -255,15 +254,19 @@ extension BudgetStoreV2 {
 
     /// Total expenses amount
     var totalExpensesAmount: Double {
-        expenses.reduce(0) { $0 + $1.amount }
+        if case .loaded(let data) = loadingState {
+            return data.expenses.reduce(0) { $0 + $1.amount }
+        }
+        return 0
     }
 
     /// Paid expenses amount - calculated from actual paid payments
     var paidExpensesAmount: Double {
         // Calculate from actual payments linked to expenses
+        guard case .loaded(let data) = loadingState else { return 0 }
         var totalPaid: Double = 0
 
-        for expense in expenses {
+        for expense in data.expenses {
             // Get all payments for this expense
             let expensePayments = paymentSchedules.filter { $0.expenseId == expense.id }
 
@@ -280,7 +283,8 @@ extension BudgetStoreV2 {
 
     /// Pending expenses amount
     var pendingExpensesAmount: Double {
-        expenses.filter { $0.paymentStatus == .pending }.reduce(0) { $0 + $1.amount }
+        guard case .loaded(let data) = loadingState else { return 0 }
+        return data.expenses.filter { $0.paymentStatus == .pending }.reduce(0) { $0 + $1.amount }
     }
 
     /// Average monthly spend
@@ -291,24 +295,39 @@ extension BudgetStoreV2 {
 
     // MARK: - Category Calculations
 
-    /// Parent categories (no parent category ID)
+    /// Parent categories (no parent category ID) - delegates to CategoryStoreV2
     var parentCategories: [BudgetCategory] {
-        categories.filter { $0.parentCategoryId == nil }
+        categoryStore.parentCategories
     }
 
     // MARK: - Stats and Metrics
 
     /// Budget statistics
     var stats: BudgetStats {
-        BudgetStats(
-            totalCategories: categories.count,
-            categoriesOverBudget: categories.filter { $0.spentAmount > $0.allocatedAmount }.count,
-            categoriesOnTrack: categories.filter { $0.spentAmount <= $0.allocatedAmount }.count,
-            totalExpenses: expenses.count,
-            expensesPending: expenses.filter { $0.paymentStatus == .pending }.count,
-            expensesOverdue: expenses.filter { $0.isOverdue }.count,
-            averageSpendingPerCategory: categories.isEmpty ? 0 : totalSpent / Double(categories.count),
-            projectedOverage: max(0, totalSpent - actualTotalBudget),
+        if case .loaded(let data) = loadingState {
+            let categories = data.categories
+            let expenses = data.expenses
+            return BudgetStats(
+                totalCategories: categories.count,
+                categoriesOverBudget: categories.filter { $0.spentAmount > $0.allocatedAmount }.count,
+                categoriesOnTrack: categories.filter { $0.spentAmount <= $0.allocatedAmount }.count,
+                totalExpenses: expenses.count,
+                expensesPending: expenses.filter { $0.paymentStatus == .pending }.count,
+                expensesOverdue: expenses.filter { $0.isOverdue }.count,
+                averageSpendingPerCategory: categories.isEmpty ? 0 : totalSpent / Double(categories.count),
+                projectedOverage: max(0, totalSpent - actualTotalBudget),
+                monthlyBurnRate: 0
+            )
+        }
+        return BudgetStats(
+            totalCategories: 0,
+            categoriesOverBudget: 0,
+            categoriesOnTrack: 0,
+            totalExpenses: 0,
+            expensesPending: 0,
+            expensesOverdue: 0,
+            averageSpendingPerCategory: 0,
+            projectedOverage: 0,
             monthlyBurnRate: 0
         )
     }
@@ -328,6 +347,10 @@ extension BudgetStoreV2 {
         var alerts: [BudgetAlert] = []
 
         // Check for overspending in categories
+        guard case .loaded(let data) = loadingState else { return [] }
+        let categories = data.categories
+        let expenses = data.expenses
+
         for category in categories {
             let spent = expenses
                 .filter { $0.budgetCategoryId == category.id }
