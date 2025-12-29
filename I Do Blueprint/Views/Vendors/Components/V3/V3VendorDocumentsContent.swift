@@ -1,20 +1,75 @@
 //
-//  VendorDocumentsSection.swift
+//  V3VendorDocumentsContent.swift
 //  I Do Blueprint
 //
-//  Displays documents linked to a vendor
+//  Documents tab content for V3 vendor detail view
 //
 
 import SwiftUI
 import Dependencies
 
-struct VendorDocumentsSection: View {
+struct V3VendorDocumentsContent: View {
     let documents: [Document]
+    let isLoading: Bool
+
     @State private var selectedDocument: Document?
 
     var body: some View {
+        VStack(spacing: Spacing.xxxl) {
+            if isLoading {
+                loadingState
+            } else if !documents.isEmpty {
+                documentsContent
+            } else {
+                emptyState
+            }
+        }
+        .sheet(item: $selectedDocument) { document in
+            V3DocumentDetailSheet(document: document)
+        }
+    }
+
+    // MARK: - Loading State
+
+    private var loadingState: some View {
+        VStack(spacing: Spacing.md) {
+            ProgressView()
+                .scaleEffect(1.5)
+
+            Text("Loading documents...")
+                .font(Typography.caption)
+                .foregroundColor(AppColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 200)
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: Spacing.lg) {
+            Image(systemName: "doc.text")
+                .font(.system(size: 48))
+                .foregroundColor(AppColors.textSecondary)
+
+            Text("No Documents")
+                .font(Typography.heading)
+                .foregroundColor(AppColors.textSecondary)
+
+            Text("Documents linked to this vendor will appear here. Upload documents from the Documents page and link them to this vendor.")
+                .font(Typography.bodyRegular)
+                .foregroundColor(AppColors.textSecondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, Spacing.xl)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(Spacing.xxxl)
+    }
+
+    // MARK: - Documents Content
+
+    private var documentsContent: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            SectionHeaderV2(
+            V3SectionHeader(
                 title: "Documents",
                 icon: "doc.text.fill",
                 color: AppColors.primary
@@ -22,23 +77,42 @@ struct VendorDocumentsSection: View {
 
             VStack(spacing: Spacing.sm) {
                 ForEach(documents) { document in
-                    DocumentRowView(document: document)
+                    V3DocumentRow(document: document)
                         .onTapGesture {
                             selectedDocument = document
                         }
                 }
             }
         }
-        .sheet(item: $selectedDocument) { document in
-            DocumentDetailSheet(document: document)
-        }
     }
 }
 
-// MARK: - Document Row View
+// MARK: - Document Row
 
-struct DocumentRowView: View {
+private struct V3DocumentRow: View {
     let document: Document
+
+    @State private var isHovering = false
+
+    private var documentTypeIcon: String {
+        switch document.documentType {
+        case .contract: return "doc.text.fill"
+        case .invoice: return "doc.plaintext.fill"
+        case .receipt: return "receipt.fill"
+        case .photo: return "photo.fill"
+        case .other: return "doc.fill"
+        }
+    }
+
+    private var documentTypeColor: Color {
+        switch document.documentType {
+        case .contract: return .blue
+        case .invoice: return .green
+        case .receipt: return .orange
+        case .photo: return .purple
+        case .other: return .gray
+        }
+    }
 
     var body: some View {
         HStack(spacing: Spacing.md) {
@@ -98,48 +172,48 @@ struct DocumentRowView: View {
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.border, lineWidth: 1)
+                .stroke(isHovering ? AppColors.primary.opacity(0.3) : AppColors.border, lineWidth: 1)
         )
-    }
-
-    private var documentTypeIcon: String {
-        switch document.documentType {
-        case .contract:
-            return "doc.text.fill"
-        case .invoice:
-            return "doc.plaintext.fill"
-        case .receipt:
-            return "receipt.fill"
-        case .photo:
-            return "photo.fill"
-        case .other:
-            return "doc.fill"
+        .scaleEffect(isHovering ? 1.01 : 1.0)
+        .animation(.easeInOut(duration: 0.2), value: isHovering)
+        .onHover { hovering in
+            isHovering = hovering
         }
-    }
-
-    private var documentTypeColor: Color {
-        switch document.documentType {
-        case .contract:
-            return .blue
-        case .invoice:
-            return .green
-        case .receipt:
-            return .orange
-        case .photo:
-            return .purple
-        case .other:
-            return .gray
-        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(document.originalFilename), \(document.documentType.displayName)")
+        .accessibilityHint("Double tap to view document details")
     }
 }
 
 // MARK: - Document Detail Sheet
 
-struct DocumentDetailSheet: View {
+private struct V3DocumentDetailSheet: View {
     let document: Document
     @Environment(\.dismiss) var dismiss
     @State private var isDownloading = false
     @Dependency(\.documentRepository) var documentRepository
+
+    private let logger = AppLogger.ui
+
+    private var documentTypeIcon: String {
+        switch document.documentType {
+        case .contract: return "doc.text.fill"
+        case .invoice: return "doc.plaintext.fill"
+        case .receipt: return "receipt.fill"
+        case .photo: return "photo.fill"
+        case .other: return "doc.fill"
+        }
+    }
+
+    private var documentTypeColor: Color {
+        switch document.documentType {
+        case .contract: return .blue
+        case .invoice: return .green
+        case .receipt: return .orange
+        case .photo: return .purple
+        case .other: return .gray
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -151,7 +225,9 @@ struct DocumentDetailSheet: View {
 
                 Spacer()
 
-                Button(action: { dismiss() }) {
+                Button {
+                    dismiss()
+                } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 24))
                         .foregroundColor(AppColors.textSecondary)
@@ -193,10 +269,10 @@ struct DocumentDetailSheet: View {
 
                     // Document Details
                     VStack(alignment: .leading, spacing: Spacing.md) {
-                        DocumentDetailRow(label: "File Size", value: document.formattedSize)
-                        DocumentDetailRow(label: "File Type", value: document.fileExtension)
-                        DocumentDetailRow(label: "Uploaded", value: document.uploadedAt.formatted(date: .long, time: .shortened))
-                        DocumentDetailRow(label: "Uploaded By", value: document.uploadedBy)
+                        V3DocumentDetailRow(label: "File Size", value: document.formattedSize)
+                        V3DocumentDetailRow(label: "File Type", value: document.fileExtension)
+                        V3DocumentDetailRow(label: "Uploaded", value: document.uploadedAt.formatted(date: .long, time: .shortened))
+                        V3DocumentDetailRow(label: "Uploaded By", value: document.uploadedBy)
 
                         if !document.tags.isEmpty {
                             VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -204,15 +280,15 @@ struct DocumentDetailSheet: View {
                                     .font(Typography.caption)
                                     .foregroundColor(AppColors.textSecondary)
 
-                                TagFlowLayout(spacing: Spacing.xs) {
+                                FlowLayout(spacing: Spacing.xs) {
                                     ForEach(document.tags, id: \.self) { tag in
                                         Text(tag)
-                                        .font(Typography.caption)
-                                        .foregroundColor(AppColors.primary)
-                                        .padding(.horizontal, Spacing.sm)
-                                        .padding(.vertical, Spacing.xs)
-                                        .background(AppColors.primary.opacity(0.1))
-                                        .cornerRadius(CornerRadius.sm)
+                                            .font(Typography.caption)
+                                            .foregroundColor(AppColors.primary)
+                                            .padding(.horizontal, Spacing.sm)
+                                            .padding(.vertical, Spacing.xs)
+                                            .background(AppColors.primary.opacity(0.1))
+                                            .cornerRadius(CornerRadius.sm)
                                     }
                                 }
                             }
@@ -223,7 +299,9 @@ struct DocumentDetailSheet: View {
 
                     // Actions
                     VStack(spacing: Spacing.sm) {
-                        Button(action: { downloadDocument() }) {
+                        Button {
+                            downloadDocument()
+                        } label: {
                             HStack {
                                 if isDownloading {
                                     ProgressView()
@@ -236,7 +314,7 @@ struct DocumentDetailSheet: View {
                             .frame(maxWidth: .infinity)
                             .padding(Spacing.md)
                             .background(AppColors.primary)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(.white)
                             .cornerRadius(CornerRadius.md)
                         }
                         .buttonStyle(.plain)
@@ -248,36 +326,6 @@ struct DocumentDetailSheet: View {
         }
         .frame(width: 500, height: 600)
         .background(AppColors.background)
-    }
-
-    private var documentTypeIcon: String {
-        switch document.documentType {
-        case .contract:
-            return "doc.text.fill"
-        case .invoice:
-            return "doc.plaintext.fill"
-        case .receipt:
-            return "receipt.fill"
-        case .photo:
-            return "photo.fill"
-        case .other:
-            return "doc.fill"
-        }
-    }
-
-    private var documentTypeColor: Color {
-        switch document.documentType {
-        case .contract:
-            return .blue
-        case .invoice:
-            return .green
-        case .receipt:
-            return .orange
-        case .photo:
-            return .purple
-        case .other:
-            return .gray
-        }
     }
 
     private func downloadDocument() {
@@ -300,15 +348,17 @@ struct DocumentDetailSheet: View {
                                 try data.write(to: url)
                                 NSWorkspace.shared.activateFileViewerSelecting([url])
                             } catch {
-                                AppLogger.ui.error("Error saving file", error: error)
+                                logger.error("Error saving file", error: error)
                             }
                         }
                         isDownloading = false
                     }
                 }
             } catch {
-                AppLogger.ui.error("Error downloading document", error: error)
-                isDownloading = false
+                logger.error("Error downloading document", error: error)
+                await MainActor.run {
+                    isDownloading = false
+                }
             }
         }
     }
@@ -316,7 +366,7 @@ struct DocumentDetailSheet: View {
 
 // MARK: - Document Detail Row
 
-struct DocumentDetailRow: View {
+private struct V3DocumentDetailRow: View {
     let label: String
     let value: String
 
@@ -335,102 +385,67 @@ struct DocumentDetailRow: View {
     }
 }
 
-// MARK: - Tag Flow Layout
+// Note: FlowLayout is defined in MoodBoardDetailsView.swift and reused here
 
-struct TagFlowLayout: Layout {
-    var spacing: CGFloat = 8
+// MARK: - Preview
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(
-            in: proposal.replacingUnspecifiedDimensions().width,
-            subviews: subviews,
-            spacing: spacing
-        )
-        return result.size
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = FlowResult(
-            in: bounds.width,
-            subviews: subviews,
-            spacing: spacing
-        )
-        for (index, subview) in subviews.enumerated() {
-            subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x, y: bounds.minY + result.positions[index].y), proposal: .unspecified)
-        }
-    }
-
-    struct FlowResult {
-        var size: CGSize = .zero
-        var positions: [CGPoint] = []
-
-        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
-            var x: CGFloat = 0
-            var y: CGFloat = 0
-            var lineHeight: CGFloat = 0
-
-            for subview in subviews {
-                let size = subview.sizeThatFits(.unspecified)
-
-                if x + size.width > maxWidth && x > 0 {
-                    x = 0
-                    y += lineHeight + spacing
-                    lineHeight = 0
-                }
-
-                positions.append(CGPoint(x: x, y: y))
-                lineHeight = max(lineHeight, size.height)
-                x += size.width + spacing
-            }
-
-            self.size = CGSize(width: maxWidth, height: y + lineHeight)
-        }
-    }
+#Preview("Documents Content - With Data") {
+    V3VendorDocumentsContent(
+        documents: [
+            Document(
+                id: UUID(),
+                coupleId: UUID(),
+                originalFilename: "Vendor Contract.pdf",
+                storagePath: "contracts/vendor-contract.pdf",
+                fileSize: 1024000,
+                mimeType: "application/pdf",
+                documentType: .contract,
+                bucketName: "invoices-and-contracts",
+                vendorId: 1,
+                expenseId: nil,
+                paymentId: nil,
+                tags: ["contract", "signed"],
+                uploadedBy: "user@example.com",
+                uploadedAt: Date(),
+                updatedAt: Date(),
+                autoTagStatus: .manual,
+                autoTagSource: .manual,
+                autoTaggedAt: nil,
+                autoTagError: nil
+            ),
+            Document(
+                id: UUID(),
+                coupleId: UUID(),
+                originalFilename: "Invoice.pdf",
+                storagePath: "invoices/invoice.pdf",
+                fileSize: 512000,
+                mimeType: "application/pdf",
+                documentType: .invoice,
+                bucketName: "invoices-and-contracts",
+                vendorId: 1,
+                expenseId: nil,
+                paymentId: nil,
+                tags: [],
+                uploadedBy: "user@example.com",
+                uploadedAt: Date(),
+                updatedAt: Date(),
+                autoTagStatus: .manual,
+                autoTagSource: .manual,
+                autoTaggedAt: nil,
+                autoTagError: nil
+            )
+        ],
+        isLoading: false
+    )
+    .padding()
+    .background(AppColors.background)
 }
 
-#Preview {
-    VendorDocumentsSection(documents: [
-        Document(
-            id: UUID(),
-            coupleId: UUID(),
-            originalFilename: "DJ Contract.pdf",
-            storagePath: "contracts/dj-contract.pdf",
-            fileSize: 1024000,
-            mimeType: "application/pdf",
-            documentType: .contract,
-            bucketName: "invoices-and-contracts",
-            vendorId: 96,
-            expenseId: nil,
-            paymentId: nil,
-            tags: ["contract", "signed"],
-            uploadedBy: "user@example.com",
-            uploadedAt: Date(),
-            updatedAt: Date(),
-            autoTagStatus: .manual,
-            autoTagSource: .manual,
-            autoTaggedAt: nil,
-            autoTagError: nil
-        ),
-        Document(
-            id: UUID(),
-            coupleId: UUID(),
-            originalFilename: "DJ Invoice.pdf",
-            storagePath: "invoices/dj-invoice.pdf",
-            fileSize: 512000,
-            mimeType: "application/pdf",
-            documentType: .invoice,
-            bucketName: "invoices-and-contracts",
-            vendorId: 96,
-            expenseId: nil,
-            paymentId: nil,
-            tags: ["invoice", "paid"],
-            uploadedBy: "user@example.com",
-            uploadedAt: Date(),
-            updatedAt: Date(),
-            autoTagStatus: .manual,
-            autoTagSource: .manual,
-            autoTaggedAt: nil,
-            autoTagError: nil
-        )
-    ])
+#Preview("Documents Content - Empty") {
+    V3VendorDocumentsContent(
+        documents: [],
+        isLoading: false
+    )
+    .padding()
+    .background(AppColors.background)
 }

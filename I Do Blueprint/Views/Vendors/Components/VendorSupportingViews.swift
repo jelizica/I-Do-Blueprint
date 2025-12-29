@@ -8,6 +8,24 @@
 import AppKit
 import SwiftUI
 
+// MARK: - Section Header V2
+
+struct SectionHeaderV2: View {
+    let title: String
+    let icon: String
+    var color: Color = AppColors.primary
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+            Text(title)
+                .font(.headline)
+                .foregroundColor(AppColors.textPrimary)
+        }
+    }
+}
+
 // MARK: - Vendor Header
 
 struct VendorHeaderView: View {
@@ -94,10 +112,18 @@ struct VendorStatusView: View {
 
             // Contract status
             if vendorDetails.contractStatus != .none {
+                let contractColor: Color = {
+                    switch vendorDetails.contractStatus.colorName {
+                    case "green": return .green
+                    case "orange": return .orange
+                    case "red": return .red
+                    default: return .gray
+                    }
+                }()
                 StatusIndicator(
                     title: "Contract",
                     value: vendorDetails.contractStatus.displayName,
-                    color: vendorDetails.contractStatus.color,
+                    color: contractColor,
                     icon: "doc.text.fill")
             }
 
@@ -259,7 +285,7 @@ struct FinancialRow: View {
                     .textCase(.uppercase)
                     .tracking(0.5)
 
-                Text(NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0")
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundColor(color)

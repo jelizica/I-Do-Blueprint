@@ -1,41 +1,51 @@
 //
-//  VendorExportFlagSection.swift
-//  My Wedding Planning App
+//  V3VendorExportToggle.swift
+//  I Do Blueprint
 //
-//  Extracted from VendorDetailViewV2.swift
+//  Export settings toggle for V3 vendor detail view
 //
 
 import SwiftUI
 
-struct VendorExportFlagSection: View {
+struct V3VendorExportToggle: View {
     let vendor: Vendor
-    let onToggle: (Bool) -> Void
+    let onToggle: (Bool) async -> Void
+
     @State private var isToggling = false
+    @State private var localValue: Bool
+
+    init(vendor: Vendor, onToggle: @escaping (Bool) async -> Void) {
+        self.vendor = vendor
+        self.onToggle = onToggle
+        _localValue = State(initialValue: vendor.includeInExport)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            SectionHeaderV2(
+            V3SectionHeader(
                 title: "Export Settings",
                 icon: "square.and.arrow.up.circle.fill",
                 color: AppColors.Vendor.contacted
             )
 
             HStack(spacing: Spacing.lg) {
+                // Icon
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title)
-                    .foregroundColor(vendor.includeInExport ? AppColors.Vendor.booked : AppColors.Vendor.notContacted.opacity(0.3))
+                    .foregroundColor(localValue ? AppColors.Vendor.booked : AppColors.Vendor.notContacted.opacity(0.3))
                     .frame(width: 48, height: 48)
                     .background(
                         Circle()
-                            .fill((vendor.includeInExport ? AppColors.Vendor.booked : AppColors.Vendor.notContacted).opacity(0.15))
+                            .fill((localValue ? AppColors.Vendor.booked : AppColors.Vendor.notContacted).opacity(0.15))
                     )
 
+                // Text
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Include in Contact List Export")
                         .font(Typography.heading)
                         .foregroundColor(AppColors.textPrimary)
 
-                    Text(vendor.includeInExport
+                    Text(localValue
                         ? "This vendor will be included when you export contact lists"
                         : "This vendor will not be included in exported contact lists")
                         .font(Typography.caption)
@@ -44,23 +54,21 @@ struct VendorExportFlagSection: View {
 
                 Spacer()
 
+                // Toggle
                 if isToggling {
                     ProgressView()
                         .scaleEffect(0.8)
                 } else {
-                    Toggle("", isOn: Binding(
-                        get: { vendor.includeInExport },
-                        set: { newValue in
-                            isToggling = true
-                            onToggle(newValue)
-                            // Reset after a delay to allow the update
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    Toggle("", isOn: $localValue)
+                        .toggleStyle(.switch)
+                        .labelsHidden()
+                        .onChange(of: localValue) { _, newValue in
+                            Task {
+                                isToggling = true
+                                await onToggle(newValue)
                                 isToggling = false
                             }
                         }
-                    ))
-                    .toggleStyle(.switch)
-                    .labelsHidden()
                 }
             }
             .padding(Spacing.lg)
@@ -72,8 +80,8 @@ struct VendorExportFlagSection: View {
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .strokeBorder(
-                        vendor.includeInExport ? AppColors.Vendor.booked.opacity(0.3) : AppColors.border,
-                        lineWidth: vendor.includeInExport ? 2 : 1
+                        localValue ? AppColors.Vendor.booked.opacity(0.3) : AppColors.border,
+                        lineWidth: localValue ? 2 : 1
                     )
             )
 
@@ -89,5 +97,28 @@ struct VendorExportFlagSection: View {
             }
             .padding(.horizontal, Spacing.sm)
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Include in contact list export: \(localValue ? "enabled" : "disabled")")
+        .accessibilityHint("Toggle to include or exclude this vendor from exports")
     }
+}
+
+// MARK: - Preview
+
+#Preview("Export Toggle - Enabled") {
+    V3VendorExportToggle(
+        vendor: .makeTest(includeInExport: true),
+        onToggle: { _ in }
+    )
+    .padding()
+    .background(AppColors.background)
+}
+
+#Preview("Export Toggle - Disabled") {
+    V3VendorExportToggle(
+        vendor: .makeTest(includeInExport: false),
+        onToggle: { _ in }
+    )
+    .padding()
+    .background(AppColors.background)
 }

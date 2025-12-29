@@ -92,7 +92,7 @@ struct VendorManagementViewV3: View {
                 .environmentObject(vendorStore)
         }
         .sheet(item: $selectedVendor) { vendor in
-            VendorDetailViewV2(
+            VendorDetailViewV3(
                 vendor: vendor,
                 vendorStore: vendorStore
             )
