@@ -42,7 +42,7 @@ struct BudgetDetailedView: View {
                     .font(Typography.heading)
                     .foregroundColor(AppColors.textPrimary)
 
-                ForEach(store.categories) { category in
+                ForEach(store.categoryStore.categories) { category in
                     CategoryRow(category: category)
                 }
             }

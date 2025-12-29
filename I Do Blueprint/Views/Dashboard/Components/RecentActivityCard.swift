@@ -24,7 +24,7 @@ struct RecentActivityCard: View {
         var items: [Activity] = []
 
         // Recent expenses
-        if let recentExpense = budgetStore.expenses.first {
+        if let recentExpense = budgetStore.expenseStore.expenses.first {
             items.append(Activity(
                 icon: "checkmark.circle.fill",
                 text: "Expense added: \(recentExpense.expenseName)",

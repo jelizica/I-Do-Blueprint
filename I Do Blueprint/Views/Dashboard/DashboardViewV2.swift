@@ -286,8 +286,8 @@ struct DashboardViewV2: View {
             spent: spent,
             remaining: remaining,
             percentageUsed: percentageUsed,
-            categories: budgetStore.categories.count,
-            overBudgetCategories: budgetStore.categories.filter { $0.spentAmount > $0.allocatedAmount }.count,
+            categories: budgetStore.categoryStore.categories.count,
+            overBudgetCategories: budgetStore.categoryStore.categories.filter { $0.spentAmount > $0.allocatedAmount }.count,
             recentExpenses: []
         )
 
