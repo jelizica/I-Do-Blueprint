@@ -455,20 +455,20 @@ struct PaymentPlanSummary: Identifiable, Sendable, Codable {
     }
     
     var formattedTotalAmount: String {
-        NumberFormatter.currency.string(from: NSNumber(value: totalAmount)) ?? "$0"
+        NumberFormatter.currencyShort.string(from: NSNumber(value: totalAmount)) ?? "$0"
     }
     
     var formattedAmountPaid: String {
-        NumberFormatter.currency.string(from: NSNumber(value: amountPaid)) ?? "$0"
+        NumberFormatter.currencyShort.string(from: NSNumber(value: amountPaid)) ?? "$0"
     }
     
     var formattedAmountRemaining: String {
-        NumberFormatter.currency.string(from: NSNumber(value: amountRemaining)) ?? "$0"
+        NumberFormatter.currencyShort.string(from: NSNumber(value: amountRemaining)) ?? "$0"
     }
     
     var formattedNextPaymentAmount: String? {
         guard let amount = nextPaymentAmount else { return nil }
-        return NumberFormatter.currency.string(from: NSNumber(value: amount))
+        return NumberFormatter.currencyShort.string(from: NSNumber(value: amount))
     }
 }
 
