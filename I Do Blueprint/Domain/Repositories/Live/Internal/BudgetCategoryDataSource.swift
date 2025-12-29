@@ -305,7 +305,7 @@ actor BudgetCategoryDataSource {
             
             // Merge results and deduplicate by id
             let allItems = categoryItems + subcategoryItems
-            let uniqueItemsDict = Dictionary(uniqueKeysWithValues: allItems.map { ($0.id, $0) })
+            let uniqueItemsDict = Dictionary(allItems.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
             let budgetItems = Array(uniqueItemsDict.values)
             
             let duration = Date().timeIntervalSince(startTime)

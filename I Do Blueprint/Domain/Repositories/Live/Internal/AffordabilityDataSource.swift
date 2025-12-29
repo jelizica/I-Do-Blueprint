@@ -79,8 +79,7 @@ actor AffordabilityDataSource {
             return result
         } catch {
             inFlightScenarios = nil
-            let duration = Date().timeIntervalSince(Date())
-            logger.error("Affordability scenarios fetch failed after \(String(format: "%.2f", duration))s", error: error)
+            logger.error("Affordability scenarios fetch failed", error: error)
             
             await SentryService.shared.captureError(error, context: [
                 "operation": "fetchAffordabilityScenarios",

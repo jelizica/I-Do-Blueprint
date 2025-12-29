@@ -302,14 +302,51 @@ actor ExpenseDataSource {
     /// Rolls back an expense to its previous state
     func rollbackExpense(_ expense: Expense) async throws {
         do {
+            // Create rollback update excluding computed fields like vendorName
+            struct ExpenseRollback: Codable {
+                let expenseName: String
+                let amount: Double
+                let categoryId: UUID?
+                let vendorId: Int64?
+                let paid: Bool
+                let notes: String?
+                let expenseDate: Date?
+                let updatedAt: Date
+
+                enum CodingKeys: String, CodingKey {
+                    case expenseName = "expense_name"
+                    case amount
+                    case categoryId = "category_id"
+                    case vendorId = "vendor_id"
+                    case paid
+                    case notes
+                    case expenseDate = "expense_date"
+                    case updatedAt = "updated_at"
+                }
+            }
+
+            let rollbackData = ExpenseRollback(
+                expenseName: expense.expenseName,
+                amount: expense.amount,
+                categoryId: expense.categoryId,
+                vendorId: expense.vendorId,
+                paid: expense.paid,
+                notes: expense.notes,
+                expenseDate: expense.expenseDate,
+                updatedAt: Date()
+            )
+
             try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
                     .from("expenses")
-                    .update(expense)
+                    .update(rollbackData)
                     .eq("id", value: expense.id)
                     .execute()
             }
             logger.info("Rolled back expense: \(expense.id)")
+
+            // Invalidate cache after rollback
+            await RepositoryCache.shared.remove("expenses_\(expense.coupleId.uuidString)")
         } catch {
             logger.error("Failed to rollback expense", error: error)
             throw error

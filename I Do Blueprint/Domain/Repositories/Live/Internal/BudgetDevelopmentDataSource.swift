@@ -247,20 +247,22 @@ actor BudgetDevelopmentDataSource {
         
         let task = Task<[BudgetItem], Error> { [weak self] in
             guard let self = self else { throw CancellationError() }
-            
-            var query = self.supabase.from("budget_development_items").select()
-            
-            if let scenarioId {
-                query = query.eq("scenario_id", value: scenarioId)
+
+            let items: [BudgetItem] = try await RepositoryNetwork.withRetry {
+                var query = self.supabase.from("budget_development_items").select()
+
+                if let scenarioId {
+                    query = query.eq("scenario_id", value: scenarioId)
+                }
+
+                return try await query
+                    .order("created_at", ascending: false)
+                    .execute()
+                    .value
             }
-            
-            let items: [BudgetItem] = try await query
-                .order("created_at", ascending: false)
-                .execute()
-                .value
-            
+
             await RepositoryCache.shared.set(cacheKey, value: items)
-            
+
             return items
         }
         
@@ -328,6 +330,7 @@ actor BudgetDevelopmentDataSource {
             // Invalidate caches
             if let scenarioId = item.scenarioId {
                 await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
+                await RepositoryCache.shared.remove("budget_items_hierarchical_\(scenarioId)")
             }
             await RepositoryCache.shared.remove("budget_dev_items_all")
             
@@ -707,7 +710,7 @@ actor BudgetDevelopmentDataSource {
             
             // Invalidate budget development items cache for all scenarios
             let stats = await RepositoryCache.shared.stats()
-            for key in stats.keys where key.hasPrefix("budget_development_items_") {
+            for key in stats.keys where key.hasPrefix("budget_dev_items_") {
                 await RepositoryCache.shared.remove(key)
             }
         } catch {
@@ -915,15 +918,17 @@ actor BudgetDevelopmentDataSource {
         
         do {
             let now = Date()
-            let updates = items.map { (itemId, order) in
-                OrderUpdate(id: itemId, displayOrder: order, updatedAt: now)
-            }
-            
+
+            // Update each item individually to avoid upsert creating malformed records
             try await RepositoryNetwork.withRetry { [self] in
-                try await self.supabase
-                    .from("budget_development_items")
-                    .upsert(updates)
-                    .execute()
+                for (itemId, order) in items {
+                    let update = OrderUpdate(id: itemId, displayOrder: order, updatedAt: now)
+                    try await self.supabase
+                        .from("budget_development_items")
+                        .update(update)
+                        .eq("id", value: itemId)
+                        .execute()
+                }
             }
             
             let duration = Date().timeIntervalSince(startTime)

@@ -164,6 +164,8 @@ actor PaymentScheduleDataSource {
                 updatedAt: schedule.updatedAt
             )
 
+            // NOTE: Insert wrapped in retry has small risk of duplicate creation on network timeout
+            // This is acceptable as database constraints will prevent true duplicates
             let created: PaymentSchedule = try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
                     .from("payment_plans")
@@ -176,7 +178,8 @@ actor PaymentScheduleDataSource {
 
             _ = Date().timeIntervalSince(startTime)
 
-            await RepositoryCache.shared.remove("payment_schedules")
+            // Invalidate cache with tenant ID
+            await RepositoryCache.shared.remove("payment_schedules_\(schedule.coupleId.uuidString)")
 
             return created
         } catch {
@@ -324,7 +327,8 @@ actor PaymentScheduleDataSource {
 
             _ = Date().timeIntervalSince(startTime)
 
-            await RepositoryCache.shared.remove("payment_schedules")
+            // Invalidate cache with tenant ID
+            await RepositoryCache.shared.remove("payment_schedules_\(schedule.coupleId.uuidString)")
 
             return result
         } catch {
@@ -343,6 +347,18 @@ actor PaymentScheduleDataSource {
         do {
             let startTime = Date()
 
+            // Fetch the schedule first to get couple_id for proper cache invalidation
+            let schedules: [PaymentSchedule] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("payment_plans")
+                    .select()
+                    .eq("id", value: String(id))
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+            let schedule = schedules.first
+
             try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
                     .from("payment_plans")
@@ -353,7 +369,10 @@ actor PaymentScheduleDataSource {
 
             _ = Date().timeIntervalSince(startTime)
 
-            await RepositoryCache.shared.remove("payment_schedules")
+            // Invalidate cache with tenant ID
+            if let schedule = schedule {
+                await RepositoryCache.shared.remove("payment_schedules_\(schedule.coupleId.uuidString)")
+            }
         } catch {
             await SentryService.shared.captureError(error, context: [
                 "operation": "deletePaymentSchedule",

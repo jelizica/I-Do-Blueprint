@@ -14,7 +14,6 @@ import Supabase
 actor GiftsAndOwedDataSource {
     private let supabase: SupabaseClient
     private let logger = AppLogger.repository
-    private lazy var cacheStrategy: BudgetCacheStrategy = BudgetCacheStrategy()
 
     init(supabase: SupabaseClient) {
         self.supabase = supabase
@@ -72,8 +71,8 @@ actor GiftsAndOwedDataSource {
             // Log important mutation
             logger.info("Created gift/owed: \(created.title)")
 
-            // Invalidate cache
-            await RepositoryCache.shared.remove("gifts_and_owed")
+            // Invalidate cache with tenant ID
+            await RepositoryCache.shared.remove("gifts_and_owed_\(gift.coupleId.uuidString)")
             if let scenarioId = gift.scenarioId {
                 await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
             }
@@ -113,8 +112,8 @@ actor GiftsAndOwedDataSource {
             // Log important mutation
             logger.info("Updated gift/owed: \(result.title)")
 
-            // Invalidate cache
-            await RepositoryCache.shared.remove("gifts_and_owed")
+            // Invalidate cache with tenant ID
+            await RepositoryCache.shared.remove("gifts_and_owed_\(gift.coupleId.uuidString)")
             if let scenarioId = gift.scenarioId {
                 await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
             }
@@ -135,6 +134,18 @@ actor GiftsAndOwedDataSource {
         do {
             let startTime = Date()
 
+            // Fetch the gift first to get couple_id and scenario_id for proper cache invalidation
+            let gifts: [GiftOrOwed] = try await RepositoryNetwork.withRetry {
+                try await self.supabase
+                    .from("gifts_and_owed")
+                    .select()
+                    .eq("id", value: id)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+            let gift = gifts.first
+
             try await RepositoryNetwork.withRetry {
                 try await self.supabase
                     .from("gifts_and_owed")
@@ -148,8 +159,13 @@ actor GiftsAndOwedDataSource {
             // Log important mutation
             logger.info("Deleted gift/owed: \(id)")
 
-            // Invalidate cache
-            await RepositoryCache.shared.remove("gifts_and_owed")
+            // Invalidate cache with tenant ID
+            if let gift = gift {
+                await RepositoryCache.shared.remove("gifts_and_owed_\(gift.coupleId.uuidString)")
+                if let scenarioId = gift.scenarioId {
+                    await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+                }
+            }
         } catch {
             logger.error("Failed to delete gift/owed", error: error)
             await SentryService.shared.captureError(error, context: [
