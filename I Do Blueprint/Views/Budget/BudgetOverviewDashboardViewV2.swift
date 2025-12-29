@@ -301,14 +301,14 @@ struct BudgetOverviewDashboardViewV2: View {
         isRefreshing = true
         defer { isRefreshing = false }
 
-        await budgetStore.refreshBudgetData()
+        await budgetStore.refresh()
         currentScenario = budgetStore.savedScenarios.first { $0.id == selectedScenarioId }
         await loadBudgetItems()
         applyFiltersAndSearch()
     }
 
     private func loadBudgetItems() async {
-        budgetItems = await budgetStore.loadBudgetDevelopmentItemsWithSpentAmounts(scenarioId: selectedScenarioId)
+        budgetItems = await budgetStore.development.loadBudgetDevelopmentItemsWithSpentAmounts(scenarioId: selectedScenarioId)
             }
 
     // MARK: - Search and Filtering
@@ -390,7 +390,7 @@ struct BudgetOverviewDashboardViewV2: View {
         }
 
         do {
-            try await budgetStore.unlinkExpense(
+            try await budgetStore.expenseStore.unlinkExpense(
                 expenseId: expenseId,
                 budgetItemId: itemId,
                 scenarioId: scenario.id
@@ -410,19 +410,18 @@ struct BudgetOverviewDashboardViewV2: View {
             }
 
     private func handleUnlinkGift(itemId: String) async {
-        guard currentScenario != nil else {
+        guard let scenario = currentScenario else {
             logger.warning("Cannot unlink gift: Current scenario not available")
             return
         }
 
-
-        do {
-            try await budgetStore.unlinkGift(budgetItemId: itemId)
-            logger.info("Gift unlinked successfully")
-            await refreshData()
-        } catch {
-            logger.error("Error unlinking gift", error: error)
-        }
+        // TODO: Implement gift unlinking - need to determine giftId from budgetItemId
+        logger.warning("Gift unlinking not yet implemented for budget item: \(itemId)")
+        
+        // Placeholder implementation - would need to:
+        // 1. Find the gift linked to this budget item
+        // 2. Call budgetStore.unlinkGiftFromScenario(giftId: giftId, scenarioId: scenario.id)
+        // 3. Refresh data
     }
 
     private func handleAddExpense(itemId: String) {

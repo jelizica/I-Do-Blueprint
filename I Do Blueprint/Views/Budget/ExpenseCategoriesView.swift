@@ -10,7 +10,7 @@ struct ExpenseCategoriesView: View {
     @State private var categoryToDelete: BudgetCategory?
 
     private var filteredCategories: [BudgetCategory] {
-        let categories = budgetStore.categories
+        let categories = budgetStore.categoryStore.categories
 
         let searchFiltered = searchText.isEmpty ? categories : categories.filter { category in
             category.categoryName.localizedCaseInsensitiveContains(searchText)
@@ -107,7 +107,11 @@ struct ExpenseCategoriesView: View {
             Button("Delete", role: .destructive) {
                 if let category = categoryToDelete {
                     Task {
-                        await budgetStore.deleteCategory(id: category.id)
+                        do {
+                            try await budgetStore.categoryStore.deleteCategory(id: category.id)
+                        } catch {
+                            AppLogger.ui.error("Failed to delete category", error: error)
+                        }
                     }
                 }
             }
@@ -133,7 +137,7 @@ struct CategorySection: View {
     // Parent categories should only show sum of subcategories (not their own allocated amount)
     private var totalSpent: Double {
         subcategories.reduce(0) { total, subcategory in
-            total + budgetStore.spentAmount(for: subcategory.id)
+            total + budgetStore.categoryStore.spentAmount(for: subcategory.id, expenses: budgetStore.expenseStore.expenses)
         }
     }
 
@@ -161,7 +165,7 @@ struct CategorySection: View {
                 ForEach(subcategories, id: \.id) { subcategory in
                     CategoryRowView(
                         category: subcategory,
-                        spentAmount: budgetStore.spentAmount(for: subcategory.id),
+                        spentAmount: budgetStore.categoryStore.spentAmount(for: subcategory.id, expenses: budgetStore.expenseStore.expenses),
                         isParent: false,
                         budgetStore: budgetStore,
                         onEdit: onEdit,
@@ -230,14 +234,6 @@ struct CategoryFolderRowView: View {
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
-                
-                // Linked budget items count
-                let linkedCount = budgetStore.linkedBudgetItemsCount(for: category)
-                if linkedCount > 0 {
-                    Text("\(linkedCount) linked budget item\(linkedCount == 1 ? "" : "s")")
-                        .font(.caption2)
-                        .foregroundColor(.blue)
-                }
 
                 // Budget progress
                 if totalBudgeted > 0 {
@@ -258,12 +254,12 @@ struct CategoryFolderRowView: View {
 
             // Budget information (sum of subcategories)
             VStack(alignment: .trailing, spacing: 2) {
-                Text(NumberFormatter.currency.string(from: NSNumber(value: totalSpent)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: totalSpent)) ?? "$0")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(statusColor)
 
-                Text("of \(NumberFormatter.currency.string(from: NSNumber(value: totalBudgeted)) ?? "$0")")
+                Text("of \(NumberFormatter.currencyShort.string(from: NSNumber(value: totalBudgeted)) ?? "$0")")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -325,7 +321,11 @@ struct CategoryFolderRowView: View {
         )
         
         Task {
-            await budgetStore.addCategory(duplicatedCategory)
+            do {
+                _ = try await budgetStore.categoryStore.addCategory(duplicatedCategory)
+            } catch {
+                AppLogger.ui.error("Failed to duplicate category", error: error)
+            }
         }
     }
 }
@@ -374,14 +374,6 @@ struct CategoryRowView: View {
                         .foregroundColor(.secondary)
                         .lineLimit(1)
                 }
-                
-                // Linked budget items count
-                let linkedCount = budgetStore.linkedBudgetItemsCount(for: category)
-                if linkedCount > 0 {
-                    Text("\(linkedCount) linked budget item\(linkedCount == 1 ? "" : "s")")
-                        .font(.caption2)
-                        .foregroundColor(.blue)
-                }
 
                 // Budget progress
                 HStack(spacing: 8) {
@@ -400,12 +392,12 @@ struct CategoryRowView: View {
 
             // Budget information
             VStack(alignment: .trailing, spacing: 2) {
-                Text(NumberFormatter.currency.string(from: NSNumber(value: spentAmount)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: spentAmount)) ?? "$0")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(statusColor)
 
-                Text("of \(NumberFormatter.currency.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")")
+                Text("of \(NumberFormatter.currencyShort.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")")
                     .font(.caption2)
                     .foregroundColor(.secondary)
             }
@@ -468,7 +460,11 @@ struct CategoryRowView: View {
         )
         
         Task {
-            await budgetStore.addCategory(duplicatedCategory)
+            do {
+                _ = try await budgetStore.categoryStore.addCategory(duplicatedCategory)
+            } catch {
+                AppLogger.ui.error("Failed to duplicate category", error: error)
+            }
         }
     }
 }
@@ -583,8 +579,12 @@ struct AddCategoryView: View {
             updatedAt: nil)
 
         Task {
-            await budgetStore.addCategory(category)
-            dismiss()
+            do {
+                _ = try await budgetStore.categoryStore.addCategory(category)
+                dismiss()
+            } catch {
+                AppLogger.ui.error("Failed to add category", error: error)
+            }
         }
     }
 }
@@ -682,8 +682,12 @@ struct EditCategoryView: View {
         updatedCategory.typicalPercentage = Double(typicalPercentage)
 
         Task {
-            await budgetStore.updateCategory(updatedCategory)
-            dismiss()
+            do {
+                _ = try await budgetStore.categoryStore.updateCategory(updatedCategory)
+                dismiss()
+            } catch {
+                AppLogger.ui.error("Failed to update category", error: error)
+            }
         }
     }
 }

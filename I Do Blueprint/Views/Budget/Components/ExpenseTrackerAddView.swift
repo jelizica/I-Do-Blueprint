@@ -65,7 +65,7 @@ struct ExpenseTrackerAddView: View {
                             .foregroundColor(.secondary)
                         
                         HierarchicalCategoryPicker(
-                            categories: budgetStore.categories,
+                            categories: budgetStore.categoryStore.categories,
                             selectedCategoryId: $selectedCategoryId
                         )
                     }
@@ -163,7 +163,7 @@ struct ExpenseTrackerAddView: View {
                     createdAt: Date(),
                     updatedAt: nil)
 
-                _ = try await budgetStore.createExpense(expense)
+                _ = try await budgetStore.expenseStore.addExpense(expense)
                 dismiss()
             } catch {
                 logger.error("Failed to add expense", error: error)

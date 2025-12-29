@@ -9,22 +9,22 @@ struct BudgetCalculatorView: View {
             // Scenario Selector Header
             BudgetCalculatorHeader(
                 selectedScenarioId: Binding(
-                    get: { budgetStore.selectedScenario?.id },
+                    get: { budgetStore.affordability.selectedScenario?.id },
                     set: { _ in }
                 ),
-                scenarios: budgetStore.scenarios,
+                scenarios: budgetStore.affordability.scenarios,
                 onScenarioChange: { scenario in
-                    budgetStore.selectScenario(scenario)
+                    budgetStore.affordability.selectScenario(scenario)
                     Task {
-                        await budgetStore.loadContributions()
+                        await budgetStore.affordability.loadContributions()
                     }
                 },
                 onAddScenario: {
-                    budgetStore.showAddScenarioSheet = true
+                    budgetStore.affordability.showAddScenarioSheet = true
                 },
                 onDeleteScenario: {
-                    if let scenario = budgetStore.selectedScenario {
-                        Task { await budgetStore.deleteScenario(scenario) }
+                    if let scenario = budgetStore.affordability.selectedScenario {
+                        Task { await budgetStore.affordability.deleteScenario(scenario) }
                     }
                 }
             )
@@ -36,43 +36,43 @@ struct BudgetCalculatorView: View {
                     // Left Side - Budget Inputs
                     VStack(alignment: .leading, spacing: 24) {
                         BudgetInputsSection(
-                            calculationStartDate: $budgetStore.editedCalculationStartDate,
-                            partner1Monthly: $budgetStore.editedPartner1Monthly,
-                            partner2Monthly: $budgetStore.editedPartner2Monthly,
-                            hasUnsavedChanges: budgetStore.hasUnsavedChanges,
-                            weddingDate: budgetStore.editedWeddingDate,
+                            calculationStartDate: $budgetStore.affordability.editedCalculationStartDate,
+                            partner1Monthly: $budgetStore.affordability.editedPartner1Monthly,
+                            partner2Monthly: $budgetStore.affordability.editedPartner2Monthly,
+                            hasUnsavedChanges: budgetStore.affordability.hasUnsavedChanges,
+                            weddingDate: budgetStore.affordability.editedWeddingDate,
                             partner1Name: partner1Name,
                             partner2Name: partner2Name,
                             onFieldChanged: {
-                                budgetStore.markFieldChanged()
+                                budgetStore.affordability.markFieldChanged()
                             },
                             onSave: {
-                                Task { await budgetStore.saveChanges() }
+                                Task { await budgetStore.affordability.saveChanges() }
                             }
                         )
 
                         GiftsContributionsSection(
-                            totalGifts: budgetStore.totalGifts,
-                            totalExternal: budgetStore.totalExternal,
-                            contributions: budgetStore.contributions,
+                            totalGifts: budgetStore.affordability.totalGifts,
+                            totalExternal: budgetStore.affordability.totalExternal,
+                            contributions: budgetStore.affordability.contributions,
                             onAddContribution: {
-                                budgetStore.showAddContributionSheet = true
+                                budgetStore.affordability.showAddContributionSheet = true
                             },
                             onLinkGifts: {
                                 Task {
-                                    await budgetStore.loadAvailableGifts()
-                                    budgetStore.showLinkGiftsSheet = true
+                                    await budgetStore.affordability.loadAvailableGifts()
+                                    budgetStore.affordability.showLinkGiftsSheet = true
                                 }
                             },
                             onEditContribution: { contribution in
                                 Task {
-                                    await budgetStore.startEditingGift(contributionId: contribution.id)
-                                    budgetStore.showEditGiftSheet = true
+                                    await budgetStore.affordability.startEditingGift(contributionId: contribution.id)
+                                    budgetStore.affordability.showEditGiftSheet = true
                                 }
                             },
                             onDeleteContribution: { contribution in
                                 Task {
-                                    await budgetStore.deleteContribution(contribution)
+                                    await budgetStore.affordability.deleteContribution(contribution)
                                 }
                             }
                         )
@@ -82,11 +82,11 @@ struct BudgetCalculatorView: View {
                     // Right Side - Affordability Results
                     VStack(alignment: .leading, spacing: 24) {
                         AffordabilityResultsSection(
-                            totalAffordableBudget: budgetStore.totalAffordableBudget,
-                            alreadyPaid: budgetStore.alreadyPaid,
-                            projectedSavings: budgetStore.projectedSavings,
-                            monthsLeft: budgetStore.monthsLeft,
-                            progressPercentage: budgetStore.progressPercentage
+                            totalAffordableBudget: budgetStore.affordability.totalAffordableBudget,
+                            alreadyPaid: budgetStore.affordability.alreadyPaid,
+                            projectedSavings: budgetStore.affordability.projectedSavings,
+                            monthsLeft: budgetStore.affordability.monthsLeft,
+                            progressPercentage: budgetStore.affordability.progressPercentage
                         )
                     }
                     .frame(maxWidth: .infinity)
@@ -96,7 +96,7 @@ struct BudgetCalculatorView: View {
         }
         .task {
             // Load scenarios first
-            await budgetStore.loadScenarios()
+            await budgetStore.affordability.loadScenarios()
         }
         .onChange(of: settingsStore.hasLoaded) { _, loaded in
             // When settings finish loading, set the wedding date
@@ -106,7 +106,7 @@ struct BudgetCalculatorView: View {
 
                 if !weddingDateFromSettings.isEmpty {
                     AppLogger.ui.info("BudgetCalculatorView: Setting wedding date to: '\(weddingDateFromSettings)'")
-                    budgetStore.setWeddingDate(weddingDateFromSettings)
+                    budgetStore.affordability.setWeddingDate(weddingDateFromSettings)
                 } else {
                     AppLogger.ui.warning("BudgetCalculatorView: Wedding date is empty")
                 }
@@ -116,7 +116,7 @@ struct BudgetCalculatorView: View {
             // Only update if the date is not empty
             if !newDate.isEmpty {
                 AppLogger.ui.info("BudgetCalculatorView: Wedding date changed to: '\(newDate)'")
-                budgetStore.setWeddingDate(newDate)
+                budgetStore.affordability.setWeddingDate(newDate)
             }
         }
         .onAppear {
@@ -125,54 +125,54 @@ struct BudgetCalculatorView: View {
                 let weddingDateFromSettings = settingsStore.settings.global.weddingDate
                 if !weddingDateFromSettings.isEmpty {
                     AppLogger.ui.info("BudgetCalculatorView.onAppear: Setting wedding date to: '\(weddingDateFromSettings)'")
-                    budgetStore.setWeddingDate(weddingDateFromSettings)
+                    budgetStore.affordability.setWeddingDate(weddingDateFromSettings)
                 }
             }
         }
-        .sheet(isPresented: $budgetStore.showAddScenarioSheet) {
+        .sheet(isPresented: $budgetStore.affordability.showAddScenarioSheet) {
             BudgetCalculatorAddScenarioSheet(onSave: { name in
                 Task {
-                    await budgetStore.createScenario(name: name)
-                    budgetStore.showAddScenarioSheet = false
+                    await budgetStore.affordability.createScenario(name: name)
+                    budgetStore.affordability.showAddScenarioSheet = false
                 }
             })
         }
-        .sheet(isPresented: $budgetStore.showAddContributionSheet) {
+        .sheet(isPresented: $budgetStore.affordability.showAddContributionSheet) {
             BudgetCalculatorAddContributionSheet(onSave: { name, amount, type, date in
                 Task {
-                    await budgetStore.addContribution(
+                    await budgetStore.affordability.addContribution(
                         name: name,
                         amount: amount,
                         type: type,
                         date: date
                     )
-                    budgetStore.showAddContributionSheet = false
+                    budgetStore.affordability.showAddContributionSheet = false
                 }
             })
         }
-        .sheet(isPresented: $budgetStore.showLinkGiftsSheet) {
+        .sheet(isPresented: $budgetStore.affordability.showLinkGiftsSheet) {
             LinkGiftsSheet(
-                availableGifts: budgetStore.availableGifts,
+                availableGifts: budgetStore.affordability.availableGifts,
                 onLink: { giftIds in
                     Task {
-                        await budgetStore.linkGifts(giftIds: giftIds)
-                        budgetStore.showLinkGiftsSheet = false
+                        await budgetStore.affordability.linkGifts(giftIds: giftIds)
+                        budgetStore.affordability.showLinkGiftsSheet = false
                     }
                 }
             )
         }
-        .sheet(isPresented: $budgetStore.showEditGiftSheet) {
-            if let gift = budgetStore.editingGift {
+        .sheet(isPresented: $budgetStore.affordability.showEditGiftSheet) {
+            if let gift = budgetStore.affordability.editingGift {
                 EditGiftSheet(
                     gift: gift,
                     onSave: { updatedGift in
                         Task {
-                            await budgetStore.updateGift(updatedGift)
+                            await budgetStore.affordability.updateGift(updatedGift)
                         }
                     },
                     onCancel: {
-                        budgetStore.showEditGiftSheet = false
-                        budgetStore.editingGift = nil
+                        budgetStore.affordability.showEditGiftSheet = false
+                        budgetStore.affordability.editingGift = nil
                     }
                 )
             }

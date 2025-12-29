@@ -26,7 +26,7 @@ struct ExpenseDetailView: View {
                             .fontWeight(.bold)
 
                         HStack {
-                            Text(NumberFormatter.currency.string(from: NSNumber(value: expense.amount)) ?? "$0")
+                            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.amount)) ?? "$0")
                                 .font(.system(size: 36, weight: .bold))
                                 .foregroundColor(AppColors.Budget.allocated)
 
@@ -215,7 +215,7 @@ struct ExpenseDetailRow: View {
             return "\(value)"
         case .currency:
             if let amount = value as? Double {
-                return NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0"
+                return NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0"
             }
             return "\(value)"
         case .date:

@@ -137,11 +137,11 @@ struct CategoryBreakdownChart: View {
                         }
 
                         Text(
-                            "Projected Spending: \(NumberFormatter.currency.string(from: NSNumber(value: selectedItem.spending)) ?? "$0")")
+                            "Projected Spending: \(NumberFormatter.currencyShort.string(from: NSNumber(value: selectedItem.spending)) ?? "$0")")
                             .font(.subheadline)
 
                         Text(
-                            "Allocated: \(NumberFormatter.currency.string(from: NSNumber(value: selectedItem.category.allocatedAmount)) ?? "$0")")
+                            "Allocated: \(NumberFormatter.currencyShort.string(from: NSNumber(value: selectedItem.category.allocatedAmount)) ?? "$0")")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
 
@@ -179,7 +179,7 @@ struct CategoryBreakdownChart: View {
                                 Text(item.category.categoryName)
                                     .font(.caption)
                                     .lineLimit(1)
-                                Text(NumberFormatter.currency.string(from: NSNumber(value: item.spending)) ?? "$0")
+                                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: item.spending)) ?? "$0")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }

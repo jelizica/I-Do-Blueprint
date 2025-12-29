@@ -30,7 +30,7 @@ struct BudgetInsightsView: View {
             results.append(BudgetInsight(
                 type: InsightType.alert,
                 title: "Overdue Payments",
-                description: "\(overdueExpenses.count) payments are overdue. Total amount: \(NumberFormatter.currency.string(from: NSNumber(value: overdueExpenses.reduce(0) { $0 + $1.remainingAmount })) ?? "$0")",
+                description: "\(overdueExpenses.count) payments are overdue. Total amount: \(NumberFormatter.currencyShort.string(from: NSNumber(value: overdueExpenses.reduce(0) { $0 + $1.remainingAmount })) ?? "$0")",
                 action: "View Payments"))
         }
 
@@ -41,7 +41,7 @@ struct BudgetInsightsView: View {
                 results.append(BudgetInsight(
                     type: InsightType.info,
                     title: "Unallocated Budget",
-                    description: "You have \(NumberFormatter.currency.string(from: NSNumber(value: unallocatedAmount)) ?? "$0") not allocated to any category.",
+                    description: "You have \(NumberFormatter.currencyShort.string(from: NSNumber(value: unallocatedAmount)) ?? "$0") not allocated to any category.",
                     action: "Allocate Funds"))
             }
         }

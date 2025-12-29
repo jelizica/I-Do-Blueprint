@@ -18,7 +18,7 @@ struct ExpenseTrackerView: View {
     private let logger = AppLogger.ui
 
     var filteredExpenses: [Expense] {
-        var results = budgetStore.expenses
+        var results = budgetStore.expenseStore.expenses
 
         // Apply search filter
         if !searchText.isEmpty {
@@ -45,8 +45,8 @@ struct ExpenseTrackerView: View {
 
     // Calculate category benchmarks
     var categoryBenchmarks: [CategoryBenchmarkData] {
-        budgetStore.categories.compactMap { category in
-            let categoryExpenses = budgetStore.expensesForCategory(category.id)
+        budgetStore.categoryStore.categories.compactMap { category in
+            let categoryExpenses = budgetStore.expenseStore.expensesForCategory(category.id)
             let spent = categoryExpenses.reduce(0) { $0 + $1.amount }
             let budgeted = category.allocatedAmount
             let percentage = budgeted > 0 ? (spent / budgeted) * 100 : 0
@@ -79,7 +79,7 @@ struct ExpenseTrackerView: View {
                     totalSpent: budgetStore.totalExpensesAmount,
                     pendingAmount: budgetStore.pendingExpensesAmount,
                     paidAmount: budgetStore.paidExpensesAmount,
-                    expenseCount: budgetStore.expenses.count,
+                    expenseCount: budgetStore.expenseStore.expenses.count,
                     onAddExpense: { showAddExpenseSheet = true })
 
                 // Filters
@@ -89,7 +89,7 @@ struct ExpenseTrackerView: View {
                     selectedCategoryFilter: $selectedCategoryFilter,
                     viewMode: $viewMode,
                     showBenchmarks: $showBenchmarks,
-                    categories: budgetStore.categories)
+                    categories: budgetStore.categoryStore.categories)
 
                 // Expense List
                 ExpenseListView(
@@ -153,7 +153,7 @@ struct ExpenseTrackerView: View {
             defer { isLoadingExpenses = false }
 
             do {
-                try await budgetStore.loadExpenses()
+                await budgetStore.expenseStore.loadExpenses()
             } catch {
                 logger.error("Failed to load expenses", error: error)
             }
@@ -163,7 +163,7 @@ struct ExpenseTrackerView: View {
     private func deleteExpense(_ expense: Expense) {
         Task {
             do {
-                try await budgetStore.deleteExpense(id: expense.id)
+                try await budgetStore.expenseStore.deleteExpense(id: expense.id)
                 expenseToDelete = nil
             } catch {
                 logger.error("Failed to delete expense", error: error)

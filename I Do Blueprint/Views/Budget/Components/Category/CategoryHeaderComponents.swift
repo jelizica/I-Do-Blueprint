@@ -35,7 +35,7 @@ struct CategoryHeaderView: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")
                         .font(.title2)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.Budget.allocated)
@@ -116,7 +116,7 @@ struct CategoryStatsView: View {
                         Text("Spent")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: category.spentAmount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: category.spentAmount)) ?? "$0")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(category.isOverBudget ? AppColors.Budget.overBudget : .primary)
@@ -128,7 +128,7 @@ struct CategoryStatsView: View {
                         Text("Remaining")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: category.remainingAmount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: category.remainingAmount)) ?? "$0")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(category.remainingAmount >= 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget)

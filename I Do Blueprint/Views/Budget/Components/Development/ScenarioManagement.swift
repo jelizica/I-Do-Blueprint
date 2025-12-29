@@ -67,7 +67,7 @@ extension BudgetDevelopmentView {
         }
 
         if let scenario = savedScenarios.first(where: { $0.id == scenarioId }) {
-            let items = await budgetStore.loadBudgetDevelopmentItems(scenarioId: scenarioId)
+            let items = await budgetStore.development.loadBudgetDevelopmentItems(scenarioId: scenarioId)
 
             await MainActor.run {
                 budgetName = scenario.scenarioName
@@ -112,7 +112,7 @@ extension BudgetDevelopmentView {
             if !itemsToDelete.isEmpty {
                 for itemId in itemsToDelete {
                     do {
-                        try await budgetStore.deleteBudgetDevelopmentItem(id: itemId)
+                        try await budgetStore.development.deleteBudgetDevelopmentItem(id: itemId)
                     } catch {
                         logger.error("Failed to delete item \(itemId)", error: error)
                     }
@@ -121,7 +121,7 @@ extension BudgetDevelopmentView {
             }
 
             // Call atomic save (scenario first, then items)
-            let (persistedScenarioId, insertedCount) = try await budgetStore.saveScenarioWithItems(scenarioData, items: budgetItems)
+            let (persistedScenarioId, insertedCount) = try await budgetStore.development.saveScenarioWithItems(scenarioData, items: budgetItems)
 
             // Update local state
             if currentScenarioId == nil {
@@ -199,9 +199,9 @@ extension BudgetDevelopmentView {
         do {
             // Update only the affected scenarios
             if let originalIndex = originalPrimaryIndex, originalIndex != index {
-                _ = try await budgetStore.updateBudgetDevelopmentScenario(savedScenarios[originalIndex])
+                _ = try await budgetStore.development.updateBudgetDevelopmentScenario(savedScenarios[originalIndex])
             }
-            _ = try await budgetStore.updateBudgetDevelopmentScenario(savedScenarios[index])
+            _ = try await budgetStore.development.updateBudgetDevelopmentScenario(savedScenarios[index])
 
             logger.info("Successfully set primary scenario: \(savedScenarios[index].scenarioName)")
         } catch {

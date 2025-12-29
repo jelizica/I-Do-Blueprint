@@ -103,7 +103,7 @@ struct PaymentEditModal: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: editedPayment.paymentAmount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: editedPayment.paymentAmount)) ?? "$0")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(editedPayment.paid ? .green : .primary)

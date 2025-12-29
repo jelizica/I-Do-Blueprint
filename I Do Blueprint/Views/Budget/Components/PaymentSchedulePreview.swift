@@ -36,7 +36,7 @@ struct PaymentSchedulePreview: View {
                 HStack {
                     Text("Total Amount:")
                     Spacer()
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: totalAmount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: totalAmount)) ?? "$0")
                         .fontWeight(.semibold)
                 }
 
@@ -50,7 +50,7 @@ struct PaymentSchedulePreview: View {
                 HStack {
                     Text("Schedule Total:")
                     Spacer()
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: totalScheduleAmount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: totalScheduleAmount)) ?? "$0")
                         .fontWeight(.semibold)
                         .foregroundColor(abs(amountDifference) > 0.01 ? AppColors.Budget.overBudget : .primary)
                 }
@@ -59,7 +59,7 @@ struct PaymentSchedulePreview: View {
                     HStack {
                         Text("Difference:")
                         Spacer()
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: amountDifference)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: amountDifference)) ?? "$0")
                             .fontWeight(.semibold)
                             .foregroundColor(AppColors.Budget.overBudget)
                     }
@@ -121,7 +121,7 @@ struct PaymentScheduleItemRow: View {
             Spacer()
 
             VStack(alignment: .trailing, spacing: 4) {
-                Text(NumberFormatter.currency.string(from: NSNumber(value: item.amount)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: item.amount)) ?? "$0")
                     .font(.subheadline)
                     .fontWeight(.semibold)
 

@@ -382,16 +382,16 @@ struct BudgetItemRow: View, Identifiable {
     // MARK: - Helper Properties
     
     private var parentCategories: [BudgetCategory] {
-        budgetStore.categories.filter { $0.parentCategoryId == nil }
+        budgetStore.categoryStore.categories.filter { $0.parentCategoryId == nil }
     }
     
     private func subcategoriesForCategory(_ categoryName: String) -> [BudgetCategory] {
-        guard let parentCategory = budgetStore.categories.first(where: {
+        guard let parentCategory = budgetStore.categoryStore.categories.first(where: {
             $0.categoryName == categoryName && $0.parentCategoryId == nil
         }) else {
             return []
         }
         
-        return budgetStore.categories.filter { $0.parentCategoryId == parentCategory.id }
+        return budgetStore.categoryStore.categories.filter { $0.parentCategoryId == parentCategory.id }
     }
 }

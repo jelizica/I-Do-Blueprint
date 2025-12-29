@@ -8,7 +8,7 @@ struct ExpenseTrackerRowView: View {
     @EnvironmentObject var budgetStore: BudgetStoreV2
 
     private var category: BudgetCategory? {
-        budgetStore.categories.first { $0.id == expense.budgetCategoryId }
+        budgetStore.categoryStore.categories.first { $0.id == expense.budgetCategoryId }
     }
 
     var body: some View {

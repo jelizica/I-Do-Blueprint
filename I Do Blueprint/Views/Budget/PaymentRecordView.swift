@@ -61,21 +61,21 @@ struct PaymentRecordView: View {
                     HStack {
                         Text("Total Amount")
                         Spacer()
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: expense.amount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.amount)) ?? "$0")
                             .fontWeight(.semibold)
                     }
 
                     HStack {
                         Text("Already Paid")
                         Spacer()
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: expense.paidAmount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.paidAmount)) ?? "$0")
                             .foregroundColor(AppColors.Budget.income)
                     }
 
                     HStack {
                         Text("Remaining")
                         Spacer()
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: expense.remainingAmount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.remainingAmount)) ?? "$0")
                             .foregroundColor(AppColors.Budget.pending)
                             .fontWeight(.semibold)
                     }
@@ -123,7 +123,7 @@ struct PaymentRecordView: View {
                     HStack {
                         Text("Payment Amount")
                         Spacer()
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: paymentAmountValue)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: paymentAmountValue)) ?? "$0")
                             .foregroundColor(AppColors.Budget.allocated)
                             .fontWeight(.semibold)
                     }
@@ -131,14 +131,14 @@ struct PaymentRecordView: View {
                     HStack {
                         Text("New Paid Total")
                         Spacer()
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: newPaidAmount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: newPaidAmount)) ?? "$0")
                             .foregroundColor(AppColors.Budget.income)
                     }
 
                     HStack {
                         Text("New Remaining")
                         Spacer()
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: max(0, newRemainingAmount))) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: max(0, newRemainingAmount))) ?? "$0")
                             .foregroundColor(newRemainingAmount <= 0.01 ? AppColors.Budget.income : AppColors.Budget.pending)
                     }
 

@@ -259,17 +259,29 @@ struct PaymentScheduleView: View {
                                 },
                                 onTogglePaidStatus: { schedule in
                                     Task {
-                                        await budgetStore.updatePaymentSchedule(schedule)
+                                        do {
+                                            try await budgetStore.payments.updatePayment(schedule)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to update payment status", error: error)
+                                        }
                                     }
                                 },
                                 onUpdate: { schedule in
                                     Task {
-                                        await budgetStore.updatePaymentSchedule(schedule)
+                                        do {
+                                            try await budgetStore.payments.updatePayment(schedule)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to update payment", error: error)
+                                        }
                                     }
                                 },
                                 onDelete: { schedule in
                                     Task {
-                                        await budgetStore.deletePaymentSchedule(id: schedule.id)
+                                        do {
+                                            try await budgetStore.payments.deletePayment(id: schedule.id)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to delete payment", error: error)
+                                        }
                                     }
                                 },
                                 getVendorName: getVendorNameById
@@ -296,17 +308,29 @@ struct PaymentScheduleView: View {
                                 paymentSchedules: budgetStore.paymentSchedules,
                                 onTogglePaidStatus: { schedule in
                                     Task {
-                                        await budgetStore.updatePaymentSchedule(schedule)
+                                        do {
+                                            try await budgetStore.payments.updatePayment(schedule)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to update payment status", error: error)
+                                        }
                                     }
                                 },
                                 onUpdate: { schedule in
                                     Task {
-                                        await budgetStore.updatePaymentSchedule(schedule)
+                                        do {
+                                            try await budgetStore.payments.updatePayment(schedule)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to update payment", error: error)
+                                        }
                                     }
                                 },
                                 onDelete: { schedule in
                                     Task {
-                                        await budgetStore.deletePaymentSchedule(id: schedule.id)
+                                        do {
+                                            try await budgetStore.payments.deletePayment(id: schedule.id)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to delete payment", error: error)
+                                        }
                                     }
                                 },
                                 getVendorName: getVendorNameById
@@ -347,12 +371,20 @@ struct PaymentScheduleView: View {
                                 expense: getExpenseForPayment(payment),
                                 onUpdate: { updatedPayment in
                                     Task {
-                                        await budgetStore.updatePaymentSchedule(updatedPayment)
+                                        do {
+                                            try await budgetStore.payments.updatePayment(updatedPayment)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to update payment", error: error)
+                                        }
                                     }
                                 },
                                 onDelete: { paymentToDelete in
                                     Task {
-                                        await budgetStore.deletePaymentSchedule(id: paymentToDelete.id)
+                                        do {
+                                            try await budgetStore.payments.deletePayment(id: paymentToDelete.id)
+                                        } catch {
+                                            AppLogger.ui.error("Failed to delete payment", error: error)
+                                        }
                                     }
                                 },
                                 getVendorName: { vendorId in
@@ -386,7 +418,7 @@ struct PaymentScheduleView: View {
         ToolbarItem(placement: .secondaryAction) {
             Button(action: {
                 Task {
-                    await budgetStore.refreshBudgetData()
+                    await budgetStore.refresh()
                 }
             }) {
                 Image(systemName: "arrow.clockwise")
@@ -396,11 +428,15 @@ struct PaymentScheduleView: View {
 
     private var addPaymentSheet: some View {
         AddPaymentScheduleView(
-            expenses: budgetStore.expenses.filter { $0.paymentStatus != .paid },
+            expenses: budgetStore.expenseStore.expenses.filter { $0.paymentStatus != .paid },
             existingPaymentSchedules: budgetStore.paymentSchedules,
             onSave: { newPaymentSchedule in
                 Task {
-                    await budgetStore.addPaymentSchedule(newPaymentSchedule)
+                    do {
+                        try await budgetStore.payments.addPayment(newPaymentSchedule)
+                    } catch {
+                        AppLogger.ui.error("Failed to add payment schedule", error: error)
+                    }
                 }
             },
             getVendorName: getVendorNameById
@@ -430,7 +466,7 @@ struct PaymentScheduleView: View {
     }
 
     private func getExpenseForPayment(_ payment: PaymentSchedule) -> Expense? {
-        budgetStore.expenses.first { $0.id == payment.expenseId }
+        budgetStore.expenseStore.expenses.first { $0.id == payment.expenseId }
     }
     
     /// Helper to resolve vendor name with consistent priority:
@@ -440,7 +476,7 @@ struct PaymentScheduleView: View {
     private func getVendorNameById(_ vendorId: Int64?) -> String? {
         // First try to get vendor name from the payment's expense
         if let payment = budgetStore.paymentSchedules.first(where: { $0.vendorId == vendorId }),
-           let expense = budgetStore.expenses.first(where: { $0.id == payment.expenseId }),
+           let expense = budgetStore.expenseStore.expenses.first(where: { $0.id == payment.expenseId }),
            let vendorName = expense.vendorName, !vendorName.isEmpty {
             return vendorName
         }
@@ -465,14 +501,20 @@ struct PaymentScheduleView: View {
         do {
             if groupingStrategy == .byPlanId {
                 // Use flat summaries for "By Plan ID"
-                let summaries = try await budgetStore.fetchPaymentPlanSummaries(groupBy: groupingStrategy)
+                let summaries = try await budgetStore.payments.fetchPaymentPlanSummaries(
+                    groupBy: groupingStrategy,
+                    expenses: budgetStore.expenseStore.expenses
+                )
                 await MainActor.run {
                     paymentPlanSummaries = summaries
                     paymentPlanGroups = []
                 }
             } else {
                 // Use hierarchical groups for "By Expense" and "By Vendor"
-                let groups = try await budgetStore.fetchPaymentPlanGroups(groupBy: groupingStrategy)
+                let groups = try await budgetStore.payments.fetchPaymentPlanGroups(
+                    groupBy: groupingStrategy,
+                    expenses: budgetStore.expenseStore.expenses
+                )
                 await MainActor.run {
                     paymentPlanGroups = groups
                     paymentPlanSummaries = []
@@ -570,14 +612,14 @@ struct PaymentSummaryHeaderView: View {
             HStack(spacing: 20) {
                 PaymentOverviewCard(
                     title: "Upcoming Payments",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: totalUpcoming)) ?? "$0",
+                    value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalUpcoming)) ?? "$0",
                     subtitle: "Due soon",
                     icon: "calendar",
                     color: AppColors.Budget.pending)
 
                 PaymentOverviewCard(
                     title: "Overdue Payments",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: totalOverdue)) ?? "$0",
+                    value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalOverdue)) ?? "$0",
                     subtitle: "Past due",
                     icon: "exclamationmark.triangle.fill",
                     color: AppColors.Budget.overBudget)
@@ -620,7 +662,7 @@ struct PaymentScheduleRowView: View {
 
                         Spacer()
 
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: payment.paymentAmount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: payment.paymentAmount)) ?? "$0")
                             .font(.title3)
                             .fontWeight(.semibold)
                             .foregroundColor(payment.paid ? AppColors.Budget.income : .primary)

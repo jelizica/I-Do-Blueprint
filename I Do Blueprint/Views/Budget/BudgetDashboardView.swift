@@ -30,7 +30,7 @@ struct BudgetDashboardView: View {
                                     .font(.title2)
                             }
 
-                            Button(action: { Task { await budgetStore.refreshBudgetData() } }) {
+                            Button(action: { Task { await budgetStore.refresh() } }) {
                                 Image(systemName: "arrow.clockwise")
                                     .font(.title2)
                             }
@@ -100,7 +100,7 @@ struct BudgetDashboardView: View {
 
                 // Spending Trend Chart
                 SpendingTrendDashboardChart(
-                    expenses: budgetStore.expenses,
+                    expenses: budgetStore.expenseStore.expenses,
                     period: selectedPeriod)
 
                 // Quick Actions Grid - Using Component Library
@@ -270,7 +270,7 @@ struct RecentActivityDashboard: View {
                         Spacer()
 
                         if let amount = activity.amount {
-                            Text(NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0")
+                            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(activity.type.color)

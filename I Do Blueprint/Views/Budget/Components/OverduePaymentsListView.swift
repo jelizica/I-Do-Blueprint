@@ -36,7 +36,7 @@ struct OverduePaymentsListView: View {
                                 Spacer()
                             }
 
-                            Text(NumberFormatter.currency.string(from: NSNumber(value: expense.remainingAmount)) ?? "$0")
+                            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.remainingAmount)) ?? "$0")
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundColor(AppColors.Budget.overBudget)

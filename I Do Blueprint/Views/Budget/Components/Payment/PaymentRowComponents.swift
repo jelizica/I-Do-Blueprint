@@ -93,7 +93,7 @@ struct PaymentRowView: View {
 
                 // Amount
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: payment.amount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: payment.amount)) ?? "$0")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
@@ -138,7 +138,7 @@ struct PaymentDetailView: View {
                             .font(.title2)
                             .fontWeight(.bold)
 
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: payment.amount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: payment.amount)) ?? "$0")
                             .font(.title)
                             .fontWeight(.bold)
                             .foregroundColor(AppColors.Budget.allocated)

@@ -48,7 +48,7 @@ struct GiftsAndOwedView: View {
                 ToolbarItem(placement: .secondaryAction) {
                     Button(action: {
                         Task {
-                            await budgetStore.refreshBudgetData()
+                            await budgetStore.refresh()
                         }
                     }) {
                         Image(systemName: "arrow.clockwise")
@@ -97,19 +97,19 @@ struct GiftsAndOwedView: View {
                 StatItem(
                     icon: "checkmark.circle.fill",
                     label: "Received",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalReceived)) ?? "$0",
+                    value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.totalReceived)) ?? "$0",
                     color: AppColors.Budget.income
                 ),
                 StatItem(
                     icon: "clock.fill",
                     label: "Pending",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalPending)) ?? "$0",
+                    value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.totalPending)) ?? "$0",
                     color: AppColors.Budget.pending
                 ),
                 StatItem(
                     icon: "plus.circle.fill",
                     label: "Total Budget Addition",
-                    value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalBudgetAddition)) ?? "$0",
+                    value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.totalBudgetAddition)) ?? "$0",
                     color: AppColors.Budget.allocated
                 )
             ],
@@ -184,7 +184,7 @@ struct GiftOrOwedRowView: View {
 
                         Spacer()
 
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: giftOrOwed.amount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: giftOrOwed.amount)) ?? "$0")
                             .font(.title3)
                             .fontWeight(.semibold)
                             .foregroundColor(giftOrOwed.status.color)

@@ -93,8 +93,13 @@ struct AddPaymentView: View {
                 createdAt: Date())
 
             Task {
-                await budgetStore.addPayment(payment)
-                dismiss()
+                do {
+                    try await budgetStore.payments.addPayment(payment)
+                    dismiss()
+                } catch {
+                    AppLogger.ui.error("Failed to add payment", error: error)
+                    errorMessage = "Failed to add payment: \(error.localizedDescription)"
+                }
             }
         } catch {
             errorMessage = error.localizedDescription

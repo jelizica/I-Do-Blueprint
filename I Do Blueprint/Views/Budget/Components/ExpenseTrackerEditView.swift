@@ -80,7 +80,7 @@ struct ExpenseTrackerEditView: View {
                             .foregroundColor(.secondary)
                         
                         HierarchicalCategoryPicker(
-                            categories: budgetStore.categories,
+                            categories: budgetStore.categoryStore.categories,
                             selectedCategoryId: $selectedCategoryId
                         )
                     }
@@ -164,7 +164,7 @@ struct ExpenseTrackerEditView: View {
                 updatedExpense.notes = notes.isEmpty ? nil : notes
                 updatedExpense.updatedAt = Date()
 
-                _ = try await budgetStore.updateExpense(updatedExpense)
+                _ = try await budgetStore.expenseStore.updateExpense(updatedExpense)
                 dismiss()
             } catch {
                 logger.error("Failed to update expense", error: error)

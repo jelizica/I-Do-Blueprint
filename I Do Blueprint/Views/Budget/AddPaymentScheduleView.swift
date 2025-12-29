@@ -238,7 +238,7 @@ struct AddPaymentScheduleView: View {
         }
 
         guard effectiveAmount <= remainingUnpaidAmount else {
-            validationMessage = "Payment amount cannot exceed the remaining unpaid amount of \(NumberFormatter.currency.string(from: NSNumber(value: remainingUnpaidAmount)) ?? "$0").\n\nThis expense has already had \(NumberFormatter.currency.string(from: NSNumber(value: alreadyPaidForExpense)) ?? "$0") paid through existing payment schedules."
+            validationMessage = "Payment amount cannot exceed the remaining unpaid amount of \(NumberFormatter.currencyShort.string(from: NSNumber(value: remainingUnpaidAmount)) ?? "$0").\n\nThis expense has already had \(NumberFormatter.currencyShort.string(from: NSNumber(value: alreadyPaidForExpense)) ?? "$0") paid through existing payment schedules."
             showingValidationAlert = true
             return
         }

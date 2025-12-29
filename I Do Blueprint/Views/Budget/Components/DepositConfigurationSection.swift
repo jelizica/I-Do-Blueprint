@@ -50,7 +50,7 @@ struct DepositConfigurationSection: View {
 
             Slider(value: $formData.depositPercentage, in: 1 ... 99, step: 1)
 
-            Text("Deposit amount: \(NumberFormatter.currency.string(from: NSNumber(value: formData.actualDepositAmount)) ?? "$0")")
+            Text("Deposit amount: \(NumberFormatter.currencyShort.string(from: NSNumber(value: formData.actualDepositAmount)) ?? "$0")")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }

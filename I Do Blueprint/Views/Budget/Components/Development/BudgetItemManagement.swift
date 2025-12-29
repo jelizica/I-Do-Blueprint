@@ -200,7 +200,7 @@ extension BudgetDevelopmentView {
 
         let trimmedName = categoryName.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        let existingCategory = budgetStore.categories.first {
+        let existingCategory = budgetStore.categoryStore.categories.first {
             $0.categoryName == trimmedName && $0.parentCategoryId == nil
         }
 
@@ -227,7 +227,7 @@ extension BudgetDevelopmentView {
                 lockedAllocation: false,
                 description: "Category created from budget development",
                 createdAt: Date())
-            await budgetStore.addCategory(newCategory)
+            try? await budgetStore.categoryStore.addCategory(newCategory)
         }
 
         updateBudgetItem(itemId, field: "category", value: trimmedName)
@@ -241,11 +241,11 @@ extension BudgetDevelopmentView {
 
         let trimmedName = subcategoryName.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard let parentCategory = budgetStore.categories.first(where: {
+        guard let parentCategory = budgetStore.categoryStore.categories.first(where: {
             $0.categoryName == item.category && $0.parentCategoryId == nil
         }) else { return }
 
-        let existingSubcategory = budgetStore.categories.first {
+        let existingSubcategory = budgetStore.categoryStore.categories.first {
             $0.categoryName == trimmedName && $0.parentCategoryId == parentCategory.id
         }
 
@@ -272,7 +272,7 @@ extension BudgetDevelopmentView {
                 lockedAllocation: false,
                 description: "Subcategory created from budget development",
                 createdAt: Date())
-            await budgetStore.addCategory(newSubcategory)
+            try? await budgetStore.categoryStore.addCategory(newSubcategory)
         }
 
         updateBudgetItem(itemId, field: "subcategory", value: trimmedName)

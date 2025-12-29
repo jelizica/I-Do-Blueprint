@@ -44,7 +44,7 @@ struct BudgetAllocationGuideView: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
 
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: unallocatedAmount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: unallocatedAmount)) ?? "$0")
                             .font(.system(size: 36, weight: .bold))
                             .foregroundColor(AppColors.Budget.allocated)
                     }
@@ -135,7 +135,7 @@ struct RecommendationRow: View {
                 Text("Current:")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(NumberFormatter.currency.string(from: NSNumber(value: recommendation.currentAllocation)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: recommendation.currentAllocation)) ?? "$0")
                     .font(.caption)
 
                 Spacer()
@@ -143,7 +143,7 @@ struct RecommendationRow: View {
                 Text("Suggested:")
                     .font(.caption)
                     .foregroundColor(.secondary)
-                Text(NumberFormatter.currency.string(from: NSNumber(value: recommendation.suggestedAllocation)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: recommendation.suggestedAllocation)) ?? "$0")
                     .font(.caption)
                     .fontWeight(.semibold)
                     .foregroundColor(AppColors.Budget.allocated)

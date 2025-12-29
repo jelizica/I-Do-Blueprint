@@ -102,7 +102,7 @@ struct EditGiftOrOwedModal: View {
                 Spacer()
 
                 VStack(alignment: .trailing, spacing: 4) {
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: editedGift.amount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: editedGift.amount)) ?? "$0")
                         .font(.title2)
                         .fontWeight(.bold)
                         .foregroundColor(editedGift.status.color)

@@ -43,14 +43,14 @@ struct BudgetAnalyticsView: View {
                     ChartContainerView(
                         chartType: selectedChartType,
                         timeframe: selectedTimeframe,
-                        categories: budgetStore.categories,
-                        expenses: budgetStore.expenses,
+                        categories: budgetStore.categoryStore.categories,
+                        expenses: budgetStore.expenseStore.expenses,
                         benchmarks: budgetStore.categoryBenchmarks)
 
                     // Insights and recommendations
                     BudgetInsightsView(
-                        categories: budgetStore.categories,
-                        expenses: budgetStore.expenses,
+                        categories: budgetStore.categoryStore.categories,
+                        expenses: budgetStore.expenseStore.expenses,
                         benchmarks: budgetStore.categoryBenchmarks,
                         summary: budgetStore.budgetSummary)
                 }
@@ -61,7 +61,7 @@ struct BudgetAnalyticsView: View {
                 ToolbarItem(placement: .secondaryAction) {
                     Button(action: {
                         Task {
-                            await budgetStore.refreshBudgetData()
+                            await budgetStore.refresh()
                         }
                     }) {
                         Image(systemName: "arrow.clockwise")

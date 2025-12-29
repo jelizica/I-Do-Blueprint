@@ -15,19 +15,19 @@ struct BudgetCashFlowView: View {
                         StatItem(
                             icon: "arrow.down.circle.fill",
                             label: "Total Inflows",
-                            value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalInflows)) ?? "$0",
+                            value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.totalInflows)) ?? "$0",
                             color: AppColors.Budget.income
                         ),
                         StatItem(
                             icon: "arrow.up.circle.fill",
                             label: "Total Outflows",
-                            value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalOutflows)) ?? "$0",
+                            value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.totalOutflows)) ?? "$0",
                             color: AppColors.Budget.expense
                         ),
                         StatItem(
                             icon: "dollarsign.circle.fill",
                             label: "Net Cash Flow",
-                            value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.netCashFlow)) ?? "$0",
+                            value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.netCashFlow)) ?? "$0",
                             color: budgetStore.netCashFlow >= 0 ? AppColors.Budget.income : AppColors.Budget.expense
                         )
                     ],
@@ -86,7 +86,7 @@ struct BudgetCashFlowView: View {
             .padding()
         }
         .task {
-            await budgetStore.loadCashFlowData()
+            await budgetStore.refresh()
         }
     }
 }
@@ -157,7 +157,7 @@ struct CashFlowSection: View {
 
                     Spacer()
 
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: item.amount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: item.amount)) ?? "$0")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(isIncome ? AppColors.Budget.income : AppColors.Budget.expense)

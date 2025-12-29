@@ -193,7 +193,7 @@ struct AddBudgetCategoryView: View {
                         HStack {
                             Text("Allocated Amount")
                             Spacer()
-                            Text(NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0")
+                            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0")
                                 .fontWeight(.semibold)
                                 .foregroundColor(.blue)
                         }

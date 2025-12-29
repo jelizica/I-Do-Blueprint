@@ -157,7 +157,7 @@ struct AddExpenseView: View {
                                 HStack {
                                     Text("Category Budget")
                                     Spacer()
-                                    Text(NumberFormatter.currency
+                                    Text(NumberFormatter.currencyShort
                                         .string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")
                                         .foregroundColor(AppColors.Budget.allocated)
                                 }
@@ -165,7 +165,7 @@ struct AddExpenseView: View {
                                 HStack {
                                     Text("Currently Spent")
                                     Spacer()
-                                    Text(NumberFormatter.currency
+                                    Text(NumberFormatter.currencyShort
                                         .string(from: NSNumber(value: category.spentAmount)) ?? "$0")
                                         .foregroundColor(.secondary)
                                 }
@@ -174,7 +174,7 @@ struct AddExpenseView: View {
                                     Text("After This Expense")
                                     Spacer()
                                     let newTotal = category.spentAmount + amount
-                                    Text(NumberFormatter.currency.string(from: NSNumber(value: newTotal)) ?? "$0")
+                                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: newTotal)) ?? "$0")
                                         .foregroundColor(newTotal > category.allocatedAmount ? AppColors.Budget.overBudget : AppColors.Budget.underBudget)
                                         .fontWeight(.semibold)
                                 }

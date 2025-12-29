@@ -52,7 +52,7 @@ struct PartialAmountSelector: View {
                             .font(.subheadline)
                             .fontWeight(.medium)
 
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: remainingUnpaid)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: remainingUnpaid)) ?? "$0")
                             .font(.title3)
                             .fontWeight(.semibold)
                             .foregroundColor(AppColors.Budget.allocated)
@@ -101,7 +101,7 @@ struct PartialAmountSelector: View {
                         .focused($focusedField, equals: .partialAmount)
                         .frame(maxWidth: 200)
 
-                    Text("of \(NumberFormatter.currency.string(from: NSNumber(value: remainingUnpaid)) ?? "$0") remaining")
+                    Text("of \(NumberFormatter.currencyShort.string(from: NSNumber(value: remainingUnpaid)) ?? "$0") remaining")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -120,7 +120,7 @@ struct PartialAmountSelector: View {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
 
-                            Text(NumberFormatter.currency.string(from: NSNumber(value: remainingUnpaid - formData.partialAmount)) ?? "$0")
+                            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: remainingUnpaid - formData.partialAmount)) ?? "$0")
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundColor(AppColors.Budget.pending)
@@ -138,7 +138,7 @@ struct PartialAmountSelector: View {
                 .foregroundColor(AppColors.Budget.allocated)
                 .font(.caption)
 
-            Text("You're creating a payment plan for \(NumberFormatter.currency.string(from: NSNumber(value: formData.effectiveAmount)) ?? "$0") of the \(NumberFormatter.currency.string(from: NSNumber(value: remainingUnpaid)) ?? "$0") remaining unpaid. You can create additional payment plans for any remaining balance later.")
+            Text("You're creating a payment plan for \(NumberFormatter.currencyShort.string(from: NSNumber(value: formData.effectiveAmount)) ?? "$0") of the \(NumberFormatter.currencyShort.string(from: NSNumber(value: remainingUnpaid)) ?? "$0") remaining unpaid. You can create additional payment plans for any remaining balance later.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

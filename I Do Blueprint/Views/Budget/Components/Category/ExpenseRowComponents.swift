@@ -29,14 +29,14 @@ struct ExpenseRowView: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(NumberFormatter.currency.string(from: NSNumber(value: expense.amount)) ?? "$0")
+                        Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.amount)) ?? "$0")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
 
                         if expense.paidAmount > 0 {
                             Text(
-                                "Paid: \(NumberFormatter.currency.string(from: NSNumber(value: expense.paidAmount)) ?? "$0")")
+                                "Paid: \(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.paidAmount)) ?? "$0")")
                                 .font(.caption)
                                 .foregroundColor(AppColors.Budget.income)
                         }

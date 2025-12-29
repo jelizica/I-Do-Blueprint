@@ -54,7 +54,7 @@ struct ExpenseSelector: View {
                 HStack {
                     Text(expense.expenseName)
                     Spacer()
-                    Text(NumberFormatter.currency.string(from: NSNumber(value: expense.amount)) ?? "$0")
+                    Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.amount)) ?? "$0")
                         .foregroundColor(.secondary)
                 }
                 .tag(expense.id as UUID?)
@@ -69,7 +69,7 @@ struct ExpenseSelector: View {
                 Text("Total Amount")
                     .fontWeight(.medium)
                 Spacer()
-                Text(NumberFormatter.currency.string(from: NSNumber(value: expense.amount)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: expense.amount)) ?? "$0")
                     .font(.title3)
                     .fontWeight(.semibold)
             }
@@ -77,7 +77,7 @@ struct ExpenseSelector: View {
             HStack {
                 Text("Already Paid")
                 Spacer()
-                Text(NumberFormatter.currency.string(from: NSNumber(value: alreadyPaid)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: alreadyPaid)) ?? "$0")
                     .foregroundColor(AppColors.Budget.income)
             }
 
@@ -85,7 +85,7 @@ struct ExpenseSelector: View {
                 Text("Remaining")
                 Spacer()
                 let remaining = remainingAmount ?? (expense.amount - alreadyPaid)
-                Text(NumberFormatter.currency.string(from: NSNumber(value: remaining)) ?? "$0")
+                Text(NumberFormatter.currencyShort.string(from: NSNumber(value: remaining)) ?? "$0")
                     .foregroundColor(AppColors.Budget.pending)
             }
         }

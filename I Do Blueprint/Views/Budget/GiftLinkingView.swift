@@ -429,7 +429,7 @@ struct GiftLinkingView: View {
     }
 
     private func formatCurrency(_ amount: Double) -> String {
-        NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0"
+        NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0"
     }
 }
 
@@ -508,7 +508,7 @@ struct GiftSelectionRowView: View {
     }
 
     private func formatCurrency(_ amount: Double) -> String {
-        NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0"
+        NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0"
     }
 
     private func formatDate(_ date: Date) -> String {

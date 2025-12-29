@@ -210,7 +210,11 @@ struct PaymentManagementView: View {
             // Find the original PaymentSchedule
             if let schedule = budgetStore.paymentSchedules.first(where: { String($0.id) == payment.id }) {
                 Task {
-                    await budgetStore.deletePayment(schedule)
+                    do {
+                        try await budgetStore.payments.deletePayment(schedule)
+                    } catch {
+                        AppLogger.ui.error("Failed to delete payment", error: error)
+                    }
                 }
             }
         }

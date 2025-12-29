@@ -20,7 +20,7 @@ struct BudgetAnalyticsHeader: View {
                         StatItem(
                             icon: "flame.fill",
                             label: "Monthly Burn Rate",
-                            value: NumberFormatter.currency.string(from: NSNumber(value: stats.monthlyBurnRate)) ?? "$0",
+                            value: NumberFormatter.currencyShort.string(from: NSNumber(value: stats.monthlyBurnRate)) ?? "$0",
                             color: AppColors.Budget.pending
                         ),
                         StatItem(
@@ -39,7 +39,7 @@ struct BudgetAnalyticsHeader: View {
                 InfoCard(
                     icon: "exclamationmark.triangle.fill",
                     title: "Projected Overage",
-                    content: NumberFormatter.currency.string(from: NSNumber(value: stats.projectedOverage)) ?? "$0",
+                    content: NumberFormatter.currencyShort.string(from: NSNumber(value: stats.projectedOverage)) ?? "$0",
                     color: AppColors.Budget.overBudget
                 )
             }

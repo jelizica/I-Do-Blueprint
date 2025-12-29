@@ -28,7 +28,7 @@ struct BudgetCategoriesListView: View {
                             Text("Allocated:")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text(NumberFormatter.currency.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")
+                            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")
                                 .font(.caption)
                                 .fontWeight(.medium)
 
@@ -37,7 +37,7 @@ struct BudgetCategoriesListView: View {
                             Text("Spent:")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text(NumberFormatter.currency.string(from: NSNumber(value: category.spentAmount)) ?? "$0")
+                            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: category.spentAmount)) ?? "$0")
                                 .font(.caption)
                                 .fontWeight(.medium)
                                 .foregroundColor(category.isOverBudget ? AppColors.Budget.overBudget : .primary)
@@ -45,7 +45,7 @@ struct BudgetCategoriesListView: View {
 
                         if category.isOverBudget {
                             let overAmount = category.spentAmount - category.allocatedAmount
-                            Text("Over by: \(NumberFormatter.currency.string(from: NSNumber(value: overAmount)) ?? "$0")")
+                            Text("Over by: \(NumberFormatter.currencyShort.string(from: NSNumber(value: overAmount)) ?? "$0")")
                                 .font(.caption)
                                 .foregroundColor(AppColors.Budget.overBudget)
                                 .fontWeight(.semibold)

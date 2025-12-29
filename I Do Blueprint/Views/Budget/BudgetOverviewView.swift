@@ -12,10 +12,10 @@ struct BudgetOverviewView: View {
     @State private var searchText = ""
 
     var filteredAndSortedCategories: [BudgetCategory] {
-        let filtered = budgetStore.filteredCategories(by: selectedFilterOption).filter { category in
+        let filtered = budgetStore.categoryStore.filteredCategories(by: selectedFilterOption).filter { category in
             searchText.isEmpty || category.categoryName.localizedCaseInsensitiveContains(searchText)
         }
-        return budgetStore.sortedCategories(filtered, by: selectedSortOption, ascending: sortAscending)
+        return budgetStore.categoryStore.sortedCategories(filtered, by: selectedSortOption, ascending: sortAscending)
     }
 
     var body: some View {
@@ -102,7 +102,7 @@ struct BudgetOverviewView: View {
 
                         Button(action: {
                             Task {
-                                await budgetStore.refreshBudgetData()
+                                await budgetStore.refresh()
                             }
                         }) {
                             Label("Refresh", systemImage: "arrow.clockwise")
@@ -115,7 +115,11 @@ struct BudgetOverviewView: View {
             .sheet(isPresented: $showingAddCategory) {
                 AddBudgetCategoryView { newCategory in
                     Task {
-                        await budgetStore.addBudgetCategory(newCategory)
+                        do {
+                            _ = try await budgetStore.categoryStore.addCategory(newCategory)
+                        } catch {
+                            AppLogger.ui.error("Failed to add category", error: error)
+                        }
                     }
                 }
                 #if os(macOS)
@@ -123,10 +127,10 @@ struct BudgetOverviewView: View {
                 #endif
             }
             .sheet(isPresented: $showingAddExpense) {
-                AddExpenseView(categories: budgetStore.categories) { newExpense in
-                    Task {
-                        await budgetStore.addExpense(newExpense)
-                    }
+                AddExpenseView(categories: budgetStore.categoryStore.categories) { newExpense in
+                Task {
+                await budgetStore.expenseStore.addExpense(newExpense)
+                }
                 }
                 #if os(macOS)
                 .frame(minWidth: 700, idealWidth: 750, maxWidth: 800, minHeight: 650, idealHeight: 750, maxHeight: 850)
@@ -136,21 +140,25 @@ struct BudgetOverviewView: View {
             if let category = selectedCategory {
                 BudgetCategoryDetailView(
                     category: category,
-                    expenses: budgetStore.expenses.filter { $0.categoryId == category.id },
+                    expenses: budgetStore.expenseStore.expenses.filter { $0.categoryId == category.id },
                     onUpdateCategory: { updatedCategory in
                         Task {
-                            await budgetStore.updateBudgetCategory(updatedCategory)
+                            do {
+                                _ = try await budgetStore.categoryStore.updateCategory(updatedCategory)
+                            } catch {
+                                AppLogger.ui.error("Failed to update category", error: error)
+                            }
                         }
                     },
                     onAddExpense: { expense in
                         Task {
-                            await budgetStore.addExpense(expense)
+                            await budgetStore.expenseStore.addExpense(expense)
                         }
                     },
                     onUpdateExpense: { expense in
                         Task {
                             do {
-                                _ = try await budgetStore.updateExpense(expense)
+                                _ = try await budgetStore.expenseStore.updateExpense(expense)
                             } catch {
                                 AppLogger.ui.error("Failed to update expense", error: error)
                             }
@@ -238,20 +246,20 @@ struct BudgetSummaryHeaderView: View {
                     StatItem(
                         icon: "dollarsign.circle.fill",
                         label: "Total Budget",
-                        value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.actualTotalBudget)) ?? "$0",
+                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.actualTotalBudget)) ?? "$0",
                         color: AppColors.Budget.allocated
                     ),
                     StatItem(
                         icon: "creditcard.fill",
                         label: "Total Spent",
-                        value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.totalSpent)) ?? "$0",
+                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.totalSpent)) ?? "$0",
                         color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.underBudget,
                         trend: .neutral
                     ),
                     StatItem(
                         icon: "banknote.fill",
                         label: "Remaining",
-                        value: NumberFormatter.currency.string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
+                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
                         color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.pending
                     )
                 ],
@@ -317,7 +325,7 @@ struct BudgetCategoryRowView: View {
     let budgetStore: BudgetStoreV2
 
     private var enhancedCategory: EnhancedBudgetCategory {
-        budgetStore.enhancedCategory(category)
+        budgetStore.categoryStore.enhancedCategory(category, expenses: budgetStore.expenseStore.expenses)
     }
 
     var body: some View {
@@ -336,14 +344,14 @@ struct BudgetCategoryRowView: View {
                     Spacer()
 
                     VStack(alignment: .trailing, spacing: 2) {
-                        Text(NumberFormatter.currency
+                        Text(NumberFormatter.currencyShort
                             .string(from: NSNumber(value: enhancedCategory.projectedSpending)) ?? "$0")
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundColor(enhancedCategory.isOverBudget ? AppColors.Budget.overBudget : .primary)
 
                         Text(
-                            "of \(NumberFormatter.currency.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")")
+                            "of \(NumberFormatter.currencyShort.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }

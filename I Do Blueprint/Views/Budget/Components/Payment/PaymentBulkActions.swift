@@ -71,7 +71,11 @@ struct BulkActionsView: View {
                 if let schedule = budgetStore.paymentSchedules.first(where: { String($0.id) == payment.id }) {
                     var updatedSchedule = schedule
                     updatedSchedule.paid = true
-                    await budgetStore.updatePayment(updatedSchedule)
+                    do {
+                        try await budgetStore.payments.updatePayment(updatedSchedule)
+                    } catch {
+                        AppLogger.ui.error("Failed to mark payment as paid", error: error)
+                    }
                 }
             }
             onComplete()
@@ -84,7 +88,11 @@ struct BulkActionsView: View {
             for payment in selectedPaymentItems {
                 // Find the original PaymentSchedule and delete it
                 if let schedule = budgetStore.paymentSchedules.first(where: { String($0.id) == payment.id }) {
-                    await budgetStore.deletePayment(schedule)
+                    do {
+                        try await budgetStore.payments.deletePayment(schedule)
+                    } catch {
+                        AppLogger.ui.error("Failed to delete payment", error: error)
+                    }
                 }
             }
             onComplete()

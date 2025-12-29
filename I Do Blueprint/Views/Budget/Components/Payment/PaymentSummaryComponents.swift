@@ -96,7 +96,7 @@ struct PaymentManagementSummaryCard: View {
                 .foregroundColor(color)
                 .font(.title3)
 
-            Text(NumberFormatter.currency.string(from: NSNumber(value: amount)) ?? "$0")
+            Text(NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0")
                 .font(.headline)
                 .fontWeight(.bold)
                 .foregroundColor(color)

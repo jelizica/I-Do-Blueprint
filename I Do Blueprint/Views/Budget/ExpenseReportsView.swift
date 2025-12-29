@@ -18,8 +18,8 @@ struct ExpenseReportsView: View {
     // MARK: - Computed Properties
 
     private var transformedExpenses: [ExpenseItem] {
-        budgetStore.expenses.map { expense in
-            let category = budgetStore.categories.first { $0.id == expense.budgetCategoryId }
+        budgetStore.expenseStore.expenses.map { expense in
+            let category = budgetStore.categoryStore.categories.first { $0.id == expense.budgetCategoryId }
             return ExpenseItem(
                 id: expense.id.uuidString,
                 date: expense.expenseDate,
@@ -119,7 +119,7 @@ struct ExpenseReportsView: View {
                     // Header
                     ExpenseReportsHeader(
                         onExport: { showingExportOptions = true },
-                        onRefresh: { await budgetStore.refreshBudgetData() })
+                        onRefresh: { await budgetStore.refresh() })
 
                     // Filters
                     ExpenseReportsFilters(
@@ -165,7 +165,7 @@ struct ExpenseReportsView: View {
                 .navigationBarTitleDisplayMode(.large)
             #endif
                                 .sheet(isPresented: $showingExportOptions) {
-                    ExpenseExportOptionsView(expenses: budgetStore.expenses, categories: budgetStore.categories)
+                    ExpenseExportOptionsView(expenses: budgetStore.expenseStore.expenses, categories: budgetStore.categoryStore.categories)
                 }
         }
     }
@@ -182,7 +182,7 @@ struct ExpenseReportsView: View {
             .mapValues { expenses in expenses.reduce(0) { $0 + $1.amount } }
 
         let categoryData = categoryTotals.map { name, amount in
-            let color = budgetStore.categories.first { $0.categoryName == name }?.color ?? "#3B82F6"
+            let color = budgetStore.categoryStore.categories.first { $0.categoryName == name }?.color ?? "#3B82F6"
             return CategoryData(name: name, amount: amount, color: color)
         }.sorted { $0.amount > $1.amount }
 
