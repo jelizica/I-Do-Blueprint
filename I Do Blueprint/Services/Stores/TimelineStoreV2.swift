@@ -111,10 +111,9 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
     showSuccess("Timeline item created successfully")
     } catch {
     loadingState = .error(TimelineError.createFailed(underlying: error))
-    ErrorHandler.shared.handle(
-        error,
-        context: ErrorContext(operation: "createTimelineItem", feature: "timeline")
-    )
+    await handleError(error, operation: "createTimelineItem") { [weak self] in
+        await self?.createTimelineItem(insertData)
+    }
     }
     }
 
@@ -150,10 +149,11 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
                 loadingState = .loaded(items)
             }
             loadingState = .error(TimelineError.updateFailed(underlying: error))
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(operation: "updateTimelineItem", feature: "timeline", metadata: ["itemId": item.id.uuidString])
-            )
+            await handleError(error, operation: "updateTimelineItem", context: [
+                "itemId": item.id.uuidString
+            ]) { [weak self] in
+                await self?.updateTimelineItem(item)
+            }
         }
     }
 
@@ -179,10 +179,11 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
                 loadingState = .loaded(items)
             }
             loadingState = .error(TimelineError.deleteFailed(underlying: error))
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(operation: "deleteTimelineItem", feature: "timeline", metadata: ["itemId": item.id.uuidString])
-            )
+            await handleError(error, operation: "deleteTimelineItem", context: [
+                "itemId": item.id.uuidString
+            ]) { [weak self] in
+                await self?.deleteTimelineItem(item)
+            }
         }
     }
 
@@ -203,6 +204,9 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
             // Invalidate cache due to mutation
             invalidateCache()
         } catch {
+            await handleError(error, operation: "createMilestone") { [weak self] in
+                await self?.createMilestone(insertData)
+            }
             loadingState = .error(TimelineError.createFailed(underlying: error))
         }
     }
@@ -222,6 +226,11 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
             } catch {
                 // Rollback on error
                 milestones[index] = original
+                await handleError(error, operation: "updateMilestone", context: [
+                    "milestoneId": milestone.id.uuidString
+                ]) { [weak self] in
+                    await self?.updateMilestone(milestone)
+                }
                 loadingState = .error(TimelineError.updateFailed(underlying: error))
             }
         }
@@ -239,6 +248,11 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
         } catch {
             // Rollback on error
             milestones.insert(removed, at: index)
+            await handleError(error, operation: "deleteMilestone", context: [
+                "milestoneId": milestone.id.uuidString
+            ]) { [weak self] in
+                await self?.deleteMilestone(milestone)
+            }
             loadingState = .error(TimelineError.deleteFailed(underlying: error))
         }
     }
