@@ -93,7 +93,9 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             
             return items
         } catch {
-            logger.error("Failed to load budget development items", error: error)
+            await handleError(error, operation: "loadBudgetDevelopmentItems", context: [
+                "scenarioId": scenarioId ?? "all"
+            ])
             return []
         }
     }
@@ -126,7 +128,9 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             let items = try await repository.fetchBudgetDevelopmentItemsWithSpentAmounts(scenarioId: scenarioId)
             return items
         } catch {
-            logger.error("Failed to load budget overview items", error: error)
+            await handleError(error, operation: "loadBudgetDevelopmentItemsWithSpentAmounts", context: [
+                "scenarioId": scenarioId
+            ])
             return []
         }
     }
@@ -212,15 +216,16 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             
             return folder
         } catch {
-            logger.error("Error creating folder", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "createFolder",
-                    feature: "budget",
-                    metadata: ["folderName": name, "scenarioId": scenarioId]
-                )
-            )
+            await handleError(error, operation: "createFolder", context: [
+                "folderName": name,
+                "scenarioId": scenarioId
+            ]) { [weak self] in
+                do {
+                    _ = try await self?.createFolder(name: name, scenarioId: scenarioId, parentFolderId: parentFolderId, displayOrder: displayOrder)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.createFailed(underlying: error)
         }
     }
@@ -243,15 +248,16 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             // Invalidate all scenario caches (we don't know which scenario this item belongs to)
             await invalidateScenarioCache()
         } catch {
-            logger.error("Error moving item to folder", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "moveItemToFolder",
-                    feature: "budget",
-                    metadata: ["itemId": itemId, "targetFolderId": targetFolderId ?? "root"]
-                )
-            )
+            await handleError(error, operation: "moveItemToFolder", context: [
+                "itemId": itemId,
+                "targetFolderId": targetFolderId ?? "root"
+            ]) { [weak self] in
+                do {
+                    try await self?.moveItemToFolder(itemId: itemId, targetFolderId: targetFolderId, displayOrder: displayOrder)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.updateFailed(underlying: error)
         }
     }
@@ -266,15 +272,15 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             // Invalidate all scenario caches
             await invalidateScenarioCache()
         } catch {
-            logger.error("Error updating display order", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "updateDisplayOrder",
-                    feature: "budget",
-                    metadata: ["itemCount": items.count]
-                )
-            )
+            await handleError(error, operation: "updateDisplayOrder", context: [
+                "itemCount": items.count
+            ]) { [weak self] in
+                do {
+                    try await self?.updateDisplayOrder(items: items)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.updateFailed(underlying: error)
         }
     }
@@ -288,15 +294,16 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             try await repository.toggleFolderExpansion(folderId: folderId, isExpanded: isExpanded)
             logger.info("Toggled folder \(folderId) expansion to \(isExpanded)")
         } catch {
-            logger.error("Error toggling folder expansion", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "toggleFolderExpansion",
-                    feature: "budget",
-                    metadata: ["folderId": folderId, "isExpanded": isExpanded]
-                )
-            )
+            await handleError(error, operation: "toggleFolderExpansion", context: [
+                "folderId": folderId,
+                "isExpanded": isExpanded
+            ]) { [weak self] in
+                do {
+                    try await self?.toggleFolderExpansion(folderId: folderId, isExpanded: isExpanded)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.updateFailed(underlying: error)
         }
     }
@@ -310,15 +317,15 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             logger.info("Fetched \(items.count) hierarchical items for scenario \(scenarioId)")
             return items
         } catch {
-            logger.error("Error fetching hierarchical items", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "fetchBudgetItemsHierarchical",
-                    feature: "budget",
-                    metadata: ["scenarioId": scenarioId]
-                )
-            )
+            await handleError(error, operation: "fetchBudgetItemsHierarchical", context: [
+                "scenarioId": scenarioId
+            ]) { [weak self] in
+                do {
+                    _ = try await self?.fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
@@ -332,15 +339,15 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             logger.info("Calculated totals for folder \(folderId): $\(totals.withTax)")
             return totals
         } catch {
-            logger.error("Error calculating folder totals", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "calculateFolderTotals",
-                    feature: "budget",
-                    metadata: ["folderId": folderId]
-                )
-            )
+            await handleError(error, operation: "calculateFolderTotals", context: [
+                "folderId": folderId
+            ]) { [weak self] in
+                do {
+                    _ = try await self?.calculateFolderTotals(folderId: folderId)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
@@ -356,15 +363,16 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             let canMove = try await repository.canMoveItem(itemId: itemId, toFolder: targetFolderId)
             return canMove
         } catch {
-            logger.error("Error validating move", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "canMoveItem",
-                    feature: "budget",
-                    metadata: ["itemId": itemId, "targetFolderId": targetFolderId ?? "root"]
-                )
-            )
+            await handleError(error, operation: "canMoveItem", context: [
+                "itemId": itemId,
+                "targetFolderId": targetFolderId ?? "root"
+            ]) { [weak self] in
+                do {
+                    _ = try await self?.canMoveItem(itemId: itemId, toFolder: targetFolderId)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
@@ -381,15 +389,16 @@ class BudgetDevelopmentStoreV2: ObservableObject {
             // Invalidate all scenario caches
             await invalidateScenarioCache()
         } catch {
-            logger.error("Error deleting folder", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "deleteFolder",
-                    feature: "budget",
-                    metadata: ["folderId": folderId, "deleteContents": deleteContents]
-                )
-            )
+            await handleError(error, operation: "deleteFolder", context: [
+                "folderId": folderId,
+                "deleteContents": deleteContents
+            ]) { [weak self] in
+                do {
+                    try await self?.deleteFolder(folderId: folderId, deleteContents: deleteContents)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
