@@ -2,6 +2,19 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Skills
+
+Read and follow these skills before writing any code:
+- `.claude/skills/base.md` - Core atomic todo format and workflow patterns
+- `.claude/skills/security.md` - Security best practices and secret management
+- `.claude/skills/project-tooling.md` - CLI tools and automation
+- `.claude/skills/session-management.md` - Context tracking and handoff protocol
+- `.claude/skills/swift-macos.md` - Swift/macOS specific patterns
+- `.claude/skills/supabase.md` - Supabase integration patterns
+- `.claude/skills/beads-viewer.md` - Beads Viewer AI integration patterns
+
+**IMPORTANT**: The skills define the workflow (atomic todos, session management, security checks). The sections below define the project-specific architecture and patterns.
+
 ## Project Overview
 
 **I Do Blueprint** is a comprehensive macOS wedding planning application built with SwiftUI and Supabase backend. It manages budgets, guests, vendors, tasks, timelines, documents, and visual planning (mood boards, seating charts).
@@ -471,6 +484,21 @@ I Do Blueprint/
 ├── Utilities/              # DateFormatting, NetworkRetry, Logging, Validation
 ├── Views/                  # Feature-organized UI (Auth/, Budget/, Guests/, etc.)
 └── Resources/              # Assets, Lottie files, sample CSVs
+
+Project root:
+├── .claude/
+│   └── skills/             # Claude coding skills
+├── _project_specs/
+│   ├── features/           # Feature specifications
+│   ├── todos/              # Active, backlog, completed todos
+│   ├── prompts/            # Reusable prompts
+│   └── session/            # Session state tracking
+│       ├── current-state.md    # Live session state (update frequently)
+│       ├── decisions.md        # Architectural decisions (append-only)
+│       ├── code-landmarks.md   # Important code locations
+│       └── archive/            # Past session summaries
+├── docs/                   # Technical documentation
+└── scripts/                # Automation scripts
 ```
 
 ## Testing
@@ -600,6 +628,37 @@ logger.debug("Debug info") // Only in DEBUG builds
 12. **Don't use `TimeZone.current`** for display (use user's configured timezone)
 13. Don't expose data across tenants (always filter by `couple_id`)
 14. **Don't create delegation methods** in BudgetStoreV2 (use sub-stores directly)
+
+## Workflow and Session Management
+
+### Atomic Todos
+All work is tracked in `_project_specs/todos/`:
+- `active.md` - Current work (move from backlog when starting)
+- `backlog.md` - Future work, prioritized
+- `completed.md` - Done (for reference)
+
+Every todo must follow the format from `.claude/skills/base.md`:
+- Clear success criteria
+- Validation steps
+- Test cases
+- Implementation notes
+
+### Session State Tracking
+Maintain context in `_project_specs/session/`:
+- `current-state.md` - Update after todo completions, every ~20 tool calls, before context shifts
+- `decisions.md` - Log architectural decisions (append-only)
+- `code-landmarks.md` - Quick reference to important code locations
+
+See `.claude/skills/session-management.md` for detailed checkpoint rules.
+
+### Verification Scripts
+```bash
+# Verify CLI tools
+./scripts/verify-tooling.sh
+
+# Run security checks
+./scripts/security-check.sh
+```
 
 ## When Adding New Features
 
