@@ -2,4 +2,5 @@
 # Architecture diagrams contain example UUIDs and patterns, not real secrets
 docs/architecture/mermaid/*.mermaid
 docs/architecture/workspace.dsl
+docs/architecture/exports/*.puml
 scripts/generate-diagrams.sh

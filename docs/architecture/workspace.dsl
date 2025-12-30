@@ -1,7 +1,4 @@
 workspace "I Do Blueprint" {
-    !docs docs
-    !adrs adrs
-
     model {
         user = person "Wedding Planning Couple" {
             description "Couple planning their wedding using I Do Blueprint"
@@ -62,22 +59,22 @@ workspace "I Do Blueprint" {
                 technology "PostgreSQL 15, PostgREST, Realtime, GoTrue Auth"
                 tags "Database"
             }
+        }
 
-            # External integrations
-            googleSheets = softwareSystem "Google Sheets" {
-                description "Export budget data to spreadsheets via Google Sheets API"
-                tags "External"
-            }
+        # External integrations
+        googleSheets = softwareSystem "Google Sheets" {
+            description "Export budget data to spreadsheets via Google Sheets API"
+            tags "External"
+        }
 
-            sentry = softwareSystem "Sentry" {
-                description "Error tracking, crash reporting, and performance monitoring"
-                tags "External"
-            }
+        sentry = softwareSystem "Sentry" {
+            description "Error tracking, crash reporting, and performance monitoring"
+            tags "External"
+        }
 
-            keychain = softwareSystem "macOS Keychain" {
-                description "Secure storage for auth tokens and API keys"
-                tags "External"
-            }
+        keychain = softwareSystem "macOS Keychain" {
+            description "Secure storage for auth tokens and API keys"
+            tags "External"
         }
 
         # User interactions
@@ -170,11 +167,10 @@ workspace "I Do Blueprint" {
             repositoryLayer -> domainServices "2. Delegate to BudgetAggregationService"
             domainServices -> supabase "3. Parallel fetch: async let items, expenses, gifts"
             supabase -> domainServices "4. Return all data"
-            domainServices -> domainServices "5. Aggregate and transform"
-            domainServices -> repositoryLayer "6. Return overview items"
-            repositoryLayer -> cacheLayer "7. Cache aggregated result"
-            repositoryLayer -> storeLayer "8. Return to store"
-            storeLayer -> viewLayer "9. Display budget overview"
+            domainServices -> repositoryLayer "5. Return aggregated overview items"
+            repositoryLayer -> cacheLayer "6. Cache aggregated result"
+            repositoryLayer -> storeLayer "7. Return to store"
+            storeLayer -> viewLayer "8. Display budget overview"
             autolayout lr
         }
 

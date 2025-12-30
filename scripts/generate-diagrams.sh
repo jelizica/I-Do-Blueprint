@@ -30,17 +30,18 @@ fi
 # Create output directory if it doesn't exist
 mkdir -p "$OUTPUT_DIR"
 
-# Export diagrams
+# Export diagrams as PlantUML
+echo "   Exporting as PlantUML..."
 structurizr-cli export \
     -workspace "$WORKSPACE_DSL" \
-    -format png \
+    -format plantuml \
     -output "$OUTPUT_DIR"
 
 echo ""
 echo "✅ Diagrams generated successfully!"
 echo ""
 echo "📊 Generated files:"
-ls -lh "$OUTPUT_DIR"/*.png 2>/dev/null || echo "   (No PNG files found)"
+ls -lh "$OUTPUT_DIR"/*.puml 2>/dev/null || echo "   (No PlantUML files found)"
 
 echo ""
 echo "💡 View diagrams:"
