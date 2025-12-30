@@ -67,17 +67,10 @@ extension BudgetStoreV2 {
                         logger.warning("Payment status constraint violation - database may need migration to support 'partial' status. Attempted status: \(expense.paymentStatus.rawValue)")
                     }
                     
-                    ErrorHandler.shared.handle(
-                        error,
-                        context: ErrorContext(
-                            operation: "updateExpensePaymentStatus",
-                            feature: "budget",
-                            metadata: [
-                                "expenseId": expense.id.uuidString,
-                                "attemptedStatus": expense.paymentStatus.rawValue
-                            ]
-                        )
-                    )
+                    await handleError(error, operation: "updateExpensePaymentStatus", context: [
+                        "expenseId": expense.id.uuidString,
+                        "attemptedStatus": expense.paymentStatus.rawValue
+                    ])
                     
                     // Continue with other expenses instead of failing completely
                     continue
@@ -140,14 +133,13 @@ extension BudgetStoreV2 {
                 }
             } catch {
                 logger.error("Failed to update payment status for expense \(expenseId)", error: error)
-                ErrorHandler.shared.handle(
-                    error,
-                    context: ErrorContext(
-                        operation: "updateExpensePaymentStatus",
-                        feature: "budget",
-                        metadata: ["expenseId": expenseId.uuidString]
-                    )
-                )
+                
+                await handleError(error, operation: "updateExpensePaymentStatus", context: [
+                    "expenseId": expenseId.uuidString,
+                    "attemptedStatus": status.rawValue
+                ]) { [weak self] in
+                    await self?.updateExpensePaymentStatus(expenseId: expenseId)
+                }
             }
         }
     }

@@ -46,9 +46,18 @@ class DocumentUploadStore: ObservableObject {
             AppLogger.ui.info("Document uploaded successfully: \(document.originalFilename)")
             return document
         } catch {
+            AppLogger.ui.error("Failed to upload document", error: error)
+            
+            await handleError(error, operation: "uploadDocument", context: [
+                "fileName": metadata.fileName,
+                "fileSize": fileData.count
+            ]) { [weak self] in
+                guard let self = self else { return }
+                _ = try? await self.uploadDocument(fileData: fileData, metadata: metadata, coupleId: coupleId)
+            }
+            
             let docError = DocumentError.uploadFailed(underlying: error)
             lastUploadError = docError
-            AppLogger.ui.error("Failed to upload document", error: error)
             throw docError
         }
     }
@@ -76,6 +85,12 @@ class DocumentUploadStore: ObservableObject {
             AppLogger.ui.info("Successfully read file data: \(metadata.fileName), size: \(fileData.count) bytes")
         } catch {
             AppLogger.ui.error("Failed to read file data from: \(metadata.localURL.path)", error: error)
+            
+            await handleError(error, operation: "uploadFile", context: [
+                "fileName": metadata.fileName,
+                "filePath": metadata.localURL.path
+            ])
+            
             throw NSError(
                 domain: "DocumentUploadStore",
                 code: -1,
