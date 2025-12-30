@@ -20,7 +20,7 @@ struct MoneyReceivedSummaryCard: View {
             HStack {
                 MetricView(
                     title: "Total Received",
-                    value: "$\(totalReceived, specifier: "%.0f")",
+                    value: String(format: "$%.0f", totalReceived),
                     color: AppColors.Budget.income,
                     alignment: .leading
                 )
@@ -38,7 +38,7 @@ struct MoneyReceivedSummaryCard: View {
                 
                 MetricView(
                     title: "Avg Gift",
-                    value: "$\(averageGiftAmount, specifier: "%.0f")",
+                    value: String(format: "$%.0f", averageGiftAmount),
                     color: AppColors.Budget.allocated,
                     alignment: .trailing
                 )
