@@ -2,6 +2,32 @@ import Foundation
 import Supabase
 import PostgREST
 
+// MARK: - Security Note
+//
+// UserDefaults is intentionally used for feature flag storage.
+// This is a SAFE and APPROPRIATE use of UserDefaults because:
+//
+// 1. **Non-Sensitive Data**: Feature flags are boolean configuration values,
+//    not credentials, tokens, or personally identifiable information (PII).
+//
+// 2. **No Security Impact**: Knowing which features are enabled/disabled
+//    does not compromise user security or data privacy.
+//
+// 3. **Performance**: UserDefaults provides fast, synchronous access which
+//    is critical for feature flag checks that happen frequently.
+//
+// 4. **Persistence**: Feature flags need to persist across app launches
+//    without requiring authentication or network access.
+//
+// 5. **Debug Override**: Developers need to easily toggle flags during testing.
+//
+// For sensitive data (API keys, tokens, credentials), use:
+// - Keychain (see SecureAPIKeyManager.swift)
+// - Supabase Auth (for session tokens)
+//
+// Reference: OWASP MASVS-STORAGE-1 - "Sensitive data is stored securely"
+// Feature flags are NOT sensitive data per OWASP classification.
+
 /// Response model for feature flags from Supabase
 struct FeatureFlagsResponse: Codable {
     let flags: [String: Bool]

@@ -227,27 +227,50 @@ class SessionManager: ObservableObject {
         return nil
     }
 
+    /// Saves a value to the Keychain with appropriate security settings.
+    ///
+    /// Security Model:
+    /// - Uses `kSecAttrAccessibleAfterFirstUnlock` to protect data when device is locked
+    /// - Does NOT require biometric/passcode for each access because:
+    ///   1. Tenant ID is not a credential - it's a pointer to which data to load
+    ///   2. Actual data security is enforced by Supabase Row Level Security (RLS)
+    ///   3. Requiring biometric for every app launch would create poor UX
+    ///   4. The Supabase auth token (managed separately) provides authentication
+    ///
+    /// For truly sensitive items (API keys, credentials), see `SecureAPIKeyManager`
+    /// which uses `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`.
     private func saveToKeychain(value: String, account: String) throws {
         guard let data = value.data(using: .utf8) else {
             logger.error("Failed to encode value for keychain account: \(account)")
             throw SessionError.keychainSaveFailed(errSecParam)
         }
 
-        let query: [String: Any] = [
+        // Delete query (without accessibility attribute)
+        let deleteQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
-            kSecAttrAccount as String: account,
-            kSecValueData as String: data
+            kSecAttrAccount as String: account
         ]
 
         // Delete existing item
-        let deleteStatus = SecItemDelete(query as CFDictionary)
+        let deleteStatus = SecItemDelete(deleteQuery as CFDictionary)
         if deleteStatus != errSecSuccess && deleteStatus != errSecItemNotFound {
             logger.warning("Failed to delete existing keychain item for account \(account): \(SessionError.keychainDeleteFailed(deleteStatus).localizedDescription)")
         }
 
+        // Add query with security attributes
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: account,
+            kSecValueData as String: data,
+            // Protect data when device is locked, but allow access after first unlock
+            // This is appropriate for session state (not credentials)
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+        ]
+
         // Add new item
-        let status = SecItemAdd(query as CFDictionary, nil)
+        let status = SecItemAdd(addQuery as CFDictionary, nil)
         if status == errSecSuccess {
             logger.debug("Session value saved to keychain for account: \(account)")
         } else {

@@ -17,10 +17,6 @@ final class ResendEmailService: ObservableObject {
     private let baseURL = "https://api.resend.com"
     private let apiKeyManager = SecureAPIKeyManager.shared
 
-    // Embedded API key for shared email service
-    // Users can optionally override this with their own key in Settings
-    private let embeddedAPIKey = "re_5tuxAHLr_3LtMhuJ2de7d6Awh2aLyTjup"
-
     // MARK: - Published State
 
     @Published var isSending = false
@@ -44,14 +40,14 @@ final class ResendEmailService: ObservableObject {
         token: String,
         expiresAt: Date
     ) async throws {
-        // Try to get user's custom API key, fall back to embedded key
+        // Try to get user's custom API key, fall back to shared service key from AppConfig
         let apiKey: String
         if let userKey = apiKeyManager.getAPIKey(for: .resend), !userKey.isEmpty {
             logger.debug("Using user-provided Resend API key")
             apiKey = userKey
         } else {
-            logger.debug("Using embedded shared Resend API key")
-            apiKey = embeddedAPIKey
+            logger.debug("Using shared Resend API key from AppConfig")
+            apiKey = AppConfig.getResendAPIKey()
         }
 
         isSending = true

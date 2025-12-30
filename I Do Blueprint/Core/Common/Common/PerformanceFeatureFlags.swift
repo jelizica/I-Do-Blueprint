@@ -7,6 +7,16 @@
 
 import Foundation
 
+// MARK: - Security Note
+//
+// UserDefaults is intentionally used for performance feature flags.
+// This is SAFE because these are non-sensitive configuration values:
+// - Boolean toggles for debug features
+// - Integer limits for concurrent operations
+// - No credentials, tokens, or PII
+//
+// See FeatureFlags.swift for detailed security rationale.
+
 /// Feature flags specifically for performance and memory-intensive operations
 enum PerformanceFeatureFlags {
     /// Enable periodic analytics refresh (every 5 minutes)
