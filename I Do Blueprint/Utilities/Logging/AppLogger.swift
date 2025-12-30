@@ -47,38 +47,102 @@ struct AppLogger: Sendable {
 
     // MARK: - Public Logging Methods
 
-    /// Log a debug message (only in DEBUG builds)
+    /// Log a debug message (respects configuration)
     nonisolated func debug(_ message: String, file: String = #file, function: String = #function, line: Int = #line) {
         #if DEBUG
-        logger.debug("\(message, privacy: .public) [\(fileBaseName(file)):\(line) \(function)]")
+        // Check configuration on main actor
+        Task { @MainActor in
+            let config = LoggingConfiguration.shared
+            guard config.shouldLog(level: .debug, for: category),
+                  config.shouldSample(for: category) else {
+                return
+            }
+            
+            if config.includeSourceLocation {
+                logger.debug("\(message, privacy: .public) [\(fileBaseName(file)):\(line) \(function)]")
+            } else {
+                logger.debug("\(message, privacy: .public)")
+            }
+        }
         #endif
     }
 
-    /// Log an info message
+    /// Log an info message (respects configuration)
     nonisolated func info(_ message: String, file: String = #file, function: String = #function) {
-        logger.info("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
-    }
-
-    /// Log a warning message
-    nonisolated func warning(_ message: String, file: String = #file, function: String = #function) {
-        logger.warning("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
-    }
-
-    /// Log an error message
-    nonisolated func error(_ message: String, error: Error? = nil, file: String = #file, function: String = #function) {
-        if let error = error {
-            logger.error("\(message, privacy: .public): \(error.localizedDescription, privacy: .public) [\(fileBaseName(file)) \(function)]")
-        } else {
-            logger.error("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
+        Task { @MainActor in
+            let config = LoggingConfiguration.shared
+            guard config.shouldLog(level: .info, for: category),
+                  config.shouldSample(for: category) else {
+                return
+            }
+            
+            if config.includeSourceLocation {
+                logger.info("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
+            } else {
+                logger.info("\(message, privacy: .public)")
+            }
         }
     }
 
-    /// Log a critical fault
+    /// Log a warning message (respects configuration)
+    nonisolated func warning(_ message: String, file: String = #file, function: String = #function) {
+        Task { @MainActor in
+            let config = LoggingConfiguration.shared
+            guard config.shouldLog(level: .warning, for: category),
+                  config.shouldSample(for: category) else {
+                return
+            }
+            
+            if config.includeSourceLocation {
+                logger.warning("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
+            } else {
+                logger.warning("\(message, privacy: .public)")
+            }
+        }
+    }
+
+    /// Log an error message (respects configuration)
+    nonisolated func error(_ message: String, error: Error? = nil, file: String = #file, function: String = #function) {
+        Task { @MainActor in
+            let config = LoggingConfiguration.shared
+            guard config.shouldLog(level: .error, for: category) else {
+                return
+            }
+            
+            if config.includeSourceLocation {
+                if let error = error {
+                    logger.error("\(message, privacy: .public): \(error.localizedDescription, privacy: .public) [\(fileBaseName(file)) \(function)]")
+                } else {
+                    logger.error("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
+                }
+            } else {
+                if let error = error {
+                    logger.error("\(message, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                } else {
+                    logger.error("\(message, privacy: .public)")
+                }
+            }
+        }
+    }
+
+    /// Log a critical fault (always logs, respects source location config)
     nonisolated func fault(_ message: String, error: Error? = nil, file: String = #file, function: String = #function) {
-        if let error = error {
-            logger.fault("\(message, privacy: .public): \(error.localizedDescription, privacy: .public) [\(fileBaseName(file)) \(function)]")
-        } else {
-            logger.fault("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
+        Task { @MainActor in
+            let config = LoggingConfiguration.shared
+            
+            if config.includeSourceLocation {
+                if let error = error {
+                    logger.fault("\(message, privacy: .public): \(error.localizedDescription, privacy: .public) [\(fileBaseName(file)) \(function)]")
+                } else {
+                    logger.fault("\(message, privacy: .public) [\(fileBaseName(file)) \(function)]")
+                }
+            } else {
+                if let error = error {
+                    logger.fault("\(message, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                } else {
+                    logger.fault("\(message, privacy: .public)")
+                }
+            }
         }
     }
 
