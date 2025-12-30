@@ -1,30 +1,33 @@
-A comprehensive guide to the Model Context Protocol (MCP) tools.
+A comprehensive guide to the Model Context Protocol (MCP) tools and development workflow utilities.
 
 ## Table of Contents
 
-### Claude Code Active Servers
+### Claude Code Active MCP Servers
 1. [ADR Analysis Server](#adr-analysis-server)
 2. [Code Guardian Studio](#code-guardian-studio)
 3. [Grep MCP](#grep-mcp)
 4. [Supabase MCP](#supabase-mcp)
 5. [Swiftzilla](#swiftzilla)
 
-### Claude Desktop Servers
-6. [Owlex](#owlex)
-7. [Sync MCP Config](#sync-mcp-config)
-8. [Agent Deck](#agent-deck)
-9. [Beads](#beads)
-10. [Beads Viewer](#beads-viewer)
+### Development Workflow Tools
+6. [Beads](#beads) (Claude Code Plugin)
+7. [Beads Viewer](#beads-viewer) (Claude Code Plugin)
+8. [Sync MCP Config](#sync-mcp-config) (CLI Tool)
+9. [direnv](#direnv) (Environment Manager)
+
+### Multi-Agent Orchestration
+10. [Owlex](#owlex) (MCP Server)
+11. [Agent Deck](#agent-deck) (Session Manager)
 
 ---
 
-# Claude Code Active Servers
+# Claude Code Active MCP Servers
 
 The following MCP servers are configured and active in Claude Code CLI.
 
 ## ADR Analysis Server
 
-**Repository:** tosin2013/mcp-adr-analysis-server
+**Repository:** https://github.com/tosin2013/mcp-adr-analysis-server
 
 **Purpose:** Architectural Decision Records (ADR) analysis and management with AI-powered insights
 
@@ -68,9 +71,7 @@ npm run build
 
 ## Code Guardian Studio
 
-**Repository/Article:** Building Code Guardian Studio - An MCP Server for AI-Powered Code Refactoring
-
-**URL:** https://dev.to/phuongrealmax/building-code-guardian-studio-an-mcp-server-for-ai-powered-code-refactoring-1ice
+**Repository/Article:** https://dev.to/phuongrealmax/building-code-guardian-studio-an-mcp-server-for-ai-powered-code-refactoring-1ice
 
 **Purpose:** AI-powered code refactoring and quality analysis MCP server
 
@@ -103,7 +104,7 @@ npm run build
 
 ## Grep MCP
 
-**Repository:** galprz/grep-mcp
+**Repository:** https://github.com/galprz/grep-mcp
 **Blog Post:** https://vercel.com/blog/grep-a-million-github-repositories-via-mcp
 
 **Purpose:** High-performance semantic code search across massive codebases and GitHub repositories
@@ -143,7 +144,7 @@ npm install -g grep-mcp
 
 ## Supabase MCP
 
-**Repository:** supabase-community/supabase-mcp
+**Repository:** https://github.com/supabase-community/supabase-mcp
 **Documentation:** https://supabase.com/docs/guides/getting-started/mcp
 
 **Purpose:** Official Supabase Model Context Protocol server for database operations and API management
@@ -223,58 +224,179 @@ npx supabase mcp install
 
 ---
 
-# Claude Desktop Servers
+# Development Workflow Tools
 
-The following MCP servers are configured for Claude Desktop application.
+The following tools support development workflows across different environments.
 
----
+## Beads
 
-## Owlex
+**Repository:** https://github.com/steveyegge/beads
 
-**Repository:** agentic-mcp-tools/owlex
+**Implementation:**
+- **Claude Code**: Plugin (recommended)
+- **Qodo Gen**: MCP Server
 
-**Purpose:** Multi-agent orchestration MCP server for coordinating multiple AI models
+**Purpose:** Distributed, git-backed graph issue tracker for AI agents. Provides persistent, structured memory for coding agents.
 
 **Key Features:**
-- Council deliberation - Query all agents in parallel with optional revision round
-- Session management - Start fresh or resume with full context preserved
-- Async execution - Tasks run in background with timeout control
-- Critique mode - Agents find bugs and flaws in each other's answers
+- Persistent memory - Replaces messy markdown plans with dependency-aware graph
+- Git as database - Issues stored as JSONL in .beads/ (versioned, branched, merged like code)
+- Agent-optimized - JSON output, dependency tracking, auto-ready task detection
+- Zero conflict - Hash-based IDs (bd-a1b2) prevent merge collisions in multi-agent workflows
+- Invisible infrastructure - SQLite local cache for speed, background daemon for auto-sync
+- Semantic compaction - "Memory decay" summarizes old closed tasks to save context window
+- Hierarchical IDs - Support for epics, tasks, and subtasks (bd-a3f8.1.1)
+- Stealth mode - Use locally without committing to main repo
 
 **Installation:**
 ```bash
-uv tool install git+https://github.com/agentic-mcp-tools/owlex.git
+npm install -g @beads/bd
+# or
+brew install steveyegge/beads/bd
+# or
+go install github.com/steveyegge/beads/cmd/bd@latest
 ```
 
-**Configuration (.mcp.json):**
-```json
-{
-  "mcpServers": {
-    "owlex": {
-      "command": "owlex-server"
-    }
-  }
-}
+**Core Commands:**
+- `bd init` - Initialize (humans run once)
+- `bd init --stealth` - Stealth mode (local-only)
+- `bd ready` - List tasks with no open blockers
+- `bd create "Title" -p 0` - Create P0 task
+- `bd dep add <child> <parent>` - Link tasks (blocks relationship)
+- `bd show <id>` - View task details and audit trail
+- `bd list` - List all tasks
+- `bd close <id>` - Mark task completed
+- `bd reopen <id>` - Reopen task
+
+**Data Format:**
+- Issues stored as JSONL in .beads/beads.jsonl
+- Each issue is a JSON object with full history
+- Git-native (branches, merges, conflicts handled)
+- Hash-based IDs prevent collisions during merge conflicts
+- Full audit trail for each task
+
+**Task Hierarchy Example:**
+```
+bd-a3f8        (Epic: Login system)
+bd-a3f8.1      (Task: Database setup)
+bd-a3f8.1.1    (Subtask: Schema design)
 ```
 
-**Main Tools:**
-- **council_ask**: Query all agents and collect answers with optional deliberation
-  - Parameters: prompt (required), claude_opinion, deliberate (default: true), critique (default: false), timeout (default: 300s)
-  - Returns: round_1 with initial answers, round_2 with revisions (if enabled)
-- **Agent Sessions**: start_codex_session, resume_codex_session, start_gemini_session, resume_gemini_session
-- **Task Management**: wait_for_task, get_task_result, list_tasks, cancel_task
+---
 
-**Best Use Cases by Agent:**
-- **Codex**: Code review, bug finding, PRD discussion
-- **Gemini**: Large codebase analysis (1M context), multimodal
-- **OpenCode**: Alternative perspective, plan mode
-- **Claude**: Complex multi-step implementation
+## Beads Viewer
+
+**Repository:** https://github.com/Dicklesworthstone/beads_viewer
+
+**Implementation:**
+- **Claude Code**: Plugin (recommended)
+- **Qodo Gen**: MCP Server
+
+**Purpose:** Elegant, keyboard-driven terminal interface for browsing, managing, and analyzing Beads task tracking data. Provides graph-aware insights with AI agent integration.
+
+**Key Features:**
+- Fast terminal UI - Zero network latency, Vim-style navigation (j/k)
+- Split view - List on left, rich details on right (responsive to terminal width)
+- Kanban board - Visualize workflow (Open, In Progress, Blocked, Closed)
+- Dependency graph - Interactive visualization with D3.js and custom ASCII rendering
+- Graph metrics - PageRank, Betweenness, HITS, Critical Path, Cycles detection
+- Insights dashboard - 6-panel interactive analysis
+- Time-travel - Compare project state across any git revision
+- AI agent integration - Robot JSON protocol for deterministic outputs
+- Semantic search - Full-text fuzzy search with semantic capabilities
+- Sprint tracking - Burndown charts, progress tracking, at-risk detection
+- Label health - Domain-centric health monitoring
+- Interactive graph export - Self-contained HTML with force-directed visualization
+- Markdown export - Reports with embedded Mermaid diagrams
+- Cass integration - Optional AI session correlation
+
+**Installation:**
+```bash
+curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh?$(date +%s)" | bash
+```
+
+**Core Commands:**
+- `bv` - Launch interactive TUI
+- `bv --robot-triage` - THE MEGA-COMMAND: unified triage with all analysis
+- `bv --robot-next` - Single top recommendation + claim command
+- `bv --robot-plan` - Parallel execution tracks with unblocks analysis
+- `bv --robot-insights` - Full graph metrics and analysis
+- `bv --robot-priority` - Priority recommendations with confidence scores
+- `bv --robot-history` - Bead-to-commit correlations
+- `bv --robot-alerts` - Proactive health monitoring and drift detection
+- `bv --robot-label-health` - Per-label health metrics
+- `bv --robot-forecast` - ETA predictions with dependency-aware scheduling
+- `bv --export-pages` - Generate self-contained static HTML dashboard
+- `bv --export-md` - Export Markdown report with Mermaid diagrams
+- `bv --as-of <ref>` - Time-travel to historical state
+
+**Graph Metrics Computed:**
+1. **PageRank** (30% weight) - Foundational dependency importance; bedrock blocker identification
+2. **Betweenness** (30% weight) - Bottleneck/bridge position; gatekeeper nodes
+3. **HITS** - Hub/Authority: Epics (hubs) vs Infrastructure (authorities)
+4. **Critical Path** - Longest dependency chain; zero-slack keystones
+5. **Eigenvector** (10% weight) - Influence via important neighbors
+6. **Degree Centrality** - Direct blockers/blocked counts
+7. **Density** - Project coupling health (0.0 isolated, 1.0 fully coupled)
+8. **Cycles** - Circular dependency detection (logical impossibilities)
+9. **Topological Sort** - Valid execution order
+
+**TUI Navigation:**
+
+**List View:**
+- `b` - Toggle Kanban board
+- `g` - Toggle graph visualizer
+- `i` - Toggle insights dashboard
+- `h` - Toggle history view
+- `f` - Toggle file-centric drill-down
+- `l` - Label picker
+- `s` - Cycle sort mode (Priority, Created, Updated, etc.)
+- `/` - Search (fuzzy or semantic)
+- `t` - Time-travel mode
+- `T` - Quick time-travel (HEAD~5)
+- `p` - Toggle priority hints overlay
+- `!` - Toggle alerts panel
+- `C` - Copy issue to clipboard
+- `y` - Copy issue ID
+
+**Kanban Board:**
+- `h/l` - Move between columns
+- `j/k` - Move within column
+- `s` - Cycle swimlane mode (Status, Priority, Type)
+- `d` - Expand/collapse card details
+- `Tab` - Toggle side detail panel
+- `o/c/r` - Filter: Open, Closed, Ready
+
+**Graph View:**
+- `H/L` - Scroll left/right
+- `Ctrl+D/U` - Page down/up
+- `z` - Zoom in/out
+
+**Robot Commands (AI-friendly JSON output):**
+- `--robot-triage` - Best entry point; complete analysis in one call
+- `--robot-plan` - Execution plan with parallel tracks and unblock counts
+- `--robot-insights` - All 9 graph metrics with per-metric status
+- `--robot-priority` - Priority recommendations with reasoning
+- `--robot-label-health` - Per-label health and velocity
+- `--robot-label-flow` - Cross-label dependency matrix
+- `--robot-history` - Commit-to-bead correlations
+- `--robot-alerts` - Stale issues, blocking cascades, priority misalignment
+- `--robot-forecast` - ETA and completion predictions
+- `--robot-suggest` - Hygiene suggestions (duplicates, cycles, deps)
+
+**Time-Travel & Diffs:**
+- `bv --as-of HEAD~30` - View state 30 commits ago
+- `bv --as-of v1.0.0` - View state at release tag
+- `bv --diff-since HEAD~5` - Show changes in last 5 commits
+- `bv --robot-diff --diff-since HEAD~5` - JSON diff output
 
 ---
 
 ## Sync MCP Config
 
-**Repository:** jgrichardson/sync-mcp-cfg
+**Repository:** https://github.com/jgrichardson/sync-mcp-cfg
+
+**Implementation:** CLI-agnostic terminal tool
 
 **Purpose:** Manage and synchronize Model Context Protocol server configurations across multiple AI clients
 
@@ -321,9 +443,137 @@ pip install -e .
 
 ---
 
+## direnv
+
+**Website:** https://direnv.net/
+**Repository:** https://github.com/direnv/direnv
+
+**Purpose:** Automatically load and unload environment variables based on the current directory
+
+**Key Features:**
+- Automatic environment switching per directory
+- .envrc file-based configuration
+- Shell-agnostic (bash, zsh, fish, tcsh, etc.)
+- Security-focused with allowlist mechanism
+- Fast and lightweight
+- Extensive stdlib for common patterns
+- Integration with version managers (nvm, rbenv, pyenv, etc.)
+- Support for layered environments
+- No shell wrappers required
+
+**Installation:**
+```bash
+# macOS
+brew install direnv
+
+# Add to shell (bash example)
+echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+
+# Or for zsh
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc
+```
+
+**Core Commands:**
+- `direnv allow [PATH]` - Allow .envrc to execute (security check)
+- `direnv deny [PATH]` - Revoke permission for .envrc
+- `direnv reload` - Force reload of the environment
+- `direnv edit [PATH]` - Edit and auto-allow .envrc
+- `direnv status` - Show current state
+- `direnv stdlib` - Show built-in functions
+
+**Example .envrc:**
+```bash
+# Load environment variables from .env file
+dotenv
+
+# Add local bin to PATH
+PATH_add bin
+
+# Use specific Node version
+use node 18
+
+# Set project-specific variables
+export DATABASE_URL=postgresql://localhost/mydb
+export API_KEY=dev-key-here
+
+# Load different config based on environment
+if [ "$ENVIRONMENT" = "production" ]; then
+  export API_URL=https://api.production.com
+else
+  export API_URL=http://localhost:3000
+fi
+```
+
+**Best Use Cases:**
+- Project-specific environment variables
+- Automatic tool version switching (Node, Python, Ruby)
+- Per-project PATH modifications
+- Development vs production config management
+- Sensitive credential isolation per project
+- CI/CD environment simulation locally
+
+**Security Notes:**
+- .envrc files must be explicitly allowed with `direnv allow`
+- Files are SHA-256 hashed; changes require re-allowing
+- Prevents malicious code execution from untrusted directories
+- Recommended to add .envrc to .gitignore for sensitive data
+
+---
+
+# Multi-Agent Orchestration
+
+The following tools enable multi-agent coordination and session management.
+
+## Owlex
+
+**Repository:** https://github.com/agentic-mcp-tools/owlex
+
+**Implementation:** MCP Server
+
+**Purpose:** Multi-agent orchestration MCP server for coordinating multiple AI models
+
+**Key Features:**
+- Council deliberation - Query all agents in parallel with optional revision round
+- Session management - Start fresh or resume with full context preserved
+- Async execution - Tasks run in background with timeout control
+- Critique mode - Agents find bugs and flaws in each other's answers
+
+**Installation:**
+```bash
+uv tool install git+https://github.com/agentic-mcp-tools/owlex.git
+```
+
+**Configuration (.mcp.json):**
+```json
+{
+  "mcpServers": {
+    "owlex": {
+      "command": "owlex-server"
+    }
+  }
+}
+```
+
+**Main Tools:**
+- **council_ask**: Query all agents and collect answers with optional deliberation
+  - Parameters: prompt (required), claude_opinion, deliberate (default: true), critique (default: false), timeout (default: 300s)
+  - Returns: round_1 with initial answers, round_2 with revisions (if enabled)
+- **Agent Sessions**: start_codex_session, resume_codex_session, start_gemini_session, resume_gemini_session
+- **Task Management**: wait_for_task, get_task_result, list_tasks, cancel_task
+
+**Best Use Cases by Agent:**
+- **Codex**: Code review, bug finding, PRD discussion
+- **Gemini**: Large codebase analysis (1M context), multimodal
+- **OpenCode**: Alternative perspective, plan mode
+- **Claude**: Complex multi-step implementation
+
+---
+
 ## Agent Deck
 
-**Repository:** asheshgoplani/agent-deck
+**Repository:** https://github.com/asheshgoplani/agent-deck
+
+**Implementation:** Terminal-based Session Manager
 
 **Purpose:** Terminal-based session manager and command center for AI coding agents. Built with Go + Bubble Tea.
 
@@ -384,191 +634,6 @@ curl -fsSL https://raw.githubusercontent.com/asheshgoplani/agent-deck/main/insta
 
 ---
 
-## Beads
-
-**Repository:** steveyegge/beads
-
-**Purpose:** Distributed, git-backed graph issue tracker for AI agents. Provides persistent, structured memory for coding agents.
-
-**Key Features:**
-- Persistent memory - Replaces messy markdown plans with dependency-aware graph
-- Git as database - Issues stored as JSONL in .beads/ (versioned, branched, merged like code)
-- Agent-optimized - JSON output, dependency tracking, auto-ready task detection
-- Zero conflict - Hash-based IDs (bd-a1b2) prevent merge collisions in multi-agent workflows
-- Invisible infrastructure - SQLite local cache for speed, background daemon for auto-sync
-- Semantic compaction - "Memory decay" summarizes old closed tasks to save context window
-- Hierarchical IDs - Support for epics, tasks, and subtasks (bd-a3f8.1.1)
-- Stealth mode - Use locally without committing to main repo
-
-**Installation:**
-```bash
-npm install -g @beads/bd
-# or
-brew install steveyegge/beads/bd
-# or
-go install github.com/steveyegge/beads/cmd/bd@latest
-```
-
-**Core Commands:**
-- `bd init` - Initialize (humans run once)
-- `bd init --stealth` - Stealth mode (local-only)
-- `bd ready` - List tasks with no open blockers
-- `bd create "Title" -p 0` - Create P0 task
-- `bd dep add <child> <parent>` - Link tasks (blocks relationship)
-- `bd show <id>` - View task details and audit trail
-- `bd list` - List all tasks
-- `bd close <id>` - Mark task completed
-- `bd reopen <id>` - Reopen task
-
-**Data Format:**
-- Issues stored as JSONL in .beads/beads.jsonl
-- Each issue is a JSON object with full history
-- Git-native (branches, merges, conflicts handled)
-- Hash-based IDs prevent collisions during merge conflicts
-- Full audit trail for each task
-
-**Task Hierarchy Example:**
-```
-bd-a3f8        (Epic: Login system)
-bd-a3f8.1      (Task: Database setup)
-bd-a3f8.1.1    (Subtask: Schema design)
-```
-
----
-
-## Beads Viewer
-
-**Repository:** Dicklesworthstone/beads_viewer
-
-**Purpose:** Elegant, keyboard-driven terminal interface for browsing, managing, and analyzing Beads task tracking data. Provides graph-aware insights with AI agent integration.
-
-**Key Features:**
-- Fast terminal UI - Zero network latency, Vim-style navigation (j/k)
-- Split view - List on left, rich details on right (responsive to terminal width)
-- Kanban board - Visualize workflow (Open, In Progress, Blocked, Closed)
-- Dependency graph - Interactive visualization with D3.js and custom ASCII rendering
-- Graph metrics - PageRank, Betweenness, HITS, Critical Path, Cycles detection
-- Insights dashboard - 6-panel interactive analysis
-- Time-travel - Compare project state across any git revision
-- AI agent integration - Robot JSON protocol for deterministic outputs
-- Semantic search - Full-text fuzzy search with semantic capabilities
-- Sprint tracking - Burndown charts, progress tracking, at-risk detection
-- Label health - Domain-centric health monitoring
-- Interactive graph export - Self-contained HTML with force-directed visualization
-- Markdown export - Reports with embedded Mermaid diagrams
-- Cass integration - Optional AI session correlation
-
-**Installation:**
-```bash
-curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/main/install.sh?$(date +%s)" | bash
-```
-
-**Core Commands:**
-- `bv` - Launch interactive TUI
-- `bv --robot-triage` - THE MEGA-COMMAND: unified triage with all analysis
-- `bv --robot-next` - Single top recommendation + claim command
-- `bv --robot-plan` - Parallel execution tracks with unblocks analysis
-- `bv --robot-insights` - Full graph metrics and analysis
-- `bv --robot-priority` - Priority recommendations with confidence scores
-- `bv --robot-history` - Bead-to-commit correlations
-- `bv --robot-alerts` - Proactive health monitoring and drift detection
-- `bv --robot-label-health` - Per-label health metrics
-- `bv --robot-forecast` - ETA predictions with dependency-aware scheduling
-- `bv --export-pages` - Generate self-contained static HTML dashboard
-- `bv --export-md` - Export Markdown report with Mermaid diagrams
-- `bv --as-of <ref>` - Time-travel to historical state
-
-**Graph Metrics Computed:**
-1. **PageRank** (30% weight) - Foundational dependency importance; bedrock blocker identification
-2. **Betweenness** (30% weight) - Bottleneck/bridge position; gatekeeper nodes
-3. **HITS** - Hub/Authority: Epics (hubs) vs Infrastructure (authorities)
-4. **Critical Path** - Longest dependency chain; zero-slack keystones
-5. **Eigenvector** (10% weight) - Influence via important neighbors
-6. **Degree Centrality** - Direct blockers/blocked counts
-7. **Density** - Project coupling health (0.0 isolated, 1.0 fully coupled)
-8. **Cycles** - Circular dependency detection (logical impossibilities)
-9. **Topological Sort** - Valid execution order
-
-**TUI Navigation (j/k to move, Enter to open, ? for help):**
-
-**List View:**
-- `b` - Toggle Kanban board
-- `g` - Toggle graph visualizer
-- `i` - Toggle insights dashboard
-- `h` - Toggle history view
-- `f` - Toggle file-centric drill-down
-- `l` - Label picker
-- `s` - Cycle sort mode (Priority, Created, Updated, etc.)
-- `/` - Search (fuzzy or semantic)
-- `t` - Time-travel mode
-- `T` - Quick time-travel (HEAD~5)
-- `p` - Toggle priority hints overlay
-- `!` - Toggle alerts panel
-- `C` - Copy issue to clipboard
-- `y` - Copy issue ID
-
-**Kanban Board:**
-- `h/l` - Move between columns
-- `j/k` - Move within column
-- `s` - Cycle swimlane mode (Status, Priority, Type)
-- `d` - Expand/collapse card details
-- `Tab` - Toggle side detail panel
-- `o/c/r` - Filter: Open, Closed, Ready
-
-**Graph View:**
-- `H/L` - Scroll left/right
-- `Ctrl+D/U` - Page down/up
-- `z` - Zoom in/out
-
-**Insights Dashboard:**
-- `Tab/Shift+Tab` - Move between panels
-- `e` - Toggle explanations
-- `x` - Toggle calculation proofs
-
-**History View (bead-to-commit correlation):**
-- `v` - Toggle Bead Mode ↔ Git Mode
-- `f` - Toggle file-centric drill-down
-- `t` - Toggle timeline panel
-- `c` - Cycle confidence threshold
-- `y` - Copy commit SHA
-- `o` - Open in browser
-
-**Static Site Export:**
-- Generates self-contained HTML dashboards
-- Pre-computed graph layout (instant rendering, no force simulation)
-- SQLite FTS5 for instant full-text search
-- Interactive dependency graph with pan/zoom
-- Responsive design (mobile, tablet, desktop)
-- Suitable for stakeholder sharing
-
-**Robot Commands (AI-friendly JSON output):**
-- `--robot-triage` - Best entry point; complete analysis in one call
-- `--robot-plan` - Execution plan with parallel tracks and unblock counts
-- `--robot-insights` - All 9 graph metrics with per-metric status
-- `--robot-priority` - Priority recommendations with reasoning
-- `--robot-label-health` - Per-label health and velocity
-- `--robot-label-flow` - Cross-label dependency matrix
-- `--robot-history` - Commit-to-bead correlations
-- `--robot-alerts` - Stale issues, blocking cascades, priority misalignment
-- `--robot-forecast` - ETA and completion predictions
-- `--robot-suggest` - Hygiene suggestions (duplicates, cycles, deps)
-
-**Time-Travel & Diffs:**
-- `bv --as-of HEAD~30` - View state 30 commits ago
-- `bv --as-of v1.0.0` - View state at release tag
-- `bv --diff-since HEAD~5` - Show changes in last 5 commits
-- `bv --robot-diff --diff-since HEAD~5` - JSON diff output
-
-**Performance:**
-- Instant startup (<50ms for typical repos)
-- 60 FPS UI updates
-- Handles 10,000+ issues without lag
-- Two-phase analyzer: Phase 1 (instant), Phase 2 (async, 500ms timeout)
-- Caching by data hash
-- Size-aware timeouts prevent hanging
-
----
-
 ## Integration Scenarios
 
 ### For Multi-Agent Coordination:
@@ -596,21 +661,34 @@ curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/mai
 4. Run `bv --robot-plan` to find next unblocked work
 5. Use `bv --robot-insights` for impact analysis before changes
 
+### For Environment Management:
+1. Use **direnv** for project-specific environment variables
+2. Configure .envrc with API keys, database URLs, and tool versions
+3. Environment auto-loads when entering project directory
+4. Supports layered configs for development/staging/production
+
 ---
 
 ## Summary Table
 
 | Tool | Type | Primary Purpose | Best For |
 |------|------|-----------------|----------|
-| **Owlex** | MCP Server | Multi-agent orchestration | Agent councils, cross-agent critique, debate |
-| **Sync MCP Config** | CLI Tool | Configuration management | Managing MCPs across 6 client types |
-| **Agent Deck** | Terminal UI | Session management | Running multiple agents, dynamic MCP toggling |
-| **Beads** | Git-backed DB | Task tracking | Persistent task memory, dependency graphs |
-| **Beads Viewer** | Terminal UI + API | Task visualization & analysis | Triage, planning, graph-aware metrics |
+| **ADR Analysis** | MCP Server | Architectural decision records | ADR-driven development, deployment validation |
+| **Code Guardian** | MCP Server | Code quality & refactoring | Quality enforcement, automated fixes |
+| **Grep MCP** | MCP Server | Semantic code search | Large codebase exploration, pattern finding |
+| **Supabase MCP** | MCP Server | Database operations | Supabase development, migrations, Edge Functions |
+| **Swiftzilla** | MCP Server | Swift documentation search | Swift development, API lookup |
+| **Beads** | Plugin/MCP | Task tracking | Persistent task memory, dependency graphs |
+| **Beads Viewer** | Plugin/MCP | Task visualization | Triage, planning, graph-aware metrics |
+| **Sync MCP Config** | CLI Tool | Configuration management | Managing MCPs across clients |
+| **direnv** | Environment Manager | Auto-load environment variables | Per-project configuration, version switching |
+| **Owlex** | MCP Server | Multi-agent orchestration | Agent councils, cross-agent critique |
+| **Agent Deck** | Session Manager | AI session management | Running multiple agents, dynamic MCP toggling |
 
 ---
 
 ## Quick Start for Agents
+
 ```bash
 # 1. Initialize task tracking
 bd init
@@ -629,4 +707,8 @@ agent-deck  # Launch session hub
 
 # 6. Coordinate multiple agents
 owlex council_ask "Code review this PR" --deliberate
+
+# 7. Setup environment for project
+echo "export DATABASE_URL=postgresql://localhost/mydb" > .envrc
+direnv allow
 ```
