@@ -1,0 +1,5 @@
+# TruffleHog ignore patterns
+# Architecture diagrams contain example UUIDs and patterns, not real secrets
+docs/architecture/mermaid/*.mermaid
+docs/architecture/workspace.dsl
+scripts/generate-diagrams.sh

@@ -1,0 +1,62 @@
+```mermaid
+sequenceDiagram
+    participant View as SwiftUI View
+    participant Store as BudgetStoreV2
+    participant Repo as LiveBudgetRepository
+    participant Cache as RepositoryCache Actor
+    participant Strategy as BudgetCacheStrategy
+    participant DB as Supabase PostgreSQL
+
+    Note over View,DB: User Creates New Budget Category
+
+    View->>Store: createCategory(category)
+    activate Store
+
+    Store->>Repo: createCategory(category)
+    activate Repo
+
+    Repo->>DB: INSERT INTO budget_categories<br/>WHERE couple_id = UUID
+    activate DB
+    DB-->>Repo: Return created category
+    deactivate DB
+
+    Note over Repo,Strategy: Cache Invalidation Strategy
+
+    Repo->>Strategy: invalidate(.categoryCreated(tenantId))
+    activate Strategy
+
+    Strategy->>Cache: remove("categories_{uuid}")
+    Strategy->>Cache: remove("budget_summary_{uuid}")
+    Strategy->>Cache: remove("category_totals_{uuid}")
+
+    deactivate Strategy
+
+    Repo-->>Store: Return created category
+    deactivate Repo
+
+    Store->>Store: Update @Published categories
+    Store-->>View: Trigger UI update via Combine
+    deactivate Store
+
+    Note over View,DB: Next Fetch Will Cache Miss
+
+    View->>Store: loadCategories()
+    activate Store
+    Store->>Repo: fetchCategories()
+    activate Repo
+
+    Repo->>Cache: get("categories_{uuid}", maxAge: 60)
+    Cache-->>Repo: nil (cache miss)
+
+    Repo->>DB: SELECT * FROM budget_categories<br/>WHERE couple_id = UUID
+    activate DB
+    DB-->>Repo: Return categories
+    deactivate DB
+
+    Repo->>Cache: set("categories_{uuid}", categories, ttl: 60)
+
+    Repo-->>Store: Return fresh categories
+    deactivate Repo
+    Store-->>View: Update UI
+    deactivate Store
+```

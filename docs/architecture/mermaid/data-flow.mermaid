@@ -1,0 +1,42 @@
+```mermaid
+graph TB
+    subgraph "Presentation Layer"
+        View[SwiftUI Views<br/>@Environment injection]
+    end
+
+    subgraph "State Management Layer"
+        Store[Store Layer<br/>@MainActor ObservableObject<br/>@Published properties]
+    end
+
+    subgraph "Data Access Layer"
+        Repo[Repository Layer<br/>async CRUD operations<br/>NetworkRetry]
+        Cache[RepositoryCache Actor<br/>Thread-safe cache<br/>60s TTL]
+    end
+
+    subgraph "Business Logic Layer"
+        Domain[Domain Services<br/>Actor-based aggregation<br/>Parallel async/await]
+    end
+
+    subgraph "Backend"
+        Supabase[(Supabase Backend<br/>PostgreSQL + RLS<br/>couple_id scoping)]
+    end
+
+    View -->|"@Environment"| Store
+    Store -->|"@Dependency injection"| Repo
+    Repo -->|"1. Check cache first"| Cache
+    Cache -->|"Cache hit"| Repo
+    Repo -->|"2. Delegate complex logic"| Domain
+    Repo -->|"3. Query on cache miss"| Supabase
+    Domain -->|"Parallel fetch"| Supabase
+    Supabase -->|"Return data"| Repo
+    Repo -->|"4. Cache result (60s)"| Cache
+    Repo -->|"5. Return to store"| Store
+    Store -->|"6. Update @Published"| View
+
+    style View fill:#90EE90
+    style Store fill:#87CEEB
+    style Repo fill:#FFB6C1
+    style Cache fill:#DDA0DD
+    style Domain fill:#F0E68C
+    style Supabase fill:#FF6B6B
+```
