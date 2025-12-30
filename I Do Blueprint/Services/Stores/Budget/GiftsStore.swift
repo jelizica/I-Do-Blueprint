@@ -76,8 +76,8 @@ class GiftsStore: ObservableObject {
 
             logger.info("Loaded gifts data: \(giftsAndOwed.count) gifts/owed, \(giftsReceived.count) received, \(moneyOwed.count) owed")
         } catch {
+            await handleError(error, operation: "loadGiftsData")
             self.error = .fetchFailed(underlying: error)
-            logger.error("Failed to load gifts data", error: error)
         }
     }
 
@@ -93,8 +93,10 @@ class GiftsStore: ObservableObject {
             giftsAndOwed.append(created)
             logger.info("Added gift or owed: \(created.id)")
         } catch {
+            await handleError(error, operation: "addGiftOrOwed") { [weak self] in
+                await self?.addGiftOrOwed(gift)
+            }
             self.error = .createFailed(underlying: error)
-            logger.error("Error adding gift or owed", error: error)
         }
 
         isLoading = false
@@ -112,8 +114,12 @@ class GiftsStore: ObservableObject {
             }
             logger.info("Updated gift or owed: \(updated.id)")
         } catch {
+            await handleError(error, operation: "updateGiftOrOwed", context: [
+                "giftId": gift.id.uuidString
+            ]) { [weak self] in
+                await self?.updateGiftOrOwed(gift)
+            }
             self.error = .updateFailed(underlying: error)
-            logger.error("Error updating gift or owed", error: error)
         }
 
         isLoading = false
@@ -129,8 +135,12 @@ class GiftsStore: ObservableObject {
             giftsAndOwed.removeAll { $0.id == id }
             logger.info("Deleted gift or owed: \(id)")
         } catch {
+            await handleError(error, operation: "deleteGiftOrOwed", context: [
+                "giftId": id.uuidString
+            ]) { [weak self] in
+                await self?.deleteGiftOrOwed(id: id)
+            }
             self.error = .deleteFailed(underlying: error)
-            logger.error("Error deleting gift or owed", error: error)
         }
 
         isLoading = false
@@ -148,8 +158,10 @@ class GiftsStore: ObservableObject {
             giftsReceived.append(created)
             logger.info("Added gift received: \(created.id)")
         } catch {
+            await handleError(error, operation: "addGiftReceived") { [weak self] in
+                await self?.addGiftReceived(gift)
+            }
             self.error = .createFailed(underlying: error)
-            logger.error("Error adding gift received", error: error)
         }
 
         isLoading = false
@@ -167,8 +179,12 @@ class GiftsStore: ObservableObject {
             }
             logger.info("Updated gift received: \(updated.id)")
         } catch {
+            await handleError(error, operation: "updateGiftReceived", context: [
+                "giftId": gift.id.uuidString
+            ]) { [weak self] in
+                await self?.updateGiftReceived(gift)
+            }
             self.error = .updateFailed(underlying: error)
-            logger.error("Error updating gift received", error: error)
         }
 
         isLoading = false
@@ -184,8 +200,12 @@ class GiftsStore: ObservableObject {
             giftsReceived.removeAll { $0.id == id }
             logger.info("Deleted gift received: \(id)")
         } catch {
+            await handleError(error, operation: "deleteGiftReceived", context: [
+                "giftId": id.uuidString
+            ]) { [weak self] in
+                await self?.deleteGiftReceived(id: id)
+            }
             self.error = .deleteFailed(underlying: error)
-            logger.error("Error deleting gift received", error: error)
         }
 
         isLoading = false
@@ -203,8 +223,10 @@ class GiftsStore: ObservableObject {
             moneyOwed.append(created)
             logger.info("Added money owed: \(created.id)")
         } catch {
+            await handleError(error, operation: "addMoneyOwed") { [weak self] in
+                await self?.addMoneyOwed(money)
+            }
             self.error = .createFailed(underlying: error)
-            logger.error("Error adding money owed", error: error)
         }
 
         isLoading = false
@@ -222,8 +244,12 @@ class GiftsStore: ObservableObject {
             }
             logger.info("Updated money owed: \(updated.id)")
         } catch {
+            await handleError(error, operation: "updateMoneyOwed", context: [
+                "moneyId": money.id.uuidString
+            ]) { [weak self] in
+                await self?.updateMoneyOwed(money)
+            }
             self.error = .updateFailed(underlying: error)
-            logger.error("Error updating money owed", error: error)
         }
 
         isLoading = false
@@ -239,8 +265,12 @@ class GiftsStore: ObservableObject {
             moneyOwed.removeAll { $0.id == id }
             logger.info("Deleted money owed: \(id)")
         } catch {
+            await handleError(error, operation: "deleteMoneyOwed", context: [
+                "moneyId": id.uuidString
+            ]) { [weak self] in
+                await self?.deleteMoneyOwed(id: id)
+            }
             self.error = .deleteFailed(underlying: error)
-            logger.error("Error deleting money owed", error: error)
         }
 
         isLoading = false
