@@ -2,6 +2,66 @@
 
 A macOS SwiftUI app backed by Supabase.
 
+## MCP Tools & Development Workflow
+
+This project uses **Model Context Protocol (MCP) servers** for enhanced AI-assisted development. MCP servers provide specialized capabilities to AI coding assistants like Claude Code.
+
+### Available MCP Servers
+
+For comprehensive information about all MCP servers, see **[mcp_tools_info.md](mcp_tools_info.md)**.
+
+**Quick Overview:**
+- **ADR Analysis** - Architectural decision records, deployment validation, security scanning
+- **Code Guardian** - Code quality validation, automated fixes, persistent memory
+- **Grep MCP** - Semantic code search across large codebases
+- **Supabase MCP** - Database operations, migrations, Edge Functions
+- **Swiftzilla** - Swift documentation and API reference search
+- **Basic Memory** - Knowledge graph for persistent project context
+- **Beads** - Git-backed issue tracking for AI agents
+
+### Workflow Integration
+
+**For AI Agents (Claude Code):**
+1. **Start Session**: Check `bd ready` for available work, load context from Basic Memory
+2. **Research**: Use Basic Memory to search architectural docs and patterns
+3. **Execute**: Track work in Beads, use specialized MCPs (Supabase, Code Guardian)
+4. **Document**: Store new knowledge in Basic Memory, close Beads tasks
+5. **Sync**: Run `bd sync` to commit task tracking data
+
+See **[BASIC-MEMORY-AND-BEADS-GUIDE.md](BASIC-MEMORY-AND-BEADS-GUIDE.md)** for detailed workflow patterns.
+
+### Key Workflow Tools
+
+**Basic Memory (Knowledge Management)**
+- Purpose: Store WHY and WHAT - architectural decisions, patterns, pitfalls
+- Storage: Markdown files with semantic graph
+- Access: MCP tools (`mcp__basic-memory__*`)
+- Use for: Long-term documentation, architectural context, research
+
+**Beads (Issue Tracking)**
+- Purpose: Track HOW and WHEN - tasks, bugs, dependencies
+- Storage: Git-backed JSONL in `.beads/`
+- Access: CLI commands (`bd *`)
+- Use for: Active work items, dependency management, session continuity
+
+**Integration Examples:**
+```bash
+# Start session
+bd ready                    # Find ready work
+mcp__basic-memory__recent_activity(timeframe: "7d")
+
+# Research before implementing
+mcp__basic-memory__search_notes("repository pattern")
+
+# Track implementation
+bd update beads-xxx --status=in_progress
+
+# Document after completing
+mcp__basic-memory__write_note(title: "New Pattern", folder: "architecture")
+bd close beads-xxx
+bd sync
+```
+
 ## Setup
 
 ### Quick Start (Recommended)
