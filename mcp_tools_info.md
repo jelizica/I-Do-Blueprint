@@ -1,12 +1,231 @@
-A comprehensive guide to the Model Context Protocol (MCP) tools currently open in this browser session.
+A comprehensive guide to the Model Context Protocol (MCP) tools.
 
 ## Table of Contents
 
-1. [Owlex](#owlex)
-2. [Sync MCP Config](#sync-mcp-config)
-3. [Agent Deck](#agent-deck)
-4. [Beads](#beads)
-5. [Beads Viewer](#beads-viewer)
+### Claude Code Active Servers
+1. [ADR Analysis Server](#adr-analysis-server)
+2. [Code Guardian Studio](#code-guardian-studio)
+3. [Grep MCP](#grep-mcp)
+4. [Supabase MCP](#supabase-mcp)
+5. [Swiftzilla](#swiftzilla)
+
+### Claude Desktop Servers
+6. [Owlex](#owlex)
+7. [Sync MCP Config](#sync-mcp-config)
+8. [Agent Deck](#agent-deck)
+9. [Beads](#beads)
+10. [Beads Viewer](#beads-viewer)
+
+---
+
+# Claude Code Active Servers
+
+The following MCP servers are configured and active in Claude Code CLI.
+
+## ADR Analysis Server
+
+**Repository:** tosin2013/mcp-adr-analysis-server
+
+**Purpose:** Architectural Decision Records (ADR) analysis and management with AI-powered insights
+
+**Key Features:**
+- Automated ADR generation from PRDs and code analysis
+- ADR compliance validation and progress tracking
+- Deployment readiness assessment with bootstrap validation
+- Research-driven architectural recommendations
+- Environment analysis and optimization
+- Smart git push with security scanning
+- Integration with TODO.md for task tracking
+- Memory-centric architecture with conversation history
+
+**Installation:**
+```bash
+# Clone and install
+git clone https://github.com/tosin2013/mcp-adr-analysis-server
+cd mcp-adr-analysis-server
+npm install
+npm run build
+```
+
+**Main Tools:**
+- **analyze_project_ecosystem**: Comprehensive recursive project analysis with advanced prompting
+- **get_architectural_context**: Get detailed architectural context with ADR infrastructure setup
+- **generate_adrs_from_prd**: Generate ADRs from Product Requirements Documents
+- **compare_adr_progress**: Validate TODO.md progress against ADRs and environment
+- **suggest_adrs**: Suggest architectural decisions with knowledge generation
+- **deployment_readiness**: Comprehensive deployment validation with test tracking
+- **smart_git_push**: AI-driven security-focused git push with credential detection
+- **bootstrap_validation_loop**: Guided deployment validation workflow
+
+**Best Use Cases:**
+- Documenting architectural decisions systematically
+- Validating implementation progress against architectural plans
+- Security scanning before deployments
+- Generating deployment scripts and validation
+- ADR-driven development workflows
+
+---
+
+## Code Guardian Studio
+
+**Repository/Article:** Building Code Guardian Studio - An MCP Server for AI-Powered Code Refactoring
+
+**URL:** https://dev.to/phuongrealmax/building-code-guardian-studio-an-mcp-server-for-ai-powered-code-refactoring-1ice
+
+**Purpose:** AI-powered code refactoring and quality analysis MCP server
+
+**Key Features:**
+- Intelligent code quality analysis
+- Automated refactoring suggestions
+- Pattern detection and code smell identification
+- Integration with AI coding workflows
+- Session-based memory for context preservation
+- Guard module for code validation
+- Automated fix loops with learning from memory
+
+**Main Tools:**
+- **guard_validate**: Validate code for common issues (fake tests, disabled features, empty catch blocks)
+- **guard_check_test**: Analyze test files for fake tests without assertions
+- **auto_fix_loop**: Automatic error fixing with retry logic and memory learning
+- **memory_store**: Store information in persistent memory
+- **memory_recall**: Search and retrieve stored memories
+- **session_init**: Initialize session and load memory
+- **workflow_task_create**: Create new workflow tasks
+
+**Best Use Cases:**
+- Code quality enforcement during development
+- Automated refactoring recommendations
+- Test quality validation
+- Learning from past errors and fixes
+- Multi-session context preservation
+
+---
+
+## Grep MCP
+
+**Repository:** galprz/grep-mcp
+**Blog Post:** https://vercel.com/blog/grep-a-million-github-repositories-via-mcp
+
+**Purpose:** High-performance semantic code search across massive codebases and GitHub repositories
+
+**Key Features:**
+- Search millions of GitHub repositories via MCP
+- AI-powered semantic code search with natural language queries
+- Intelligent keyword extraction for precise pattern matching
+- File pattern filtering and intent-based search
+- Optimized for large-scale code exploration
+- Integration with greb-mcp for enhanced search capabilities
+
+**Installation:**
+```bash
+npm install -g grep-mcp
+```
+
+**Main Tools:**
+- **code_search**: Natural language code search with AI-powered keyword extraction
+  - Parameters: query (natural language), keywords (extracted terms, code patterns, file patterns, intent)
+  - Returns: Ranked search results with relevance scores
+
+**Best Use Cases:**
+- Finding code patterns across large codebases
+- Exploring unfamiliar repositories
+- Locating specific implementations or APIs
+- Understanding codebase structure through semantic search
+- Research-driven development workflows
+
+**Integration Notes:**
+- Works with greb-mcp for enhanced search capabilities
+- Requires FULL ABSOLUTE PATH to workspace directory (not relative paths)
+- Supports file pattern filtering (*.py, *.js, etc.)
+- Provides primary terms and code patterns for intent understanding
+
+---
+
+## Supabase MCP
+
+**Repository:** supabase-community/supabase-mcp
+**Documentation:** https://supabase.com/docs/guides/getting-started/mcp
+
+**Purpose:** Official Supabase Model Context Protocol server for database operations and API management
+
+**Key Features:**
+- Direct PostgreSQL database access and management
+- Migration creation and execution
+- Edge Functions deployment and management
+- Development branch workflows
+- Real-time logs and advisory monitoring
+- TypeScript type generation
+- Automatic security best practices enforcement
+
+**Installation:**
+```bash
+npx supabase mcp install
+```
+
+**Main Tools:**
+- **list_tables**: List all tables in schema(s)
+- **execute_sql**: Execute raw SQL queries
+- **apply_migration**: Create and apply database migrations (DDL operations)
+- **list_migrations**: List all applied migrations
+- **deploy_edge_function**: Deploy Edge Functions with JWT verification
+- **get_edge_function**: Retrieve Edge Function source code
+- **list_edge_functions**: List all Edge Functions
+- **get_advisors**: Get security and performance advisories
+- **get_logs**: Retrieve logs by service (api, postgres, auth, storage, etc.)
+- **create_branch**: Create development branches
+- **merge_branch**: Merge branch migrations to production
+
+**Best Use Cases:**
+- Database schema development and migrations
+- Edge Functions deployment and management
+- Security and performance monitoring
+- Branch-based development workflows
+- PostgreSQL-backed applications
+
+**Security Notes:**
+- Uses project-specific service role keys
+- Enforces JWT verification on Edge Functions by default
+- Provides security advisories and RLS policy recommendations
+- Safe for use with AI agents (proper key scoping)
+
+---
+
+## Swiftzilla
+
+**Website:** https://swiftzilla.dev/
+
+**Purpose:** Comprehensive Swift documentation search across Evolution proposals, API Guidelines, and Apple Developer Documentation
+
+**Key Features:**
+- Unified search across all official Swift documentation sources
+- Swift Evolution Proposals (language features, syntax, SE proposals)
+- Swift API Design Guidelines (naming conventions, best practices)
+- Apple Developer Documentation (frameworks, APIs, SDK)
+- Swift Community Blogs (tutorials, articles from top Swift developers)
+- Relevance-ranked results with content excerpts
+
+**Main Tools:**
+- **search**: Search Swift documentation with natural language queries
+  - Parameters: query (search terms)
+  - Returns: Up to 5 most relevant results from all sources with relevance scores
+
+**Query Tips:**
+- Be specific: "URLSession dataTask" works better than "networking"
+- Include framework names: "SwiftUI List" vs just "List"
+- Use technical terms: "async throws" vs "asynchronous error handling"
+
+**Best Use Cases:**
+- Finding language feature documentation and Evolution proposals
+- Understanding Swift API design conventions
+- Looking up Apple framework APIs and methods
+- Learning Swift best practices and idioms
+- Quick reference during Swift development
+
+---
+
+# Claude Desktop Servers
+
+The following MCP servers are configured for Claude Desktop application.
 
 ---
 

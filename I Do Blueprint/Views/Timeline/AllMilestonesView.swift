@@ -3,6 +3,7 @@
 //  My Wedding Planning App
 //
 //  Created by Claude Code on 10/10/25.
+//  Refactored: Decomposed into focused components to reduce complexity
 //
 
 import SwiftUI
@@ -41,7 +42,11 @@ struct AllMilestonesView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Search and filters
-                controlsSection
+                MilestonesControlsSection(
+                    searchQuery: $searchQuery,
+                    selectedFilter: $selectedFilter,
+                    sortOrder: $sortOrder
+                )
 
                 Divider()
 
@@ -49,7 +54,14 @@ struct AllMilestonesView: View {
                 if filteredAndSortedMilestones.isEmpty {
                     emptyStateView
                 } else {
-                    milestonesListView
+                    MilestonesListView(
+                        groupedMilestones: groupedMilestones,
+                        userTimezone: userTimezone,
+                        onSelectMilestone: onSelectMilestone,
+                        onToggleCompletion: { milestone in
+                            await store.toggleMilestoneCompletion(milestone)
+                        }
+                    )
                 }
             }
             .navigationTitle("All Milestones")
@@ -76,77 +88,6 @@ struct AllMilestonesView: View {
                 updateTimezone()
             }
         }
-    }
-
-    // MARK: - Controls Section
-
-    private var controlsSection: some View {
-        VStack(spacing: 12) {
-            // Search bar - Using Component Library
-            SearchBar(
-                text: $searchQuery,
-                placeholder: "Search milestones..."
-            )
-
-            // Filter and sort controls
-            HStack(spacing: 12) {
-                // Filter picker
-                Picker("Filter", selection: $selectedFilter) {
-                    ForEach(MilestoneFilter.allCases, id: \.self) { filter in
-                        Text(filter.displayName).tag(filter)
-                    }
-                }
-                .pickerStyle(.segmented)
-
-                // Sort order button
-                Menu {
-                    ForEach(MilestoneSortOrder.allCases, id: \.self) { order in
-                        Button(action: { sortOrder = order }) {
-                            HStack {
-                                Text(order.displayName)
-                                if sortOrder == order {
-                                    Image(systemName: "checkmark")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    HStack(spacing: 4) {
-                        Image(systemName: "arrow.up.arrow.down")
-                        Text(sortOrder.shortName)
-                    }
-                    .font(.caption)
-                }
-                .frame(width: 100)
-            }
-        }
-        .padding()
-        .background(Color(NSColor.windowBackgroundColor))
-    }
-
-    // MARK: - Milestones List
-
-    private var milestonesListView: some View {
-        List {
-            ForEach(groupedMilestones, id: \.key) { group in
-                Section(group.key) {
-                    ForEach(group.value) { milestone in
-                        MilestoneRow(
-                            milestone: milestone,
-                            userTimezone: userTimezone,
-                            onTap: {
-                                onSelectMilestone(milestone)
-                            },
-                            onToggleCompletion: {
-                                Task {
-                                    await store.toggleMilestoneCompletion(milestone)
-                                }
-                            })
-                    }
-                }
-            }
-        }
-        .listStyle(PlainListStyle())
     }
 
     // MARK: - Empty State
@@ -243,156 +184,6 @@ struct AllMilestonesView: View {
 
             return firstDate < secondDate
         }
-    }
-}
-
-// MARK: - Milestone Row
-
-struct MilestoneRow: View {
-    let milestone: Milestone
-    let userTimezone: TimeZone
-    let onTap: () -> Void
-    let onToggleCompletion: () -> Void
-
-    private var milestoneColor: Color {
-        if let colorString = milestone.color {
-            switch colorString.lowercased() {
-            case "red": return .red
-            case "orange": return .orange
-            case "yellow": return .yellow
-            case "green": return .green
-            case "blue": return .blue
-            case "purple": return .purple
-            case "pink": return .pink
-            default: return .blue
-            }
-        }
-        return .blue
-    }
-
-    var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: 16) {
-                // Completion checkbox
-                Button(action: onToggleCompletion) {
-                    Image(systemName: milestone.completed ? "checkmark.circle.fill" : "circle")
-                        .font(.title2)
-                        .foregroundColor(milestone.completed ? .green : .gray)
-                }
-                .buttonStyle(.plain)
-
-                // Color indicator
-                Circle()
-                    .fill(milestoneColor)
-                    .frame(width: 12, height: 12)
-
-                // Milestone info
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(milestone.milestoneName)
-                        .font(.headline)
-                        .fontWeight(.medium)
-
-                    HStack(spacing: 8) {
-                        Text(formatDate(milestone.milestoneDate))
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-
-                        if let daysText = daysUntilText() {
-                            Text("•")
-                                .foregroundColor(.secondary)
-                            Text(daysText)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                    }
-
-                    if let description = milestone.description, !description.isEmpty {
-                        Text(description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-            .padding(.vertical, Spacing.xs)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func daysUntilText() -> String? {
-        // Use user's timezone for day calculations
-        let days = DateFormatting.daysBetween(from: Date(), to: milestone.milestoneDate, in: userTimezone)
-
-        if days == 0 {
-            return "Today"
-        } else if days == 1 {
-            return "Tomorrow"
-        } else if days == -1 {
-            return "Yesterday"
-        } else if days > 0 {
-            return "in \(days) days"
-        } else {
-            return "\(abs(days)) days ago"
-        }
-    }
-}
-
-// MARK: - Filter and Sort Options
-
-enum MilestoneFilter: String, CaseIterable {
-    case all = "all"
-    case upcoming = "upcoming"
-    case past = "past"
-    case completed = "completed"
-    case incomplete = "incomplete"
-
-    var displayName: String {
-        switch self {
-        case .all: "All"
-        case .upcoming: "Upcoming"
-        case .past: "Past"
-        case .completed: "Completed"
-        case .incomplete: "Incomplete"
-        }
-    }
-}
-
-enum MilestoneSortOrder: String, CaseIterable {
-    case dateAscending = "dateAscending"
-    case dateDescending = "dateDescending"
-    case nameAscending = "nameAscending"
-    case nameDescending = "nameDescending"
-
-    var displayName: String {
-        switch self {
-        case .dateAscending: "Date (Earliest First)"
-        case .dateDescending: "Date (Latest First)"
-        case .nameAscending: "Name (A-Z)"
-        case .nameDescending: "Name (Z-A)"
-        }
-    }
-
-    var shortName: String {
-        switch self {
-        case .dateAscending: "Date ↑"
-        case .dateDescending: "Date ↓"
-        case .nameAscending: "Name ↑"
-        case .nameDescending: "Name ↓"
-        }
-    }
-}
-
-extension MilestoneRow {
-    private func formatDate(_ date: Date) -> String {
-        // Use injected timezone for date formatting
-        return DateFormatting.formatDateMedium(date, timezone: userTimezone)
     }
 }
 
