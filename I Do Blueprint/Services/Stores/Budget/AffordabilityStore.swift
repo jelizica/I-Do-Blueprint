@@ -170,7 +170,9 @@ class AffordabilityStore: ObservableObject {
                 await loadContributions(scenarioId: scenarioId)
             }
         } catch {
-            logger.error("Failed to load affordability scenarios", error: error)
+            await handleError(error, operation: "loadScenarios", context: [
+                "scenarioCount": scenarios.count
+            ])
             self.error = .fetchFailed(underlying: error)
         }
     }
@@ -180,6 +182,9 @@ class AffordabilityStore: ObservableObject {
         do {
             contributions = try await repository.fetchAffordabilityContributions(scenarioId: scenarioId)
         } catch {
+            await handleError(error, operation: "loadContributions", context: [
+                "scenarioId": scenarioId.uuidString
+            ])
             self.error = .fetchFailed(underlying: error)
         }
     }
@@ -200,6 +205,12 @@ class AffordabilityStore: ObservableObject {
                 scenarios.append(saved)
             }
         } catch {
+            await handleError(error, operation: "saveScenario", context: [
+                "scenarioId": scenario.id.uuidString,
+                "scenarioName": scenario.scenarioName
+            ]) { [weak self] in
+                await self?.saveScenario(scenario)
+            }
             self.error = .createFailed(underlying: error)
         }
     }
@@ -216,6 +227,11 @@ class AffordabilityStore: ObservableObject {
                 }
             }
         } catch {
+            await handleError(error, operation: "deleteScenario", context: [
+                "scenarioId": id.uuidString
+            ]) { [weak self] in
+                await self?.deleteScenario(id: id)
+            }
             self.error = .deleteFailed(underlying: error)
         }
     }
@@ -230,6 +246,11 @@ class AffordabilityStore: ObservableObject {
                 contributions.append(saved)
             }
         } catch {
+            await handleError(error, operation: "saveContribution", context: [
+                "contributionId": contribution.id.uuidString
+            ]) { [weak self] in
+                await self?.saveContribution(contribution)
+            }
             self.error = .createFailed(underlying: error)
         }
     }
@@ -240,6 +261,12 @@ class AffordabilityStore: ObservableObject {
             try await repository.deleteAffordabilityContribution(id: id, scenarioId: scenarioId)
             contributions.removeAll { $0.id == id }
         } catch {
+            await handleError(error, operation: "deleteContribution", context: [
+                "contributionId": id.uuidString,
+                "scenarioId": scenarioId.uuidString
+            ]) { [weak self] in
+                await self?.deleteContribution(id: id, scenarioId: scenarioId)
+            }
             self.error = .deleteFailed(underlying: error)
         }
     }
@@ -250,7 +277,12 @@ class AffordabilityStore: ObservableObject {
             try await repository.linkGiftsToScenario(giftIds: giftIds, scenarioId: scenarioId)
             logger.info("Linked \(giftIds.count) gifts to scenario")
         } catch {
-            logger.error("Failed to link gifts to scenario", error: error)
+            await handleError(error, operation: "linkGiftsToScenario", context: [
+                "giftCount": giftIds.count,
+                "scenarioId": scenarioId.uuidString
+            ]) { [weak self] in
+                await self?.linkGiftsToScenario(giftIds: giftIds, scenarioId: scenarioId)
+            }
             self.error = .updateFailed(underlying: error)
         }
     }
@@ -261,7 +293,12 @@ class AffordabilityStore: ObservableObject {
             try await repository.unlinkGiftFromScenario(giftId: giftId, scenarioId: scenarioId)
             logger.info("Unlinked gift from scenario")
         } catch {
-            logger.error("Failed to unlink gift from scenario", error: error)
+            await handleError(error, operation: "unlinkGiftFromScenario", context: [
+                "giftId": giftId.uuidString,
+                "scenarioId": scenarioId.uuidString
+            ]) { [weak self] in
+                await self?.unlinkGiftFromScenario(giftId: giftId, scenarioId: scenarioId)
+            }
             self.error = .updateFailed(underlying: error)
         }
     }
@@ -329,6 +366,11 @@ class AffordabilityStore: ObservableObject {
             resetEditingState()
 
         } catch {
+            await handleError(error, operation: "saveChanges", context: [
+                "scenarioId": scenario.id.uuidString
+            ]) { [weak self] in
+                await self?.saveChanges()
+            }
             self.error = .updateFailed(underlying: error)
         }
     }
@@ -359,6 +401,11 @@ class AffordabilityStore: ObservableObject {
             resetEditingState()
 
         } catch {
+            await handleError(error, operation: "createScenario", context: [
+                "scenarioName": name
+            ]) { [weak self] in
+                await self?.createScenario(name: name)
+            }
             self.error = .createFailed(underlying: error)
         }
     }
@@ -377,6 +424,12 @@ class AffordabilityStore: ObservableObject {
             try await repository.deleteAffordabilityScenario(id: scenario.id)
             await loadScenarios()
         } catch {
+            await handleError(error, operation: "deleteScenario", context: [
+                "scenarioId": scenario.id.uuidString,
+                "scenarioName": scenario.scenarioName
+            ]) { [weak self] in
+                await self?.deleteScenario(scenario)
+            }
             self.error = .deleteFailed(underlying: error)
         }
     }
@@ -406,6 +459,13 @@ class AffordabilityStore: ObservableObject {
             contributions.append(created)
 
         } catch {
+            await handleError(error, operation: "addContribution", context: [
+                "contributorName": name,
+                "amount": amount,
+                "type": type.rawValue
+            ]) { [weak self] in
+                await self?.addContribution(name: name, amount: amount, type: type, date: date)
+            }
             self.error = .createFailed(underlying: error)
         }
     }
@@ -433,6 +493,11 @@ class AffordabilityStore: ObservableObject {
             // Remove from local array
             contributions.removeAll { $0.id == contribution.id }
         } catch {
+            await handleError(error, operation: "deleteContribution", context: [
+                "contributionId": contribution.id.uuidString
+            ]) { [weak self] in
+                await self?.deleteContribution(contribution)
+            }
             self.error = .deleteFailed(underlying: error)
         }
     }
@@ -448,6 +513,7 @@ class AffordabilityStore: ObservableObject {
                 availableGifts = allGifts
             }
         } catch {
+            await handleError(error, operation: "loadAvailableGifts")
             self.error = .fetchFailed(underlying: error)
         }
     }
@@ -466,6 +532,12 @@ class AffordabilityStore: ObservableObject {
             // Reload available gifts to remove the linked ones
             await loadAvailableGifts()
         } catch {
+            await handleError(error, operation: "linkGifts", context: [
+                "giftCount": giftIds.count,
+                "scenarioId": scenarioId.uuidString
+            ]) { [weak self] in
+                await self?.linkGifts(giftIds: giftIds)
+            }
             self.error = .updateFailed(underlying: error)
         }
     }
@@ -482,6 +554,11 @@ class AffordabilityStore: ObservableObject {
             }
             editingGift = nil
         } catch {
+            await handleError(error, operation: "updateGift", context: [
+                "giftId": gift.id.uuidString
+            ]) { [weak self] in
+                await self?.updateGift(gift)
+            }
             self.error = .updateFailed(underlying: error)
         }
     }
@@ -495,6 +572,9 @@ class AffordabilityStore: ObservableObject {
                 editingGift = gift
             }
         } catch {
+            await handleError(error, operation: "startEditingGift", context: [
+                "contributionId": contributionId.uuidString
+            ])
             self.error = .fetchFailed(underlying: error)
         }
     }

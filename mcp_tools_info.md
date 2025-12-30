@@ -19,6 +19,9 @@ A comprehensive guide to the Model Context Protocol (MCP) tools and development 
 10. [Owlex](#owlex) (MCP Server)
 11. [Agent Deck](#agent-deck) (Session Manager)
 
+### Claude Desktop Tools
+12. [Basic Memory](#basic-memory) (MCP Server)
+
 ---
 
 # Claude Code Active MCP Servers
@@ -634,6 +637,86 @@ curl -fsSL https://raw.githubusercontent.com/asheshgoplani/agent-deck/main/insta
 
 ---
 
+# Claude Desktop Tools
+
+The following MCP servers are configured for Claude Desktop application.
+
+## Basic Memory
+
+**Repository:** https://github.com/basicmachines-co/basic-memory
+**Website:** https://basicmachines.co
+**Documentation:** https://memory.basicmachines.co
+**Discord:** https://discord.gg/tyvKNccgqN
+
+**Purpose:** Local-first knowledge management system that builds a semantic graph from Markdown files, enabling persistent memory across AI conversations
+
+**Key Features:**
+- Local-first knowledge management - Store information as Markdown files you control
+- Bi-directional sync - Both humans and LLMs can read and write to the same files
+- Knowledge graph navigation - LLMs can follow links between related topics
+- Multi-AI platform support - Works with Claude Desktop, VS Code, ChatGPT, Gemini, and others
+- Semantic search across your knowledge base
+- Optional cloud synchronization with subscription
+- Data stored locally in ~/basic-memory directory
+- Never re-explain your project to your AI again
+
+**Installation:**
+```bash
+# Recommended method
+uv tool install basic-memory
+
+# Alternative via Smithery
+npx -y @smithery/cli install @basicmachines-co/basic-memory --client claude
+```
+
+**Configuration for Claude Desktop:**
+Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
+```json
+{
+  "mcpServers": {
+    "basic-memory": {
+      "command": "uvx",
+      "args": ["basic-memory", "mcp"]
+    }
+  }
+}
+```
+
+**Core Commands:**
+- `basic-memory sync` - One-time sync of local knowledge
+- `basic-memory sync --watch` - Real-time synchronization with watch mode
+- `basic-memory telemetry disable` - Opt out of anonymous usage tracking
+- `basic-memory cloud login` - Authenticate with cloud service
+- `basic-memory cloud sync` - Bidirectional cloud synchronization
+- `basic-memory cloud mount` - Mount cloud storage for direct access
+
+**Main Tools (MCP):**
+- **create_entities**: Store new information in knowledge graph
+- **search_nodes**: Semantic search across knowledge base
+- **open_nodes**: Open and read specific knowledge nodes
+- **get_relations**: Navigate relationships between topics
+- **read_graph**: Query the knowledge graph structure
+
+**Best Use Cases:**
+- Persistent project context across conversations
+- Building a personal/project knowledge base
+- Linking related concepts and documentation
+- Eliminating repetitive explanations to AI
+- Team knowledge sharing (with cloud sync)
+- Cross-conversation memory retention
+
+**Current Project:**
+- Project: wedding-app-knowledge
+- Location: /Users/jessicaclark/Development/nextjs-projects/my-nextjs-app/knowledge
+
+**Cloud Features (Optional):**
+- 7-day free trial available at https://basicmemory.com/beta
+- 25% early supporter discount
+- Bidirectional cloud synchronization
+- Team collaboration features
+
+---
+
 ## Integration Scenarios
 
 ### For Multi-Agent Coordination:
@@ -667,6 +750,14 @@ curl -fsSL https://raw.githubusercontent.com/asheshgoplani/agent-deck/main/insta
 3. Environment auto-loads when entering project directory
 4. Supports layered configs for development/staging/production
 
+### For Knowledge Management & Memory:
+1. Use **Basic Memory** in Claude Desktop for persistent project context
+2. Store architectural decisions, patterns, and project-specific knowledge
+3. Build a semantic knowledge graph that links related concepts
+4. Eliminate repetitive explanations across conversations
+5. Sync knowledge with `basic-memory sync --watch` for real-time updates
+6. Optional cloud sync for team collaboration
+
 ---
 
 ## Summary Table
@@ -684,6 +775,7 @@ curl -fsSL https://raw.githubusercontent.com/asheshgoplani/agent-deck/main/insta
 | **direnv** | Environment Manager | Auto-load environment variables | Per-project configuration, version switching |
 | **Owlex** | MCP Server | Multi-agent orchestration | Agent councils, cross-agent critique |
 | **Agent Deck** | Session Manager | AI session management | Running multiple agents, dynamic MCP toggling |
+| **Basic Memory** | MCP Server | Knowledge graph memory | Persistent context, project knowledge base |
 
 ---
 
@@ -711,4 +803,7 @@ owlex council_ask "Code review this PR" --deliberate
 # 7. Setup environment for project
 echo "export DATABASE_URL=postgresql://localhost/mydb" > .envrc
 direnv allow
+
+# 8. Enable persistent memory (Claude Desktop)
+basic-memory sync --watch
 ```

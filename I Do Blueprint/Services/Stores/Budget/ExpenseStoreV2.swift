@@ -60,8 +60,10 @@ class ExpenseStoreV2: ObservableObject {
             expenses = try await repository.fetchExpenses()
             logger.info("Loaded \(expenses.count) expenses")
         } catch {
+            await handleError(error, operation: "loadExpenses", context: [
+                "expenseCount": expenses.count
+            ])
             self.error = .fetchFailed(underlying: error)
-            logger.error("Failed to load expenses", error: error)
         }
         
         isLoading = false
@@ -76,9 +78,15 @@ class ExpenseStoreV2: ObservableObject {
             let created = try await repository.createExpense(expense)
             expenses.insert(created, at: 0)
             logger.info("Added expense: \(created.expenseName)")
+            showSuccess("Expense added successfully")
         } catch {
+            await handleError(error, operation: "addExpense", context: [
+                "expenseName": expense.expenseName,
+                "amount": expense.amount
+            ]) { [weak self] in
+                await self?.addExpense(expense)
+            }
             self.error = .createFailed(underlying: error)
-            logger.error("Error adding expense", error: error)
         }
         
         isLoading = false
@@ -107,13 +115,19 @@ class ExpenseStoreV2: ObservableObject {
             }
             
             logger.info("Updated expense: \(updated.expenseName)")
+            showSuccess("Expense updated successfully")
         } catch {
             // Rollback on error
             if let idx = expenses.firstIndex(where: { $0.id == expense.id }) {
                 expenses[idx] = original
             }
+            await handleError(error, operation: "updateExpense", context: [
+                "expenseId": expense.id.uuidString,
+                "expenseName": expense.expenseName
+            ]) { [weak self] in
+                await self?.updateExpense(expense)
+            }
             self.error = .updateFailed(underlying: error)
-            logger.error("Error updating expense", error: error)
         }
     }
     
@@ -129,11 +143,17 @@ class ExpenseStoreV2: ObservableObject {
         do {
             try await repository.deleteExpense(id: id)
             logger.info("Deleted expense: \(removed.expenseName)")
+            showSuccess("Expense deleted successfully")
         } catch {
             // Rollback on error
             expenses.insert(removed, at: index)
+            await handleError(error, operation: "deleteExpense", context: [
+                "expenseId": id.uuidString,
+                "expenseName": removed.expenseName
+            ]) { [weak self] in
+                await self?.deleteExpense(id: id)
+            }
             self.error = .deleteFailed(underlying: error)
-            logger.error("Error deleting expense, rolled back", error: error)
         }
     }
     
@@ -248,7 +268,11 @@ class ExpenseStoreV2: ObservableObject {
             
             logger.info("Proportional unlink complete and caches invalidated")
         } catch {
-            logger.error("Failed proportional unlink for expense", error: error)
+            await handleError(error, operation: "unlinkExpense", context: [
+                "expenseId": expenseId,
+                "budgetItemId": budgetItemId,
+                "scenarioId": scenarioId
+            ])
             throw BudgetError.updateFailed(underlying: error)
         }
     }
