@@ -8,28 +8,52 @@ The `.mcp.json` file contains sensitive API keys and should remain in your local
 
 ## Initial Setup
 
-1. **Copy the example configuration**:
+✅ **Setup Complete!** This project uses **direnv** for automatic environment variable loading.
+
+### How It Works
+
+When you `cd` into this directory, direnv automatically:
+1. Loads `.envrc` (the configuration file)
+2. Sources `.env.mcp.local` (your API keys)
+3. Exports all MCP environment variables
+4. Shows confirmation: `✅ MCP environment loaded (direnv)`
+
+When you leave the directory, direnv automatically unloads the variables.
+
+### Verify It's Working
+
+```bash
+# Navigate to project
+cd "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint"
+# Output: direnv: loading .envrc
+#         ✅ MCP environment loaded (direnv)
+
+# Check variables are loaded
+echo $OPENROUTER_API_KEY
+echo $GREB_API_KEY
+
+# Leave directory (auto-unloads)
+cd ~
+echo $OPENROUTER_API_KEY
+# (empty)
+```
+
+### Manual Setup (If Needed)
+
+If direnv isn't working, you can manually load variables:
+
+   **Option A: Use direnv (Recommended - Already Configured)**
    ```bash
-   cp .mcp.json.example .mcp.json
+   # Already set up! Just cd into the project directory
+   cd "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint"
    ```
 
-2. **Set up environment variables**:
-
-   **Option A: Use the local environment file (Recommended for this project)**
+   **Option B: Manual source** (fallback if direnv fails):
    ```bash
-   # Load environment variables from the secure local file
    source .env.mcp.local
    ```
 
-   To make this automatic when you start Claude Code, add to your shell profile (`~/.zshrc` or `~/.bash_profile`):
-   ```bash
-   # Auto-load MCP environment variables when in project directory
-   if [ -f "$PWD/.env.mcp.local" ]; then
-       source "$PWD/.env.mcp.local"
-   fi
-   ```
-
-   **Option B: Set up environment variables** in your shell profile (`~/.zshrc` or `~/.bash_profile`):
+   **Option C: Set up environment variables** in your shell profile (`~/.zshrc` or `~/.bash_profile`):
    ```bash
    # MCP Server API Keys
    export OPENROUTER_API_KEY="your-openrouter-api-key-here"
@@ -111,3 +135,9 @@ If you prefer using a `.env` file:
 - ✅ `.env.mcp.local` - Your actual API keys (covered by `.env.*`)
 - ✅ `.env`, `.env.*` - Any environment files
 - ✅ `Config.plist` - App configuration secrets
+
+## Files Safe to Commit
+
+- ✅ `.envrc` - direnv configuration (no secrets, just loading logic)
+- ✅ `.mcp.json.example` - Template for team members
+- ✅ `MCP_SETUP.md` - Setup documentation
