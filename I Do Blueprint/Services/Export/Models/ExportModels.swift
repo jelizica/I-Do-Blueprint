@@ -38,6 +38,7 @@ enum ExportError: LocalizedError {
     case imageGenerationFailed
     case unsupportedFormat
     case templateNotFound
+    case missingContent
 
     var errorDescription: String? {
         switch self {
@@ -45,6 +46,7 @@ enum ExportError: LocalizedError {
         case .imageGenerationFailed: "Failed to generate image"
         case .unsupportedFormat: "Unsupported export format"
         case .templateNotFound: "Template not found"
+        case .missingContent: "Required content is missing for export"
         }
     }
 }

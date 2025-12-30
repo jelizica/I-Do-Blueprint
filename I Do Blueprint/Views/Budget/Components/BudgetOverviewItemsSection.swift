@@ -15,7 +15,7 @@ struct BudgetOverviewItemsSection: View {
     let onEditExpense: (String, String) -> Void
     let onRemoveExpense: (String, String) async -> Void
     let onEditGift: (String, String) -> Void
-    let onRemoveGift: (String) async -> Void
+    let onRemoveGift: (String) async -> Void // giftId parameter
     let onAddExpense: (String) -> Void
     let onAddGift: (String) -> Void
     
@@ -109,9 +109,9 @@ struct BudgetOverviewItemsSection: View {
             onEditGift: { _, giftId in
                 onEditGift(item.id, giftId)
             },
-            onRemoveGift: { _ in
+            onRemoveGift: { giftId in
                 Task {
-                    await onRemoveGift(item.id)
+                    await onRemoveGift(giftId)
                 }
             },
             onAddExpense: { _ in onAddExpense(item.id) },
@@ -216,9 +216,9 @@ struct BudgetOverviewItemsSection: View {
                                         await onRemoveExpense(expenseId, item.id)
                                     }
                                 },
-                                onRemoveGift: {
+                                onRemoveGift: { giftId in
                                     Task {
-                                        await onRemoveGift(item.id)
+                                        await onRemoveGift(giftId)
                                     }
                                 }
                             )
@@ -306,9 +306,9 @@ struct BudgetOverviewItemsSection: View {
                                         await onRemoveExpense(expenseId, child.id)
                                     }
                                 },
-                                onRemoveGift: {
+                                onRemoveGift: { giftId in
                                     Task {
-                                        await onRemoveGift(child.id)
+                                        await onRemoveGift(giftId)
                                     }
                                 }
                             )

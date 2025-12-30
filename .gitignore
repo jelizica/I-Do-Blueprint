@@ -41,6 +41,9 @@ coverage.json
 # AI/code review tool configs
 .coderabbit.yaml
 
+# MCP server config with secrets
+.mcp.json
+
 # IDE
 .vscode/
 .idea/
@@ -53,3 +56,9 @@ build_log.txt
 
 # Auto-generated MCP server context (added automatically)
 .mcp-server-context.md
+
+# Session archives (keep current state, archive old sessions)
+_project_specs/session/archive/*.md
+
+# bv (beads viewer) local config and caches
+.bv/

@@ -74,7 +74,7 @@ actor GiftsAndOwedDataSource {
             // Invalidate cache with tenant ID
             await RepositoryCache.shared.remove("gifts_and_owed_\(gift.coupleId.uuidString)")
             if let scenarioId = gift.scenarioId {
-                await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+                await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId.uuidString)")
             }
 
             return created
@@ -115,7 +115,7 @@ actor GiftsAndOwedDataSource {
             // Invalidate cache with tenant ID
             await RepositoryCache.shared.remove("gifts_and_owed_\(gift.coupleId.uuidString)")
             if let scenarioId = gift.scenarioId {
-                await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+                await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId.uuidString)")
             }
 
             return result
@@ -163,7 +163,7 @@ actor GiftsAndOwedDataSource {
             if let gift = gift {
                 await RepositoryCache.shared.remove("gifts_and_owed_\(gift.coupleId.uuidString)")
                 if let scenarioId = gift.scenarioId {
-                    await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId)")
+                    await RepositoryCache.shared.remove("affordability_contributions_\(scenarioId.uuidString)")
                 }
             }
         } catch {

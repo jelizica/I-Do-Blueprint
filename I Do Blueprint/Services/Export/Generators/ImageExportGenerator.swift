@@ -11,12 +11,7 @@ import AppKit
 
 /// Protocol for image export operations
 protocol ImageExportProtocol {
-    func generateImage(
-        template: ExportTemplate,
-        content: ExportContent,
-        customizations: ExportCustomizations,
-        branding: BrandingSettings
-    ) async throws -> URL
+    func generateImage() async throws -> URL
 }
 
 /// Actor responsible for image export generation (PNG/JPEG)
@@ -41,25 +36,23 @@ actor ImageExportGenerator: ImageExportProtocol {
     // MARK: - Public Interface
     
     @MainActor
-    func generateImage(
-        template: ExportTemplate,
-        content: ExportContent,
-        customizations: ExportCustomizations,
-        branding: BrandingSettings
-    ) async throws -> URL {
+    func generateImage() async throws -> URL {
+        // Validate content availability before rendering
+        try validateContent(for: template.category)
+
         // Generate high-resolution image export
         let renderer = ImageRenderer(content: generateImageContent())
         renderer.scale = customizations.imageScale
-        
+
         guard let nsImage = renderer.nsImage else {
             throw ExportError.imageGenerationFailed
         }
-        
+
         let tempURL = FileManager.default.temporaryDirectory
             .appendingPathComponent(
                 "\(template.name)_\(Date().timeIntervalSince1970).\(template.outputFormat.fileExtension)"
             )
-        
+
         let imageData: Data
         switch template.outputFormat {
         case .png:
@@ -75,13 +68,32 @@ actor ImageExportGenerator: ImageExportProtocol {
         default:
             throw ExportError.unsupportedFormat
         }
-        
+
         try imageData.write(to: tempURL)
         return tempURL
     }
     
     // MARK: - Content Generation
     
+    // MARK: - Validation
+
+    @MainActor
+    private func validateContent(for category: ExportCategory) throws {
+        switch category {
+        case .moodBoard:
+            guard !content.moodBoards.isEmpty else {
+                throw ExportError.missingContent
+            }
+        case .seatingChart:
+            guard !content.seatingCharts.isEmpty else {
+                throw ExportError.missingContent
+            }
+        case .colorPalette, .comprehensive:
+            // No specific validation needed
+            break
+        }
+    }
+
     @ViewBuilder
     @MainActor
     private func generateImageContent() -> some View {

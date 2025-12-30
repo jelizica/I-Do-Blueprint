@@ -14,6 +14,7 @@ struct BudgetCategoriesSettingsView: View {
     @State private var searchText = ""
     @State private var showingDeleteAlert = false
     @State private var categoryToDelete: BudgetCategory?
+    @State private var parentCategoryForNewSubcategory: BudgetCategory?
     
     // Batch delete state
     @State private var selectionMode = false
@@ -135,17 +136,21 @@ struct BudgetCategoriesSettingsView: View {
                         LazyVStack(spacing: 8) {
                             ForEach(parentCategories, id: \.id) { parentCategory in
                                 SettingsCategorySection(
-                                    parentCategory: parentCategory,
-                                    subcategories: subcategories(for: parentCategory),
-                                    selectionMode: selectionMode,
-                                    selectedCategories: $selectedCategories,
-                                    onEdit: { category in
-                                        editingCategory = category
-                                    },
-                                    onDelete: { category in
-                                        categoryToDelete = category
-                                        showingDeleteAlert = true
-                                    })
+                                parentCategory: parentCategory,
+                                subcategories: subcategories(for: parentCategory),
+                                selectionMode: selectionMode,
+                                selectedCategories: $selectedCategories,
+                                onEdit: { category in
+                                editingCategory = category
+                                },
+                                onDelete: { category in
+                                categoryToDelete = category
+                                showingDeleteAlert = true
+                                },
+                                onAddSubcategory: { parentCategory in
+                                parentCategoryForNewSubcategory = parentCategory
+                                showingAddCategory = true
+                                })
                             }
                         }
                         .padding(.vertical, Spacing.sm)
@@ -166,10 +171,19 @@ struct BudgetCategoriesSettingsView: View {
             await budgetStore.categoryStore.loadCategoryDependencies()
         }
         .sheet(isPresented: $showingAddCategory) {
-            SettingsAddCategoryView(budgetStore: budgetStore)
+            SettingsAddCategoryView(
+                budgetStore: budgetStore,
+                preselectedParent: parentCategoryForNewSubcategory
+            )
         }
         .sheet(item: $editingCategory) { category in
             SettingsEditCategoryView(category: category, budgetStore: budgetStore)
+        }
+        .onChange(of: showingAddCategory) { _, newValue in
+            if !newValue {
+                // Clear parent selection when sheet is dismissed
+                parentCategoryForNewSubcategory = nil
+            }
         }
         .alert("Delete Category", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {}
@@ -240,6 +254,7 @@ struct SettingsCategorySection: View {
     @Binding var selectedCategories: Set<UUID>
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
+    let onAddSubcategory: (BudgetCategory) -> Void
     
     @State private var isExpanded = true
     @Environment(\.appStores) private var appStores
@@ -259,7 +274,8 @@ struct SettingsCategorySection: View {
                 selectedCategories: $selectedCategories,
                 budgetStore: budgetStore,
                 onEdit: onEdit,
-                onDelete: onDelete)
+                onDelete: onDelete,
+                onAddSubcategory: onAddSubcategory)
             
             // Subcategories
             if isExpanded, !subcategories.isEmpty {
@@ -293,6 +309,7 @@ struct SettingsFolderRow: View {
     let budgetStore: BudgetStoreV2
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
+    let onAddSubcategory: (BudgetCategory) -> Void
     
     private var isSelected: Bool {
         selectedCategories.contains(category.id)
@@ -393,7 +410,7 @@ struct SettingsFolderRow: View {
                     }
                     
                     Button("Add Subcategory") {
-                        // TODO: Add subcategory with this as parent
+                        onAddSubcategory(category)
                     }
                     
                     Divider()
@@ -530,12 +547,19 @@ struct SettingsCategoryRow: View {
 
 struct SettingsAddCategoryView: View {
     @ObservedObject var budgetStore: BudgetStoreV2
+    let preselectedParent: BudgetCategory?
     @Environment(\.dismiss) private var dismiss
     
     @State private var categoryName = ""
     @State private var description = ""
     @State private var selectedColor = AppColors.Budget.allocated
     @State private var parentCategory: BudgetCategory?
+    
+    init(budgetStore: BudgetStoreV2, preselectedParent: BudgetCategory? = nil) {
+        self.budgetStore = budgetStore
+        self.preselectedParent = preselectedParent
+        _parentCategory = State(initialValue: preselectedParent)
+    }
     
     private let predefinedColors: [Color] = [
         AppColors.Budget.allocated, AppColors.Budget.income, AppColors.Budget.expense, 

@@ -330,7 +330,7 @@ actor ExpenseDataSource {
                 amount: expense.amount,
                 categoryId: expense.categoryId,
                 vendorId: expense.vendorId,
-                paid: expense.paid,
+                paid: expense.paymentStatus == .paid,
                 notes: expense.notes,
                 expenseDate: expense.expenseDate,
                 updatedAt: Date()

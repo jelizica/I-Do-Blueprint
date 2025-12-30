@@ -260,12 +260,5 @@ extension Color {
     static let gold = Color(red: 1.0, green: 0.84, blue: 0.0)
     static let silver = Color(red: 0.75, green: 0.75, blue: 0.75)
 
-    var hexString: String {
-        let nsColor = NSColor(self)
-        guard let rgb = nsColor.usingColorSpace(.deviceRGB) else { return "#000000" }
-        let red = Int(rgb.redComponent * 255)
-        let green = Int(rgb.greenComponent * 255)
-        let blue = Int(rgb.blueComponent * 255)
-        return String(format: "#%02X%02X%02X", red, green, blue)
-    }
+    // Note: hexString is now in Core/Extensions/Color+Hex.swift
 }

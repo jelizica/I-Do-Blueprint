@@ -85,12 +85,7 @@ class AdvancedExportTemplateService: ObservableObject {
                 customizations: customizations,
                 branding: customBranding
             )
-            exportURL = try await imageGenerator.generateImage(
-                template: template,
-                content: content,
-                customizations: customizations,
-                branding: customBranding
-            )
+            exportURL = try await imageGenerator.generateImage()
             
         case .svg:
             let svgGenerator = SVGExportGenerator(

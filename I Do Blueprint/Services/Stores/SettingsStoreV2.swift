@@ -3,6 +3,7 @@
 //  My Wedding Planning App
 //
 //  New architecture version of settings management using repository pattern
+//  Refactored with Store Composition Pattern
 //
 
 import Auth
@@ -14,120 +15,95 @@ import Sentry
 
 @MainActor
 class SettingsStoreV2: ObservableObject {
+    // MARK: - Published Properties
+    
     @Published private(set) var settings: CoupleSettings = .default
     @Published var localSettings: CoupleSettings = .default
     @Published private(set) var customVendorCategories: [CustomVendorCategory] = []
-
+    
     @Published var isLoading = false
     @Published private(set) var hasLoaded = false
     @Published var error: SettingsError?
     @Published var successMessage: String?
     @Published var savingSections: Set<String> = []
     @Published var hasUnsavedChanges = false
-
+    
+    // MARK: - Sub-Stores
+    
+    private(set) lazy var vendorCategoryStore: VendorCategoryStore = {
+        VendorCategoryStore(
+            repository: repository,
+            onSuccess: { [weak self] message in
+                self?.showSuccess(message)
+            },
+            onError: { [weak self] error, operation in
+                Task { @MainActor in
+                    await self?.handleError(error, operation: operation)
+                }
+            }
+        )
+    }()
+    
+    // MARK: - Private Properties
+    
     private let repository: any SettingsRepositoryProtocol
+    private lazy var loadingService = SettingsLoadingService(repository: repository)
     private var loadTask: Task<Void, Never>?
     private var categoriesFetchCompleted = false
-
+    
+    // MARK: - Initialization
+    
     init(repository: (any SettingsRepositoryProtocol)? = nil) {
         self.repository = repository ?? LiveSettingsRepository()
     }
-
+    
     // MARK: - Helper Properties
-
+    
     var coupleId: UUID? {
         SupabaseManager.shared.currentUser?.id
     }
-
+    
     // MARK: - Load Settings
-
+    
     func loadSettings(force: Bool = false) async {
         // Avoid duplicate concurrent loads unless forced
         if isLoading && !force { return }
         // Allow reloading if forced or if not already loaded
         if !force && hasLoaded { return }
-
+        
         // Cancel any previous load task when forcing
         if force { loadTask?.cancel() }
-
+        
         // Create new load task
         loadTask = Task { @MainActor in
             AppLogger.ui.info("SettingsStoreV2.loadSettings: Starting to load settings (force: \(force))")
             isLoading = true
             error = nil
             categoriesFetchCompleted = false
-
+            
             do {
                 try Task.checkCancellation()
+                
                 // Fetch base settings first and mark store as loaded for UI responsiveness
-                let fetchedSettings = try await repository.fetchSettings()
+                let fetchedSettings = try await loadingService.loadSettings()
                 try Task.checkCancellation()
+                
                 settings = fetchedSettings
                 localSettings = fetchedSettings
                 hasUnsavedChanges = false
                 hasLoaded = true
                 error = nil
+                
                 AppLogger.ui.info("SettingsStoreV2.loadSettings: Settings base loaded; fetching categories in background…")
-
-                // Fetch categories without blocking; update when ready, with timeout and single retry
+                
+                // Fetch categories without blocking
                 Task { @MainActor in
-                    let catStart = Date()
-                    do {
-                        let fetchedCategories: [CustomVendorCategory] = try await self.withTimeout(seconds: 10) {
-                            try await self.repository.fetchCustomVendorCategories()
-                        }
-                        self.customVendorCategories = fetchedCategories
-                        self.categoriesFetchCompleted = true
-                        let catDur = Date().timeIntervalSince(catStart)
-                        AppLogger.ui.info("SettingsStoreV2.loadSettings: Categories loaded (\(fetchedCategories.count)) in \(String(format: "%.2f", catDur))s")
-                        await PerformanceMonitor.shared.recordOperation("settings.categories.loaded", duration: catDur)
-                        if fetchedCategories.isEmpty {
-                            SentryService.shared.addBreadcrumb(
-                                message: "settings.categories.none",
-                                category: "settings",
-                                data: ["duration_ms": Int(catDur*1000)]
-                            )
-                        } else {
-                            SentryService.shared.addBreadcrumb(
-                                message: "settings.categories.loaded",
-                                category: "settings",
-                                data: ["count": fetchedCategories.count, "duration_ms": Int(catDur*1000)]
-                            )
-                        }
-                    } catch {
-                        let catDur = Date().timeIntervalSince(catStart)
-                        AppLogger.ui.warning("SettingsStoreV2.loadSettings: Categories timeout/failure after \(String(format: "%.2f", catDur))s")
-                        SentryService.shared.addBreadcrumb(
-                            message: "settings.categories.timeout",
-                            category: "settings",
-                            data: ["duration_ms": Int(catDur*1000)]
-                        )
-                        // Retry once after a short delay
-                        Task { @MainActor in
-                            try? await Task.sleep(nanoseconds: 3_000_000_000)
-                            do {
-                                let retried = try await self.repository.fetchCustomVendorCategories()
-                                self.customVendorCategories = retried
-                                self.categoriesFetchCompleted = true
-                                let totalDur = Date().timeIntervalSince(catStart)
-                                AppLogger.ui.info("SettingsStoreV2.loadSettings: Categories loaded on retry (\(retried.count)) in \(String(format: "%.2f", totalDur))s")
-                                SentryService.shared.addBreadcrumb(
-                                    message: retried.isEmpty ? "settings.categories.none" : "settings.categories.retry_success",
-                                    category: "settings",
-                                    data: retried.isEmpty ? ["duration_ms": Int(totalDur*1000)] : ["count": retried.count, "duration_ms": Int(totalDur*1000)]
-                                )
-                            } catch {
-                                AppLogger.ui.error("SettingsStoreV2.loadSettings: Categories retry failed", error: error)
-                                SentryService.shared.captureMessage(
-                                    "settings.categories.retry_failed",
-                                    context: ["error": String(describing: error)],
-                                    level: .warning
-                                )
-                            }
-                        }
-                    }
+                    let categories = await loadingService.loadCategoriesWithRetry()
+                    self.customVendorCategories = categories
+                    self.vendorCategoryStore.categories = categories
+                    self.categoriesFetchCompleted = true
                 }
-
+                
                 // Watchdog: log if categories still not loaded after 5s
                 Task { @MainActor in
                     try? await Task.sleep(nanoseconds: 5_000_000_000)
@@ -159,97 +135,48 @@ class SettingsStoreV2: ObservableObject {
                     context: ErrorContext(operation: "loadSettings", feature: "settings")
                 )
             }
-
+            
             isLoading = false
         }
-
+        
         await loadTask?.value
     }
-
+    
     func refreshSettings() async {
         await loadSettings(force: true)
     }
-
+    
     // MARK: - Update Individual Sections
-
+    
     func saveGlobalSettings() async {
-        savingSections.insert("global")
-        defer { savingSections.remove("global") }
-        
-        let original = settings.global
-        do {
-            let payload: [String: Any] = [
-                "global": [
-                    "currency": localSettings.global.currency,
-                    "wedding_date": localSettings.global.weddingDate,
-                    "timezone": localSettings.global.timezone,
-                    "partner1_full_name": localSettings.global.partner1FullName,
-                    "partner1_nickname": localSettings.global.partner1Nickname,
-                    "partner2_full_name": localSettings.global.partner2FullName,
-                    "partner2_nickname": localSettings.global.partner2Nickname
-                ]
-            ]
-            let updated = try await repository.updateSettings(payload)
-            settings = updated
-            localSettings = updated
-            checkUnsavedChanges()
-            successMessage = "Global settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.global = original
-            self.error = .networkUnavailable
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"]))
-        } catch {
-            settings.global = original
-            self.error = .updateFailed(underlying: error)
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveGlobalSettings", feature: "settings", metadata: ["section": "global"]))
-        }
+        await saveSetting(
+            section: "global",
+            getValue: { self.settings.global },
+            setValue: { self.settings.global = $0 },
+            localValue: localSettings.global,
+            saveOperation: { try await self.repository.updateGlobalSettings($0) }
+        )
     }
-
-    func updateGlobalSettings(_ newSettings: GlobalSettings) async {
-        let original = settings.global
-        settings.global = newSettings
-
-        do {
-            try await repository.updateGlobalSettings(newSettings)
-            localSettings.global = newSettings
-            checkUnsavedChanges()
-            successMessage = "Global settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.global = original
-            self.error = .networkUnavailable
-        } catch {
-            settings.global = original
-            self.error = .updateFailed(underlying: error)
-        }
-    }
-
+    
     func saveThemeSettings() async {
-        savingSections.insert("theme")
-        defer { savingSections.remove("theme") }
-        let original = settings.theme
-        settings.theme = localSettings.theme
-        do {
-            try await repository.updateThemeSettings(localSettings.theme)
-            checkUnsavedChanges()
-            successMessage = "Theme settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.theme = original
-            self.error = .networkUnavailable
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveThemeSettings", feature: "settings", metadata: ["section": "theme"]))
-        } catch {
-            settings.theme = original
-            self.error = .updateFailed(underlying: error)
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveThemeSettings", feature: "settings", metadata: ["section": "theme"]))
-        }
+        await saveSetting(
+            section: "theme",
+            getValue: { self.settings.theme },
+            setValue: { self.settings.theme = $0 },
+            localValue: localSettings.theme,
+            saveOperation: { try await self.repository.updateThemeSettings($0) }
+        )
     }
-
+    
     func saveBudgetSettings() async {
         savingSections.insert("budget")
         defer { savingSections.remove("budget") }
+        
         let originalBudget = settings.budget
         let originalCashFlow = settings.cashFlow
         settings.budget = localSettings.budget
         settings.cashFlow = localSettings.cashFlow
+        
         do {
             try await repository.updateBudgetSettings(localSettings.budget)
             try await repository.updateCashFlowSettings(localSettings.cashFlow)
@@ -260,171 +187,143 @@ class SettingsStoreV2: ObservableObject {
             settings.budget = originalBudget
             settings.cashFlow = originalCashFlow
             self.error = .networkUnavailable
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveBudgetSettings", feature: "settings", metadata: ["section": "budget"]))
+            await handleError(error, operation: "saveBudgetSettings")
         } catch {
             settings.budget = originalBudget
             settings.cashFlow = originalCashFlow
             self.error = .updateFailed(underlying: error)
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveBudgetSettings", feature: "settings", metadata: ["section": "budget"]))
+            await handleError(error, operation: "saveBudgetSettings")
         }
     }
-
+    
     func saveTasksSettings() async {
-        savingSections.insert("tasks")
-        defer { savingSections.remove("tasks") }
-        let original = settings.tasks
-        settings.tasks = localSettings.tasks
-        do {
-            try await repository.updateTasksSettings(localSettings.tasks)
-            checkUnsavedChanges()
-            successMessage = "Tasks settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.tasks = original
-            self.error = .networkUnavailable
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveTasksSettings", feature: "settings", metadata: ["section": "tasks"]))
-        } catch {
-            settings.tasks = original
-            self.error = .updateFailed(underlying: error)
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveTasksSettings", feature: "settings", metadata: ["section": "tasks"]))
-        }
+        await saveSetting(
+            section: "tasks",
+            getValue: { self.settings.tasks },
+            setValue: { self.settings.tasks = $0 },
+            localValue: localSettings.tasks,
+            saveOperation: { try await self.repository.updateTasksSettings($0) }
+        )
     }
-
+    
     func saveVendorsSettings() async {
-        savingSections.insert("vendors")
-        defer { savingSections.remove("vendors") }
-        let original = settings.vendors
-        settings.vendors = localSettings.vendors
-        do {
-            try await repository.updateVendorsSettings(localSettings.vendors)
-            checkUnsavedChanges()
-            successMessage = "Vendors settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.vendors = original
-            self.error = .networkUnavailable
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveVendorsSettings", feature: "settings", metadata: ["section": "vendors"]))
-        } catch {
-            settings.vendors = original
-            self.error = .updateFailed(underlying: error)
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveVendorsSettings", feature: "settings", metadata: ["section": "vendors"]))
-        }
+        await saveSetting(
+            section: "vendors",
+            getValue: { self.settings.vendors },
+            setValue: { self.settings.vendors = $0 },
+            localValue: localSettings.vendors,
+            saveOperation: { try await self.repository.updateVendorsSettings($0) }
+        )
     }
-
+    
     func saveGuestsSettings() async {
-        savingSections.insert("guests")
-        defer { savingSections.remove("guests") }
-        let original = settings.guests
-        settings.guests = localSettings.guests
-        do {
-            try await repository.updateGuestsSettings(localSettings.guests)
-            checkUnsavedChanges()
-            successMessage = "Guests settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.guests = original
-            self.error = .networkUnavailable
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveGuestsSettings", feature: "settings", metadata: ["section": "guests"]))
-        } catch {
-            settings.guests = original
-            self.error = .updateFailed(underlying: error)
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveGuestsSettings", feature: "settings", metadata: ["section": "guests"]))
-        }
+        await saveSetting(
+            section: "guests",
+            getValue: { self.settings.guests },
+            setValue: { self.settings.guests = $0 },
+            localValue: localSettings.guests,
+            saveOperation: { try await self.repository.updateGuestsSettings($0) }
+        )
     }
-
+    
     func saveDocumentsSettings() async {
-        savingSections.insert("documents")
-        defer { savingSections.remove("documents") }
-        let original = settings.documents
-        settings.documents = localSettings.documents
-        do {
-            try await repository.updateDocumentsSettings(localSettings.documents)
-            checkUnsavedChanges()
-            successMessage = "Documents settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.documents = original
-            self.error = .networkUnavailable
-            let ctx = ErrorContext(operation: "saveDocumentsSettings", feature: "settings", metadata: ["section": "documents"])
-            ErrorHandler.shared.handle(error, context: ctx)
-        } catch {
-            settings.documents = original
-            self.error = .updateFailed(underlying: error)
-            let ctx = ErrorContext(operation: "saveDocumentsSettings", feature: "settings", metadata: ["section": "documents"])
-            ErrorHandler.shared.handle(error, context: ctx)
-        }
+        await saveSetting(
+            section: "documents",
+            getValue: { self.settings.documents },
+            setValue: { self.settings.documents = $0 },
+            localValue: localSettings.documents,
+            saveOperation: { try await self.repository.updateDocumentsSettings($0) }
+        )
     }
-
+    
     func saveNotificationsSettings() async {
-        savingSections.insert("notifications")
-        defer { savingSections.remove("notifications") }
-        let original = settings.notifications
-        settings.notifications = localSettings.notifications
-        do {
-            try await repository.updateNotificationsSettings(localSettings.notifications)
-            checkUnsavedChanges()
-            successMessage = "Notifications settings updated"
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.notifications = original
-            self.error = .networkUnavailable
-            let ctx = ErrorContext(operation: "saveNotificationsSettings", feature: "settings", metadata: ["section": "notifications"])
-            ErrorHandler.shared.handle(error, context: ctx)
-        } catch {
-            settings.notifications = original
-            self.error = .updateFailed(underlying: error)
-            let ctx = ErrorContext(operation: "saveNotificationsSettings", feature: "settings", metadata: ["section": "notifications"])
-            ErrorHandler.shared.handle(error, context: ctx)
-        }
+        await saveSetting(
+            section: "notifications",
+            getValue: { self.settings.notifications },
+            setValue: { self.settings.notifications = $0 },
+            localValue: localSettings.notifications,
+            saveOperation: { try await self.repository.updateNotificationsSettings($0) }
+        )
     }
-
+    
     func saveLinksSettings() async {
-        savingSections.insert("links")
-        defer { savingSections.remove("links") }
-        let original = settings.links
-        settings.links = localSettings.links
+        await saveSetting(
+            section: "links",
+            getValue: { self.settings.links },
+            setValue: { self.settings.links = $0 },
+            localValue: localSettings.links,
+            saveOperation: { try await self.repository.updateLinksSettings($0) }
+        )
+    }
+    
+    // MARK: - Generic Save Helper
+    
+    private func saveSetting<T>(
+        section: String,
+        getValue: () -> T,
+        setValue: (T) -> Void,
+        localValue: T,
+        saveOperation: (T) async throws -> Void
+    ) async {
+        savingSections.insert(section)
+        defer { savingSections.remove(section) }
+        
+        let original = getValue()
+        setValue(localValue)
+        
         do {
-            try await repository.updateLinksSettings(localSettings.links)
+            try await saveOperation(localValue)
             checkUnsavedChanges()
-            successMessage = "Links settings updated"
+            successMessage = "\(section.capitalized) settings updated"
         } catch let error as URLError where error.code == .notConnectedToInternet {
-            settings.links = original
+            setValue(original)
             self.error = .networkUnavailable
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveLinksSettings", feature: "settings", metadata: ["section": "links"]))
+            await handleError(error, operation: "save\(section.capitalized)Settings")
         } catch {
-            settings.links = original
+            setValue(original)
             self.error = .updateFailed(underlying: error)
-            ErrorHandler.shared.handle(error, context: ErrorContext(operation: "saveLinksSettings", feature: "settings", metadata: ["section": "links"]))
+            await handleError(error, operation: "save\(section.capitalized)Settings")
         }
     }
-
+    
+    // MARK: - Legacy Update Methods (for compatibility)
+    
+    func updateGlobalSettings(_ newSettings: GlobalSettings) async {
+        await updateSetting(\.global, newSettings, "Global", repository.updateGlobalSettings)
+    }
+    
     func updateThemeSettings(_ newSettings: ThemeSettings) async {
         await updateSetting(\.theme, newSettings, "Theme", repository.updateThemeSettings)
     }
-
+    
     func updateBudgetSettings(_ newSettings: BudgetSettings) async {
         await updateSetting(\.budget, newSettings, "Budget", repository.updateBudgetSettings)
     }
-
+    
     func updateCashFlowSettings(_ newSettings: CashFlowSettings) async {
         await updateSetting(\.cashFlow, newSettings, "Cash flow", repository.updateCashFlowSettings)
     }
-
+    
     func updateTasksSettings(_ newSettings: TasksSettings) async {
         await updateSetting(\.tasks, newSettings, "Tasks", repository.updateTasksSettings)
     }
-
+    
     func updateVendorsSettings(_ newSettings: VendorsSettings) async {
         await updateSetting(\.vendors, newSettings, "Vendors", repository.updateVendorsSettings)
     }
-
+    
     func updateGuestsSettings(_ newSettings: GuestsSettings) async {
         await updateSetting(\.guests, newSettings, "Guests", repository.updateGuestsSettings)
     }
-
+    
     func updateDocumentsSettings(_ newSettings: DocumentsSettings) async {
         await updateSetting(\.documents, newSettings, "Documents", repository.updateDocumentsSettings)
     }
-
+    
     func updateNotificationsSettings(_ newSettings: NotificationsSettings) async {
         await updateSetting(\.notifications, newSettings, "Notifications", repository.updateNotificationsSettings)
     }
-
+    
     func updateLinksSettings(_ newSettings: LinksSettings) async {
         await updateSetting(\.links, newSettings, "Links", repository.updateLinksSettings)
     }
@@ -443,63 +342,26 @@ class SettingsStoreV2: ObservableObject {
             self.error = .updateFailed(underlying: error)
         }
     }
-
-    // MARK: - Custom Vendor Categories
-
+    
+    // MARK: - Custom Vendor Categories (Delegated to VendorCategoryStore)
+    
     func createVendorCategory(_ category: CustomVendorCategory) async {
-        do {
-            let created = try await repository.createVendorCategory(category)
-            customVendorCategories.append(created)
-            showSuccess("Category created successfully")
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            self.error = .networkUnavailable
-            await handleError(error, operation: "create vendor category")
-        } catch {
-            self.error = .categoryCreateFailed(underlying: error)
-            await handleError(error, operation: "create vendor category")
-        }
+        await vendorCategoryStore.createCategory(category)
+        customVendorCategories = vendorCategoryStore.categories
     }
-
+    
     func updateVendorCategory(_ category: CustomVendorCategory) async {
-        guard let index = customVendorCategories.firstIndex(where: { $0.id == category.id }) else { return }
-        let original = customVendorCategories[index]
-        customVendorCategories[index] = category
-
-        do {
-            let updated = try await repository.updateVendorCategory(category)
-            customVendorCategories[index] = updated
-            showSuccess("Category updated successfully")
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            customVendorCategories[index] = original
-            self.error = .networkUnavailable
-            await handleError(error, operation: "update vendor category")
-        } catch {
-            customVendorCategories[index] = original
-            self.error = .categoryUpdateFailed(underlying: error)
-            await handleError(error, operation: "update vendor category")
-        }
+        await vendorCategoryStore.updateCategory(category)
+        customVendorCategories = vendorCategoryStore.categories
     }
-
+    
     func deleteVendorCategory(_ category: CustomVendorCategory) async {
-        guard let index = customVendorCategories.firstIndex(where: { $0.id == category.id }) else { return }
-        let removed = customVendorCategories.remove(at: index)
-
-        do {
-            try await repository.deleteVendorCategory(id: category.id)
-            showSuccess("Category deleted successfully")
-        } catch let error as URLError where error.code == .notConnectedToInternet {
-            customVendorCategories.insert(removed, at: index)
-            self.error = .networkUnavailable
-            await handleError(error, operation: "delete vendor category")
-        } catch {
-            customVendorCategories.insert(removed, at: index)
-            self.error = .categoryDeleteFailed(underlying: error)
-            await handleError(error, operation: "delete vendor category")
-        }
+        await vendorCategoryStore.deleteCategory(category)
+        customVendorCategories = vendorCategoryStore.categories
     }
-
+    
     // MARK: - Alternative Signatures for Compatibility
-
+    
     func createCustomCategory(name: String, description: String?, typicalBudgetPercentage: String?) async {
         let category = CustomVendorCategory(
             id: UUID().uuidString,
@@ -511,23 +373,21 @@ class SettingsStoreV2: ObservableObject {
             updatedAt: Date()
         )
         await createVendorCategory(category)
-        customVendorCategories.sort { $0.name < $1.name }
     }
-
+    
     func updateCustomCategory(id: String, name: String?, description: String?, typicalBudgetPercentage: String?) async {
         guard let index = customVendorCategories.firstIndex(where: { $0.id == id }) else { return }
         var category = customVendorCategories[index]
-
+        
         if let name = name {
             category.name = name
         }
         category.description = description
         category.typicalBudgetPercentage = typicalBudgetPercentage
-
+        
         await updateVendorCategory(category)
-        customVendorCategories.sort { $0.name < $1.name }
     }
-
+    
     func deleteCustomCategory(id: String) async throws {
         guard let category = customVendorCategories.first(where: { $0.id == id }) else { return }
         await deleteVendorCategory(category)
@@ -540,11 +400,13 @@ class SettingsStoreV2: ObservableObject {
             throw error
         }
     }
-
+    
     func checkVendorsUsingCategory(categoryId: String) async throws -> [VendorUsingCategory] {
-        try await repository.checkVendorsUsingCategory(categoryId: categoryId)
+        try await vendorCategoryStore.checkVendorsUsingCategory(categoryId: categoryId)
     }
-
+    
+    // MARK: - Data Management
+    
     func resetData(keepBudgetSandbox: Bool, keepAffordability: Bool, keepCategories: Bool) async throws {
         try await repository.resetData(
             keepBudgetSandbox: keepBudgetSandbox,
@@ -552,13 +414,13 @@ class SettingsStoreV2: ObservableObject {
             keepCategories: keepCategories
         )
     }
-
+    
     func formatPhoneNumbers() async throws -> PhoneFormatResult {
         try await repository.formatPhoneNumbers()
     }
-
+    
     // MARK: - Account Deletion
-
+    
     /// Delete the entire user account and all associated data
     ///
     /// This is a destructive operation that:
@@ -572,18 +434,18 @@ class SettingsStoreV2: ObservableObject {
     /// - Throws: SettingsError.accountDeletionFailed if deletion fails
     func deleteAccount() async throws {
         AppLogger.ui.info("SettingsStoreV2: Starting account deletion")
-
+        
         do {
             try await repository.deleteAccount()
             AppLogger.ui.info("SettingsStoreV2: Account deletion completed")
-
+            
             // Track deletion event for audit trail
             SentryService.shared.trackAction(
                 "account_deleted",
                 category: "account",
                 metadata: ["timestamp": Date().ISO8601Format()]
             )
-
+            
         } catch {
             AppLogger.ui.error("SettingsStoreV2: Account deletion failed", error: error)
             SentryService.shared.captureError(error, context: [
@@ -592,35 +454,35 @@ class SettingsStoreV2: ObservableObject {
             throw error
         }
     }
-
+    
     // MARK: - Convenience Methods
-
+    
     func clearSuccessMessage() {
         successMessage = nil
     }
-
+    
     func clearError() {
         error = nil
     }
-
+    
     func updateField<T>(_ keyPath: WritableKeyPath<CoupleSettings, T>, value: T) {
         localSettings[keyPath: keyPath] = value
         checkUnsavedChanges()
     }
-
+    
     private func checkUnsavedChanges() {
         hasUnsavedChanges = localSettings != settings
     }
-
+    
     func discardChanges() {
         localSettings = settings
         hasUnsavedChanges = false
     }
-
+    
     func resetLoadedState() {
         hasLoaded = false
     }
-
+    
     // MARK: - Helper Methods
     
     private func showSuccess(_ message: String) {
@@ -630,20 +492,5 @@ class SettingsStoreV2: ObservableObject {
     private func handleError(_ error: Error, operation: String) async {
         AppLogger.ui.error("SettingsStoreV2: Failed to \(operation)", error: error)
         ErrorHandler.shared.handle(error, context: ErrorContext(operation: operation, feature: "settings"))
-    }
-
-    // MARK: - Timeout Helper
-    private struct SettingsTimeout: Error {}
-    private func withTimeout<T>(seconds: Double, operation: @escaping @Sendable () async throws -> T) async throws -> T {
-        return try await withThrowingTaskGroup(of: T.self) { group in
-            group.addTask { try await operation() }
-            group.addTask {
-                try await Task.sleep(nanoseconds: UInt64(max(0, seconds) * 1_000_000_000))
-                throw SettingsTimeout()
-            }
-            let result = try await group.next()!
-            group.cancelAll()
-            return result
-        }
     }
 }

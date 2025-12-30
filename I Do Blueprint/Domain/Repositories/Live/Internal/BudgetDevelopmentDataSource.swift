@@ -2,18 +2,20 @@
 //  BudgetDevelopmentDataSource.swift
 //  I Do Blueprint
 //
-//  Internal data source for budget development operations.
-//  Handles CRUD operations for budget scenarios, items, allocations, and folder management.
+//  Data source for budget development operations.
+//  Handles CRUD operations with caching and retry logic.
+//  Complex business logic delegated to BudgetDevelopmentService.
 //
 
 import Foundation
 import Supabase
 
-/// Internal actor-based data source for budget development operations
+/// Actor-based data source for budget development operations
 /// Provides caching, in-flight request coalescing, and comprehensive error handling
 actor BudgetDevelopmentDataSource {
     private let supabase: SupabaseClient
     private nonisolated let logger = AppLogger.repository
+    private let service = BudgetDevelopmentService()
     
     // In-flight request de-duplication
     private var inFlightScenarios: [UUID: Task<[SavedScenario], Error>] = [:]
@@ -26,19 +28,14 @@ actor BudgetDevelopmentDataSource {
     // MARK: - Budget Development Scenarios
     
     /// Fetches all budget development scenarios for the current tenant
-    /// - Parameter tenantId: The couple's tenant ID
-    /// - Returns: Array of saved scenarios sorted by creation date (newest first)
-    /// - Throws: BudgetError if fetch fails
     func fetchBudgetDevelopmentScenarios(tenantId: UUID) async throws -> [SavedScenario] {
         let cacheKey = "budget_dev_scenarios_\(tenantId.uuidString)"
         
-        // Check cache first (5 min TTL)
         if let cached: [SavedScenario] = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
             logger.info("Cache hit: budget development scenarios (\(cached.count) items)")
             return cached
         }
         
-        // Coalesce in-flight requests
         if let task = inFlightScenarios[tenantId] {
             return try await task.value
         }
@@ -59,15 +56,11 @@ actor BudgetDevelopmentDataSource {
             }
             
             let duration = Date().timeIntervalSince(startTime)
-            
-            // Only log if slow
             if duration > 1.0 {
                 self.logger.info("Slow budget scenarios fetch: \(String(format: "%.2f", duration))s for \(scenarios.count) items")
             }
             
-            // Cache the result
             await RepositoryCache.shared.set(cacheKey, value: scenarios, ttl: 300)
-            
             return scenarios
         }
         
@@ -80,20 +73,15 @@ actor BudgetDevelopmentDataSource {
         } catch {
             inFlightScenarios.removeValue(forKey: tenantId)
             logger.error("Budget scenarios fetch failed", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "fetchBudgetDevelopmentScenarios",
                 "tenantId": tenantId.uuidString
             ])
-            
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
     
     /// Creates a new budget development scenario
-    /// - Parameter scenario: The scenario to create
-    /// - Returns: The created scenario with server-generated fields
-    /// - Throws: BudgetError if creation fails
     func createBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
         let startTime = Date()
         
@@ -111,28 +99,21 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Created budget development scenario: \(created.scenarioName) in \(String(format: "%.2f", duration))s")
             
-            // Invalidate cache
             await RepositoryCache.shared.remove("budget_dev_scenarios_\(scenario.coupleId.uuidString)")
-            
             return created
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to create budget development scenario after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "createBudgetDevelopmentScenario",
                 "scenarioName": scenario.scenarioName,
                 "tenantId": scenario.coupleId.uuidString
             ])
-            
             throw BudgetError.createFailed(underlying: error)
         }
     }
     
     /// Updates an existing budget development scenario
-    /// - Parameter scenario: The scenario to update
-    /// - Returns: The updated scenario
-    /// - Throws: BudgetError if update fails
     func updateBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
         let startTime = Date()
         
@@ -154,34 +135,25 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Updated budget development scenario: \(result.scenarioName), isPrimary: \(result.isPrimary) in \(String(format: "%.2f", duration))s")
             
-            // Invalidate caches
-            await RepositoryCache.shared.remove("budget_dev_scenarios_\(scenario.coupleId.uuidString)")
-            await RepositoryCache.shared.remove("primary_budget_scenario_\(scenario.coupleId.uuidString)")
-            
+            await invalidateScenarioCaches(tenantId: scenario.coupleId)
             return result
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to update budget development scenario after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "updateBudgetDevelopmentScenario",
                 "scenarioId": scenario.id,
                 "scenarioName": scenario.scenarioName,
                 "tenantId": scenario.coupleId.uuidString
             ])
-            
             throw BudgetError.updateFailed(underlying: error)
         }
     }
     
     /// Fetches the primary budget scenario for the tenant
-    /// - Parameter tenantId: The couple's tenant ID
-    /// - Returns: The primary scenario, or nil if none exists
-    /// - Throws: BudgetError if fetch fails
     func fetchPrimaryBudgetScenario(tenantId: UUID) async throws -> BudgetDevelopmentScenario? {
         let cacheKey = "primary_budget_scenario_\(tenantId.uuidString)"
         
-        // Check cache first (5 min TTL)
         if let cached: BudgetDevelopmentScenario = await RepositoryCache.shared.get(cacheKey, maxAge: 300) {
             logger.info("Cache hit: primary budget scenario")
             return cached
@@ -215,12 +187,10 @@ actor BudgetDevelopmentDataSource {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Primary budget scenario fetch failed after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "fetchPrimaryBudgetScenario",
                 "tenantId": tenantId.uuidString
             ])
-            
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
@@ -228,18 +198,13 @@ actor BudgetDevelopmentDataSource {
     // MARK: - Budget Development Items
     
     /// Fetches budget development items for a scenario
-    /// - Parameter scenarioId: Optional scenario ID to filter by
-    /// - Returns: Array of budget items
-    /// - Throws: BudgetError if fetch fails
     func fetchBudgetDevelopmentItems(scenarioId: String?) async throws -> [BudgetItem] {
         let cacheKey = scenarioId.map { "budget_dev_items_\($0)" } ?? "budget_dev_items_all"
         
-        // Check cache first (1 min TTL)
         if let cached: [BudgetItem] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
             return cached
         }
         
-        // Coalesce in-flight requests
         let requestKey = scenarioId ?? "all"
         if let task = inFlightItems[requestKey] {
             return try await task.value
@@ -250,19 +215,13 @@ actor BudgetDevelopmentDataSource {
 
             let items: [BudgetItem] = try await RepositoryNetwork.withRetry {
                 var query = self.supabase.from("budget_development_items").select()
-
                 if let scenarioId {
                     query = query.eq("scenario_id", value: scenarioId)
                 }
-
-                return try await query
-                    .order("created_at", ascending: false)
-                    .execute()
-                    .value
+                return try await query.order("created_at", ascending: false).execute().value
             }
 
             await RepositoryCache.shared.set(cacheKey, value: items)
-
             return items
         }
         
@@ -280,9 +239,6 @@ actor BudgetDevelopmentDataSource {
     }
     
     /// Fetches budget items in hierarchical order
-    /// - Parameter scenarioId: The scenario ID
-    /// - Returns: Array of budget items sorted by display order
-    /// - Throws: BudgetError if fetch fails
     func fetchBudgetItemsHierarchical(scenarioId: String) async throws -> [BudgetItem] {
         let cacheKey = "budget_items_hierarchical_\(scenarioId)"
         
@@ -302,14 +258,10 @@ actor BudgetDevelopmentDataSource {
         
         await RepositoryCache.shared.set(cacheKey, value: items)
         logger.info("Fetched \(items.count) hierarchical items for scenario \(scenarioId)")
-        
         return items
     }
     
     /// Creates a new budget development item
-    /// - Parameter item: The item to create
-    /// - Returns: The created item with server-generated fields
-    /// - Throws: BudgetError if creation fails
     func createBudgetDevelopmentItem(_ item: BudgetItem) async throws -> BudgetItem {
         let startTime = Date()
         
@@ -327,36 +279,25 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Created budget development item: \(created.itemName) in \(String(format: "%.2f", duration))s")
             
-            // Invalidate caches
-            if let scenarioId = item.scenarioId {
-                await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
-                await RepositoryCache.shared.remove("budget_items_hierarchical_\(scenarioId)")
-            }
-            await RepositoryCache.shared.remove("budget_dev_items_all")
-            
+            await invalidateItemCaches(scenarioId: item.scenarioId)
             return created
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to create budget development item after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "createBudgetDevelopmentItem",
                 "itemName": item.itemName
             ])
-            
             throw BudgetError.createFailed(underlying: error)
         }
     }
     
     /// Updates an existing budget development item
-    /// - Parameter item: The item to update
-    /// - Returns: The updated item and the previous state (for potential rollback)
-    /// - Throws: BudgetError if update fails
     func updateBudgetDevelopmentItem(_ item: BudgetItem) async throws -> (updated: BudgetItem, previous: BudgetItem?) {
         let startTime = Date()
         
         do {
-            // Read previous state for potential rollback if recalculation fails
+            // Read previous state for potential rollback
             let previousItems: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
                     .from("budget_development_items")
@@ -386,20 +327,16 @@ actor BudgetDevelopmentDataSource {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to update budget development item after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "updateBudgetDevelopmentItem",
                 "itemId": item.id,
                 "itemName": item.itemName
             ])
-            
             throw BudgetError.updateFailed(underlying: error)
         }
     }
     
     /// Rolls back a budget development item to a previous state
-    /// - Parameter item: The previous item state to restore
-    /// - Throws: BudgetError if rollback fails
     func rollbackBudgetDevelopmentItem(_ item: BudgetItem) async throws {
         do {
             try await RepositoryNetwork.withRetry { [self] in
@@ -417,23 +354,16 @@ actor BudgetDevelopmentDataSource {
     }
     
     /// Invalidates caches after successful item update
-    /// - Parameter item: The updated item
     func invalidateCachesAfterUpdate(_ item: BudgetItem) async {
-        if let scenarioId = item.scenarioId {
-            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
-        }
-        await RepositoryCache.shared.remove("budget_dev_items_all")
+        await invalidateItemCaches(scenarioId: item.scenarioId)
     }
     
     /// Deletes a budget development item
-    /// - Parameter id: The item ID to delete
-    /// - Returns: The scenario ID of the deleted item (for cache invalidation)
-    /// - Throws: BudgetError if deletion fails
     func deleteBudgetDevelopmentItem(id: String) async throws -> String? {
         let startTime = Date()
         
         do {
-            // Fetch the item first to get its scenarioId for proper cache invalidation
+            // Fetch the item first to get its scenarioId
             let items: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
                     .from("budget_development_items")
@@ -456,22 +386,15 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Deleted budget development item: \(id) in \(String(format: "%.2f", duration))s")
             
-            // Invalidate caches
-            if let scenarioId = scenarioId {
-                await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
-            }
-            await RepositoryCache.shared.remove("budget_dev_items_all")
-            
+            await invalidateItemCaches(scenarioId: scenarioId)
             return scenarioId
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to delete budget development item after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "deleteBudgetDevelopmentItem",
                 "itemId": id
             ])
-            
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
@@ -479,11 +402,6 @@ actor BudgetDevelopmentDataSource {
     // MARK: - Expense Allocations
     
     /// Fetches expense allocations for a specific budget item in a scenario
-    /// - Parameters:
-    ///   - scenarioId: The scenario ID
-    ///   - budgetItemId: The budget item ID
-    /// - Returns: Array of expense allocations
-    /// - Throws: BudgetError if fetch fails
     func fetchExpenseAllocations(scenarioId: String, budgetItemId: String) async throws -> [ExpenseAllocation] {
         let startTime = Date()
         
@@ -506,21 +424,16 @@ actor BudgetDevelopmentDataSource {
             return allocations
         } catch {
             logger.error("Failed to fetch expense allocations", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "fetchExpenseAllocations",
                 "scenarioId": scenarioId,
                 "budgetItemId": budgetItemId
             ])
-            
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
     
     /// Fetches all expense allocations for a scenario
-    /// - Parameter scenarioId: The scenario ID
-    /// - Returns: Array of expense allocations
-    /// - Throws: BudgetError if fetch fails
     func fetchExpenseAllocationsForScenario(scenarioId: String) async throws -> [ExpenseAllocation] {
         let startTime = Date()
         
@@ -542,20 +455,15 @@ actor BudgetDevelopmentDataSource {
             return allocations
         } catch {
             logger.error("Failed to fetch expense allocations for scenario", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "fetchExpenseAllocationsForScenario",
                 "scenarioId": scenarioId
             ])
-            
             throw BudgetError.fetchFailed(underlying: error)
         }
     }
     
     /// Creates a new expense allocation
-    /// - Parameter allocation: The allocation to create
-    /// - Returns: The created allocation with server-generated fields
-    /// - Throws: BudgetError if creation fails
     func createExpenseAllocation(_ allocation: ExpenseAllocation) async throws -> ExpenseAllocation {
         let startTime = Date()
         
@@ -573,29 +481,20 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Created expense allocation: \(created.expenseId) -> \(created.budgetItemId) in \(String(format: "%.2f", duration))s")
             
-            // Invalidate cache
             await RepositoryCache.shared.remove("budget_overview_items_\(allocation.scenarioId)")
-            
             return created
         } catch {
             logger.error("Failed to create expense allocation", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "createExpenseAllocation",
                 "expenseId": allocation.expenseId,
                 "budgetItemId": allocation.budgetItemId
             ])
-            
             throw BudgetError.createFailed(underlying: error)
         }
     }
     
     /// Fetches allocations for a specific expense in a scenario
-    /// - Parameters:
-    ///   - expenseId: The expense ID
-    ///   - scenarioId: The scenario ID
-    /// - Returns: Array of expense allocations
-    /// - Throws: BudgetError if fetch fails
     func fetchAllocationsForExpense(expenseId: UUID, scenarioId: String) async throws -> [ExpenseAllocation] {
         let allocations: [ExpenseAllocation] = try await RepositoryNetwork.withRetry { [self] in
             try await self.supabase
@@ -610,9 +509,6 @@ actor BudgetDevelopmentDataSource {
     }
     
     /// Fetches allocations for a specific expense across all scenarios
-    /// - Parameter expenseId: The expense ID
-    /// - Returns: Array of expense allocations
-    /// - Throws: BudgetError if fetch fails
     func fetchAllocationsForExpenseAllScenarios(expenseId: UUID) async throws -> [ExpenseAllocation] {
         let allocations: [ExpenseAllocation] = try await RepositoryNetwork.withRetry { [self] in
             try await self.supabase
@@ -626,13 +522,8 @@ actor BudgetDevelopmentDataSource {
     }
     
     /// Replaces all allocations for an expense in a scenario
-    /// - Parameters:
-    ///   - expenseId: The expense ID
-    ///   - scenarioId: The scenario ID
-    ///   - newAllocations: The new allocations to set
-    /// - Throws: BudgetError if replacement fails
     func replaceAllocations(expenseId: UUID, scenarioId: String, with newAllocations: [ExpenseAllocation]) async throws {
-        // Fetch backup of existing allocations so we can restore on failure
+        // Fetch backup of existing allocations
         let existing: [ExpenseAllocation] = try await RepositoryNetwork.withRetry { [self] in
             try await self.supabase
                 .from("expense_budget_allocations")
@@ -681,15 +572,10 @@ actor BudgetDevelopmentDataSource {
             }
         }
         
-        // Only invalidate cache after successful replace
         await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
     }
     
     /// Links a gift to a budget item
-    /// - Parameters:
-    ///   - giftId: The gift ID to link
-    ///   - budgetItemId: The budget item ID to link to
-    /// - Throws: BudgetError if linking fails
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws {
         let startTime = Date()
         
@@ -705,10 +591,9 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Linked gift \(giftId) to budget item \(budgetItemId) in \(String(format: "%.2f", duration))s")
             
-            // Invalidate related caches
             await RepositoryCache.shared.remove("gifts_and_owed")
             
-            // Invalidate budget development items cache for all scenarios
+            // Invalidate budget development items cache
             let stats = await RepositoryCache.shared.stats()
             for key in stats.keys where key.hasPrefix("budget_dev_items_") {
                 await RepositoryCache.shared.remove(key)
@@ -716,13 +601,11 @@ actor BudgetDevelopmentDataSource {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Gift linking failed after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "linkGiftToBudgetItem",
                 "giftId": giftId.uuidString,
                 "budgetItemId": budgetItemId
             ])
-            
             throw BudgetError.updateFailed(underlying: error)
         }
     }
@@ -730,11 +613,6 @@ actor BudgetDevelopmentDataSource {
     // MARK: - Composite Saves
     
     /// Saves a budget scenario with its items in a single transaction
-    /// - Parameters:
-    ///   - scenario: The scenario to save
-    ///   - items: The items to save with the scenario
-    /// - Returns: Tuple containing the scenario ID and count of inserted items
-    /// - Throws: BudgetError if save fails
     func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int) {
         struct Params: Encodable {
             let p_scenario: SavedScenario
@@ -766,39 +644,25 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Saved scenario + items via RPC in \(String(format: "%.2f", duration))s (items=\(first.inserted_items))")
             
-            // Invalidate caches
-            let tenantId = scenario.coupleId.uuidString
-            await RepositoryCache.shared.remove("budget_dev_scenarios_\(tenantId)")
-            await RepositoryCache.shared.remove("budget_dev_items_\(first.scenario_id)")
-            await RepositoryCache.shared.remove("budget_dev_items_all")
-            await RepositoryCache.shared.remove("primary_budget_scenario_\(tenantId)")
+            await invalidateScenarioCaches(tenantId: scenario.coupleId)
+            await invalidateItemCaches(scenarioId: first.scenario_id)
             
             return (first.scenario_id, first.inserted_items)
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to save scenario with items after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "saveBudgetScenarioWithItems",
                 "scenarioName": scenario.scenarioName,
                 "itemCount": items.count
             ])
-            
             throw BudgetError.updateFailed(underlying: error)
         }
     }
     
-    // MARK: - Folder Operations
+    // MARK: - Folder Operations (Delegated to Service)
     
     /// Creates a new folder
-    /// - Parameters:
-    ///   - name: The folder name
-    ///   - scenarioId: The scenario ID
-    ///   - parentFolderId: Optional parent folder ID
-    ///   - displayOrder: The display order
-    ///   - tenantId: The couple's tenant ID
-    /// - Returns: The created folder
-    /// - Throws: BudgetError if creation fails
     func createFolder(name: String, scenarioId: String, parentFolderId: String?, displayOrder: Int, tenantId: UUID) async throws -> BudgetItem {
         let startTime = Date()
         
@@ -824,31 +688,21 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Created folder: \(name) in \(String(format: "%.2f", duration))s")
             
-            // Invalidate caches
-            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
-            await RepositoryCache.shared.remove("budget_dev_items_all")
-            
+            await invalidateItemCaches(scenarioId: scenarioId)
             return created
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to create folder after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "createFolder",
                 "folderName": name,
                 "scenarioId": scenarioId
             ])
-            
             throw BudgetError.createFailed(underlying: error)
         }
     }
     
     /// Moves an item to a folder
-    /// - Parameters:
-    ///   - itemId: The item ID to move
-    ///   - targetFolderId: The target folder ID (nil for root)
-    ///   - displayOrder: The new display order
-    /// - Throws: BudgetError if move fails
     func moveItemToFolder(itemId: String, targetFolderId: String?, displayOrder: Int) async throws {
         let startTime = Date()
         
@@ -865,11 +719,7 @@ actor BudgetDevelopmentDataSource {
                 }
             }
             
-            let update = MoveUpdate(
-                parentFolderId: targetFolderId,
-                displayOrder: displayOrder,
-                updatedAt: Date()
-            )
+            let update = MoveUpdate(parentFolderId: targetFolderId, displayOrder: displayOrder, updatedAt: Date())
             
             try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
@@ -882,25 +732,20 @@ actor BudgetDevelopmentDataSource {
             let duration = Date().timeIntervalSince(startTime)
             logger.info("Moved item \(itemId) to folder \(targetFolderId ?? "root") in \(String(format: "%.2f", duration))s")
             
-            // Invalidate cache
             await RepositoryCache.shared.remove("budget_dev_items_all")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to move item to folder after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "moveItemToFolder",
                 "itemId": itemId,
                 "targetFolderId": targetFolderId ?? "root"
             ])
-            
             throw BudgetError.updateFailed(underlying: error)
         }
     }
     
     /// Updates display order for multiple items
-    /// - Parameter items: Array of tuples containing item ID and new display order
-    /// - Throws: BudgetError if update fails
     func updateDisplayOrder(items: [(itemId: String, displayOrder: Int)]) async throws {
         struct OrderUpdate: Codable {
             let id: String
@@ -918,8 +763,7 @@ actor BudgetDevelopmentDataSource {
         
         do {
             let now = Date()
-
-            // Update each item individually to avoid upsert creating malformed records
+            
             try await RepositoryNetwork.withRetry { [self] in
                 for (itemId, order) in items {
                     let update = OrderUpdate(id: itemId, displayOrder: order, updatedAt: now)
@@ -932,28 +776,21 @@ actor BudgetDevelopmentDataSource {
             }
             
             let duration = Date().timeIntervalSince(startTime)
-            logger.info("Updated display order for \(items.count) items in single batch operation in \(String(format: "%.2f", duration))s")
+            logger.info("Updated display order for \(items.count) items in \(String(format: "%.2f", duration))s")
             
-            // Invalidate cache
             await RepositoryCache.shared.remove("budget_dev_items_all")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to update display order after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "updateDisplayOrder",
                 "itemCount": items.count
             ])
-            
             throw BudgetError.updateFailed(underlying: error)
         }
     }
     
     /// Toggles folder expansion state
-    /// - Parameters:
-    ///   - folderId: The folder ID
-    ///   - isExpanded: The new expansion state
-    /// - Throws: BudgetError if update fails
     func toggleFolderExpansion(folderId: String, isExpanded: Bool) async throws {
         let startTime = Date()
         
@@ -983,23 +820,18 @@ actor BudgetDevelopmentDataSource {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to toggle folder expansion after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "toggleFolderExpansion",
                 "folderId": folderId,
                 "isExpanded": isExpanded
             ])
-            
             throw BudgetError.updateFailed(underlying: error)
         }
     }
     
-    /// Calculates folder totals recursively
-    /// - Parameter folderId: The folder ID
-    /// - Returns: Folder totals (without tax, tax, with tax)
-    /// - Throws: BudgetError if calculation fails
+    /// Calculates folder totals recursively (delegates to service)
     func calculateFolderTotals(folderId: String) async throws -> FolderTotals {
-        // Fetch the folder first to get its scenarioId
+        // Fetch the folder to get its scenarioId
         let folders: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
             try await self.supabase
                 .from("budget_development_items")
@@ -1022,45 +854,19 @@ actor BudgetDevelopmentDataSource {
         // Fetch all items for the scenario
         let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
         
-        // Recursively collect all descendants
-        func getAllDescendants(of folderId: String) -> [BudgetItem] {
-            var result: [BudgetItem] = []
-            var queue = [folderId]
-            
-            while !queue.isEmpty {
-                let currentId = queue.removeFirst()
-                let children = items.filter { $0.parentFolderId == currentId && !$0.isFolder }
-                result.append(contentsOf: children)
-                
-                let childFolders = items.filter { $0.parentFolderId == currentId && $0.isFolder }
-                queue.append(contentsOf: childFolders.map { $0.id })
-            }
-            
-            return result
-        }
-        
-        let descendants = getAllDescendants(of: folderId)
-        let withoutTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithoutTax }
-        let tax = descendants.reduce(0) { $0 + ($1.vendorEstimateWithoutTax * $1.taxRate) }
-        let withTax = descendants.reduce(0) { $0 + $1.vendorEstimateWithTax }
-        
-        return FolderTotals(withoutTax: withoutTax, tax: tax, withTax: withTax)
+        // Delegate calculation to service
+        return await service.calculateFolderTotals(folderId: folderId, allItems: items)
     }
     
-    /// Checks if an item can be moved to a folder
-    /// - Parameters:
-    ///   - itemId: The item ID to move
-    ///   - targetFolderId: The target folder ID (nil for root)
-    /// - Returns: True if the move is valid
-    /// - Throws: BudgetError if validation fails
+    /// Checks if an item can be moved to a folder (delegates to service)
     func canMoveItem(itemId: String, toFolder targetFolderId: String?) async throws -> Bool {
         // Can't move to itself
-        if itemId == targetFolderId { return false }
+        guard itemId != targetFolderId else { return false }
         
         // If moving to root, always allowed
         guard let targetFolderId = targetFolderId else { return true }
         
-        // Fetch the item first to get its scenarioId
+        // Fetch the item to get its scenarioId
         let itemsToMove: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
             try await self.supabase
                 .from("budget_development_items")
@@ -1082,55 +888,16 @@ actor BudgetDevelopmentDataSource {
         // Fetch all items for the scenario
         let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
         
-        // Check if target is a folder
-        guard let targetFolder = items.first(where: { $0.id == targetFolderId }),
-              targetFolder.isFolder else {
-            return false
-        }
-        
-        // Check depth limit (max 3 levels)
-        func getDepth(of itemId: String) -> Int {
-            var depth = 0
-            var currentId: String? = itemId
-            
-            while let id = currentId,
-                  let item = items.first(where: { $0.id == id }),
-                  let parentId = item.parentFolderId {
-                depth += 1
-                currentId = parentId
-            }
-            
-            return depth
-        }
-        
-        let targetDepth = getDepth(of: targetFolderId)
-        if targetDepth >= 3 { return false }
-        
-        // Check for circular reference
-        var visited = Set<String>()
-        var currentId: String? = targetFolderId
-        
-        while let id = currentId {
-            if visited.contains(id) || id == itemId { return false }
-            visited.insert(id)
-            
-            guard let item = items.first(where: { $0.id == id }) else { break }
-            currentId = item.parentFolderId
-        }
-        
-        return true
+        // Delegate validation to service
+        return await service.canMoveItem(itemId: itemId, toFolder: targetFolderId, allItems: items)
     }
     
-    /// Deletes a folder and optionally its contents
-    /// - Parameters:
-    ///   - folderId: The folder ID to delete
-    ///   - deleteContents: If true, deletes all contents; if false, moves contents to parent
-    /// - Throws: BudgetError if deletion fails
+    /// Deletes a folder and optionally its contents (delegates to service)
     func deleteFolder(folderId: String, deleteContents: Bool) async throws {
         let startTime = Date()
         
         do {
-            // Fetch the folder first to get its scenarioId
+            // Fetch the folder to get its scenarioId
             let folders: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
                     .from("budget_development_items")
@@ -1151,27 +918,11 @@ actor BudgetDevelopmentDataSource {
             }
             
             if deleteContents {
-                // Delete folder and all descendant items recursively
+                // Fetch all items and get descendant IDs from service
                 let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
+                let descendantIds = await service.getAllDescendantIds(of: folderId, from: items)
                 
-                // Recursively collect all descendant IDs
-                func getAllDescendantIds(of parentId: String) -> [String] {
-                    var result: [String] = []
-                    let directChildren = items.filter { $0.parentFolderId == parentId }
-                    
-                    for child in directChildren {
-                        result.append(child.id)
-                        if child.isFolder {
-                            result.append(contentsOf: getAllDescendantIds(of: child.id))
-                        }
-                    }
-                    
-                    return result
-                }
-                
-                let descendantIds = getAllDescendantIds(of: folderId)
-                
-                // Delete all descendants first (if any)
+                // Delete all descendants first
                 if !descendantIds.isEmpty {
                     try await RepositoryNetwork.withRetry { [self] in
                         try await self.supabase
@@ -1183,7 +934,7 @@ actor BudgetDevelopmentDataSource {
                     logger.info("Deleted \(descendantIds.count) descendant items from folder \(folderId)")
                 }
                 
-                // Then delete the folder itself
+                // Delete the folder itself
                 try await RepositoryNetwork.withRetry { [self] in
                     try await self.supabase
                         .from("budget_development_items")
@@ -1197,7 +948,7 @@ actor BudgetDevelopmentDataSource {
             } else {
                 // Move contents to parent, then delete folder
                 let items = try await fetchBudgetItemsHierarchical(scenarioId: scenarioId)
-                let children = items.filter { $0.parentFolderId == folderId }
+                let children = await service.getDirectChildren(of: folderId, from: items)
                 
                 // Move children to folder's parent
                 for child in children {
@@ -1217,20 +968,32 @@ actor BudgetDevelopmentDataSource {
                 logger.info("Deleted folder \(folderId), moved \(children.count) items to parent in \(String(format: "%.2f", duration))s")
             }
             
-            // Invalidate caches
-            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
-            await RepositoryCache.shared.remove("budget_dev_items_all")
+            await invalidateItemCaches(scenarioId: scenarioId)
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Failed to delete folder after \(String(format: "%.2f", duration))s", error: error)
-            
             await SentryService.shared.captureError(error, context: [
                 "operation": "deleteFolder",
                 "folderId": folderId,
                 "deleteContents": deleteContents
             ])
-            
             throw BudgetError.deleteFailed(underlying: error)
         }
+    }
+    
+    // MARK: - Cache Invalidation Helpers
+    
+    private func invalidateScenarioCaches(tenantId: UUID) async {
+        let tenantIdString = tenantId.uuidString
+        await RepositoryCache.shared.remove("budget_dev_scenarios_\(tenantIdString)")
+        await RepositoryCache.shared.remove("primary_budget_scenario_\(tenantIdString)")
+    }
+    
+    private func invalidateItemCaches(scenarioId: String?) async {
+        if let scenarioId = scenarioId {
+            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
+            await RepositoryCache.shared.remove("budget_items_hierarchical_\(scenarioId)")
+        }
+        await RepositoryCache.shared.remove("budget_dev_items_all")
     }
 }

@@ -409,19 +409,33 @@ struct BudgetOverviewDashboardViewV2: View {
     private func handleEditGift(giftId _: String, itemId _: String) {
             }
 
-    private func handleUnlinkGift(itemId: String) async {
-        guard let scenario = currentScenario else {
-            logger.warning("Cannot unlink gift: Current scenario not available")
+    private func handleUnlinkGift(giftId: String) async {
+        guard let giftUUID = UUID(uuidString: giftId) else {
+            logger.error("Invalid gift ID format: \(giftId)")
             return
         }
 
-        // TODO: Implement gift unlinking - need to determine giftId from budgetItemId
-        logger.warning("Gift unlinking not yet implemented for budget item: \(itemId)")
-        
-        // Placeholder implementation - would need to:
-        // 1. Find the gift linked to this budget item
-        // 2. Call budgetStore.unlinkGiftFromScenario(giftId: giftId, scenarioId: scenario.id)
-        // 3. Refresh data
+        // Find the gift to unlink
+        guard var gift = budgetStore.gifts.giftsAndOwed.first(where: { $0.id == giftUUID }) else {
+            logger.error("Gift not found: \(giftId)")
+            return
+        }
+
+        do {
+            // Unlink by setting scenarioId to nil
+            gift.scenarioId = nil
+
+            // Update the gift through the gifts sub-store
+            await budgetStore.gifts.updateGiftOrOwed(gift)
+            logger.info("Gift unlinked successfully")
+
+            // Delay to ensure database transaction commits and cache invalidation completes
+            try? await Task.sleep(nanoseconds: 250_000_000) // 0.25 seconds
+
+            await refreshData()
+        } catch {
+            logger.error("Error unlinking gift", error: error)
+        }
     }
 
     private func handleAddExpense(itemId: String) {

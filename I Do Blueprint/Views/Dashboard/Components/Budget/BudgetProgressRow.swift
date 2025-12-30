@@ -55,10 +55,14 @@ struct BudgetProgressRow: View {
         return min(CGFloat(amount / total), 1.0)
     }
 
-    private func formatAmount(_ amount: Double) -> String {
+    private static let amountFormatter: NumberFormatter = {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 0
-        return formatter.string(from: NSNumber(value: amount)) ?? "0"
+        return formatter
+    }()
+
+    private func formatAmount(_ amount: Double) -> String {
+        return Self.amountFormatter.string(from: NSNumber(value: amount)) ?? "0"
     }
 }

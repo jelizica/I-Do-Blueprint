@@ -44,7 +44,7 @@ struct BudgetMainView: View {
                 case .moneyTracker:
                     GiftsAndOwedView()
                 case .moneyReceived:
-                    MoneyReceivedView()
+                    MoneyReceivedViewV2()
                 case .moneyOwed:
                     MoneyOwedView()
                 }

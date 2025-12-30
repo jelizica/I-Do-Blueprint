@@ -12,7 +12,7 @@ struct BudgetTableRow: View {
     let onAddExpense: () -> Void
     let onAddGift: () -> Void
     let onRemoveExpense: (String) -> Void
-    let onRemoveGift: () -> Void
+    let onRemoveGift: (String) -> Void
 
     @State private var isExpanded = false
 
@@ -130,10 +130,20 @@ struct BudgetTableRow: View {
                             }
 
                             if !item.gifts.isEmpty {
-                                Button {
-                                    onRemoveGift()
-                                } label: {
-                                    Label("Unlink Gift", systemImage: "gift.fill")
+                                if item.gifts.count == 1, let gift = item.gifts.first {
+                                    Button {
+                                        onRemoveGift(gift.id)
+                                    } label: {
+                                        Label("Unlink Gift", systemImage: "gift.fill")
+                                    }
+                                } else {
+                                    Menu("Unlink Gift") {
+                                        ForEach(item.gifts, id: \.id) { gift in
+                                            Button("Unlink \(gift.title)") {
+                                                onRemoveGift(gift.id)
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -211,7 +221,7 @@ struct BudgetTableRow: View {
                                     .fontWeight(.medium)
 
                                 Button {
-                                    onRemoveGift()
+                                    onRemoveGift(gift.id)
                                 } label: {
                                     Image(systemName: "xmark.circle.fill")
                                         .font(.caption)

@@ -1,11 +1,46 @@
 //
 //  Typography.swift
-//  My Wedding Planning App
+//  I Do Blueprint
 //
-//  Seating Chart Redesign Typography System
+//  Complete typography system for the application
+//  Includes app-wide typography and seating chart-specific styles
 //
 
 import SwiftUI
+
+// MARK: - App Typography
+
+enum Typography {
+    // Display
+    static let displayLarge = Font.system(size: 48, weight: .bold, design: .rounded)
+    static let displayMedium = Font.system(size: 36, weight: .bold, design: .rounded)
+    static let displaySmall = Font.system(size: 28, weight: .bold, design: .rounded)
+
+    // Titles
+    static let title1 = Font.largeTitle.weight(.bold)
+    static let title2 = Font.title.weight(.semibold)
+    static let title3 = Font.title2.weight(.semibold)
+
+    // Headings
+    static let heading = Font.headline.weight(.semibold)
+    static let subheading = Font.subheadline.weight(.medium)
+
+    // Body
+    static let bodyLarge = Font.body
+    static let bodyRegular = Font.callout
+    static let bodySmall = Font.footnote
+
+    // Captions
+    static let caption = Font.caption
+    static let caption2 = Font.caption2
+
+    // Monospace (for numbers)
+    static let numberLarge = Font.system(size: 28, weight: .bold, design: .rounded)
+    static let numberMedium = Font.system(size: 20, weight: .semibold, design: .rounded)
+    static let numberSmall = Font.system(size: 16, weight: .medium, design: .rounded)
+}
+
+// MARK: - Seating Chart Typography
 
 extension Font {
     // MARK: - Display Fonts (Large Headings)

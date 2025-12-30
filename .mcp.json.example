@@ -1,0 +1,66 @@
+{
+  "mcpServers": {
+    "adr-analysis": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-adr-analysis-server"
+      ],
+      "env": {
+        "ADR_DIRECTORY": "docs/adrs",
+        "LOG_LEVEL": "ERROR",
+        "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}",
+        "PROJECT_PATH": "${PROJECT_PATH}"
+      }
+    },
+    "code-guardian": {
+      "type": "stdio",
+      "command": "/Users/jessicaclark/.nvm/versions/node/v20.19.6/bin/node",
+      "args": [
+        "/Users/jessicaclark/Downloads/code-guardian/dist/index.js"
+      ],
+      "env": {
+        "CCG_PROJECT_ROOT": "${PROJECT_PATH}"
+      }
+    },
+    "greb-mcp": {
+      "type": "stdio",
+      "command": "greb-mcp",
+      "env": {
+        "GREB_API_KEY": "${GREB_API_KEY}"
+      }
+    },
+    "local-file-organizer": {
+      "type": "stdio",
+      "command": "/Users/jessicaclark/Development/mcp-servers/local_file_organizer/venv/bin/python",
+      "args": [
+        "/Users/jessicaclark/Development/mcp-servers/local_file_organizer/file_organizer.py",
+        "${PROJECT_PATH}"
+      ]
+    },
+    "predev": {
+      "type": "http",
+      "url": "https://api.pre.dev/mcp"
+    },
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.supabase.com/mcp?project_ref=pcmasfomyhqapaaaxzby"
+      ]
+    },
+    "swiftzilla": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@swiftzilla/mcp",
+        "--api-key",
+        "${SWIFTZILLA_API_KEY}"
+      ]
+    }
+  }
+}

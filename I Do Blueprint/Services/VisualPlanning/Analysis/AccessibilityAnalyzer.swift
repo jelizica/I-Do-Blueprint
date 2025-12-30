@@ -28,7 +28,7 @@ enum ColorAccessibilityAnalyzer {
             }
         }
 
-        let overallCompliance = contrastPairs.contains { $0.wcagAA }
+        let overallCompliance = contrastPairs.allSatisfy { $0.wcagAA }
         let recommendations = generateAccessibilityRecommendations(for: contrastPairs)
 
         return AccessibilityInfo(

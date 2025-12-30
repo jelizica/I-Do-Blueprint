@@ -66,26 +66,45 @@ final class CSVImportService: CSVImportProtocol {
     
     // MARK: - Private Helpers
     
-    /// Parse a single CSV line handling quotes and commas
+    /// Parse a single CSV line handling quotes and commas per RFC 4180
+    /// Handles escaped quotes ("") within quoted fields
     private func parseCSVLine(_ line: String) -> [String] {
         var fields: [String] = []
         var currentField = ""
         var insideQuotes = false
-        
-        for char in line {
+
+        let chars = Array(line)
+        var i = 0
+
+        while i < chars.count {
+            let char = chars[i]
+
             if char == "\"" {
-                insideQuotes.toggle()
+                // Check if this is an escaped quote (RFC 4180: "" represents a single ")
+                if insideQuotes && i + 1 < chars.count && chars[i + 1] == "\"" {
+                    // Escaped quote: add single quote to field and skip both characters
+                    currentField.append("\"")
+                    i += 2
+                    continue
+                } else {
+                    // Toggle quote state
+                    insideQuotes.toggle()
+                }
             } else if char == "," && !insideQuotes {
+                // Field separator outside of quotes
                 fields.append(currentField.trimmingCharacters(in: .whitespaces))
                 currentField = ""
             } else {
+                // Regular character
                 currentField.append(char)
             }
+
+            i += 1
         }
-        
+
         // Add the last field
         fields.append(currentField.trimmingCharacters(in: .whitespaces))
-        
+
         return fields
     }
 }

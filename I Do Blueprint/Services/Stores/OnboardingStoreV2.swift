@@ -20,6 +20,18 @@ class OnboardingStoreV2: ObservableObject {
     @Dependency(\.onboardingRepository) var repository
     @Dependency(\.collaborationRepository) var collaborationRepository
     private let logger = AppLogger.ui
+    
+    // MARK: - Services
+    
+    private lazy var progressService: OnboardingProgressService = {
+        OnboardingProgressService(repository: repository)
+    }()
+    
+    private let settingsService = OnboardingSettingsService()
+    
+    private lazy var collaboratorService: OnboardingCollaboratorService = {
+        OnboardingCollaboratorService(collaborationRepository: collaborationRepository)
+    }()
 
     // MARK: - Published State
 
@@ -45,18 +57,21 @@ class OnboardingStoreV2: ObservableObject {
     }
 
     var progressPercentage: Double {
-        let totalSteps: Int = selectedMode == .express ? 4 : OnboardingStep.allCases.count
-        let completed = completedSteps.count
-        return Double(completed) / Double(totalSteps)
+        OnboardingNavigationService.calculateProgress(
+            completedSteps: completedSteps,
+            mode: selectedMode
+        )
     }
 
     var canMoveToNextStep: Bool {
-        guard let nextStep = currentStep.nextStep else { return false }
+        guard OnboardingNavigationService.getNextStep(currentStep: currentStep, mode: selectedMode) != nil else {
+            return false
+        }
         return validateCurrentStep()
     }
 
     var canMoveToPreviousStep: Bool {
-        currentStep.previousStep != nil
+        OnboardingNavigationService.getPreviousStep(currentStep: currentStep) != nil
     }
 
     // MARK: - Initialization
@@ -74,9 +89,7 @@ class OnboardingStoreV2: ObservableObject {
         error = nil
 
         do {
-            if let existingProgress = try await repository.fetchOnboardingProgress() {
-                logger.info("Found existing onboarding progress at step: \(existingProgress.currentStep.rawValue)")
-
+            if let existingProgress = try await progressService.loadProgress() {
                 // Restore state from progress
                 currentStep = existingProgress.currentStep
                 completedSteps = existingProgress.completedSteps
@@ -91,16 +104,6 @@ class OnboardingStoreV2: ObservableObject {
                 }
 
                 loadingState = .loaded(existingProgress)
-
-                SentryService.shared.addBreadcrumb(
-                    message: "Onboarding progress loaded",
-                    category: "onboarding",
-                    data: [
-                        "currentStep": existingProgress.currentStep.rawValue,
-                        "completedSteps": existingProgress.completedSteps.count,
-                        "isCompleted": existingProgress.isCompleted
-                    ]
-                )
             } else {
                 logger.info("No existing onboarding progress found")
                 loadingState = .idle
@@ -109,10 +112,6 @@ class OnboardingStoreV2: ObservableObject {
             logger.error("Failed to load onboarding progress", error: error)
             self.error = error as? OnboardingError ?? .fetchFailed(underlying: error)
             loadingState = .error(self.error!)
-
-            SentryService.shared.captureError(error, context: [
-                "operation": "loadOnboardingProgress"
-            ])
         }
     }
 
@@ -142,38 +141,19 @@ class OnboardingStoreV2: ObservableObject {
             return
         }
 
-        let progress = OnboardingProgress(
-            coupleId: coupleId,
-            currentStep: .welcome,
-            completedSteps: [],
-            isCompleted: false
-        )
-
         // Save to database in background (don't block UI)
         Task {
             do {
-                let saved = try await repository.saveOnboardingProgress(progress)
+                let saved = try await progressService.createProgress(coupleId: coupleId, mode: mode)
                 await MainActor.run {
                     loadingState = .loaded(saved)
                 }
-
-                SentryService.shared.trackAction(
-                    "start_onboarding",
-                    category: "onboarding",
-                    metadata: ["mode": mode.rawValue]
-                )
-
                 logger.info("Onboarding started successfully")
             } catch {
                 logger.error("Failed to start onboarding", error: error)
                 await MainActor.run {
                     self.error = error as? OnboardingError ?? .saveFailed(underlying: error)
                 }
-
-                SentryService.shared.captureError(error, context: [
-                    "operation": "startOnboarding",
-                    "mode": mode.rawValue
-                ])
             }
         }
     }
@@ -240,10 +220,10 @@ class OnboardingStoreV2: ObservableObject {
         logger.info("Saving wedding details")
         logger.debug("Partner 1: '\(details.partner1Name)', Partner 2: '\(details.partner2Name)', Date: \(details.weddingDate?.description ?? "nil"), TBD: \(details.isWeddingDateTBD)")
 
-        guard details.isValid else {
+        let validation = OnboardingValidationService.validateWeddingDetails(details)
+        guard validation.isValid else {
             logger.warning("Wedding details validation failed")
-            logger.warning("Partner 1 empty: \(details.partner1Name.trimmingCharacters(in: .whitespaces).isEmpty), Partner 2 empty: \(details.partner2Name.trimmingCharacters(in: .whitespaces).isEmpty), Date check: \(details.isWeddingDateTBD || details.weddingDate != nil)")
-            error = .validationFailed("Please enter both partner names and either select a date or check TBD")
+            error = .validationFailed(validation.error ?? "Invalid wedding details")
             return
         }
 
@@ -300,7 +280,10 @@ class OnboardingStoreV2: ObservableObject {
             return
         }
 
-        guard let nextStep = getNextStep() else {
+        guard let nextStep = OnboardingNavigationService.getNextStep(
+            currentStep: currentStep,
+            mode: selectedMode
+        ) else {
             logger.info("Reached final step, completing onboarding")
             await completeOnboarding()
             return
@@ -334,32 +317,9 @@ class OnboardingStoreV2: ObservableObject {
         )
     }
 
-    /// Gets the next step based on the selected onboarding mode
-    private func getNextStep() -> OnboardingStep? {
-        if selectedMode == .express {
-            // Express flow: welcome → weddingDetails → budgetSetup → completion
-            let expressFlow: [OnboardingStep] = [
-                .welcome,
-                .weddingDetails,
-                .budgetSetup,
-                .completion
-            ]
-
-            guard let currentIndex = expressFlow.firstIndex(of: currentStep),
-                  currentIndex < expressFlow.count - 1 else {
-                return nil
-            }
-
-            return expressFlow[currentIndex + 1]
-        } else {
-            // Guided flow: all steps in order
-            return currentStep.nextStep
-        }
-    }
-
     /// Moves to the previous step in the onboarding flow
     func moveToPreviousStep() async {
-        guard let previousStep = currentStep.previousStep else {
+        guard let previousStep = OnboardingNavigationService.getPreviousStep(currentStep: currentStep) else {
             logger.info("Already at first step")
             return
         }
@@ -389,7 +349,7 @@ class OnboardingStoreV2: ObservableObject {
 
     /// Skips the current step (if optional)
     func skipCurrentStep() async {
-        guard currentStep.isOptional else {
+        guard OnboardingNavigationService.canSkipStep(currentStep) else {
             logger.warning("Cannot skip required step: \(currentStep.rawValue)")
             error = .invalidStep(currentStep)
             return
@@ -400,7 +360,10 @@ class OnboardingStoreV2: ObservableObject {
         // Update UI state immediately (synchronous)
         completedSteps.insert(currentStep)
 
-        if let nextStep = currentStep.nextStep {
+        if let nextStep = OnboardingNavigationService.getNextStep(
+            currentStep: currentStep,
+            mode: selectedMode
+        ) {
             currentStep = nextStep
 
             // Save to database in background (don't await)
@@ -444,7 +407,7 @@ class OnboardingStoreV2: ObservableObject {
         logger.info("Completing onboarding")
 
         do {
-            let completed = try await repository.completeOnboarding()
+            let completed = try await progressService.completeOnboarding()
 
             isCompleted = true
             currentStep = .completion
@@ -459,152 +422,26 @@ class OnboardingStoreV2: ObservableObject {
                 await self?.createOwnerCollaboratorRecord()
             }
 
-            SentryService.shared.trackAction(
-                "complete_onboarding",
-                category: "onboarding",
-                metadata: [
-                    "mode": selectedMode.rawValue,
-                    "totalSteps": OnboardingStep.allCases.count
-                ]
-            )
-
             logger.info("Onboarding completed successfully")
         } catch {
             logger.error("Failed to complete onboarding", error: error)
             self.error = error as? OnboardingError ?? .updateFailed(underlying: error)
-
-            SentryService.shared.captureError(error, context: [
-                "operation": "completeOnboarding"
-            ])
         }
     }
 
     /// Creates initial settings from onboarding data
     private func createSettingsFromOnboardingData() async {
-        logger.info("Creating settings from onboarding data")
-
         guard let coupleId = await SessionManager.shared.currentTenantId else {
             logger.error("No tenant ID - cannot create settings")
             return
         }
 
-        // Build complete settings with onboarding data
-        var settings = CoupleSettings.default
-
-        // Update global settings
-        settings.global.currency = defaultSettings.currency
-        settings.global.timezone = defaultSettings.timezone
-
-        if weddingDetails.isValid {
-            settings.global.partner1FullName = weddingDetails.partner1Name
-            settings.global.partner1Nickname = weddingDetails.partner1Nickname
-            settings.global.partner2FullName = weddingDetails.partner2Name
-            settings.global.partner2Nickname = weddingDetails.partner2Nickname
-
-            // Save wedding date in YYYY-MM-DD format
-            if let weddingDate = weddingDetails.weddingDate {
-                let formatter = DateFormatter()
-                formatter.dateFormat = "yyyy-MM-dd"
-                formatter.timeZone = TimeZone(secondsFromGMT: 0) // Use UTC to avoid timezone shifts
-                settings.global.weddingDate = formatter.string(from: weddingDate)
-                settings.global.isWeddingDateTBD = false
-
-                logger.info("Saving wedding date from onboarding: \(settings.global.weddingDate)")
-            } else {
-                // No date set - mark as TBD
-                settings.global.weddingDate = ""
-                settings.global.isWeddingDateTBD = true
-
-                logger.info("No wedding date set - marking as TBD")
-            }
-
-            // Update wedding events from onboarding
-            if !weddingDetails.weddingEvents.isEmpty {
-                // Convert onboarding events to settings events
-                settings.global.weddingEvents = weddingDetails.weddingEvents.enumerated().map { index, event in
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "yyyy-MM-dd"
-                    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-
-                    return SettingsWeddingEvent(
-                        id: event.id,
-                        eventName: event.eventName,
-                        eventDate: event.eventDate.map { formatter.string(from: $0) } ?? "",
-                        eventTime: event.eventTime,
-                        venueLocation: event.venueLocation,
-                        description: "",
-                        isMainEvent: event.isMainEvent,
-                        eventOrder: index + 1
-                    )
-                }
-
-                logger.info("Saved \(weddingDetails.weddingEvents.count) wedding events from onboarding")
-            } else {
-                // Keep default events if none configured in onboarding
-                logger.info("No wedding events configured in onboarding, keeping defaults")
-            }
-        }
-
-        // Update budget settings
-        if let budgetPrefs = defaultSettings.budgetPreferences {
-            if let totalBudget = budgetPrefs.totalBudget {
-                settings.budget.totalBudget = totalBudget
-                settings.budget.baseBudget = totalBudget
-            }
-            settings.budget.paymentReminders = budgetPrefs.trackPayments
-        }
-
-        // Update theme settings
-        if let themePrefs = defaultSettings.themePreferences {
-            settings.theme.colorScheme = themePrefs.colorScheme
-            settings.theme.darkMode = themePrefs.darkMode
-
-            logger.info("Saved theme preferences: \(themePrefs.colorScheme), dark mode: \(themePrefs.darkMode)")
-        }
-
-        // Update notification settings
-        if let notifPrefs = defaultSettings.notificationPreferences {
-            settings.notifications.emailEnabled = notifPrefs.emailEnabled
-            settings.notifications.pushEnabled = notifPrefs.pushEnabled
-
-            logger.info("Saved notification preferences")
-        }
-
-        // Update feature preferences
-        if let featurePrefs = defaultSettings.featurePreferences {
-            settings.tasks = featurePrefs.tasks
-            settings.vendors = featurePrefs.vendors
-            settings.guests = featurePrefs.guests
-            settings.documents = featurePrefs.documents
-
-            logger.info("Saved feature preferences: tasks(\(featurePrefs.tasks.defaultView)), vendors(\(featurePrefs.vendors.defaultView)), guests(\(featurePrefs.guests.defaultView))")
-        }
-
-        // Upsert the settings record (insert or update if exists)
         do {
-            struct SettingsUpsert: Encodable {
-                let couple_id: UUID
-                let settings: CoupleSettings
-                let schema_version: Int
-            }
-
-            let upsert = SettingsUpsert(
-                couple_id: coupleId,
-                settings: settings,
-                schema_version: 1
+            try await settingsService.createSettings(
+                coupleId: coupleId,
+                weddingDetails: weddingDetails,
+                defaultSettings: defaultSettings
             )
-
-            guard let client = SupabaseManager.shared.client else {
-                logger.error("Supabase client not available")
-                return
-            }
-
-            try await client
-                .from("couple_settings")
-                .upsert(upsert, onConflict: "couple_id")
-                .execute()
-
-            logger.info("Successfully created/updated settings record from onboarding data")
         } catch {
             logger.error("Failed to create/update settings record", error: error)
             // Don't throw - onboarding is still complete, settings can be configured later
@@ -613,8 +450,6 @@ class OnboardingStoreV2: ObservableObject {
 
     /// Creates owner collaborator record for the user who completed onboarding
     private func createOwnerCollaboratorRecord() async {
-        logger.info("Creating owner collaborator record")
-
         guard let coupleId = await SessionManager.shared.currentTenantId else {
             logger.error("No tenant ID - cannot create owner collaborator")
             return
@@ -630,41 +465,15 @@ class OnboardingStoreV2: ObservableObject {
             return
         }
 
-        // Determine display name from wedding details
-        // Use partner1's name as default (user can update later if they're partner2)
-        let displayName = weddingDetails.partner1Name.isEmpty ? nil : weddingDetails.partner1Name
-
         do {
-            // Use the class-level dependency
-            let collaborator = try await collaborationRepository.createOwnerCollaborator(
+            try await collaboratorService.createOwnerCollaborator(
                 coupleId: coupleId,
                 userId: userId,
-                email: userEmail,
-                displayName: displayName
-            )
-
-            logger.info("Owner collaborator created successfully: \(collaborator.id.uuidString)")
-
-            SentryService.shared.addBreadcrumb(
-                message: "Owner collaborator created during onboarding",
-                category: "onboarding",
-                data: [
-                    "couple_id": coupleId.uuidString,
-                    "user_id": userId.uuidString,
-                    "has_display_name": displayName != nil
-                ]
+                userEmail: userEmail,
+                weddingDetails: weddingDetails
             )
         } catch {
-            // Log error but don't fail onboarding
-            // User can still use the app, just won't be able to invite others until this is fixed
-            logger.error("Failed to create owner collaborator (non-blocking)", error: error)
-
-            SentryService.shared.captureError(error, context: [
-                "operation": "createOwnerCollaboratorRecord",
-                "couple_id": coupleId.uuidString,
-                "user_id": userId.uuidString,
-                "blocking": "false"
-            ])
+            // Error already logged in service
         }
     }
 
@@ -672,25 +481,11 @@ class OnboardingStoreV2: ObservableObject {
 
     /// Validates the current step's requirements
     private func validateCurrentStep() -> Bool {
-        switch currentStep {
-        case .welcome:
-            return true // Always valid
-
-        case .weddingDetails:
-            return weddingDetails.isValid
-
-        case .defaultSettings:
-            return !defaultSettings.currency.isEmpty && !defaultSettings.timezone.isEmpty
-
-        case .featurePreferences, .guestImport, .vendorImport:
-            return true // Optional steps
-
-        case .budgetSetup:
-            return true // Will validate in budget wizard
-
-        case .completion:
-            return true
-        }
+        OnboardingValidationService.validateStep(
+            currentStep,
+            weddingDetails: weddingDetails,
+            defaultSettings: defaultSettings
+        )
     }
 
     // MARK: - Update Progress Helper
@@ -705,17 +500,12 @@ class OnboardingStoreV2: ObservableObject {
         let updated = transform(currentProgress)
 
         do {
-            let saved = try await repository.updateOnboardingProgress(updated)
+            let saved = try await progressService.updateProgress(updated)
             loadingState = .loaded(saved)
             logger.info("Progress updated successfully")
         } catch {
             logger.error("Failed to update progress", error: error)
             self.error = error as? OnboardingError ?? .updateFailed(underlying: error)
-
-            SentryService.shared.captureError(error, context: [
-                "operation": "updateProgress",
-                "currentStep": currentStep.rawValue
-            ])
         }
     }
 
@@ -726,7 +516,7 @@ class OnboardingStoreV2: ObservableObject {
         logger.info("Resetting onboarding state")
 
         do {
-            try await repository.deleteOnboardingProgress()
+            try await progressService.deleteProgress()
 
             loadingState = .idle
             currentStep = .welcome
@@ -748,7 +538,7 @@ class OnboardingStoreV2: ObservableObject {
     /// Checks if onboarding has been completed
     func checkIfCompleted() async -> Bool {
         do {
-            let completed = try await repository.isOnboardingCompleted()
+            let completed = try await progressService.isCompleted()
             isCompleted = completed
             return completed
         } catch {
