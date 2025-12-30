@@ -265,8 +265,9 @@ class SessionManager: ObservableObject {
             kSecAttrAccount as String: account,
             kSecValueData as String: data,
             // Protect data when device is locked, but allow access after first unlock
-            // This is appropriate for session state (not credentials)
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlock
+            // Use ThisDeviceOnly to prevent backup/restore to other devices (security best practice)
+            // Session data should not be transferred between devices
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
 
         // Add new item
