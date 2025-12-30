@@ -273,15 +273,11 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
                 let tCancel = Date(); loadingState = .idle; mainThreadAccumulated += Date().timeIntervalSince(tCancel)
             } catch {
                 let tErr = Date(); loadingState = .error(BudgetError.fetchFailed(underlying: error)); mainThreadAccumulated += Date().timeIntervalSince(tErr)
-                logger.error("Error loading budget data", error: error)
-                ErrorHandler.shared.handle(
-                    error,
-                    context: ErrorContext(
-                        operation: "loadBudgetData",
-                        feature: "budget",
-                        metadata: ["force": force]
-                    )
-                )
+                await handleError(error, operation: "loadBudgetData", context: [
+                    "force": force
+                ]) { [weak self] in
+                    await self?.loadBudgetData(force: force)
+                }
             }
 
             await PerformanceMonitor.shared.recordOperation(
@@ -305,6 +301,9 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
             }
         } catch let fetchError {
             loadingState = .error(BudgetError.fetchFailed(underlying: fetchError))
+            await handleError(fetchError, operation: "loadBudgetSummary") { [weak self] in
+                await self?.loadBudgetSummary()
+            }
         }
     }
 
@@ -373,15 +372,9 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
                 logger.info("No primary scenario found")
             }
         } catch {
-            logger.error("Failed to load primary scenario", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "loadPrimaryScenario",
-                    feature: "budget",
-                    metadata: [:]
-                )
-            )
+            await handleError(error, operation: "loadPrimaryScenario") { [weak self] in
+                await self?.loadPrimaryScenario()
+            }
         }
     }
     

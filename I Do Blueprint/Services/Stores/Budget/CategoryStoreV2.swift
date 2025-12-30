@@ -67,15 +67,15 @@ final class CategoryStoreV2: ObservableObject {
             logger.info("Added category: \(created.categoryName)")
             return created
         } catch {
-            logger.error("Error adding category", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "addCategory",
-                    feature: "budget",
-                    metadata: ["categoryName": category.categoryName]
-                )
-            )
+            await handleError(error, operation: "addCategory", context: [
+                "categoryName": category.categoryName
+            ]) { [weak self] in
+                do {
+                    _ = try await self?.addCategory(category)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.createFailed(underlying: error)
         }
     }
@@ -115,15 +115,16 @@ final class CategoryStoreV2: ObservableObject {
                 categories[idx] = original
             }
             
-            logger.error("Error updating category", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "updateCategory",
-                    feature: "budget",
-                    metadata: ["categoryId": category.id.uuidString, "categoryName": category.categoryName]
-                )
-            )
+            await handleError(error, operation: "updateCategory", context: [
+                "categoryId": category.id.uuidString,
+                "categoryName": category.categoryName
+            ]) { [weak self] in
+                do {
+                    _ = try await self?.updateCategory(category)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.updateFailed(underlying: error)
         }
     }
@@ -156,15 +157,16 @@ final class CategoryStoreV2: ObservableObject {
             // Rollback on error
             categories.insert(removed, at: index)
             
-            logger.error("Error deleting category", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "deleteCategory",
-                    feature: "budget",
-                    metadata: ["categoryId": id.uuidString, "categoryName": removed.categoryName]
-                )
-            )
+            await handleError(error, operation: "deleteCategory", context: [
+                "categoryId": id.uuidString,
+                "categoryName": removed.categoryName
+            ]) { [weak self] in
+                do {
+                    try await self?.deleteCategory(id: id)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
@@ -182,15 +184,9 @@ final class CategoryStoreV2: ObservableObject {
                 categoryDependencies[category.id] = deps
                 loadedCount += 1
             } catch {
-                logger.error("Failed to load dependencies for category \(category.id)", error: error)
-                ErrorHandler.shared.handle(
-                    error,
-                    context: ErrorContext(
-                        operation: "loadCategoryDependencies",
-                        feature: "budget",
-                        metadata: ["categoryId": category.id.uuidString]
-                    )
-                )
+                await handleError(error, operation: "loadCategoryDependencies", context: [
+                    "categoryId": category.id.uuidString
+                ])
             }
         }
         
@@ -247,15 +243,11 @@ final class CategoryStoreV2: ObservableObject {
             
             return result
         } catch {
-            logger.error("Batch delete failed", error: error)
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "batchDeleteCategories",
-                    feature: "budget",
-                    metadata: ["categoryCount": ids.count]
-                )
-            )
+            await handleError(error, operation: "batchDeleteCategories", context: [
+                "categoryCount": ids.count
+            ]) { [weak self] in
+                _ = await self?.batchDeleteCategories(ids: ids)
+            }
             
             // Return empty result on complete failure (wrap errors for Sendable)
             let wrapped = ids.map { (id: UUID) -> (UUID, BatchDeleteResult.SendableErrorWrapper) in

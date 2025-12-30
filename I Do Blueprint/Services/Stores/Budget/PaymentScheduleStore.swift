@@ -111,8 +111,8 @@ class PaymentScheduleStore: ObservableObject {
             paymentSchedules = try await repository.fetchPaymentSchedules()
             logger.info("Loaded \(paymentSchedules.count) payment schedules")
         } catch {
+            await handleError(error, operation: "loadPaymentSchedules")
             self.error = .fetchFailed(underlying: error)
-            logger.error("Failed to load payment schedules", error: error)
         }
     }
 
@@ -125,8 +125,8 @@ class PaymentScheduleStore: ObservableObject {
             paymentPlanSummaries = try await repository.fetchPaymentPlanSummaries()
             logger.info("Loaded \(paymentPlanSummaries.count) payment plan summaries")
         } catch {
+            await handleError(error, operation: "loadPaymentPlanSummaries")
             self.error = .fetchFailed(underlying: error)
-            logger.error("Failed to load payment plan summaries", error: error)
         }
         
         isLoading = false
@@ -143,8 +143,10 @@ class PaymentScheduleStore: ObservableObject {
             }
             return summary
         } catch {
+            await handleError(error, operation: "loadPaymentPlanSummary", context: [
+                "expenseId": expenseId.uuidString
+            ])
             self.error = .fetchFailed(underlying: error)
-            logger.error("Failed to load payment plan summary for expense: \(expenseId)", error: error)
             return nil
         }
     }
@@ -165,14 +167,19 @@ class PaymentScheduleStore: ObservableObject {
                 do {
                     try await notifier.notifyPaymentScheduleChanged(expenseId: expenseId)
                 } catch {
-                    logger.error("Expense payment status notification failed after create", error: error)
+                    await handleError(error, operation: "notifyPaymentScheduleChanged", context: [
+                        "expenseId": expenseId.uuidString,
+                        "action": "create"
+                    ])
                     await loadPaymentSchedules()
                     self.error = .updateFailed(underlying: error)
                 }
             }
         } catch {
+            await handleError(error, operation: "addPayment") { [weak self] in
+                await self?.addPayment(schedule)
+            }
             self.error = .createFailed(underlying: error)
-            logger.error("Error adding payment schedule", error: error)
         }
 
         isLoading = false
@@ -196,12 +203,17 @@ class PaymentScheduleStore: ObservableObject {
                 do {
                     try await notifier.notifyPaymentScheduleChanged(expenseId: expenseId)
                 } catch {
-                    logger.error("Expense payment status notification failed after update; rolling back payment schedule", error: error)
+                    await handleError(error, operation: "notifyPaymentScheduleChanged", context: [
+                        "expenseId": expenseId.uuidString,
+                        "action": "update"
+                    ])
                     do {
                         _ = try await repository.updatePaymentSchedule(previousSchedule)
                         paymentSchedules[index] = previousSchedule
                     } catch {
-                        logger.error("Failed to rollback payment schedule after notifier failure", error: error)
+                        await handleError(error, operation: "rollbackPaymentSchedule", context: [
+                            "scheduleId": String(schedule.id)
+                        ])
                         await loadPaymentSchedules()
                     }
                     self.error = .updateFailed(underlying: error)
@@ -209,8 +221,12 @@ class PaymentScheduleStore: ObservableObject {
             }
         } catch {
             paymentSchedules[index] = previousSchedule
+            await handleError(error, operation: "updatePayment", context: [
+                "scheduleId": String(schedule.id)
+            ]) { [weak self] in
+                await self?.updatePayment(schedule)
+            }
             self.error = .updateFailed(underlying: error)
-            logger.error("Error updating payment schedule", error: error)
         }
     }
 
@@ -231,12 +247,17 @@ class PaymentScheduleStore: ObservableObject {
                 do {
                     try await notifier.notifyPaymentScheduleChanged(expenseId: expenseId)
                 } catch {
-                    logger.error("Expense payment status notification failed after delete; restoring schedule", error: error)
+                    await handleError(error, operation: "notifyPaymentScheduleChanged", context: [
+                        "expenseId": expenseId.uuidString,
+                        "action": "delete"
+                    ])
                     do {
                         let restored = try await repository.createPaymentSchedule(removed)
                         paymentSchedules.insert(restored, at: min(index, paymentSchedules.count))
                     } catch {
-                        logger.error("Failed to restore schedule after notifier failure", error: error)
+                        await handleError(error, operation: "restorePaymentSchedule", context: [
+                            "scheduleId": String(id)
+                        ])
                         await loadPaymentSchedules()
                     }
                     self.error = .deleteFailed(underlying: error)
@@ -244,8 +265,12 @@ class PaymentScheduleStore: ObservableObject {
             }
         } catch {
             paymentSchedules.insert(removed, at: index)
+            await handleError(error, operation: "deletePayment", context: [
+                "scheduleId": String(id)
+            ]) { [weak self] in
+                await self?.deletePayment(id: id)
+            }
             self.error = .deleteFailed(underlying: error)
-            logger.error("Error deleting payment schedule, rolled back", error: error)
         }
     }
 

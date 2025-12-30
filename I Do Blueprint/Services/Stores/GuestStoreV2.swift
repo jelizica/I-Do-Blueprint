@@ -193,14 +193,11 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                 AppLogger.ui.debug("GuestStoreV2.addGuest: Operation cancelled (URLError)")
             } catch {
                 loadingState = .error(GuestError.createFailed(underlying: error))
-                ErrorHandler.shared.handle(
-                    error,
-                    context: ErrorContext(
-                        operation: "addGuest",
-                        feature: "guest",
-                        metadata: ["guestName": guest.fullName]
-                    )
-                )
+                await handleError(error, operation: "addGuest", context: [
+                    "guestName": guest.fullName
+                ]) { [weak self] in
+                    await self?.addGuest(guest)
+                }
             }
         }
 
@@ -279,17 +276,12 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                     loadingState = .loaded(guests)
                 }
                 loadingState = .error(GuestError.updateFailed(underlying: error))
-                ErrorHandler.shared.handle(
-                    error,
-                    context: ErrorContext(
-                        operation: "updateGuest",
-                        feature: "guest",
-                        metadata: [
-                            "guestId": guest.id.uuidString,
-                            "guestName": guest.fullName
-                        ]
-                    )
-                )
+                await handleError(error, operation: "updateGuest", context: [
+                    "guestId": guest.id.uuidString,
+                    "guestName": guest.fullName
+                ]) { [weak self] in
+                    await self?.updateGuest(guest)
+                }
             }
         }
 
@@ -355,14 +347,11 @@ class GuestStoreV2: ObservableObject, CacheableStore {
                     loadingState = .loaded(guests)
                 }
                 loadingState = .error(GuestError.deleteFailed(underlying: error))
-                ErrorHandler.shared.handle(
-                    error,
-                    context: ErrorContext(
-                        operation: "deleteGuest",
-                        feature: "guest",
-                        metadata: ["guestId": id.uuidString]
-                    )
-                )
+                await handleError(error, operation: "deleteGuest", context: [
+                    "guestId": id.uuidString
+                ]) { [weak self] in
+                    await self?.deleteGuest(id: id)
+                }
             }
         }
 
