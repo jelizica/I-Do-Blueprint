@@ -935,7 +935,257 @@ allocationsByItem[itemId, default: []].append(allocation)
 
 ---
 
-## 8. Other Notes
+## 8. Workflow Management with Basic Memory & Beads
+
+This project uses **two complementary tools** for optimal AI-assisted development workflows:
+
+### Tools Overview
+
+| Tool | Basic Memory | Beads |
+|------|-------------|-------|
+| **Purpose** | Knowledge management | Issue tracking |
+| **Focus** | WHY & WHAT | HOW & WHEN |
+| **Time Horizon** | Long-term (months/years) | Short-term (days/weeks) |
+| **Storage** | Markdown files (semantic graph) | JSONL files (dependency graph) |
+| **Access** | MCP tools | CLI commands |
+| **Integration** | Claude Code, Claude Desktop | Git-native |
+
+### When to Use Each Tool
+
+**Use Basic Memory For:**
+- Architectural decisions and ADRs
+- Technical documentation and patterns
+- Research and investigation results
+- Domain knowledge and business rules
+- Common pitfalls and solutions
+- Code standards and conventions
+
+**Use Beads For:**
+- Feature development tracking
+- Bug fixes and technical tasks
+- Work prioritization (P0-P4)
+- Dependency management
+- Session continuity
+- Active work status
+
+### Essential Workflows
+
+#### 1. Research → Plan → Execute → Document
+
+```bash
+# RESEARCH (Basic Memory)
+mcp__basic-memory__search_notes("repository pattern", project: "i-do-blueprint")
+mcp__basic-memory__read_note("Cache Strategy", project: "i-do-blueprint")
+
+# PLAN (Beads)
+bd create "Implement guest import feature" -t feature -p 1
+bd create "Add CSV validation" -t task -p 1
+bd dep add beads-xxx beads-yyy
+
+# EXECUTE (Beads)
+bd ready
+bd update beads-xxx --status=in_progress
+# [Write code, run tests]
+bd close beads-xxx
+
+# DOCUMENT (Basic Memory)
+mcp__basic-memory__write_note(
+  title: "CSV Import Pattern",
+  folder: "architecture/data-import",
+  project: "i-do-blueprint"
+)
+```
+
+#### 2. Problem → Investigate → Fix → Learn
+
+```bash
+# PROBLEM (Beads)
+bd create "UUID case mismatch bug" -t bug -p 0
+
+# INVESTIGATE (Basic Memory)
+mcp__basic-memory__search_notes("UUID handling", project: "i-do-blueprint")
+
+# FIX (Beads)
+bd update beads-xxx --status=in_progress
+# [Apply fix, test, commit]
+bd close beads-xxx
+
+# LEARN (Basic Memory)
+mcp__basic-memory__write_note(
+  title: "Common Pitfall - UUID String Conversion",
+  folder: "troubleshooting",
+  project: "i-do-blueprint"
+)
+```
+
+#### 3. Session Start Protocol
+
+```bash
+# 1. Restore context (Basic Memory)
+mcp__basic-memory__recent_activity(timeframe: "7d", project: "i-do-blueprint")
+mcp__basic-memory__build_context(url: "projects/i-do-blueprint")
+
+# 2. Check active work (Beads)
+bd ready                     # What's ready to work?
+bd list --status=in_progress # What was I working on?
+bd blocked                   # What's blocked?
+
+# 3. Select next task (Beads)
+bd show beads-xxx
+bd update beads-xxx --status=in_progress
+
+# 4. Load relevant knowledge (Basic Memory)
+mcp__basic-memory__search_notes("relevant topic", project: "i-do-blueprint")
+```
+
+#### 4. Session End Protocol
+
+```bash
+# 1. Complete work items (Beads)
+bd close beads-xxx beads-yyy beads-zzz
+bd update beads-aaa --status=blocked
+
+# 2. Document new knowledge (Basic Memory)
+mcp__basic-memory__write_note(
+  title: "Pattern Name",
+  content: "...",
+  folder: "architecture/patterns",
+  project: "i-do-blueprint"
+)
+
+# 3. Sync to git (Beads)
+bd sync
+```
+
+### Basic Memory Command Reference
+
+```bash
+# Reading
+mcp__basic-memory__read_note(identifier: "Note Title", project: "i-do-blueprint")
+mcp__basic-memory__search_notes(query: "search terms", project: "i-do-blueprint")
+mcp__basic-memory__build_context(url: "architecture/*", project: "i-do-blueprint")
+
+# Writing
+mcp__basic-memory__write_note(
+  title: "Note Title",
+  content: "...",
+  folder: "architecture/patterns",
+  tags: ["tag1", "tag2"],
+  project: "i-do-blueprint"
+)
+
+mcp__basic-memory__edit_note(
+  identifier: "Note Title",
+  operation: "append",
+  content: "\n## New Section",
+  project: "i-do-blueprint"
+)
+```
+
+### Beads Command Reference
+
+```bash
+# Creating & Managing
+bd create "Task title" -p 0              # Priority 0 (critical)
+bd create "Feature title" -t feature -p 1
+bd create "Bug title" -t bug -p 0
+bd update beads-xxx --status=in_progress
+bd close beads-xxx
+
+# Querying
+bd ready                                 # Tasks ready to work
+bd list --status=open                    # All open tasks
+bd blocked                               # All blocked tasks
+bd show beads-xxx                        # Full task details
+
+# Dependencies
+bd dep add beads-child beads-parent     # child depends on parent
+
+# Sync
+bd sync                                  # Commit and push changes
+```
+
+### Best Practices
+
+1. **Separation of Concerns**
+   - Basic Memory = Knowledge that outlives individual tasks
+   - Beads = Current sprint/week work items
+
+2. **Cross-Referencing**
+   - Reference Beads tasks in Basic Memory notes
+   - Link Basic Memory docs in Beads task notes
+
+3. **Documentation Timing**
+   - Document AFTER completing work, not before
+   - Capture patterns and decisions, not implementation details
+
+4. **Task Granularity**
+   - Beads tasks: Completable in < 1 day
+   - Basic Memory notes: 1000-3000 words, comprehensive
+
+5. **Priority Alignment**
+   - P0 (Critical) → Document immediately
+   - P1 (High) → Document if novel pattern
+   - P2+ → Document only if architecturally significant
+
+### Knowledge Repository Structure
+
+The `knowledge-repo-bm/` directory (Basic Memory project: `i-do-blueprint`) contains:
+
+```
+knowledge-repo-bm/
+├── architecture/         # Architecture patterns, decisions
+│   ├── caching/
+│   ├── models/
+│   ├── repositories/
+│   ├── services/
+│   └── stores/
+├── database/            # Database schema, migrations
+├── security/            # Security patterns, RLS
+├── testing/             # Testing infrastructure
+├── project-management/  # Beads integration notes
+├── projects/            # Project-wide context
+│   └── i-do-blueprint/
+└── quick-reference/     # Quick lookup guides
+```
+
+### Decision Tree
+
+```
+Is this information needed in 6 months?
+├─ YES → Basic Memory
+│  └─ Architecture decisions, patterns, pitfalls
+│
+└─ NO → Beads
+   └─ "Fix bug X", "Add feature Y", "Refactor Z"
+
+Will this help understand future code?
+├─ YES → Basic Memory
+│  └─ Why we chose X, How pattern Y works
+│
+└─ NO → Beads
+   └─ Task status, blocking relationships
+
+Is this actionable work?
+├─ YES → Beads
+│  └─ Create task, track progress, mark complete
+│
+└─ NO → Basic Memory
+   └─ Document context, record decision
+```
+
+### For More Information
+
+See **`BASIC-MEMORY-AND-BEADS-GUIDE.md`** for:
+- Complete workflow patterns
+- Real-world examples
+- Integration setup
+- Detailed command reference
+- Advanced use cases
+
+---
+
+## 9. Other Notes
 
 ### For LLMs Generating Code
 

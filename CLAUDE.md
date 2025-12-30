@@ -631,6 +631,60 @@ logger.debug("Debug info") // Only in DEBUG builds
 
 ## Workflow and Session Management
 
+### Knowledge Management & Task Tracking
+
+This project uses **two complementary tools** for comprehensive workflow management:
+
+**📚 Basic Memory (Knowledge Management)** - Stores the WHY and WHAT
+- **Purpose**: Long-term architectural knowledge, decisions, and context
+- **Access**: MCP tools (`mcp__basic-memory__*`)
+- **Project**: `i-do-blueprint`
+- **Use for**: Architecture decisions, patterns, research, domain knowledge, pitfalls
+
+**📋 Beads (Issue Tracking)** - Tracks the HOW and WHEN
+- **Purpose**: Active work items, dependencies, task execution
+- **Access**: CLI commands (`bd *`)
+- **Storage**: Git-backed `.beads/` directory
+- **Use for**: Features, bugs, tasks, dependencies, work status
+
+**See `BASIC-MEMORY-AND-BEADS-GUIDE.md` for complete integration patterns and workflows.**
+
+### Quick Reference
+
+**Session Start Protocol:**
+```bash
+# 1. Restore context (Basic Memory)
+mcp__basic-memory__recent_activity(timeframe: "7d", project: "i-do-blueprint")
+mcp__basic-memory__build_context(url: "projects/i-do-blueprint")
+
+# 2. Check active work (Beads)
+bd ready                    # What's ready to work?
+bd list --status=in_progress # What was I working on?
+
+# 3. Load relevant knowledge (Basic Memory)
+mcp__basic-memory__search_notes("relevant topic")
+```
+
+**Session End Protocol:**
+```bash
+# 1. Complete work items (Beads)
+bd close beads-xxx beads-yyy beads-zzz
+
+# 2. Document new knowledge (Basic Memory)
+mcp__basic-memory__write_note(
+  title: "Pattern Name",
+  folder: "architecture/patterns",
+  project: "i-do-blueprint"
+)
+
+# 3. Sync to git (Beads)
+bd sync
+```
+
+**The Golden Rule:**
+- Basic Memory = WHY & WHAT (long-term knowledge)
+- Beads = HOW & WHEN (short-term execution)
+
 ### Atomic Todos
 All work is tracked in `_project_specs/todos/`:
 - `active.md` - Current work (move from backlog when starting)
