@@ -104,27 +104,29 @@ class TaskStoreV2: ObservableObject, CacheableStore {
     }
 
     func createTask(_ insertData: TaskInsertData) async {
-    successMessage = nil
+        successMessage = nil
 
-    do {
-    let task = try await repository.createTask(insertData)
+        do {
+            let task = try await repository.createTask(insertData)
 
-    if case .loaded(var currentTasks) = loadingState {
-    currentTasks.append(task)
-    loadingState = .loaded(currentTasks)
-    }
+            if case .loaded(var currentTasks) = loadingState {
+                currentTasks.append(task)
+                loadingState = .loaded(currentTasks)
+            }
 
-    taskStats = try await repository.fetchTaskStats()
-    // Invalidate cache due to mutation
-    invalidateCache()
-    showSuccess("Task created successfully")
-    } catch {
-    loadingState = .error(TaskError.createFailed(underlying: error))
-    ErrorHandler.shared.handle(
-        error,
-        context: ErrorContext(operation: "createTask", feature: "task")
-    )
-    }
+            taskStats = try await repository.fetchTaskStats()
+            // Invalidate cache due to mutation
+            invalidateCache()
+            showSuccess("Task created successfully")
+        } catch {
+            await handleError(error, operation: "createTask", context: [
+                "taskName": insertData.taskName
+            ]) { [weak self] in
+                await self?.createTask(insertData)
+            }
+            
+            loadingState = .error(TaskError.createFailed(underlying: error))
+        }
     }
 
     func updateTask(_ task: WeddingTask) async {
@@ -160,11 +162,15 @@ class TaskStoreV2: ObservableObject, CacheableStore {
                 tasks[idx] = original
                 loadingState = .loaded(tasks)
             }
+            
+            await handleError(error, operation: "updateTask", context: [
+                "taskId": task.id.uuidString,
+                "taskName": task.taskName
+            ]) { [weak self] in
+                await self?.updateTask(task)
+            }
+            
             loadingState = .error(TaskError.updateFailed(underlying: error))
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(operation: "updateTask", feature: "task", metadata: ["taskId": task.id.uuidString])
-            )
         }
     }
 
@@ -192,11 +198,15 @@ class TaskStoreV2: ObservableObject, CacheableStore {
                 tasks.insert(removed, at: index)
                 loadingState = .loaded(tasks)
             }
+            
+            await handleError(error, operation: "deleteTask", context: [
+                "taskId": task.id.uuidString,
+                "taskName": task.taskName
+            ]) { [weak self] in
+                await self?.deleteTask(task)
+            }
+            
             loadingState = .error(TaskError.deleteFailed(underlying: error))
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(operation: "deleteTask", feature: "task", metadata: ["taskId": task.id.uuidString])
-            )
         }
     }
 
@@ -368,6 +378,18 @@ class TaskStoreV2: ObservableObject, CacheableStore {
 
     var stats: TaskStats {
         taskStats ?? TaskStats(total: 0, notStarted: 0, inProgress: 0, completed: 0, overdue: 0)
+    }
+
+    // MARK: - Private Helpers
+
+    private func showSuccess(_ message: String) {
+        successMessage = message
+
+        // Auto-hide after 3 seconds
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            successMessage = nil
+        }
     }
 
     // MARK: - State Management

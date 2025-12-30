@@ -139,12 +139,14 @@ class VendorStoreV2: ObservableObject, CacheableStore {
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to add vendor after \(duration)s", error: error)
-            loadingState = .error(VendorError.createFailed(underlying: error))
+            
             await handleError(error, operation: "addVendor", context: [
                 "vendorName": vendor.vendorName
             ]) { [weak self] in
                 await self?.addVendor(vendor)
             }
+            
+            loadingState = .error(VendorError.createFailed(underlying: error))
         }
     }
 
@@ -195,16 +197,19 @@ class VendorStoreV2: ObservableObject, CacheableStore {
                let idx = vendors.firstIndex(where: { $0.id == vendor.id }) {
                 vendors[idx] = original
                 loadingState = .loaded(vendors)
+            }
+            
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to update vendor after \(duration)s", error: error)
-            loadingState = .error(VendorError.updateFailed(underlying: error))
+            
             await handleError(error, operation: "updateVendor", context: [
                 "vendorId": String(vendor.id),
                 "vendorName": vendor.vendorName
             ]) { [weak self] in
                 await self?.updateVendor(vendor)
             }
-            }
+            
+            loadingState = .error(VendorError.updateFailed(underlying: error))
         }
     }
 
@@ -247,16 +252,19 @@ class VendorStoreV2: ObservableObject, CacheableStore {
             if case .loaded(var vendors) = loadingState {
                 vendors.insert(removed, at: index)
                 loadingState = .loaded(vendors)
+            }
+            
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to delete vendor after \(duration)s", error: error)
-            loadingState = .error(VendorError.deleteFailed(underlying: error))
+            
             await handleError(error, operation: "deleteVendor", context: [
                 "vendorId": String(vendor.id),
                 "vendorName": vendor.vendorName
             ]) { [weak self] in
                 await self?.deleteVendor(vendor)
             }
-            }
+            
+            loadingState = .error(VendorError.deleteFailed(underlying: error))
         }
     }
 

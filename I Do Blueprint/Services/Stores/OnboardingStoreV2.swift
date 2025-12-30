@@ -110,6 +110,11 @@ class OnboardingStoreV2: ObservableObject {
             }
         } catch {
             logger.error("Failed to load onboarding progress", error: error)
+            
+            await handleError(error, operation: "loadProgress") { [weak self] in
+                await self?.loadProgress()
+            }
+            
             self.error = error as? OnboardingError ?? .fetchFailed(underlying: error)
             loadingState = .error(self.error!)
         }
@@ -425,6 +430,11 @@ class OnboardingStoreV2: ObservableObject {
             logger.info("Onboarding completed successfully")
         } catch {
             logger.error("Failed to complete onboarding", error: error)
+            
+            await handleError(error, operation: "completeOnboarding") { [weak self] in
+                await self?.completeOnboarding()
+            }
+            
             self.error = error as? OnboardingError ?? .updateFailed(underlying: error)
         }
     }
@@ -505,6 +515,9 @@ class OnboardingStoreV2: ObservableObject {
             logger.info("Progress updated successfully")
         } catch {
             logger.error("Failed to update progress", error: error)
+            
+            await handleError(error, operation: "updateProgress")
+            
             self.error = error as? OnboardingError ?? .updateFailed(underlying: error)
         }
     }
@@ -529,6 +542,11 @@ class OnboardingStoreV2: ObservableObject {
             logger.info("Onboarding state reset successfully")
         } catch {
             logger.error("Failed to reset onboarding", error: error)
+            
+            await handleError(error, operation: "reset") { [weak self] in
+                await self?.reset()
+            }
+            
             self.error = error as? OnboardingError ?? .deleteFailed(underlying: error)
         }
     }
