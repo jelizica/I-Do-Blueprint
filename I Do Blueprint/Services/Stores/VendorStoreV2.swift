@@ -140,10 +140,11 @@ class VendorStoreV2: ObservableObject, CacheableStore {
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to add vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.createFailed(underlying: error))
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(operation: "addVendor", feature: "vendor", metadata: ["vendorName": vendor.vendorName])
-            )
+            await handleError(error, operation: "addVendor", context: [
+                "vendorName": vendor.vendorName
+            ]) { [weak self] in
+                await self?.addVendor(vendor)
+            }
         }
     }
 
@@ -197,14 +198,12 @@ class VendorStoreV2: ObservableObject, CacheableStore {
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to update vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.updateFailed(underlying: error))
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "updateVendor",
-                    feature: "vendor",
-                    metadata: ["vendorId": String(vendor.id), "vendorName": vendor.vendorName]
-                )
-            )
+            await handleError(error, operation: "updateVendor", context: [
+                "vendorId": String(vendor.id),
+                "vendorName": vendor.vendorName
+            ]) { [weak self] in
+                await self?.updateVendor(vendor)
+            }
             }
         }
     }
@@ -251,14 +250,12 @@ class VendorStoreV2: ObservableObject, CacheableStore {
             let duration = Date().timeIntervalSince(startTime)
             AppLogger.repository.error("Failed to delete vendor after \(duration)s", error: error)
             loadingState = .error(VendorError.deleteFailed(underlying: error))
-            ErrorHandler.shared.handle(
-                error,
-                context: ErrorContext(
-                    operation: "deleteVendor",
-                    feature: "vendor",
-                    metadata: ["vendorId": String(vendor.id), "vendorName": vendor.vendorName]
-                )
-            )
+            await handleError(error, operation: "deleteVendor", context: [
+                "vendorId": String(vendor.id),
+                "vendorName": vendor.vendorName
+            ]) { [weak self] in
+                await self?.deleteVendor(vendor)
+            }
             }
         }
     }
