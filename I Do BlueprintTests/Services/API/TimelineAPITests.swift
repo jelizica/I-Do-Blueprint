@@ -450,6 +450,7 @@ class MockSupabaseClient {
     var shouldThrowError = false
     var errorToThrow: Error?
     var deleteSucceeds = true
+    var updateSucceeds = true
     
     // Mock data
     var mockPayments: [PaymentRow] = []
@@ -505,5 +506,161 @@ class MockSupabaseClient {
         let notes: String?
         let created_at: String
         let updated_at: String
+    }
+}
+
+// MARK: - Mock Supabase Client Extension for Timeline API
+
+extension MockSupabaseClient {
+    /// Mock implementation of database query for payments
+    func fetchPayments() async throws -> [PaymentRow] {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        return mockPayments
+    }
+    
+    /// Mock implementation of database query for vendors
+    func fetchVendors() async throws -> [VendorRow] {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        return mockVendors
+    }
+    
+    /// Mock implementation of database query for guests
+    func fetchGuests() async throws -> [GuestRow] {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        return mockGuests
+    }
+    
+    /// Mock implementation of fetching timeline item by ID
+    func fetchTimelineItem(id: UUID) async throws -> TimelineItem {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        guard let item = mockTimelineItem else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Timeline item not found"])
+        }
+        return item
+    }
+    
+    /// Mock implementation of creating timeline item
+    func createTimelineItem(_ data: TimelineItemInsertData) async throws -> TimelineItem {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        guard let item = mockTimelineItem else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock timeline item not configured"])
+        }
+        return item
+    }
+    
+    /// Mock implementation of updating timeline item
+    func updateTimelineItem(id: UUID, data: TimelineItemInsertData) async throws -> TimelineItem {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        if !updateSucceeds {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Update not allowed"])
+        }
+        guard let item = mockTimelineItem else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock timeline item not configured"])
+        }
+        return item
+    }
+    
+    /// Mock implementation of updating timeline item completion
+    func updateTimelineItemCompletion(id: UUID, completed: Bool) async throws -> TimelineItem {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        if !updateSucceeds {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Update not allowed"])
+        }
+        guard let item = mockTimelineItem else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock timeline item not configured"])
+        }
+        return item
+    }
+    
+    /// Mock implementation of deleting timeline item
+    func deleteTimelineItem(id: UUID) async throws {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        if !deleteSucceeds {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Delete not allowed"])
+        }
+    }
+    
+    /// Mock implementation of fetching milestones
+    func fetchMilestones() async throws -> [Milestone] {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        return mockMilestones
+    }
+    
+    /// Mock implementation of fetching milestone by ID
+    func fetchMilestone(id: UUID) async throws -> Milestone {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        guard let milestone = mockMilestone else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Milestone not found"])
+        }
+        return milestone
+    }
+    
+    /// Mock implementation of creating milestone
+    func createMilestone(_ data: MilestoneInsertData) async throws -> Milestone {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        guard let milestone = mockMilestone else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock milestone not configured"])
+        }
+        return milestone
+    }
+    
+    /// Mock implementation of updating milestone
+    func updateMilestone(id: UUID, data: MilestoneInsertData) async throws -> Milestone {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        if !updateSucceeds {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Update not allowed"])
+        }
+        guard let milestone = mockMilestone else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock milestone not configured"])
+        }
+        return milestone
+    }
+    
+    /// Mock implementation of updating milestone completion
+    func updateMilestoneCompletion(id: UUID, completed: Bool) async throws -> Milestone {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        if !updateSucceeds {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Update not allowed"])
+        }
+        guard let milestone = mockMilestone else {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock milestone not configured"])
+        }
+        return milestone
+    }
+    
+    /// Mock implementation of deleting milestone
+    func deleteMilestone(id: UUID) async throws {
+        if shouldThrowError {
+            throw errorToThrow ?? NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Mock error"])
+        }
+        if !deleteSucceeds {
+            throw NSError(domain: "MockError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Delete not allowed"])
+        }
     }
 }
