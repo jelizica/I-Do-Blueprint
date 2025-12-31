@@ -193,6 +193,8 @@ private struct MainAppView: View {
         .sheet(item: $coordinator.activeSheet) { sheet in
             sheet.view(coordinator: coordinator)
                 .environmentObject(settingsStore)
+                .environmentObject(appStores.budget)
+                .environmentObject(coordinator)
         }
     }
 }
