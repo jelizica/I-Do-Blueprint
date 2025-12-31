@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PhoneNumberKit
 
 struct ExportTemplateSelectionView: View {
     @StateObject private var templateService = AdvancedExportTemplateService.shared
@@ -448,7 +449,12 @@ struct BrandingSettingsView: View {
 
                 Section("Contact Information") {
                     TextField("Email", text: $branding.contactInfo.email)
-                    TextField("Phone", text: $branding.contactInfo.phone)
+                    PhoneNumberTextFieldWrapper(
+                        phoneNumber: $branding.contactInfo.phone,
+                        defaultRegion: "US",
+                        placeholder: "Phone"
+                    )
+                    .frame(height: 40)
                     TextField("Website", text: $branding.contactInfo.website)
                     TextField("Address", text: $branding.contactInfo.address)
                 }

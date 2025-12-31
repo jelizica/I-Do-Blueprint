@@ -14,6 +14,7 @@
 //
 
 import SwiftUI
+import PhoneNumberKit
 
 struct VendorManagementViewV3: View {
     @Environment(\.appStores) private var appStores
@@ -165,8 +166,12 @@ struct AddVendorSheet: View {
                         .textContentType(.name)
                     TextField("Email", text: $email)
                         .textContentType(.emailAddress)
-                    TextField("Phone Number", text: $phoneNumber)
-                        .textContentType(.telephoneNumber)
+                    PhoneNumberTextFieldWrapper(
+                        phoneNumber: $phoneNumber,
+                        defaultRegion: "US",
+                        placeholder: "Phone Number"
+                    )
+                    .frame(height: 40)
                     TextField("Website", text: $website)
                         .textContentType(.URL)
                 }

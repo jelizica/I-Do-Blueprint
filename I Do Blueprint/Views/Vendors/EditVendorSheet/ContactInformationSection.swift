@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PhoneNumberKit
 
 struct ContactInformationSection: View {
     @Binding var contactName: String
@@ -30,9 +31,12 @@ struct ContactInformationSection: View {
                 }
                 
                 VendorFormField(label: "Phone") {
-                    TextField("(555) 123-4567", text: $phoneNumber)
-                        .textFieldStyle(.roundedBorder)
-                        .textContentType(.telephoneNumber)
+                    PhoneNumberTextFieldWrapper(
+                        phoneNumber: $phoneNumber,
+                        defaultRegion: "US",
+                        placeholder: "(555) 123-4567"
+                    )
+                    .frame(height: 40)
                 }
                 
                 VendorFormField(label: "Website") {
