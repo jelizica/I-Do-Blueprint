@@ -4,3 +4,10 @@ docs/architecture/mermaid/*.mermaid
 docs/architecture/workspace.dsl
 docs/architecture/exports/*.puml
 scripts/generate-diagrams.sh
+
+# Beads issue tracker contains security issue descriptions (not actual secrets)
+# These are references to findings that have been remediated
+.beads/issues.jsonl
+
+# CCG document registry contains file metadata, not secrets
+.ccg/registry/documents.json

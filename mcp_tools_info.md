@@ -12,8 +12,9 @@ A comprehensive guide to the Model Context Protocol (MCP) tools and development 
 ### Development Workflow Tools
 6. [Beads](#beads) (Claude Code Plugin)
 7. [Beads Viewer](#beads-viewer) (Claude Code Plugin)
-8. [Sync MCP Config](#sync-mcp-config) (CLI Tool)
-9. [direnv](#direnv) (Environment Manager)
+8. [Semgrep](#semgrep) (CLI Tool + Optional MCP)
+9. [Sync MCP Config](#sync-mcp-config) (CLI Tool)
+10. [direnv](#direnv) (Environment Manager)
 
 ### Multi-Agent Orchestration
 10. [Owlex](#owlex) (MCP Server)
@@ -21,6 +22,9 @@ A comprehensive guide to the Model Context Protocol (MCP) tools and development 
 
 ### Claude Desktop Tools
 12. [Basic Memory](#basic-memory) (MCP Server)
+
+### Xcode/Agnostic Tools
+13. [Themis](#themis) (Swift Package)
 
 ---
 
@@ -395,6 +399,226 @@ curl -fsSL "https://raw.githubusercontent.com/Dicklesworthstone/beads_viewer/mai
 
 ---
 
+## Semgrep
+
+**Repository:** https://github.com/semgrep/semgrep
+**Website:** https://semgrep.dev
+**Documentation:** https://semgrep.dev/docs/
+**Rule Registry:** https://semgrep.dev/r
+**Slack Community:** https://go.semgrep.dev/slack
+
+**Implementation:** CLI Tool + Optional MCP Server
+
+**Purpose:** Fast, open-source static analysis tool that searches code, finds bugs, and enforces secure guardrails and coding standards using patterns that look like source code
+
+**Key Features:**
+- Lightweight static analysis for 30+ languages including Swift
+- Semantic grep for code - matches patterns semantically, not just text
+- Rules look like the code you write (no ASTs, regex wrestling, or painful DSLs)
+- Cross-function and cross-file analysis (Pro version)
+- SAST, SCA (Software Composition Analysis), and Secrets scanning
+- 5,000+ community and pro rules in the registry
+- AI-powered triage with Semgrep Assistant
+- Local analysis - code never uploaded by default
+- Pre-commit hooks and CI/CD integration
+- MCP server for AI agent integration
+
+**Installation:**
+```bash
+# macOS
+brew install semgrep
+
+# Ubuntu/WSL/Linux/macOS via pip
+python3 -m pip install semgrep
+
+# Docker
+docker run -it -v "${PWD}:/src" semgrep/semgrep semgrep login
+docker run -e SEMGREP_APP_TOKEN=<TOKEN> --rm -v "${PWD}:/src" semgrep/semgrep semgrep ci
+
+# Upgrade
+brew upgrade semgrep
+# or
+python3 -m pip install --upgrade semgrep
+```
+
+**Core Commands:**
+- `semgrep login` - Create account and login for Pro features
+- `semgrep ci` - Scan code for vulnerabilities (recommended)
+- `semgrep scan --config auto` - Auto-detect and scan with appropriate rules
+- `semgrep scan --config p/default` - Scan with default ruleset
+- `semgrep scan --config p/security-audit` - Security-focused scan
+- `semgrep -e '$X == $X' --lang=py path/to/src` - Interactive pattern search
+- `semgrep --test --config rules/ tests/` - Test custom rules
+
+**Swift-Specific Support:**
+- **Documentation:** https://semgrep.dev/docs/languages/swift
+- Interprocedural analysis (cross-function) with Pro
+- SwiftPM package manager support for SCA
+- Reachability analysis for dependency vulnerabilities
+- License detection and SBOM generation
+- Framework-specific Pro rules for comprehensive coverage
+
+**Swift Security Rules (Examples):**
+- CWE-477: Use of obsolete function (`ptrace` API forbidden from iOS)
+- CWE-327: Broken cryptographic algorithms (MD2, MD5, etc.)
+- Certificate Pinning issues
+- Biometric Authentication issues
+- XXE, SQL Injection, NoSQL Injection
+- WebView security issues
+- Insecure Storage and Keychain Settings
+- Log Injection vulnerabilities
+
+**Community Rule Collections:**
+
+| Repository | Focus | Languages |
+|------------|-------|-----------|
+| [akabe1-semgrep-rules](https://github.com/akabe1/akabe1-semgrep-rules) | iOS/Swift security, Java, COBOL | Swift, Java, COBOL |
+| [OWASP Mobile Rules](https://github.com/insideapp-oss/mobile-application-security-rules) | OWASP MASTG compliance | Swift, Java, Kotlin |
+| [Semgrep Registry](https://semgrep.dev/r) | 5,000+ official rules | All supported languages |
+
+**Using Custom Rules:**
+```bash
+# Run rules from a folder
+semgrep --config akabe1-semgrep-rules/ios/swift/
+
+# Run single rule file
+semgrep --config rules/swift-insecure-storage.yaml
+
+# Combine with official rules
+semgrep --config p/default --config ./custom-rules/
+```
+
+**MCP Server Integration (Optional):**
+
+The Semgrep MCP server enables AI agents to scan code for security vulnerabilities.
+
+**Note:** The standalone MCP repo (https://github.com/semgrep/mcp) has been archived and moved to the main semgrep repository.
+
+**MCP Installation:**
+```bash
+# Python package
+uvx semgrep-mcp
+
+# Docker
+docker run -i --rm ghcr.io/semgrep/mcp -t stdio
+
+# Hosted server (experimental)
+# URL: https://mcp.semgrep.ai/mcp
+```
+
+**MCP Configuration (Cursor/Claude Code):**
+```json
+{
+  "mcpServers": {
+    "semgrep": {
+      "command": "uvx",
+      "args": ["semgrep-mcp"],
+      "env": {
+        "SEMGREP_APP_TOKEN": "<token>"
+      }
+    }
+  }
+}
+```
+
+**MCP Tools:**
+- **security_check**: Scan code for security vulnerabilities
+- **semgrep_scan**: Scan code files with a given config string
+- **semgrep_scan_with_custom_rule**: Scan using custom Semgrep rules
+- **get_abstract_syntax_tree**: Output AST of code
+- **semgrep_findings**: Fetch findings from Semgrep AppSec Platform (requires token)
+- **supported_languages**: List supported languages
+- **semgrep_rule_schema**: Get latest rule JSON Schema
+
+**MCP Prompts:**
+- **write_custom_semgrep_rule**: Help write a custom Semgrep rule
+
+**MCP Resources:**
+- `semgrep://rule/schema`: Rule YAML syntax specification
+- `semgrep://rule/{rule_id}/yaml`: Full rule from registry
+
+**Semgrep Ecosystem:**
+- **Semgrep Community Edition (CE)**: Open-source, single-file analysis
+- **Semgrep AppSec Platform**: Enterprise SAST, SCA, Secrets with orchestration
+- **Semgrep Code (SAST)**: Cross-file/function analysis, Pro rules
+- **Semgrep Supply Chain (SSC)**: Reachable dependency vulnerabilities
+- **Semgrep Secrets**: Semantic secrets detection with validation
+- **Semgrep Assistant (AI)**: Auto-triage and remediation guidance
+
+**Best Use Cases:**
+- Security vulnerability scanning (SAST)
+- Dependency vulnerability detection (SCA)
+- Secrets and credential detection
+- Code quality enforcement
+- Custom coding standards
+- Pre-commit security checks
+- CI/CD security gates
+- AI-assisted code review with MCP
+
+**Integration with SwiftScan:**
+
+SwiftScan (`swiftscan`) is a wrapper/alias that runs Semgrep with iOS/Swift-specific rules, making it easier to scan Swift projects without remembering complex Semgrep configurations.
+
+**SwiftScan Installation:**
+```bash
+# Install via Homebrew (recommended)
+brew install AikidoSec/tap/swiftscan
+
+# Or install via pip
+pip install swiftscan
+```
+
+**SwiftScan Commands:**
+```bash
+# Basic scan (current directory)
+swiftscan .
+
+# JSON output (for parsing/automation)
+swiftscan . --json
+
+# Scan specific directory
+swiftscan /path/to/swift/project
+
+# Scan with verbose output
+swiftscan . --verbose
+
+# Show help
+swiftscan --help
+```
+
+**SwiftScan vs Semgrep Direct:**
+| Command | Purpose |
+|---------|---------|
+| `swiftscan .` | Quick iOS/Swift security scan with curated rules |
+| `swiftscan . --json` | Machine-readable output for CI/CD or analysis |
+| `semgrep scan --config p/swift` | Direct Semgrep with Swift ruleset |
+| `semgrep scan --config auto` | Auto-detect language and apply rules |
+
+**Typical Workflow:**
+```bash
+# 1. Run SwiftScan for quick security check
+swiftscan . --json > security-scan.json
+
+# 2. Review findings
+cat security-scan.json | jq '.results[] | {rule: .check_id, file: .path, line: .start.line, message: .extra.message}'
+
+# 3. Create Beads issues for findings
+bd create "Fix: <finding description>" -t bug -p 1
+```
+
+**Resources:**
+- **GitHub:** https://github.com/semgrep/semgrep
+- **Swift Documentation:** https://semgrep.dev/docs/languages/swift
+- **Rule Registry:** https://semgrep.dev/r
+- **Playground:** https://semgrep.dev/editor
+- **Academy:** https://academy.semgrep.dev
+- **Swift Rules (akabe1):** https://github.com/akabe1/akabe1-semgrep-rules
+- **OWASP Mobile Rules:** https://github.com/insideapp-oss/mobile-application-security-rules
+- **MCP Server (archived):** https://github.com/semgrep/mcp
+- **MCP Hosted:** https://mcp.semgrep.ai
+
+---
+
 ## Sync MCP Config
 
 **Repository:** https://github.com/jgrichardson/sync-mcp-cfg
@@ -717,6 +941,671 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 
 ---
 
+# Xcode/Agnostic Tools
+
+The following tools are Swift packages and development utilities for Xcode projects.
+
+## Themis
+
+**Repository:** https://github.com/cossacklabs/themis
+**Swift Documentation:** https://docs.cossacklabs.com/themis/languages/swift/
+**Installation Guide:** https://docs.cossacklabs.com/themis/languages/swift/installation/
+**Swift Examples:** https://github.com/cossacklabs/themis/tree/master/docs/examples/swift
+**Swift Package Index:** https://swiftpackageindex.com/cossacklabs/themis
+
+**Purpose:** Cross-platform cryptographic library providing easy-to-use, high-level cryptographic primitives for secure data storage, messaging, and session management
+
+**Key Features:**
+- **Secure Cell**: Symmetric encryption for data at rest (AES-256)
+- **Secure Message**: Asymmetric encryption and digital signatures for messaging
+- **Secure Session**: Stateful session-based encryption with perfect forward secrecy
+- **Secure Comparator**: Zero-knowledge proof-based secret comparison
+- **Key Generation**: EC and RSA keypair generation, symmetric key generation
+- Cross-platform support (14 platforms including iOS, macOS, Android, Web)
+- No cryptographic expertise required - high-level APIs
+- Unified API across all supported languages
+- Apache 2.0 licensed with 1,900+ GitHub stars
+- Zero data race safety errors (Swift 6 ready)
+
+**Supported Platforms:**
+- macOS 10.12–11+
+- iOS 10–14+
+- Swift 4 and Swift 5
+- visionOS, watchOS, tvOS support
+
+**Installation:**
+
+**Swift Package Manager (Recommended):**
+```swift
+// In Package.swift or Xcode > File > Add Package Dependencies
+dependencies: [
+    .package(url: "https://github.com/cossacklabs/themis", from: "0.15.5")
+]
+```
+
+**CocoaPods:**
+```ruby
+# In Podfile
+pod 'themis'
+```
+
+**Carthage:**
+```
+# In Cartfile
+github "cossacklabs/themis"
+
+# Then run
+carthage update --use-xcframeworks
+```
+
+**Import:**
+```swift
+import themis
+```
+
+---
+
+### Cryptographic Primitives
+
+#### 1. Key Generation
+
+**Asymmetric Keypairs (EC or RSA):**
+```swift
+// Generate EC keypair (recommended for most use cases)
+let keypair = TSKeyGen(algorithm: .EC)!
+let privateKey: Data = keypair.privateKey!
+let publicKey: Data = keypair.publicKey!
+
+// Generate RSA keypair (for legacy compatibility)
+let rsaKeypair = TSKeyGen(algorithm: .RSA)!
+```
+
+**Symmetric Keys:**
+```swift
+// Generate AES-256 symmetric key
+let masterKey: Data = TSGenerateSymmetricKey()!
+```
+
+#### 2. Secure Cell (Data at Rest)
+
+**Seal Mode (Recommended):**
+```swift
+// With symmetric key
+let symmetricKey = TSGenerateSymmetricKey()!
+let cell = TSCellSeal(key: symmetricKey)!
+
+// Or with passphrase (uses KDF internally)
+let cell = TSCellSeal(passphrase: "user-password")!
+
+// Encrypt
+let plaintext: Data = "Sensitive wedding data".data(using: .utf8)!
+let context: Data = "guest-list-v1".data(using: .utf8)!  // Optional context
+let encrypted: Data = try! cell.encrypt(plaintext, context: context)
+
+// Decrypt
+let decrypted = try? cell.decrypt(encrypted, context: context)
+```
+
+**Token Protect Mode (Fixed-length output):**
+```swift
+let cell = TSCellToken(key: symmetricKey)!
+
+// Encrypt - returns separate encrypted data and auth token
+let result = try! cell.encrypt(plaintext, context: context)
+let encrypted: Data = result.encrypted  // Same length as plaintext
+let authToken: Data = result.token      // Store separately
+
+// Decrypt - requires both encrypted data and token
+let decrypted = try? cell.decrypt(encrypted, token: authToken, context: context)
+```
+
+**Context Imprint Mode (Length-preserving, no auth tag):**
+```swift
+let cell = TSCellContextImprint(key: symmetricKey)!
+
+// Context is REQUIRED in this mode
+let encrypted = try! cell.encrypt(plaintext, context: context)
+// encrypted.count == plaintext.count
+
+// Decrypt - no automatic integrity verification
+let decrypted = try! cell.decrypt(encrypted, context: context)
+```
+
+#### 3. Secure Message (Authenticated Messaging)
+
+**Signature Mode (Sign/Verify):**
+```swift
+// Sender signs with private key
+let senderKeypair = TSKeyGen(algorithm: .EC)!
+let signer = TSMessage(inSignVerifyModeWithPrivateKey: senderKeypair.privateKey,
+                       peerPublicKey: nil)!
+let signedMessage = try! signer.wrap(message)
+
+// Recipient verifies with sender's public key
+let verifier = TSMessage(inSignVerifyModeWithPrivateKey: nil,
+                         peerPublicKey: senderKeypair.publicKey)!
+let verified = try? verifier.unwrapData(signedMessage)
+```
+
+**Encryption Mode (Encrypt/Decrypt):**
+```swift
+// Alice encrypts for Bob
+let aliceKeypair = TSKeyGen(algorithm: .EC)!
+let bobKeypair = TSKeyGen(algorithm: .EC)!
+
+let aliceMessage = TSMessage(inEncryptModeWithPrivateKey: aliceKeypair.privateKey,
+                             peerPublicKey: bobKeypair.publicKey)!
+let encrypted = try! aliceMessage.wrap(message)
+
+// Bob decrypts from Alice
+let bobMessage = TSMessage(inEncryptModeWithPrivateKey: bobKeypair.privateKey,
+                           peerPublicKey: aliceKeypair.publicKey)!
+let decrypted = try? bobMessage.unwrapData(encrypted)
+```
+
+#### 4. Secure Session (Perfect Forward Secrecy)
+
+```swift
+// Callback for peer public key lookup
+final class SessionCallbacks: TSSessionTransportInterface {
+    private let knownPeers: [Data: Data]  // peerID -> publicKey
+    
+    override func publicKey(for peerID: Data) throws -> Data? {
+        return knownPeers[peerID]
+    }
+}
+
+// Initialize session
+let myID: Data = "alice".data(using: .utf8)!
+let myPrivateKey: Data = keypair.privateKey!
+let callbacks = SessionCallbacks(knownPeers: peerDatabase)
+
+let session = TSSession(userId: myID, privateKey: myPrivateKey,
+                        callbacks: callbacks)!
+
+// Client initiates connection
+let negotiationMessage = try! session.connectRequest()
+sendToPeer(negotiationMessage)
+
+// Both parties negotiate until established
+while !session.isSessionEstablished() {
+    let request = receiveFromPeer()
+    if let reply = try? session.unwrapData(request) {
+        sendToPeer(reply)
+    }
+}
+
+// Exchange encrypted messages
+let encrypted = try! session.wrap(message)
+let decrypted = try? session.unwrapData(receivedMessage)
+```
+
+#### 5. Secure Comparator (Zero-Knowledge Proof)
+
+```swift
+// Both parties initialize with their secret
+let secret: Data = "shared-wedding-code".data(using: .utf8)!
+let comparator = TSComparator(messageToCompare: secret)!
+
+// Client initiates
+let initialMessage = try! comparator.beginCompare()
+sendToPeer(initialMessage)
+
+// Exchange messages until comparison complete
+while comparator.status() == .comparatorNotReady {
+    let message = receiveFromPeer()
+    if let response = try? comparator.proceedCompare(message) {
+        sendToPeer(response)
+    }
+}
+
+// Check result
+if comparator.status() == .comparatorMatch {
+    // Secrets match - grant access
+} else {
+    // Secrets don't match - deny access
+}
+```
+
+---
+
+### I Do Blueprint Use Cases
+
+#### 1. Encrypting Sensitive Wedding Data at Rest
+
+**Secure Cell for Local Storage:**
+```swift
+// WeddingDataEncryptionService.swift
+import themis
+
+actor WeddingDataEncryptionService {
+    private let masterKey: Data
+    private let cell: TSCellSeal
+    
+    init() throws {
+        // Load or generate master key from Keychain
+        if let existingKey = KeychainManager.shared.getData(forKey: "wedding_master_key") {
+            self.masterKey = existingKey
+        } else {
+            self.masterKey = TSGenerateSymmetricKey()!
+            try KeychainManager.shared.save(masterKey, forKey: "wedding_master_key")
+        }
+        self.cell = TSCellSeal(key: masterKey)!
+    }
+    
+    /// Encrypt sensitive guest data before local caching
+    func encryptGuestData(_ guest: Guest) throws -> Data {
+        let encoder = JSONEncoder()
+        let plaintext = try encoder.encode(guest)
+        let context = "guest_\(guest.id.uuidString)".data(using: .utf8)!
+        return try cell.encrypt(plaintext, context: context)
+    }
+    
+    /// Decrypt guest data from local cache
+    func decryptGuestData(_ encrypted: Data, guestId: UUID) throws -> Guest {
+        let context = "guest_\(guestId.uuidString)".data(using: .utf8)!
+        let decrypted = try cell.decrypt(encrypted, context: context)
+        return try JSONDecoder().decode(Guest.self, from: decrypted)
+    }
+    
+    /// Encrypt budget information
+    func encryptBudgetData(_ budget: BudgetSummary, coupleId: UUID) throws -> Data {
+        let plaintext = try JSONEncoder().encode(budget)
+        let context = "budget_\(coupleId.uuidString)".data(using: .utf8)!
+        return try cell.encrypt(plaintext, context: context)
+    }
+    
+    /// Encrypt vendor contract details
+    func encryptVendorContract(_ contract: VendorContract) throws -> Data {
+        let plaintext = try JSONEncoder().encode(contract)
+        let context = "contract_\(contract.vendorId.uuidString)".data(using: .utf8)!
+        return try cell.encrypt(plaintext, context: context)
+    }
+}
+```
+
+#### 2. Secure Collaborator Invitation Links
+
+**Secure Message for Invitation Tokens:**
+```swift
+// CollaboratorInvitationCrypto.swift
+import themis
+
+struct CollaboratorInvitationCrypto {
+    private let serverPublicKey: Data  // From Supabase Edge Function
+    private let appKeypair: TSKeyGen
+    
+    init(serverPublicKey: Data) {
+        self.serverPublicKey = serverPublicKey
+        self.appKeypair = TSKeyGen(algorithm: .EC)!
+    }
+    
+    /// Create encrypted invitation payload
+    func createSecureInvitation(
+        coupleId: UUID,
+        inviteeEmail: String,
+        role: CollaboratorRole,
+        expiresAt: Date
+    ) throws -> SecureInvitation {
+        let payload = InvitationPayload(
+            coupleId: coupleId,
+            inviteeEmail: inviteeEmail,
+            role: role,
+            expiresAt: expiresAt,
+            nonce: UUID().uuidString
+        )
+        
+        let message = TSMessage(
+            inEncryptModeWithPrivateKey: appKeypair.privateKey,
+            peerPublicKey: serverPublicKey
+        )!
+        
+        let plaintext = try JSONEncoder().encode(payload)
+        let encrypted = try message.wrap(plaintext)
+        
+        return SecureInvitation(
+            encryptedPayload: encrypted.base64EncodedString(),
+            appPublicKey: appKeypair.publicKey!.base64EncodedString()
+        )
+    }
+    
+    /// Verify invitation signature from server
+    func verifyInvitationResponse(_ signedResponse: Data) throws -> InvitationResponse {
+        let verifier = TSMessage(
+            inSignVerifyModeWithPrivateKey: nil,
+            peerPublicKey: serverPublicKey
+        )!
+        
+        let verified = try verifier.unwrapData(signedResponse)
+        return try JSONDecoder().decode(InvitationResponse.self, from: verified)
+    }
+}
+```
+
+#### 3. Secure Real-time Collaboration Sessions
+
+**Secure Session for Collaborator Communication:**
+```swift
+// CollaborationSessionManager.swift
+import themis
+
+actor CollaborationSessionManager {
+    private var sessions: [UUID: TSSession] = [:]
+    private let myKeypair: TSKeyGen
+    private let callbacks: CollaboratorCallbacks
+    
+    init(collaboratorKeys: [UUID: Data]) {
+        self.myKeypair = TSKeyGen(algorithm: .EC)!
+        self.callbacks = CollaboratorCallbacks(knownCollaborators: collaboratorKeys)
+    }
+    
+    /// Establish secure session with collaborator
+    func establishSession(with collaboratorId: UUID) async throws -> Data {
+        let myId = "app_\(UUID().uuidString)".data(using: .utf8)!
+        let session = TSSession(
+            userId: myId,
+            privateKey: myKeypair.privateKey!,
+            callbacks: callbacks
+        )!
+        
+        sessions[collaboratorId] = session
+        return try session.connectRequest()
+    }
+    
+    /// Process session negotiation message
+    func processNegotiation(from collaboratorId: UUID, message: Data) throws -> Data? {
+        guard let session = sessions[collaboratorId] else {
+            throw CollaborationError.sessionNotFound
+        }
+        return try session.unwrapData(message)
+    }
+    
+    /// Check if session is established
+    func isSessionEstablished(with collaboratorId: UUID) -> Bool {
+        sessions[collaboratorId]?.isSessionEstablished() ?? false
+    }
+    
+    /// Send encrypted activity update
+    func encryptActivityUpdate(_ activity: ActivityEvent, to collaboratorId: UUID) throws -> Data {
+        guard let session = sessions[collaboratorId],
+              session.isSessionEstablished() else {
+            throw CollaborationError.sessionNotEstablished
+        }
+        
+        let plaintext = try JSONEncoder().encode(activity)
+        return try session.wrap(plaintext)
+    }
+    
+    /// Decrypt received activity update
+    func decryptActivityUpdate(_ encrypted: Data, from collaboratorId: UUID) throws -> ActivityEvent {
+        guard let session = sessions[collaboratorId] else {
+            throw CollaborationError.sessionNotFound
+        }
+        
+        let decrypted = try session.unwrapData(encrypted)
+        return try JSONDecoder().decode(ActivityEvent.self, from: decrypted)
+    }
+}
+
+final class CollaboratorCallbacks: TSSessionTransportInterface {
+    private let knownCollaborators: [UUID: Data]
+    
+    init(knownCollaborators: [UUID: Data]) {
+        self.knownCollaborators = knownCollaborators
+        super.init()
+    }
+    
+    override func publicKey(for peerID: Data) throws -> Data? {
+        guard let idString = String(data: peerID, encoding: .utf8),
+              let uuid = UUID(uuidString: idString.replacingOccurrences(of: "collaborator_", with: "")) else {
+            return nil
+        }
+        return knownCollaborators[uuid]
+    }
+}
+```
+
+#### 4. Secure Vendor Access Codes
+
+**Secure Comparator for Vendor Verification:**
+```swift
+// VendorAccessVerification.swift
+import themis
+
+actor VendorAccessVerification {
+    /// Verify vendor has correct access code without revealing it
+    func verifyVendorAccess(
+        vendorProvidedCode: String,
+        expectedCodeHash: String,
+        via channel: AsyncChannel<Data>
+    ) async throws -> Bool {
+        let secret = vendorProvidedCode.data(using: .utf8)!
+        let comparator = TSComparator(messageToCompare: secret)!
+        
+        // Initiate comparison
+        let initialMessage = try comparator.beginCompare()
+        await channel.send(initialMessage)
+        
+        // Exchange messages until comparison complete
+        while comparator.status() == .comparatorNotReady {
+            let response = await channel.receive()
+            if let reply = try? comparator.proceedCompare(response) {
+                await channel.send(reply)
+            }
+        }
+        
+        return comparator.status() == .comparatorMatch
+    }
+}
+```
+
+#### 5. Encrypting Cached Repository Data
+
+**Integration with RepositoryCache:**
+```swift
+// SecureRepositoryCache.swift
+import themis
+
+actor SecureRepositoryCache {
+    private let cache: RepositoryCache
+    private let encryptionService: WeddingDataEncryptionService
+    
+    init(cache: RepositoryCache, encryptionService: WeddingDataEncryptionService) {
+        self.cache = cache
+        self.encryptionService = encryptionService
+    }
+    
+    /// Store encrypted data in cache
+    func setSecure<T: Codable>(_ key: String, value: T, ttl: TimeInterval) async throws {
+        let plaintext = try JSONEncoder().encode(value)
+        let context = "cache_\(key)".data(using: .utf8)!
+        
+        let cell = TSCellSeal(key: try await getOrCreateCacheKey())!
+        let encrypted = try cell.encrypt(plaintext, context: context)
+        
+        await cache.set(key, value: encrypted, ttl: ttl)
+    }
+    
+    /// Retrieve and decrypt data from cache
+    func getSecure<T: Codable>(_ key: String, maxAge: TimeInterval) async throws -> T? {
+        guard let encrypted: Data = await cache.get(key, maxAge: maxAge) else {
+            return nil
+        }
+        
+        let context = "cache_\(key)".data(using: .utf8)!
+        let cell = TSCellSeal(key: try await getOrCreateCacheKey())!
+        let decrypted = try cell.decrypt(encrypted, context: context)
+        
+        return try JSONDecoder().decode(T.self, from: decrypted)
+    }
+    
+    private func getOrCreateCacheKey() async throws -> Data {
+        if let key = KeychainManager.shared.getData(forKey: "cache_encryption_key") {
+            return key
+        }
+        let newKey = TSGenerateSymmetricKey()!
+        try KeychainManager.shared.save(newKey, forKey: "cache_encryption_key")
+        return newKey
+    }
+}
+```
+
+#### 6. Secure Document Storage
+
+**Encrypting Wedding Documents:**
+```swift
+// SecureDocumentService.swift
+import themis
+
+actor SecureDocumentService {
+    private let masterKey: Data
+    
+    init(masterKey: Data) {
+        self.masterKey = masterKey
+    }
+    
+    /// Encrypt document before uploading to Supabase Storage
+    func encryptDocument(_ document: WeddingDocument) throws -> EncryptedDocument {
+        let cell = TSCellSeal(key: masterKey)!
+        
+        // Use document ID as context for additional security
+        let context = "doc_\(document.id.uuidString)_\(document.coupleId.uuidString)".data(using: .utf8)!
+        
+        let encryptedContent = try cell.encrypt(document.content, context: context)
+        let encryptedMetadata = try cell.encrypt(
+            JSONEncoder().encode(document.metadata),
+            context: context
+        )
+        
+        return EncryptedDocument(
+            id: document.id,
+            coupleId: document.coupleId,
+            encryptedContent: encryptedContent,
+            encryptedMetadata: encryptedMetadata,
+            contentHash: SHA256.hash(data: document.content).description
+        )
+    }
+    
+    /// Decrypt document after downloading from Supabase Storage
+    func decryptDocument(_ encrypted: EncryptedDocument) throws -> WeddingDocument {
+        let cell = TSCellSeal(key: masterKey)!
+        let context = "doc_\(encrypted.id.uuidString)_\(encrypted.coupleId.uuidString)".data(using: .utf8)!
+        
+        let content = try cell.decrypt(encrypted.encryptedContent, context: context)
+        let metadataData = try cell.decrypt(encrypted.encryptedMetadata, context: context)
+        let metadata = try JSONDecoder().decode(DocumentMetadata.self, from: metadataData)
+        
+        return WeddingDocument(
+            id: encrypted.id,
+            coupleId: encrypted.coupleId,
+            content: content,
+            metadata: metadata
+        )
+    }
+}
+```
+
+---
+
+### Security Best Practices
+
+1. **Key Management:**
+   - Store symmetric keys in Keychain, never in UserDefaults or plain files
+   - Use separate keys for different data categories (guests, budget, documents)
+   - Rotate keys periodically for long-lived data
+
+2. **Context Usage:**
+   - Always use context/associated data with Secure Cell
+   - Include entity IDs and version info in context
+   - Context prevents data from being decrypted in wrong context
+
+3. **Error Handling:**
+   ```swift
+   do {
+       let decrypted = try cell.decrypt(encrypted, context: context)
+   } catch {
+       AppLogger.security.error("Decryption failed - possible tampering", error: error)
+       SentryService.shared.captureError(error, context: ["operation": "decrypt"])
+       throw SecurityError.decryptionFailed
+   }
+   ```
+
+4. **Secure Session Lifecycle:**
+   - Establish new sessions for each collaboration period
+   - Don't reuse session keys across app launches
+   - Implement session timeout for inactive collaborators
+
+5. **App Store Compliance:**
+   - Themis uses encryption, requiring US export compliance declaration
+   - See: https://docs.cossacklabs.com/themis/regulations/us-crypto-regulations/
+   - Select "Yes" for encryption in App Store Connect
+
+---
+
+### Integration with Existing Architecture
+
+**Repository Pattern Integration:**
+```swift
+// LiveGuestRepository+Encryption.swift
+extension LiveGuestRepository {
+    /// Fetch and decrypt guests from encrypted cache
+    func fetchGuestsSecure() async throws -> [Guest] {
+        let cacheKey = "guests_encrypted_\(tenantId.uuidString)"
+        
+        // Try encrypted cache first
+        if let cached: [Guest] = try? await secureCache.getSecure(cacheKey, maxAge: 60) {
+            return cached
+        }
+        
+        // Fetch from Supabase (data is encrypted at rest by Supabase)
+        let guests = try await fetchGuests()
+        
+        // Cache with client-side encryption
+        try? await secureCache.setSecure(cacheKey, value: guests, ttl: 60)
+        
+        return guests
+    }
+}
+```
+
+**Store Integration:**
+```swift
+// GuestStoreV2+Security.swift
+extension GuestStoreV2 {
+    /// Export guest list with encryption
+    func exportGuestListSecure(password: String) async throws -> Data {
+        let cell = TSCellSeal(passphrase: password)!
+        let guestData = try JSONEncoder().encode(guests)
+        return try cell.encrypt(guestData)
+    }
+    
+    /// Import encrypted guest list
+    func importGuestListSecure(_ encrypted: Data, password: String) async throws {
+        let cell = TSCellSeal(passphrase: password)!
+        let decrypted = try cell.decrypt(encrypted)
+        let importedGuests = try JSONDecoder().decode([Guest].self, from: decrypted)
+        // Process imported guests...
+    }
+}
+```
+
+---
+
+### Resources
+
+- **GitHub:** https://github.com/cossacklabs/themis
+- **Swift Documentation:** https://docs.cossacklabs.com/themis/languages/swift/
+- **Features Guide:** https://docs.cossacklabs.com/themis/languages/swift/features/
+- **Installation:** https://docs.cossacklabs.com/themis/languages/swift/installation/
+- **Swift Examples:** https://github.com/cossacklabs/themis/tree/master/docs/examples/swift
+- **Swift Package Index:** https://swiftpackageindex.com/cossacklabs/themis
+- **Cryptography Theory:** https://docs.cossacklabs.com/themis/crypto-theory/
+- **Key Management:** https://docs.cossacklabs.com/themis/crypto-theory/key-management/
+- **US Export Regulations:** https://docs.cossacklabs.com/themis/regulations/us-crypto-regulations/
+- **Security Whitepaper:** https://www.cossacklabs.com/files/secure-comparator-paper-rev12.pdf
+
+---
+
 ## Integration Scenarios
 
 ### For Multi-Agent Coordination:
@@ -767,6 +1656,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | **ADR Analysis** | MCP Server | Architectural decision records | ADR-driven development, deployment validation |
 | **Code Guardian** | MCP Server | Code quality & refactoring | Quality enforcement, automated fixes |
 | **Grep MCP** | MCP Server | Semantic code search | Large codebase exploration, pattern finding |
+| **Semgrep** | CLI + MCP Server | Static analysis & security scanning | SAST, SCA, secrets detection, Swift security |
 | **Supabase MCP** | MCP Server | Database operations | Supabase development, migrations, Edge Functions |
 | **Swiftzilla** | MCP Server | Swift documentation search | Swift development, API lookup |
 | **Beads** | Plugin/MCP | Task tracking | Persistent task memory, dependency graphs |
@@ -776,6 +1666,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json`:
 | **Owlex** | MCP Server | Multi-agent orchestration | Agent councils, cross-agent critique |
 | **Agent Deck** | Session Manager | AI session management | Running multiple agents, dynamic MCP toggling |
 | **Basic Memory** | MCP Server | Knowledge graph memory | Persistent context, project knowledge base |
+| **Themis** | Swift Package | Cryptographic primitives | Data encryption, secure messaging, session security |
 
 ---
 

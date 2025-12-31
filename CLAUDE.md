@@ -131,7 +131,7 @@ Available environment stores:
 
 ### Repository Pattern
 
-All data access goes through repository protocols for testability:
+All data access goes through repository protocols for testability. **All Live repositories MUST be actors** for thread-safe access:
 
 ```swift
 // 1. Protocol in Domain/Repositories/Protocols/
@@ -140,31 +140,61 @@ protocol GuestRepositoryProtocol: Sendable {
     func createGuest(_ guest: Guest) async throws -> Guest
 }
 
-// 2. Live implementation in Domain/Repositories/Live/
-class LiveGuestRepository: GuestRepositoryProtocol {
-    private let supabase: SupabaseClient
-    private let logger = AppLogger.database
+// 2. Live implementation in Domain/Repositories/Live/ (MUST be actor)
+actor LiveGuestRepository: GuestRepositoryProtocol {
+    private let supabase: SupabaseClient?
+    private let logger = AppLogger.repository
     private let cacheStrategy = GuestCacheStrategy()
+    private let sessionManager: SessionManager
+
+    // In-flight request de-duplication (prevents duplicate API calls)
+    private var inFlightGuests: [UUID: Task<[Guest], Error>] = [:]
 
     func fetchGuests() async throws -> [Guest] {
-        // Check cache first
-        let cacheKey = "guests_\(tenantId.uuidString)"
+        let tenantId = try await getTenantId()
+
+        // 1. Check cache first (standardized key via CacheConfiguration)
+        let cacheKey = CacheConfiguration.KeyPrefix.guests(tenantId)
         if let cached: [Guest] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: guests (\(cached.count) items)")
             return cached
         }
 
-        // Fetch from Supabase - ALWAYS pass UUID directly (not .uuidString)
-        let guests: [Guest] = try await supabase.database
-            .from("guest_list")
-            .select()
-            .eq("couple_id", value: tenantId) // ✅ UUID type
-            .order("created_at", ascending: false)
-            .execute()
-            .value
+        // 2. Coalesce in-flight requests per-tenant (prevents duplicate API calls)
+        if let task = inFlightGuests[tenantId] {
+            return try await task.value
+        }
 
-        // Cache and return
-        await RepositoryCache.shared.set(cacheKey, value: guests, ttl: 60)
-        return guests
+        // 3. Create new task and track it
+        let task = Task<[Guest], Error> { [weak self] in
+            guard let self = self else { throw CancellationError() }
+            let client = try await self.getClient()
+
+            // Fetch from Supabase with retry - ALWAYS pass UUID directly (not .uuidString)
+            let guests: [Guest] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("guest_list")
+                    .select()
+                    .eq("couple_id", value: tenantId) // ✅ UUID type
+                    .order("created_at", ascending: false)
+                    .execute()
+                    .value
+            }
+
+            // Cache result
+            await RepositoryCache.shared.set(cacheKey, value: guests, ttl: 60)
+            return guests
+        }
+
+        inFlightGuests[tenantId] = task
+        do {
+            let result = try await task.value
+            inFlightGuests[tenantId] = nil
+            return result
+        } catch {
+            inFlightGuests[tenantId] = nil
+            throw GuestError.fetchFailed(underlying: error)
+        }
     }
 
     func createGuest(_ guest: Guest) async throws -> Guest {
@@ -183,6 +213,13 @@ extension DependencyValues {
     }
 }
 ```
+
+**Critical Implementation Details:**
+1. All Live repositories are `actor` types for thread safety
+2. In-flight request coalescing prevents duplicate API calls
+3. Cache keys use `CacheConfiguration.KeyPrefix` for standardization
+4. `RepositoryNetwork.withRetry` wraps network calls for resilience
+5. UUID passed directly to Supabase (NOT `.uuidString`)
 
 ### Domain Services Pattern
 
@@ -222,9 +259,43 @@ class LiveBudgetRepository: BudgetRepositoryProtocol {
 
 ### Cache Invalidation Strategy Pattern
 
-Per-domain cache strategies for maintainable cache management:
+Per-domain cache strategies with standardized key prefixes and health monitoring:
 
 ```swift
+// Domain/Repositories/Caching/CacheConfiguration.swift
+enum CacheConfiguration {
+    /// Standardized cache key prefixes (prevents typos, enables monitoring)
+    enum KeyPrefix {
+        static func guests(_ tenantId: UUID) -> String { "guests_\(tenantId.uuidString)" }
+        static func guestStats(_ tenantId: UUID) -> String { "guest_stats_\(tenantId.uuidString)" }
+        static func budget(_ tenantId: UUID) -> String { "budget_\(tenantId.uuidString)" }
+        static func vendors(_ tenantId: UUID) -> String { "vendors_\(tenantId.uuidString)" }
+        // ... more prefixes per domain
+    }
+
+    /// Default TTL values per data type
+    enum TTL {
+        static let guests: TimeInterval = 60        // 1 minute
+        static let budget: TimeInterval = 300       // 5 minutes
+        static let settings: TimeInterval = 3600    // 1 hour
+        static let metadata: TimeInterval = 86400   // 24 hours
+    }
+}
+
+// Domain/Repositories/Caching/CacheMonitor.swift
+actor CacheMonitor {
+    /// Track cache health metrics
+    func trackCacheHealth() async -> CacheHealthReport {
+        let cache = RepositoryCache.shared
+        return CacheHealthReport(
+            hitRate: await cache.hitRate,
+            missRate: await cache.missRate,
+            totalEntries: await cache.count,
+            staleness: await cache.averageAge
+        )
+    }
+}
+
 // Domain/Repositories/Caching/CacheOperation.swift
 enum CacheOperation {
     case guestCreated(tenantId: UUID)
@@ -240,10 +311,9 @@ actor GuestCacheStrategy: CacheInvalidationStrategy {
         case .guestCreated(let tenantId),
              .guestUpdated(let tenantId),
              .guestDeleted(let tenantId):
-            let id = tenantId.uuidString
-            await RepositoryCache.shared.remove("guests_\(id)")
-            await RepositoryCache.shared.remove("guest_stats_\(id)")
-            await RepositoryCache.shared.remove("guest_count_\(id)")
+            // Use standardized key prefixes
+            await RepositoryCache.shared.remove(CacheConfiguration.KeyPrefix.guests(tenantId))
+            await RepositoryCache.shared.remove(CacheConfiguration.KeyPrefix.guestStats(tenantId))
         default:
             break
         }
@@ -468,9 +538,14 @@ I Do Blueprint/
 │   ├── Models/             # Feature-organized domain models (Budget/, Guest/, Task/, etc.)
 │   ├── Repositories/
 │   │   ├── Protocols/      # Repository interfaces
-│   │   ├── Live/           # Supabase implementations with caching
+│   │   ├── Live/           # Actor-based Supabase implementations
+│   │   │   └── Internal/   # Data source actors for parallel fetching
 │   │   ├── Mock/           # Test implementations
-│   │   └── Caching/        # Cache strategies per domain
+│   │   └── Caching/        # Cache infrastructure
+│   │       ├── *CacheStrategy.swift  # Per-domain invalidation strategies
+│   │       ├── CacheConfiguration.swift  # Standardized key prefixes & TTLs
+│   │       ├── CacheMonitor.swift    # Health monitoring
+│   │       └── RepositoryCache.swift # Actor-based in-memory cache
 │   └── Services/           # Domain services (business logic actors)
 ├── Services/
 │   ├── Stores/             # State management (V2 pattern, @MainActor ObservableObject)
@@ -607,11 +682,15 @@ logger.debug("Debug info") // Only in DEBUG builds
 10. Use `async/await` for asynchronous operations
 11. Conform to `Sendable` for types crossing actor boundaries
 12. Cache frequently accessed data with `RepositoryCache`
-13. Use `NetworkRetry` for resilient network operations
+13. Use `RepositoryNetwork.withRetry` for resilient network operations
 14. **Pass UUIDs directly to Supabase queries** (not `.uuidString`)
 15. Use `DateFormatting` for all date display and storage
 16. Always access stores via `AppStores.shared` or `@Environment`
 17. Access BudgetStoreV2 sub-stores directly (no delegation)
+18. **Implement all Live repositories as actors** for thread safety
+19. **Use in-flight request de-duplication** to prevent duplicate API calls
+20. **Use `CacheConfiguration.KeyPrefix`** for standardized cache keys
+21. **Use `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`** for keychain storage
 
 ### ❌ Don'ts
 1. **Don't create store instances in views** - use `AppStores.shared` or `@Environment`
@@ -633,7 +712,9 @@ logger.debug("Debug info") // Only in DEBUG builds
 
 ### Knowledge Management & Task Tracking
 
-This project uses **two complementary tools** for comprehensive workflow management:
+This project uses **multiple complementary tools** for comprehensive workflow management. See `knowledge-repo-bm/mcp-tools/` for detailed documentation on each tool.
+
+#### Core Tools
 
 **📚 Basic Memory (Knowledge Management)** - Stores the WHY and WHAT
 - **Purpose**: Long-term architectural knowledge, decisions, and context
@@ -647,7 +728,31 @@ This project uses **two complementary tools** for comprehensive workflow managem
 - **Storage**: Git-backed `.beads/` directory
 - **Use for**: Features, bugs, tasks, dependencies, work status
 
-**See `BASIC-MEMORY-AND-BEADS-GUIDE.md` for complete integration patterns and workflows.**
+**📊 Beads Viewer (Task Analysis)** - Graph-aware task visualization
+- **Purpose**: Triage, planning, and dependency analysis
+- **Access**: CLI commands (`bv *`)
+- **Key Command**: `bv --robot-triage` (THE MEGA-COMMAND for complete analysis)
+- **Use for**: Finding next task, bottleneck identification, sprint planning
+
+#### MCP Servers Available
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| **ADR Analysis** | Architectural decisions & deployment validation | Architecture work, deployment prep |
+| **Code Guardian** | Code quality & automated fixes | Refactoring, quality gates |
+| **Grep MCP** | Semantic code search | Finding patterns, exploring codebase |
+| **Supabase MCP** | Database operations & Edge Functions | Database work, migrations |
+| **Swiftzilla** | Swift documentation search | Swift API lookup, language features |
+| **Owlex** | Multi-agent coordination | Complex decisions, code review |
+
+#### Security Tools
+
+| Tool | Command | Purpose |
+|------|---------|---------|
+| **MCP Shield** | `npx mcp-shield` | Scan MCP servers for vulnerabilities |
+| **Semgrep** | `swiftscan .` | Swift code security scanning |
+
+**See `BASIC-MEMORY-AND-BEADS-GUIDE.md` and `mcp_tools_info.md` for complete integration patterns.**
 
 ### Quick Reference
 
@@ -657,12 +762,15 @@ This project uses **two complementary tools** for comprehensive workflow managem
 mcp__basic-memory__recent_activity(timeframe: "7d", project: "i-do-blueprint")
 mcp__basic-memory__build_context(url: "projects/i-do-blueprint")
 
-# 2. Check active work (Beads)
+# 2. Get unified triage (Beads Viewer)
+bv --robot-triage
+
+# 3. Check active work (Beads)
 bd ready                    # What's ready to work?
 bd list --status=in_progress # What was I working on?
 
-# 3. Load relevant knowledge (Basic Memory)
-mcp__basic-memory__search_notes("relevant topic")
+# 4. Load relevant knowledge (Basic Memory)
+mcp__basic-memory__search_notes("relevant topic", project: "i-do-blueprint")
 ```
 
 **Session End Protocol:**
@@ -679,11 +787,15 @@ mcp__basic-memory__write_note(
 
 # 3. Sync to git (Beads)
 bd sync
+
+# 4. Check for alerts
+bv --robot-alerts
 ```
 
 **The Golden Rule:**
 - Basic Memory = WHY & WHAT (long-term knowledge)
 - Beads = HOW & WHEN (short-term execution)
+- Beads Viewer = WHAT NEXT (intelligent triage)
 
 ### Atomic Todos
 All work is tracked in `_project_specs/todos/`:
@@ -717,25 +829,58 @@ See `.claude/skills/session-management.md` for detailed checkpoint rules.
 ## When Adding New Features
 
 1. Create domain model in `Domain/Models/{Feature}/`
+   - Ensure `Sendable` conformance for actor-crossing types
+   - Avoid non-Sendable types like `NSImage` if using pagination
+
 2. Create repository protocol in `Domain/Repositories/Protocols/`
+   - Must conform to `Sendable`
+   - All methods must be `async throws` for actor compatibility
+
 3. Implement live repository in `Domain/Repositories/Live/`
-   - Add caching with `RepositoryCache`
+   - **MUST be an `actor`** (not a class)
+   - Add in-flight request de-duplication (per-tenant tracking)
+   - Add caching with `RepositoryCache` using `CacheConfiguration.KeyPrefix`
    - Add cache strategy in `Domain/Repositories/Caching/`
-   - Add retry logic with `NetworkRetry`
+   - Wrap network calls with `RepositoryNetwork.withRetry`
    - Add error tracking with `SentryService`
+   - Use `AppLogger.repository` for logging
+
 4. (Optional) Create domain service in `Domain/Services/` for complex logic
+   - Implement as `actor` for thread-safe business logic
+
 5. Implement mock repository in `I Do BlueprintTests/Helpers/MockRepositories.swift`
+   - Simple class (no actor needed for mocks)
+
 6. Register repository in `Core/Common/Common/DependencyValues.swift`
+   - Create singleton in `LiveRepositories` enum
+   - Add `DependencyKey` with live/test/preview values
+
 7. Create store in `Services/Stores/{Feature}StoreV2.swift`
+   - **MUST be `@MainActor class`**
+   - Conform to `ObservableObject` and `CacheableStore`
    - Use `LoadingState<T>` pattern
-   - Implement `CacheableStore` if needed
-   - Use `handleError` extension
+   - Inject repository via `@Dependency`
+   - Use `handleError` extension for all errors
+   - Track `lastLoadTime` and implement `isCacheValid()`
+   - Cancel previous tasks on new load
+
 8. Create views in `Views/{Feature}/`
+   - Access store via `@Environment(\.appStores)` or `@Environment(\.{feature}Store)`
+   - **NEVER create store instances** with `@StateObject`
    - Use design system constants
    - Add accessibility labels
    - Keep views under 300 lines
+
 9. Add tests in `I Do BlueprintTests/Services/Stores/`
-10. Add database migration if needed (enable RLS, add `couple_id`, create policy)
+   - Test class must be `@MainActor`
+   - Use `withDependencies` to inject mocks
+   - Use `.makeTest()` builders for test data
+
+10. Add database migration if needed
+    - Enable RLS on table
+    - Add `couple_id` column for multi-tenancy
+    - Create RLS policy using `get_user_couple_id()`
+    - Test with multiple tenants to ensure isolation
 
 ## Configuration
 
@@ -753,6 +898,86 @@ See `.claude/skills/session-management.md` for detailed checkpoint rules.
 - ❌ Never include service_role keys in the app
 - ✅ User secrets stored in macOS Keychain
 
+## Known Limitations
+
+### Pagination Limitation (Guest Model)
+
+**Status**: Intentionally not implemented due to Sendable conformance issue.
+
+**Root Cause**: The `Guest` model contains `NSImage` (avatar image), which is **not Sendable** and blocks pagination implementation in actor-based repositories.
+
+```swift
+// Domain/Models/Guest/Guest.swift
+struct Guest: Codable {
+    let id: UUID
+    let firstName: String
+    // ... other properties
+    let avatarImage: NSImage?  // ❌ NSImage is NOT Sendable
+}
+```
+
+**Impact**:
+- Repositories fetch all guests at once (no server-side pagination)
+- Client-side pagination in views still works
+- Acceptable for typical wedding guest lists (< 500 guests)
+- Repository caching mitigates repeated fetch overhead
+
+**Workaround**: Fetch all guests, apply client-side pagination/filtering as needed.
+
+**Future**: Revisit when Swift 6 stabilizes Sendable requirements or when `NSImage` becomes Sendable.
+
+**See**: `LiveGuestRepository.swift` lines 95-107 for commented-out pagination attempt.
+
+## Security Patterns
+
+### Keychain Storage (Session Data)
+
+**Critical**: All session data stored in macOS Keychain uses `kSecAttrAccessibleWhenUnlockedThisDeviceOnly` accessibility level.
+
+```swift
+// Core/Common/Auth/SessionManager.swift
+private func saveToKeychain(_ data: Data, key: String) throws {
+    let query: [String: Any] = [
+        kSecClass as String: kSecClassGenericPassword,
+        kSecAttrAccount as String: key,
+        kSecValueData as String: data,
+        kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly // ✅ Device-locked
+    ]
+    // ...
+}
+```
+
+**Why**: Prevents backup/restore of session data to other devices (security hardening).
+
+**Commit Reference**: `608dfae` - Fixed critical API key exposure and keychain security issues.
+
+### API Key Management
+
+**Never hardcode API keys** in source code. Use environment-based configuration:
+
+```swift
+// Core/Configuration/AppConfig.swift
+enum AppConfig {
+    static var supabaseURL: String {
+        // 1. Try Config.plist (optional override)
+        if let url = Bundle.main.object(forInfoDictionaryKey: "SupabaseURL") as? String {
+            return url
+        }
+        // 2. Fall back to hardcoded (safe: anon key protected by RLS)
+        return "https://your-project.supabase.co"
+    }
+}
+```
+
+**Safe to commit**:
+- ✅ Supabase anon key (protected by Row Level Security)
+- ✅ Sentry DSN (public identifiers)
+
+**Never commit**:
+- ❌ Supabase service_role key
+- ❌ OAuth client secrets
+- ❌ Private API keys
+
 ## Common Pitfalls
 
 1. **Forgetting @MainActor on stores** → runtime crashes
@@ -765,3 +990,7 @@ See `.claude/skills/session-management.md` for detailed checkpoint rules.
 8. **Using TimeZone.current** → inconsistent date display
 9. **Creating store instances in views** → memory explosion
 10. **Creating delegation methods** → unnecessary indirection (use sub-stores)
+11. **Forgetting in-flight request de-duplication** → duplicate API calls
+12. **Not using CacheConfiguration.KeyPrefix** → typos in cache keys
+13. **Hardcoding API keys in source** → security vulnerabilities
+14. **Wrong keychain accessibility** → session data leaks via backup

@@ -103,10 +103,10 @@ private enum AlertPresenterKey: DependencyKey {
     static let liveValue: any AlertPresenterProtocol = AlertPresenter.shared
 
     @MainActor
-    static let testValue: any AlertPresenterProtocol = MockAlertPresenter()
+    static let testValue: any AlertPresenterProtocol = PreviewAlertPresenter()
 
     @MainActor
-    static let previewValue: any AlertPresenterProtocol = MockAlertPresenter()
+    static let previewValue: any AlertPresenterProtocol = PreviewAlertPresenter()
 }
 
 // MARK: - Dependency Extensions

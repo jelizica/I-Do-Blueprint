@@ -277,6 +277,246 @@ extension MoneyOwed {
     }
 }
 
+extension BudgetItem {
+    static func makeTest(
+        id: String = UUID().uuidString,
+        coupleId: String = UUID().uuidString,
+        scenarioId: String = "test-scenario",
+        itemName: String = "Test Budget Item",
+        vendorEstimateWithoutTax: Double = 1000.0,
+        taxRate: Double = 0.08,
+        isFolder: Bool = false,
+        parentFolderId: String? = nil,
+        displayOrder: Int = 0
+    ) -> BudgetItem {
+        BudgetItem(
+            id: id,
+            coupleId: coupleId,
+            scenarioId: scenarioId,
+            itemName: itemName,
+            vendorEstimateWithoutTax: vendorEstimateWithoutTax,
+            taxRate: taxRate,
+            vendorEstimateWithTax: vendorEstimateWithoutTax * (1 + taxRate),
+            isFolder: isFolder,
+            parentFolderId: parentFolderId,
+            displayOrder: displayOrder,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension SavedScenario {
+    static func makeTest(
+        id: String = UUID().uuidString,
+        coupleId: String = UUID().uuidString,
+        scenarioName: String = "Test Scenario",
+        isPrimary: Bool = false
+    ) -> SavedScenario {
+        SavedScenario(
+            id: id,
+            coupleId: coupleId,
+            scenarioName: scenarioName,
+            isPrimary: isPrimary,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension BudgetOverviewItem {
+    static func makeTest(
+        id: String = UUID().uuidString,
+        coupleId: String = UUID().uuidString,
+        scenarioId: String = "test-scenario",
+        itemName: String = "Test Overview Item",
+        vendorEstimateWithoutTax: Double = 1000.0,
+        taxRate: Double = 0.08,
+        spentAmount: Double = 500.0,
+        isFolder: Bool = false
+    ) -> BudgetOverviewItem {
+        BudgetOverviewItem(
+            id: id,
+            coupleId: coupleId,
+            scenarioId: scenarioId,
+            itemName: itemName,
+            vendorEstimateWithoutTax: vendorEstimateWithoutTax,
+            taxRate: taxRate,
+            vendorEstimateWithTax: vendorEstimateWithoutTax * (1 + taxRate),
+            spentAmount: spentAmount,
+            isFolder: isFolder,
+            parentFolderId: nil,
+            displayOrder: 0,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension TaxInfo {
+    static func makeTest(
+        id: Int64 = 1,
+        coupleId: UUID = UUID(),
+        taxName: String = "Sales Tax",
+        taxRate: Double = 0.08,
+        isDefault: Bool = false
+    ) -> TaxInfo {
+        TaxInfo(
+            id: id,
+            coupleId: coupleId,
+            taxName: taxName,
+            taxRate: taxRate,
+            isDefault: isDefault,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension WeddingEvent {
+    static func makeTest(
+        id: String = UUID().uuidString,
+        coupleId: UUID = UUID(),
+        eventName: String = "Test Event",
+        eventDate: Date = Date(),
+        eventType: String = "ceremony"
+    ) -> WeddingEvent {
+        WeddingEvent(
+            id: id,
+            coupleId: coupleId,
+            eventName: eventName,
+            eventDate: eventDate,
+            eventType: eventType,
+            location: nil,
+            description: nil,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension AffordabilityScenario {
+    static func makeTest(
+        id: UUID = UUID(),
+        coupleId: UUID = UUID(),
+        scenarioName: String = "Test Affordability",
+        totalBudget: Double = 50000.0,
+        monthlyIncome: Double = 10000.0,
+        monthlyExpenses: Double = 5000.0
+    ) -> AffordabilityScenario {
+        AffordabilityScenario(
+            id: id,
+            coupleId: coupleId,
+            scenarioName: scenarioName,
+            totalBudget: totalBudget,
+            monthlyIncome: monthlyIncome,
+            monthlyExpenses: monthlyExpenses,
+            savingsGoal: nil,
+            monthsToWedding: 12,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension ContributionItem {
+    static func makeTest(
+        id: UUID = UUID(),
+        scenarioId: UUID = UUID(),
+        coupleId: UUID = UUID(),
+        contributorName: String = "Test Contributor",
+        amount: Double = 5000.0,
+        contributionType: String = "gift"
+    ) -> ContributionItem {
+        ContributionItem(
+            id: id,
+            scenarioId: scenarioId,
+            coupleId: coupleId,
+            contributorName: contributorName,
+            amount: amount,
+            contributionType: contributionType,
+            notes: nil,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension ExpenseAllocation {
+    static func makeTest(
+        id: String = UUID().uuidString,
+        expenseId: String = UUID().uuidString,
+        budgetItemId: String = UUID().uuidString,
+        scenarioId: String = "test-scenario",
+        allocatedAmount: Double = 500.0
+    ) -> ExpenseAllocation {
+        ExpenseAllocation(
+            id: id,
+            expenseId: expenseId,
+            budgetItemId: budgetItemId,
+            scenarioId: scenarioId,
+            allocatedAmount: allocatedAmount,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension FolderTotals {
+    static func makeTest(
+        withoutTax: Double = 10000.0,
+        tax: Double = 800.0,
+        withTax: Double = 10800.0
+    ) -> FolderTotals {
+        FolderTotals(
+            withoutTax: withoutTax,
+            tax: tax,
+            withTax: withTax
+        )
+    }
+}
+
+extension BudgetSummary {
+    static func makeTest(
+        id: UUID = UUID(),
+        coupleId: UUID = UUID(),
+        totalBudget: Double = 50000.0,
+        totalSpent: Double = 25000.0,
+        totalAllocated: Double = 45000.0
+    ) -> BudgetSummary {
+        BudgetSummary(
+            id: id,
+            coupleId: coupleId,
+            totalBudget: totalBudget,
+            totalSpent: totalSpent,
+            totalAllocated: totalAllocated,
+            remainingBudget: totalBudget - totalSpent,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
+extension BudgetDevelopmentScenario {
+    static func makeTest(
+        id: String = UUID().uuidString,
+        coupleId: String = UUID().uuidString,
+        scenarioName: String = "Test Development Scenario",
+        isPrimary: Bool = false,
+        totalEstimate: Double = 50000.0
+    ) -> BudgetDevelopmentScenario {
+        BudgetDevelopmentScenario(
+            id: id,
+            coupleId: coupleId,
+            scenarioName: scenarioName,
+            isPrimary: isPrimary,
+            totalEstimate: totalEstimate,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
+    }
+}
+
 // MARK: - Task Builders
 
 extension WeddingTask {

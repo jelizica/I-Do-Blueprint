@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "MCP Tools (5).md",
+                "file": "CONTEXT_ENGINEERING_SUMMARY.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "MCP Tools (5)"
+              "title": "CONTEXT_ENGINEERING_SUMMARY"
             }
           }
         ]
@@ -183,9 +183,32 @@
       "bases:Create new base": false
     }
   },
-  "active": "d6e809fa65dd9a74",
+  "active": "0b3391b2ed5e7a08",
   "lastOpenFiles": [
-    "I Do Blueprint/Views/Shared/VendorFormComponents.swift",
+    "docs/CONTEXT_ENGINEERING_QUICK_START.md",
+    "CONTEXT_ENGINEERING_SUMMARY.md",
+    "BASIC-MEMORY-AND-BEADS-GUIDE.md",
+    "knowledge-repo-bm/mcp-tools/MCP Servers - Code Analysis.md",
+    "I Do Blueprint/Services/VisualPlanning/Search/SearchModels.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/SavedSearchManager.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/SearchSuggestionService.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/ColorComparisonHelper.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/SearchResultTransformer.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/StylePreferencesSearchService.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/SeatingChartSearchService.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/ColorPaletteSearchService.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search/MoodBoardSearchService.swift",
+    "I Do Blueprint/Services/VisualPlanning/Search",
+    "knowledge-repo-bm/2025-12-29.md",
+    "knowledge-repo-bm/architecture/services/TimelineAPI Service Decomposition.md",
+    "knowledge-repo-bm/project-management/Project Status - December 2025.md",
+    "knowledge-repo-bm/architecture/services/AlertPresenter Service Decomposition.md",
+    "knowledge-repo-bm/testing/Testing Infrastructure and Patterns.md",
+    "knowledge-repo-bm/security/Security Architecture - Multi-Tenancy and RLS.md",
+    "knowledge-repo-bm/quick-reference/I Do Blueprint - Quick Reference Guide.md",
+    "knowledge-repo-bm/project-management/Beads Issues - Active Work and Technical Debt.md",
+    "knowledge-repo-bm/database/Supabase Database Schema Overview.md",
+    "knowledge-repo-bm/projects/i-do-blueprint/I Do Blueprint - Project Overview.md",
     "ARCHITECTURE_IMPROVEMENT_PLAN.md",
     "MCP Tools (5).md"
   ]

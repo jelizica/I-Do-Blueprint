@@ -46,7 +46,7 @@ struct VisualPlanningSearchView: View {
         }
         .sheet(isPresented: $showingSavedSearches) {
             SavedSearchesView(
-                savedSearches: $searchService.savedSearches,
+                savedSearches: searchService.savedSearches,
                 onSelect: { search in
                     searchService.loadSavedSearch(search)
                     showingSavedSearches = false

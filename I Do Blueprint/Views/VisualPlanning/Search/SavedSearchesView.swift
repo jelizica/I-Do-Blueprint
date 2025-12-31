@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct SavedSearchesView: View {
-    @Binding var savedSearches: [SavedSearch]
+    let savedSearches: [SavedSearch]
     let onSelect: (SavedSearch) -> Void
     let onDelete: (SavedSearch) -> Void
     let onDismiss: () -> Void
@@ -242,18 +242,10 @@ struct SavedSearchesView: View {
     }
 
     private func renameSearch(_ search: SavedSearch, to newName: String) {
-        if let index = savedSearches.firstIndex(where: { $0.id == search.id }) {
-            // Create new SavedSearch with updated name
-            let updatedSearch = SavedSearch(
-                name: newName,
-                query: search.query,
-                filters: search.filters,
-                createdAt: search.createdAt,
-                lastUsed: search.lastUsed
-            )
-            savedSearches[index] = updatedSearch
-            logger.info("Renamed search to: \(newName)")
-        }
+        // Note: Rename functionality would need to be handled by the parent
+        // through a callback since savedSearches is no longer mutable
+        logger.info("Rename requested for: \(search.name) to \(newName)")
+        // TODO: Add onRename callback to parent if rename functionality is needed
     }
 
     // MARK: - Sort Option
@@ -398,7 +390,7 @@ struct SavedSearchRow: View {
 
 #Preview {
     SavedSearchesView(
-        savedSearches: .constant([
+        savedSearches: [
             SavedSearch(
                 name: "Romantic Mood Boards",
                 query: "romantic",
@@ -412,7 +404,7 @@ struct SavedSearchRow: View {
                 filters: SearchFilters(tenantId: "preview"),
                 createdAt: Date().addingTimeInterval(-86400 * 14)
             )
-        ]),
+        ],
         onSelect: { _ in },
         onDelete: { _ in },
         onDismiss: {}

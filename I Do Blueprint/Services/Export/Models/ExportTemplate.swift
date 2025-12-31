@@ -96,6 +96,37 @@ enum ExportFormat: String, CaseIterable, Codable {
     }
 }
 
+// MARK: - Export Quality
+
+enum ExportQuality: String, CaseIterable, Codable {
+    case low = "low"
+    case medium = "medium"
+    case high = "high"
+    case ultra = "ultra"
+    
+    var title: String {
+        switch self {
+        case .low: "Low (72 DPI)"
+        case .medium: "Medium (150 DPI)"
+        case .high: "High (300 DPI)"
+        case .ultra: "Ultra (600 DPI)"
+        }
+    }
+    
+    var dpi: CGFloat {
+        switch self {
+        case .low: 72
+        case .medium: 150
+        case .high: 300
+        case .ultra: 600
+        }
+    }
+    
+    var scale: CGFloat {
+        dpi / 72.0 // 72 DPI is the default screen resolution
+    }
+}
+
 // MARK: - Template Feature
 
 enum TemplateFeature: String, CaseIterable, Codable {

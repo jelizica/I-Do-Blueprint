@@ -36,17 +36,23 @@ struct ExportCustomizations {
 enum ExportError: LocalizedError {
     case pageGenerationFailed
     case imageGenerationFailed
+    case renderingFailed
+    case fileCreationFailed
     case unsupportedFormat
     case templateNotFound
     case missingContent
+    case invalidData
 
     var errorDescription: String? {
         switch self {
         case .pageGenerationFailed: "Failed to generate PDF page"
         case .imageGenerationFailed: "Failed to generate image"
+        case .renderingFailed: "Failed to render content"
+        case .fileCreationFailed: "Failed to create export file"
         case .unsupportedFormat: "Unsupported export format"
         case .templateNotFound: "Template not found"
         case .missingContent: "Required content is missing for export"
+        case .invalidData: "Invalid data provided"
         }
     }
 }

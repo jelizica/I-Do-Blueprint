@@ -431,7 +431,7 @@ struct ChecklistItem: View {
     }()
 
     return PreviewStepView(state: $sampleState) {
-        // TODO: Implement action - print("Generate mood board")
+        // Preview-only: No action needed for static preview
     }
     .frame(width: 900, height: 700)
 }

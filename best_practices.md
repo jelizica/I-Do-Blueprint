@@ -935,20 +935,45 @@ allocationsByItem[itemId, default: []].append(allocation)
 
 ---
 
-## 8. Workflow Management with Basic Memory & Beads
+## 8. Workflow Management with MCP Tools
 
-This project uses **two complementary tools** for optimal AI-assisted development workflows:
+This project uses **multiple complementary tools** for optimal AI-assisted development workflows. Detailed documentation is available in `knowledge-repo-bm/mcp-tools/`.
 
 ### Tools Overview
 
-| Tool | Basic Memory | Beads |
-|------|-------------|-------|
-| **Purpose** | Knowledge management | Issue tracking |
-| **Focus** | WHY & WHAT | HOW & WHEN |
-| **Time Horizon** | Long-term (months/years) | Short-term (days/weeks) |
-| **Storage** | Markdown files (semantic graph) | JSONL files (dependency graph) |
-| **Access** | MCP tools | CLI commands |
-| **Integration** | Claude Code, Claude Desktop | Git-native |
+#### Core Workflow Tools
+
+| Tool | Purpose | Focus | Access |
+|------|---------|-------|--------|
+| **Basic Memory** | Knowledge management | WHY & WHAT | MCP tools |
+| **Beads** | Issue tracking | HOW & WHEN | CLI (`bd *`) |
+| **Beads Viewer** | Task visualization | WHAT NEXT | CLI (`bv *`) |
+
+#### MCP Servers
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| **ADR Analysis** | Architectural decisions & deployment validation | Architecture work, deployment prep |
+| **Code Guardian** | Code quality & automated fixes | Refactoring, quality gates |
+| **Grep MCP** | Semantic code search | Finding patterns, exploring codebase |
+| **Supabase MCP** | Database operations & Edge Functions | Database work, migrations |
+| **Swiftzilla** | Swift documentation search | Swift API lookup, language features |
+| **Owlex** | Multi-agent coordination | Complex decisions, code review |
+
+#### Security Tools
+
+| Tool | Command | Purpose |
+|------|---------|---------|
+| **MCP Shield** | `npx mcp-shield` | Scan MCP servers for vulnerabilities |
+| **Semgrep** | `swiftscan .` | Swift code security scanning |
+
+#### Session Management
+
+| Tool | Purpose | When to Use |
+|------|---------|-------------|
+| **Agent Deck** | AI session management | Managing multiple agent sessions |
+| **Sync MCP Config** | MCP configuration sync | Keeping MCP configs in sync across tools |
+| **direnv** | Environment management | Per-project environment variables |
 
 ### When to Use Each Tool
 
@@ -967,6 +992,25 @@ This project uses **two complementary tools** for optimal AI-assisted developmen
 - Dependency management
 - Session continuity
 - Active work status
+
+**Use Beads Viewer For:**
+- Task triage and prioritization (`bv --robot-triage`)
+- Finding next task (`bv --robot-next`)
+- Execution planning (`bv --robot-plan`)
+- Dependency analysis (`bv --robot-insights`)
+- Health monitoring (`bv --robot-alerts`)
+
+**Use MCP Servers For:**
+- **ADR Analysis**: Document architectural decisions, validate deployments
+- **Code Guardian**: Validate code quality, automated refactoring
+- **Grep MCP**: Search codebase semantically, find patterns
+- **Supabase MCP**: Database migrations, Edge Functions, schema work
+- **Swiftzilla**: Look up Swift APIs, language features
+- **Owlex**: Multi-agent code review, complex decisions
+
+**Use Security Tools For:**
+- **MCP Shield**: Daily MCP server security audits
+- **Semgrep**: Pre-commit Swift security scanning
 
 ### Essential Workflows
 
@@ -1183,9 +1227,350 @@ See **`BASIC-MEMORY-AND-BEADS-GUIDE.md`** for:
 - Detailed command reference
 - Advanced use cases
 
+See **`knowledge-repo-bm/mcp-tools/`** for detailed documentation on:
+- MCP Tools Overview
+- MCP Servers - Code Analysis
+- MCP Servers - Infrastructure
+- Development Workflow Tools
+- Multi-Agent Orchestration
+- Knowledge Management
+- Security & Cryptography
+- Agent Workflow Patterns
+- Quick Start Guide
+
 ---
 
-## 9. Other Notes
+## 9. MCP Tools Reference
+
+This section provides a comprehensive reference for all MCP tools available in this project.
+
+### Core Workflow Tools
+
+#### Basic Memory
+**Purpose**: Local-first knowledge management with semantic graph
+**Access**: MCP tools (`mcp__basic-memory__*`)
+**Project**: `i-do-blueprint`
+
+**Key Commands**:
+```bash
+# Reading
+mcp__basic-memory__read_note(identifier: "Note Title", project: "i-do-blueprint")
+mcp__basic-memory__search_notes(query: "search terms", project: "i-do-blueprint")
+mcp__basic-memory__build_context(url: "architecture/*", project: "i-do-blueprint")
+mcp__basic-memory__recent_activity(timeframe: "7d", project: "i-do-blueprint")
+
+# Writing
+mcp__basic-memory__write_note(
+  title: "Note Title",
+  content: "...",
+  folder: "architecture/patterns",
+  tags: ["tag1", "tag2"],
+  project: "i-do-blueprint"
+)
+
+mcp__basic-memory__edit_note(
+  identifier: "Note Title",
+  operation: "append",  # or "prepend", "find_replace", "replace_section"
+  content: "\n## New Section",
+  project: "i-do-blueprint"
+)
+```
+
+**Best Use Cases**:
+- Architectural decisions and ADRs
+- Technical documentation and patterns
+- Research and investigation results
+- Domain knowledge and business rules
+- Common pitfalls and solutions
+
+#### Beads
+**Purpose**: Git-backed graph issue tracker for AI agents
+**Access**: CLI commands (`bd *`)
+**Storage**: `.beads/` directory (git-tracked)
+
+**Key Commands**:
+```bash
+bd init                          # Initialize (run once)
+bd ready                         # Tasks with no blockers
+bd create "Title" -p 0           # Create P0 task
+bd create "Title" -t feature -p 1 # Create feature
+bd create "Title" -t bug -p 0    # Create bug
+bd list --status=open            # List open tasks
+bd show <id>                     # Task details
+bd update <id> --status=in_progress  # Claim task
+bd close <id>                    # Complete task
+bd dep add <child> <parent>      # Add dependency
+bd sync                          # Commit and push
+```
+
+**Priority Levels**: P0=critical, P1=high, P2=medium, P3=low, P4=backlog
+**Types**: task, bug, feature, epic, question, docs
+
+#### Beads Viewer
+**Purpose**: Graph-aware task visualization and analysis
+**Access**: CLI commands (`bv *`)
+
+**Key Commands**:
+```bash
+bv                              # Launch interactive TUI
+bv --robot-triage              # THE MEGA-COMMAND: complete analysis
+bv --robot-next                # Get next task recommendation
+bv --robot-plan                # Execution plan with parallel tracks
+bv --robot-insights            # Graph metrics and analysis
+bv --robot-priority            # Priority recommendations
+bv --robot-alerts              # Health monitoring and drift detection
+bv --robot-label-health        # Per-label health metrics
+bv --robot-forecast            # ETA predictions
+bv --export-pages              # Generate static HTML dashboard
+bv --export-md                 # Export Markdown report
+```
+
+**Graph Metrics Computed**:
+- PageRank (30% weight): Foundational dependency importance
+- Betweenness (30% weight): Bottleneck/bridge position
+- HITS: Hub/Authority identification
+- Critical Path: Longest dependency chain
+- Cycles: Circular dependency detection
+
+### MCP Servers
+
+#### ADR Analysis Server
+**Purpose**: Architectural Decision Records analysis and management
+**Repository**: https://github.com/tosin2013/mcp-adr-analysis-server
+
+**Key Tools**:
+- `analyze_project_ecosystem`: Comprehensive project analysis
+- `get_architectural_context`: Detailed architectural context
+- `generate_adrs_from_prd`: Generate ADRs from PRDs
+- `compare_adr_progress`: Validate TODO.md against ADRs
+- `suggest_adrs`: Suggest architectural decisions
+- `deployment_readiness`: Deployment validation
+- `smart_git_push`: Security-focused git push
+
+**Best Use Cases**:
+- Documenting architectural decisions
+- Validating implementation progress
+- Security scanning before deployments
+- ADR-driven development workflows
+
+#### Code Guardian Studio
+**Purpose**: AI-powered code refactoring and quality analysis
+
+**Key Tools**:
+- `guard_validate`: Validate code for common issues
+- `guard_check_test`: Analyze test files for fake tests
+- `auto_fix_loop`: Automatic error fixing with retry
+- `memory_store`: Store information in persistent memory
+- `memory_recall`: Search and retrieve stored memories
+
+**Best Use Cases**:
+- Code quality enforcement
+- Automated refactoring recommendations
+- Test quality validation
+- Learning from past errors
+
+#### Grep MCP
+**Purpose**: High-performance semantic code search
+**Repository**: https://github.com/galprz/grep-mcp
+
+**Key Tools**:
+- `code_search`: Natural language code search with AI-powered keyword extraction
+
+**Best Use Cases**:
+- Finding code patterns across large codebases
+- Exploring unfamiliar repositories
+- Locating specific implementations
+- Understanding codebase structure
+
+#### Supabase MCP
+**Purpose**: Database operations and API management
+**Repository**: https://github.com/supabase-community/supabase-mcp
+
+**Key Tools**:
+- `list_tables`: List all tables in schema(s)
+- `execute_sql`: Execute raw SQL queries
+- `apply_migration`: Create and apply migrations
+- `deploy_edge_function`: Deploy Edge Functions
+- `get_advisors`: Get security/performance advisories
+- `get_logs`: Retrieve logs by service
+- `create_branch`: Create development branches
+- `merge_branch`: Merge branch migrations
+
+**Best Use Cases**:
+- Database schema development
+- Edge Functions deployment
+- Security and performance monitoring
+- Branch-based development
+
+#### Swiftzilla
+**Purpose**: Swift documentation search
+**Website**: https://swiftzilla.dev/
+
+**Key Tools**:
+- `search`: Search Swift documentation with natural language
+
+**Best Use Cases**:
+- Finding language feature documentation
+- Understanding Swift API design conventions
+- Looking up Apple framework APIs
+- Learning Swift best practices
+
+#### Owlex
+**Purpose**: Multi-agent orchestration
+**Repository**: https://github.com/agentic-mcp-tools/owlex
+
+**Key Tools**:
+- `council_ask`: Query all agents with optional deliberation
+- `start_codex_session`, `start_gemini_session`: Start agent sessions
+- `wait_for_task`, `get_task_result`: Task management
+
+**Best Use Cases**:
+- Multi-agent code review
+- Complex architectural decisions
+- Cross-agent critique mode
+- Parallel analysis
+
+### Security Tools
+
+#### MCP Shield
+**Purpose**: MCP server security scanning
+**Repository**: https://github.com/riseandignite/mcp-shield
+
+**Key Commands**:
+```bash
+npx mcp-shield                              # Basic scan
+npx mcp-shield --claude-api-key KEY         # With AI analysis
+npx mcp-shield --path ~/path/to/config.json # Specific config
+npx mcp-shield --identify-as claude-desktop # Test for bait-and-switch
+npx mcp-shield --safe-list "obsidian,github" # Exclude trusted servers
+```
+
+**What It Detects**:
+- Hidden Instructions
+- Data Exfiltration
+- Tool Shadowing
+- Sensitive File Access
+- Cross-Origin Violations
+- Bait-and-Switch attacks
+
+#### Semgrep
+**Purpose**: Static analysis and security scanning
+**Repository**: https://github.com/semgrep/semgrep
+
+**Key Commands**:
+```bash
+semgrep scan --config auto          # Auto-detect and scan
+swiftscan .                         # Swift-specific scan (alias)
+swiftscan . --json                  # JSON output
+semgrep scan --config p/security-audit  # Security audit
+```
+
+**Swift Security Rules**:
+- CWE-477: Use of obsolete function
+- CWE-327: Broken cryptographic algorithms
+- Certificate Pinning issues
+- Biometric Authentication issues
+- WebView security issues
+- Insecure Storage and Keychain Settings
+
+### Session Management Tools
+
+#### Agent Deck
+**Purpose**: Terminal-based AI session manager
+**Repository**: https://github.com/asheshgoplani/agent-deck
+
+**Key Commands**:
+```bash
+agent-deck                          # Launch interactive TUI
+agent-deck add <path> -c claude     # Add session
+agent-deck list                     # List all sessions
+agent-deck session attach <id>      # Attach to session
+agent-deck session fork <id>        # Fork session
+agent-deck mcp attach <id> <mcp>    # Attach MCP to session
+agent-deck mcp detach <id> <mcp>    # Detach MCP
+```
+
+**Best Use Cases**:
+- Managing multiple AI agent sessions
+- Session forking for parallel exploration
+- Dynamic MCP attachment
+- Hierarchical session organization
+
+#### Sync MCP Config
+**Purpose**: Synchronize MCP configurations across clients
+**Repository**: https://github.com/jgrichardson/sync-mcp-cfg
+
+**Key Commands**:
+```bash
+sync-mcp-cfg init                   # Initialize configuration
+sync-mcp-cfg status                 # Check client status
+sync-mcp-cfg add <name> <command>   # Add MCP server
+sync-mcp-cfg list                   # List configured servers
+sync-mcp-cfg sync --from <client> --to <client>  # Sync between clients
+```
+
+**Supported Clients**:
+- Claude Code CLI
+- Claude Desktop
+- Cursor
+- VS Code Copilot
+- Gemini CLI
+- OpenCode
+
+#### direnv
+**Purpose**: Automatic environment variable management
+**Website**: https://direnv.net/
+
+**Key Commands**:
+```bash
+direnv allow                        # Allow .envrc to execute
+direnv deny                         # Revoke permission
+direnv reload                       # Force reload
+direnv edit                         # Edit and auto-allow
+```
+
+**Best Use Cases**:
+- Project-specific environment variables
+- Automatic tool version switching
+- Per-project PATH modifications
+- Development vs production config
+
+### Daily Workflow Quick Reference
+
+```bash
+# Morning Routine
+bv --robot-triage                   # Get unified triage
+bd ready                            # Find ready tasks
+bd update <id> --status=in_progress # Claim task
+
+# During Work
+swiftscan .                         # Security scan before commit
+# Use MCP servers as needed for specific tasks
+
+# Evening Routine
+bd close <id>                       # Complete tasks
+bd sync                             # Sync Beads
+git push                            # Push code
+bv --robot-alerts                   # Check for issues
+```
+
+### Security Workflow
+
+```bash
+# Daily
+npx mcp-shield                      # Quick MCP audit
+
+# Before Commits
+swiftscan .                         # Swift security scan
+
+# Weekly
+semgrep --config p/swift --config p/secrets .  # Full security scan
+npx mcp-shield --claude-api-key $ANTHROPIC_API_KEY  # Deep MCP analysis
+```
+
+---
+
+## 10. Other Notes
 
 ### For LLMs Generating Code
 

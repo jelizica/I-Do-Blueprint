@@ -1,5 +1,5 @@
 {
-  "originHash" : "20575d36d9324aa53ec4db66abb6b99419bf68aaf3dd1f699939804c2cc7d242",
+  "originHash" : "c38b74772f636e4afc5410b8e41a05473d1688dd1e2224d6d4a30650035d4020",
   "pins" : [
     {
       "identity" : "appauth-ios",
@@ -224,6 +224,15 @@
       "state" : {
         "revision" : "d9f903b214b9d56e3c1e4533b03359aee94acd5d",
         "version" : "0.2.4"
+      }
+    },
+    {
+      "identity" : "themis",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/cossacklabs/themis",
+      "state" : {
+        "revision" : "024f19470629d7d452bb51c0e95375b4cc4cd52d",
+        "version" : "0.15.5"
       }
     },
     {

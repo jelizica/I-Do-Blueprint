@@ -14,8 +14,8 @@ struct ExportInterfaceView: View {
     let exportType: ExportType
     let item: ExportableItem
 
-    @State private var selectedFormat: ExportService.ExportFormat = .pdf
-    @State private var selectedQuality: ExportService.ExportQuality = .high
+    @State private var selectedFormat: ExportFormat = .pdf
+    @State private var selectedQuality: ExportQuality = .high
     @State private var includeMetadata = true
     @State private var includeHexCodes = true
     @State private var includeGuestList = true
@@ -133,10 +133,10 @@ struct ExportInterfaceView: View {
                     .fontWeight(.medium)
 
                 Picker("Format", selection: $selectedFormat) {
-                    ForEach([ExportService.ExportFormat.pdf, .png, .jpeg], id: \.self) { format in
+                    ForEach([ExportFormat.pdf, .png, .jpeg], id: \.self) { format in
                         HStack {
                             Image(systemName: format.icon)
-                            Text(format.title)
+                            Text(format.displayName)
                         }
                         .tag(format)
                     }
@@ -151,7 +151,7 @@ struct ExportInterfaceView: View {
                     .fontWeight(.medium)
 
                 Picker("Quality", selection: $selectedQuality) {
-                    ForEach(ExportService.ExportQuality.allCases, id: \.self) { quality in
+                    ForEach(ExportQuality.allCases, id: \.self) { quality in
                         Text(quality.title).tag(quality)
                     }
                 }
@@ -307,7 +307,7 @@ struct ExportInterfaceView: View {
             }
         }
 
-        throw ExportService.ExportError.invalidData
+        throw ExportError.invalidData
     }
 
     private func calculateEstimatedFileSize() -> String {
@@ -499,22 +499,7 @@ struct SeatingChartPreviewThumbnail: View {
 
 // MARK: - Extensions
 
-extension ExportService.ExportFormat {
-    var icon: String {
-        switch self {
-        case .pdf: "doc.richtext"
-        case .png: "photo"
-        case .jpeg: "photo"
-        case .svg: "square.and.pencil"
-        }
-    }
-}
 
-extension ExportService.ExportQuality: CaseIterable {
-    public static var allCases: [ExportService.ExportQuality] {
-        [.low, .medium, .high, .ultra]
-    }
-}
 
 extension DateFormatter {
     static let filename: DateFormatter = {

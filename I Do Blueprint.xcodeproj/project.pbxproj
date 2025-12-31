@@ -29,6 +29,7 @@
 		1692110B2EAEF20000239461 /* CoreXLSX in Frameworks */ = {isa = PBXBuildFile; productRef = 1692110A2EAEF20000239461 /* CoreXLSX */; };
 		169ADED92EA817330097916E /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 169ADED82EA817330097916E /* Sentry */; };
 		169ADEDB2EA817330097916E /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 169ADEDA2EA817330097916E /* SentrySwiftUI */; };
+		16D71EC62F03E3C000F7FF4F /* themis in Frameworks */ = {isa = PBXBuildFile; productRef = 16D71EC52F03E3C000F7FF4F /* themis */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -99,6 +100,7 @@
 				162469A52E90539D00920873 /* SwiftUIX in Frameworks */,
 				162469A82E9053E400920873 /* Kingfisher in Frameworks */,
 				1692110B2EAEF20000239461 /* CoreXLSX in Frameworks */,
+				16D71EC62F03E3C000F7FF4F /* themis in Frameworks */,
 				162469902E90526300920873 /* AppAuth in Frameworks */,
 				162469842E9051C100920873 /* PostgREST in Frameworks */,
 				1624698D2E90521200920873 /* GoogleAPIClientForREST_Sheets in Frameworks */,
@@ -195,6 +197,7 @@
 				169ADED82EA817330097916E /* Sentry */,
 				169ADEDA2EA817330097916E /* SentrySwiftUI */,
 				1692110A2EAEF20000239461 /* CoreXLSX */,
+				16D71EC52F03E3C000F7FF4F /* themis */,
 			);
 			productName = "I Do Blueprint";
 			productReference = 1624653D2E904FFC00920873 /* I Do Blueprint.app */;
@@ -295,6 +298,7 @@
 				162469AF2E90546B00920873 /* XCRemoteSwiftPackageReference "swift-dependencies" */,
 				169ADED72EA817330097916E /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				169211092EAEF20000239461 /* XCRemoteSwiftPackageReference "CoreXLSX" */,
+				16D71EC42F03E3C000F7FF4F /* XCRemoteSwiftPackageReference "themis" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1624653E2E904FFC00920873 /* Products */;
@@ -866,6 +870,14 @@
 				minimumVersion = 8.57.0;
 			};
 		};
+		16D71EC42F03E3C000F7FF4F /* XCRemoteSwiftPackageReference "themis" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/cossacklabs/themis";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.15.5;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -978,6 +990,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 169ADED72EA817330097916E /* XCRemoteSwiftPackageReference "sentry-cocoa" */;
 			productName = SentrySwiftUI;
+		};
+		16D71EC52F03E3C000F7FF4F /* themis */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 16D71EC42F03E3C000F7FF4F /* XCRemoteSwiftPackageReference "themis" */;
+			productName = themis;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
