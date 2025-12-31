@@ -284,6 +284,7 @@ private struct FormatOptionCard: View {
                 plusOneAttending: true,
                 attendingCeremony: true,
                 attendingReception: true,
+                attendingRehearsal: true,
                 attendingOtherEvents: nil,
                 dietaryRestrictions: "Vegetarian",
                 accessibilityNeeds: nil,

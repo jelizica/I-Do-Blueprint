@@ -339,6 +339,7 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
                     plusOneAttending: guest.plusOneAttending,
                     attendingCeremony: guest.attendingCeremony,
                     attendingReception: guest.attendingReception,
+                    attendingRehearsal: guest.attendingRehearsal,
                     attendingOtherEvents: guest.attendingOtherEvents,
                     dietaryRestrictions: guest.dietaryRestrictions,
                     accessibilityNeeds: guest.accessibilityNeeds,

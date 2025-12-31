@@ -3,6 +3,7 @@
 //  I Do Blueprint
 //
 //  Modern modal guest detail view with gradient header
+//  Displays all guest fields from the database in organized sections
 //
 
 import SwiftUI
@@ -26,15 +27,32 @@ struct GuestDetailViewV4: View {
         settingsStore.settings
     }
     
+    // MARK: - Computed Properties for Section Visibility
+    
     private var hasAddress: Bool {
         guard let guest = guest else { return false }
         return guest.addressLine1 != nil || guest.city != nil || guest.state != nil
     }
     
+    private var hasAccessibilityNeeds: Bool {
+        guard let guest = guest else { return false }
+        return guest.accessibilityNeeds != nil && !guest.accessibilityNeeds!.isEmpty
+    }
+    
+    private var isWeddingPartyMember: Bool {
+        guard let guest = guest else { return false }
+        return guest.isWeddingParty
+    }
+    
     private var shouldShowAdditionalDetails: Bool {
         guard let guest = guest else { return false }
-        return guest.preferredContactMethod != nil || guest.invitationNumber != nil || guest.giftReceived ||
-        guest.isWeddingParty || guest.tableAssignment != nil || guest.seatNumber != nil
+        return guest.preferredContactMethod != nil ||
+               guest.invitationNumber != nil ||
+               guest.giftReceived ||
+               guest.tableAssignment != nil ||
+               guest.seatNumber != nil ||
+               guest.rsvpDate != nil ||
+               guest.plusOneAllowed
     }
     
     var body: some View {
@@ -71,8 +89,20 @@ struct GuestDetailViewV4: View {
                                     GuestDetailDietarySection(restrictions: restrictions)
                                 }
                                 
-                                // Event Attendance
+                                // Accessibility Needs
+                                if hasAccessibilityNeeds {
+                                    GuestDetailAccessibilitySection(
+                                        accessibilityNeeds: guest.accessibilityNeeds!
+                                    )
+                                }
+                                
+                                // Event Attendance (grayed out if not attending)
                                 GuestDetailEventAttendance(guest: guest)
+                                
+                                // Wedding Party Section (only for wedding party members)
+                                if isWeddingPartyMember {
+                                    GuestDetailWeddingPartySection(guest: guest)
+                                }
                                 
                                 // Address Information
                                 if hasAddress {
@@ -84,7 +114,7 @@ struct GuestDetailViewV4: View {
                                     GuestDetailNotesSection(notes: notes)
                                 }
                                 
-                                // Additional Details (collapsed at bottom)
+                                // Additional Details
                                 if shouldShowAdditionalDetails {
                                     Divider()
                                     GuestDetailAdditionalDetails(guest: guest)
@@ -99,7 +129,7 @@ struct GuestDetailViewV4: View {
                             onDelete: { showingDeleteAlert = true }
                         )
                     }
-                    .frame(width: 600, height: 700)
+                    .frame(width: 600, height: 750)
                     .background(AppColors.cardBackground)
                     .cornerRadius(CornerRadius.lg)
                     .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
@@ -133,7 +163,7 @@ struct GuestDetailViewV4: View {
 
 // MARK: - Preview
 
-#Preview {
+#Preview("Attending Guest with All Details") {
     let testGuest = Guest(
         id: UUID(),
         createdAt: Date(),
@@ -152,10 +182,65 @@ struct GuestDetailViewV4: View {
         plusOneAttending: true,
         attendingCeremony: true,
         attendingReception: true,
+        attendingRehearsal: true,
         attendingOtherEvents: nil,
         dietaryRestrictions: "Vegetarian, Gluten-Free",
-        accessibilityNeeds: nil,
+        accessibilityNeeds: "Wheelchair accessible seating required",
         tableAssignment: 5,
+        seatNumber: 3,
+        preferredContactMethod: .email,
+        addressLine1: "123 Main Street",
+        addressLine2: "Apt 4B",
+        city: "Boston",
+        state: "MA",
+        zipCode: "02101",
+        country: "USA",
+        invitationNumber: "INV-2026-042",
+        isWeddingParty: true,
+        weddingPartyRole: "Bridesmaid",
+        preparationNotes: "Arriving at 8am for photos",
+        coupleId: UUID(),
+        mealOption: "Vegetarian",
+        giftReceived: true,
+        notes: "Sarah requested a seat near the bridal party table.",
+        hairDone: true,
+        makeupDone: false
+    )
+    
+    let store = GuestStoreV2()
+    
+    return GuestDetailViewV4(
+        guestId: testGuest.id,
+        guestStore: store
+    )
+    .environmentObject(SettingsStoreV2())
+    .environmentObject(AppCoordinator.shared)
+}
+
+#Preview("Pending Guest") {
+    let testGuest = Guest(
+        id: UUID(),
+        createdAt: Date(),
+        updatedAt: Date(),
+        firstName: "John",
+        lastName: "Doe",
+        email: "john.doe@email.com",
+        phone: nil,
+        guestGroupId: nil,
+        relationshipToCouple: "Colleague",
+        invitedBy: .bride2,
+        rsvpStatus: .pending,
+        rsvpDate: nil,
+        plusOneAllowed: false,
+        plusOneName: nil,
+        plusOneAttending: false,
+        attendingCeremony: true,
+        attendingReception: true,
+        attendingRehearsal: false,
+        attendingOtherEvents: nil,
+        dietaryRestrictions: nil,
+        accessibilityNeeds: nil,
+        tableAssignment: nil,
         seatNumber: nil,
         preferredContactMethod: .email,
         addressLine1: nil,
@@ -169,16 +254,14 @@ struct GuestDetailViewV4: View {
         weddingPartyRole: nil,
         preparationNotes: nil,
         coupleId: UUID(),
-        mealOption: "Vegetarian",
+        mealOption: nil,
         giftReceived: false,
-        notes: "Sarah requested a seat near the bridal party table. She's also volunteering to help with decorations on the wedding morning.",
+        notes: nil,
         hairDone: false,
         makeupDone: false
     )
     
     let store = GuestStoreV2()
-    // Note: In preview, the guest won't be in the store, so the modal will dismiss immediately
-    // For a working preview, you'd need to add the guest to the store first
     
     return GuestDetailViewV4(
         guestId: testGuest.id,

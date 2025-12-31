@@ -602,6 +602,7 @@ struct GuestDTO: Codable {
             plusOneAttending: false,
             attendingCeremony: true,
             attendingReception: true,
+            attendingRehearsal: true,
             attendingOtherEvents: nil,
             dietaryRestrictions: dietary_restrictions,
             accessibilityNeeds: nil,

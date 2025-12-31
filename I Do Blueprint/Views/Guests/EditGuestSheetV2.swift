@@ -316,6 +316,7 @@ struct EditGuestSheetV2: View {
             plusOneAttending: false,
             attendingCeremony: true,
             attendingReception: true,
+            attendingRehearsal: true,
             attendingOtherEvents: nil,
             dietaryRestrictions: nil,
             accessibilityNeeds: nil,

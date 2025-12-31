@@ -419,6 +419,7 @@ struct AddGuestView: View {
             plusOneAttending: false,
             attendingCeremony: attendingCeremony,
             attendingReception: attendingReception,
+            attendingRehearsal: attendingCeremony, // Default to same as ceremony
             attendingOtherEvents: nil,
             dietaryRestrictions: dietaryRestrictions.isEmpty ? nil : dietaryRestrictions
                 .trimmingCharacters(in: .whitespacesAndNewlines),

@@ -115,6 +115,7 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
     var plusOneAttending: Bool
     var attendingCeremony: Bool
     var attendingReception: Bool
+    var attendingRehearsal: Bool
     var attendingOtherEvents: [String]?
     var dietaryRestrictions: String?
     var accessibilityNeeds: String?
@@ -147,6 +148,11 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
         return phone
     }
 
+    /// Returns true if the guest's RSVP status indicates they are attending
+    var isAttending: Bool {
+        rsvpStatus == .attending || rsvpStatus == .confirmed
+    }
+
     // Custom coding keys to match database column names
     enum CodingKeys: String, CodingKey {
         case id = "id"
@@ -166,6 +172,7 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
         case plusOneAttending = "plus_one_attending"
         case attendingCeremony = "attending_ceremony"
         case attendingReception = "attending_reception"
+        case attendingRehearsal = "attending_rehearsal"
         case attendingOtherEvents = "attending_other_events"
         case dietaryRestrictions = "dietary_restrictions"
         case accessibilityNeeds = "accessibility_needs"

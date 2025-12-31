@@ -73,6 +73,7 @@ final class GuestConversionService: GuestConversionProtocol {
                 plusOneAttending: DateParsingHelpers.parseBoolean(values["plusOneAttending"] ?? "") ?? false,
                 attendingCeremony: DateParsingHelpers.parseBoolean(values["attendingCeremony"] ?? "") ?? true,
                 attendingReception: DateParsingHelpers.parseBoolean(values["attendingReception"] ?? "") ?? true,
+                attendingRehearsal: DateParsingHelpers.parseBoolean(values["attendingRehearsal"] ?? "") ?? true,
                 attendingOtherEvents: nil,
                 dietaryRestrictions: values["dietaryRestrictions"]?.trimmingCharacters(in: .whitespaces).nilIfEmpty,
                 accessibilityNeeds: values["accessibilityNeeds"]?.trimmingCharacters(in: .whitespaces).nilIfEmpty,
