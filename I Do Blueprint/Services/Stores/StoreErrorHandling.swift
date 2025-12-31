@@ -13,6 +13,10 @@ import SwiftUI
 extension ObservableObject where Self: AnyObject {
 
     /// Handle an error with user-facing feedback, Sentry tracking, and optional retry
+    /// 
+    /// **Important**: This method automatically filters out `CancellationError` and URL cancellation errors,
+    /// which are expected during normal SwiftUI lifecycle events (e.g., tab switching, view dismissal).
+    /// These errors are logged at debug level and do NOT trigger user-facing alerts or Sentry reports.
     @MainActor
     func handleError(
         _ error: Error,
@@ -20,6 +24,20 @@ extension ObservableObject where Self: AnyObject {
         context: [String: Any]? = nil,
         retry: (() async -> Void)? = nil
     ) async {
+        // CRITICAL: Filter out cancellation errors - these are expected during normal SwiftUI lifecycle
+        // (e.g., user switches tabs, view disappears, task is cancelled)
+        // Do NOT show user-facing errors or report to Sentry for cancellations
+        if error is CancellationError {
+            AppLogger.database.debug("Task cancelled in \(operation) - this is expected during view lifecycle changes")
+            return
+        }
+        
+        // Also check for URLError.cancelled which can occur when network requests are cancelled
+        if let urlError = error as? URLError, urlError.code == .cancelled {
+            AppLogger.database.debug("URL request cancelled in \(operation) - this is expected during view lifecycle changes")
+            return
+        }
+        
         let userError = UserFacingError.from(error)
 
         // Log the technical error

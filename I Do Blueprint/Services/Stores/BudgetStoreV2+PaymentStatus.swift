@@ -57,6 +57,14 @@ extension BudgetStoreV2 {
                 do {
                     _ = try await repository.updateExpense(expense)
                     successCount += 1
+                } catch is CancellationError {
+                    // Task was cancelled (e.g., user switched tabs) - this is expected, don't report
+                    logger.debug("Payment status update cancelled for expense \(expense.id)")
+                    break // Exit loop immediately on cancellation
+                } catch let urlError as URLError where urlError.code == .cancelled {
+                    // URL request was cancelled - this is expected during view lifecycle changes
+                    logger.debug("Payment status update URL request cancelled for expense \(expense.id)")
+                    break // Exit loop immediately on cancellation
                 } catch {
                     failureCount += 1
                     logger.error("Failed to update payment status for expense \(expense.id): \(error.localizedDescription)", error: error)

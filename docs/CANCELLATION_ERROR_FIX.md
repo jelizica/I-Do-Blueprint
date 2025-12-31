@@ -1,8 +1,10 @@
-# Cancellation Error Fix - Settings Tab Switching
+# Cancellation Error Fix - Comprehensive Solution
 
 ## Problem Summary
 
-When switching tabs in Settings, Sentry was receiving multiple `CancellationError` reports from `BudgetCategoryDataSource.checkCategoryDependencies()`. These were being logged as errors and sent to Sentry, creating noise in error tracking.
+When switching tabs in Settings (or any view with `.task` modifiers), users were seeing error dialogs like "Unable to load budget data" even though no actual error occurred. Additionally, Sentry was receiving multiple `CancellationError` reports, creating noise in error tracking.
+
+**User-Visible Symptom**: Error dialog appears when switching between Budget Categories and Budget Configuration tabs.
 
 ## Root Cause
 
@@ -135,15 +137,138 @@ This is **expected SwiftUI behavior**:
 4. ✅ **Cancellation checkpoints**: Use `Task.checkCancellation()` in expensive operations
 5. ✅ **Selective error reporting**: Only report actual errors to Sentry
 
-## Future Considerations
+## Comprehensive Fix (2025-01-01)
 
-If this pattern appears in other stores, consider:
-1. Creating a reusable `handleCancellableLoop` helper
-2. Adding cancellation handling to `StoreErrorHandling` extension
-3. Documenting this pattern in `best_practices.md`
+The pattern has been applied globally to prevent this issue across ALL stores and views.
+
+### Fix 2: StoreErrorHandling.swift - Global Cancellation Filter
+
+**File**: `I Do Blueprint/Services/Stores/StoreErrorHandling.swift`
+
+**Change**: Added cancellation filtering at the TOP of `handleError()` so ALL stores benefit:
+
+```swift
+@MainActor
+func handleError(
+    _ error: Error,
+    operation: String,
+    context: [String: Any]? = nil,
+    retry: (() async -> Void)? = nil
+) async {
+    // CRITICAL: Filter out cancellation errors - these are expected during normal SwiftUI lifecycle
+    if error is CancellationError {
+        AppLogger.database.debug("Task cancelled in \(operation) - this is expected during view lifecycle changes")
+        return
+    }
+    
+    // Also check for URLError.cancelled
+    if let urlError = error as? URLError, urlError.code == .cancelled {
+        AppLogger.database.debug("URL request cancelled in \(operation) - this is expected during view lifecycle changes")
+        return
+    }
+    
+    // Only real errors reach this point...
+}
+```
+
+**Impact**: Every store using `handleError()` now automatically filters cancellation errors.
+
+### Fix 3: UserFacingError.swift - Added Cancelled Case
+
+**File**: `I Do Blueprint/Domain/Models/Shared/UserFacingError.swift`
+
+**Changes**:
+1. Added `.cancelled` case to the enum
+2. Updated `from()` to detect cancellation errors first
+3. Added `shouldShowToUser` property
+
+```swift
+enum UserFacingError: LocalizedError {
+    case cancelled  // Task was cancelled (expected during view lifecycle changes)
+    // ... other cases
+    
+    static func from(_ error: Error) -> UserFacingError {
+        // Check cancellation first
+        if error is CancellationError {
+            return .cancelled
+        }
+        
+        if let urlError = error as? URLError, urlError.code == .cancelled {
+            return .cancelled
+        }
+        // ... other mappings
+    }
+    
+    var shouldShowToUser: Bool {
+        switch self {
+        case .cancelled: return false
+        default: return true
+        }
+    }
+}
+```
+
+### Fix 4: BudgetStoreV2+PaymentStatus.swift - Loop Cancellation
+
+**File**: `I Do Blueprint/Services/Stores/BudgetStoreV2+PaymentStatus.swift`
+
+**Change**: Added cancellation handling in the expense update loop:
+
+```swift
+for expense in expensesToUpdate {
+    do {
+        _ = try await repository.updateExpense(expense)
+        successCount += 1
+    } catch is CancellationError {
+        logger.debug("Payment status update cancelled for expense \(expense.id)")
+        break // Exit loop immediately
+    } catch let urlError as URLError where urlError.code == .cancelled {
+        logger.debug("Payment status update URL request cancelled for expense \(expense.id)")
+        break
+    } catch {
+        // Only report actual errors
+        await handleError(error, operation: "updateExpensePaymentStatus", context: [...])
+    }
+}
+```
+
+## Defense in Depth Architecture
+
+The fix uses multiple layers to ensure cancellation errors never reach users:
+
+```
+Layer 1: StoreErrorHandling.handleError()
+         ↓ filters CancellationError, returns early
+         
+Layer 2: UserFacingError.from()
+         ↓ maps to .cancelled case
+         
+Layer 3: UserFacingError.shouldShowToUser
+         ↓ returns false for .cancelled
+         
+Layer 4: Individual store loops
+         ↓ catch CancellationError, break immediately
+```
+
+## Files Modified
+
+| File | Change |
+|------|--------|
+| `Services/Stores/StoreErrorHandling.swift` | Global cancellation filter |
+| `Domain/Models/Shared/UserFacingError.swift` | Added `.cancelled` case |
+| `Services/Stores/Budget/CategoryStoreV2.swift` | Loop cancellation (original fix) |
+| `Services/Stores/BudgetStoreV2+PaymentStatus.swift` | Loop cancellation |
+
+## Knowledge Base
+
+This pattern is documented in Basic Memory:
+- **Note**: `architecture/patterns/CancellationError Handling Pattern`
+- **Tags**: error-handling, swiftui, async, cancellation, patterns, stores
 
 ---
 
-**Date**: 2025-12-31  
+**Original Date**: 2025-12-31  
+**Comprehensive Fix**: 2025-01-01  
 **Fixed By**: Claude (Qodo)  
+**Beads Issue**: I Do Blueprint-74p (closed)
 **Sentry Event IDs**: bf7501062cc748b89f5cf69113772fe7, c49b4af013e94b96bf5c48e9e973bf83, c34dddfc781f415b956e653aa54158fe

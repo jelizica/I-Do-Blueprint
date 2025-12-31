@@ -16,6 +16,7 @@ enum UserFacingError: LocalizedError {
     case notFound(String)
     case unauthorized
     case rateLimited
+    case cancelled  // Task was cancelled (expected during view lifecycle changes)
     case unknown(Error)
 
     var errorDescription: String? {
@@ -34,6 +35,9 @@ enum UserFacingError: LocalizedError {
             return "Your session has expired. Please sign in again."
         case .rateLimited:
             return "Too many requests. Please wait a moment and try again."
+        case .cancelled:
+            // This should never be shown to users - it's filtered out before display
+            return nil
         case .unknown(let error):
             return "An unexpected error occurred: \(error.localizedDescription)"
         }
@@ -55,6 +59,9 @@ enum UserFacingError: LocalizedError {
             return "Sign in again to continue."
         case .rateLimited:
             return "Wait a moment before making more requests."
+        case .cancelled:
+            // This should never be shown to users - it's filtered out before display
+            return nil
         case .unknown:
             return "Try again or contact support if the problem persists."
         }
@@ -64,13 +71,34 @@ enum UserFacingError: LocalizedError {
         switch self {
         case .networkUnavailable, .serverError, .timeout, .rateLimited:
             return true
-        case .validationFailed, .notFound, .unauthorized, .unknown:
+        case .validationFailed, .notFound, .unauthorized, .unknown, .cancelled:
             return false
         }
     }
 
     /// Maps any error to a user-facing error
     static func from(_ error: Error) -> UserFacingError {
+        // CRITICAL: Check for cancellation errors first - these are expected during SwiftUI lifecycle
+        // (e.g., user switches tabs, view disappears, task is cancelled)
+        // Return .cancelled so callers can filter these out before showing to users
+        if error is CancellationError {
+            return .cancelled
+        }
+        
+        // Check for URLError (including cancellation)
+        if let urlError = error as? URLError {
+            switch urlError.code {
+            case .cancelled:
+                return .cancelled
+            case .notConnectedToInternet, .networkConnectionLost:
+                return .networkUnavailable
+            case .timedOut:
+                return .timeout
+            default:
+                return .serverError
+            }
+        }
+        
         // Check for NetworkError (already exists)
         if let networkError = error as? NetworkError {
             switch networkError {
@@ -91,18 +119,6 @@ enum UserFacingError: LocalizedError {
             }
         }
 
-        // Check for URLError
-        if let urlError = error as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .networkConnectionLost:
-                return .networkUnavailable
-            case .timedOut:
-                return .timeout
-            default:
-                return .serverError
-            }
-        }
-
         // Check for domain errors (BudgetError, GuestError, etc.)
         // These are already wrapped, so treat as server errors
         let errorString = String(describing: error)
@@ -114,5 +130,16 @@ enum UserFacingError: LocalizedError {
         }
 
         return .unknown(error)
+    }
+    
+    /// Returns true if this error should be shown to users
+    /// Cancellation errors should NOT be shown as they are expected during normal app usage
+    var shouldShowToUser: Bool {
+        switch self {
+        case .cancelled:
+            return false
+        default:
+            return true
+        }
     }
 }
