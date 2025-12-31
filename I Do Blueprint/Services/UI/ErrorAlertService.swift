@@ -93,10 +93,20 @@ class ErrorAlertService {
     }
 
     /// Show a user-facing error with optional retry
+    /// 
+    /// **Note**: Cancellation errors (`.cancelled`) are automatically filtered out
+    /// and will NOT show any alert, as they are expected during normal SwiftUI lifecycle.
     func showUserFacingError(
         _ error: UserFacingError,
         retryAction: (() async -> Void)? = nil
     ) async {
+        // CRITICAL: Don't show alerts for cancellation errors
+        // These are expected during normal SwiftUI lifecycle (tab switching, view dismissal)
+        guard error.shouldShowToUser else {
+            AppLogger.ui.debug("Skipping alert for non-user-facing error: \(String(describing: error))")
+            return
+        }
+        
         let title = error.isRetryable ? "Temporary Error" : "Error"
         let message = [
             error.errorDescription,

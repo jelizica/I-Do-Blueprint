@@ -99,6 +99,83 @@ enum UserFacingError: LocalizedError {
             }
         }
         
+        // Check for BudgetError with underlying cancellation
+        if let budgetError = error as? BudgetError {
+            switch budgetError {
+            case .fetchFailed(let underlying), .createFailed(let underlying),
+                 .updateFailed(let underlying), .deleteFailed(let underlying):
+                // Recursively check if underlying error is cancellation
+                let underlyingUserError = UserFacingError.from(underlying)
+                if case .cancelled = underlyingUserError {
+                    return .cancelled
+                }
+                return .serverError
+            case .networkUnavailable:
+                return .networkUnavailable
+            case .unauthorized:
+                return .unauthorized
+            default:
+                return .serverError
+            }
+        }
+        
+        // Check for GuestError with underlying cancellation
+        if let guestError = error as? GuestError {
+            switch guestError {
+            case .fetchFailed(let underlying), .createFailed(let underlying),
+                 .updateFailed(let underlying), .deleteFailed(let underlying):
+                let underlyingUserError = UserFacingError.from(underlying)
+                if case .cancelled = underlyingUserError {
+                    return .cancelled
+                }
+                return .serverError
+            case .networkUnavailable:
+                return .networkUnavailable
+            case .unauthorized:
+                return .unauthorized
+            default:
+                return .serverError
+            }
+        }
+        
+        // Check for VendorError with underlying cancellation
+        if let vendorError = error as? VendorError {
+            switch vendorError {
+            case .fetchFailed(let underlying), .createFailed(let underlying),
+                 .updateFailed(let underlying), .deleteFailed(let underlying):
+                let underlyingUserError = UserFacingError.from(underlying)
+                if case .cancelled = underlyingUserError {
+                    return .cancelled
+                }
+                return .serverError
+            case .networkUnavailable:
+                return .networkUnavailable
+            case .unauthorized:
+                return .unauthorized
+            default:
+                return .serverError
+            }
+        }
+        
+        // Check for TaskError with underlying cancellation
+        if let taskError = error as? TaskError {
+            switch taskError {
+            case .fetchFailed(let underlying), .createFailed(let underlying),
+                 .updateFailed(let underlying), .deleteFailed(let underlying):
+                let underlyingUserError = UserFacingError.from(underlying)
+                if case .cancelled = underlyingUserError {
+                    return .cancelled
+                }
+                return .serverError
+            case .networkUnavailable:
+                return .networkUnavailable
+            case .unauthorized:
+                return .unauthorized
+            default:
+                return .serverError
+            }
+        }
+        
         // Check for NetworkError (already exists)
         if let networkError = error as? NetworkError {
             switch networkError {
@@ -119,8 +196,8 @@ enum UserFacingError: LocalizedError {
             }
         }
 
-        // Check for domain errors (BudgetError, GuestError, etc.)
-        // These are already wrapped, so treat as server errors
+        // Fallback: Check for domain errors by string matching
+        // This catches any domain errors we might have missed above
         let errorString = String(describing: error)
         if errorString.contains("BudgetError") ||
            errorString.contains("GuestError") ||
