@@ -183,7 +183,12 @@ final class CategoryStoreV2: ObservableObject {
                 let deps = try await repository.checkCategoryDependencies(id: category.id)
                 categoryDependencies[category.id] = deps
                 loadedCount += 1
+            } catch is CancellationError {
+                // Task was cancelled (e.g., user switched tabs) - this is expected, don't report
+                logger.debug("Category dependency load cancelled for category \(category.id)")
+                break // Exit loop immediately on cancellation
             } catch {
+                // Only report non-cancellation errors
                 await handleError(error, operation: "loadCategoryDependencies", context: [
                     "categoryId": category.id.uuidString
                 ])
@@ -191,7 +196,9 @@ final class CategoryStoreV2: ObservableObject {
         }
         
         let duration = Date().timeIntervalSince(start)
-        logger.info("Loaded dependencies for \(loadedCount)/\(categories.count) categories in \(String(format: "%.2f", duration))s")
+        if loadedCount > 0 {
+            logger.info("Loaded dependencies for \(loadedCount)/\(categories.count) categories in \(String(format: "%.2f", duration))s")
+        }
     }
     
     /// Check if a category can be deleted (has no dependencies)

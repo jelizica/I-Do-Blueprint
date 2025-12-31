@@ -204,6 +204,9 @@ actor BudgetCategoryDataSource {
         do {
             let startTime = Date()
             
+            // Check for cancellation before starting expensive operations
+            try Task.checkCancellation()
+            
             // Fetch the category first to get its name
             let categories: [BudgetCategory] = try await RepositoryNetwork.withRetry { [self] in
                 try await self.supabase
@@ -223,6 +226,9 @@ actor BudgetCategoryDataSource {
                     userInfo: [NSLocalizedDescriptionKey: "Category not found"]
                 ))
             }
+            
+            // Check for cancellation before continuing
+            try Task.checkCancellation()
             
             // Fetch expenses linked to this category
             let expenses: [Expense] = try await RepositoryNetwork.withRetry { [self] in
