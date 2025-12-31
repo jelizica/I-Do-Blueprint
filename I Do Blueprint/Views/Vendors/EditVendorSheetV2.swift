@@ -11,6 +11,7 @@ import Supabase
 import Storage
 import UniformTypeIdentifiers
 import PhotosUI
+import PhoneNumberKit
 
 struct EditVendorSheetV2: View {
     @Environment(\.dismiss) private var dismiss
@@ -213,9 +214,12 @@ struct EditVendorSheetV2: View {
                             }
 
                             FormField(label: "Phone") {
-                                TextField("(555) 123-4567", text: $phoneNumber)
-                                    .textFieldStyle(.roundedBorder)
-                                    .textContentType(.telephoneNumber)
+                                PhoneNumberTextFieldWrapper(
+                                    phoneNumber: $phoneNumber,
+                                    defaultRegion: "US",
+                                    placeholder: "(555) 123-4567"
+                                )
+                                .frame(height: 40)
                             }
 
                             FormField(label: "Website") {
