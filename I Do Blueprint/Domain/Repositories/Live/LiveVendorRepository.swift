@@ -213,13 +213,22 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             let tenantId = try await getTenantId()
             let startTime = Date()
 
+            // Format phone number before saving
+            var formattedPhoneNumber = vendor.phoneNumber
+            if let phone = vendor.phoneNumber, !phone.isEmpty {
+                let phoneService = PhoneNumberService()
+                let formatted = await phoneService.formatPhoneNumber(phone)
+                formattedPhoneNumber = formatted ?? phone // Fallback to original if formatting fails
+                logger.debug("Formatted phone: \(phone) -> \(formatted ?? phone)")
+            }
+
             // Create insert data without the id field - database will auto-generate it
             let insertData = VendorInsertData(
                 vendorName: vendor.vendorName,
                 vendorType: vendor.vendorType,
                 vendorCategoryId: vendor.vendorCategoryId,
                 contactName: vendor.contactName,
-                phoneNumber: vendor.phoneNumber,
+                phoneNumber: formattedPhoneNumber,
                 email: vendor.email,
                 website: vendor.website,
                 notes: vendor.notes,
@@ -280,6 +289,14 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
             var updated = vendor
             updated.updatedAt = Date()
             let startTime = Date()
+
+            // Format phone number before saving
+            if let phone = updated.phoneNumber, !phone.isEmpty {
+                let phoneService = PhoneNumberService()
+                let formatted = await phoneService.formatPhoneNumber(phone)
+                updated.phoneNumber = formatted ?? phone // Fallback to original if formatting fails
+                logger.debug("Formatted phone: \(phone) -> \(formatted ?? phone)")
+            }
 
             let result: Vendor = try await RepositoryNetwork.withRetry {
                 try await client
@@ -669,33 +686,47 @@ actor LiveVendorRepository: VendorRepositoryProtocol {
 
             logger.info("Starting import of \(vendors.count) vendors for couple: \(tenantId.uuidString)")
 
+            // Format phone numbers before import
+            let phoneService = PhoneNumberService()
+            var formattedVendors: [(vendor: VendorImportData, formattedPhone: String?)] = []
+            
+            for vendor in vendors {
+                var formattedPhone = vendor.phoneNumber
+                if let phone = vendor.phoneNumber, !phone.isEmpty {
+                    let formatted = await phoneService.formatPhoneNumber(phone)
+                    formattedPhone = formatted ?? phone
+                    logger.debug("Formatted phone during import: \(phone) -> \(formatted ?? phone)")
+                }
+                formattedVendors.append((vendor, formattedPhone))
+            }
+
             // Convert import data to insert format (uses file-level VendorInsertData struct)
-            let insertData = vendors.map { vendor in
+            let insertData = formattedVendors.map { item in
                 VendorInsertData(
-                    vendorName: vendor.vendorName,
-                    vendorType: vendor.vendorType,
-                    vendorCategoryId: vendor.vendorCategoryId,
-                    contactName: vendor.contactName,
-                    phoneNumber: vendor.phoneNumber,
-                    email: vendor.email,
-                    website: vendor.website,
-                    notes: vendor.notes,
-                    quotedAmount: vendor.quotedAmount,
-                    imageUrl: vendor.imageUrl,
-                    isBooked: vendor.isBooked,
-                    dateBooked: vendor.dateBooked,
-                    budgetCategoryId: vendor.budgetCategoryId,
+                    vendorName: item.vendor.vendorName,
+                    vendorType: item.vendor.vendorType,
+                    vendorCategoryId: item.vendor.vendorCategoryId,
+                    contactName: item.vendor.contactName,
+                    phoneNumber: item.formattedPhone,
+                    email: item.vendor.email,
+                    website: item.vendor.website,
+                    notes: item.vendor.notes,
+                    quotedAmount: item.vendor.quotedAmount,
+                    imageUrl: item.vendor.imageUrl,
+                    isBooked: item.vendor.isBooked,
+                    dateBooked: item.vendor.dateBooked,
+                    budgetCategoryId: item.vendor.budgetCategoryId,
                     coupleId: tenantId,
-                    isArchived: vendor.isArchived,
-                    includeInExport: vendor.includeInExport,
-                    streetAddress: vendor.streetAddress,
-                    streetAddress2: vendor.streetAddress2,
-                    city: vendor.city,
-                    state: vendor.state,
-                    postalCode: vendor.postalCode,
-                    country: vendor.country,
-                    latitude: vendor.latitude,
-                    longitude: vendor.longitude
+                    isArchived: item.vendor.isArchived,
+                    includeInExport: item.vendor.includeInExport,
+                    streetAddress: item.vendor.streetAddress,
+                    streetAddress2: item.vendor.streetAddress2,
+                    city: item.vendor.city,
+                    state: item.vendor.state,
+                    postalCode: item.vendor.postalCode,
+                    country: item.vendor.country,
+                    latitude: item.vendor.latitude,
+                    longitude: item.vendor.longitude
                 )
             }
 

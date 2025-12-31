@@ -1,0 +1,39 @@
+╔══════════════════════════════════════════════════════════════╗
+║  CLAUDE CODE API KEY SETUP - QUICK REFERENCE                 ║
+╚══════════════════════════════════════════════════════════════╝
+
+✅ COMPLETED:
+  • Environment variables added to ~/.zshrc
+  • .claude.json updated to use ${VARIABLE} references
+  • Old hardcoded keys removed from config
+
+⚠️  TODO (YOU MUST DO THIS):
+
+1. Edit ~/.zshrc and add your rotated API keys:
+   
+   nano ~/.zshrc
+   
+   Find these lines and replace placeholders:
+   
+   export OPENROUTER_API_KEY="your-new-openrouter-key-here"
+   export GREB_API_KEY="your-new-greb-key-here"
+   export SWIFTZILLA_API_KEY="your-new-swiftzilla-key-here"
+   export PREDEV_API_KEY="your-predev-key-here"
+
+2. Reload your shell:
+   
+   source ~/.zshrc
+
+3. Verify keys are set:
+   
+   echo $OPENROUTER_API_KEY
+   echo $GREB_API_KEY
+   echo $SWIFTZILLA_API_KEY
+   echo $PREDEV_API_KEY
+
+4. Restart Claude Code and test MCP servers
+
+📚 Full documentation: docs/CLAUDE_CONFIG_SECURITY_SETUP.md
+
+🔒 Security: Keys are now in ~/.zshrc (not committed to git)
+           .claude.json only has ${VARIABLE} references

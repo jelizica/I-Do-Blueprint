@@ -30,6 +30,7 @@
 		169ADED92EA817330097916E /* Sentry in Frameworks */ = {isa = PBXBuildFile; productRef = 169ADED82EA817330097916E /* Sentry */; };
 		169ADEDB2EA817330097916E /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 169ADEDA2EA817330097916E /* SentrySwiftUI */; };
 		16D71EC62F03E3C000F7FF4F /* themis in Frameworks */ = {isa = PBXBuildFile; productRef = 16D71EC52F03E3C000F7FF4F /* themis */; };
+		16E7F84B2F05098F0077D523 /* PhoneNumberKit in Frameworks */ = {isa = PBXBuildFile; productRef = 16E7F84A2F05098F0077D523 /* PhoneNumberKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -100,6 +101,7 @@
 				162469A52E90539D00920873 /* SwiftUIX in Frameworks */,
 				162469A82E9053E400920873 /* Kingfisher in Frameworks */,
 				1692110B2EAEF20000239461 /* CoreXLSX in Frameworks */,
+				16E7F84B2F05098F0077D523 /* PhoneNumberKit in Frameworks */,
 				16D71EC62F03E3C000F7FF4F /* themis in Frameworks */,
 				162469902E90526300920873 /* AppAuth in Frameworks */,
 				162469842E9051C100920873 /* PostgREST in Frameworks */,
@@ -198,6 +200,7 @@
 				169ADEDA2EA817330097916E /* SentrySwiftUI */,
 				1692110A2EAEF20000239461 /* CoreXLSX */,
 				16D71EC52F03E3C000F7FF4F /* themis */,
+				16E7F84A2F05098F0077D523 /* PhoneNumberKit */,
 			);
 			productName = "I Do Blueprint";
 			productReference = 1624653D2E904FFC00920873 /* I Do Blueprint.app */;
@@ -299,6 +302,7 @@
 				169ADED72EA817330097916E /* XCRemoteSwiftPackageReference "sentry-cocoa" */,
 				169211092EAEF20000239461 /* XCRemoteSwiftPackageReference "CoreXLSX" */,
 				16D71EC42F03E3C000F7FF4F /* XCRemoteSwiftPackageReference "themis" */,
+				16E7F8492F05098F0077D523 /* XCRemoteSwiftPackageReference "PhoneNumberKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1624653E2E904FFC00920873 /* Products */;
@@ -878,6 +882,14 @@
 				minimumVersion = 0.15.5;
 			};
 		};
+		16E7F8492F05098F0077D523 /* XCRemoteSwiftPackageReference "PhoneNumberKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/marmelroy/PhoneNumberKit";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 4.2.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -995,6 +1007,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 16D71EC42F03E3C000F7FF4F /* XCRemoteSwiftPackageReference "themis" */;
 			productName = themis;
+		};
+		16E7F84A2F05098F0077D523 /* PhoneNumberKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 16E7F8492F05098F0077D523 /* XCRemoteSwiftPackageReference "PhoneNumberKit" */;
+			productName = PhoneNumberKit;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

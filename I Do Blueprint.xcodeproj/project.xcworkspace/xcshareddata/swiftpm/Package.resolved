@@ -1,5 +1,5 @@
 {
-  "originHash" : "c38b74772f636e4afc5410b8e41a05473d1688dd1e2224d6d4a30650035d4020",
+  "originHash" : "8e4085def4dff954cfde3041cd9a7f9642c6fd5377d899ae5b431dd9f6fdcbea",
   "pins" : [
     {
       "identity" : "appauth-ios",
@@ -98,6 +98,15 @@
       "state" : {
         "revision" : "2849f5323265386e200484b0d0f896e73c3411b9",
         "version" : "6.0.1"
+      }
+    },
+    {
+      "identity" : "phonenumberkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/marmelroy/PhoneNumberKit",
+      "state" : {
+        "revision" : "16bb5d46b82540280c5aab8976a94d8a9cda8135",
+        "version" : "4.2.2"
       }
     },
     {

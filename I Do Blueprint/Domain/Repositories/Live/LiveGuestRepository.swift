@@ -162,10 +162,19 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             let tenantId = try await getTenantId()
             let startTime = Date()
 
+            // Format phone number before saving
+            var guestToCreate = guest
+            if let phone = guest.phone, !phone.isEmpty {
+                let phoneService = PhoneNumberService()
+                let formatted = await phoneService.formatPhoneNumber(phone)
+                guestToCreate.phone = formatted ?? phone // Fallback to original if formatting fails
+                logger.debug("Formatted phone: \(phone) -> \(formatted ?? phone)")
+            }
+
             let created: Guest = try await RepositoryNetwork.withRetry {
                 try await client
                     .from("guest_list")
-                    .insert(guest)
+                    .insert(guestToCreate)
                     .select()
                     .single()
                     .execute()
@@ -197,6 +206,14 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
             var updated = guest
             updated.updatedAt = Date()
             let startTime = Date()
+
+            // Format phone number before saving
+            if let phone = updated.phone, !phone.isEmpty {
+                let phoneService = PhoneNumberService()
+                let formatted = await phoneService.formatPhoneNumber(phone)
+                updated.phone = formatted ?? phone // Fallback to original if formatting fails
+                logger.debug("Formatted phone: \(phone) -> \(formatted ?? phone)")
+            }
 
             let result: Guest = try await RepositoryNetwork.withRetry {
                 try await client
@@ -289,10 +306,21 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
 
             logger.info("Importing \(guests.count) guests...")
 
-            // Ensure all guests have the correct couple_id
+            // Ensure all guests have the correct couple_id and format phone numbers
             var guestsToImport = guests
+            let phoneService = PhoneNumberService()
+            
             for index in guestsToImport.indices {
                 var guest = guestsToImport[index]
+                
+                // Format phone number if present
+                var formattedPhone = guest.phone
+                if let phone = guest.phone, !phone.isEmpty {
+                    let formatted = await phoneService.formatPhoneNumber(phone)
+                    formattedPhone = formatted ?? phone
+                    logger.debug("Formatted phone during import: \(phone) -> \(formatted ?? phone)")
+                }
+                
                 guest = Guest(
                     id: guest.id,
                     createdAt: guest.createdAt,
@@ -300,7 +328,7 @@ actor LiveGuestRepository: GuestRepositoryProtocol {
                     firstName: guest.firstName,
                     lastName: guest.lastName,
                     email: guest.email,
-                    phone: guest.phone,
+                    phone: formattedPhone,
                     guestGroupId: guest.guestGroupId,
                     relationshipToCouple: guest.relationshipToCouple,
                     invitedBy: guest.invitedBy,
