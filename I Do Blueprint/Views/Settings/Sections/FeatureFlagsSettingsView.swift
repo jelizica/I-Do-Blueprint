@@ -18,53 +18,9 @@ struct FeatureFlagsSettingsView: View {
                     .font(.title2)
                     .fontWeight(.bold)
 
-                Text("Enable or disable features for testing. Changes take effect immediately.")
+                Text("All features are enabled by default. Toggle off for testing/debugging only.")
                     .font(.caption)
                     .foregroundColor(.secondary)
-            }
-
-            Section("Store Architecture") {
-                FeatureFlagToggle(
-                    title: "Budget Store V2",
-                    description: "Use new repository-based budget store",
-                    isEnabled: featureStatus["BudgetStoreV2"] ?? false,
-                    onToggle: { enabled in
-                        if enabled {
-                            FeatureFlags.enableBudgetStoreV2()
-                        } else {
-                            FeatureFlags.disableBudgetStoreV2()
-                        }
-                        refreshStatus()
-                    }
-                )
-
-                FeatureFlagToggle(
-                    title: "Guest Store V2",
-                    description: "Use new repository-based guest store",
-                    isEnabled: featureStatus["GuestStoreV2"] ?? false,
-                    onToggle: { enabled in
-                        if enabled {
-                            FeatureFlags.enableGuestStoreV2()
-                        } else {
-                            FeatureFlags.disableGuestStoreV2()
-                        }
-                        refreshStatus()
-                    }
-                )
-
-                FeatureFlagToggle(
-                    title: "Vendor Store V2",
-                    description: "Use new repository-based vendor store",
-                    isEnabled: featureStatus["VendorStoreV2"] ?? false,
-                    onToggle: { enabled in
-                        if enabled {
-                            FeatureFlags.enableVendorStoreV2()
-                        } else {
-                            FeatureFlags.disableVendorStoreV2()
-                        }
-                        refreshStatus()
-                    }
-                )
             }
 
             Section("Completed Features ✅") {
@@ -161,7 +117,7 @@ struct FeatureFlagsSettingsView: View {
                 refreshStatus()
             }
         } message: {
-            Text("This will reset all feature flags to their default values. The app may need to be restarted for changes to take effect.")
+            Text("This will reset all feature flags to their default values (enabled). The app may need to be restarted for changes to take effect.")
         }
     }
 

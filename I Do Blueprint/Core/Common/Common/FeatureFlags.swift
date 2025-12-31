@@ -153,16 +153,12 @@ struct RemoteFeatureFlagProvider: FeatureFlagProvider {
     }
 }
 
-/// Feature flags for gradual rollout of new architecture
-/// Allows safe migration with instant rollback capability
+/// Feature flags for completed features
+/// All features default to enabled (true) and can be toggled for testing/debugging
 enum FeatureFlags {
     // MARK: - Feature Flag Keys
 
-    private static let budgetStoreV2Key = "useBudgetStoreV2"
-    private static let guestStoreV2Key = "useGuestStoreV2"
-    private static let vendorStoreV2Key = "useVendorStoreV2"
-
-    // High-priority completed features
+    // Completed features - all default to enabled
     private static let enableTimelineMilestonesKey = "enableTimelineMilestones"
     private static let enableAdvancedBudgetExportKey = "enableAdvancedBudgetExport"
     private static let enableVisualPlanningPasteKey = "enableVisualPlanningPaste"
@@ -181,57 +177,7 @@ enum FeatureFlags {
         #endif
     }
 
-    // MARK: - Budget Feature
-
-    /// Whether to use the new BudgetStoreV2 with repository pattern
-    static var useBudgetStoreV2: Bool {
-        // For development/testing, you can hardcode this to true
-        // For production, use UserDefaults or remote config
-        #if DEBUG
-        return UserDefaults.standard.bool(forKey: budgetStoreV2Key)
-        #else
-        // Production rollout strategy
-        return isEnabledWithRollout(key: budgetStoreV2Key, rolloutPercentage: 0)
-        #endif
-    }
-
-    static func enableBudgetStoreV2() {
-        provider.setEnabled(budgetStoreV2Key, value: true)
-    }
-
-    static func disableBudgetStoreV2() {
-        provider.setEnabled(budgetStoreV2Key, value: false)
-    }
-
-    // MARK: - Guest Feature (Future)
-
-    static var useGuestStoreV2: Bool {
-        UserDefaults.standard.bool(forKey: guestStoreV2Key)
-    }
-
-    static func enableGuestStoreV2() {
-        UserDefaults.standard.set(true, forKey: guestStoreV2Key)
-    }
-
-    static func disableGuestStoreV2() {
-        UserDefaults.standard.set(false, forKey: guestStoreV2Key)
-    }
-
-    // MARK: - Vendor Feature (Future)
-
-    static var useVendorStoreV2: Bool {
-        UserDefaults.standard.bool(forKey: vendorStoreV2Key)
-    }
-
-    static func enableVendorStoreV2() {
-        UserDefaults.standard.set(true, forKey: vendorStoreV2Key)
-    }
-
-    static func disableVendorStoreV2() {
-        UserDefaults.standard.set(false, forKey: vendorStoreV2Key)
-    }
-
-    // MARK: - Timeline Milestones Feature (✅ Completed)
+    // MARK: - Timeline Milestones Feature (✅ Completed - Auto-enabled)
 
     static var enableTimelineMilestones: Bool {
         #if DEBUG
@@ -373,9 +319,6 @@ enum FeatureFlags {
     /// Get status of all feature flags
     static func status() -> [String: Bool] {
         [
-            "BudgetStoreV2": useBudgetStoreV2,
-            "GuestStoreV2": useGuestStoreV2,
-            "VendorStoreV2": useVendorStoreV2,
             "TimelineMilestones": enableTimelineMilestones,
             "AdvancedBudgetExport": enableAdvancedBudgetExport,
             "VisualPlanningPaste": enableVisualPlanningPaste,
@@ -386,11 +329,8 @@ enum FeatureFlags {
         ]
     }
 
-    /// Reset all feature flags
+    /// Reset all feature flags to their defaults (enabled)
     static func resetAll() {
-        UserDefaults.standard.removeObject(forKey: budgetStoreV2Key)
-        UserDefaults.standard.removeObject(forKey: guestStoreV2Key)
-        UserDefaults.standard.removeObject(forKey: vendorStoreV2Key)
         UserDefaults.standard.removeObject(forKey: enableTimelineMilestonesKey)
         UserDefaults.standard.removeObject(forKey: enableAdvancedBudgetExportKey)
         UserDefaults.standard.removeObject(forKey: enableVisualPlanningPasteKey)
@@ -398,7 +338,7 @@ enum FeatureFlags {
         UserDefaults.standard.removeObject(forKey: enableTemplateApplicationKey)
         UserDefaults.standard.removeObject(forKey: enableExpenseDetailsKey)
         UserDefaults.standard.removeObject(forKey: enableBudgetAnalyticsActionsKey)
-        AppLogger.general.info("Reset all feature flags")
+        AppLogger.general.info("Reset all feature flags to defaults (enabled)")
     }
 
     /// Refreshes remote feature flags in the background
@@ -415,19 +355,17 @@ enum FeatureFlags {
 
 /*
 
- // Enable new architecture for testing:
- FeatureFlags.enableBudgetStoreV2()
+ // All features are enabled by default
+ // To disable a feature for testing:
+ FeatureFlags.setTimelineMilestones(enabled: false)
 
- // Disable if issues are found:
- FeatureFlags.disableBudgetStoreV2()
+ // To re-enable:
+ FeatureFlags.setTimelineMilestones(enabled: true)
 
  // Check status:
  print(FeatureFlags.status())
 
- // In production, gradually roll out:
- // 1. Start with 10% (change rolloutPercentage to 10)
- // 2. Monitor for issues
- // 3. Increase to 25%, 50%, 100%
- // 4. If issues occur, set to 0 for instant rollback
+ // Reset all to defaults (enabled):
+ FeatureFlags.resetAll()
 
  */
