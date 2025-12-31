@@ -1,5 +1,11 @@
 # Cancellation Error Fix - Comprehensive Solution
 
+## ✅ Status: VERIFIED WORKING (2025-01-01)
+
+This fix has been fully implemented and tested. Users can now switch between Settings tabs without seeing false error dialogs.
+
+---
+
 ## Problem Summary
 
 When switching tabs in Settings (or any view with `.task` modifiers), users were seeing error dialogs like "Unable to load budget data" even though no actual error occurred. Additionally, Sentry was receiving multiple `CancellationError` reports, creating noise in error tracking.
@@ -232,7 +238,56 @@ for expense in expensesToUpdate {
 }
 ```
 
-## Defense in Depth Architecture
+### Fix 5: UserFacingError.swift - Domain Error Unwrapping (Critical Fix)
+
+**File**: `I Do Blueprint/Domain/Models/Shared/UserFacingError.swift`
+
+**Problem**: The initial fix filtered `CancellationError` at the top level, but domain errors like `BudgetError.fetchFailed(underlying: CancellationError)` were still being shown because the cancellation was wrapped inside the domain error.
+
+**Solution**: Recursively unwrap domain errors to check if the underlying error is a cancellation:
+
+```swift
+// Check for BudgetError with underlying cancellation
+if let budgetError = error as? BudgetError {
+    switch budgetError {
+    case .fetchFailed(let underlying), .createFailed(let underlying),
+         .updateFailed(let underlying), .deleteFailed(let underlying):
+        // Recursively check if underlying error is cancellation
+        let underlyingUserError = UserFacingError.from(underlying)
+        if case .cancelled = underlyingUserError {
+            return .cancelled
+        }
+        return .serverError
+    case .networkUnavailable:
+        return .networkUnavailable
+    case .unauthorized:
+        return .unauthorized
+    default:
+        return .serverError
+    }
+}
+```
+
+Same pattern applied to: `GuestError`, `VendorError`, `TaskError`
+
+### Fix 6: ErrorAlertService.swift - Guard Before Showing Alert
+
+**File**: `I Do Blueprint/Services/UI/ErrorAlertService.swift`
+
+**Change**: Added guard to check `shouldShowToUser` before displaying any alert:
+
+```swift
+func showUserFacingError(_ error: UserFacingError, retryAction: (() async -> Void)? = nil) async {
+    // CRITICAL: Don't show alerts for cancellation errors
+    guard error.shouldShowToUser else {
+        AppLogger.ui.debug("Skipping alert for non-user-facing error")
+        return
+    }
+    // ... show alert
+}
+```
+
+## Defense in Depth Architecture (7 Layers)
 
 The fix uses multiple layers to ensure cancellation errors never reach users:
 
@@ -240,13 +295,23 @@ The fix uses multiple layers to ensure cancellation errors never reach users:
 Layer 1: StoreErrorHandling.handleError()
          ↓ filters CancellationError, returns early
          
-Layer 2: UserFacingError.from()
-         ↓ maps to .cancelled case
+Layer 2: UserFacingError.from() - Direct check
+         ↓ checks error is CancellationError
          
-Layer 3: UserFacingError.shouldShowToUser
+Layer 3: UserFacingError.from() - URLError check
+         ↓ checks URLError.code == .cancelled
+         
+Layer 4: UserFacingError.from() - Domain error unwrapping
+         ↓ unwraps BudgetError/GuestError/VendorError/TaskError
+         ↓ recursively checks underlying error
+         
+Layer 5: UserFacingError.shouldShowToUser
          ↓ returns false for .cancelled
          
-Layer 4: Individual store loops
+Layer 6: ErrorAlertService.showUserFacingError()
+         ↓ guards on shouldShowToUser before showing alert
+         
+Layer 7: Individual store loops
          ↓ catch CancellationError, break immediately
 ```
 
@@ -255,7 +320,8 @@ Layer 4: Individual store loops
 | File | Change |
 |------|--------|
 | `Services/Stores/StoreErrorHandling.swift` | Global cancellation filter |
-| `Domain/Models/Shared/UserFacingError.swift` | Added `.cancelled` case |
+| `Domain/Models/Shared/UserFacingError.swift` | Added `.cancelled` case + domain error unwrapping |
+| `Services/UI/ErrorAlertService.swift` | Guard on shouldShowToUser |
 | `Services/Stores/Budget/CategoryStoreV2.swift` | Loop cancellation (original fix) |
 | `Services/Stores/BudgetStoreV2+PaymentStatus.swift` | Loop cancellation |
 
