@@ -195,21 +195,7 @@ struct SettingsView: View {
         case .guestsTasks(.taskPreferences):
             TasksSettingsView(viewModel: store)
         case .guestsTasks(.teamMembers):
-            // TODO: Create TeamMembersSettingsView
-            VStack(spacing: 16) {
-                Image(systemName: "person.2.badge.gearshape")
-                    .font(.system(size: 48))
-                    .foregroundColor(.secondary)
-                Text("Team Members")
-                    .font(.title2)
-                    .fontWeight(.semibold)
-                Text("Manage responsible parties and meal options")
-                    .font(.body)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding()
+            TeamMembersSettingsView(viewModel: store)
             
         // Appearance
         case .appearance(.theme):
