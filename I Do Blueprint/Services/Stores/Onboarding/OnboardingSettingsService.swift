@@ -77,9 +77,28 @@ actor OnboardingSettingsService {
                 }
                 
                 logger.info("Saved \(weddingDetails.weddingEvents.count) wedding events from onboarding")
+                
+                // Also create events in the wedding_events table for guest attendance tracking
+                await createWeddingEventsInDatabase(
+                    coupleId: coupleId,
+                    events: weddingDetails.weddingEvents,
+                    weddingDate: weddingDetails.weddingDate
+                )
             } else {
-                // Keep default events if none configured in onboarding
-                logger.info("No wedding events configured in onboarding, keeping defaults")
+                // Create default events if none configured in onboarding
+                logger.info("No wedding events configured in onboarding, creating defaults")
+                
+                // Create default ceremony and reception events
+                let defaultEvents = [
+                    OnboardingWeddingEvent.defaultCeremony(),
+                    OnboardingWeddingEvent.defaultReception()
+                ]
+                
+                await createWeddingEventsInDatabase(
+                    coupleId: coupleId,
+                    events: defaultEvents,
+                    weddingDate: weddingDetails.weddingDate
+                )
             }
         }
         
@@ -126,6 +145,93 @@ actor OnboardingSettingsService {
     
     // MARK: - Private Helpers
     
+    /// Creates wedding events in the wedding_events database table
+    /// This ensures events are available for guest attendance tracking
+    private func createWeddingEventsInDatabase(
+        coupleId: UUID,
+        events: [OnboardingWeddingEvent],
+        weddingDate: Date?
+    ) async {
+        guard let client = SupabaseManager.shared.client else {
+            logger.error("Supabase client not available for creating wedding events")
+            return
+        }
+        
+        for (index, event) in events.enumerated() {
+            do {
+                // Determine event type based on event name
+                let eventType = determineEventType(from: event.eventName, isMainEvent: event.isMainEvent)
+                
+                // Use event date if set, otherwise use wedding date
+                let eventDate = event.eventDate ?? weddingDate ?? Date()
+                
+                // Create the database event record
+                let dbEvent = WeddingEventInsert(
+                    id: UUID().uuidString, // Generate new UUID for database
+                    event_name: event.eventName,
+                    event_type: eventType,
+                    event_date: eventDate,
+                    start_time: parseTime(event.eventTime),
+                    end_time: nil,
+                    venue_name: event.venueLocation.isEmpty ? nil : event.venueLocation,
+                    is_main_event: event.isMainEvent,
+                    event_order: index + 1,
+                    couple_id: coupleId.uuidString
+                )
+                
+                try await client
+                    .from("wedding_events")
+                    .insert(dbEvent)
+                    .execute()
+                
+                logger.info("Created wedding event in database: \(event.eventName) (type: \(eventType))")
+            } catch {
+                // Log error but don't fail onboarding - events can be created later
+                logger.error("Failed to create wedding event '\(event.eventName)' in database", error: error)
+            }
+        }
+    }
+    
+    /// Determines the event type based on event name
+    private func determineEventType(from eventName: String, isMainEvent: Bool) -> String {
+        let lowercaseName = eventName.lowercased()
+        
+        if lowercaseName.contains("ceremony") {
+            return "ceremony"
+        } else if lowercaseName.contains("reception") {
+            return "reception"
+        } else if lowercaseName.contains("rehearsal") || lowercaseName.contains("welcome") || lowercaseName.contains("dinner") {
+            return "rehearsal"
+        } else if lowercaseName.contains("brunch") {
+            return "brunch"
+        } else if lowercaseName.contains("party") {
+            return "party"
+        } else if isMainEvent {
+            return "ceremony" // Default main event to ceremony
+        } else {
+            return "other"
+        }
+    }
+    
+    /// Parses time string to Date (for start_time field)
+    private func parseTime(_ timeString: String) -> Date? {
+        guard !timeString.isEmpty else { return nil }
+        
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        // Try various time formats
+        let formats = ["h:mm a", "H:mm", "h:mma", "HH:mm"]
+        for format in formats {
+            formatter.dateFormat = format
+            if let date = formatter.date(from: timeString) {
+                return date
+            }
+        }
+        
+        return nil
+    }
+    
     /// Upserts settings to database
     private func upsertSettings(coupleId: UUID, settings: CoupleSettings) async throws {
         struct SettingsUpsert: Encodable {
@@ -154,4 +260,20 @@ actor OnboardingSettingsService {
             .upsert(upsert, onConflict: "couple_id")
             .execute()
     }
+}
+
+// MARK: - Wedding Event Insert Model
+
+/// Model for inserting wedding events into the database
+private struct WeddingEventInsert: Encodable {
+    let id: String
+    let event_name: String
+    let event_type: String
+    let event_date: Date
+    let start_time: Date?
+    let end_time: Date?
+    let venue_name: String?
+    let is_main_event: Bool
+    let event_order: Int
+    let couple_id: String
 }
