@@ -44,6 +44,9 @@ struct SettingsView: View {
                                 .foregroundColor(section.color)
                         }
                     }
+                    .accessibilityLabel("\(section.rawValue) settings")
+                    .accessibilityHint(expandedSections.contains(section) ? "Collapse to hide subsections" : "Expand to show subsections")
+                    .accessibilityIdentifier("settings-section-\(section.rawValue)")
                 }
             }
             .navigationTitle("Settings")
@@ -152,6 +155,10 @@ struct SettingsView: View {
                 : Color.clear
         )
         .cornerRadius(6)
+        .accessibilityLabel("\(subsection.rawValue)")
+        .accessibilityHint("Opens \(subsection.rawValue) settings")
+        .accessibilityIdentifier("settings-subsection-\(subsection.rawValue)")
+        .accessibilityAddTraits(selectedSection == section && selectedSubsection == subsection ? [.isSelected] : [])
     }
 
     // MARK: - Navigation Title
