@@ -153,19 +153,15 @@ struct RemoteFeatureFlagProvider: FeatureFlagProvider {
     }
 }
 
-/// Feature flags for completed features
-/// All features default to enabled (true) and can be toggled for testing/debugging
+/// Feature flags infrastructure for gradual feature rollout
+/// Currently no active flags - add flags here when implementing new experimental features
+/// See Beads issue I Do Blueprint-6ym for implementation guide
 enum FeatureFlags {
     // MARK: - Feature Flag Keys
-
-    // Completed features - all default to enabled
-    private static let enableTimelineMilestonesKey = "enableTimelineMilestones"
-    private static let enableAdvancedBudgetExportKey = "enableAdvancedBudgetExport"
-    private static let enableVisualPlanningPasteKey = "enableVisualPlanningPaste"
-    private static let enableImagePickerKey = "enableImagePicker"
-    private static let enableTemplateApplicationKey = "enableTemplateApplication"
-    private static let enableExpenseDetailsKey = "enableExpenseDetails"
-    private static let enableBudgetAnalyticsActionsKey = "enableBudgetAnalyticsActions"
+    // Add new feature flag keys here when needed
+    
+    // Example:
+    // private static let enableNewFeatureKey = "enableNewFeature"
 
     // MARK: - Provider Selection
 
@@ -177,103 +173,20 @@ enum FeatureFlags {
         #endif
     }
 
-    // MARK: - Timeline Milestones Feature (✅ Completed - Auto-enabled)
-
-    static var enableTimelineMilestones: Bool {
-        #if DEBUG
-        return UserDefaults.standard.object(forKey: enableTimelineMilestonesKey) as? Bool ?? true
-        #else
-        return isEnabledWithRollout(key: enableTimelineMilestonesKey, rolloutPercentage: 100)
-        #endif
-    }
-
-    static func setTimelineMilestones(enabled: Bool) {
-        provider.setEnabled(enableTimelineMilestonesKey, value: enabled)
-    }
-
-    // MARK: - Advanced Budget Export Feature (✅ Completed)
-
-    static var enableAdvancedBudgetExport: Bool {
-        #if DEBUG
-        return UserDefaults.standard.object(forKey: enableAdvancedBudgetExportKey) as? Bool ?? true
-        #else
-        return isEnabledWithRollout(key: enableAdvancedBudgetExportKey, rolloutPercentage: 100)
-        #endif
-    }
-
-    static func setAdvancedBudgetExport(enabled: Bool) {
-        provider.setEnabled(enableAdvancedBudgetExportKey, value: enabled)
-    }
-
-    // MARK: - Visual Planning Paste Feature (✅ Completed)
-
-    static var enableVisualPlanningPaste: Bool {
-        #if DEBUG
-        return UserDefaults.standard.object(forKey: enableVisualPlanningPasteKey) as? Bool ?? true
-        #else
-        return isEnabledWithRollout(key: enableVisualPlanningPasteKey, rolloutPercentage: 100)
-        #endif
-    }
-
-    static func setVisualPlanningPaste(enabled: Bool) {
-        provider.setEnabled(enableVisualPlanningPasteKey, value: enabled)
-    }
-
-    // MARK: - Image Picker Feature (✅ Completed)
-
-    static var enableImagePicker: Bool {
-        #if DEBUG
-        return UserDefaults.standard.object(forKey: enableImagePickerKey) as? Bool ?? true
-        #else
-        return isEnabledWithRollout(key: enableImagePickerKey, rolloutPercentage: 100)
-        #endif
-    }
-
-    static func setImagePicker(enabled: Bool) {
-        provider.setEnabled(enableImagePickerKey, value: enabled)
-    }
-
-    // MARK: - Template Application Feature (✅ Completed)
-
-    static var enableTemplateApplication: Bool {
-        #if DEBUG
-        return UserDefaults.standard.object(forKey: enableTemplateApplicationKey) as? Bool ?? true
-        #else
-        return isEnabledWithRollout(key: enableTemplateApplicationKey, rolloutPercentage: 100)
-        #endif
-    }
-
-    static func setTemplateApplication(enabled: Bool) {
-        provider.setEnabled(enableTemplateApplicationKey, value: enabled)
-    }
-
-    // MARK: - Expense Details Feature (✅ Completed)
-
-    static var enableExpenseDetails: Bool {
-        #if DEBUG
-        return UserDefaults.standard.object(forKey: enableExpenseDetailsKey) as? Bool ?? true
-        #else
-        return isEnabledWithRollout(key: enableExpenseDetailsKey, rolloutPercentage: 100)
-        #endif
-    }
-
-    static func setExpenseDetails(enabled: Bool) {
-        provider.setEnabled(enableExpenseDetailsKey, value: enabled)
-    }
-
-    // MARK: - Budget Analytics Actions Feature (✅ Completed)
-
-    static var enableBudgetAnalyticsActions: Bool {
-        #if DEBUG
-        return UserDefaults.standard.object(forKey: enableBudgetAnalyticsActionsKey) as? Bool ?? true
-        #else
-        return isEnabledWithRollout(key: enableBudgetAnalyticsActionsKey, rolloutPercentage: 100)
-        #endif
-    }
-
-    static func setBudgetAnalyticsActions(enabled: Bool) {
-        provider.setEnabled(enableBudgetAnalyticsActionsKey, value: enabled)
-    }
+    // MARK: - Feature Flag Definitions
+    // Add new feature flags here following this pattern:
+    //
+    // static var enableNewFeature: Bool {
+    //     #if DEBUG
+    //     return UserDefaults.standard.object(forKey: enableNewFeatureKey) as? Bool ?? false
+    //     #else
+    //     return isEnabledWithRollout(key: enableNewFeatureKey, rolloutPercentage: 0)
+    //     #endif
+    // }
+    //
+    // static func setNewFeature(enabled: Bool) {
+    //     provider.setEnabled(enableNewFeatureKey, value: enabled)
+    // }
 
     // MARK: - Rollout Strategy
 
@@ -318,27 +231,15 @@ enum FeatureFlags {
 
     /// Get status of all feature flags
     static func status() -> [String: Bool] {
-        [
-            "TimelineMilestones": enableTimelineMilestones,
-            "AdvancedBudgetExport": enableAdvancedBudgetExport,
-            "VisualPlanningPaste": enableVisualPlanningPaste,
-            "ImagePicker": enableImagePicker,
-            "TemplateApplication": enableTemplateApplication,
-            "ExpenseDetails": enableExpenseDetails,
-            "BudgetAnalyticsActions": enableBudgetAnalyticsActions
-        ]
+        // Return empty dictionary when no flags are active
+        // Add flags here as they're implemented
+        [:]
     }
 
-    /// Reset all feature flags to their defaults (enabled)
+    /// Reset all feature flags to their defaults
     static func resetAll() {
-        UserDefaults.standard.removeObject(forKey: enableTimelineMilestonesKey)
-        UserDefaults.standard.removeObject(forKey: enableAdvancedBudgetExportKey)
-        UserDefaults.standard.removeObject(forKey: enableVisualPlanningPasteKey)
-        UserDefaults.standard.removeObject(forKey: enableImagePickerKey)
-        UserDefaults.standard.removeObject(forKey: enableTemplateApplicationKey)
-        UserDefaults.standard.removeObject(forKey: enableExpenseDetailsKey)
-        UserDefaults.standard.removeObject(forKey: enableBudgetAnalyticsActionsKey)
-        AppLogger.general.info("Reset all feature flags to defaults (enabled)")
+        // Add flag reset logic here as flags are implemented
+        AppLogger.general.info("Reset all feature flags to defaults")
     }
 
     /// Refreshes remote feature flags in the background
@@ -355,17 +256,34 @@ enum FeatureFlags {
 
 /*
 
- // All features are enabled by default
- // To disable a feature for testing:
- FeatureFlags.setTimelineMilestones(enabled: false)
-
- // To re-enable:
- FeatureFlags.setTimelineMilestones(enabled: true)
-
- // Check status:
- print(FeatureFlags.status())
-
- // Reset all to defaults (enabled):
- FeatureFlags.resetAll()
+ // When adding a new feature flag:
+ 
+ // 1. Add key constant
+ private static let enableNewFeatureKey = "enableNewFeature"
+ 
+ // 2. Add getter (defaults to false for new features)
+ static var enableNewFeature: Bool {
+     #if DEBUG
+     return UserDefaults.standard.object(forKey: enableNewFeatureKey) as? Bool ?? false
+     #else
+     return isEnabledWithRollout(key: enableNewFeatureKey, rolloutPercentage: 0)
+     #endif
+ }
+ 
+ // 3. Add setter
+ static func setNewFeature(enabled: Bool) {
+     provider.setEnabled(enableNewFeatureKey, value: enabled)
+ }
+ 
+ // 4. Add to status() dictionary
+ // 5. Add to resetAll() cleanup
+ // 6. Add to FeatureFlagsSettingsView.swift UI
+ // 7. Use in views with conditional rendering:
+ 
+ if FeatureFlags.enableNewFeature {
+     NewFeatureView()
+ }
+ 
+ // See Beads issue I Do Blueprint-6ym for complete implementation guide
 
  */

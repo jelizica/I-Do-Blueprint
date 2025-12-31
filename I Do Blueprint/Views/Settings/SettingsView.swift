@@ -219,8 +219,6 @@ struct SettingsView: View {
         // Developer
         case .developer(.apiKeys):
             APIKeysSettingsView()
-        case .developer(.featureFlags):
-            FeatureFlagsSettingsView()
         }
     }
 

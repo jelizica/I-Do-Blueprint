@@ -159,14 +159,12 @@ enum DataContentSubsection: String, CaseIterable, Identifiable, SettingsSubsecti
 
 enum DeveloperSubsection: String, CaseIterable, Identifiable, SettingsSubsection {
     case apiKeys = "API Keys"
-    case featureFlags = "Feature Flags"
     
     var id: String { rawValue }
     
     var icon: String {
         switch self {
         case .apiKeys: "key.fill"
-        case .featureFlags: "flag.fill"
         }
     }
 }
