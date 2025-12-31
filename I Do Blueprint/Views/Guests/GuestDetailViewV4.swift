@@ -12,6 +12,7 @@ struct GuestDetailViewV4: View {
     let guestId: UUID
     @ObservedObject var guestStore: GuestStoreV2
     @EnvironmentObject private var settingsStore: SettingsStoreV2
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
     @EnvironmentObject private var coordinator: AppCoordinator
     @Environment(\.dismiss) private var dismiss
     
@@ -96,8 +97,11 @@ struct GuestDetailViewV4: View {
                                     )
                                 }
                                 
-                                // Event Attendance (grayed out if not attending)
-                                GuestDetailEventAttendance(guest: guest)
+                                // Event Attendance (dynamically based on created events)
+                                GuestDetailEventAttendance(
+                                    guest: guest,
+                                    weddingEvents: budgetStore.weddingEvents
+                                )
                                 
                                 // Wedding Party Section (only for wedding party members)
                                 if isWeddingPartyMember {
@@ -214,6 +218,7 @@ struct GuestDetailViewV4: View {
         guestStore: store
     )
     .environmentObject(SettingsStoreV2())
+    .environmentObject(BudgetStoreV2())
     .environmentObject(AppCoordinator.shared)
 }
 
@@ -268,5 +273,6 @@ struct GuestDetailViewV4: View {
         guestStore: store
     )
     .environmentObject(SettingsStoreV2())
+    .environmentObject(BudgetStoreV2())
     .environmentObject(AppCoordinator.shared)
 }
