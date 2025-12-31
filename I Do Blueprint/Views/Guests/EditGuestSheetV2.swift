@@ -7,6 +7,7 @@
 //
 
 import SwiftUI
+import PhoneNumberKit
 
 struct EditGuestSheetV2: View {
     @Environment(\.dismiss) private var dismiss
@@ -122,9 +123,12 @@ struct EditGuestSheetV2: View {
                                 }
 
                                 FormField(label: "Phone") {
-                                    TextField("(555) 123-4567", text: $phone)
-                                        .textFieldStyle(.roundedBorder)
-                                        .textContentType(.telephoneNumber)
+                                    PhoneNumberTextFieldWrapper(
+                                        phoneNumber: $phone,
+                                        defaultRegion: "US",
+                                        placeholder: "(555) 123-4567"
+                                    )
+                                    .frame(height: 40)
                                 }
                             }
                         }

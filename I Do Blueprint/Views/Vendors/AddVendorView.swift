@@ -1,5 +1,6 @@
 import SwiftUI
 import Dependencies
+import PhoneNumberKit
 
 struct AddVendorView: View {
     private let logger = AppLogger.ui
@@ -108,8 +109,12 @@ struct AddVendorView: View {
                                         Text("Phone Number")
                                             .font(.caption)
                                             .foregroundColor(.secondary)
-                                        TextField("(555) 123-4567", text: $phoneNumber)
-                                            .textFieldStyle(.roundedBorder)
+                                        PhoneNumberTextFieldWrapper(
+                                            phoneNumber: $phoneNumber,
+                                            defaultRegion: "US",
+                                            placeholder: "(555) 123-4567"
+                                        )
+                                        .frame(height: 40)
                                     }
 
                                     VStack(alignment: .leading, spacing: 4) {

@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import PhoneNumberKit
 
 struct AddGuestView: View {
     @Environment(\.dismiss) private var dismiss
@@ -165,14 +166,12 @@ struct AddGuestView: View {
                                         .textInputAutocapitalization(.never)
                                     #endif
 
-                                    TextField("Phone Number", text: $phone)
-                                        .textFieldStyle(.roundedBorder)
-                                    #if os(macOS)
-                                        .textContentType(.telephoneNumber)
-                                    #else
-                                        .textContentType(.telephoneNumber)
-                                        .keyboardType(.phonePad)
-                                    #endif
+                                    PhoneNumberTextFieldWrapper(
+                                        phoneNumber: $phone,
+                                        defaultRegion: "US",
+                                        placeholder: "Phone Number"
+                                    )
+                                    .frame(height: 40)
 
                                     Picker("Preferred Contact Method", selection: $preferredContactMethod) {
                                         ForEach(PreferredContactMethod.allCases, id: \.self) { method in
