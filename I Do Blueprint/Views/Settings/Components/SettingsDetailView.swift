@@ -3,13 +3,14 @@
 //  I Do Blueprint
 //
 //  Detail content view for settings sections
+//  NOTE: This file is deprecated. Use SettingsView.swift instead.
 //
 
 import SwiftUI
 
 struct SettingsDetailView: View {
     let selectedSection: SettingsSection
-    let selectedGlobalSubsection: GlobalSubsection
+    let selectedSubsection: AnySubsection
     @ObservedObject var store: SettingsStoreV2
     
     var body: some View {
@@ -33,7 +34,7 @@ struct SettingsDetailView: View {
     private var statusMessages: some View {
         if let error = store.error {
             ErrorBannerView(
-                message: error.localizedDescription ?? "An error occurred",
+                message: error.localizedDescription,
                 onDismiss: {
                     store.clearError()
                 }
@@ -55,58 +56,63 @@ struct SettingsDetailView: View {
     
     @ViewBuilder
     private var sectionContent: some View {
-        switch selectedSection {
-        case .global:
-            globalSectionContent
-        case .theme:
-            ThemeSettingsView(viewModel: store)
-        case .budget:
-            BudgetConfigSettingsView(viewModel: store)
-        case .tasks:
-            TasksSettingsView(viewModel: store)
-        case .vendors:
-            VendorsSettingsView(viewModel: store)
-        case .vendorCategories:
-            VendorCategoriesSettingsView(viewModel: store)
-        case .guests:
-            GuestsSettingsView(viewModel: store)
-        case .documents:
-            DocumentsSettingsView(viewModel: store)
-        case .collaboration:
-            CollaborationSettingsView()
-        case .notifications:
-            NotificationsSettingsView(viewModel: store)
-        case .links:
-            LinksSettingsView(viewModel: store)
-        case .apiKeys:
-            APIKeysSettingsView()
-        case .account:
-            AccountSettingsView()
-        case .featureFlags:
-            FeatureFlagsSettingsView()
-        case .danger:
-            DangerZoneView(viewModel: store)
-        }
-    }
-    
-    @ViewBuilder
-    private var globalSectionContent: some View {
-        switch selectedGlobalSubsection {
-        case .overview:
+        switch selectedSubsection {
+        // Global
+        case .global(.overview):
             GlobalSettingsView(viewModel: store)
-        case .weddingEvents:
+        case .global(.weddingEvents):
             WeddingEventsView()
+            
+        // Account
+        case .account(.profile):
+            AccountSettingsView()
+        case .account(.collaboration):
+            CollaborationSettingsView()
+        case .account(.dataPrivacy):
+            DangerZoneView(viewModel: store)
+            
+        // Budget & Vendors
+        case .budgetVendors(.budgetConfiguration):
+            BudgetConfigSettingsView(viewModel: store)
+        case .budgetVendors(.budgetCategories):
+            BudgetCategoriesSettingsView()
+        case .budgetVendors(.vendorManagement):
+            VendorsSettingsView(viewModel: store)
+        case .budgetVendors(.vendorCategories):
+            VendorCategoriesSettingsView(viewModel: store)
+            
+        // Guests & Tasks
+        case .guestsTasks(.guestPreferences):
+            GuestsSettingsView(viewModel: store)
+        case .guestsTasks(.taskPreferences):
+            TasksSettingsView(viewModel: store)
+        case .guestsTasks(.teamMembers):
+            Text("Team Members - Coming Soon")
+            
+        // Appearance
+        case .appearance(.theme):
+            ThemeSettingsView(viewModel: store)
+        case .appearance(.notifications):
+            NotificationsSettingsView(viewModel: store)
+            
+        // Data & Content
+        case .dataContent(.documents):
+            DocumentsSettingsView(viewModel: store)
+        case .dataContent(.importantLinks):
+            LinksSettingsView(viewModel: store)
+            
+        // Developer
+        case .developer(.apiKeys):
+            APIKeysSettingsView()
+        case .developer(.featureFlags):
+            FeatureFlagsSettingsView()
         }
     }
     
     // MARK: - Computed Properties
     
     private var navigationTitle: String {
-        if selectedSection == .global {
-            return "Global - \(selectedGlobalSubsection.rawValue)"
-        } else {
-            return selectedSection.rawValue
-        }
+        "\(selectedSection.rawValue) - \(selectedSubsection.rawValue)"
     }
 }
 
@@ -116,7 +122,7 @@ struct SettingsDetailView: View {
     NavigationStack {
         SettingsDetailView(
             selectedSection: .global,
-            selectedGlobalSubsection: .overview,
+            selectedSubsection: .global(.overview),
             store: SettingsStoreV2()
         )
     }

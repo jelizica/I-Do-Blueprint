@@ -2,8 +2,7 @@
 //  SettingsView.swift
 //  My Wedding Planning App
 //
-//  Created by Claude Code on 9/29/25.
-//  NOTE: This is the legacy version. Use SettingsViewV2 for new development.
+//  Restructured settings with nested hierarchy
 //
 
 import SwiftUI
@@ -11,10 +10,9 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.appStores) private var appStores
     @State private var selectedSection: SettingsSection = .global
-    @State private var selectedGlobalSubsection: GlobalSubsection = .overview
+    @State private var selectedSubsection: AnySubsection = .global(.overview)
     @State private var showDeveloperSettings = false
-    @State private var tapCount = 0
-    @State private var expandedSections: Set<SettingsSection> = [.global]
+    @State private var expandedSections: Set<SettingsSection> = [.global, .account]
 
     private var store: SettingsStoreV2 {
         appStores.settings
@@ -25,75 +23,45 @@ struct SettingsView: View {
             // Sidebar
             List(selection: $selectedSection) {
                 ForEach(SettingsSection.allCases) { section in
-                    if section.hasSubsections {
-                        DisclosureGroup(
-                            isExpanded: Binding(
-                                get: { expandedSections.contains(section) },
-                                set: { isExpanded in
-                                    if isExpanded {
-                                        expandedSections.insert(section)
-                                    } else {
-                                        expandedSections.remove(section)
-                                    }
+                    DisclosureGroup(
+                        isExpanded: Binding(
+                            get: { expandedSections.contains(section) },
+                            set: { isExpanded in
+                                if isExpanded {
+                                    expandedSections.insert(section)
+                                } else {
+                                    expandedSections.remove(section)
                                 }
-                            )
-                        ) {
-                            ForEach(GlobalSubsection.allCases) { subsection in
-                                Button(action: {
-                                    selectedSection = section
-                                    selectedGlobalSubsection = subsection
-                                }) {
-                                    Label {
-                                        Text(subsection.rawValue)
-                                    } icon: {
-                                        Image(systemName: subsection.icon)
-                                            .foregroundColor(.accentColor)
-                                    }
-                                }
-                                .buttonStyle(.plain)
-                                .padding(.leading, 20)
-                                .background(
-                                    selectedSection == section && selectedGlobalSubsection == subsection
-                                        ? Color.accentColor.opacity(0.1)
-                                        : Color.clear
-                                )
-                                .cornerRadius(6)
                             }
-                        } label: {
-                            Label {
-                                Text(section.rawValue)
-                            } icon: {
-                                Image(systemName: section.icon)
-                                    .foregroundColor(section.color)
-                            }
-                        }
-                    } else {
-                        NavigationLink(value: section) {
-                            Label {
-                                Text(section.rawValue)
-                            } icon: {
-                                Image(systemName: section.icon)
-                                    .foregroundColor(section.color)
-                            }
+                        )
+                    ) {
+                        subsectionButtons(for: section)
+                    } label: {
+                        Label {
+                            Text(section.rawValue)
+                        } icon: {
+                            Image(systemName: section.icon)
+                                .foregroundColor(section.color)
                         }
                     }
                 }
             }
             .navigationTitle("Settings")
             .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 250)
-            .onTapGesture(count: 5) {
-                // Triple-click on sidebar to open developer settings
-                showDeveloperSettings = true
-                tapCount = 0
+            .onAppear {
+                restoreExpandedState()
+            }
+            .onChange(of: expandedSections) { _, _ in
+                saveExpandedState()
             }
         } detail: {
             // Detail View
             ScrollView {
                 VStack(alignment: .leading, spacing: 24) {
-                    // Error/Success Messages - Using Component Library
+                    // Error/Success Messages
                     if let error = store.error {
                         ErrorBannerView(
-                            message: error.localizedDescription ?? "An error occurred",
+                            message: error.localizedDescription,
                             onDismiss: {
                                 store.clearError()
                             }
@@ -118,11 +86,7 @@ struct SettingsView: View {
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .navigationTitle(
-                selectedSection == .global 
-                    ? "Global - \(selectedGlobalSubsection.rawValue)"
-                    : selectedSection.rawValue
-            )
+            .navigationTitle(navigationTitle)
         }
         .task {
             await store.loadSettings()
@@ -132,49 +96,154 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Subsection Buttons
+
+    @ViewBuilder
+    private func subsectionButtons(for section: SettingsSection) -> some View {
+        switch section {
+        case .global:
+            ForEach(GlobalSubsection.allCases) { subsection in
+                subsectionButton(.global(subsection), for: section)
+            }
+        case .account:
+            ForEach(AccountSubsection.allCases) { subsection in
+                subsectionButton(.account(subsection), for: section)
+            }
+        case .budgetVendors:
+            ForEach(BudgetVendorsSubsection.allCases) { subsection in
+                subsectionButton(.budgetVendors(subsection), for: section)
+            }
+        case .guestsTasks:
+            ForEach(GuestsTasksSubsection.allCases) { subsection in
+                subsectionButton(.guestsTasks(subsection), for: section)
+            }
+        case .appearance:
+            ForEach(AppearanceSubsection.allCases) { subsection in
+                subsectionButton(.appearance(subsection), for: section)
+            }
+        case .dataContent:
+            ForEach(DataContentSubsection.allCases) { subsection in
+                subsectionButton(.dataContent(subsection), for: section)
+            }
+        case .developer:
+            ForEach(DeveloperSubsection.allCases) { subsection in
+                subsectionButton(.developer(subsection), for: section)
+            }
+        }
+    }
+
+    private func subsectionButton(_ subsection: AnySubsection, for section: SettingsSection) -> some View {
+        Button(action: {
+            selectedSection = section
+            selectedSubsection = subsection
+        }) {
+            Label {
+                Text(subsection.rawValue)
+            } icon: {
+                Image(systemName: subsection.icon)
+                    .foregroundColor(.accentColor)
+            }
+        }
+        .buttonStyle(.plain)
+        .padding(.leading, 20)
+        .background(
+            (selectedSection == section && selectedSubsection == subsection)
+                ? Color.accentColor.opacity(0.1)
+                : Color.clear
+        )
+        .cornerRadius(6)
+    }
+
+    // MARK: - Navigation Title
+
+    private var navigationTitle: String {
+        "\(selectedSection.rawValue) - \(selectedSubsection.rawValue)"
+    }
+
+    // MARK: - Section Content
+
     @ViewBuilder
     private var sectionContent: some View {
-        switch selectedSection {
-        case .global:
-            switch selectedGlobalSubsection {
-            case .overview:
-                GlobalSettingsView(viewModel: store)
-            case .weddingEvents:
-                WeddingEventsView()
-            }
-        case .theme:
-            ThemeSettingsView(viewModel: store)
-        case .budget:
-            BudgetConfigSettingsView(viewModel: store)
-        case .tasks:
-            TasksSettingsView(viewModel: store)
-        case .vendors:
-            VendorsSettingsView(viewModel: store)
-        case .vendorCategories:
-            VendorCategoriesSettingsView(viewModel: store)
-        case .guests:
-            GuestsSettingsView(viewModel: store)
-        case .documents:
-            DocumentsSettingsView(viewModel: store)
-        case .collaboration:
-            CollaborationSettingsView()
-        case .notifications:
-            NotificationsSettingsView(viewModel: store)
-        case .links:
-            LinksSettingsView(viewModel: store)
-        case .apiKeys:
-            APIKeysSettingsView()
-        case .account:
+        switch selectedSubsection {
+        // Global
+        case .global(.overview):
+            GlobalSettingsView(viewModel: store)
+        case .global(.weddingEvents):
+            WeddingEventsView()
+            
+        // Account
+        case .account(.profile):
             AccountSettingsView()
-        case .featureFlags:
-            FeatureFlagsSettingsView()
-        case .danger:
+        case .account(.collaboration):
+            CollaborationSettingsView()
+        case .account(.dataPrivacy):
             DangerZoneView(viewModel: store)
+            
+        // Budget & Vendors
+        case .budgetVendors(.budgetConfiguration):
+            BudgetConfigSettingsView(viewModel: store)
+        case .budgetVendors(.budgetCategories):
+            BudgetCategoriesSettingsView()
+        case .budgetVendors(.vendorManagement):
+            VendorsSettingsView(viewModel: store)
+        case .budgetVendors(.vendorCategories):
+            VendorCategoriesSettingsView(viewModel: store)
+            
+        // Guests & Tasks
+        case .guestsTasks(.guestPreferences):
+            GuestsSettingsView(viewModel: store)
+        case .guestsTasks(.taskPreferences):
+            TasksSettingsView(viewModel: store)
+        case .guestsTasks(.teamMembers):
+            // TODO: Create TeamMembersSettingsView
+            VStack(spacing: 16) {
+                Image(systemName: "person.2.badge.gearshape")
+                    .font(.system(size: 48))
+                    .foregroundColor(.secondary)
+                Text("Team Members")
+                    .font(.title2)
+                    .fontWeight(.semibold)
+                Text("Manage responsible parties and meal options")
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding()
+            
+        // Appearance
+        case .appearance(.theme):
+            ThemeSettingsView(viewModel: store)
+        case .appearance(.notifications):
+            NotificationsSettingsView(viewModel: store)
+            
+        // Data & Content
+        case .dataContent(.documents):
+            DocumentsSettingsView(viewModel: store)
+        case .dataContent(.importantLinks):
+            LinksSettingsView(viewModel: store)
+            
+        // Developer
+        case .developer(.apiKeys):
+            APIKeysSettingsView()
+        case .developer(.featureFlags):
+            FeatureFlagsSettingsView()
+        }
+    }
+
+    // MARK: - State Persistence
+
+    private func saveExpandedState() {
+        let expanded = expandedSections.map { $0.rawValue }
+        UserDefaults.standard.set(expanded, forKey: "SettingsExpandedSections")
+    }
+
+    private func restoreExpandedState() {
+        if let saved = UserDefaults.standard.array(forKey: "SettingsExpandedSections") as? [String] {
+            expandedSections = Set(saved.compactMap { SettingsSection(rawValue: $0) })
         }
     }
 }
-
-// Note: AlertMessage component replaced with ErrorBannerView and InfoCard from component library
 
 #Preview {
     SettingsView()

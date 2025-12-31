@@ -3,24 +3,21 @@
 //  I Do Blueprint
 //
 //  Sidebar navigation for settings sections
+//  NOTE: This file is deprecated. Use SettingsView.swift instead.
 //
 
 import SwiftUI
 
 struct SettingsSidebarView: View {
     @Binding var selectedSection: SettingsSection
-    @Binding var selectedGlobalSubsection: GlobalSubsection
+    @Binding var selectedSubsection: AnySubsection
     @Binding var expandedSections: Set<SettingsSection>
     let onDeveloperTap: () -> Void
     
     var body: some View {
         List(selection: $selectedSection) {
             ForEach(SettingsSection.allCases) { section in
-                if section.hasSubsections {
-                    subsectionGroup(for: section)
-                } else {
-                    sectionLink(for: section)
-                }
+                subsectionGroup(for: section)
             }
         }
         .navigationTitle("Settings")
@@ -46,18 +43,43 @@ struct SettingsSidebarView: View {
                 }
             )
         ) {
-            ForEach(GlobalSubsection.allCases) { subsection in
-                subsectionButton(for: section, subsection: subsection)
-            }
+            subsectionButtons(for: section)
         } label: {
             sectionLabel(for: section)
         }
     }
     
     @ViewBuilder
-    private func sectionLink(for section: SettingsSection) -> some View {
-        NavigationLink(value: section) {
-            sectionLabel(for: section)
+    private func subsectionButtons(for section: SettingsSection) -> some View {
+        switch section {
+        case .global:
+            ForEach(GlobalSubsection.allCases) { subsection in
+                subsectionButton(.global(subsection), for: section)
+            }
+        case .account:
+            ForEach(AccountSubsection.allCases) { subsection in
+                subsectionButton(.account(subsection), for: section)
+            }
+        case .budgetVendors:
+            ForEach(BudgetVendorsSubsection.allCases) { subsection in
+                subsectionButton(.budgetVendors(subsection), for: section)
+            }
+        case .guestsTasks:
+            ForEach(GuestsTasksSubsection.allCases) { subsection in
+                subsectionButton(.guestsTasks(subsection), for: section)
+            }
+        case .appearance:
+            ForEach(AppearanceSubsection.allCases) { subsection in
+                subsectionButton(.appearance(subsection), for: section)
+            }
+        case .dataContent:
+            ForEach(DataContentSubsection.allCases) { subsection in
+                subsectionButton(.dataContent(subsection), for: section)
+            }
+        case .developer:
+            ForEach(DeveloperSubsection.allCases) { subsection in
+                subsectionButton(.developer(subsection), for: section)
+            }
         }
     }
     
@@ -72,10 +94,10 @@ struct SettingsSidebarView: View {
     }
     
     @ViewBuilder
-    private func subsectionButton(for section: SettingsSection, subsection: GlobalSubsection) -> some View {
+    private func subsectionButton(_ subsection: AnySubsection, for section: SettingsSection) -> some View {
         Button(action: {
             selectedSection = section
-            selectedGlobalSubsection = subsection
+            selectedSubsection = subsection
         }) {
             Label {
                 Text(subsection.rawValue)
@@ -87,7 +109,7 @@ struct SettingsSidebarView: View {
         .buttonStyle(.plain)
         .padding(.leading, 20)
         .background(
-            selectedSection == section && selectedGlobalSubsection == subsection
+            (selectedSection == section && selectedSubsection == subsection)
                 ? Color.accentColor.opacity(0.1)
                 : Color.clear
         )
@@ -101,7 +123,7 @@ struct SettingsSidebarView: View {
     NavigationSplitView {
         SettingsSidebarView(
             selectedSection: .constant(.global),
-            selectedGlobalSubsection: .constant(.overview),
+            selectedSubsection: .constant(.global(.overview)),
             expandedSections: .constant([.global]),
             onDeveloperTap: {}
         )

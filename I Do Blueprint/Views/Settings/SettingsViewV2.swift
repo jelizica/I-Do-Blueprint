@@ -2,8 +2,8 @@
 //  SettingsViewV2.swift
 //  I Do Blueprint
 //
+//  NOTE: This file is deprecated. Use SettingsView.swift instead.
 //  Refactored settings view with extracted sidebar and detail components
-//  Reduced nesting from level 10 to max level 4
 //
 
 import SwiftUI
@@ -11,7 +11,7 @@ import SwiftUI
 struct SettingsViewV2: View {
     @Environment(\.appStores) private var appStores
     @State private var selectedSection: SettingsSection = .global
-    @State private var selectedGlobalSubsection: GlobalSubsection = .overview
+    @State private var selectedSubsection: AnySubsection = .global(.overview)
     @State private var showDeveloperSettings = false
     @State private var expandedSections: Set<SettingsSection> = [.global]
     
@@ -23,7 +23,7 @@ struct SettingsViewV2: View {
         NavigationSplitView {
             SettingsSidebarView(
                 selectedSection: $selectedSection,
-                selectedGlobalSubsection: $selectedGlobalSubsection,
+                selectedSubsection: $selectedSubsection,
                 expandedSections: $expandedSections,
                 onDeveloperTap: {
                     showDeveloperSettings = true
@@ -32,7 +32,7 @@ struct SettingsViewV2: View {
         } detail: {
             SettingsDetailView(
                 selectedSection: selectedSection,
-                selectedGlobalSubsection: selectedGlobalSubsection,
+                selectedSubsection: selectedSubsection,
                 store: store
             )
         }
