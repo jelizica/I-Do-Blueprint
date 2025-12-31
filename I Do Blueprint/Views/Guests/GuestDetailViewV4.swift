@@ -137,6 +137,8 @@ struct GuestDetailViewV4: View {
                     .background(AppColors.cardBackground)
                     .cornerRadius(CornerRadius.lg)
                     .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+                    .position(x: NSScreen.main?.visibleFrame.midX ?? 400,
+                             y: (NSScreen.main?.visibleFrame.midY ?? 400) - 50) // Offset up to avoid dock
                 }
                 .sheet(isPresented: $showingEditSheet) {
                     EditGuestSheetV2(guest: guest, guestStore: guestStore) { _ in
