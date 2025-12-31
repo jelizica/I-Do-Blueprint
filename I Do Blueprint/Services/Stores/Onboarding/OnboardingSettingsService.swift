@@ -56,39 +56,19 @@ actor OnboardingSettingsService {
                 logger.info("No wedding date set - marking as TBD")
             }
             
-            // Update wedding events from onboarding
+            // Create events in the wedding_events database table
+            // This is the single source of truth for events
             if !weddingDetails.weddingEvents.isEmpty {
-                // Convert onboarding events to settings events
-                settings.global.weddingEvents = weddingDetails.weddingEvents.enumerated().map { index, event in
-                    let formatter = DateFormatter()
-                    formatter.dateFormat = "yyyy-MM-dd"
-                    formatter.timeZone = TimeZone(secondsFromGMT: 0)
-                    
-                    return SettingsWeddingEvent(
-                        id: event.id,
-                        eventName: event.eventName,
-                        eventDate: event.eventDate.map { formatter.string(from: $0) } ?? "",
-                        eventTime: event.eventTime,
-                        venueLocation: event.venueLocation,
-                        description: "",
-                        isMainEvent: event.isMainEvent,
-                        eventOrder: index + 1
-                    )
-                }
-                
-                logger.info("Saved \(weddingDetails.weddingEvents.count) wedding events from onboarding")
-                
-                // Also create events in the wedding_events table for guest attendance tracking
                 await createWeddingEventsInDatabase(
                     coupleId: coupleId,
                     events: weddingDetails.weddingEvents,
                     weddingDate: weddingDetails.weddingDate
                 )
+                logger.info("Created \(weddingDetails.weddingEvents.count) wedding events in database")
             } else {
                 // Create default events if none configured in onboarding
                 logger.info("No wedding events configured in onboarding, creating defaults")
                 
-                // Create default ceremony and reception events
                 let defaultEvents = [
                     OnboardingWeddingEvent.defaultCeremony(),
                     OnboardingWeddingEvent.defaultReception()
@@ -100,6 +80,11 @@ actor OnboardingSettingsService {
                     weddingDate: weddingDetails.weddingDate
                 )
             }
+            
+            // Note: We no longer store events in settings.global.weddingEvents
+            // The wedding_events table is the single source of truth
+            // Clear the settings events to avoid confusion
+            settings.global.weddingEvents = []
         }
         
         // Update budget settings
@@ -134,7 +119,7 @@ actor OnboardingSettingsService {
             settings.guests = featurePrefs.guests
             settings.documents = featurePrefs.documents
             
-            logger.info("Saved feature preferences: tasks(\(featurePrefs.tasks.defaultView)), vendors(\(featurePrefs.vendors.defaultView)), guests(\(featurePrefs.guests.defaultView))")
+            logger.info("Saved feature preferences")
         }
         
         // Upsert the settings record (insert or update if exists)
@@ -146,7 +131,7 @@ actor OnboardingSettingsService {
     // MARK: - Private Helpers
     
     /// Creates wedding events in the wedding_events database table
-    /// This ensures events are available for guest attendance tracking
+    /// This is the single source of truth for wedding events
     private func createWeddingEventsInDatabase(
         coupleId: UUID,
         events: [OnboardingWeddingEvent],
@@ -159,21 +144,19 @@ actor OnboardingSettingsService {
         
         for (index, event) in events.enumerated() {
             do {
-                // Determine event type based on event name
-                let eventType = determineEventType(from: event.eventName, isMainEvent: event.isMainEvent)
-                
                 // Use event date if set, otherwise use wedding date
                 let eventDate = event.eventDate ?? weddingDate ?? Date()
                 
-                // Create the database event record
+                // Create the database event record using the event type directly
                 let dbEvent = WeddingEventInsert(
                     id: UUID().uuidString, // Generate new UUID for database
                     event_name: event.eventName,
-                    event_type: eventType,
+                    event_type: event.eventType.rawValue, // Use the enum's raw value
                     event_date: eventDate,
                     start_time: parseTime(event.eventTime),
                     end_time: nil,
                     venue_name: event.venueLocation.isEmpty ? nil : event.venueLocation,
+                    notes: event.notes.isEmpty ? nil : event.notes, // Store notes for "other" type
                     is_main_event: event.isMainEvent,
                     event_order: index + 1,
                     couple_id: coupleId.uuidString
@@ -184,32 +167,11 @@ actor OnboardingSettingsService {
                     .insert(dbEvent)
                     .execute()
                 
-                logger.info("Created wedding event in database: \(event.eventName) (type: \(eventType))")
+                logger.info("Created wedding event in database: \(event.eventName) (type: \(event.eventType.rawValue))")
             } catch {
                 // Log error but don't fail onboarding - events can be created later
                 logger.error("Failed to create wedding event '\(event.eventName)' in database", error: error)
             }
-        }
-    }
-    
-    /// Determines the event type based on event name
-    private func determineEventType(from eventName: String, isMainEvent: Bool) -> String {
-        let lowercaseName = eventName.lowercased()
-        
-        if lowercaseName.contains("ceremony") {
-            return "ceremony"
-        } else if lowercaseName.contains("reception") {
-            return "reception"
-        } else if lowercaseName.contains("rehearsal") || lowercaseName.contains("welcome") || lowercaseName.contains("dinner") {
-            return "rehearsal"
-        } else if lowercaseName.contains("brunch") {
-            return "brunch"
-        } else if lowercaseName.contains("party") {
-            return "party"
-        } else if isMainEvent {
-            return "ceremony" // Default main event to ceremony
-        } else {
-            return "other"
         }
     }
     
@@ -273,6 +235,7 @@ private struct WeddingEventInsert: Encodable {
     let start_time: Date?
     let end_time: Date?
     let venue_name: String?
+    let notes: String?
     let is_main_event: Bool
     let event_order: Int
     let couple_id: String

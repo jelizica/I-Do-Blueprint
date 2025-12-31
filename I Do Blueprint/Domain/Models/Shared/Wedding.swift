@@ -7,6 +7,63 @@
 
 import Foundation
 
+// MARK: - Event Type Enum
+
+/// The 4 valid wedding event types in the database
+enum WeddingEventType: String, Codable, CaseIterable, Identifiable {
+    case ceremony = "ceremony"
+    case reception = "reception"
+    case rehearsal = "rehearsal"
+    case other = "other"
+    
+    var id: String { rawValue }
+    
+    /// Display name for the event type
+    var displayName: String {
+        switch self {
+        case .ceremony: return "Ceremony"
+        case .reception: return "Reception"
+        case .rehearsal: return "Rehearsal/Welcome Event"
+        case .other: return "Other"
+        }
+    }
+    
+    /// Icon for the event type
+    var icon: String {
+        switch self {
+        case .ceremony: return "heart.fill"
+        case .reception: return "party.popper.fill"
+        case .rehearsal: return "music.note"
+        case .other: return "calendar"
+        }
+    }
+    
+    /// Color for the event type (returns Color name string for use with design system)
+    var colorName: String {
+        switch self {
+        case .ceremony: return "purple"
+        case .reception: return "blue"
+        case .rehearsal: return "orange"
+        case .other: return "gray"
+        }
+    }
+    
+    /// Whether this event type requires a note/description
+    var requiresNote: Bool {
+        self == .other
+    }
+    
+    /// Default event name for this type
+    var defaultEventName: String {
+        switch self {
+        case .ceremony: return "Wedding Ceremony"
+        case .reception: return "Wedding Reception"
+        case .rehearsal: return "Welcome Dinner"
+        case .other: return "Other Event"
+        }
+    }
+}
+
 // Type alias for compatibility
 typealias WeddingEvent = WeddingEventDB
 

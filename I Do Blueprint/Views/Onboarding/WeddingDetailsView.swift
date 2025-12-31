@@ -468,10 +468,30 @@ struct WeddingEventCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
+            // Event Type Dropdown and Main Event Badge
             HStack {
-                TextField("Event Name", text: $event.eventName)
-                    .font(Typography.bodyLarge)
-                    .fontWeight(.semibold)
+                // Event Type Picker
+                Picker("Event Type", selection: $event.eventType) {
+                    ForEach(WeddingEventType.allCases) { type in
+                        HStack {
+                            Image(systemName: type.icon)
+                            Text(type.displayName)
+                        }
+                        .tag(type)
+                    }
+                }
+                .pickerStyle(.menu)
+                .onChange(of: event.eventType) { newType in
+                    // Auto-update event name when type changes (if using default name)
+                    if event.eventName == WeddingEventType.ceremony.defaultEventName ||
+                       event.eventName == WeddingEventType.reception.defaultEventName ||
+                       event.eventName == WeddingEventType.rehearsal.defaultEventName ||
+                       event.eventName == WeddingEventType.other.defaultEventName {
+                        event.eventName = newType.defaultEventName
+                    }
+                }
+                
+                Spacer()
 
                 if event.isMainEvent {
                     Text("Main Event")
@@ -483,7 +503,37 @@ struct WeddingEventCard: View {
                         .cornerRadius(4)
                 }
             }
+            
+            // Event Name
+            TextField("Event Name", text: $event.eventName)
+                .font(Typography.bodyLarge)
+                .fontWeight(.semibold)
+                .textFieldStyle(.plain)
+                .padding(Spacing.sm)
+                .background(AppColors.background)
+                .cornerRadius(4)
+            
+            // Notes field (required for "other" type)
+            if event.eventType == .other {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    HStack {
+                        Text("Event Description")
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textSecondary)
+                        Text("*")
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.error)
+                    }
+                    TextField("Describe this event...", text: $event.notes)
+                        .font(Typography.bodyRegular)
+                        .textFieldStyle(.plain)
+                        .padding(Spacing.sm)
+                        .background(AppColors.background)
+                        .cornerRadius(4)
+                }
+            }
 
+            // Venue Location
             TextField("Venue Location (Optional)", text: $event.venueLocation)
                 .font(Typography.bodyRegular)
                 .textFieldStyle(.plain)
@@ -491,6 +541,7 @@ struct WeddingEventCard: View {
                 .background(AppColors.background)
                 .cornerRadius(4)
 
+            // Date and Time
             HStack(spacing: Spacing.md) {
                 Button(action: { showDatePicker.toggle() }) {
                     HStack {

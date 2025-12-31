@@ -178,36 +178,44 @@ struct WeddingDetails: Codable, Equatable {
 
 // MARK: - Onboarding Wedding Event
 
-/// Wedding event captured during onboarding (simplified version of SettingsWeddingEvent)
+/// Wedding event captured during onboarding
+/// Uses WeddingEventType enum for the 4 valid event types
 struct OnboardingWeddingEvent: Codable, Equatable, Identifiable {
     let id: String
     var eventName: String
+    var eventType: WeddingEventType
     var eventDate: Date?
     var eventTime: String
     var venueLocation: String
     var isMainEvent: Bool
+    var notes: String  // Required for "other" event type
 
     init(
         id: String = UUID().uuidString,
         eventName: String,
+        eventType: WeddingEventType = .ceremony,
         eventDate: Date? = nil,
         eventTime: String = "",
         venueLocation: String = "",
-        isMainEvent: Bool = false
+        isMainEvent: Bool = false,
+        notes: String = ""
     ) {
         self.id = id
         self.eventName = eventName
+        self.eventType = eventType
         self.eventDate = eventDate
         self.eventTime = eventTime
         self.venueLocation = venueLocation
         self.isMainEvent = isMainEvent
+        self.notes = notes
     }
 
     /// Creates default ceremony event
     static func defaultCeremony() -> OnboardingWeddingEvent {
         OnboardingWeddingEvent(
             id: "default-ceremony",
-            eventName: "Wedding Ceremony",
+            eventName: WeddingEventType.ceremony.defaultEventName,
+            eventType: .ceremony,
             isMainEvent: true
         )
     }
@@ -216,7 +224,18 @@ struct OnboardingWeddingEvent: Codable, Equatable, Identifiable {
     static func defaultReception() -> OnboardingWeddingEvent {
         OnboardingWeddingEvent(
             id: "default-reception",
-            eventName: "Wedding Reception",
+            eventName: WeddingEventType.reception.defaultEventName,
+            eventType: .reception,
+            isMainEvent: false
+        )
+    }
+    
+    /// Creates default rehearsal/welcome event
+    static func defaultRehearsal() -> OnboardingWeddingEvent {
+        OnboardingWeddingEvent(
+            id: "default-rehearsal",
+            eventName: WeddingEventType.rehearsal.defaultEventName,
+            eventType: .rehearsal,
             isMainEvent: false
         )
     }
