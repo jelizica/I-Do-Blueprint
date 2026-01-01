@@ -11,59 +11,59 @@ import SwiftUI
 // MARK: - Budget Page Enum
 
 enum BudgetPage: String, CaseIterable, Identifiable {
-    // Overview Group (5 pages)
-    case dashboard = "Budget Dashboard"
+    // Hub (special case - not in a group)
+    case hub = "Dashboard"
+    
+    // Planning & Analysis Group (4 pages)
+    case developmentDashboard = "Development Dashboard"
     case analytics = "Analytics Hub"
     case cashFlow = "Account Cash Flow"
-    case development = "Budget Development"
     case calculator = "Calculator"
 
-    // Expenses Group (3 pages)
+    // Expenses Group (4 pages - includes Payment Schedule)
     case expenseTracker = "Expense Tracker"
     case expenseReports = "Expense Reports"
     case expenseCategories = "Expense Categories"
-
-    // Payments Group (1 page)
     case paymentSchedule = "Payment Schedule"
 
-    // Gifts & Owed Group (3 pages)
+    // Income Group (3 pages - renamed from Gifts & Owed)
     case moneyTracker = "Money Tracker"
     case moneyReceived = "Money Received"
     case moneyOwed = "Money Owed"
 
     var id: String { rawValue }
 
-    var group: BudgetGroup {
+    var group: BudgetGroup? {
         switch self {
-        case .dashboard, .analytics, .cashFlow, .development, .calculator:
-            return .overview
-        case .expenseTracker, .expenseReports, .expenseCategories:
+        case .hub:
+            return nil  // Hub is not in a group
+        case .developmentDashboard, .analytics, .cashFlow, .calculator:
+            return .planningAnalysis
+        case .expenseTracker, .expenseReports, .expenseCategories, .paymentSchedule:
             return .expenses
-        case .paymentSchedule:
-            return .payments
         case .moneyTracker, .moneyReceived, .moneyOwed:
-            return .giftsOwed
+            return .income
         }
     }
 
     var icon: String {
         switch self {
-        // Overview
-        case .dashboard: return "chart.bar.fill"
+        // Hub
+        case .hub: return "square.grid.2x2.fill"
+        
+        // Planning & Analysis
+        case .developmentDashboard: return "chart.bar.fill"
         case .analytics: return "chart.xyaxis.line"
         case .cashFlow: return "chart.line.uptrend.xyaxis"
-        case .development: return "hammer.fill"
         case .calculator: return "function"
 
         // Expenses
         case .expenseTracker: return "receipt.fill"
         case .expenseReports: return "chart.bar.doc.horizontal.fill"
         case .expenseCategories: return "folder.fill"
-
-        // Payments
         case .paymentSchedule: return "calendar.badge.clock"
 
-        // Gifts & Owed
+        // Income
         case .moneyTracker: return "dollarsign.circle.fill"
         case .moneyReceived: return "arrow.down.circle.fill"
         case .moneyOwed: return "arrow.up.circle.fill"
@@ -73,15 +73,17 @@ enum BudgetPage: String, CaseIterable, Identifiable {
     @ViewBuilder
     var view: some View {
         switch self {
-        // Overview group
-        case .dashboard:
+        // Hub
+        case .hub:
+            EmptyView()  // Hub is handled separately in BudgetDashboardHubView
+        
+        // Planning & Analysis group
+        case .developmentDashboard:
             BudgetOverviewDashboardViewV2()
         case .analytics:
             BudgetAnalyticsView()
         case .cashFlow:
             BudgetCashFlowView()
-        case .development:
-            BudgetDevelopmentView()
         case .calculator:
             BudgetCalculatorView()
 
@@ -92,12 +94,10 @@ enum BudgetPage: String, CaseIterable, Identifiable {
             ExpenseReportsView()
         case .expenseCategories:
             ExpenseCategoriesView()
-
-        // Payments group
         case .paymentSchedule:
             PaymentScheduleView()
 
-        // Gifts & Owed group
+        // Income group
         case .moneyTracker:
             GiftsAndOwedView()
         case .moneyReceived:
@@ -111,28 +111,25 @@ enum BudgetPage: String, CaseIterable, Identifiable {
 // MARK: - Budget Group Enum
 
 enum BudgetGroup: String, CaseIterable, Identifiable {
-    case overview = "Overview"
+    case planningAnalysis = "Planning & Analysis"
     case expenses = "Expenses"
-    case payments = "Payments"
-    case giftsOwed = "Gifts & Owed"
+    case income = "Income"
 
     var id: String { rawValue }
 
     var color: Color {
         switch self {
-        case .overview: return AppColors.Budget.allocated
+        case .planningAnalysis: return AppColors.Budget.allocated
         case .expenses: return AppColors.Budget.overBudget
-        case .payments: return AppColors.Budget.income
-        case .giftsOwed: return AppColors.Budget.pending
+        case .income: return AppColors.Budget.income
         }
     }
 
     var icon: String {
         switch self {
-        case .overview: return "chart.bar.fill"
-        case .expenses: return "receipt.fill"
-        case .payments: return "calendar.badge.clock"
-        case .giftsOwed: return "dollarsign.circle.fill"
+        case .planningAnalysis: return "chart.bar.fill"
+        case .expenses: return "creditcard.fill"
+        case .income: return "dollarsign.circle.fill"
         }
     }
 
@@ -142,23 +139,20 @@ enum BudgetGroup: String, CaseIterable, Identifiable {
 
     var defaultPage: BudgetPage {
         switch self {
-        case .overview: return .dashboard
+        case .planningAnalysis: return .developmentDashboard
         case .expenses: return .expenseTracker
-        case .payments: return .paymentSchedule
-        case .giftsOwed: return .moneyTracker
+        case .income: return .moneyTracker
         }
     }
 
     var description: String {
         switch self {
-        case .overview:
-            return "Dashboard, analytics, and budget planning tools"
+        case .planningAnalysis:
+            return "Planning and analysis tools"
         case .expenses:
-            return "Track and categorize wedding expenses"
-        case .payments:
-            return "Manage payment schedules and deadlines"
-        case .giftsOwed:
-            return "Track gifts received and money owed"
+            return "Track spending and payments"
+        case .income:
+            return "Monitor gifts and money owed"
         }
     }
 }

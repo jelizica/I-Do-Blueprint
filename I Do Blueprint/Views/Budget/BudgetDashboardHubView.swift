@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct BudgetDashboardHubView: View {
-    @State private var currentPage: BudgetPage = .dashboard
+    @State private var currentPage: BudgetPage = .hub
     @EnvironmentObject var budgetStore: BudgetStoreV2
 
     var body: some View {
@@ -24,7 +24,7 @@ struct BudgetDashboardHubView: View {
                     .ignoresSafeArea()
 
                 // Content based on current page
-                if currentPage == .dashboard {
+                if currentPage == .hub {
                     // Dashboard hub content
                     ScrollView {
                         VStack(spacing: Spacing.xl) {
@@ -32,7 +32,7 @@ struct BudgetDashboardHubView: View {
                             budgetDashboardSummary(windowSize: windowSize)
                                 .frame(width: availableWidth)
 
-                            // 4 Group Cards (2x2 grid or adaptive)
+                            // 3 Group Cards (not 4)
                             groupCardsGrid(windowSize: windowSize)
                                 .frame(width: availableWidth)
 
@@ -176,6 +176,9 @@ struct BudgetDashboardHubView: View {
                 .padding(.horizontal, Spacing.sm)
 
             VStack(spacing: Spacing.xs) {
+                QuickAccessRow(page: .developmentDashboard) {
+                    currentPage = .developmentDashboard
+                }
                 QuickAccessRow(page: .expenseTracker) {
                     currentPage = .expenseTracker
                 }
@@ -196,9 +199,22 @@ struct BudgetDashboardHubView: View {
 
     private var budgetPageDropdown: some View {
         Menu {
-            // Overview Group
-            Section("Overview") {
-                ForEach(BudgetGroup.overview.pages) { page in
+            // Dashboard (always first, outside sections)
+            Button {
+                currentPage = .hub
+            } label: {
+                Label("Dashboard", systemImage: "square.grid.2x2.fill")
+                if currentPage == .hub {
+                    Image(systemName: "checkmark")
+                }
+            }
+            .keyboardShortcut("1", modifiers: [.command])
+
+            Divider()
+
+            // Planning & Analysis Group
+            Section("Planning & Analysis") {
+                ForEach(BudgetGroup.planningAnalysis.pages) { page in
                     Button {
                         currentPage = page
                     } label: {
@@ -224,23 +240,9 @@ struct BudgetDashboardHubView: View {
                 }
             }
 
-            // Payments Group
-            Section("Payments") {
-                ForEach(BudgetGroup.payments.pages) { page in
-                    Button {
-                        currentPage = page
-                    } label: {
-                        Label(page.rawValue, systemImage: page.icon)
-                        if currentPage == page {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-
-            // Gifts & Owed Group
-            Section("Gifts & Owed") {
-                ForEach(BudgetGroup.giftsOwed.pages) { page in
+            // Income Group
+            Section("Income") {
+                ForEach(BudgetGroup.income.pages) { page in
                     Button {
                         currentPage = page
                     } label: {
@@ -324,7 +326,7 @@ struct QuickAccessRow: View {
             HStack(spacing: Spacing.md) {
                 Image(systemName: page.icon)
                     .font(.system(size: 16))
-                    .foregroundColor(page.group.color)
+                    .foregroundColor(page.group?.color ?? AppColors.Budget.allocated)
                     .frame(width: 24)
 
                 Text(page.rawValue)
