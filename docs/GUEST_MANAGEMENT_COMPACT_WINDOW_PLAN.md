@@ -630,3 +630,87 @@ Models agreed on compact card design principles:
 8. **I Do Blueprint-bf4** [P1] - Testing & Polish (depends on integration)
 
 Each bead has comprehensive descriptions, acceptance criteria, and test plans for fresh chat pickup.
+
+## LLM Council: UI Boundary Issue Fix (2025-12-31)
+
+### Problem Identified
+After initial implementation, cards and containers were being cut off at the app edges due to **fixed-width cards (290px)** conflicting with flexible grid columns and available window width.
+
+### Root Cause Analysis (100% Consensus)
+All four council members (GPT-5.1, Gemini-3-Pro, Claude Sonnet 4.5, Grok-4) unanimously identified:
+
+**The Math Problem:**
+- Regular mode at 700px minimum window:
+  - Window: 700px
+  - Horizontal padding: 2 × 48px = 96px
+  - Available for grid: 604px
+  - Required for 3 fixed cards: (3 × 290px) + (2 × 16px spacing) = 902px
+  - **Overflow: 298px** ❌
+
+### Solution Implemented
+
+#### 1. Flexible-Width Cards (GuestCardV4.swift)
+```swift
+// Before: Fixed width causing overflow
+.frame(width: 290, height: 243)
+
+// After: Flexible width with comfortable minimum
+.frame(minWidth: 250, maxWidth: .infinity)
+.frame(height: 243) // Keep fixed height
+```
+
+#### 2. Adaptive Grid Columns (GuestListGrid.swift)
+```swift
+// Before: Hard-coded column counts
+let columns = windowSize == .regular ? 3 : 4
+LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: columns), ...)
+
+// After: Adaptive columns that calculate automatically
+LazyVGrid(
+    columns: [GridItem(.adaptive(minimum: 250, maximum: 350), spacing: Spacing.lg)],
+    spacing: Spacing.lg
+) { ... }
+```
+
+**Key Benefits:**
+- Cards automatically fill available space
+- Grid calculates optimal column count (1-5 columns depending on width)
+- No overflow at any window size
+- Smooth transitions during window resize
+- Cards stay between 250-350px for comfortable reading
+
+#### 3. Padding Strategy (Verified Correct)
+Current implementation already follows best practices:
+- Single-level horizontal padding at parent view
+- Header and ScrollView content are siblings (not nested)
+- Consistent padding values: `Spacing.lg` (16px) compact, `Spacing.huge` (48px) regular/large
+
+### Council Recommendations Summary
+
+**GPT-5.1:** Recommended `.adaptive(minimum:)` grid with flexible cards. Emphasized removing fixed widths.
+
+**Gemini-3-Pro:** Detailed math breakdown showing 290px cards cannot fit in 604px space. Recommended `.adaptive(minimum: 250)`.
+
+**Claude Sonnet 4.5:** Comprehensive solution with both flexible cards and dynamic column calculation. Emphasized macOS-specific considerations.
+
+**Grok-4:** Detailed root cause analysis with emphasis on GeometryReader usage and avoiding fixed widths on macOS.
+
+### Testing Checklist
+- [x] Build succeeds with no errors
+- [x] Cards no longer clip at window edges
+- [x] Grid adapts smoothly from 1-5 columns based on width
+- [x] Compact mode (640-700px) works correctly
+- [x] Regular mode (700-1000px) works correctly
+- [x] Large mode (>1000px) works correctly
+- [x] Stats cards already have flexible width (no changes needed)
+
+### Files Modified
+1. `GuestCardV4.swift` - Lines 34-35: Changed to flexible width with min/max constraints
+2. `GuestListGrid.swift` - Lines 37-39: Changed to adaptive grid with single GridItem
+3. `GuestStatsSection.swift` - Already correct (has `.frame(maxWidth: .infinity)`)
+
+### macOS-Specific Considerations Addressed
+- GeometryReader provides content area width (excluding window chrome)
+- No safe area insets needed for horizontal layout on macOS
+- Adaptive grids handle arbitrary window resizing smoothly
+- Scroll bars are accounted for by GeometryReader

@@ -32,9 +32,12 @@ struct GuestListGrid: View {
                     }
                     .id(renderId)
                 } else {
-                    // Regular/Large: Grid layout with full cards
-                    let columns = windowSize == .regular ? 3 : 4
-                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: columns), spacing: Spacing.lg) {
+                    // Regular/Large: Adaptive grid with flexible columns
+                    // Cards will automatically fill the available width (min: 250px per card)
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 250, maximum: 350), spacing: Spacing.lg)],
+                        spacing: Spacing.lg
+                    ) {
                         ForEach(guests, id: \.id) { guest in
                             GuestCardV4(guest: guest, settings: settings)
                                 .onTapGesture {

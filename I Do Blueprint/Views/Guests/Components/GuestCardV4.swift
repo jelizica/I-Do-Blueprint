@@ -16,22 +16,23 @@ struct GuestCardV4: View {
         VStack(alignment: .leading, spacing: 0) {
             // Avatar and Status Badge
             avatarSection
-            
+
             // Guest Name
             nameSection
-            
+
             // Email
             emailSection
-            
+
             // Invited By
             invitedBySection
-            
+
             Spacer()
-            
+
             // Table and Meal Section
             detailsSection
         }
-        .frame(width: 290, height: 243)
+        .frame(minWidth: 250, maxWidth: .infinity) // Flexible width with comfortable minimum
+        .frame(height: 243) // Keep fixed height
         .background(AppColors.cardBackground)
         .cornerRadius(12)
         .overlay(
