@@ -156,3 +156,142 @@ rules:
     metadata:
       category: compliance
       apple-privacy-manifest: true
+
+  # ===== ADDITIONAL SECURITY RULES =====
+
+  # Auth Token Storage
+  - id: auth-token-in-userdefaults
+    pattern-either:
+      - pattern: |
+          UserDefaults.standard.set($TOKEN, forKey: $KEY)
+      - pattern: |
+          UserDefaults.standard.setValue($TOKEN, forKey: $KEY)
+    metavariable-pattern:
+      metavariable: $KEY
+      patterns:
+        - pattern-regex: ".*(token|session|auth|jwt|bearer|api_key|access|refresh).*"
+    message: |
+      Auth token stored in UserDefaults detected. UserDefaults is not encrypted.
+      Use Keychain (SessionManager) for sensitive auth data.
+      SECURITY RISK: Tokens in UserDefaults can be extracted from backups.
+    severity: ERROR
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [auth, storage]
+      cwe: "CWE-922: Insecure Storage of Sensitive Information"
+
+  # Service Role Key (Critical)
+  - id: service-role-key-in-client
+    pattern-regex: "service_role|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\\.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ii4qIiwicm9sZSI6InNlcnZpY2Vfcm9sZSI"
+    message: |
+      CRITICAL: service_role key detected in client code!
+      service_role keys bypass Row Level Security and should NEVER be in client apps.
+      This is a CRITICAL security vulnerability allowing full database access.
+      Remove immediately and use anon key only.
+    severity: ERROR
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [auth, secrets]
+      cwe: "CWE-798: Use of Hard-coded Credentials"
+      owasp: "A07:2021 - Identification and Authentication Failures"
+
+  # Database Error Exposure
+  - id: database-error-exposed-to-user
+    pattern-either:
+      - pattern: showError($ERROR.localizedDescription)
+      - pattern: print($ERR as PostgrestError)
+      - pattern: logger.error(..., $ERR.localizedDescription, ...)
+    message: |
+      Database error may be exposed to user. Error messages can reveal:
+      - Database schema details
+      - Table/column names
+      - SQL syntax
+      Use generic error messages for users. Log detailed errors securely.
+    severity: WARNING
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [information-disclosure]
+      cwe: "CWE-209: Generation of Error Message Containing Sensitive Information"
+
+  # CSV/XLSX Export PII Warning
+  - id: pii-export-without-sanitization
+    pattern-either:
+      - pattern: |
+          exportToCSV(guests: $GUESTS)
+      - pattern: |
+          exportToExcel(guests: $GUESTS)
+      - pattern: |
+          GuestExportService.$METHOD($GUESTS)
+    message: |
+      Exporting guest PII to file. Ensure:
+      - User consent for data export
+      - Secure file permissions (user-only access)
+      - Exported files are not synced to cloud (exclude from iCloud)
+      - File deletion after use
+    severity: INFO
+    languages: [swift]
+    metadata:
+      category: privacy
+      gdpr: true
+
+  # Unsafe Query String Building
+  - id: unsafe-query-string-interpolation
+    pattern-either:
+      - pattern: |
+          .from("\($TABLE)")
+      - pattern: |
+          .select("\($COLUMNS)")
+      - pattern: |
+          .eq("\($COLUMN)", value: "\($VALUE)")
+    message: |
+      String interpolation in database query detected.
+      This could lead to SQL injection if user input is interpolated.
+      Use parameterized queries: .eq("column", value: safeValue)
+    severity: WARNING
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [injection]
+      cwe: "CWE-89: SQL Injection"
+
+  # Auth State in Logs
+  - id: auth-state-logged
+    pattern-either:
+      - pattern: |
+          logger.$METHOD(..., $SESSION, ...)
+      - pattern: |
+          print($SESSION)
+      - pattern: |
+          logger.$METHOD(..., $USER.accessToken, ...)
+    message: |
+      Auth session or token logged. This could expose:
+      - Access tokens
+      - Refresh tokens
+      - User session identifiers
+      Avoid logging auth state. Use session IDs only for debugging.
+    severity: WARNING
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [auth, logging]
+
+  # Missing RLS in Realtime Channels
+  - id: realtime-channel-without-rls-filter
+    pattern: |
+      supabase.realtime.channel($CHANNEL)
+    pattern-not: |
+      supabase.realtime.channel($CHANNEL)
+        ...
+        .eq("couple_id", ...)
+    message: |
+      Realtime channel subscription without couple_id filter.
+      This could broadcast data across tenants. Apply RLS filters to realtime channels.
+      Example: .on(.insert, schema: "public", table: "guests", filter: "couple_id=eq.\(tenantId)")
+    severity: ERROR
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [auth, multi-tenancy]
