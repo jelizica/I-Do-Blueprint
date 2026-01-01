@@ -81,8 +81,8 @@ struct VendorManagementViewV3: View {
                         vendors: vendorStore.vendors
                     )
                     .padding(.horizontal, horizontalPadding)
-                    .padding(.top, Spacing.xxxl)
-                    .padding(.bottom, Spacing.xxl)
+                    .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
+                    .padding(.bottom, Spacing.lg)
 
                     // Content Section
                     ScrollView {

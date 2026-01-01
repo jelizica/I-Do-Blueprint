@@ -49,8 +49,8 @@ struct GuestManagementViewV4: View {
                         onAddGuest: { coordinator.present(.addGuest) }
                     )
                     .padding(.horizontal, horizontalPadding)
-                    .padding(.top, Spacing.xxxl)
-                    .padding(.bottom, Spacing.xxl)
+                    .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
+                    .padding(.bottom, Spacing.lg)
 
                     // Scrollable Content Section
                     ScrollView {
@@ -68,6 +68,7 @@ struct GuestManagementViewV4: View {
 
                             // Search and Filters
                             GuestSearchAndFilters(
+                                windowSize: windowSize,
                                 searchText: $searchText,
                                 selectedStatus: $selectedStatus,
                                 selectedInvitedBy: $selectedInvitedBy,
