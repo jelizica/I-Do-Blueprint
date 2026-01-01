@@ -10,6 +10,7 @@ import SwiftUI
 
 struct BudgetDashboardHubView: View {
     @State private var currentPage: BudgetPage = .hub
+    @State private var expandedSections: Set<BudgetGroup> = []
     @EnvironmentObject var budgetStore: BudgetStoreV2
 
     var body: some View {
@@ -28,22 +29,29 @@ struct BudgetDashboardHubView: View {
                     // Dashboard hub content
                     ScrollView {
                         VStack(spacing: Spacing.xl) {
-                            // Dashboard header with stats
-                            budgetDashboardSummary(windowSize: windowSize)
+                            // Standardized header (replaces old summary with refresh button)
+                            BudgetManagementHeader(
+                                windowSize: windowSize,
+                                currentPage: $currentPage,
+                                expandedSections: $expandedSections
+                            )
+
+                            // Dashboard stats summary
+                            budgetStatsSummary(windowSize: windowSize)
                                 .frame(width: availableWidth)
 
-                            // 3 Group Cards (not 4)
+                            // 3 Group Cards
                             groupCardsGrid(windowSize: windowSize)
                                 .frame(width: availableWidth)
 
-                            // Quick Access section (hidden in compact)
+                            // Quick Access section (optimized layout)
                             if windowSize != .compact {
-                                quickAccessSection
+                                quickAccessSection(windowSize: windowSize)
                                     .frame(width: availableWidth)
                             }
                         }
                         .padding(.horizontal, horizontalPadding)
-                        .padding(.top, Spacing.lg)
+                        .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
                     }
                 } else {
                     // Show the selected page's view
@@ -51,53 +59,16 @@ struct BudgetDashboardHubView: View {
                 }
             }
         }
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                budgetPageDropdown
-            }
-        }
         .task {
             await budgetStore.loadBudgetData()
         }
     }
 
-    // MARK: - Dashboard Summary
+    // MARK: - Budget Stats Summary
 
     @ViewBuilder
-    private func budgetDashboardSummary(windowSize: WindowSize) -> some View {
+    private func budgetStatsSummary(windowSize: WindowSize) -> some View {
         VStack(spacing: Spacing.lg) {
-            // Header
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Budget Dashboard")
-                        .font(Typography.displaySmall)
-
-                    if windowSize != .compact {
-                        Text("Your wedding budget at a glance")
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-
-                Spacer()
-
-                Button(action: {
-                    Task {
-                        await budgetStore.refresh()
-                    }
-                }) {
-                    if windowSize == .compact {
-                        Image(systemName: "arrow.clockwise")
-                            .font(.system(size: 20))
-                    } else {
-                        Label("Refresh", systemImage: "arrow.clockwise")
-                    }
-                }
-                .frame(width: windowSize == .compact ? 44 : nil, height: 44)
-                .buttonStyle(.bordered)
-                .help(windowSize == .compact ? "Refresh" : "")
-            }
-
             // Stats Grid
             StatsGridView(
                 stats: [
@@ -169,100 +140,38 @@ struct BudgetDashboardHubView: View {
 
     // MARK: - Quick Access Section
 
-    private var quickAccessSection: some View {
+    @ViewBuilder
+    private func quickAccessSection(windowSize: WindowSize) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Quick Access")
                 .font(.headline)
-                .padding(.horizontal, Spacing.sm)
 
-            VStack(spacing: Spacing.xs) {
-                QuickAccessRow(page: .developmentDashboard) {
+            // Horizontal grid layout (2x2 for regular, 4 columns for large)
+            let columns: [GridItem] = {
+                if windowSize == .large {
+                    return Array(repeating: GridItem(.flexible()), count: 4)
+                } else {
+                    return Array(repeating: GridItem(.flexible()), count: 2)
+                }
+            }()
+
+            LazyVGrid(columns: columns, spacing: Spacing.md) {
+                QuickAccessCard(page: .developmentDashboard) {
                     currentPage = .developmentDashboard
                 }
-                QuickAccessRow(page: .expenseTracker) {
+                QuickAccessCard(page: .expenseTracker) {
                     currentPage = .expenseTracker
                 }
-                QuickAccessRow(page: .paymentSchedule) {
+                QuickAccessCard(page: .paymentSchedule) {
                     currentPage = .paymentSchedule
                 }
-                QuickAccessRow(page: .analytics) {
+                QuickAccessCard(page: .analytics) {
                     currentPage = .analytics
                 }
             }
-            .padding(Spacing.sm)
-            .background(Color(NSColor.controlBackgroundColor))
-            .cornerRadius(12)
         }
     }
 
-    // MARK: - Toolbar Dropdown
-
-    private var budgetPageDropdown: some View {
-        Menu {
-            // Dashboard (always first, outside sections)
-            Button {
-                currentPage = .hub
-            } label: {
-                Label("Dashboard", systemImage: "square.grid.2x2.fill")
-                if currentPage == .hub {
-                    Image(systemName: "checkmark")
-                }
-            }
-            .keyboardShortcut("1", modifiers: [.command])
-
-            Divider()
-
-            // Planning & Analysis Group
-            Section("Planning & Analysis") {
-                ForEach(BudgetGroup.planningAnalysis.pages) { page in
-                    Button {
-                        currentPage = page
-                    } label: {
-                        Label(page.rawValue, systemImage: page.icon)
-                        if currentPage == page {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-
-            // Expenses Group
-            Section("Expenses") {
-                ForEach(BudgetGroup.expenses.pages) { page in
-                    Button {
-                        currentPage = page
-                    } label: {
-                        Label(page.rawValue, systemImage: page.icon)
-                        if currentPage == page {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-
-            // Income Group
-            Section("Income") {
-                ForEach(BudgetGroup.income.pages) { page in
-                    Button {
-                        currentPage = page
-                    } label: {
-                        Label(page.rawValue, systemImage: page.icon)
-                        if currentPage == page {
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: Spacing.xs) {
-                Text("Budget: \(currentPage.rawValue)")
-                    .font(.headline)
-                Image(systemName: "chevron.down")
-                    .font(.caption)
-            }
-        }
-        .menuStyle(.borderlessButton)
-    }
 }
 
 // MARK: - Supporting Views
@@ -317,29 +226,36 @@ struct BudgetGroupCard: View {
     }
 }
 
-struct QuickAccessRow: View {
+struct QuickAccessCard: View {
     let page: BudgetPage
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: Spacing.md) {
-                Image(systemName: page.icon)
-                    .font(.system(size: 16))
-                    .foregroundColor(page.group?.color ?? AppColors.Budget.allocated)
-                    .frame(width: 24)
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                HStack {
+                    Image(systemName: page.icon)
+                        .font(.system(size: 20))
+                        .foregroundColor(page.group?.color ?? AppColors.Budget.allocated)
+
+                    Spacer()
+
+                    Image(systemName: "arrow.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
 
                 Text(page.rawValue)
                     .font(.subheadline)
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                    .fontWeight(.medium)
+                    .foregroundColor(AppColors.textPrimary)
+                    .lineLimit(2)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.vertical, Spacing.sm)
-            .padding(.horizontal, Spacing.md)
+            .padding(Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color(NSColor.controlBackgroundColor))
+            .cornerRadius(8)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
