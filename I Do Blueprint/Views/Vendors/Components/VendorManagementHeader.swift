@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct VendorManagementHeader: View {
+    let windowSize: WindowSize
     @Binding var showingImportSheet: Bool
     @Binding var showingExportOptions: Bool
     @Binding var showingAddVendor: Bool
@@ -15,84 +16,117 @@ struct VendorManagementHeader: View {
     let vendors: [Vendor]
     
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
-            // Title and Description
-            VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            // Title and subtitle
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Vendor Management")
-                    .font(Typography.displaySmall)
+                    .font(Typography.displayLarge)
                     .foregroundColor(AppColors.textPrimary)
-
-                Text("Manage and track all your vendors in one place")
-                    .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                
+                if windowSize != .compact {
+                    Text("Manage and track all your vendors in one place")
+                        .font(Typography.bodyRegular)
+                        .foregroundColor(AppColors.textSecondary)
+                }
             }
+            
+            // Action buttons
+            if windowSize == .compact {
+                compactActionButtons
+            } else {
+                regularActionButtons
+            }
+        }
+    }
+    
+    // MARK: - Compact Action Buttons
+    
+    private var compactActionButtons: some View {
+        HStack(spacing: Spacing.sm) {
+            // Combined Import/Export menu
+            Menu {
+                Button {
+                    showingImportSheet = true
+                } label: {
+                    Label("Import CSV", systemImage: "square.and.arrow.down")
+                }
+                
+                Button {
+                    showingExportOptions = true
+                } label: {
+                    Label("Export", systemImage: "square.and.arrow.up")
+                }
+            } label: {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "ellipsis.circle")
+                    Text("Import/Export")
+                        .font(Typography.bodySmall)
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
+            }
+            .buttonStyle(.bordered)
+            
+            Spacer()
+            
+            // Add Vendor button (prominent)
+            Button {
+                showingAddVendor = true
+            } label: {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Vendor")
+                        .font(Typography.bodySmall)
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppColors.primary)
+        }
+    }
+    
+    // MARK: - Regular Action Buttons
+    
+    private var regularActionButtons: some View {
+        HStack(spacing: Spacing.md) {
+            Button {
+                showingImportSheet = true
+            } label: {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "square.and.arrow.down")
+                    Text("Import CSV")
+                }
+            }
+            .buttonStyle(.bordered)
+            .help("Import vendors from CSV file")
+
+            Button {
+                showingExportOptions = true
+            } label: {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text("Export")
+                }
+            }
+            .buttonStyle(.bordered)
+            .disabled(vendors.isEmpty)
+            .help("Export vendors to CSV or Google Sheets")
 
             Spacer()
 
-            // Action Buttons
-            HStack(spacing: 12) {
-                importButton
-                exportButton
-                addVendorButton
+            Button {
+                showingAddVendor = true
+            } label: {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Add Vendor")
+                }
             }
+            .buttonStyle(.borderedProminent)
+            .tint(AppColors.primary)
+            .help("Add a new vendor")
         }
-        .frame(height: 68)
-    }
-    
-    // MARK: - Action Buttons
-    
-    private var importButton: some View {
-        Button {
-            showingImportSheet = true
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "square.and.arrow.down")
-                    .font(.system(size: 14))
-                Text("Import")
-                    .font(Typography.bodyRegular)
-            }
-            .foregroundColor(AppColors.textPrimary)
-            .frame(height: 42)
-            .padding(.horizontal, Spacing.lg)
-            .background(AppColors.cardBackground)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.borderLight, lineWidth: 0.5)
-            )
-        }
-        .buttonStyle(.plain)
-        .accessibleActionButton(
-            label: "Import vendors",
-            hint: "Import vendors from CSV or Excel file"
-        )
-    }
-    
-    private var exportButton: some View {
-        Button {
-            showingExportOptions = true
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(.system(size: 14))
-                Text("Export")
-                    .font(Typography.bodyRegular)
-            }
-            .foregroundColor(AppColors.textPrimary)
-            .frame(height: 42)
-            .padding(.horizontal, Spacing.lg)
-            .background(AppColors.cardBackground)
-            .cornerRadius(8)
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.borderLight, lineWidth: 0.5)
-            )
-        }
-        .buttonStyle(.plain)
-        .accessibleActionButton(
-            label: "Export vendors",
-            hint: "Export vendor list to CSV or Google Sheets"
-        )
         .confirmationDialog("Export Vendors", isPresented: $showingExportOptions) {
             Button("Export to CSV") {
                 Task {
@@ -106,28 +140,5 @@ struct VendorManagementHeader: View {
             }
             Button("Cancel", role: .cancel) {}
         }
-    }
-    
-    private var addVendorButton: some View {
-        Button {
-            showingAddVendor = true
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "plus")
-                    .font(.system(size: 14, weight: .semibold))
-                Text("Add Vendor")
-                    .font(Typography.bodyRegular)
-            }
-            .foregroundColor(AppColors.textPrimary)
-            .frame(height: 42)
-            .padding(.horizontal, Spacing.xl)
-            .background(AppColors.primary)
-            .cornerRadius(8)
-        }
-        .buttonStyle(.plain)
-        .accessibleActionButton(
-            label: "Add new vendor",
-            hint: "Create a new vendor entry"
-        )
     }
 }

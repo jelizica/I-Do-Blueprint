@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct VendorStatsSection: View {
+    let windowSize: WindowSize
     let vendors: [Vendor]
     
     private var activeVendors: [Vendor] {
@@ -31,44 +32,48 @@ struct VendorStatsSection: View {
     }
     
     var body: some View {
-        VStack(spacing: Spacing.lg) {
-            // Main Stats Row
-            HStack(spacing: Spacing.lg) {
-                VendorManagementStatCard(
-                    title: "Total Vendors",
-                    value: "\(activeVendors.count)",
-                    subtitle: nil,
-                    subtitleColor: AppColors.success,
-                    icon: "building.2.fill"
-                )
+        if windowSize == .compact {
+            // Compact: 2-2-1 asymmetric grid
+            VStack(spacing: Spacing.lg) {
+                // Row 1: Total Vendors + Total Quoted
+                HStack(spacing: Spacing.lg) {
+                    VendorManagementStatCard(
+                        title: "Total Vendors",
+                        value: "\(activeVendors.count)",
+                        subtitle: nil,
+                        subtitleColor: AppColors.success,
+                        icon: "building.2.fill"
+                    )
 
-                VendorManagementStatCard(
-                    title: "Total Quoted",
-                    value: formatCurrency(totalQuoted),
-                    subtitle: "from all vendors",
-                    subtitleColor: AppColors.textSecondary,
-                    icon: "dollarsign.circle.fill"
-                )
-            }
+                    VendorManagementStatCard(
+                        title: "Total Quoted",
+                        value: formatCurrency(totalQuoted),
+                        subtitle: "from all vendors",
+                        subtitleColor: AppColors.textSecondary,
+                        icon: "dollarsign.circle.fill"
+                    )
+                }
 
-            // Sub-sections Row
-            HStack(spacing: Spacing.lg) {
-                VendorManagementStatCard(
-                    title: "Booked",
-                    value: "\(bookedVendors.count)",
-                    subtitle: "Confirmed vendors",
-                    subtitleColor: AppColors.success,
-                    icon: "checkmark.seal.fill"
-                )
+                // Row 2: Booked + Available
+                HStack(spacing: Spacing.lg) {
+                    VendorManagementStatCard(
+                        title: "Booked",
+                        value: "\(bookedVendors.count)",
+                        subtitle: "Confirmed vendors",
+                        subtitleColor: AppColors.success,
+                        icon: "checkmark.seal.fill"
+                    )
 
-                VendorManagementStatCard(
-                    title: "Available",
-                    value: "\(availableVendors.count)",
-                    subtitle: "Still considering",
-                    subtitleColor: AppColors.warning,
-                    icon: "clock.fill"
-                )
+                    VendorManagementStatCard(
+                        title: "Available",
+                        value: "\(availableVendors.count)",
+                        subtitle: "Still considering",
+                        subtitleColor: AppColors.warning,
+                        icon: "clock.fill"
+                    )
+                }
 
+                // Row 3: Archived (full width)
                 VendorManagementStatCard(
                     title: "Archived",
                     value: "\(archivedVendors.count)",
@@ -76,6 +81,55 @@ struct VendorStatsSection: View {
                     subtitleColor: AppColors.textSecondary,
                     icon: "archivebox.fill"
                 )
+            }
+        } else {
+            // Regular/Large: Original 2-row layout
+            VStack(spacing: Spacing.lg) {
+                // Main Stats Row
+                HStack(spacing: Spacing.lg) {
+                    VendorManagementStatCard(
+                        title: "Total Vendors",
+                        value: "\(activeVendors.count)",
+                        subtitle: nil,
+                        subtitleColor: AppColors.success,
+                        icon: "building.2.fill"
+                    )
+
+                    VendorManagementStatCard(
+                        title: "Total Quoted",
+                        value: formatCurrency(totalQuoted),
+                        subtitle: "from all vendors",
+                        subtitleColor: AppColors.textSecondary,
+                        icon: "dollarsign.circle.fill"
+                    )
+                }
+
+                // Sub-sections Row
+                HStack(spacing: Spacing.lg) {
+                    VendorManagementStatCard(
+                        title: "Booked",
+                        value: "\(bookedVendors.count)",
+                        subtitle: "Confirmed vendors",
+                        subtitleColor: AppColors.success,
+                        icon: "checkmark.seal.fill"
+                    )
+
+                    VendorManagementStatCard(
+                        title: "Available",
+                        value: "\(availableVendors.count)",
+                        subtitle: "Still considering",
+                        subtitleColor: AppColors.warning,
+                        icon: "clock.fill"
+                    )
+
+                    VendorManagementStatCard(
+                        title: "Archived",
+                        value: "\(archivedVendors.count)",
+                        subtitle: "No longer needed",
+                        subtitleColor: AppColors.textSecondary,
+                        icon: "archivebox.fill"
+                    )
+                }
             }
         }
     }

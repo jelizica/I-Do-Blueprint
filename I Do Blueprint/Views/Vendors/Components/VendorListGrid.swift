@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct VendorListGrid: View {
+    let windowSize: WindowSize
     let loadingState: LoadingState<[Vendor]>
     let filteredVendors: [Vendor]
     let searchText: String
@@ -48,12 +49,7 @@ struct VendorListGrid: View {
     
     private var vendorGrid: some View {
         LazyVGrid(
-            columns: [
-                GridItem(.flexible(), spacing: Spacing.lg),
-                GridItem(.flexible(), spacing: Spacing.lg),
-                GridItem(.flexible(), spacing: Spacing.lg),
-                GridItem(.flexible(), spacing: Spacing.lg)
-            ],
+            columns: gridColumns(for: windowSize),
             spacing: Spacing.lg
         ) {
             ForEach(filteredVendors) { vendor in
@@ -62,6 +58,22 @@ struct VendorListGrid: View {
                         selectedVendor = vendor
                     }
             }
+        }
+    }
+    
+    // MARK: - Grid Columns
+    
+    private func gridColumns(for windowSize: WindowSize) -> [GridItem] {
+        switch windowSize {
+        case .compact:
+            // 2 columns in compact
+            return Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: 2)
+        case .regular:
+            // 3 columns in regular
+            return Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: 3)
+        case .large:
+            // 4 columns in large
+            return Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: 4)
         }
     }
     

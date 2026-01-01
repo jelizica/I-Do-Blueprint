@@ -61,55 +61,68 @@ struct VendorManagementViewV3: View {
     }
 
     var body: some View {
-        ZStack {
-            AppGradients.appBackground
-                .ignoresSafeArea()
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.huge
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
 
-            VStack(spacing: 0) {
-                // Header Section
-                VendorManagementHeader(
-                    showingImportSheet: $showingImportSheet,
-                    showingExportOptions: $showingExportOptions,
-                    showingAddVendor: $showingAddVendor,
-                    exportHandler: exportHandler,
-                    vendors: vendorStore.vendors
-                )
-                .padding(.horizontal, Spacing.huge)
-                .padding(.top, Spacing.xxxl)
-                .padding(.bottom, Spacing.xxl)
+            ZStack {
+                AppGradients.appBackground
+                    .ignoresSafeArea()
 
-                // Content Section
-                ScrollView {
-                    VStack(spacing: Spacing.xl) {
-                        // Stats Cards
-                        VendorStatsSection(vendors: vendorStore.vendors)
+                VStack(spacing: 0) {
+                    // Header Section
+                    VendorManagementHeader(
+                        windowSize: windowSize,
+                        showingImportSheet: $showingImportSheet,
+                        showingExportOptions: $showingExportOptions,
+                        showingAddVendor: $showingAddVendor,
+                        exportHandler: exportHandler,
+                        vendors: vendorStore.vendors
+                    )
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.top, Spacing.xxxl)
+                    .padding(.bottom, Spacing.xxl)
 
-                        // Search and Filter Section
-                        VendorSearchAndFilters(
-                            searchText: $searchText,
-                            selectedFilter: $selectedFilter,
-                            selectedSort: $selectedSort
-                        )
+                    // Content Section
+                    ScrollView {
+                        VStack(spacing: Spacing.xl) {
+                            // Stats Cards
+                            VendorStatsSection(
+                                windowSize: windowSize,
+                                vendors: vendorStore.vendors
+                            )
 
-                        // Vendor Grid
-                        VendorListGrid(
-                            loadingState: vendorStore.loadingState,
-                            filteredVendors: filteredAndSortedVendors,
-                            searchText: searchText,
-                            selectedFilter: selectedFilter,
-                            selectedVendor: $selectedVendor,
-                            showingAddVendor: $showingAddVendor,
-                            onRetry: {
-                                await vendorStore.retryLoad()
-                            },
-                            onClearFilters: {
-                                searchText = ""
-                                selectedFilter = .all
-                            }
-                        )
+                            // Search and Filter Section
+                            VendorSearchAndFilters(
+                                windowSize: windowSize,
+                                searchText: $searchText,
+                                selectedFilter: $selectedFilter,
+                                selectedSort: $selectedSort
+                            )
+
+                            // Vendor Grid
+                            VendorListGrid(
+                                windowSize: windowSize,
+                                loadingState: vendorStore.loadingState,
+                                filteredVendors: filteredAndSortedVendors,
+                                searchText: searchText,
+                                selectedFilter: selectedFilter,
+                                selectedVendor: $selectedVendor,
+                                showingAddVendor: $showingAddVendor,
+                                onRetry: {
+                                    await vendorStore.retryLoad()
+                                },
+                                onClearFilters: {
+                                    searchText = ""
+                                    selectedFilter = .all
+                                }
+                            )
+                        }
+                        .frame(width: availableWidth)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.bottom, windowSize == .compact ? Spacing.lg : Spacing.huge)
                     }
-                    .padding(.horizontal, Spacing.huge)
-                    .padding(.bottom, Spacing.huge)
                 }
             }
         }
