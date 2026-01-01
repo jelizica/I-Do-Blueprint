@@ -10,29 +10,37 @@ import SwiftUI
 struct V3VendorTabBar: View {
     @Binding var selectedTab: VendorDetailTab
     var documentCount: Int = 0
+    
+    /// Width threshold below which we show icon-only mode
+    /// This prevents text wrapping to multiple lines
+    private let iconOnlyThreshold: CGFloat = 500
 
     var body: some View {
-        HStack {
-            Spacer()
-            
-            HStack(spacing: Spacing.sm) {
-                ForEach(VendorDetailTab.allCases) { tab in
-                    V3TabButton(
-                        tab: tab,
-                        isSelected: selectedTab == tab,
-                        badge: tab == .documents && documentCount > 0 ? documentCount : nil
-                    ) {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            selectedTab = tab
+        GeometryReader { geometry in
+            HStack {
+                Spacer()
+                
+                HStack(spacing: Spacing.sm) {
+                    ForEach(VendorDetailTab.allCases) { tab in
+                        V3TabButton(
+                            tab: tab,
+                            isSelected: selectedTab == tab,
+                            badge: tab == .documents && documentCount > 0 ? documentCount : nil,
+                            showIconOnly: geometry.size.width < iconOnlyThreshold
+                        ) {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                selectedTab = tab
+                            }
                         }
                     }
                 }
+                
+                Spacer()
             }
-            
-            Spacer()
+            .padding(.vertical, Spacing.md)
+            .background(AppColors.cardBackground)
         }
-        .padding(.vertical, Spacing.md)
-        .background(AppColors.cardBackground)
+        .frame(height: 60) // Fixed height for tab bar
     }
 }
 
@@ -42,6 +50,7 @@ private struct V3TabButton: View {
     let tab: VendorDetailTab
     let isSelected: Bool
     let badge: Int?
+    let showIconOnly: Bool
     let action: () -> Void
 
     @State private var isHovering = false
@@ -50,10 +59,12 @@ private struct V3TabButton: View {
         Button(action: action) {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: isSelected ? tab.iconFilled : tab.icon)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                    .font(.system(size: showIconOnly ? 18 : 14, weight: isSelected ? .semibold : .regular))
 
-                Text(tab.title)
-                    .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                if !showIconOnly {
+                    Text(tab.title)
+                        .font(.system(size: 14, weight: isSelected ? .semibold : .regular))
+                }
 
                 if let badge = badge, badge > 0 {
                     Text("\(badge)")
@@ -65,7 +76,7 @@ private struct V3TabButton: View {
                         .clipShape(Capsule())
                 }
             }
-            .padding(.horizontal, Spacing.md)
+            .padding(.horizontal, showIconOnly ? Spacing.md : Spacing.md)
             .padding(.vertical, Spacing.sm)
             .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
             .background(
