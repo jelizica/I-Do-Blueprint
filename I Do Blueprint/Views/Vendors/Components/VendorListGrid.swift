@@ -66,9 +66,9 @@ struct VendorListGrid: View {
                 .frame(maxWidth: .infinity)
                 .clipped()
             } else {
-                // Regular/Large: Use existing VendorCardV3
+                // Regular/Large: Adaptive grid with flexible columns (matches GuestListGrid)
                 LazyVGrid(
-                    columns: gridColumns(for: windowSize),
+                    columns: [GridItem(.adaptive(minimum: 250, maximum: 350), spacing: Spacing.lg)],
                     spacing: Spacing.lg
                 ) {
                     ForEach(filteredVendors) { vendor in
@@ -83,20 +83,7 @@ struct VendorListGrid: View {
     }
     
     // MARK: - Grid Columns
-    
-    private func gridColumns(for windowSize: WindowSize) -> [GridItem] {
-        switch windowSize {
-        case .compact:
-            // Not used in compact mode (uses adaptive grid instead)
-            return []
-        case .regular:
-            // 3 columns in regular
-            return Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: 3)
-        case .large:
-            // 4 columns in large
-            return Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: 4)
-        }
-    }
+    // Note: No longer needed - using adaptive columns like GuestListGrid
     
     // MARK: - Empty State
     

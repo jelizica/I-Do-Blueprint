@@ -54,7 +54,8 @@ struct VendorCardV3: View {
             // Quoted Amount Section
             quotedAmountSection
         }
-        .frame(width: 290, height: 243)
+        .frame(minWidth: 250, maxWidth: .infinity) // Flexible width (matches GuestCardV4)
+        .frame(height: 243)
         .background(AppColors.cardBackground)
         .cornerRadius(12)
         .overlay(
