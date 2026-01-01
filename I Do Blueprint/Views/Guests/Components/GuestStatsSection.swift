@@ -33,7 +33,7 @@ struct GuestStatsSection: View {
                     GuestManagementStatCard(
                         title: "Acceptance Rate",
                         value: "\(Int(acceptanceRate * 100))%",
-                        subtitle: "\(attendingCount) confirmed",
+                        subtitle: nil,
                         subtitleColor: AppColors.success,
                         icon: "checkmark.circle.fill"
                     )
@@ -83,7 +83,7 @@ struct GuestStatsSection: View {
                     GuestManagementStatCard(
                         title: "Acceptance Rate",
                         value: "\(Int(acceptanceRate * 100))%",
-                        subtitle: "\(attendingCount) confirmed",
+                        subtitle: nil,
                         subtitleColor: AppColors.success,
                         icon: "checkmark.circle.fill"
                     )
