@@ -714,3 +714,492 @@ Current implementation already follows best practices:
 - No safe area insets needed for horizontal layout on macOS
 - Adaptive grids handle arbitrary window resizing smoothly
 - Scroll bars are accounted for by GeometryReader
+
+---
+
+## LLM Council: Compact Card Redesign (2025-12-31)
+
+### Problem Identified (Second Issue)
+After fixing regular cards, the **GuestCompactCard** (horizontal layout for compact mode) was **still running off screen edges**. User requested complete redesign from horizontal bar layout to vertical mini-cards.
+
+### User Requirements
+1. **Vertical layout** (VStack, not HStack) - mini-cards instead of horizontal bars
+2. **Content:** Avatar + Name + Status indicator ONLY (remove email, invited by, table, meal)
+3. **Status indicator:** Small colored circle (not text badge):
+   - Green = attending/confirmed
+   - Red = declined/no-response
+   - Yellow/Orange = pending
+4. **Width strategy:** Adaptive sizing to fit 2-3 cards per row and fill available space
+5. **Multi-column:** Display 2-3 cards per row in compact mode (<700px)
+
+### Council Consensus (100% Agreement)
+
+All four models (GPT-5.1, Gemini-3-Pro, Claude Sonnet 4.5, Grok-4) unanimously recommended:
+
+#### 1. Vertical Mini-Card Layout → **Option B**
+**Avatar with status circle overlay (bottom-right), name centered below**
+
+**Rationale:**
+- Most space-efficient (saves vertical real estate)
+- Status indicator visually attached to person (intuitive association)
+- Clean, modern "contact card" aesthetic
+- Name gets full card width for better truncation handling
+- Bottom-right overlay is macOS standard (online status, notification badges)
+
+#### 2. Width Calculation Strategy → **Adaptive Grid (Option B)**
+**Use `.adaptive(minimum: 100-120px)` with flexible card width**
+
+**Rationale:**
+- Dynamic name calculation (Option A) is expensive, fragile, breaks on data changes
+- Fixed width (Option C) causes truncation for longer names
+- Adaptive grid strikes balance: Grid calculates columns automatically, cards flex to fill space
+- For <700px width: 2-3 cards naturally fit with 100px minimum
+- Handles window resizing elegantly
+
+#### 3. Grid Configuration
+```swift
+LazyVGrid(
+    columns: [GridItem(.adaptive(minimum: 100, maximum: 140), spacing: Spacing.md)],
+    spacing: Spacing.md
+)
+```
+
+**Specifications:**
+- **Minimum:** 100px (fits "FirstName LastName" comfortably)
+- **Maximum:** 140px (prevents awkward stretching with 2 cards in 700px)
+- **Spacing:** 12px (md) between cards
+- **Parent padding:** `.horizontal(.lg)` at parent level (16px)
+
+**Math validation:**
+- 700px width - 32px padding = 668px available
+- 668px ÷ 100px min = 6.68 cards → capped by 140px max
+- Practical result: 2-3 columns due to content size + spacing
+
+#### 4. Status Circle Design
+**Recommendation:**
+- **Size:** 12px diameter
+- **Style:** Solid circle with 2px white border (ensures visibility on any avatar color)
+- **Position:** Overlay on avatar, bottom-right, offset 2px from edge
+
+**Color mapping:**
+```swift
+var statusColor: Color {
+    switch guest.rsvpStatus {
+    case .attending, .confirmed: return AppColors.success  // Green
+    case .declined, .noResponse: return AppColors.error    // Red
+    case .pending, .maybe, .invited: return AppColors.warning  // Yellow/Orange
+    default: return AppColors.textSecondary.opacity(0.4)
+    }
+}
+```
+
+#### 5. Avatar Size → **48px (increased from 40px)**
+**Rationale:**
+- Avatar is now primary/only visual anchor (email removed)
+- 48px is standard macOS contact/profile size
+- Better interaction target size
+- Status circle (12px) proportionally better on 48px base
+- More prominent in vertical layout
+
+### Solution Implemented
+
+#### New GuestCompactCard (Vertical Mini-Card)
+```swift
+struct GuestCompactCard: View {
+    let guest: Guest
+    let settings: CoupleSettings
+    @State private var avatarImage: NSImage?
+
+    var body: some View {
+        VStack(spacing: Spacing.sm) {
+            // Avatar with Status Circle Overlay
+            ZStack(alignment: .bottomTrailing) {
+                // Avatar Circle (48px)
+                Group {
+                    if let image = avatarImage {
+                        Image(nsImage: image)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 48, height: 48)
+                            .clipShape(Circle())
+                    } else {
+                        Circle()
+                            .fill(AppColors.cardBackground)
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Text(guest.firstName.prefix(1) + guest.lastName.prefix(1))
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(AppColors.textSecondary)
+                            )
+                    }
+                }
+
+                // Status Circle Indicator (12px)
+                Circle()
+                    .fill(statusColor)
+                    .frame(width: 12, height: 12)
+                    .overlay(
+                        Circle()
+                            .strokeBorder(Color.white, lineWidth: 2)
+                    )
+                    .offset(x: 2, y: 2) // Slight offset for prominence
+                    .accessibilityLabel(statusAccessibilityLabel)
+            }
+
+            // Guest Name (centered, 2 lines max)
+            Text(guest.fullName)
+                .font(Typography.bodyRegular)
+                .foregroundColor(AppColors.textPrimary)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(Spacing.sm)
+        .frame(maxWidth: .infinity) // Flex to fill grid cell
+        .background(AppColors.cardBackground)
+        .cornerRadius(CornerRadius.md)
+    }
+}
+```
+
+#### Updated GuestListGrid (Compact Mode)
+```swift
+if windowSize == .compact {
+    // Compact: Adaptive grid of vertical mini-cards (2-3 per row)
+    LazyVGrid(
+        columns: [GridItem(.adaptive(minimum: 100, maximum: 140), spacing: Spacing.md)],
+        alignment: .center,
+        spacing: Spacing.md
+    ) {
+        ForEach(guests, id: \.id) { guest in
+            GuestCompactCard(guest: guest, settings: settings)
+                .onTapGesture { onGuestTap(guest) }
+        }
+    }
+    .id(renderId)
+}
+```
+
+### Key Improvements Over Previous Horizontal Design
+
+| Aspect | Before (Horizontal) | After (Vertical Mini-Card) |
+|--------|---------------------|----------------------------|
+| **Layout** | HStack (horizontal bar) | VStack (vertical tile) |
+| **Grid Logic** | VStack (vertical list) | LazyVGrid (multi-column grid) |
+| **Overflow** | Extended beyond window | Adaptive grid, never overflows |
+| **Cards per row** | 1 (vertical list) | 2-3 (multi-column grid) |
+| **Avatar size** | 40px | 48px (more prominent) |
+| **Status** | Text badge (takes space) | 12px colored circle overlay |
+| **Content** | Name + email + badge | Name + avatar + status only |
+| **Width strategy** | Full-width horizontal | Flexible adaptive grid (100-140px) |
+| **Space efficiency** | ~8-10 guests visible | ~15-20 guests visible |
+| **Visual density** | Low (one card per row) | High (2-3 cards per row) |
+
+### Council Recommendations Summary
+
+**GPT-5.1:**
+- Recommended Option B (avatar with overlay), adaptive grid with 180-220px range
+- 48px avatar, 10px status dot
+- Emphasized VStack with centered alignment
+- Noted space efficiency and visual hierarchy
+
+**Gemini-3-Pro:**
+- Recommended Option B, adaptive grid with minimum 120px
+- 60px avatar (we chose 48px for better fit), 12px status dot with border
+- Detailed explanation of "cutout" border effect for visibility
+- Emphasized performance considerations (avoiding longest-name calculation)
+
+**Claude Sonnet 4.5:**
+- Recommended Option B, adaptive grid 100-140px range (IMPLEMENTED)
+- 48px avatar, 12px status circle with 2px white border (IMPLEMENTED)
+- Comprehensive implementation with accessibility labels
+- Visual preview diagram, testing checklist, migration notes
+
+**Grok-4:**
+- Recommended Option B, adaptive grid with 120px minimum
+- 40px avatar (we chose 48px based on other council members)
+- 12px status dot, solid fill
+- Emphasized macOS resizing considerations
+
+**Final Implementation:** Synthesized all recommendations, choosing the most practical values:
+- 48px avatar (consensus from 3/4 models)
+- 12px status circle with 2px border (unanimous)
+- 100-140px adaptive grid (Claude's recommendation, balanced approach)
+- VStack with centered name (unanimous)
+
+### Accessibility Enhancements
+Added accessibility labels for non-text status indicators:
+```swift
+private var statusAccessibilityLabel: String {
+    switch guest.rsvpStatus {
+    case .attending, .confirmed: return "Attending"
+    case .declined: return "Declined"
+    case .noResponse: return "No response"
+    case .pending, .maybe, .invited: return "Pending response"
+    default: return guest.rsvpStatus.displayName
+    }
+}
+```
+
+### Testing Checklist (Compact Card Redesign)
+- [ ] Build succeeds with no errors
+- [ ] Compact cards display in 2-3 column grid at <700px width
+- [ ] Cards no longer clip at window edges
+- [ ] Grid adapts smoothly during window resize
+- [ ] Status circles display correct colors (green/red/yellow)
+- [ ] Status circle border visible on all avatar backgrounds
+- [ ] Long names truncate to 2 lines without breaking layout
+- [ ] Avatar images load correctly (or show initials)
+- [ ] Tap gesture works on entire card
+- [ ] Accessibility labels work with VoiceOver
+- [ ] Test at 640px, 670px, 699px widths
+
+### Files Modified (Compact Card Redesign)
+1. **`GuestCompactCard.swift`** - Complete redesign:
+   - Changed HStack → VStack (vertical layout)
+   - Removed email, invited by fields
+   - Increased avatar 40px → 48px
+   - Changed status badge → 12px colored circle overlay
+   - Added flexible width with `.frame(maxWidth: .infinity)`
+   - Added accessibility labels for status circle
+
+2. **`GuestListGrid.swift`** - Lines 23-38:
+   - Changed VStack → LazyVGrid for compact mode
+   - Added adaptive grid: `GridItem(.adaptive(minimum: 100, maximum: 140))`
+   - Centered alignment for balanced visual weight
+
+### Separate Issues Created
+1. **Beads Issue `I Do Blueprint-swc`**: "Fix stats cards and search/filters boundary clipping in compact mode"
+   - Stats cards and search bar still show boundary issues (separate from guest cards)
+   - Will be addressed in follow-up work
+   - Priority: P2 (High)
+
+2. **Beads Issue `I Do Blueprint-fp4`**: "Fix GuestCompactCard edge clipping: LazyVGrid adaptive maximum not enforced"
+   - Post-implementation edge clipping discovered (2025-12-31)
+   - See "Edge Clipping Investigation" section below
+   - Priority: P2 (High)
+
+---
+
+## Edge Clipping Investigation (2025-12-31)
+
+### Problem Discovery
+After implementing the vertical mini-card redesign, user reported slight edge clipping still occurring at <700px width. Deep investigation with LLM Council revealed fundamental SwiftUI behavior issue.
+
+### Root Cause: GridItem.adaptive() Maximum Not Enforced
+
+**Critical Finding:** `GridItem(.adaptive(minimum:maximum:))` does NOT treat `maximum` as a hard constraint.
+
+**How SwiftUI Actually Works:**
+1. Grid calculates columns based on `minimum` value
+2. Distributes remaining space equally among all columns
+3. **Ignores `maximum`** if equal distribution exceeds it
+4. Cards with `.frame(maxWidth: .infinity)` accept any width offered
+
+**Math at 699px Window:**
+```
+Available width: 699px - 32px padding = 667px
+
+With minimum: 100, maximum: 140:
+- SwiftUI tries: 4 columns
+- Actual card width: (667 - 36px spacing) / 4 = 157.75px
+- Problem: 157.75px > 140px maximum ❌
+- Result: Cards overflow and clip at right edge
+```
+
+### LLM Council Analysis (3 Models Consulted)
+
+#### GPT-5.1 Recommendation: Option D
+**Add explicit frame constraint to card**
+```swift
+// Remove reliance on GridItem maximum
+// Add hard cap directly to card
+
+VStack { /* ... */ }
+    .padding(Spacing.sm)
+    .frame(maxWidth: 140)  // Hard cap here
+    // Remove: .frame(maxWidth: .infinity)
+```
+
+**Rationale:**
+- Grid handles column calculation
+- Card enforces its own maximum
+- No clipping because card < allocated track width
+
+#### Gemini-3-Pro Recommendation: Option C
+**Increase minimum, remove maximum**
+```swift
+LazyVGrid(
+    columns: [GridItem(.adaptive(minimum: 160), spacing: Spacing.md)],
+    // Remove maximum constraint entirely
+)
+```
+
+**Math proof:**
+- Try 4 columns: 160×4 + 36 spacing = 676px > 667px ❌
+- Try 3 columns: 160×3 + 24 spacing = 504px ✓
+- Result: 3 columns × 214px cards (plenty of room)
+
+**Rationale:**
+- Forces correct column count via higher minimum
+- Removes unreliable maximum constraint
+- Cards stretch to fill naturally
+
+#### Claude Sonnet 4.5 Recommendation: Option C+D (Two-Layer Constraint)
+**Tighten adaptive range AND add card constraint**
+```swift
+// Grid
+LazyVGrid(
+    columns: [GridItem(.adaptive(minimum: 100, maximum: 130), spacing: Spacing.md)]
+)
+
+// Card
+VStack { /* ... */ }
+    .padding(Spacing.sm)
+    .frame(maxWidth: 130)        // Hard limit
+    .frame(maxWidth: .infinity)  // Allow centering if column wider
+```
+
+**Expected behavior:**
+- <350px: 2 columns × ~150px (hits max, centers in column)
+- 350-500px: 3 columns × ~130px (perfect fit)
+- 500-700px: 4 columns × ~130px (perfect fit)
+- \>700px: 5+ columns × 120-130px
+
+**Rationale:**
+- Two-layer constraint for reliability
+- Grid suggests size, card enforces hard limit
+- Centering works when column > card width
+- **Most robust solution**
+
+### Chosen Solution: Claude Sonnet 4.5's Two-Layer Approach
+
+**Implementation Plan:**
+1. **GuestListGrid.swift** (line 27):
+   - Change: `maximum: 140` → `maximum: 130`
+
+2. **GuestCompactCard.swift** (line 65):
+   - Add: `.frame(maxWidth: 130)` before `.frame(maxWidth: .infinity)`
+
+**Code Changes:**
+```swift
+// GuestListGrid.swift
+LazyVGrid(
+    columns: [GridItem(.adaptive(minimum: 100, maximum: 130), spacing: Spacing.md)],
+    alignment: .center,
+    spacing: Spacing.md
+)
+
+// GuestCompactCard.swift
+VStack(spacing: Spacing.sm) {
+    // Avatar + Status + Name
+}
+.padding(Spacing.sm)
+.frame(maxWidth: 130)        // NEW: Hard constraint
+.frame(maxWidth: .infinity)  // KEEP: Allow centering
+.background(AppColors.cardBackground)
+// ... rest of styling
+```
+
+**Why This Works:**
+- Grid calculates flexible columns using adaptive logic
+- Cards refuse to exceed 130px even if given more space
+- If column is wider than 130px, card centers within it
+- No overflow, no clipping, responsive at all sizes
+
+### Testing Checklist (Edge Clipping Fix)
+- [ ] Cards don't clip at 640px, 670px, 699px widths
+- [ ] Display shows 2-3 columns (not 4) at <700px
+- [ ] Individual cards max out at 130px width
+- [ ] Cards center properly when column is wider than 130px
+- [ ] Grid adapts smoothly during window resize
+- [ ] No visual regression at >700px (regular mode)
+- [ ] Status circles remain visible and positioned correctly
+- [ ] Name text truncation still works (2 lines max)
+
+### Key Learnings
+
+1. **SwiftUI GridItem Behavior:**
+   - `minimum` controls column count calculation
+   - `maximum` is a suggestion, not a hard constraint
+   - Equal space distribution can exceed maximum
+
+2. **Proper Constraint Pattern:**
+   - Use `.adaptive()` for flexible column calculation
+   - Add explicit `.frame(maxWidth:)` to children for hard limits
+   - Layer constraints: grid suggests, children enforce
+
+3. **Don't Trust GridItem Maximum Alone:**
+   - Always validate with explicit frame constraints on children
+   - Test at boundary window sizes (699px, 700px, 701px)
+   - Use LLM Council for complex layout issues
+
+### References
+- **Beads Issue:** `I Do Blueprint-fp4`
+- **LLM Council Consultation:** 2025-12-31 (3 models, 100% agreement on root cause)
+- **SwiftUI Documentation:** GridItem.Size.adaptive documentation (incomplete/misleading)
+- **Previous Fixes:**
+  - `bcdb987` - Regular GuestCardV4 flexible width fix
+  - Council redesign - Vertical mini-card implementation
+
+---
+
+## LLM Council: Final Modifier Order Fix (2026-01-01)
+
+### Problem
+Despite previous fixes, compact cards were still clipping at window edges. The two-layer constraint approach (grid maximum + card maxWidth) was not working.
+
+### Root Cause (100% Council Consensus - 4 Models)
+**Modifier order was incorrect.** The code had:
+```swift
+.frame(maxWidth: 130)        // Sets max to 130
+.frame(maxWidth: .infinity)  // OVERRIDES to infinity!
+.background(...)             // Background uses infinity width
+```
+
+The second `.frame(maxWidth: .infinity)` was applied **before** the background, causing the visual card to expand to fill the grid column width.
+
+### Solution Implemented
+**Apply background BETWEEN the two frame modifiers:**
+
+```swift
+VStack(spacing: Spacing.sm) { ... }
+.padding(Spacing.sm)
+// 1. First, constrain the content to max 130px
+.frame(maxWidth: 130)
+// 2. Apply visual styling to the constrained size (background uses 130px max)
+.background(AppColors.cardBackground)
+.cornerRadius(CornerRadius.md)
+.overlay(...)
+// 3. Then allow the card to center within the grid column
+.frame(maxWidth: .infinity, alignment: .center)
+```
+
+### Why This Works
+1. **Inner frame (130px):** Constrains the VStack content
+2. **Background/styling:** Applied to the 130px-constrained view
+3. **Outer frame (infinity):** Allows centering within grid column, but the visual card (white background) is already capped at 130px
+
+### Grid Update
+Also updated `GuestListGrid.swift` to use `minimum: 130` without `maximum` since:
+- `GridItem.adaptive(maximum:)` is NOT enforced by SwiftUI
+- The card itself now enforces max width via modifier order
+- Using `minimum: 130` ensures columns are at least 130px, cards center within
+
+### Files Modified
+1. **`GuestCompactCard.swift`** - Reordered modifiers: frame(130) → background → frame(infinity)
+2. **`GuestListGrid.swift`** - Changed to `GridItem(.adaptive(minimum: 130))` without maximum
+
+### Council Models Consulted
+- **openai/gpt-5.1** - Detailed explanation of modifier stacking behavior
+- **google/gemini-3-pro-preview** - Emphasized background placement importance
+- **anthropic/claude-sonnet-4.5** - Provided complete working solution
+- **x-ai/grok-4** - Recommended GeometryReader alternative for strict control
+
+### Testing Checklist
+- [ ] Build succeeds with no errors ✅
+- [ ] Cards don't clip at 640px, 670px, 699px widths
+- [ ] Visual card (white background) never exceeds 130px
+- [ ] Cards center properly when column is wider than 130px
+- [ ] Grid adapts smoothly during window resize
+- [ ] No visual regression at >700px (regular mode)

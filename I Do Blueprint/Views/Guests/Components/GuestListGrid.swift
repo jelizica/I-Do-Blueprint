@@ -21,8 +21,15 @@ struct GuestListGrid: View {
                 GuestEmptyState(onAddGuest: onAddGuest)
             } else {
                 if windowSize == .compact {
-                    // Compact: List of horizontal cards
-                    VStack(spacing: Spacing.md) {
+                    // Compact: Adaptive grid of vertical mini-cards (2-3 per row)
+                    // Note: GridItem.adaptive(maximum:) is NOT enforced by SwiftUI
+                    // The card itself enforces max width via modifier order (see GuestCompactCard)
+                    // Using minimum: 130 ensures columns are at least 130px, cards center within
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 130), spacing: Spacing.md)],
+                        alignment: .center,
+                        spacing: Spacing.md
+                    ) {
                         ForEach(guests, id: \.id) { guest in
                             GuestCompactCard(guest: guest, settings: settings)
                                 .onTapGesture {
