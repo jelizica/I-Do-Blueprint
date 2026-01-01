@@ -49,9 +49,15 @@ struct BudgetDevelopmentView: View {
     @State var deleteScenarioData = ScenarioDialogData()
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Configuration header
-            BudgetConfigurationHeader(
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
+            
+            VStack(spacing: 0) {
+                // Configuration header
+                BudgetConfigurationHeader(
+                    windowSize: windowSize,
                 selectedScenario: $selectedScenario,
                 budgetName: $budgetName,
                 selectedTaxRateId: $selectedTaxRateId,
@@ -90,9 +96,10 @@ struct BudgetDevelopmentView: View {
             )
 
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: windowSize == .compact ? Spacing.lg : 24) {
                     // Budget summary cards
                     BudgetSummaryCardsSection(
+                        windowSize: windowSize,
                         totalWithoutTax: totalWithoutTax,
                         totalTax: totalTax,
                         totalWithTax: totalWithTax
@@ -162,6 +169,7 @@ struct BudgetDevelopmentView: View {
                     // Summary sections
                     if !budgetItems.isEmpty {
                         BudgetSummaryBreakdowns(
+                            windowSize: windowSize,
                             expandedCategories: $expandedCategories,
                             eventBreakdown: eventBreakdown,
                             categoryBreakdown: categoryBreakdown,
@@ -172,8 +180,11 @@ struct BudgetDevelopmentView: View {
                         )
                     }
                 }
-                .padding()
+                .frame(width: availableWidth)
+                .padding(.horizontal, horizontalPadding)
+                .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
             }
+        }
         }
         .task {
             await loadInitialData()

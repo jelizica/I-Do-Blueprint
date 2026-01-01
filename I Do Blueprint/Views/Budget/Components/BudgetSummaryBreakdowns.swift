@@ -3,6 +3,8 @@
 import SwiftUI
 
 struct BudgetSummaryBreakdowns: View {
+    let windowSize: WindowSize
+    
     @Binding var expandedCategories: Set<String>
 
     let eventBreakdown: [String: Double]
@@ -13,11 +15,68 @@ struct BudgetSummaryBreakdowns: View {
     let responsibleOptions: [String]
     
     @State private var expandedSubcategories: Set<String> = []
+    @State private var selectedBreakdownTab: BreakdownTab = .event
+    
+    enum BreakdownTab: String, CaseIterable {
+        case event = "Events"
+        case category = "Categories"
+        case person = "Responsibility"
+    }
 
     var body: some View {
+        Group {
+            if windowSize == .compact {
+                compactBreakdowns
+            } else {
+                regularBreakdowns
+            }
+        }
+    }
+    
+    // MARK: - Compact Mode (Tabbed Interface)
+    
+    @ViewBuilder
+    private var compactBreakdowns: some View {
+        VStack(spacing: Spacing.md) {
+            // Tab selector
+            Picker("Breakdown", selection: $selectedBreakdownTab) {
+                ForEach(BreakdownTab.allCases, id: \.self) { tab in
+                    Text(tab.rawValue).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            
+            // Selected breakdown content
+            switch selectedBreakdownTab {
+            case .event:
+                eventBreakdownContent
+            case .category:
+                categoryBreakdownContent
+            case .person:
+                personBreakdownContent
+            }
+        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(12)
+    }
+    
+    // MARK: - Regular Mode (3 Columns)
+    
+    @ViewBuilder
+    private var regularBreakdowns: some View {
         HStack(alignment: .top, spacing: 16) {
-            // Event breakdown
-            VStack(alignment: .leading, spacing: 12) {
+            eventBreakdownContent
+            categoryBreakdownContent
+            personBreakdownContent
+        }
+    }
+    
+    // MARK: - Breakdown Content Components
+    
+    @ViewBuilder
+    private var eventBreakdownContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
                 Text("Event Breakdown")
                     .font(.headline)
 
@@ -39,12 +98,14 @@ struct BudgetSummaryBreakdowns: View {
                     .padding(.vertical, Spacing.xxs)
                 }
             }
-            .padding()
-            .background(Color(NSColor.controlBackgroundColor))
-            .cornerRadius(8)
-
-            // Category breakdown
-            VStack(alignment: .leading, spacing: 12) {
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+    }
+    
+    @ViewBuilder
+    private var categoryBreakdownContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
                 Text("Category Totals")
                     .font(.headline)
 
@@ -139,12 +200,14 @@ struct BudgetSummaryBreakdowns: View {
                     }
                 }
             }
-            .padding()
-            .background(Color(NSColor.controlBackgroundColor))
-            .cornerRadius(8)
-
-            // Person responsibility breakdown
-            VStack(alignment: .leading, spacing: 12) {
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
+    }
+    
+    @ViewBuilder
+    private var personBreakdownContent: some View {
+        VStack(alignment: .leading, spacing: 12) {
                 Text("Responsibility")
                     .font(.headline)
 
@@ -176,10 +239,9 @@ struct BudgetSummaryBreakdowns: View {
                     }
                 }
             }
-            .padding()
-            .background(Color(NSColor.controlBackgroundColor))
-            .cornerRadius(8)
-        }
+        .padding()
+        .background(Color(NSColor.controlBackgroundColor))
+        .cornerRadius(8)
     }
 
     private func colorForPerson(_ person: String) -> Color {

@@ -4,6 +4,8 @@ import AppKit
 import SwiftUI
 
 struct BudgetConfigurationHeader: View {
+    let windowSize: WindowSize
+    
     @Binding var selectedScenario: String
     @Binding var budgetName: String
     @Binding var selectedTaxRateId: Int64?
@@ -31,165 +33,305 @@ struct BudgetConfigurationHeader: View {
     let onShowTaxRateDialog: () -> Void
 
     var body: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: windowSize == .compact ? Spacing.md : 16) {
             HStack {
                 Text("Budget Development")
-                    .font(.title2)
+                    .font(windowSize == .compact ? .headline : .title2)
                     .fontWeight(.bold)
 
                 Spacer()
 
-                HStack(spacing: 8) {
-                    Menu {
-                        Section(header: Text("Local Export")) {
-                            Button(action: onExportJSON) {
-                                Label("Export as JSON", systemImage: "doc.text")
-                            }
-                            Button(action: onExportCSV) {
-                                Label("Export as CSV (Excel)", systemImage: "tablecells")
-                            }
-                        }
-
-                        Section(header: Text("Google Export")) {
-                            if isGoogleAuthenticated {
-                                Button(action: { Task { await onExportToGoogleDrive() } }) {
-                                    Label("Upload to Google Drive", systemImage: "icloud.and.arrow.up")
-                                }
-                                Button(action: { Task { await onExportToGoogleSheets() } }) {
-                                    Label("Create Google Sheet", systemImage: "doc.on.doc")
-                                }
-                                Button(action: onSignOutFromGoogle) {
-                                    Label("Sign Out from Google", systemImage: "person.crop.circle.badge.xmark")
-                                }
-                            } else {
-                                Button(action: { Task { await onSignInToGoogle() } }) {
-                                    Label("Sign in to Google", systemImage: "person.crop.circle.badge.checkmark")
-                                }
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.down")
-                            Text("Export")
-                        }
-                    }
-                    .buttonStyle(.bordered)
-
-                    Button(action: { Task { await onSaveScenario() } }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.down.fill")
-                            Text(saving ? "Saving..." : "Save")
-                        }
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(saving)
-
-                    Button(action: { Task { await onUploadScenario() } }) {
-                        HStack(spacing: 4) {
-                            Image(systemName: "square.and.arrow.up")
-                            Text(uploading ? "Uploading..." : "Upload")
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(uploading || currentScenarioId == nil)
+                if windowSize == .compact {
+                    compactActionsMenu
+                } else {
+                    regularActionsRow
                 }
             }
 
-            HStack(spacing: 16) {
-                // Scenario selector
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Budget Scenario")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-
-                    HStack {
-                        Picker("Scenario", selection: $selectedScenario) {
-                            Text("Create New Scenario").tag("new")
-                            ForEach(savedScenarios, id: \.id) { scenario in
-                                HStack {
-                                    if scenario.isPrimary {
-                                        Image(systemName: "star.fill")
-                                            .foregroundColor(.yellow)
-                                    }
-                                    Text(scenario.scenarioName)
-                                }
-                                .tag(scenario.id)
-                            }
+            if windowSize == .compact {
+                compactFormFields
+            } else {
+                regularFormFields
+            }
+        }
+        .padding(windowSize == .compact ? Spacing.md : Spacing.lg)
+        .background(Color(NSColor.controlBackgroundColor))
+    }
+    
+    // MARK: - Compact Mode Components
+    
+    @ViewBuilder
+    private var compactActionsMenu: some View {
+        Menu {
+            Button(action: { Task { await onSaveScenario() } }) {
+                Label(saving ? "Saving..." : "Save", systemImage: "square.and.arrow.down.fill")
+            }
+            .disabled(saving)
+            
+            Button(action: { Task { await onUploadScenario() } }) {
+                Label(uploading ? "Uploading..." : "Upload", systemImage: "square.and.arrow.up")
+            }
+            .disabled(uploading || currentScenarioId == nil)
+            
+            Divider()
+            
+            Menu("Export") {
+                Section(header: Text("Local Export")) {
+                    Button(action: onExportJSON) {
+                        Label("Export as JSON", systemImage: "doc.text")
+                    }
+                    Button(action: onExportCSV) {
+                        Label("Export as CSV", systemImage: "tablecells")
+                    }
+                }
+                
+                Section(header: Text("Google Export")) {
+                    if isGoogleAuthenticated {
+                        Button(action: { Task { await onExportToGoogleDrive() } }) {
+                            Label("Upload to Google Drive", systemImage: "icloud.and.arrow.up")
                         }
-                        .pickerStyle(.menu)
-                        .onChange(of: selectedScenario) {
-                            Task { await onLoadScenario(selectedScenario) }
+                        Button(action: { Task { await onExportToGoogleSheets() } }) {
+                            Label("Create Google Sheet", systemImage: "doc.on.doc")
                         }
-
-                        if selectedScenario != "new" {
-                            Menu {
-                                Button("Set as Primary") {
-                                    Task { await onSetPrimaryScenario(selectedScenario) }
-                                }
-                                .disabled(savedScenarios.first { $0.id == selectedScenario }?.isPrimary == true)
-
-                                Button("Rename") {
-                                    if let scenario = savedScenarios.first(where: { $0.id == selectedScenario }) {
-                                        onShowRenameDialog(scenario.id, scenario.scenarioName)
-                                    }
-                                }
-
-                                Button("Duplicate") {
-                                    if let scenario = savedScenarios.first(where: { $0.id == selectedScenario }) {
-                                        onShowDuplicateDialog(scenario.id, "\(scenario.scenarioName) (Copy)")
-                                    }
-                                }
-
-                                Divider()
-
-                                Button("Delete", role: .destructive) {
-                                    if let scenario = savedScenarios.first(where: { $0.id == selectedScenario }) {
-                                        onShowDeleteDialog(scenario.id, scenario.scenarioName)
-                                    }
-                                }
-                            } label: {
-                                Image(systemName: "ellipsis.circle")
-                            }
+                        Button(action: onSignOutFromGoogle) {
+                            Label("Sign Out from Google", systemImage: "person.crop.circle.badge.xmark")
+                        }
+                    } else {
+                        Button(action: { Task { await onSignInToGoogle() } }) {
+                            Label("Sign in to Google", systemImage: "person.crop.circle.badge.checkmark")
                         }
                     }
                 }
-
-                // Scenario name (for new scenarios)
-                if selectedScenario == "new" {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Scenario Name")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-
-                        TextField("Enter scenario name", text: $budgetName)
-                            .textFieldStyle(.roundedBorder)
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.title3)
+        }
+    }
+    
+    @ViewBuilder
+    private var regularActionsRow: some View {
+        HStack(spacing: 8) {
+            Menu {
+                Section(header: Text("Local Export")) {
+                    Button(action: onExportJSON) {
+                        Label("Export as JSON", systemImage: "doc.text")
+                    }
+                    Button(action: onExportCSV) {
+                        Label("Export as CSV (Excel)", systemImage: "tablecells")
                     }
                 }
 
-                // Tax rate selector
+                Section(header: Text("Google Export")) {
+                    if isGoogleAuthenticated {
+                        Button(action: { Task { await onExportToGoogleDrive() } }) {
+                            Label("Upload to Google Drive", systemImage: "icloud.and.arrow.up")
+                        }
+                        Button(action: { Task { await onExportToGoogleSheets() } }) {
+                            Label("Create Google Sheet", systemImage: "doc.on.doc")
+                        }
+                        Button(action: onSignOutFromGoogle) {
+                            Label("Sign Out from Google", systemImage: "person.crop.circle.badge.xmark")
+                        }
+                    } else {
+                        Button(action: { Task { await onSignInToGoogle() } }) {
+                            Label("Sign in to Google", systemImage: "person.crop.circle.badge.checkmark")
+                        }
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "square.and.arrow.down")
+                    Text("Export")
+                }
+            }
+            .buttonStyle(.bordered)
+
+            Button(action: { Task { await onSaveScenario() } }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "square.and.arrow.down.fill")
+                    Text(saving ? "Saving..." : "Save")
+                }
+            }
+            .buttonStyle(.bordered)
+            .disabled(saving)
+
+            Button(action: { Task { await onUploadScenario() } }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "square.and.arrow.up")
+                    Text(uploading ? "Uploading..." : "Upload")
+                }
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(uploading || currentScenarioId == nil)
+        }
+    }
+    
+    @ViewBuilder
+    private var compactFormFields: some View {
+        VStack(spacing: Spacing.md) {
+            // Scenario selector (full width)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Budget Scenario")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                HStack {
+                    Picker("Scenario", selection: $selectedScenario) {
+                        Text("Create New Scenario").tag("new")
+                        ForEach(savedScenarios, id: \.id) { scenario in
+                            HStack {
+                                if scenario.isPrimary {
+                                    Image(systemName: "star.fill")
+                                        .foregroundColor(.yellow)
+                                }
+                                Text(scenario.scenarioName)
+                            }
+                            .tag(scenario.id)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: selectedScenario) {
+                        Task { await onLoadScenario(selectedScenario) }
+                    }
+                    
+                    if selectedScenario != "new" {
+                        scenarioActionsMenu
+                    }
+                }
+            }
+            
+            // Scenario name (only for new)
+            if selectedScenario == "new" {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Default Tax Rate")
+                    Text("Scenario Name")
                         .font(.caption)
                         .foregroundStyle(.secondary)
-
-                    HStack {
-                        Picker("Tax Rate", selection: $selectedTaxRateId) {
-                            ForEach(taxRates, id: \.id) { rate in
-                                Text("\(rate.region) (\(String(format: "%.2f", rate.taxRate * 100))%)")
-                                    .tag(rate.id as Int64?)
-                            }
+                    TextField("Enter scenario name", text: $budgetName)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+            
+            // Tax rate selector (full width)
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Default Tax Rate")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Picker("Tax Rate", selection: $selectedTaxRateId) {
+                        ForEach(taxRates, id: \.id) { rate in
+                            Text("\(rate.region) (\(String(format: "%.2f", rate.taxRate * 100))%)")
+                                .tag(rate.id as Int64?)
                         }
-                        .pickerStyle(.menu)
-
-                        Button("Add Rate") {
-                            onShowTaxRateDialog()
-                        }
+                    }
+                    .pickerStyle(.menu)
+                    
+                    Button("Add") { onShowTaxRateDialog() }
                         .buttonStyle(.bordered)
-                    }
                 }
             }
         }
-        .padding()
-        .background(Color(NSColor.controlBackgroundColor))
+    }
+    
+    @ViewBuilder
+    private var regularFormFields: some View {
+        HStack(spacing: 16) {
+            // Scenario selector
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Budget Scenario")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Picker("Scenario", selection: $selectedScenario) {
+                        Text("Create New Scenario").tag("new")
+                        ForEach(savedScenarios, id: \.id) { scenario in
+                            HStack {
+                                if scenario.isPrimary {
+                                    Image(systemName: "star.fill")
+                                        .foregroundColor(.yellow)
+                                }
+                                Text(scenario.scenarioName)
+                            }
+                            .tag(scenario.id)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: selectedScenario) {
+                        Task { await onLoadScenario(selectedScenario) }
+                    }
+
+                    if selectedScenario != "new" {
+                        scenarioActionsMenu
+                    }
+                }
+            }
+
+            // Scenario name (for new scenarios)
+            if selectedScenario == "new" {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Scenario Name")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    TextField("Enter scenario name", text: $budgetName)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
+
+            // Tax rate selector
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Default Tax Rate")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                HStack {
+                    Picker("Tax Rate", selection: $selectedTaxRateId) {
+                        ForEach(taxRates, id: \.id) { rate in
+                            Text("\(rate.region) (\(String(format: "%.2f", rate.taxRate * 100))%)")
+                                .tag(rate.id as Int64?)
+                        }
+                    }
+                    .pickerStyle(.menu)
+
+                    Button("Add Rate") {
+                        onShowTaxRateDialog()
+                    }
+                    .buttonStyle(.bordered)
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var scenarioActionsMenu: some View {
+        Menu {
+            Button("Set as Primary") {
+                Task { await onSetPrimaryScenario(selectedScenario) }
+            }
+            .disabled(savedScenarios.first { $0.id == selectedScenario }?.isPrimary == true)
+
+            Button("Rename") {
+                if let scenario = savedScenarios.first(where: { $0.id == selectedScenario }) {
+                    onShowRenameDialog(scenario.id, scenario.scenarioName)
+                }
+            }
+
+            Button("Duplicate") {
+                if let scenario = savedScenarios.first(where: { $0.id == selectedScenario }) {
+                    onShowDuplicateDialog(scenario.id, "\(scenario.scenarioName) (Copy)")
+                }
+            }
+
+            Divider()
+
+            Button("Delete", role: .destructive) {
+                if let scenario = savedScenarios.first(where: { $0.id == selectedScenario }) {
+                    onShowDeleteDialog(scenario.id, scenario.scenarioName)
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
     }
 }
