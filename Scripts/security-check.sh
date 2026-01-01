@@ -1,7 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "Running security checks..."
+echo "🔒 Running comprehensive security checks..."
+echo ""
 
 # Check .env is not staged
 if git diff --cached --name-only | grep -E '^\.env$|^\.env\.' | grep -v '\.example$'; then
@@ -45,4 +46,31 @@ else
   fi
 fi
 
-echo "Security checks complete!"
+# Run Semgrep Pro with custom PII tracking rules
+echo ""
+echo "🔍 Running Semgrep Pro (SAST + PII Tracking)..."
+if [ -d ".semgrep/rules" ]; then
+  # Run with custom PII rules + Pro rules
+  semgrep scan \
+    --config .semgrep/rules \
+    --config auto \
+    --pro \
+    --exclude "*.test.swift" \
+    --exclude "Tests/" \
+    --exclude "I Do BlueprintTests/" \
+    --quiet \
+    || echo "⚠️  Semgrep found security issues (see above)"
+else
+  # Run with Pro rules only
+  semgrep scan \
+    --config auto \
+    --pro \
+    --exclude "*.test.swift" \
+    --exclude "Tests/" \
+    --exclude "I Do BlueprintTests/" \
+    --quiet \
+    || echo "⚠️  Semgrep found security issues (see above)"
+fi
+
+echo ""
+echo "✅ All security checks complete!"

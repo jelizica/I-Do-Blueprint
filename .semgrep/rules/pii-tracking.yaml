@@ -1,0 +1,158 @@
+rules:
+  # Guest PII Detection
+  - id: guest-pii-database-query
+    pattern-either:
+      - pattern: |
+          .from("guest_list")
+      - pattern: |
+          .from("guests")
+    message: |
+      Guest PII database access detected. Ensure:
+      - Row Level Security (RLS) is enabled
+      - couple_id filter is applied
+      - Data is not logged or exposed in errors
+    severity: WARNING
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [privacy]
+      cwe: "CWE-359: Exposure of Private Personal Information to an Unauthorized Actor"
+      owasp: "A01:2021 - Broken Access Control"
+      references:
+        - https://owasp.org/Top10/A01_2021-Broken_Access_Control/
+
+  - id: guest-email-exposure
+    pattern-either:
+      - pattern: |
+          print($GUEST.email)
+      - pattern: |
+          logger.debug(..., $GUEST.email, ...)
+      - pattern: |
+          logger.info(..., $GUEST.email, ...)
+    message: |
+      Guest email (PII) logged or printed. This violates privacy best practices.
+      Use logger.debug() only and ensure logs are not sent to third parties.
+    severity: WARNING
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [privacy]
+      gdpr: true
+
+  - id: sensitive-data-in-error-messages
+    pattern-either:
+      - pattern: |
+          throw ...(message: "... \($GUEST.firstName) ...")
+      - pattern: |
+          throw ...(message: "... \($GUEST.email) ...")
+      - pattern: |
+          throw ...(message: "... \($GUEST.phoneNumber) ...")
+    message: |
+      Sensitive guest data included in error message. This could leak PII in logs.
+      Use generic error messages and log details separately with proper masking.
+    severity: ERROR
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [privacy]
+
+  # Budget/Financial Data
+  - id: budget-data-logging
+    pattern-either:
+      - pattern: |
+          print($BUDGET.totalAmount)
+      - pattern: |
+          logger.$METHOD(..., $EXPENSE.amount, ...)
+    message: |
+      Financial data logged. Ensure sensitive budget information is not exposed.
+    severity: INFO
+    languages: [swift]
+
+  # Vendor PII
+  - id: vendor-contact-exposure
+    pattern-either:
+      - pattern: |
+          print($VENDOR.email)
+      - pattern: |
+          print($VENDOR.phone)
+    message: |
+      Vendor contact information (PII) exposed in logs.
+    severity: WARNING
+    languages: [swift]
+
+  # Supabase RLS Checks
+  - id: missing-couple-id-filter
+    pattern: |
+      .from($TABLE)
+       .select()
+    pattern-not: |
+      .from($TABLE)
+       .select()
+       .eq("couple_id", ...)
+    message: |
+      Database query without couple_id filter detected.
+      This could leak data across tenants. Always filter by couple_id for multi-tenancy.
+    severity: ERROR
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [auth, privacy]
+      multi-tenancy: true
+
+  - id: uuid-to-string-conversion
+    pattern-either:
+      - pattern: |
+          .eq($COLUMN, value: $UUID.uuidString)
+      - pattern: |
+          .neq($COLUMN, value: $UUID.uuidString)
+    message: |
+      UUID converted to string for query. This causes case mismatch bugs.
+      Pass UUID directly: .eq("couple_id", value: tenantId)
+    severity: ERROR
+    languages: [swift]
+    metadata:
+      category: correctness
+      bug-pattern: uuid-case-mismatch
+
+  # Keychain Security
+  - id: insecure-keychain-accessibility
+    pattern-not-regex: "kSecAttrAccessibleWhenUnlockedThisDeviceOnly"
+    pattern-regex: "kSecAttrAccessible.*"
+    message: |
+      Keychain item uses accessibility level other than kSecAttrAccessibleWhenUnlockedThisDeviceOnly.
+      This could allow session data to be backed up and restored to other devices.
+    severity: WARNING
+    languages: [swift]
+    metadata:
+      category: security
+      subcategory: [keychain]
+
+  # Hardcoded Secrets
+  - id: hardcoded-api-key
+    pattern-either:
+      - pattern: |
+          let $VAR = "$SECRET"
+      - pattern: |
+          var $VAR = "$SECRET"
+    metavariable-pattern:
+      metavariable: $VAR
+      patterns:
+        - pattern-regex: ".*(key|token|secret|password|api).*"
+    message: |
+      Possible hardcoded secret detected. Use AppConfig or environment variables instead.
+    severity: ERROR
+    languages: [swift]
+
+  # Privacy Manifest Checks (iOS/macOS)
+  - id: required-reason-api-usage
+    pattern-either:
+      - pattern: FileManager.default.contentsOfDirectory(...)
+      - pattern: UserDefaults.standard
+      - pattern: NSPersistentContainer(...)
+    message: |
+      Using Required Reason API. Ensure Privacy Manifest (PrivacyInfo.xcprivacy) documents this usage.
+    severity: INFO
+    languages: [swift]
+    metadata:
+      category: compliance
+      apple-privacy-manifest: true
