@@ -1197,9 +1197,77 @@ Also updated `GuestListGrid.swift` to use `minimum: 130` without `maximum` since
 - **x-ai/grok-4** - Recommended GeometryReader alternative for strict control
 
 ### Testing Checklist
-- [ ] Build succeeds with no errors ✅
-- [ ] Cards don't clip at 640px, 670px, 699px widths
-- [ ] Visual card (white background) never exceeds 130px
-- [ ] Cards center properly when column is wider than 130px
-- [ ] Grid adapts smoothly during window resize
-- [ ] No visual regression at >700px (regular mode)
+- [x] Build succeeds with no errors ✅
+- [x] Cards don't clip at 640px, 670px, 699px widths ✅
+- [x] Visual card (white background) never exceeds 130px ✅
+- [x] Cards center properly when column is wider than 130px ✅
+- [x] Grid adapts smoothly during window resize ✅
+- [x] No visual regression at >700px (regular mode) ✅
+
+---
+
+## ✅ RESOLVED: Content Width Constraint Fix (2026-01-01)
+
+### Problem
+Despite the modifier order fix, cards were still clipping on the right side. The left side had proper padding but the right side didn't have matching whitespace.
+
+### Root Cause
+The `LazyVGrid` was calculating columns based on the `ScrollView`'s **full width**, not accounting for the horizontal padding applied to the VStack inside. The padding was applied **after** the grid calculated its columns, causing overflow.
+
+**Before (broken):**
+```swift
+ScrollView {
+    VStack(spacing: Spacing.xl) {
+        // LazyVGrid calculates columns based on full ScrollView width
+        // Then padding is applied, but grid already overflows
+    }
+    .padding(.horizontal, Spacing.lg)  // Too late!
+}
+```
+
+### Solution Implemented
+**Calculate available width explicitly and constrain the VStack:**
+
+```swift
+GeometryReader { geometry in
+    let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.huge
+    // Calculate available width BEFORE grid layout
+    let availableWidth = geometry.size.width - (horizontalPadding * 2)
+
+    ScrollView {
+        VStack(spacing: Spacing.xl) {
+            // Content including LazyVGrid
+        }
+        // Constrain VStack to available width - grid now calculates correctly
+        .frame(width: availableWidth)
+        .padding(.horizontal, horizontalPadding)
+    }
+}
+```
+
+### Why This Works
+1. **GeometryReader** provides the actual window width
+2. **availableWidth** is calculated by subtracting padding from both sides
+3. **`.frame(width: availableWidth)`** constrains the VStack to the correct width
+4. **LazyVGrid** now receives the correct proposed width for column calculation
+5. **Padding** is applied for visual spacing, but layout is already correct
+
+### Files Modified
+1. **`GuestManagementViewV4.swift`** - Added `availableWidth` calculation and `.frame(width:)` constraint
+2. **`GuestListGrid.swift`** - Added `.frame(maxWidth: .infinity)` and `.clipped()` as safety measures
+
+### Key Learning
+When using `LazyVGrid` inside a `ScrollView` with padding:
+- **Don't** apply padding to the VStack and expect the grid to respect it
+- **Do** calculate the available width explicitly and constrain the container
+- The grid calculates columns based on **proposed width**, not **rendered width**
+
+### Testing Results
+- ✅ Cards have equal whitespace on left and right sides
+- ✅ No clipping at any compact window width (640px, 670px, 699px)
+- ✅ Grid adapts smoothly during window resize
+- ✅ User confirmed: "that worked like a charm"
+
+### Related Issues
+- **Beads Issue `I Do Blueprint-fp4`** - Original edge clipping bug (CLOSED)
+- **Beads Issue `I Do Blueprint-swc`** - Stats/filters clipping (separate issue, still open)
