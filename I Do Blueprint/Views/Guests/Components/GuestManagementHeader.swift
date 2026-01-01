@@ -31,9 +31,9 @@ struct GuestManagementHeader: View {
             Spacer()
 
             // Action Buttons
-            HStack(spacing: 12) {
+            HStack(spacing: Spacing.sm) {
                 if windowSize == .compact {
-                    // Compact: Menu with Import/Export
+                    // Import/Export menu (icon only)
                     Menu {
                         Button(action: onImport) {
                             Label("Import", systemImage: "square.and.arrow.down")
@@ -44,28 +44,22 @@ struct GuestManagementHeader: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 18))
+                            .font(.system(size: 20))
                             .foregroundColor(AppColors.textPrimary)
-                            .frame(width: 42, height: 42)
-                            .background(AppColors.cardBackground)
-                            .cornerRadius(8)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(AppColors.borderLight, lineWidth: 0.5)
-                            )
-                    }
-                    .menuStyle(.borderlessButton)
-
-                    // Add Guest Button (icon-only in compact)
-                    Button(action: onAddGuest) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(AppColors.textPrimary)
-                            .frame(width: 42, height: 42)
-                            .background(AppColors.primary)
-                            .cornerRadius(8)
+                            .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
+                    .help("Import/Export")
+
+                    // Add Guest button (icon only)
+                    Button(action: onAddGuest) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundColor(AppColors.primary)
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Add Guest")
                 } else {
                     // Regular/Large: All buttons with text
                     Button(action: onImport) {
