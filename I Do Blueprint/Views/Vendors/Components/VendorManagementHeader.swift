@@ -16,33 +16,32 @@ struct VendorManagementHeader: View {
     let vendors: [Vendor]
     
     var body: some View {
-        if windowSize == .compact {
-            // Compact: Title and icon buttons in same row
-            HStack(alignment: .center) {
+        HStack(alignment: .center, spacing: 0) {
+            // Title and Description
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Vendor Management")
                     .font(Typography.displaySmall)
                     .foregroundColor(AppColors.textPrimary)
-                
-                Spacer()
-                
-                compactActionButtons
-            }
-        } else {
-            // Regular: Title, subtitle, and action buttons
-            VStack(alignment: .leading, spacing: Spacing.md) {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Vendor Management")
-                        .font(Typography.displayLarge)
-                        .foregroundColor(AppColors.textPrimary)
-                    
+
+                if windowSize != .compact {
                     Text("Manage and track all your vendors in one place")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textSecondary)
                 }
-                
-                regularActionButtons
+            }
+
+            Spacer()
+
+            // Action Buttons
+            HStack(spacing: Spacing.sm) {
+                if windowSize == .compact {
+                    compactActionButtons
+                } else {
+                    regularActionButtons
+                }
             }
         }
+        .frame(height: 68)
     }
     
     // MARK: - Compact Action Buttons
