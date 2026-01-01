@@ -10,7 +10,6 @@ import SwiftUI
 
 struct BudgetDashboardHubView: View {
     @State private var currentPage: BudgetPage = .hub
-    @State private var expandedSections: Set<BudgetGroup> = []
     @EnvironmentObject var budgetStore: BudgetStoreV2
 
     var body: some View {
@@ -25,37 +24,39 @@ struct BudgetDashboardHubView: View {
                     .ignoresSafeArea()
 
                 // Content based on current page
-                if currentPage == .hub {
-                    // Dashboard hub content
-                    ScrollView {
-                        VStack(spacing: Spacing.xl) {
-                            // Standardized header (replaces old summary with refresh button)
-                            BudgetManagementHeader(
-                                windowSize: windowSize,
-                                currentPage: $currentPage,
-                                expandedSections: $expandedSections
-                            )
+                ScrollView {
+                    VStack(spacing: Spacing.xl) {
+                        // Standardized header (persists across ALL pages)
+                        BudgetManagementHeader(
+                            windowSize: windowSize,
+                            currentPage: $currentPage
+                        )
 
-                            // Dashboard stats summary
-                            budgetStatsSummary(windowSize: windowSize)
-                                .frame(width: availableWidth)
-
-                            // 3 Group Cards
-                            groupCardsGrid(windowSize: windowSize)
-                                .frame(width: availableWidth)
-
-                            // Quick Access section (optimized layout)
-                            if windowSize != .compact {
-                                quickAccessSection(windowSize: windowSize)
+                        if currentPage == .hub {
+                            // Dashboard hub content
+                            VStack(spacing: Spacing.xl) {
+                                // Dashboard stats summary
+                                budgetStatsSummary(windowSize: windowSize)
                                     .frame(width: availableWidth)
+
+                                // 3 Group Cards
+                                groupCardsGrid(windowSize: windowSize)
+                                    .frame(width: availableWidth)
+
+                                // Quick Access section (optimized layout)
+                                if windowSize != .compact {
+                                    quickAccessSection(windowSize: windowSize)
+                                        .frame(width: availableWidth)
+                                }
                             }
+                        } else {
+                            // Show the selected page's view
+                            currentPage.view
+                                .frame(width: availableWidth)
                         }
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
                     }
-                } else {
-                    // Show the selected page's view
-                    currentPage.view
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
                 }
             }
         }

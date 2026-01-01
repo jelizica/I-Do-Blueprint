@@ -11,7 +11,6 @@ import SwiftUI
 struct BudgetManagementHeader: View {
     let windowSize: WindowSize
     @Binding var currentPage: BudgetPage
-    @Binding var expandedSections: Set<BudgetGroup>
 
     var body: some View {
         HStack(alignment: .center, spacing: 0) {
@@ -53,35 +52,16 @@ struct BudgetManagementHeader: View {
 
             Divider()
 
-            // Expandable Sections
+            // All sections with all pages visible (no expansion needed)
             ForEach(BudgetGroup.allCases) { group in
-                Section {
-                    // Section header with expand/collapse
-                    Button {
-                        toggleSection(group)
-                    } label: {
-                        HStack {
-                            Label(group.rawValue, systemImage: group.icon)
-                            Spacer()
-                            Image(systemName: expandedSections.contains(group) ? "chevron.down" : "chevron.right")
-                                .font(.caption)
-                        }
-                    }
-
-                    // Show pages only if section is expanded
-                    if expandedSections.contains(group) {
-                        ForEach(group.pages) { page in
-                            Button {
-                                currentPage = page
-                            } label: {
-                                HStack {
-                                    Label(page.rawValue, systemImage: page.icon)
-                                        .padding(.leading, Spacing.md)
-                                    if currentPage == page {
-                                        Spacer()
-                                        Image(systemName: "checkmark")
-                                    }
-                                }
+                Section(group.rawValue) {
+                    ForEach(group.pages) { page in
+                        Button {
+                            currentPage = page
+                        } label: {
+                            Label(page.rawValue, systemImage: page.icon)
+                            if currentPage == page {
+                                Image(systemName: "checkmark")
                             }
                         }
                     }
@@ -104,29 +84,17 @@ struct BudgetManagementHeader: View {
         .buttonStyle(.plain)
         .help("Navigate budget pages")
     }
-
-    // MARK: - Helper Methods
-
-    private func toggleSection(_ group: BudgetGroup) {
-        if expandedSections.contains(group) {
-            expandedSections.remove(group)
-        } else {
-            expandedSections.insert(group)
-        }
-    }
 }
 
 // MARK: - Preview
 
 #Preview {
     @Previewable @State var currentPage: BudgetPage = .hub
-    @Previewable @State var expandedSections: Set<BudgetGroup> = []
 
     VStack(spacing: 0) {
         BudgetManagementHeader(
             windowSize: .regular,
-            currentPage: $currentPage,
-            expandedSections: $expandedSections
+            currentPage: $currentPage
         )
         .padding(.horizontal, Spacing.huge)
         .padding(.top, Spacing.xl)
