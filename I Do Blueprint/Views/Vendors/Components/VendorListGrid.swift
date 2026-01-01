@@ -48,15 +48,36 @@ struct VendorListGrid: View {
     // MARK: - Vendor Grid
     
     private var vendorGrid: some View {
-        LazyVGrid(
-            columns: gridColumns(for: windowSize),
-            spacing: Spacing.lg
-        ) {
-            ForEach(filteredVendors) { vendor in
-                VendorCardV3(vendor: vendor)
-                    .onTapGesture {
-                        selectedVendor = vendor
+        Group {
+            if windowSize == .compact {
+                // Compact: Adaptive grid of vertical mini-cards
+                LazyVGrid(
+                    columns: [GridItem(.adaptive(minimum: 130), spacing: Spacing.md)],
+                    alignment: .center,
+                    spacing: Spacing.md
+                ) {
+                    ForEach(filteredVendors) { vendor in
+                        VendorCompactCard(vendor: vendor)
+                            .onTapGesture {
+                                selectedVendor = vendor
+                            }
                     }
+                }
+                .frame(maxWidth: .infinity)
+                .clipped()
+            } else {
+                // Regular/Large: Use existing VendorCardV3
+                LazyVGrid(
+                    columns: gridColumns(for: windowSize),
+                    spacing: Spacing.lg
+                ) {
+                    ForEach(filteredVendors) { vendor in
+                        VendorCardV3(vendor: vendor)
+                            .onTapGesture {
+                                selectedVendor = vendor
+                            }
+                    }
+                }
             }
         }
     }
@@ -66,8 +87,8 @@ struct VendorListGrid: View {
     private func gridColumns(for windowSize: WindowSize) -> [GridItem] {
         switch windowSize {
         case .compact:
-            // 2 columns in compact
-            return Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: 2)
+            // Not used in compact mode (uses adaptive grid instead)
+            return []
         case .regular:
             // 3 columns in regular
             return Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: 3)

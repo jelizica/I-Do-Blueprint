@@ -48,7 +48,7 @@ struct VendorStatsSection: View {
                     VendorManagementStatCard(
                         title: "Total Quoted",
                         value: formatCurrency(totalQuoted),
-                        subtitle: "from all vendors",
+                        subtitle: nil,
                         subtitleColor: AppColors.textSecondary,
                         icon: "dollarsign.circle.fill"
                     )
@@ -98,7 +98,7 @@ struct VendorStatsSection: View {
                     VendorManagementStatCard(
                         title: "Total Quoted",
                         value: formatCurrency(totalQuoted),
-                        subtitle: "from all vendors",
+                        subtitle: nil,
                         subtitleColor: AppColors.textSecondary,
                         icon: "dollarsign.circle.fill"
                     )

@@ -16,24 +16,30 @@ struct VendorManagementHeader: View {
     let vendors: [Vendor]
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            // Title and subtitle
-            VStack(alignment: .leading, spacing: Spacing.xs) {
+        if windowSize == .compact {
+            // Compact: Title and icon buttons in same row
+            HStack(alignment: .center) {
                 Text("Vendor Management")
                     .font(Typography.displayLarge)
                     .foregroundColor(AppColors.textPrimary)
                 
-                if windowSize != .compact {
+                Spacer()
+                
+                compactActionButtons
+            }
+        } else {
+            // Regular: Title, subtitle, and action buttons
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Vendor Management")
+                        .font(Typography.displayLarge)
+                        .foregroundColor(AppColors.textPrimary)
+                    
                     Text("Manage and track all your vendors in one place")
                         .font(Typography.bodyRegular)
                         .foregroundColor(AppColors.textSecondary)
                 }
-            }
-            
-            // Action buttons
-            if windowSize == .compact {
-                compactActionButtons
-            } else {
+                
                 regularActionButtons
             }
         }
@@ -43,7 +49,7 @@ struct VendorManagementHeader: View {
     
     private var compactActionButtons: some View {
         HStack(spacing: Spacing.sm) {
-            // Combined Import/Export menu
+            // Import/Export menu (icon only)
             Menu {
                 Button {
                     showingImportSheet = true
@@ -57,32 +63,38 @@ struct VendorManagementHeader: View {
                     Label("Export", systemImage: "square.and.arrow.up")
                 }
             } label: {
-                HStack(spacing: Spacing.xs) {
-                    Image(systemName: "ellipsis.circle")
-                    Text("Import/Export")
-                        .font(Typography.bodySmall)
-                }
-                .padding(.horizontal, Spacing.md)
-                .padding(.vertical, Spacing.sm)
+                Image(systemName: "ellipsis.circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(AppColors.textPrimary)
+                    .frame(width: 44, height: 44)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
+            .help("Import/Export")
             
-            Spacer()
-            
-            // Add Vendor button (prominent)
+            // Add Vendor button (icon only)
             Button {
                 showingAddVendor = true
             } label: {
-                HStack(spacing: Spacing.xs) {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Add Vendor")
-                        .font(Typography.bodySmall)
-                }
-                .padding(.horizontal, Spacing.md)
-                .padding(.vertical, Spacing.sm)
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(AppColors.primary)
+                    .frame(width: 44, height: 44)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(AppColors.primary)
+            .buttonStyle(.plain)
+            .help("Add Vendor")
+        }
+        .confirmationDialog("Export Vendors", isPresented: $showingExportOptions) {
+            Button("Export to CSV") {
+                Task {
+                    await exportHandler.exportVendors(vendors, format: .csv)
+                }
+            }
+            Button("Export to Google Sheets") {
+                Task {
+                    await exportHandler.exportVendors(vendors, format: .googleSheets)
+                }
+            }
+            Button("Cancel", role: .cancel) {}
         }
     }
     
