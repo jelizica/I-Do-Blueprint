@@ -1,5 +1,9 @@
 import SwiftUI
 
+// DEPRECATED: This view is no longer used. AppCoordinator now routes to BudgetDashboardHubView.
+// Will be removed after migration is complete.
+
+/*
 struct BudgetMainView: View {
     @EnvironmentObject private var budgetStore: BudgetStoreV2
     @State private var selectedItem: BudgetNavigationItem = .budgetDashboard
@@ -362,3 +366,4 @@ struct EventSettingsView: View {
 #Preview {
     BudgetMainView()
 }
+*/

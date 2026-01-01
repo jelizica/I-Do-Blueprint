@@ -1,0 +1,6 @@
+#!/bin/bash
+# Short alias for LLM Council wrapper
+# Usage: council "your question"
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+exec "$SCRIPT_DIR/llm-council-wrapper.sh" "$@"

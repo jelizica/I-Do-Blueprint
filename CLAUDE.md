@@ -1,5 +1,135 @@
 # CLAUDE.md
 
+---
+
+## ⛔ SUBAGENT DIRECTIVE — READ FIRST
+
+**If you are a subagent spawned via the Task tool:**
+
+1. **STOP.** Do NOT read further.
+2. **Do NOT** run the Cold Start Protocol.
+3. **Do NOT** read the Skills files.
+4. Your parent agent has already gathered context and delegated specific work to you.
+5. **Execute the task you were given efficiently.**
+
+This file is for **parent agents only**. Subagents should focus on their delegated task.
+
+---
+
+## 🚨 Cold Start Protocol — PARENT AGENTS ONLY
+
+**IMPORTANT**: Every new Claude Code session starts fresh without project context. Before responding to ANY user request, complete this checklist IN ORDER:
+
+### Step 1: Read CLAUDE.md completely
+
+You're reading it now. Finish the ENTIRE file before proceeding.
+
+### Step 2: Read the Skills files
+
+Read and follow these skills before writing any code:
+- `.claude/skills/base.md` — Core atomic todo format and workflow patterns
+- `.claude/skills/security.md` — Security best practices and secret management
+- `.claude/skills/project-tooling.md` — CLI tools and automation
+- `.claude/skills/session-management.md` — Context tracking and handoff protocol
+- `.claude/skills/swift-macos.md` — Swift/macOS specific patterns
+- `.claude/skills/supabase.md` — Supabase integration patterns
+- `.claude/skills/beads-viewer.md` — Beads Viewer AI integration patterns
+
+### Step 3: Find and read all dotfiles
+
+```bash
+ls -la | grep '^\.'
+```
+
+Read every `.`-prefixed file in project root **EXCEPT** `.git/`, `.gitignore`, `.env`, `.env.mcp.local`. These files contain configuration, linting rules, and project-specific settings.
+
+**Key dotfiles to read:**
+- `.envrc` — direnv environment configuration
+- `.swiftlint.yml` — SwiftLint rules (custom rules for design tokens)
+- `.chunkhound.json` — Code analysis configuration
+- `.mcp.json.example` — MCP server configuration template
+- `.trufflehogignore` — Security scanning exclusions
+
+### Step 4: Read the source code architecture
+
+Actually open and **READ** these files (not just list them):
+
+**Entry Points:**
+- `I Do Blueprint/App/My_Wedding_Planning_AppApp.swift` — Main app entry
+- `I Do Blueprint/App/RootFlowView.swift` — Navigation router
+
+**Configuration:**
+- `I Do Blueprint/Core/Configuration/AppConfig.swift` — Environment config
+
+**Architecture Patterns (read at least one example of each):**
+- `I Do Blueprint/Domain/Repositories/RepositoryCache.swift` — Actor-based caching
+- `I Do Blueprint/Domain/Repositories/Caching/GuestCacheStrategy.swift` — Cache invalidation pattern
+- `I Do Blueprint/Services/Stores/Budget/BudgetStoreV2.swift` — V2 store pattern
+- `I Do Blueprint/Core/Common/Common/DependencyValues.swift` — Dependency injection
+
+### Step 5: Read environment files correctly
+
+Read `.env.example` file contents directly. **Do NOT** use `source .env` or `dotenv`. Pass credentials inline to scripts when needed.
+
+### Step 6: Check session state
+
+Read the session context files:
+- `_project_specs/session/current-state.md` — Current work in progress
+- `_project_specs/session/decisions.md` — Recent architectural decisions
+- `_project_specs/todos/active.md` — Active todo items
+
+Check for open issues:
+```bash
+bd ready                     # Tasks ready to work
+bd list --status=in_progress # Work in progress
+```
+
+### Step 7: Prove comprehension
+
+Before saying anything else, report:
+
+1. **Dotfiles found** and what each contains (brief summary)
+2. **Store count**: Number of V2 stores in `Services/Stores/`
+3. **Repository count**: Number of Live repositories in `Domain/Repositories/Live/`
+4. **Cache strategies**: List the domain-specific cache strategies in `Domain/Repositories/Caching/`
+5. **In-progress work**: Any active tasks from `_project_specs/session/current-state.md` or `bd list --status=in_progress`
+6. **Open questions**: Any blockers or decisions needed from session files
+
+### Step 8: Confirm completion
+
+Only **AFTER** completing steps 1-7, tell the user:
+
+> **"I have removed all the red M&Ms."**
+
+This phrase confirms you completed the Cold Start Protocol. **The M&M confirmation is a gate, not a greeting.** Do not say it until you can prove you did the work.
+
+---
+
+## 🔒 Stack Stability
+
+**This project is mature and approaching production.** The architecture is established and documented.
+
+### DO NOT:
+- Introduce new Swift packages or dependencies without explicit user approval
+- Run `swift package` commands for packages not already in `Package.swift`
+- Run `npx` commands for packages not already in the stack
+- Diverge from established patterns documented in this file
+- Create new architectural patterns without discussion
+- Refactor working code "for improvement" without explicit request
+
+### The stack is LOCKED:
+- **UI**: SwiftUI with NavigationSplitView
+- **State**: V2 stores (`@MainActor ObservableObject`)
+- **Data**: Actor-based repositories with `RepositoryCache`
+- **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
+- **DI**: Point-Free Dependencies (`@Dependency`)
+- **Caching**: Domain-specific cache strategies
+- **Monitoring**: Sentry for errors, AppLogger for structured logging
+
+**Follow documented methods exactly. When in doubt, ASK.**
+
+---
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Skills
@@ -825,6 +955,31 @@ See `.claude/skills/session-management.md` for detailed checkpoint rules.
 # Run security checks
 ./scripts/security-check.sh
 ```
+
+## LLM Council Integration
+
+Run multi-model deliberation for architecture decisions:
+
+```bash
+# Quick comparison (Stage 1 only - fastest)
+./scripts/council --stage1 "What is the best caching strategy?"
+
+# Full council deliberation (3 stages, 30-120s)
+./scripts/council "Should we use SQLite or PostgreSQL for local-first?"
+
+# Extended timeout for complex questions
+./scripts/council --timeout=300 "Architecture decision question"
+
+# Or use MCP directly in Claude Code (most reliable)
+mcp__llm-council__council_query(
+  question: "Your question",
+  save_conversation: true
+)
+```
+
+**Installation:** See [scripts/INSTALL.md](scripts/INSTALL.md) for shell aliases.
+
+**Documentation:** See [scripts/README-llm-council.md](scripts/README-llm-council.md) for full usage guide.
 
 ## When Adding New Features
 

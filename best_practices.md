@@ -1,5 +1,109 @@
 # 📘 Project Best Practices
 
+---
+
+## 🚨 Cold Start Protocol — READ THIS FIRST
+
+**IMPORTANT**: Every new Qodo Gen session starts fresh without project context. Before responding to ANY user request, complete this checklist IN ORDER:
+
+### Step 1: Read this file completely
+
+You're reading it now. Finish the ENTIRE `best_practices.md` file before proceeding. This is your primary context source.
+
+### Step 2: Find and read all dotfiles
+
+```bash
+ls -la | grep '^\.'
+```
+
+Read every `.`-prefixed file in project root **EXCEPT** `.git/`, `.gitignore`, `.env`, `.env.mcp.local`. These files are your memory from previous sessions. They contain configuration, linting rules, and project-specific settings.
+
+**Key dotfiles to read:**
+- `.envrc` — direnv environment configuration
+- `.swiftlint.yml` — SwiftLint rules (custom rules for design tokens)
+- `.chunkhound.json` — Code analysis configuration
+- `.mcp.json.example` — MCP server configuration template
+- `.trufflehogignore` — Security scanning exclusions
+
+### Step 3: Read the source code architecture
+
+Actually open and **READ** these files (not just list them):
+
+**Entry Points:**
+- `I Do Blueprint/App/My_Wedding_Planning_AppApp.swift` — Main app entry
+- `I Do Blueprint/App/RootFlowView.swift` — Navigation router
+
+**Configuration:**
+- `I Do Blueprint/Core/Configuration/AppConfig.swift` — Environment config
+
+**Architecture Patterns (read at least one example of each):**
+- `I Do Blueprint/Domain/Repositories/RepositoryCache.swift` — Actor-based caching
+- `I Do Blueprint/Domain/Repositories/Caching/GuestCacheStrategy.swift` — Cache invalidation pattern
+- `I Do Blueprint/Services/Stores/Budget/BudgetStoreV2.swift` — V2 store pattern
+- `I Do Blueprint/Core/Common/Common/DependencyValues.swift` — Dependency injection
+
+### Step 4: Read environment files correctly
+
+Read `.env.example` file contents directly. **Do NOT** use `source .env` or `dotenv`. Pass credentials inline to scripts when needed.
+
+### Step 5: Check session state
+
+Read the session context files:
+- `_project_specs/session/current-state.md` — Current work in progress
+- `_project_specs/session/decisions.md` — Recent architectural decisions
+- `_project_specs/todos/active.md` — Active todo items
+
+Check for open issues:
+```bash
+bd ready                     # Tasks ready to work
+bd list --status=in_progress # Work in progress
+```
+
+### Step 6: Prove comprehension
+
+Before saying anything else, report:
+
+1. **Dotfiles found** and what each contains (brief summary)
+2. **Store count**: Number of V2 stores in `Services/Stores/`
+3. **Repository count**: Number of Live repositories in `Domain/Repositories/Live/`
+4. **Cache strategies**: List the domain-specific cache strategies in `Domain/Repositories/Caching/`
+5. **In-progress work**: Any active tasks from `_project_specs/session/current-state.md` or `bd list --status=in_progress`
+6. **Open questions**: Any blockers or decisions needed from session files
+
+### Step 7: Confirm completion
+
+Only **AFTER** completing steps 1-6, tell the user:
+
+> **"I have removed all the red M&Ms."**
+
+This phrase confirms you completed the Cold Start Protocol. **The M&M confirmation is a gate, not a greeting.** Do not say it until you can prove you did the work.
+
+---
+
+## 🔒 Stack Stability
+
+**This project is mature and approaching production.** The architecture is established and documented.
+
+### DO NOT:
+- Introduce new Swift packages or dependencies without explicit user approval
+- Run `swift package` commands for packages not already in `Package.swift`
+- Diverge from established patterns documented in this file
+- Create new architectural patterns without discussion
+- Refactor working code "for improvement" without explicit request
+
+### The stack is LOCKED:
+- **UI**: SwiftUI with NavigationSplitView
+- **State**: V2 stores (`@MainActor ObservableObject`)
+- **Data**: Actor-based repositories with `RepositoryCache`
+- **Backend**: Supabase (PostgreSQL + Auth + Storage + Realtime)
+- **DI**: Point-Free Dependencies (`@Dependency`)
+- **Caching**: Domain-specific cache strategies
+- **Monitoring**: Sentry for errors, AppLogger for structured logging
+
+**Follow documented methods exactly. When in doubt, ASK.**
+
+---
+
 ## 1. Project Purpose
 
 **I Do Blueprint** is a comprehensive macOS wedding planning application built with SwiftUI. It helps couples manage all aspects of their wedding including budget tracking, guest management, vendor coordination, task planning, timeline management, document storage, and visual planning (mood boards, seating charts). The app uses Supabase as a backend for multi-tenant data storage and supports Google Drive integration for document management.

@@ -97,7 +97,7 @@ class AppCoordinator: ObservableObject {
             case .vendors:
                 VendorManagementViewV3()
             case .budget:
-                BudgetMainView()
+                BudgetDashboardHubView()
             case .visualPlanning:
                 VisualPlanningMainViewV2()
             case .timeline:

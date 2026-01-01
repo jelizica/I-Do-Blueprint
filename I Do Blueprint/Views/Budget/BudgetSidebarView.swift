@@ -82,6 +82,11 @@ enum BudgetNavigationItem: Hashable, Identifiable {
     }
 }
 
+// NOTE: BudgetGroup enum moved to Domain/Models/Budget/BudgetPage.swift
+// This file (BudgetSidebarView) is deprecated and will be removed after migration is complete
+// Keeping BudgetNavigationItem temporarily for reference
+
+/*
 enum BudgetGroup: String, CaseIterable {
     case overview = "Overview"
     case expenses = "Expenses"
@@ -119,9 +124,13 @@ enum BudgetGroup: String, CaseIterable {
         }
     }
 }
+*/
 
 // MARK: - Sidebar View
+// DEPRECATED: This view is no longer used. AppCoordinator now routes to BudgetDashboardHubView.
+// Will be removed after migration is complete.
 
+/*
 struct BudgetSidebarView: View {
     @Binding var selection: BudgetNavigationItem
     @State private var expandedGroups: Set<BudgetGroup> = Set(BudgetGroup.allCases)
@@ -205,3 +214,4 @@ struct BudgetSidebarView: View {
         Text("Select an item")
     }
 }
+*/
