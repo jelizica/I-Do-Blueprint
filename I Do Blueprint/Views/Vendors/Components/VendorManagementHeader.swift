@@ -20,7 +20,7 @@ struct VendorManagementHeader: View {
             // Compact: Title and icon buttons in same row
             HStack(alignment: .center) {
                 Text("Vendor Management")
-                    .font(Typography.displayLarge)
+                    .font(Typography.displaySmall)
                     .foregroundColor(AppColors.textPrimary)
                 
                 Spacer()
