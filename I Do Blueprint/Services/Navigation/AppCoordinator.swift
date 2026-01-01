@@ -21,6 +21,12 @@ class AppCoordinator: ObservableObject {
     @Published var selectedTab: AppTab = .dashboard
     @Published var activeSheet: Sheet?
     @Published var activeFullScreenCover: FullScreenCover?
+    
+    // MARK: - Window Size (for dynamic sheet sizing)
+    
+    /// The current size of the main content area, updated by the parent view
+    /// Used by sheet content to calculate dynamic sizes
+    @Published var parentWindowSize: CGSize = CGSize(width: 800, height: 600)
 
     // MARK: - Shared Store Instances (from AppStores singleton)
 

@@ -171,30 +171,41 @@ private struct MainAppView: View {
     @EnvironmentObject var coordinator: AppCoordinator
 
     var body: some View {
-        NavigationSplitView {
-            // Sidebar
-            AppSidebarView()
-                .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
-        } detail: {
-            // Main content - shows the selected tab's view
-            coordinator.selectedTab.view
-                .environmentObject(appStores)
-                .environmentObject(appStores.budget)
-                .environmentObject(appStores.guest)
-                .environmentObject(appStores.vendor)
-                .environmentObject(appStores.document)
-                .environmentObject(appStores.task)
-                .environmentObject(appStores.timeline)
-                .environmentObject(appStores.notes)
-                .environmentObject(appStores.visualPlanning)
-                .environmentObject(settingsStore)
-        }
-        .navigationSplitViewStyle(.balanced)
-        .sheet(item: $coordinator.activeSheet) { sheet in
-            sheet.view(coordinator: coordinator)
-                .environmentObject(settingsStore)
-                .environmentObject(appStores.budget)
-                .environmentObject(coordinator)
+        // Use GeometryReader to capture window size for dynamic sheet sizing
+        GeometryReader { geometry in
+            NavigationSplitView {
+                // Sidebar
+                AppSidebarView()
+                    .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
+            } detail: {
+                // Main content - shows the selected tab's view
+                coordinator.selectedTab.view
+                    .environmentObject(appStores)
+                    .environmentObject(appStores.budget)
+                    .environmentObject(appStores.guest)
+                    .environmentObject(appStores.vendor)
+                    .environmentObject(appStores.document)
+                    .environmentObject(appStores.task)
+                    .environmentObject(appStores.timeline)
+                    .environmentObject(appStores.notes)
+                    .environmentObject(appStores.visualPlanning)
+                    .environmentObject(settingsStore)
+            }
+            .navigationSplitViewStyle(.balanced)
+            // Capture initial window size
+            .onAppear {
+                coordinator.parentWindowSize = geometry.size
+            }
+            // Update window size when it changes
+            .onChange(of: geometry.size) { _, newSize in
+                coordinator.parentWindowSize = newSize
+            }
+            .sheet(item: $coordinator.activeSheet) { sheet in
+                sheet.view(coordinator: coordinator)
+                    .environmentObject(settingsStore)
+                    .environmentObject(appStores.budget)
+                    .environmentObject(coordinator)
+            }
         }
     }
 }

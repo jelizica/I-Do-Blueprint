@@ -56,19 +56,108 @@ struct GuestDetailViewV4: View {
                guest.plusOneAllowed
     }
     
+    // MARK: - Size Constants
+    
+    /// Preferred modal width (clamped between min and max)
+    private let minWidth: CGFloat = 400
+    private let maxWidth: CGFloat = 700
+    
+    /// Preferred modal height (clamped between min and max)
+    private let minHeight: CGFloat = 350
+    private let maxHeight: CGFloat = 850
+    
+    /// Threshold below which we use compact layout
+    private let compactHeightThreshold: CGFloat = 550
+    
+    /// Buffer for window chrome (title bar, toolbar) that isn't available for content
+    private let windowChromeBuffer: CGFloat = 40
+    
+    /// Calculate dynamic size based on parent window size from coordinator
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        // Use 60% of parent width and 75% of parent height (minus chrome buffer), clamped to min/max bounds
+        // The chrome buffer accounts for title bar (~28pt) + safety margin
+        let targetWidth = min(maxWidth, max(minWidth, parentSize.width * 0.6))
+        let targetHeight = min(maxHeight, max(minHeight, parentSize.height * 0.75 - windowChromeBuffer))
+        
+        return CGSize(width: targetWidth, height: targetHeight)
+    }
+    
+    /// Whether to use compact layout (smaller header, everything scrolls)
+    private var isCompactMode: Bool {
+        dynamicSize.height < compactHeightThreshold
+    }
+    
     var body: some View {
         Group {
             if let guest = guest {
-                ZStack {
-                    // Semi-transparent background overlay
-                    AppColors.textPrimary.opacity(0.5)
-                        .ignoresSafeArea()
-                        .onTapGesture {
-                            dismiss()
+                // Adaptive layout based on available height
+                // Compact mode: header scrolls with content
+                // Normal mode: fixed header, scrollable content
+                VStack(spacing: 0) {
+                    if isCompactMode {
+                        // COMPACT MODE: Everything scrolls, smaller header
+                        ScrollView {
+                            VStack(spacing: 0) {
+                                // Compact Header (horizontal, smaller)
+                                GuestDetailCompactHeader(
+                                    guest: guest,
+                                    settings: settings,
+                                    onDismiss: { dismiss() }
+                                )
+                                
+                                // Content sections
+                                VStack(alignment: .leading, spacing: Spacing.lg) {
+                                    // Contact Information
+                                    GuestDetailContactSection(guest: guest)
+                                    
+                                    // RSVP Status and Meal Choice Row
+                                    GuestDetailStatusRow(guest: guest)
+                                    
+                                    // Dietary Restrictions
+                                    if let restrictions = guest.dietaryRestrictions, !restrictions.isEmpty {
+                                        GuestDetailDietarySection(restrictions: restrictions)
+                                    }
+                                    
+                                    // Accessibility Needs
+                                    if hasAccessibilityNeeds {
+                                        GuestDetailAccessibilitySection(
+                                            accessibilityNeeds: guest.accessibilityNeeds!
+                                        )
+                                    }
+                                    
+                                    // Event Attendance (dynamically based on created events)
+                                    GuestDetailEventAttendance(
+                                        guest: guest,
+                                        weddingEvents: budgetStore.weddingEvents
+                                    )
+                                    
+                                    // Wedding Party Section (only for wedding party members)
+                                    if isWeddingPartyMember {
+                                        GuestDetailWeddingPartySection(guest: guest)
+                                    }
+                                    
+                                    // Address Information
+                                    if hasAddress {
+                                        GuestDetailAddressSection(guest: guest)
+                                    }
+                                    
+                                    // Notes
+                                    if let notes = guest.notes, !notes.isEmpty {
+                                        GuestDetailNotesSection(notes: notes)
+                                    }
+                                    
+                                    // Additional Details
+                                    if shouldShowAdditionalDetails {
+                                        Divider()
+                                        GuestDetailAdditionalDetails(guest: guest)
+                                    }
+                                }
+                                .padding(Spacing.lg)
+                            }
                         }
-                    
-                    // Main modal content
-                    VStack(spacing: 0) {
+                    } else {
+                        // NORMAL MODE: Fixed header, scrollable content
                         // Gradient Header with Avatar
                         GuestDetailHeader(
                             guest: guest,
@@ -126,20 +215,19 @@ struct GuestDetailViewV4: View {
                             }
                             .padding(Spacing.xl)
                         }
-                        
-                        // Action Buttons
-                        GuestDetailActionButtons(
-                            onEdit: { showingEditSheet = true },
-                            onDelete: { showingDeleteAlert = true }
-                        )
                     }
-                    .frame(width: 600, height: 750)
-                    .background(AppColors.cardBackground)
-                    .cornerRadius(CornerRadius.lg)
-                    .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
-                    .position(x: NSScreen.main?.visibleFrame.midX ?? 400,
-                             y: (NSScreen.main?.visibleFrame.midY ?? 400) - 50) // Offset up to avoid dock
+                    
+                    // Action Buttons - ALWAYS fixed at bottom
+                    GuestDetailActionButtons(
+                        onEdit: { showingEditSheet = true },
+                        onDelete: { showingDeleteAlert = true }
+                    )
                 }
+                // Dynamic frame size based on parent window size
+                // This explicit frame tells the sheet how big to be
+                .frame(width: dynamicSize.width, height: dynamicSize.height)
+                .background(AppColors.cardBackground)
+                .cornerRadius(CornerRadius.lg)
                 .sheet(isPresented: $showingEditSheet) {
                     EditGuestSheetV2(guest: guest, guestStore: guestStore) { _ in
                         // Reload will happen automatically through the store

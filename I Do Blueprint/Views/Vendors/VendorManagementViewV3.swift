@@ -129,6 +129,7 @@ struct VendorManagementViewV3: View {
                 vendor: vendor,
                 vendorStore: vendorStore
             )
+            .environmentObject(AppCoordinator.shared)
         }
         .sheet(isPresented: $showingAddVendor) {
             AddVendorSheet(vendorStore: vendorStore)

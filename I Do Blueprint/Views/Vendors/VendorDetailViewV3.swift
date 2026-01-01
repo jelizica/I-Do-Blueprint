@@ -21,6 +21,7 @@ struct VendorDetailViewV3: View {
     // MARK: - Environment
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var coordinator: AppCoordinator
 
     // MARK: - Dependencies
 
@@ -43,9 +44,43 @@ struct VendorDetailViewV3: View {
     @State private var documents: [Document] = []
     @State private var isLoadingDocuments = false
 
+    // MARK: - Size Constants
+
+    /// Preferred modal width (clamped between min and max)
+    private let minWidth: CGFloat = 400
+    private let maxWidth: CGFloat = 700
+
+    /// Preferred modal height (clamped between min and max)
+    private let minHeight: CGFloat = 350
+    private let maxHeight: CGFloat = 850
+
+    /// Threshold below which we use compact layout
+    private let compactHeightThreshold: CGFloat = 550
+
+    /// Buffer for window chrome (title bar, toolbar) that isn't available for content
+    private let windowChromeBuffer: CGFloat = 40
+
     // MARK: - Logger
 
     private let logger = AppLogger.ui
+
+    // MARK: - Computed Properties
+
+    /// Calculate dynamic size based on parent window size from coordinator
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        // Use 60% of parent width and 75% of parent height (minus chrome buffer), clamped to min/max bounds
+        // The chrome buffer accounts for title bar (~28pt) + safety margin
+        let targetWidth = min(maxWidth, max(minWidth, parentSize.width * 0.6))
+        let targetHeight = min(maxHeight, max(minHeight, parentSize.height * 0.75 - windowChromeBuffer))
+
+        return CGSize(width: targetWidth, height: targetHeight)
+    }
+
+    /// Whether to use compact layout (smaller header, everything scrolls)
+    private var isCompactMode: Bool {
+        dynamicSize.height < compactHeightThreshold
+    }
 
     // MARK: - Initialization
 
@@ -59,40 +94,68 @@ struct VendorDetailViewV3: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // Hero Header
-            V3VendorHeroHeader(
-                vendor: currentVendor,
-                onEdit: { showingEditSheet = true },
-                onDelete: { showingDeleteAlert = true },
-                onClose: { dismiss() },
-                onLogoUpdated: handleLogoUpdate
-            )
+            if isCompactMode {
+                // COMPACT MODE: Compact header scrolls with content
+                ScrollView {
+                    VStack(spacing: 0) {
+                        // Compact Header (horizontal, smaller)
+                        V3VendorCompactHeader(
+                            vendor: currentVendor,
+                            onClose: { dismiss() }
+                        )
 
-            // Tab Bar
-            V3VendorTabBar(
-                selectedTab: $selectedTab,
-                documentCount: documents.count
-            )
+                        // Tab Bar
+                        V3VendorTabBar(
+                            selectedTab: $selectedTab,
+                            documentCount: documents.count
+                        )
 
-            Divider()
+                        Divider()
 
-            // Tab Content
-            TabView(selection: $selectedTab) {
-                overviewTab
-                    .tag(VendorDetailTab.overview)
+                        // Tab Content
+                        tabContent
+                            .padding(.top, Spacing.md)
+                    }
+                }
+            } else {
+                // NORMAL MODE: Fixed hero header, scrollable content
+                // Hero Header
+                V3VendorHeroHeader(
+                    vendor: currentVendor,
+                    onEdit: { showingEditSheet = true },
+                    onDelete: { showingDeleteAlert = true },
+                    onClose: { dismiss() },
+                    onLogoUpdated: handleLogoUpdate
+                )
 
-                financialTab
-                    .tag(VendorDetailTab.financial)
+                // Tab Bar
+                V3VendorTabBar(
+                    selectedTab: $selectedTab,
+                    documentCount: documents.count
+                )
 
-                documentsTab
-                    .tag(VendorDetailTab.documents)
+                Divider()
 
-                notesTab
-                    .tag(VendorDetailTab.notes)
+                // Tab Content
+                TabView(selection: $selectedTab) {
+                    overviewTab
+                        .tag(VendorDetailTab.overview)
+
+                    financialTab
+                        .tag(VendorDetailTab.financial)
+
+                    documentsTab
+                        .tag(VendorDetailTab.documents)
+
+                    notesTab
+                        .tag(VendorDetailTab.notes)
+                }
+                .tabViewStyle(.automatic)
             }
-            .tabViewStyle(.automatic)
         }
-        .frame(width: 650, height: 700)
+        // Dynamic frame size based on parent window size
+        // This explicit frame tells the sheet how big to be
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(AppColors.background)
         .sheet(isPresented: $showingEditSheet) {
             EditVendorSheetV2(vendor: currentVendor, vendorStore: vendorStore) { updatedVendor in
@@ -121,7 +184,24 @@ struct VendorDetailViewV3: View {
         }
     }
 
-    // MARK: - Tab Views
+    // MARK: - Tab Content
+
+    /// Tab content for compact mode (no TabView wrapper)
+    @ViewBuilder
+    private var tabContent: some View {
+        switch selectedTab {
+        case .overview:
+            overviewContent
+        case .financial:
+            financialContent
+        case .documents:
+            documentsContent
+        case .notes:
+            notesContent
+        }
+    }
+
+    // MARK: - Tab Views (Normal Mode)
 
     private var overviewTab: some View {
         ScrollView {
@@ -161,6 +241,40 @@ struct VendorDetailViewV3: View {
             V3VendorNotesContent(notes: currentVendor.notes)
                 .padding(Spacing.xl)
         }
+    }
+
+    // MARK: - Content Views (Compact Mode)
+
+    private var overviewContent: some View {
+        V3VendorOverviewContent(
+            vendor: currentVendor,
+            onEdit: { showingEditSheet = true },
+            onExportToggle: handleExportToggle
+        )
+        .padding(Spacing.lg)
+    }
+
+    private var financialContent: some View {
+        V3VendorFinancialContent(
+            vendor: currentVendor,
+            expenses: expenses,
+            payments: payments,
+            isLoading: isLoadingFinancials
+        )
+        .padding(Spacing.lg)
+    }
+
+    private var documentsContent: some View {
+        V3VendorDocumentsContent(
+            documents: documents,
+            isLoading: isLoadingDocuments
+        )
+        .padding(Spacing.lg)
+    }
+
+    private var notesContent: some View {
+        V3VendorNotesContent(notes: currentVendor.notes)
+            .padding(Spacing.lg)
     }
 
     // MARK: - Data Loading
