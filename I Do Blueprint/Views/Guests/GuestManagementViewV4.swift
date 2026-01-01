@@ -30,78 +30,84 @@ struct GuestManagementViewV4: View {
     }
     
     var body: some View {
-        ZStack {
-            AppGradients.appBackground
-                .ignoresSafeArea()
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
 
-            VStack(spacing: 0) {
-                // Sticky Header Section
-                GuestManagementHeader(
-                    onImport: { showingImportSheet = true },
-                    onExport: exportGuestList,
-                    onAddGuest: { coordinator.present(.addGuest) }
-                )
-                .padding(.horizontal, Spacing.huge)
-                .padding(.top, Spacing.xxxl)
-                .padding(.bottom, Spacing.xxl)
+            ZStack {
+                AppGradients.appBackground
+                    .ignoresSafeArea()
 
-                // Scrollable Content Section
-                ScrollView {
-                    VStack(spacing: Spacing.xl) {
-                        // Stats Cards
-                        GuestStatsSection(
-                            totalGuestsCount: guestStore.totalGuestsCount,
-                            weeklyChange: guestStore.weeklyChange,
-                            acceptanceRate: guestStore.acceptanceRate,
-                            attendingCount: guestStore.attendingCount,
-                            pendingCount: guestStore.pendingCount,
-                            declinedCount: guestStore.declinedCount
-                        )
+                VStack(spacing: 0) {
+                    // Sticky Header Section
+                    GuestManagementHeader(
+                        windowSize: windowSize,
+                        onImport: { showingImportSheet = true },
+                        onExport: exportGuestList,
+                        onAddGuest: { coordinator.present(.addGuest) }
+                    )
+                    .padding(.horizontal, windowSize == .compact ? Spacing.lg : Spacing.huge)
+                    .padding(.top, Spacing.xxxl)
+                    .padding(.bottom, Spacing.xxl)
 
-                        // Search and Filters
-                        GuestSearchAndFilters(
-                            searchText: $searchText,
-                            selectedStatus: $selectedStatus,
-                            selectedInvitedBy: $selectedInvitedBy,
-                            selectedSortOption: $selectedSortOption,
-                            settings: settings
-                        )
+                    // Scrollable Content Section
+                    ScrollView {
+                        VStack(spacing: Spacing.xl) {
+                            // Stats Cards
+                            GuestStatsSection(
+                                windowSize: windowSize,
+                                totalGuestsCount: guestStore.totalGuestsCount,
+                                weeklyChange: guestStore.weeklyChange,
+                                acceptanceRate: guestStore.acceptanceRate,
+                                attendingCount: guestStore.attendingCount,
+                                pendingCount: guestStore.pendingCount,
+                                declinedCount: guestStore.declinedCount
+                            )
 
-                        // Guest List
-                        guestListContent
+                            // Search and Filters
+                            GuestSearchAndFilters(
+                                searchText: $searchText,
+                                selectedStatus: $selectedStatus,
+                                selectedInvitedBy: $selectedInvitedBy,
+                                selectedSortOption: $selectedSortOption,
+                                settings: settings
+                            )
+
+                            // Guest List
+                            guestListContent(windowSize: windowSize)
+                        }
+                        .padding(.horizontal, windowSize == .compact ? Spacing.lg : Spacing.huge)
+                        .padding(.bottom, windowSize == .compact ? Spacing.lg : Spacing.huge)
                     }
-                    .padding(.horizontal, Spacing.huge)
-                    .padding(.bottom, Spacing.huge)
                 }
             }
-        }
-        .navigationTitle("Guest Management")
-        .sheet(isPresented: $showingImportSheet) {
-            GuestCSVImportView()
-                .environmentObject(guestStore)
-        }
-        .sheet(isPresented: $showingExportSheet) {
-            GuestExportView(
-                guests: filteredAndSortedGuests,
-                settings: settings,
-                onExportSuccessful: handleExportSuccess
-            )
-        }
-        .task {
-            if guestStore.loadingState.isIdle {
-                await guestStore.loadGuestData()
+            .navigationTitle("Guest Management")
+            .sheet(isPresented: $showingImportSheet) {
+                GuestCSVImportView()
+                    .environmentObject(guestStore)
             }
-        }
-        .onChange(of: guestStore.guestListVersion) { _ in
-            // Force the grid to rebuild when the underlying list reloads
-            guestListRenderId &+= 1
+            .sheet(isPresented: $showingExportSheet) {
+                GuestExportView(
+                    guests: filteredAndSortedGuests,
+                    settings: settings,
+                    onExportSuccessful: handleExportSuccess
+                )
+            }
+            .task {
+                if guestStore.loadingState.isIdle {
+                    await guestStore.loadGuestData()
+                }
+            }
+            .onChange(of: guestStore.guestListVersion) { _ in
+                // Force the grid to rebuild when the underlying list reloads
+                guestListRenderId &+= 1
+            }
         }
     }
 
     // MARK: - Guest List Content
 
     @ViewBuilder
-    private var guestListContent: some View {
+    private func guestListContent(windowSize: WindowSize) -> some View {
         if guestStore.isLoading {
             ProgressView("Loading guests...")
                 .frame(maxWidth: .infinity, minHeight: 200)
@@ -113,6 +119,7 @@ struct GuestManagementViewV4: View {
             }
         } else {
             GuestListGrid(
+                windowSize: windowSize,
                 guests: filteredAndSortedGuests,
                 settings: settings,
                 renderId: guestListRenderId,

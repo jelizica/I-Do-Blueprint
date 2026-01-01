@@ -8,31 +8,42 @@
 import SwiftUI
 
 struct GuestListGrid: View {
+    let windowSize: WindowSize
     let guests: [Guest]
     let settings: CoupleSettings
     let renderId: Int
     let onGuestTap: (Guest) -> Void
     let onAddGuest: () -> Void
-    
+
     var body: some View {
         Group {
             if guests.isEmpty {
                 GuestEmptyState(onAddGuest: onAddGuest)
             } else {
-                LazyVGrid(columns: [
-                    GridItem(.flexible(), spacing: Spacing.lg),
-                    GridItem(.flexible(), spacing: Spacing.lg),
-                    GridItem(.flexible(), spacing: Spacing.lg),
-                    GridItem(.flexible(), spacing: Spacing.lg)
-                ], spacing: Spacing.lg) {
-                    ForEach(guests, id: \.id) { guest in
-                        GuestCardV4(guest: guest, settings: settings)
-                            .onTapGesture {
-                                onGuestTap(guest)
-                            }
+                if windowSize == .compact {
+                    // Compact: List of horizontal cards
+                    VStack(spacing: Spacing.md) {
+                        ForEach(guests, id: \.id) { guest in
+                            GuestCompactCard(guest: guest, settings: settings)
+                                .onTapGesture {
+                                    onGuestTap(guest)
+                                }
+                        }
                     }
+                    .id(renderId)
+                } else {
+                    // Regular/Large: Grid layout with full cards
+                    let columns = windowSize == .regular ? 3 : 4
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: Spacing.lg), count: columns), spacing: Spacing.lg) {
+                        ForEach(guests, id: \.id) { guest in
+                            GuestCardV4(guest: guest, settings: settings)
+                                .onTapGesture {
+                                    onGuestTap(guest)
+                                }
+                        }
+                    }
+                    .id(renderId)
                 }
-                .id(renderId)
             }
         }
     }
