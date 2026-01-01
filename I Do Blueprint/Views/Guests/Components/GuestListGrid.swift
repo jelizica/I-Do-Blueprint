@@ -37,6 +37,9 @@ struct GuestListGrid: View {
                                 }
                         }
                     }
+                    // Ensure grid respects parent bounds and doesn't overflow
+                    .frame(maxWidth: .infinity)
+                    .clipped()
                     .id(renderId)
                 } else {
                     // Regular/Large: Adaptive grid with flexible columns

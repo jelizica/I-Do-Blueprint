@@ -32,6 +32,9 @@ struct GuestManagementViewV4: View {
     var body: some View {
         GeometryReader { geometry in
             let windowSize = geometry.size.width.windowSize
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.huge
+            // Calculate available width for content (geometry width minus padding on both sides)
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
 
             ZStack {
                 AppGradients.appBackground
@@ -45,7 +48,7 @@ struct GuestManagementViewV4: View {
                         onExport: exportGuestList,
                         onAddGuest: { coordinator.present(.addGuest) }
                     )
-                    .padding(.horizontal, windowSize == .compact ? Spacing.lg : Spacing.huge)
+                    .padding(.horizontal, horizontalPadding)
                     .padding(.top, Spacing.xxxl)
                     .padding(.bottom, Spacing.xxl)
 
@@ -75,7 +78,9 @@ struct GuestManagementViewV4: View {
                             // Guest List
                             guestListContent(windowSize: windowSize)
                         }
-                        .padding(.horizontal, windowSize == .compact ? Spacing.lg : Spacing.huge)
+                        // Constrain the VStack to the available width to prevent overflow
+                        .frame(width: availableWidth)
+                        .padding(.horizontal, horizontalPadding)
                         .padding(.bottom, windowSize == .compact ? Spacing.lg : Spacing.huge)
                     }
                 }
