@@ -195,14 +195,14 @@ struct BudgetDevelopmentUnifiedHeader: View {
     
     @ViewBuilder
     private var compactFormFields: some View {
-        VStack(spacing: Spacing.md) {
+        VStack(spacing: Spacing.lg) {
             // Scenario selector (full width)
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Budget Scenario")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
-                HStack {
+                HStack(spacing: Spacing.sm) {
                     Picker("Scenario", selection: $selectedScenario) {
                         Text("Create New Scenario").tag("new")
                         ForEach(savedScenarios, id: \.id) { scenario in
@@ -263,15 +263,9 @@ struct BudgetDevelopmentUnifiedHeader: View {
     
     @ViewBuilder
     private var regularFormFields: some View {
-        VStack(spacing: Spacing.md) {
-            // Actions row (Export, Save, Upload buttons)
-            HStack {
-                Spacer()
-                regularActionsRow
-            }
-            
-            // Form fields row
-            HStack(spacing: 16) {
+        VStack(spacing: Spacing.lg) {
+            // Form fields row (removed duplicate action buttons - they're in ellipsis menu)
+            HStack(spacing: Spacing.lg) {
                 // Scenario selector
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Budget Scenario")
