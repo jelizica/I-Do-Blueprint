@@ -106,7 +106,8 @@ struct PaymentScheduleView: View {
                 scheduleCount: filteredPayments.count
             )
 
-            PaymentFilterBar(
+            PaymentFilterBarV2(
+                windowSize: windowSize,
                 showPlanView: $showPlanView,
                 selectedFilterOption: $selectedFilterOption,
                 groupingStrategy: $groupingStrategy,
