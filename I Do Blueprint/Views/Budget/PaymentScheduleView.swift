@@ -99,12 +99,12 @@ struct PaymentScheduleView: View {
 
     private func headerView(windowSize: WindowSize) -> some View {
         VStack(spacing: 0) {
-            PaymentSummaryHeaderView(
+            PaymentSummaryHeaderViewV2(
+                windowSize: windowSize,
                 totalUpcoming: upcomingPaymentsTotal,
                 totalOverdue: overduePaymentsTotal,
-                scheduleCount: filteredPayments.count)
-                .padding()
-                .background(Color(NSColor.controlBackgroundColor))
+                scheduleCount: filteredPayments.count
+            )
 
             PaymentFilterBar(
                 showPlanView: $showPlanView,
