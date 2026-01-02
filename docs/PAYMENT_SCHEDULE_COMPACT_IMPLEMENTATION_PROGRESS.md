@@ -4,8 +4,8 @@
 > **Started:** January 2, 2026  
 > **Target Completion:** January 2, 2026  
 > **Total Estimated Time:** 5 hours  
-> **Time Spent:** 3 hours 15 minutes  
-> **Completion:** 62.5% (5/8 phases)
+> **Time Spent:** 4 hours  
+> **Completion:** 75% (6/8 phases)
 
 ---
 
@@ -157,20 +157,37 @@ Implementation of responsive compact window optimization for the Payment Schedul
 
 ---
 
-### ⏳ Phase 6: Compact Payment Plan Cards (45 min)
-**Status:** PENDING  
-**Beads Issue:** Not created yet
+### ✅ Phase 6: Compact Payment Plan Cards (45 min)
+**Status:** COMPLETE  
+**Beads Issue:** `I Do Blueprint-0bzw` (closed)  
+**Commit:** `1b50ea6`
 
-**Objectives:**
-- Update ExpandablePaymentPlanCardView to accept WindowSize
-- Compact mode: Stack financial summary vertically (Total, Paid, Remaining)
-- Reduce progress bar width or make full-width
-- Compact the next payment / overdue section
-- Ensure expanded individual payments list is readable
+**Completed:**
+- ✅ Updated ExpandablePaymentPlanCardView to accept WindowSize parameter
+- ✅ Implemented compact financial summary: Vertical stack (Total, Paid, Remaining)
+- ✅ Implemented regular financial summary: Horizontal row
+- ✅ Made progress bar full-width in compact mode (300px max in regular)
+- ✅ Applied responsive padding (Spacing.sm compact, Spacing.md regular)
+- ✅ Added .lineLimit(1).minimumScaleFactor(0.8) to all currency values
+- ✅ Created financialSummary computed property with @ViewBuilder
+- ✅ Added financialMetric helper function for compact layout
+- ✅ Updated PaymentPlansListView to pass windowSize
+- ✅ Updated HierarchicalPaymentGroupView to pass windowSize
+- ✅ Updated PaymentScheduleView to pass windowSize to PaymentPlansListView
 
-**Files to Modify:**
-- `ExpandablePaymentPlanCardView.swift`
-- `PaymentPlansListView.swift` (pass windowSize)
+**Files Modified:**
+- `Views/Budget/Components/ExpandablePaymentPlanCardView.swift` (~80 lines changes)
+- `Views/Budget/Components/PaymentPlansListView.swift`
+- `Views/Budget/Components/HierarchicalPaymentGroupView.swift`
+- `Views/Budget/PaymentScheduleView.swift`
+
+**Layout Patterns:**
+- Compact: Vertical stack for financial metrics with full-width progress bar
+- Regular/Large: Horizontal row for financial metrics with 300px max progress bar
+- Financial metric helper: HStack with label left, value right
+- Responsive padding throughout card
+
+**Build Status:** ✅ BUILD SUCCEEDED
 
 ---
 
@@ -213,13 +230,13 @@ Implementation of responsive compact window optimization for the Payment Schedul
 | Phase 3: Overview Cards | ✅ Complete | 45 min | maj4 | 22d5c28 |
 | Phase 4: Filter Bar | ✅ Complete | 45 min | u9ig | TBD |
 | Phase 5: Payment Row | ✅ Complete | 30 min | 8vtq | TBD |
-| Phase 6: Plan Cards | ⏳ Pending | 45 min | - | - |
+| Phase 6: Plan Cards | ✅ Complete | 45 min | 0bzw | 1b50ea6 |
 | Phase 7: Modal Sizing | ⏳ Pending | 30 min | - | - |
 | Phase 8: Polish & Testing | ⏳ Pending | 30 min | - | - |
 
-**Total:** 5/8 phases complete (62.5%)  
-**Time Spent:** 3 hours 15 minutes / 5 hours estimated  
-**Remaining:** 1 hour 45 minutes
+**Total:** 6/8 phases complete (75%)  
+**Time Spent:** 4 hours / 5 hours estimated  
+**Remaining:** 1 hour
 
 ---
 
@@ -299,5 +316,5 @@ No new errors or warnings introduced.
 
 ---
 
-**Last Updated:** January 2, 2026 - After Phase 5 completion  
-**Next Update:** After Phase 6 completion
+**Last Updated:** January 2, 2026 - After Phase 6 completion  
+**Next Update:** After Phase 7 completion
