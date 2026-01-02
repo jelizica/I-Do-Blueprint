@@ -58,132 +58,132 @@ struct BudgetDevelopmentView: View {
                 // Configuration header
                 BudgetConfigurationHeader(
                     windowSize: windowSize,
-                selectedScenario: $selectedScenario,
-                budgetName: $budgetName,
-                selectedTaxRateId: $selectedTaxRateId,
-                saving: $saving,
-                uploading: $uploading,
-                savedScenarios: savedScenarios,
-                currentScenarioId: currentScenarioId,
-                taxRates: budgetStore.taxRates,
-                isGoogleAuthenticated: googleIntegration.authManager.isAuthenticated,
-                onExportJSON: exportBudgetAsJSON,
-                onExportCSV: exportBudgetAsCSV,
-                onExportToGoogleDrive: exportToGoogleDrive,
-                onExportToGoogleSheets: exportToGoogleSheets,
-                onSignInToGoogle: signInToGoogle,
-                onSignOutFromGoogle: { googleIntegration.authManager.signOut() },
-                onSaveScenario: saveScenario,
-                onUploadScenario: uploadScenario,
-                onLoadScenario: loadScenario,
-                onSetPrimaryScenario: setPrimaryScenario,
-                onShowRenameDialog: { id, name in
-                    renameScenarioData = ScenarioDialogData(id: id, name: name)
-                    showingRenameDialog = true
-                },
-                onShowDuplicateDialog: { id, name in
-                    duplicateScenarioData = ScenarioDialogData(id: id, name: name)
-                    showingDuplicateDialog = true
-                },
-                onShowDeleteDialog: { id, name in
-                    deleteScenarioData = ScenarioDialogData(id: id, name: name)
-                    showingDeleteDialog = true
-                },
-                onShowTaxRateDialog: {
-                    customTaxRateData = CustomTaxRateData()
-                    showingTaxRateDialog = true
-                }
-            )
+                    selectedScenario: $selectedScenario,
+                    budgetName: $budgetName,
+                    selectedTaxRateId: $selectedTaxRateId,
+                    saving: $saving,
+                    uploading: $uploading,
+                    savedScenarios: savedScenarios,
+                    currentScenarioId: currentScenarioId,
+                    taxRates: budgetStore.taxRates,
+                    isGoogleAuthenticated: googleIntegration.authManager.isAuthenticated,
+                    onExportJSON: exportBudgetAsJSON,
+                    onExportCSV: exportBudgetAsCSV,
+                    onExportToGoogleDrive: exportToGoogleDrive,
+                    onExportToGoogleSheets: exportToGoogleSheets,
+                    onSignInToGoogle: signInToGoogle,
+                    onSignOutFromGoogle: { googleIntegration.authManager.signOut() },
+                    onSaveScenario: saveScenario,
+                    onUploadScenario: uploadScenario,
+                    onLoadScenario: loadScenario,
+                    onSetPrimaryScenario: setPrimaryScenario,
+                    onShowRenameDialog: { id, name in
+                        renameScenarioData = ScenarioDialogData(id: id, name: name)
+                        showingRenameDialog = true
+                    },
+                    onShowDuplicateDialog: { id, name in
+                        duplicateScenarioData = ScenarioDialogData(id: id, name: name)
+                        showingDuplicateDialog = true
+                    },
+                    onShowDeleteDialog: { id, name in
+                        deleteScenarioData = ScenarioDialogData(id: id, name: name)
+                        showingDeleteDialog = true
+                    },
+                    onShowTaxRateDialog: {
+                        customTaxRateData = CustomTaxRateData()
+                        showingTaxRateDialog = true
+                    }
+                )
 
-            ScrollView {
-                VStack(spacing: windowSize == .compact ? Spacing.lg : 24) {
-                    // Budget summary cards
-                    BudgetSummaryCardsSection(
-                        windowSize: windowSize,
-                        totalWithoutTax: totalWithoutTax,
-                        totalTax: totalTax,
-                        totalWithTax: totalWithTax
-                    )
+                ScrollView {
+                    VStack(spacing: windowSize == .compact ? Spacing.lg : 24) {
+                        // Budget summary cards
+                        BudgetSummaryCardsSection(
+                            windowSize: windowSize,
+                            totalWithoutTax: totalWithoutTax,
+                            totalTax: totalTax,
+                            totalWithTax: totalWithTax
+                        )
 
-                    // Budget items table - only render if tenant ID is available
-                    if SessionManager.shared.currentTenantId != nil {
-                        if isLoadingScenario {
-                            // Loading state with spinner
-                            VStack(spacing: Spacing.lg) {
-                                ProgressView()
-                                    .scaleEffect(1.5)
-                                    .progressViewStyle(.circular)
+                        // Budget items table - only render if tenant ID is available
+                        if SessionManager.shared.currentTenantId != nil {
+                            if isLoadingScenario {
+                                // Loading state with spinner
+                                VStack(spacing: Spacing.lg) {
+                                    ProgressView()
+                                        .scaleEffect(1.5)
+                                        .progressViewStyle(.circular)
+                                    
+                                    Text("Loading scenario...")
+                                        .font(.seatingBody)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 300)
+                                .background(Color(NSColor.controlBackgroundColor))
+                                .cornerRadius(12)
+                            } else {
+                                BudgetItemsTable(
+                                    budgetItems: $budgetItems,
+                                    newCategoryNames: $newCategoryNames,
+                                    newSubcategoryNames: $newSubcategoryNames,
+                                    newEventNames: $newEventNames,
+                                    budgetStore: budgetStore,
+                                    selectedTaxRate: selectedTaxRate,
+                                    currentScenarioId: currentScenarioId,
+                                    coupleId: SessionManager.shared.currentTenantId!.uuidString,
+                                    onAddItem: addBudgetItem,
+                                    onUpdateItem: updateBudgetItem,
+                                    onRemoveItem: removeBudgetItem,
+                                    onAddCategory: handleNewCategoryName,
+                                    onAddSubcategory: handleNewSubcategoryName,
+                                    onAddEvent: handleNewEventName,
+                                    onAddFolder: addFolder,
+                                    responsibleOptions: personOptions
+                                )
+                            }
+                        } else {
+                            // Error state when no tenant is selected
+                            VStack(spacing: 16) {
+                                Image(systemName: "exclamationmark.triangle")
+                                    .font(.system(size: 48))
+                                    .foregroundStyle(.orange)
                                 
-                                Text("Loading scenario...")
-                                    .font(.seatingBody)
-                                    .foregroundColor(.secondary)
+                                Text("No Wedding Selected")
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                
+                                Text("Please select your wedding couple to continue working on your budget.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .frame(maxWidth: 400)
                             }
                             .frame(maxWidth: .infinity)
-                            .frame(height: 300)
+                            .padding(.vertical, Spacing.huge)
+                            .padding()
                             .background(Color(NSColor.controlBackgroundColor))
                             .cornerRadius(12)
-                        } else {
-                            BudgetItemsTable(
-                                budgetItems: $budgetItems,
-                                newCategoryNames: $newCategoryNames,
-                                newSubcategoryNames: $newSubcategoryNames,
-                                newEventNames: $newEventNames,
-                                budgetStore: budgetStore,
-                                selectedTaxRate: selectedTaxRate,
-                                currentScenarioId: currentScenarioId,
-                                coupleId: SessionManager.shared.currentTenantId!.uuidString,
-                                onAddItem: addBudgetItem,
-                                onUpdateItem: updateBudgetItem,
-                                onRemoveItem: removeBudgetItem,
-                                onAddCategory: handleNewCategoryName,
-                                onAddSubcategory: handleNewSubcategoryName,
-                                onAddEvent: handleNewEventName,
-                                onAddFolder: addFolder,
+                        }
+
+                        // Summary sections
+                        if !budgetItems.isEmpty {
+                            BudgetSummaryBreakdowns(
+                                windowSize: windowSize,
+                                expandedCategories: $expandedCategories,
+                                eventBreakdown: eventBreakdown,
+                                categoryBreakdown: categoryBreakdown,
+                                categoryItems: categoryItems,
+                                personBreakdown: personBreakdown,
+                                totalWithTax: totalWithTax,
                                 responsibleOptions: personOptions
                             )
                         }
-                    } else {
-                        // Error state when no tenant is selected
-                        VStack(spacing: 16) {
-                            Image(systemName: "exclamationmark.triangle")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.orange)
-                            
-                            Text("No Wedding Selected")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            
-                            Text("Please select your wedding couple to continue working on your budget.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: 400)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, Spacing.huge)
-                        .padding()
-                        .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(12)
                     }
-
-                    // Summary sections
-                    if !budgetItems.isEmpty {
-                        BudgetSummaryBreakdowns(
-                            windowSize: windowSize,
-                            expandedCategories: $expandedCategories,
-                            eventBreakdown: eventBreakdown,
-                            categoryBreakdown: categoryBreakdown,
-                            categoryItems: categoryItems,
-                            personBreakdown: personBreakdown,
-                            totalWithTax: totalWithTax,
-                            responsibleOptions: personOptions
-                        )
-                    }
+                    .frame(width: availableWidth)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
                 }
-                .frame(width: availableWidth)
-                .padding(.horizontal, horizontalPadding)
-                .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
-            }
             }
         }
         .task {

@@ -23,16 +23,16 @@ struct BudgetDashboardHubView: View {
                 Color(NSColor.windowBackgroundColor)
                     .ignoresSafeArea()
 
-                // Content based on current page
-                ScrollView {
-                    VStack(spacing: Spacing.xl) {
-                        // Standardized header (persists across ALL pages)
-                        BudgetManagementHeader(
-                            windowSize: windowSize,
-                            currentPage: $currentPage
-                        )
+                if currentPage == .hub {
+                    // Hub page with its own ScrollView
+                    ScrollView {
+                        VStack(spacing: Spacing.xl) {
+                            // Standardized header (persists across ALL pages)
+                            BudgetManagementHeader(
+                                windowSize: windowSize,
+                                currentPage: $currentPage
+                            )
 
-                        if currentPage == .hub {
                             // Dashboard hub content
                             VStack(spacing: Spacing.xl) {
                                 // Dashboard stats summary
@@ -49,14 +49,24 @@ struct BudgetDashboardHubView: View {
                                         .frame(width: availableWidth)
                                 }
                             }
-                        } else {
-                            // Show the selected page's view
-                            currentPage.view
-                                .frame(width: availableWidth)
                         }
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
                     }
-                    .padding(.horizontal, horizontalPadding)
-                    .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
+                } else {
+                    // Child pages render their own content (they have their own ScrollView/GeometryReader)
+                    VStack(spacing: 0) {
+                        // Header at the top
+                        BudgetManagementHeader(
+                            windowSize: windowSize,
+                            currentPage: $currentPage
+                        )
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
+                        
+                        // Child page content fills remaining space
+                        currentPage.view
+                    }
                 }
             }
         }
