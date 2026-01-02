@@ -159,8 +159,8 @@ struct PaymentScheduleView: View {
                         isLoadingPlans: isLoadingPlans,
                         loadError: loadError,
                         groupingStrategy: groupingStrategy,
-                        paymentPlanSummaries: paymentPlanSummaries,
-                        paymentPlanGroups: paymentPlanGroups,
+                        paymentPlanSummaries: filteredPaymentPlanSummaries,
+                        paymentPlanGroups: filteredPaymentPlanGroups,
                         paymentSchedules: budgetStore.paymentSchedules,
                         expandedPlanIds: expandedPlanIds,
                         onRetry: {
@@ -294,6 +294,58 @@ struct PaymentScheduleView: View {
             return matchesFilter && matchesSearch
         }
         return filtered.sorted { $0.paymentDate < $1.paymentDate }
+    }
+    
+    /// Filtered payment plan summaries (for Plans view with "By Plan ID" grouping)
+    var filteredPaymentPlanSummaries: [PaymentPlanSummary] {
+        guard !searchQuery.isEmpty else { return paymentPlanSummaries }
+        
+        let query = searchQuery.lowercased()
+        return paymentPlanSummaries.filter { summary in
+            // Search by vendor name
+            let vendorName = getVendorNameById(summary.vendorId) ?? ""
+            let vendorMatches = vendorName.lowercased().contains(query)
+            
+            // Search by expense name
+            let expenseName = budgetStore.expenseStore.expenses.first(where: { $0.id == summary.expenseId })?.expenseName ?? ""
+            let expenseMatches = expenseName.lowercased().contains(query)
+            
+            return vendorMatches || expenseMatches
+        }
+    }
+    
+    /// Filtered payment plan groups (for Plans view with "By Expense" or "By Vendor" grouping)
+    var filteredPaymentPlanGroups: [PaymentPlanGroup] {
+        guard !searchQuery.isEmpty else { return paymentPlanGroups }
+        
+        let query = searchQuery.lowercased()
+        return paymentPlanGroups.compactMap { group -> PaymentPlanGroup? in
+            // Filter plans within the group
+            let filteredPlans = group.plans.filter { summary in
+                // Search by vendor name
+                let vendorName = getVendorNameById(summary.vendorId) ?? ""
+                let vendorMatches = vendorName.lowercased().contains(query)
+                
+                // Search by expense name
+                let expenseName = budgetStore.expenseStore.expenses.first(where: { $0.id == summary.expenseId })?.expenseName ?? ""
+                let expenseMatches = expenseName.lowercased().contains(query)
+                
+                // Search by group name
+                let groupMatches = group.groupName.lowercased().contains(query)
+                
+                return vendorMatches || expenseMatches || groupMatches
+            }
+            
+            // Only include group if it has matching plans
+            guard !filteredPlans.isEmpty else { return nil }
+            
+            return PaymentPlanGroup(
+                id: group.id,
+                groupName: group.groupName,
+                groupType: group.groupType,
+                plans: filteredPlans
+            )
+        }
     }
 
     var upcomingPaymentsTotal: Double {
