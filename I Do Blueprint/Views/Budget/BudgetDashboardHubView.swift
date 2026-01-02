@@ -157,8 +157,8 @@ struct BudgetDashboardHubView: View {
             }()
 
             LazyVGrid(columns: columns, spacing: Spacing.md) {
-                QuickAccessCard(page: .developmentDashboard) {
-                    currentPage = .developmentDashboard
+                QuickAccessCard(page: .budgetOverview) {
+                    currentPage = .budgetOverview
                 }
                 QuickAccessCard(page: .expenseTracker) {
                     currentPage = .expenseTracker

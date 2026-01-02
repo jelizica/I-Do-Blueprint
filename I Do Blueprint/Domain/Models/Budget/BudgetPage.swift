@@ -14,8 +14,9 @@ enum BudgetPage: String, CaseIterable, Identifiable {
     // Hub (special case - not in a group)
     case hub = "Dashboard"
     
-    // Planning & Analysis Group (4 pages)
-    case developmentDashboard = "Development Dashboard"
+    // Planning & Analysis Group (5 pages)
+    case budgetOverview = "Budget Overview"
+    case budgetBuilder = "Budget Builder"
     case analytics = "Analytics Hub"
     case cashFlow = "Account Cash Flow"
     case calculator = "Calculator"
@@ -37,7 +38,7 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         switch self {
         case .hub:
             return nil  // Hub is not in a group
-        case .developmentDashboard, .analytics, .cashFlow, .calculator:
+        case .budgetOverview, .budgetBuilder, .analytics, .cashFlow, .calculator:
             return .planningAnalysis
         case .expenseTracker, .expenseReports, .expenseCategories, .paymentSchedule:
             return .expenses
@@ -52,7 +53,8 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         case .hub: return "square.grid.2x2.fill"
         
         // Planning & Analysis
-        case .developmentDashboard: return "chart.bar.fill"
+        case .budgetOverview: return "chart.bar.fill"
+        case .budgetBuilder: return "hammer.fill"
         case .analytics: return "chart.xyaxis.line"
         case .cashFlow: return "chart.line.uptrend.xyaxis"
         case .calculator: return "function"
@@ -78,8 +80,10 @@ enum BudgetPage: String, CaseIterable, Identifiable {
             EmptyView()  // Hub is handled separately in BudgetDashboardHubView
         
         // Planning & Analysis group
-        case .developmentDashboard:
+        case .budgetOverview:
             BudgetOverviewDashboardViewV2()
+        case .budgetBuilder:
+            BudgetDevelopmentView()
         case .analytics:
             BudgetAnalyticsView()
         case .cashFlow:
@@ -139,7 +143,7 @@ enum BudgetGroup: String, CaseIterable, Identifiable {
 
     var defaultPage: BudgetPage {
         switch self {
-        case .planningAnalysis: return .developmentDashboard
+        case .planningAnalysis: return .budgetOverview
         case .expenses: return .expenseTracker
         case .income: return .moneyTracker
         }
