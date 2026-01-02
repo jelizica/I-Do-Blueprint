@@ -395,12 +395,6 @@ struct BudgetItemCard: View {
     // State for event selector popover
     @State private var showingEventSelector = false
     
-    /// Dynamically calculated total with tax
-    /// Formula: estimate * (1 + taxRate/100) where taxRate is stored as percentage (e.g., 10.35)
-    private var calculatedTotalWithTax: Double {
-        item.vendorEstimateWithoutTax * (1 + item.taxRate / 100)
-    }
-    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             collapsedView
@@ -445,8 +439,8 @@ struct BudgetItemCard: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 2) {
-                    // Use dynamically calculated total instead of stored value
-                    Text("$\(String(format: "%.0f", calculatedTotalWithTax))")
+                    // Use vendorEstimateWithTax which is recalculated by parent when estimate or tax rate changes
+                    Text("$\(String(format: "%.0f", item.vendorEstimateWithTax))")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
