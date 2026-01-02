@@ -241,7 +241,7 @@ No new errors or warnings introduced.
 ---
 
 **Last Updated:** January 2, 2026 - IMPLEMENTATION COMPLETE + ALL REFINEMENTS  
-**Status:** ✅ All 4 phases + 5 refinements completed successfully  
+**Status:** ✅ All 4 phases + 6 refinements completed successfully  
 **Next Steps:** None - refinement complete
 
 ---
@@ -345,6 +345,25 @@ No new errors or warnings introduced.
 
 ---
 
+### ✅ Bug 6: Search Doesn't Filter Plans View (I Do Blueprint-c3hn)
+**Status:** COMPLETE | **Commit:** `039c80b`
+
+**Problem:** User feedback - search bar only filtered Individual view, had no effect on Plans view.
+
+**Solution:**
+- Added `filteredPaymentPlanSummaries` computed property (for "By Plan ID" grouping)
+- Added `filteredPaymentPlanGroups` computed property (for "By Expense" and "By Vendor" grouping)
+- Search filters by vendor name, expense name, and group name
+- Updated `paymentListView` to use filtered data instead of raw data
+- Search now respects current view mode (Individual/Plans)
+
+**Files Modified:**
+- `PaymentScheduleView.swift` (~54 lines added)
+
+**Result:** Search now works in both Individual and Plans views, filtering by vendor, expense, and group names
+
+---
+
 ## Summary of All Work
 
 | Phase/Fix | Status | Time | Beads | Commit |
@@ -358,9 +377,10 @@ No new errors or warnings introduced.
 | **Nitpick 3:** Summary Cards Compact | ✅ Complete | 30 min | rxrg | 8f340e3 |
 | **Nitpick 4:** Adaptive Grid Cards | ✅ Complete | 20 min | sg4k | 47a6936 |
 | **Nitpick 5:** Toggle/Filter Same Line | ✅ Complete | 10 min | 3rz2 | fe28cbd |
+| **Nitpick 6:** Search Filter Plans View | ✅ Complete | 25 min | c3hn | 039c80b |
 
-**Total:** 9/9 items complete (100%)  
-**Total Time:** 6 hours  
+**Total:** 10/10 items complete (100%)  
+**Total Time:** 6 hours 25 minutes  
 **Remaining:** 0 hours
 
 ---
