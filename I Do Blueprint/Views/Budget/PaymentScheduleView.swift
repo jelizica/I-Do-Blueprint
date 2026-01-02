@@ -27,6 +27,9 @@ struct PaymentScheduleView: View {
     @State private var selectedFilterOption: PaymentFilterOption = .all
     @State private var showPlanView: Bool = false
     @AppStorage("paymentPlanGroupingStrategy") private var groupingStrategy: PaymentPlanGroupingStrategy = .byExpense
+    
+    // Search state
+    @State private var searchQuery: String = ""
 
     // Dialog states
     @State private var showingAddPayment = false
@@ -99,6 +102,23 @@ struct PaymentScheduleView: View {
 
     private func headerView(windowSize: WindowSize) -> some View {
         VStack(spacing: 0) {
+            // Static header with search and next payment context
+            PaymentScheduleStaticHeader(
+                windowSize: windowSize,
+                searchQuery: $searchQuery,
+                nextPayment: nextUpcomingPayment,
+                overdueCount: overduePaymentsCount,
+                onOverdueClick: {
+                    selectedFilterOption = .overdue
+                },
+                onNextPaymentClick: {
+                    // TODO: Scroll to next payment (future enhancement)
+                },
+                userTimezone: userTimezone
+            )
+            
+            Divider()
+            
             PaymentSummaryHeaderViewV2(
                 windowSize: windowSize,
                 totalUpcoming: upcomingPaymentsTotal,
@@ -235,24 +255,41 @@ struct PaymentScheduleView: View {
         calendar.timeZone = userTimezone
         
         let filtered = budgetStore.paymentSchedules.filter { payment in
+            // Apply filter option
+            let matchesFilter: Bool
             switch selectedFilterOption {
             case .all:
-                return true
+                matchesFilter = true
             case .upcoming:
-                return payment.paymentDate > Date() && !payment.paid
+                matchesFilter = payment.paymentDate > Date() && !payment.paid
             case .overdue:
-                return payment.paymentDate < Date() && !payment.paid
+                matchesFilter = payment.paymentDate < Date() && !payment.paid
             case .thisWeek:
                 let startOfWeek = calendar.dateInterval(of: .weekOfYear, for: Date())?.start ?? Date()
                 let endOfWeek = calendar.dateInterval(of: .weekOfYear, for: Date())?.end ?? Date()
-                return payment.paymentDate >= startOfWeek && payment.paymentDate <= endOfWeek
+                matchesFilter = payment.paymentDate >= startOfWeek && payment.paymentDate <= endOfWeek
             case .thisMonth:
                 let startOfMonth = calendar.dateInterval(of: .month, for: Date())?.start ?? Date()
                 let endOfMonth = calendar.dateInterval(of: .month, for: Date())?.end ?? Date()
-                return payment.paymentDate >= startOfMonth && payment.paymentDate <= endOfMonth
+                matchesFilter = payment.paymentDate >= startOfMonth && payment.paymentDate <= endOfMonth
             case .paid:
-                return payment.paid
+                matchesFilter = payment.paid
             }
+            
+            // Apply search query
+            let matchesSearch: Bool
+            if searchQuery.isEmpty {
+                matchesSearch = true
+            } else {
+                let query = searchQuery.lowercased()
+                let vendorMatches = payment.vendor.lowercased().contains(query)
+                let notesMatches = payment.notes?.lowercased().contains(query) ?? false
+                let amountString = NumberFormatter.currencyShort.string(from: NSNumber(value: payment.paymentAmount)) ?? ""
+                let amountMatches = amountString.lowercased().contains(query)
+                matchesSearch = vendorMatches || notesMatches || amountMatches
+            }
+            
+            return matchesFilter && matchesSearch
         }
         return filtered.sorted { $0.paymentDate < $1.paymentDate }
     }
@@ -263,6 +300,19 @@ struct PaymentScheduleView: View {
 
     var overduePaymentsTotal: Double {
         filteredPayments.filter { !$0.paid && $0.paymentDate < Date() }.reduce(0) { $0 + $1.paymentAmount }
+    }
+    
+    private var nextUpcomingPayment: PaymentSchedule? {
+        budgetStore.paymentSchedules
+            .filter { !$0.paid && $0.paymentDate > Date() }
+            .sorted { $0.paymentDate < $1.paymentDate }
+            .first
+    }
+    
+    private var overduePaymentsCount: Int {
+        budgetStore.paymentSchedules
+            .filter { !$0.paid && $0.paymentDate < Date() }
+            .count
     }
     
     // MARK: - Private Helpers
