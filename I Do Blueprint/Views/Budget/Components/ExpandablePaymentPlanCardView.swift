@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Expandable view that shows payment plan summary and individual payments when expanded
 struct ExpandablePaymentPlanCardView: View {
+    let windowSize: WindowSize
     let plan: PaymentPlanSummary
     let paymentSchedules: [PaymentSchedule]
     let isExpanded: Bool
@@ -87,44 +88,14 @@ struct ExpandablePaymentPlanCardView: View {
                                 
                                 ProgressView(value: plan.percentPaid, total: 100)
                                     .tint(plan.planStatus.color)
+                                    .frame(maxWidth: windowSize == .compact ? .infinity : 300)
                                     .accessibilityLabel("Payment progress: \(Int(plan.percentPaid)) percent complete")
                             }
                             
                             // Financial Summary
-                            HStack(spacing: Spacing.lg) {
-                                VStack(alignment: .leading, spacing: Spacing.xs) {
-                                    Text("Total")
-                                        .font(Typography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
-                                    
-                                    Text(plan.totalAmount, format: .currency(code: "USD"))
-                                        .font(Typography.subheading)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(AppColors.textPrimary)
-                                }
-                                
-                                VStack(alignment: .leading, spacing: Spacing.xs) {
-                                    Text("Paid")
-                                        .font(Typography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
-                                    
-                                    Text(plan.amountPaid, format: .currency(code: "USD"))
-                                        .font(Typography.subheading)
-                                        .foregroundColor(.green)
-                                }
-                                
-                                VStack(alignment: .leading, spacing: Spacing.xs) {
-                                    Text("Remaining")
-                                        .font(Typography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
-                                    
-                                    Text(plan.amountRemaining, format: .currency(code: "USD"))
-                                        .font(Typography.subheading)
-                                        .foregroundColor(.orange)
-                                }
-                            }
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("Total: \(plan.totalAmount, format: .currency(code: "USD")), Paid: \(plan.amountPaid, format: .currency(code: "USD")), Remaining: \(plan.amountRemaining, format: .currency(code: "USD"))")
+                            financialSummary
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Total: \(plan.totalAmount, format: .currency(code: "USD")), Paid: \(plan.amountPaid, format: .currency(code: "USD")), Remaining: \(plan.amountRemaining, format: .currency(code: "USD"))")
                             
                             // Next Payment or Overdue Status
                             if plan.isOverdue {
@@ -186,7 +157,7 @@ struct ExpandablePaymentPlanCardView: View {
                             }
                         }
                     }
-                    .padding(Spacing.md)
+                    .padding(windowSize == .compact ? Spacing.sm : Spacing.md)
                 }
                 .buttonStyle(PaymentPlanSummaryButtonStyle())
                 .accessibilityLabel("Payment plan for \(plan.vendor)")
@@ -216,8 +187,8 @@ struct ExpandablePaymentPlanCardView: View {
                     .help("View plan details and edit individual payments")
                     .accessibilityLabel("View or edit payment plan details")
                 }
-                .padding(.horizontal, Spacing.md)
-                .padding(.bottom, Spacing.md)
+                .padding(.horizontal, windowSize == .compact ? Spacing.sm : Spacing.md)
+                .padding(.bottom, windowSize == .compact ? Spacing.sm : Spacing.md)
             }
             
             // Individual Payments (shown when expanded)
@@ -288,6 +259,77 @@ struct ExpandablePaymentPlanCardView: View {
                 onDelete: onDelete,
                 getVendorName: getVendorName
             )
+        }
+    }
+    
+    // MARK: - Financial Summary
+    
+    @ViewBuilder
+    private var financialSummary: some View {
+        if windowSize == .compact {
+            // Compact: Vertical stack
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                financialMetric(label: "Total", value: plan.totalAmount, color: AppColors.textPrimary)
+                financialMetric(label: "Paid", value: plan.amountPaid, color: .green)
+                financialMetric(label: "Remaining", value: plan.amountRemaining, color: .orange)
+            }
+        } else {
+            // Regular/Large: Horizontal row
+            HStack(spacing: Spacing.lg) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Total")
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                    
+                    Text(plan.totalAmount, format: .currency(code: "USD"))
+                        .font(Typography.subheading)
+                        .fontWeight(.semibold)
+                        .foregroundColor(AppColors.textPrimary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Paid")
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                    
+                    Text(plan.amountPaid, format: .currency(code: "USD"))
+                        .font(Typography.subheading)
+                        .foregroundColor(.green)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+                
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Remaining")
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                    
+                    Text(plan.amountRemaining, format: .currency(code: "USD"))
+                        .font(Typography.subheading)
+                        .foregroundColor(.orange)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
+        }
+    }
+    
+    private func financialMetric(label: String, value: Double, color: Color) -> some View {
+        HStack {
+            Text(label)
+                .font(Typography.caption)
+                .foregroundColor(AppColors.textSecondary)
+            
+            Spacer()
+            
+            Text(value, format: .currency(code: "USD"))
+                .font(Typography.bodyRegular)
+                .fontWeight(.semibold)
+                .foregroundColor(color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
     }
 }
@@ -383,6 +425,7 @@ struct ExpandablePaymentPlanCardView_Previews: PreviewProvider {
         VStack(spacing: Spacing.lg) {
             // Collapsed state
             ExpandablePaymentPlanCardView(
+                windowSize: .regular,
                 plan: PaymentPlanSummary.makeTest(),
                 paymentSchedules: [],
                 isExpanded: false,
@@ -395,6 +438,7 @@ struct ExpandablePaymentPlanCardView_Previews: PreviewProvider {
             
             // Expanded state
             ExpandablePaymentPlanCardView(
+                windowSize: .regular,
                 plan: PaymentPlanSummary.makeTest(),
                 paymentSchedules: [],
                 isExpanded: true,

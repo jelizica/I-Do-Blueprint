@@ -133,6 +133,7 @@ struct PaymentScheduleView: View {
             VStack(spacing: 0) {
                 if showPlanView {
                     PaymentPlansListView(
+                        windowSize: windowSize,
                         isLoadingPlans: isLoadingPlans,
                         loadError: loadError,
                         groupingStrategy: groupingStrategy,

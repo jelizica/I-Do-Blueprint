@@ -9,6 +9,7 @@ import SwiftUI
 
 /// Displays a hierarchical group of payment plans (e.g., all plans for a vendor or expense)
 struct HierarchicalPaymentGroupView: View {
+    let windowSize: WindowSize
     let group: PaymentPlanGroup
     let paymentSchedules: [PaymentSchedule]
     let onTogglePaidStatus: (PaymentSchedule) -> Void
@@ -32,6 +33,7 @@ struct HierarchicalPaymentGroupView: View {
                 VStack(spacing: Spacing.md) {
                     ForEach(group.plans) { plan in
                         ExpandablePaymentPlanCardView(
+                            windowSize: windowSize,
                             plan: plan,
                             paymentSchedules: paymentSchedules,
                             isExpanded: expandedPlanIds.contains(plan.id),
@@ -233,6 +235,7 @@ struct HierarchicalPaymentGroupView_Previews: PreviewProvider {
         
         VStack(spacing: Spacing.lg) {
             HierarchicalPaymentGroupView(
+                windowSize: .regular,
                 group: testGroup,
                 paymentSchedules: [],
                 onTogglePaidStatus: { _ in },

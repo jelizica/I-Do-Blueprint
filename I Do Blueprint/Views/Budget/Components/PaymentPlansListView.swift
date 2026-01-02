@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct PaymentPlansListView: View {
+    let windowSize: WindowSize
     let isLoadingPlans: Bool
     let loadError: String?
     let groupingStrategy: PaymentPlanGroupingStrategy
@@ -94,6 +95,7 @@ struct PaymentPlansListView: View {
                 LazyVStack(spacing: 16) {
                     ForEach(paymentPlanSummaries) { plan in
                         ExpandablePaymentPlanCardView(
+                            windowSize: windowSize,
                             plan: plan,
                             paymentSchedules: paymentSchedules,
                             isExpanded: expandedPlanIds.contains(plan.id),
@@ -127,6 +129,7 @@ struct PaymentPlansListView: View {
                 LazyVStack(spacing: 16) {
                     ForEach(paymentPlanGroups) { group in
                         HierarchicalPaymentGroupView(
+                            windowSize: windowSize,
                             group: group,
                             paymentSchedules: paymentSchedules,
                             onTogglePaidStatus: onTogglePaidStatus,
