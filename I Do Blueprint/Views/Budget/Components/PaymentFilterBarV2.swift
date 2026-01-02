@@ -33,19 +33,16 @@ struct PaymentFilterBarV2: View {
     // MARK: - Compact Layout
     
     private var compactLayout: some View {
-        VStack(spacing: Spacing.sm) {
-            // View mode toggle (full width)
+        HStack(spacing: Spacing.sm) {
+            // View mode toggle (left)
             viewModeToggle
-                .frame(maxWidth: .infinity)
             
-            // Filter/Grouping row
-            HStack(spacing: Spacing.sm) {
-                if showPlanView {
-                    groupingMenu
-                    groupingInfoButton
-                } else {
-                    filterMenu
-                }
+            // Filter/Grouping (right)
+            if showPlanView {
+                groupingMenu
+                groupingInfoButton
+            } else {
+                filterMenu
             }
         }
     }
