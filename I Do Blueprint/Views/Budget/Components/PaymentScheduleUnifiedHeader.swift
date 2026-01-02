@@ -12,7 +12,6 @@ struct PaymentScheduleUnifiedHeader: View {
     let windowSize: WindowSize
     @Binding var currentPage: BudgetPage
     let onAddPayment: () -> Void
-    let onRefresh: () async -> Void
     
     var body: some View {
         VStack(spacing: 0) {
@@ -53,14 +52,6 @@ struct PaymentScheduleUnifiedHeader: View {
         Menu {
             Button(action: onAddPayment) {
                 Label("Add Payment", systemImage: "plus")
-            }
-            
-            Button(action: {
-                Task {
-                    await onRefresh()
-                }
-            }) {
-                Label("Refresh", systemImage: "arrow.clockwise")
             }
             
             Divider()

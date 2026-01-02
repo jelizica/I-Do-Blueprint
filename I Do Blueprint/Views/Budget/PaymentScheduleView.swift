@@ -90,8 +90,7 @@ struct PaymentScheduleView: View {
             PaymentScheduleUnifiedHeader(
                 windowSize: windowSize,
                 currentPage: currentPage,
-                onAddPayment: { showingAddPayment = true },
-                onRefresh: { await budgetStore.refresh() }
+                onAddPayment: { showingAddPayment = true }
             )
             
             headerView(windowSize: windowSize)
