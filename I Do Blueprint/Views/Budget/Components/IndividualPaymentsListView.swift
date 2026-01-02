@@ -22,32 +22,48 @@ struct IndividualPaymentsListView: View {
                 "No Payment Schedules",
                 systemImage: "calendar.circle",
                 description: Text("Add payment schedules to track upcoming payments and deadlines"))
+                .frame(minHeight: 400)
         } else {
-            List {
+            LazyVStack(spacing: 0) {
                 ForEach(groupedPayments, id: \.key) { group in
-                    Section(group.key) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        // Section header
+                        Text(group.key)
+                            .font(Typography.bodySmall.weight(.semibold))
+                            .foregroundColor(AppColors.textSecondary)
+                            .padding(.horizontal, windowSize == .compact ? Spacing.md : Spacing.lg)
+                            .padding(.vertical, Spacing.sm)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(NSColor.controlBackgroundColor))
+                        
+                        // Section content
                         ForEach(group.value, id: \.id) { payment in
-                            PaymentScheduleRowView(
-                                windowSize: windowSize,
-                                payment: payment,
-                                expense: getExpenseForPayment(payment),
-                                onUpdate: onUpdate,
-                                onDelete: onDelete,
-                                getVendorName: { vendorId in
-                                    // First try to get vendor name from the payment's expense
-                                    if let expense = getExpenseForPayment(payment) {
-                                        return expense.vendorName
+                            VStack(spacing: 0) {
+                                PaymentScheduleRowView(
+                                    windowSize: windowSize,
+                                    payment: payment,
+                                    expense: getExpenseForPayment(payment),
+                                    onUpdate: onUpdate,
+                                    onDelete: onDelete,
+                                    getVendorName: { vendorId in
+                                        // First try to get vendor name from the payment's expense
+                                        if let expense = getExpenseForPayment(payment) {
+                                            return expense.vendorName
+                                        }
+                                        // Fall back to payment's vendor field
+                                        return payment.vendor.isEmpty ? nil : payment.vendor
                                     }
-                                    // Fall back to payment's vendor field
-                                    return payment.vendor.isEmpty ? nil : payment.vendor
-                                }
-                            )
-                            .id(payment.id)
+                                )
+                                .id(payment.id)
+                                
+                                Divider()
+                                    .padding(.leading, windowSize == .compact ? Spacing.md : Spacing.lg)
+                            }
                         }
                     }
                 }
             }
-            .listStyle(PlainListStyle())
+            .padding(.vertical, Spacing.md)
         }
     }
     
