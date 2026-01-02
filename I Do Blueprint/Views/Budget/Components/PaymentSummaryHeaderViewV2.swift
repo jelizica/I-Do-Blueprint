@@ -18,8 +18,14 @@ struct PaymentSummaryHeaderViewV2: View {
         if windowSize == .compact {
             // 1 column in compact - stack vertically
             return [GridItem(.flexible())]
+        } else if windowSize == .regular {
+            // 2 columns in regular (space-dependent)
+            return [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ]
         } else {
-            // 3 columns in regular/large
+            // 3 columns in large
             return [
                 GridItem(.flexible()),
                 GridItem(.flexible()),
@@ -73,16 +79,16 @@ struct PaymentOverviewCardV2: View {
     let color: Color
     
     var body: some View {
-        VStack(spacing: windowSize == .compact ? Spacing.sm : Spacing.md) {
+        VStack(spacing: windowSize == .compact ? Spacing.xs : Spacing.sm) {
             HStack {
-                // Icon with circle background
+                // Icon with circle background (reduced from 44x44 to 32x32)
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.15))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 32, height: 32)
                     
                     Image(systemName: icon)
-                        .font(.system(size: 20))
+                        .font(.system(size: 16))
                         .foregroundColor(color)
                 }
                 
@@ -98,7 +104,7 @@ struct PaymentOverviewCardV2: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(value)
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(AppColors.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -110,7 +116,7 @@ struct PaymentOverviewCardV2: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
-        .padding(windowSize == .compact ? Spacing.md : Spacing.xl)
+        .padding(windowSize == .compact ? Spacing.sm : Spacing.md)
         .background(Color(NSColor.windowBackgroundColor))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
