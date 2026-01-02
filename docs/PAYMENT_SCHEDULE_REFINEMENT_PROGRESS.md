@@ -240,8 +240,8 @@ No new errors or warnings introduced.
 
 ---
 
-**Last Updated:** January 2, 2026 - IMPLEMENTATION COMPLETE + NITPICK FIXES + ADAPTIVE GRID  
-**Status:** ✅ All 4 phases + 3 nitpick fixes + adaptive grid fix completed successfully  
+**Last Updated:** January 2, 2026 - IMPLEMENTATION COMPLETE + ALL REFINEMENTS  
+**Status:** ✅ All 4 phases + 5 refinements completed successfully  
 **Next Steps:** None - refinement complete
 
 ---
@@ -326,6 +326,25 @@ No new errors or warnings introduced.
 
 ---
 
+### ✅ Bug 5: Toggle and Filter on Same Line (I Do Blueprint-3rz2)
+**Status:** COMPLETE | **Commit:** `fe28cbd`
+
+**Problem:** User feedback - toggle and filter stacked vertically wastes space in compact view.
+
+**Solution:**
+- Changed compact layout from `VStack` to `HStack`
+- Individual/Plans toggle now on left
+- Filter dropdown now on right
+- Both on same horizontal line
+- More space-efficient layout
+
+**Files Modified:**
+- `PaymentFilterBarV2.swift` (~8 lines changed)
+
+**Result:** Cleaner, more compact layout with toggle left and filter right on same line
+
+---
+
 ## Summary of All Work
 
 | Phase/Fix | Status | Time | Beads | Commit |
@@ -338,9 +357,10 @@ No new errors or warnings introduced.
 | **Nitpick 2:** Modal Proportional Sizing | ✅ Complete | 30 min | f9kf | 8f340e3 |
 | **Nitpick 3:** Summary Cards Compact | ✅ Complete | 30 min | rxrg | 8f340e3 |
 | **Nitpick 4:** Adaptive Grid Cards | ✅ Complete | 20 min | sg4k | 47a6936 |
+| **Nitpick 5:** Toggle/Filter Same Line | ✅ Complete | 10 min | 3rz2 | fe28cbd |
 
-**Total:** 8/8 items complete (100%)  
-**Total Time:** 5 hours 50 minutes  
+**Total:** 9/9 items complete (100%)  
+**Total Time:** 6 hours  
 **Remaining:** 0 hours
 
 ---
