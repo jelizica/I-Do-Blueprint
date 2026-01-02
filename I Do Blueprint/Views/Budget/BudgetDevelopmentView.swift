@@ -9,6 +9,28 @@ struct BudgetDevelopmentView: View {
     @EnvironmentObject var settingsStore: SettingsStoreV2
     @StateObject var googleIntegration = GoogleIntegrationManager()
     @StateObject var exportHelper = BudgetExportHelper()
+    
+    /// Binding to parent's currentPage for unified header navigation
+    /// When nil, uses internal state (for standalone usage via BudgetPage.view)
+    var externalCurrentPage: Binding<BudgetPage>?
+    
+    /// Internal state for standalone usage
+    @State private var internalCurrentPage: BudgetPage = .budgetBuilder
+    
+    /// Computed binding that uses external if available, otherwise internal
+    private var currentPage: Binding<BudgetPage> {
+        externalCurrentPage ?? $internalCurrentPage
+    }
+    
+    /// Convenience initializer with external binding (used by BudgetDashboardHubView)
+    init(currentPage: Binding<BudgetPage>) {
+        self.externalCurrentPage = currentPage
+    }
+    
+    /// Default initializer for standalone usage (used by BudgetPage.view)
+    init() {
+        self.externalCurrentPage = nil
+    }
 
     // Core state
     @State var budgetItems: [BudgetItem] = []
@@ -55,9 +77,10 @@ struct BudgetDevelopmentView: View {
             let availableWidth = geometry.size.width - (horizontalPadding * 2)
             
             VStack(spacing: 0) {
-                // Configuration header
-                BudgetConfigurationHeader(
+                // Unified header with "Budget" title, "Budget Development" subtitle, ellipsis menu, and nav dropdown
+                BudgetDevelopmentUnifiedHeader(
                     windowSize: windowSize,
+                    currentPage: currentPage,
                     selectedScenario: $selectedScenario,
                     budgetName: $budgetName,
                     selectedTaxRateId: $selectedTaxRateId,

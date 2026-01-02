@@ -34,20 +34,16 @@ struct BudgetConfigurationHeader: View {
 
     var body: some View {
         VStack(spacing: windowSize == .compact ? Spacing.md : 16) {
-            HStack {
-                Text("Budget Development")
-                    .font(windowSize == .compact ? .headline : .title2)
-                    .fontWeight(.bold)
-
-                Spacer()
-
-                if windowSize == .compact {
-                    compactActionsMenu
-                } else {
+            // Actions row (Save, Upload, Export buttons) - only in regular mode
+            // In compact mode, these are in the ellipsis menu passed to parent header
+            if windowSize != .compact {
+                HStack {
+                    Spacer()
                     regularActionsRow
                 }
             }
 
+            // Form fields
             if windowSize == .compact {
                 compactFormFields
             } else {
@@ -56,6 +52,60 @@ struct BudgetConfigurationHeader: View {
         }
         .padding(windowSize == .compact ? Spacing.md : Spacing.lg)
         .background(Color(NSColor.controlBackgroundColor))
+    }
+    
+    // MARK: - Ellipsis Menu for Parent Header (Compact Mode)
+    
+    /// Returns the ellipsis menu to be displayed in the parent header
+    /// Call this from the parent view to get the actions menu
+    var ellipsisMenu: some View {
+        Menu {
+            Button(action: { Task { await onSaveScenario() } }) {
+                Label(saving ? "Saving..." : "Save", systemImage: "square.and.arrow.down.fill")
+            }
+            .disabled(saving)
+            
+            Button(action: { Task { await onUploadScenario() } }) {
+                Label(uploading ? "Uploading..." : "Upload", systemImage: "square.and.arrow.up")
+            }
+            .disabled(uploading || currentScenarioId == nil)
+            
+            Divider()
+            
+            Menu("Export") {
+                Section(header: Text("Local Export")) {
+                    Button(action: onExportJSON) {
+                        Label("Export as JSON", systemImage: "doc.text")
+                    }
+                    Button(action: onExportCSV) {
+                        Label("Export as CSV", systemImage: "tablecells")
+                    }
+                }
+                
+                Section(header: Text("Google Export")) {
+                    if isGoogleAuthenticated {
+                        Button(action: { Task { await onExportToGoogleDrive() } }) {
+                            Label("Upload to Google Drive", systemImage: "icloud.and.arrow.up")
+                        }
+                        Button(action: { Task { await onExportToGoogleSheets() } }) {
+                            Label("Create Google Sheet", systemImage: "doc.on.doc")
+                        }
+                        Button(action: onSignOutFromGoogle) {
+                            Label("Sign Out from Google", systemImage: "person.crop.circle.badge.xmark")
+                        }
+                    } else {
+                        Button(action: { Task { await onSignInToGoogle() } }) {
+                            Label("Sign in to Google", systemImage: "person.crop.circle.badge.checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+                .font(.title3)
+                .foregroundColor(AppColors.textPrimary)
+        }
+        .buttonStyle(.plain)
     }
     
     // MARK: - Compact Mode Components

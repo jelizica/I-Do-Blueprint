@@ -56,16 +56,23 @@ struct BudgetDashboardHubView: View {
                 } else {
                     // Child pages render their own content (they have their own ScrollView/GeometryReader)
                     VStack(spacing: 0) {
-                        // Header at the top
-                        BudgetManagementHeader(
-                            windowSize: windowSize,
-                            currentPage: $currentPage
-                        )
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
+                        // Budget Builder (Development) has its own unified header, other pages use standard header
+                        if currentPage != .budgetBuilder {
+                            BudgetManagementHeader(
+                                windowSize: windowSize,
+                                currentPage: $currentPage
+                            )
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
+                        }
                         
                         // Child page content fills remaining space
-                        currentPage.view
+                        // Budget Builder needs currentPage binding for its unified header
+                        if currentPage == .budgetBuilder {
+                            BudgetDevelopmentView(currentPage: $currentPage)
+                        } else {
+                            currentPage.view
+                        }
                     }
                 }
             }

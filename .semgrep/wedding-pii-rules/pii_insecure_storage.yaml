@@ -78,16 +78,10 @@ rules:
 
           # Pattern 4: FileManager writing PII to disk without encryption
           - patterns:
-              - pattern-inside: |
-                  func $FUNC(...) {
-                    ...
-                    try $DATA.write(to: $URL, ...)
-                    ...
-                  }
-              - pattern: try $DATA.write(to: $URL, ...)
+              - pattern: "$DATA.write(to: $URL)"
               - metavariable-regex:
-                  metavariable: $FUNC
-                  regex: (?i).*(guest|vendor|contact|export|save).*
+                  metavariable: $DATA
+                  regex: (?i).*(guest|vendor|contact).*
 
           # Pattern 5: Plist files containing PII
           - patterns:

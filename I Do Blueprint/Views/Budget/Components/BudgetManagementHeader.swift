@@ -8,31 +8,52 @@
 
 import SwiftUI
 
-struct BudgetManagementHeader: View {
+struct BudgetManagementHeader<ActionsContent: View>: View {
     let windowSize: WindowSize
     @Binding var currentPage: BudgetPage
+    
+    /// Optional custom actions menu (e.g., ellipsis menu from child pages)
+    let actionsContent: ActionsContent?
+    
+    /// Initialize with custom actions content
+    init(
+        windowSize: WindowSize,
+        currentPage: Binding<BudgetPage>,
+        @ViewBuilder actionsContent: () -> ActionsContent
+    ) {
+        self.windowSize = windowSize
+        self._currentPage = currentPage
+        self.actionsContent = actionsContent()
+    }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
+        HStack(alignment: .center, spacing: Spacing.md) {
             // Title and subtitle
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text("Budget")
                     .font(Typography.displaySmall)
                     .foregroundColor(AppColors.textPrimary)
 
-                if windowSize != .compact {
-                    Text(currentPage == .hub ? "Your wedding budget at a glance" : currentPage.rawValue)
-                        .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
-                }
+                // Subtitle: page name (less bold) or default text for hub
+                Text(currentPage == .hub ? "Your wedding budget at a glance" : currentPage.rawValue)
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textSecondary)
             }
 
             Spacer()
 
-            // Navigation dropdown (replaces refresh button)
-            budgetPageDropdown
+            // Actions row: custom actions (ellipsis) + nav dropdown
+            HStack(spacing: Spacing.sm) {
+                // Custom actions from child page (e.g., ellipsis menu)
+                if let actions = actionsContent {
+                    actions
+                }
+                
+                // Navigation dropdown
+                budgetPageDropdown
+            }
         }
-        .frame(height: 68)
+        .frame(minHeight: 68)
     }
 
     // MARK: - Budget Page Dropdown
@@ -83,6 +104,20 @@ struct BudgetManagementHeader: View {
         }
         .buttonStyle(.plain)
         .help("Navigate budget pages")
+    }
+}
+
+// MARK: - Convenience initializer for no actions
+
+extension BudgetManagementHeader where ActionsContent == EmptyView {
+    /// Initialize without custom actions (default behavior)
+    init(
+        windowSize: WindowSize,
+        currentPage: Binding<BudgetPage>
+    ) {
+        self.windowSize = windowSize
+        self._currentPage = currentPage
+        self.actionsContent = nil
     }
 }
 

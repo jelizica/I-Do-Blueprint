@@ -46,11 +46,30 @@ else
   fi
 fi
 
+# Run Semgrep with wedding-specific PII detection rules
+echo ""
+echo "🔍 Running Wedding PII Detection (Custom Rules)..."
+if [ -d ".semgrep/wedding-pii-rules" ]; then
+  semgrep scan \
+    --config .semgrep/wedding-pii-rules/ \
+    --exclude "*.test.swift" \
+    --exclude "*Tests.swift" \
+    --exclude "Tests/" \
+    --exclude "I Do BlueprintTests/" \
+    --exclude "*Preview.swift" \
+    --exclude "Helpers/ModelBuilders.swift" \
+    --max-target-bytes=5MB \
+    --quiet \
+    || echo "⚠️  PII issues found (see above)"
+else
+  echo "⚠️  Wedding PII rules not found at .semgrep/wedding-pii-rules/"
+fi
+
 # Run Semgrep Pro with custom PII tracking rules
 echo ""
-echo "🔍 Running Semgrep Pro (SAST + PII Tracking)..."
+echo "🔍 Running Semgrep Pro (SAST + General Security)..."
 if [ -d ".semgrep/rules" ]; then
-  # Run with custom PII rules + Pro rules
+  # Run with custom rules + Pro rules
   semgrep scan \
     --config .semgrep/rules \
     --config auto \
