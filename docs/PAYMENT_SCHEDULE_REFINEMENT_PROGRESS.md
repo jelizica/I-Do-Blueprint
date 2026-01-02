@@ -240,8 +240,8 @@ No new errors or warnings introduced.
 
 ---
 
-**Last Updated:** January 2, 2026 - IMPLEMENTATION COMPLETE + NITPICK FIXES  
-**Status:** ✅ All 4 phases + 3 nitpick fixes completed successfully  
+**Last Updated:** January 2, 2026 - IMPLEMENTATION COMPLETE + NITPICK FIXES + ADAPTIVE GRID  
+**Status:** ✅ All 4 phases + 3 nitpick fixes + adaptive grid fix completed successfully  
 **Next Steps:** None - refinement complete
 
 ---
@@ -302,6 +302,30 @@ No new errors or warnings introduced.
 
 ---
 
+### ✅ Bug 4: Adaptive Grid for Summary Cards (I Do Blueprint-sg4k)
+**Status:** COMPLETE | **Commit:** `47a6936`
+
+**Problem:** User feedback - single column layout takes up too much space in compact view.
+
+**Solution:**
+- Copied Budget Overview adaptive grid pattern exactly
+- Replaced `VStack` with `LazyVGrid` using `GridItem(.adaptive(minimum: 140, maximum: 200))`
+- Added `PaymentOverviewCompactCard` component (matches `BudgetOverviewCompactCard`)
+- Cards now fit 2-3 per row in compact view instead of single column
+- Smaller, more efficient card design:
+  - 28x28 icon (vs 32x32)
+  - Size 9 uppercase title
+  - Size 14 bold rounded value
+  - 44pt minimum height
+  - Hover effects with scale animation
+
+**Files Modified:**
+- `PaymentSummaryHeaderViewV2.swift` (~111 lines added)
+
+**Result:** Cards are smaller and fit multiple per row, matching Budget Overview exactly
+
+---
+
 ## Summary of All Work
 
 | Phase/Fix | Status | Time | Beads | Commit |
@@ -313,9 +337,10 @@ No new errors or warnings introduced.
 | **Nitpick 1:** Overdue Badge Tab Switch | ✅ Complete | 15 min | u3o1 | 8f340e3 |
 | **Nitpick 2:** Modal Proportional Sizing | ✅ Complete | 30 min | f9kf | 8f340e3 |
 | **Nitpick 3:** Summary Cards Compact | ✅ Complete | 30 min | rxrg | 8f340e3 |
+| **Nitpick 4:** Adaptive Grid Cards | ✅ Complete | 20 min | sg4k | 47a6936 |
 
-**Total:** 7/7 items complete (100%)  
-**Total Time:** 5 hours 30 minutes  
+**Total:** 8/8 items complete (100%)  
+**Total Time:** 5 hours 50 minutes  
 **Remaining:** 0 hours
 
 ---
