@@ -37,37 +37,31 @@ struct PaymentSummaryHeaderViewV2: View {
     var body: some View {
         Group {
             if windowSize == .compact {
-                // Compact: Stack vertically with full width
-                VStack(spacing: Spacing.sm) {
-                    PaymentOverviewCardV2(
-                        windowSize: windowSize,
-                        title: "Upcoming Payments",
-                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalUpcoming)) ?? "$0",
-                        subtitle: "Due soon",
+                // Compact: Use adaptive grid like Budget Overview - fits as many cards as possible
+                LazyVGrid(columns: [
+                    GridItem(.adaptive(minimum: 140, maximum: 200), spacing: Spacing.sm)
+                ], spacing: Spacing.sm) {
+                    PaymentOverviewCompactCard(
+                        title: "Upcoming",
+                        value: totalUpcoming,
                         icon: "calendar",
                         color: AppColors.Budget.pending
                     )
-                    .frame(maxWidth: .infinity)
                     
-                    PaymentOverviewCardV2(
-                        windowSize: windowSize,
-                        title: "Overdue Payments",
-                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalOverdue)) ?? "$0",
-                        subtitle: "Past due",
+                    PaymentOverviewCompactCard(
+                        title: "Overdue",
+                        value: totalOverdue,
                         icon: "exclamationmark.triangle.fill",
                         color: AppColors.Budget.overBudget
                     )
-                    .frame(maxWidth: .infinity)
                     
-                    PaymentOverviewCardV2(
-                        windowSize: windowSize,
-                        title: "Total Schedules",
-                        value: "\(scheduleCount)",
-                        subtitle: "Active schedules",
+                    PaymentOverviewCompactCard(
+                        title: "Schedules",
+                        value: Double(scheduleCount),
                         icon: "list.number",
-                        color: AppColors.Budget.allocated
+                        color: AppColors.Budget.allocated,
+                        formatAsCurrency: false
                     )
-                    .frame(maxWidth: .infinity)
                 }
             } else {
                 // Regular/Large: Use grid layout
@@ -162,5 +156,101 @@ struct PaymentOverviewCardV2: View {
                 .stroke(color.opacity(0.2), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+}
+
+// MARK: - Payment Overview Compact Card
+
+/// A smaller, inline version for compact mode - matches Budget Overview pattern
+/// Uses adaptive grid to fit multiple cards per row
+private struct PaymentOverviewCompactCard: View {
+    let title: String
+    let value: Double
+    let icon: String
+    let color: Color
+    var formatAsCurrency: Bool = true
+    
+    @State private var isHovered = false
+    
+    var body: some View {
+        HStack(spacing: Spacing.sm) {
+            // Smaller icon with background circle
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.15))
+                    .frame(width: 28, height: 28)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(color)
+            }
+            
+            VStack(alignment: .leading, spacing: 1) {
+                // Title: size 9, uppercase
+                Text(title)
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .tracking(0.3)
+                    .lineLimit(1)
+                
+                // Value: size 14, bold, rounded
+                Text(formattedValue)
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+            }
+            
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(minHeight: 44)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(
+                            LinearGradient(
+                                colors: [color.opacity(0.03), color.opacity(0.01)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(color.opacity(isHovered ? 0.3 : 0.1), lineWidth: 1)
+                )
+        )
+        .shadow(
+            color: color.opacity(0.05),
+            radius: 3,
+            x: 0,
+            y: 1
+        )
+        .scaleEffect(isHovered ? 1.01 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isHovered)
+        .onHover { hovering in
+            isHovered = hovering
+        }
+    }
+    
+    private var formattedValue: String {
+        if formatAsCurrency {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .currency
+            formatter.currencySymbol = "$"
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 0
+            formatter.groupingSeparator = ","
+            formatter.usesGroupingSeparator = true
+            return formatter.string(from: NSNumber(value: value)) ?? "$0"
+        } else {
+            return String(format: "%.0f", value)
+        }
     }
 }
