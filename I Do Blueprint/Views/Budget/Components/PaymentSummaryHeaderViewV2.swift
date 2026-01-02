@@ -35,33 +35,71 @@ struct PaymentSummaryHeaderViewV2: View {
     }
     
     var body: some View {
-        LazyVGrid(columns: columns, spacing: windowSize == .compact ? Spacing.sm : Spacing.lg) {
-            PaymentOverviewCardV2(
-                windowSize: windowSize,
-                title: "Upcoming Payments",
-                value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalUpcoming)) ?? "$0",
-                subtitle: "Due soon",
-                icon: "calendar",
-                color: AppColors.Budget.pending
-            )
-            
-            PaymentOverviewCardV2(
-                windowSize: windowSize,
-                title: "Overdue Payments",
-                value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalOverdue)) ?? "$0",
-                subtitle: "Past due",
-                icon: "exclamationmark.triangle.fill",
-                color: AppColors.Budget.overBudget
-            )
-            
-            PaymentOverviewCardV2(
-                windowSize: windowSize,
-                title: "Total Schedules",
-                value: "\(scheduleCount)",
-                subtitle: "Active schedules",
-                icon: "list.number",
-                color: AppColors.Budget.allocated
-            )
+        Group {
+            if windowSize == .compact {
+                // Compact: Stack vertically with full width
+                VStack(spacing: Spacing.sm) {
+                    PaymentOverviewCardV2(
+                        windowSize: windowSize,
+                        title: "Upcoming Payments",
+                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalUpcoming)) ?? "$0",
+                        subtitle: "Due soon",
+                        icon: "calendar",
+                        color: AppColors.Budget.pending
+                    )
+                    .frame(maxWidth: .infinity)
+                    
+                    PaymentOverviewCardV2(
+                        windowSize: windowSize,
+                        title: "Overdue Payments",
+                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalOverdue)) ?? "$0",
+                        subtitle: "Past due",
+                        icon: "exclamationmark.triangle.fill",
+                        color: AppColors.Budget.overBudget
+                    )
+                    .frame(maxWidth: .infinity)
+                    
+                    PaymentOverviewCardV2(
+                        windowSize: windowSize,
+                        title: "Total Schedules",
+                        value: "\(scheduleCount)",
+                        subtitle: "Active schedules",
+                        icon: "list.number",
+                        color: AppColors.Budget.allocated
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+            } else {
+                // Regular/Large: Use grid layout
+                LazyVGrid(columns: columns, spacing: Spacing.lg) {
+                    PaymentOverviewCardV2(
+                        windowSize: windowSize,
+                        title: "Upcoming Payments",
+                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalUpcoming)) ?? "$0",
+                        subtitle: "Due soon",
+                        icon: "calendar",
+                        color: AppColors.Budget.pending
+                    )
+                    
+                    PaymentOverviewCardV2(
+                        windowSize: windowSize,
+                        title: "Overdue Payments",
+                        value: NumberFormatter.currencyShort.string(from: NSNumber(value: totalOverdue)) ?? "$0",
+                        subtitle: "Past due",
+                        icon: "exclamationmark.triangle.fill",
+                        color: AppColors.Budget.overBudget
+                    )
+                    
+                    PaymentOverviewCardV2(
+                        windowSize: windowSize,
+                        title: "Total Schedules",
+                        value: "\(scheduleCount)",
+                        subtitle: "Active schedules",
+                        icon: "list.number",
+                        color: AppColors.Budget.allocated
+                    )
+                }
+            }
         }
         .padding(windowSize == .compact ? Spacing.md : Spacing.lg)
         .background(Color(NSColor.controlBackgroundColor))

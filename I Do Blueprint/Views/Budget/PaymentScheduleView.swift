@@ -105,9 +105,12 @@ struct PaymentScheduleView: View {
             PaymentScheduleStaticHeader(
                 windowSize: windowSize,
                 searchQuery: $searchQuery,
+                showPlanView: $showPlanView,
                 nextPayment: nextUpcomingPayment,
                 overdueCount: overduePaymentsCount,
                 onOverdueClick: {
+                    // Switch to Individual tab and apply overdue filter
+                    showPlanView = false
                     selectedFilterOption = .overdue
                 },
                 onNextPaymentClick: {

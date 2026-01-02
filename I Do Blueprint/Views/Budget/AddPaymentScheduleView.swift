@@ -53,24 +53,46 @@ struct AddPaymentScheduleView: View {
     }
 
     var body: some View {
-        mainNavigationView
-            .frame(minWidth: 900, minHeight: 600)
-            .onAppear(perform: handleOnAppear)
-            .onChange(of: formData.selectedExpenseId, perform: updateExpenseAndSchedule)
-            .onChange(of: formData.usePartialAmount, perform: updateScheduleOnly)
-            .onChange(of: formData.partialAmount, perform: updateScheduleOnly)
-            .onChange(of: formData.paymentType, perform: updateScheduleOnly)
-            .onChange(of: formData.totalAmount, perform: updateScheduleOnly)
-            .onChange(of: formData.individualAmount, perform: updateScheduleOnly)
-            .onChange(of: formData.monthlyAmount, perform: updateScheduleOnly)
-            .onChange(of: formData.intervalAmount, perform: updateScheduleOnly)
-            .onChange(of: formData.intervalMonths, perform: updateScheduleOnly)
-            .onChange(of: formData.cyclicalPayments, perform: updateScheduleOnly)
-            .alert(
-                "Validation Error",
-                isPresented: $showingValidationAlert,
-                actions: alertActions,
-                message: alertMessage)
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
+            let widthMultiplier: CGFloat = {
+                switch windowSize {
+                case .compact: return 0.90
+                case .regular: return 0.70
+                case .large: return 0.60
+                }
+            }()
+            let heightMultiplier: CGFloat = {
+                switch windowSize {
+                case .compact: return 0.85
+                case .regular: return 0.80
+                case .large: return 0.75
+                }
+            }()
+            
+            mainNavigationView
+                .frame(
+                    width: geometry.size.width * widthMultiplier,
+                    height: geometry.size.height * heightMultiplier
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onAppear(perform: handleOnAppear)
+                .onChange(of: formData.selectedExpenseId, perform: updateExpenseAndSchedule)
+                .onChange(of: formData.usePartialAmount, perform: updateScheduleOnly)
+                .onChange(of: formData.partialAmount, perform: updateScheduleOnly)
+                .onChange(of: formData.paymentType, perform: updateScheduleOnly)
+                .onChange(of: formData.totalAmount, perform: updateScheduleOnly)
+                .onChange(of: formData.individualAmount, perform: updateScheduleOnly)
+                .onChange(of: formData.monthlyAmount, perform: updateScheduleOnly)
+                .onChange(of: formData.intervalAmount, perform: updateScheduleOnly)
+                .onChange(of: formData.intervalMonths, perform: updateScheduleOnly)
+                .onChange(of: formData.cyclicalPayments, perform: updateScheduleOnly)
+                .alert(
+                    "Validation Error",
+                    isPresented: $showingValidationAlert,
+                    actions: alertActions,
+                    message: alertMessage)
+        }
     }
 
     private var mainNavigationView: some View {

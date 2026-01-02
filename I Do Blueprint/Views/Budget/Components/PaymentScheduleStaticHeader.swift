@@ -11,6 +11,7 @@ import SwiftUI
 struct PaymentScheduleStaticHeader: View {
     let windowSize: WindowSize
     @Binding var searchQuery: String
+    @Binding var showPlanView: Bool
     let nextPayment: PaymentSchedule?
     let overdueCount: Int
     let onOverdueClick: () -> Void
