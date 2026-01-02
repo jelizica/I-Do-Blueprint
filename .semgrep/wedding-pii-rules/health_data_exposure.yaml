@@ -99,14 +99,12 @@ rules:
                   // WARNING: Contains health data
                   ...
 
-          # Pattern 4: Network requests with health data in URL params (major violation)
+          # Pattern 4: Network requests with health data (simplified pattern)
           - patterns:
-              - pattern-either:
-                  - pattern: URLRequest(url: URL(string: "...\($GUEST.dietaryRestrictions)...")...)
-                  - pattern: URLRequest(url: URL(string: "...\($GUEST.accessibilityNeeds)...")...)
-              - pattern-not-inside: |
-                  // Encrypted health data transmission
-                  ...
+              - pattern: URLRequest(url: URL(string: $URL)...)
+              - metavariable-regex:
+                  metavariable: $URL
+                  regex: (?i).*(dietary|accessibility|health|allergy).*
 
           # Pattern 5: Storing health data in UserDefaults (covered by other rule, but double-check)
           - patterns:

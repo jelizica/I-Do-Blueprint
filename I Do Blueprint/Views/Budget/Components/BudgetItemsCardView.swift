@@ -392,6 +392,15 @@ struct BudgetItemCard: View {
     let onUpdateItem: (String, String, Any) -> Void
     let onRemoveItem: () -> Void
     
+    // State for event selector popover
+    @State private var showingEventSelector = false
+    
+    /// Dynamically calculated total with tax
+    /// Formula: estimate * (1 + taxRate/100) where taxRate is stored as percentage (e.g., 10.35)
+    private var calculatedTotalWithTax: Double {
+        item.vendorEstimateWithoutTax * (1 + item.taxRate / 100)
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             collapsedView
@@ -436,7 +445,8 @@ struct BudgetItemCard: View {
                 Spacer()
                 
                 VStack(alignment: .trailing, spacing: 2) {
-                    Text("$\(String(format: "%.0f", item.vendorEstimateWithTax))")
+                    // Use dynamically calculated total instead of stored value
+                    Text("$\(String(format: "%.0f", calculatedTotalWithTax))")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(AppColors.textPrimary)
@@ -651,33 +661,62 @@ struct BudgetItemCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    /// Display event names instead of IDs
+    /// Editable event selector with popover
     private var eventsDisplay: some View {
-        let eventNames = resolveEventNames()
-        
-        return Group {
-            if eventNames.isEmpty {
-                Text("None")
+        Button(action: { showingEventSelector.toggle() }) {
+            HStack {
+                Text(eventDisplayText)
                     .font(.subheadline)
+                    .foregroundColor(eventDisplayText == "Select events" ? .secondary : .primary)
+                    .lineLimit(1)
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .font(.caption)
                     .foregroundColor(.secondary)
-            } else {
-                Text(eventNames.joined(separator: ", "))
-                    .font(.subheadline)
-                    .foregroundColor(.primary)
-                    .lineLimit(2)
             }
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, 6)
+            .background(Color(NSColor.controlBackgroundColor))
+            .cornerRadius(6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showingEventSelector) {
+            EventMultiSelectorPopover(
+                events: weddingEvents,
+                selectedEventIds: item.eventIds ?? [],
+                onToggleEvent: { eventId in
+                    var current = item.eventIds ?? []
+                    if let index = current.firstIndex(of: eventId) {
+                        current.remove(at: index)
+                    } else {
+                        current.append(eventId)
+                    }
+                    onUpdateItem(item.id, "eventIds", current)
+                }
+            )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    /// Resolve event IDs to event names
-    private func resolveEventNames() -> [String] {
-        guard let eventIds = item.eventIds, !eventIds.isEmpty else {
-            return []
-        }
-        
-        return eventIds.compactMap { eventId in
-            weddingEvents.first(where: { $0.id == eventId })?.eventName
+    /// Display text for event selector button
+    private var eventDisplayText: String {
+        let selectedEventIds = item.eventIds ?? []
+        if selectedEventIds.isEmpty {
+            return "Select events"
+        } else {
+            let selectedEventNames = weddingEvents
+                .filter { selectedEventIds.contains($0.id) }
+                .map(\.eventName)
+            
+            if selectedEventNames.count == 1 {
+                return selectedEventNames[0]
+            } else {
+                return "\(selectedEventNames.count) events"
+            }
         }
     }
     
