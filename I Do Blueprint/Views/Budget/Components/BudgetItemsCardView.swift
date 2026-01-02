@@ -461,17 +461,70 @@ struct BudgetItemCard: View {
             Divider()
                 .padding(.horizontal, Spacing.sm)
             
-            VStack(spacing: Spacing.sm) {
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                // Item Name - full width
                 itemNameRow
-                categoryRow
-                estimateRow
-                responsibleRow
+                
+                // Two-column grid for other fields
+                twoColumnGrid
+                
+                // Notes - full width
                 notesRow
+                
+                // Delete button
                 deleteRow
             }
-            .padding(Spacing.sm)
+            .padding(Spacing.md)
             .background(Color(NSColor.controlBackgroundColor).opacity(0.3))
         }
+    }
+    
+    // MARK: - Two Column Grid
+    
+    private var twoColumnGrid: some View {
+        Grid(alignment: .leading, horizontalSpacing: Spacing.md, verticalSpacing: Spacing.sm) {
+            // Row 1: Category & Subcategory
+            GridRow {
+                labeledField(label: "Category") {
+                    categoryPicker
+                }
+                labeledField(label: "Subcategory") {
+                    subcategoryPicker
+                }
+            }
+            
+            // Row 2: Estimate & Tax Rate
+            GridRow {
+                labeledField(label: "Estimate (No Tax)") {
+                    estimateField
+                }
+                labeledField(label: "Tax Rate") {
+                    taxRateDisplay
+                }
+            }
+            
+            // Row 3: Responsible & Events
+            GridRow {
+                labeledField(label: "Responsible") {
+                    responsiblePicker
+                }
+                labeledField(label: "Events") {
+                    eventsDisplay
+                }
+            }
+        }
+    }
+    
+    /// Helper to create a labeled field with consistent styling
+    @ViewBuilder
+    private func labeledField<Content: View>(label: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     // MARK: - Item Name Row
@@ -491,29 +544,7 @@ struct BudgetItemCard: View {
         }
     }
     
-    // MARK: - Category Row
-    
-    private var categoryRow: some View {
-        HStack(spacing: Spacing.sm) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Category")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                categoryPicker
-            }
-            .frame(maxWidth: .infinity)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Subcategory")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                subcategoryPicker
-            }
-            .frame(maxWidth: .infinity)
-        }
-    }
+    // MARK: - Pickers
     
     private var categoryPicker: some View {
         let currentCategory = item.category
@@ -527,6 +558,7 @@ struct BudgetItemCard: View {
         }
         .pickerStyle(.menu)
         .labelsHidden()
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var subcategoryPicker: some View {
@@ -535,36 +567,14 @@ struct BudgetItemCard: View {
             get: { currentSubcategory },
             set: { onUpdateItem(item.id, "subcategory", $0) }
         )) {
+            Text("None").tag("")
             ForEach(subcategories, id: \.self) { sub in
                 Text(sub).tag(sub)
             }
         }
         .pickerStyle(.menu)
         .labelsHidden()
-    }
-    
-    // MARK: - Estimate Row
-    
-    private var estimateRow: some View {
-        HStack(spacing: Spacing.sm) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Estimate (No Tax)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                estimateField
-            }
-            .frame(maxWidth: .infinity)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Tax Rate")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                taxRatePicker
-            }
-            .frame(maxWidth: .infinity)
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private var estimateField: some View {
@@ -577,45 +587,37 @@ struct BudgetItemCard: View {
         .font(.subheadline)
     }
     
-    private var taxRatePicker: some View {
+    /// Tax rate display - shows just the percentage, picker shows full name
+    private var taxRateDisplay: some View {
         let currentTaxRate = item.taxRate
         return Picker("", selection: Binding(
             get: { currentTaxRate },
             set: { onUpdateItem(item.id, "taxRate", $0) }
         )) {
-            // Add a "No Tax" option
-            Text("No Tax (0%)").tag(0.0)
+            // No Tax option
+            Text("0%").tag(0.0)
             
+            // Tax rates from settings - multiply by 100 to show as percentage
             ForEach(taxRates, id: \.id) { rate in
-                Text("\(rate.region) (\(String(format: "%.2f", rate.taxRate))%)")
+                // Picker shows full name with percentage
+                Text("\(rate.region) (\(formatTaxRate(rate.taxRate)))")
                     .tag(rate.taxRate)
             }
         }
         .pickerStyle(.menu)
         .labelsHidden()
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    // MARK: - Responsible Row
-    
-    private var responsibleRow: some View {
-        HStack(spacing: Spacing.sm) {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Responsible")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                responsiblePicker
-            }
-            .frame(maxWidth: .infinity)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Events")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                
-                eventsDisplay
-            }
-            .frame(maxWidth: .infinity)
+    /// Format tax rate as percentage (multiply by 100 since stored as decimal)
+    private func formatTaxRate(_ rate: Double) -> String {
+        let percentage = rate * 100
+        if percentage == 0 {
+            return "0%"
+        } else if percentage.truncatingRemainder(dividingBy: 1) == 0 {
+            return "\(Int(percentage))%"
+        } else {
+            return String(format: "%.2f%%", percentage)
         }
     }
     
@@ -631,6 +633,7 @@ struct BudgetItemCard: View {
         }
         .pickerStyle(.menu)
         .labelsHidden()
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     /// Display event names instead of IDs
@@ -649,6 +652,7 @@ struct BudgetItemCard: View {
                     .lineLimit(2)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     /// Resolve event IDs to event names
@@ -670,18 +674,13 @@ struct BudgetItemCard: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
             
-            notesField
+            TextField("Add notes...", text: Binding(
+                get: { item.notes ?? "" },
+                set: { onUpdateItem(item.id, "notes", $0) }
+            ))
+            .textFieldStyle(.roundedBorder)
+            .font(.subheadline)
         }
-    }
-    
-    private var notesField: some View {
-        let currentNotes = item.notes ?? ""
-        return TextField("Add notes...", text: Binding(
-            get: { currentNotes },
-            set: { onUpdateItem(item.id, "notes", $0) }
-        ))
-        .textFieldStyle(.roundedBorder)
-        .font(.subheadline)
     }
     
     // MARK: - Delete Row
