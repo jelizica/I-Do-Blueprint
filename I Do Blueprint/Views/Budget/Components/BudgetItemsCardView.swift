@@ -6,6 +6,19 @@
 
 import SwiftUI
 
+/// View mode for organizing budget items
+enum BudgetItemsViewMode: String, CaseIterable {
+    case byCategory = "By Category"
+    case byFolder = "By Folder"
+    
+    var icon: String {
+        switch self {
+        case .byCategory: return "square.grid.2x2"
+        case .byFolder: return "folder"
+        }
+    }
+}
+
 struct BudgetItemsCardView: View {
     @Binding var budgetItems: [BudgetItem]
     @Binding var newCategoryNames: [String: String]
@@ -26,6 +39,9 @@ struct BudgetItemsCardView: View {
     let onAddFolder: (String, String?) -> Void
     let responsibleOptions: [String]
     
+    // View mode toggle
+    @State private var viewMode: BudgetItemsViewMode = .byCategory
+    
     // Folder support
     @State private var showingCreateFolder = false
     @State private var newFolderName = ""
@@ -36,8 +52,8 @@ struct BudgetItemsCardView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            // Action buttons
-            actionButtons
+            // View mode toggle and action buttons
+            headerRow
             
             if budgetItems.isEmpty {
                 emptyStateView
@@ -50,6 +66,36 @@ struct BudgetItemsCardView: View {
         .cornerRadius(12)
         .sheet(isPresented: $showingCreateFolder) {
             createFolderSheet
+        }
+    }
+    
+    // MARK: - Header Row
+    
+    private var headerRow: some View {
+        VStack(spacing: Spacing.sm) {
+            // View mode toggle
+            HStack(spacing: Spacing.xs) {
+                ForEach(BudgetItemsViewMode.allCases, id: \.self) { mode in
+                    Button(action: { viewMode = mode }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: mode.icon)
+                            Text(mode.rawValue)
+                        }
+                        .font(.caption)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xs)
+                        .background(viewMode == mode ? AppColors.Budget.allocated.opacity(0.15) : Color.clear)
+                        .foregroundColor(viewMode == mode ? AppColors.Budget.allocated : .secondary)
+                        .cornerRadius(6)
+                    }
+                    .buttonStyle(.plain)
+                }
+                
+                Spacer()
+            }
+            
+            // Action buttons
+            actionButtons
         }
     }
     
@@ -83,19 +129,99 @@ struct BudgetItemsCardView: View {
     
     private var itemsList: some View {
         LazyVStack(spacing: Spacing.md) {
-            ForEach(groupedItems.keys.sorted(), id: \.self) { category in
-                if let items = groupedItems[category] {
-                    categorySection(category: category, items: items)
+            switch viewMode {
+            case .byCategory:
+                ForEach(groupedByCategory.keys.sorted(), id: \.self) { category in
+                    if let items = groupedByCategory[category] {
+                        categorySection(category: category, items: items)
+                    }
+                }
+            case .byFolder:
+                folderBasedView
+            }
+        }
+    }
+    
+    // MARK: - Grouped by Category
+    
+    private var groupedByCategory: [String: [BudgetItem]] {
+        Dictionary(grouping: budgetItems.filter { !$0.isFolder }) { item in
+            item.category.isEmpty ? "Uncategorized" : item.category
+        }
+    }
+    
+    // MARK: - Folder-Based View
+    
+    @ViewBuilder
+    private var folderBasedView: some View {
+        // Get folders
+        let folders = budgetItems.filter { $0.isFolder }
+        let rootFolders = folders.filter { $0.parentFolderId == nil }
+        let itemsWithoutFolder = budgetItems.filter { !$0.isFolder && $0.parentFolderId == nil }
+        
+        // Root level folders
+        ForEach(rootFolders) { folder in
+            folderSection(folder: folder)
+        }
+        
+        // Items without folder
+        if !itemsWithoutFolder.isEmpty {
+            VStack(alignment: .leading, spacing: Spacing.sm) {
+                HStack {
+                    Image(systemName: "doc.text")
+                        .foregroundColor(.secondary)
+                    Text("Uncategorized Items")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.secondary)
+                    
+                    Spacer()
+                    
+                    let total = itemsWithoutFolder.reduce(0.0) { $0 + $1.vendorEstimateWithTax }
+                    Text("$\(String(format: "%.0f", total))")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xs)
+                
+                ForEach(itemsWithoutFolder) { item in
+                    itemCard(item: item)
                 }
             }
         }
     }
     
-    // MARK: - Grouped Items
-    
-    private var groupedItems: [String: [BudgetItem]] {
-        Dictionary(grouping: budgetItems.filter { !$0.isFolder }) { item in
-            item.category.isEmpty ? "Uncategorized" : item.category
+    private func folderSection(folder: BudgetItem) -> some View {
+        let childItems = budgetItems.filter { !$0.isFolder && $0.parentFolderId == folder.id }
+        let total = childItems.reduce(0.0) { $0 + $1.vendorEstimateWithTax }
+        
+        return VStack(alignment: .leading, spacing: Spacing.sm) {
+            // Folder header
+            HStack {
+                Image(systemName: "folder.fill")
+                    .foregroundColor(AppColors.Budget.allocated)
+                Text(folder.itemName)
+                    .font(.headline)
+                    .fontWeight(.semibold)
+                
+                Spacer()
+                
+                Text("$\(String(format: "%.0f", total))")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xs)
+            .background(Color(NSColor.controlBackgroundColor).opacity(0.5))
+            .cornerRadius(8)
+            
+            // Child items
+            ForEach(childItems) { item in
+                itemCard(item: item)
+            }
         }
     }
     
@@ -107,19 +233,24 @@ struct BudgetItemsCardView: View {
             categoryHeader(category: category, items: items)
             
             ForEach(items) { item in
-                BudgetItemCard(
-                    item: item,
-                    isExpanded: expandedItemIds.contains(item.id),
-                    categories: parentCategoryNames,
-                    subcategories: subcategoryNames(for: item.category),
-                    taxRates: budgetStore.taxRates,
-                    responsibleOptions: responsibleOptions,
-                    onToggleExpand: { toggleExpand(item.id) },
-                    onUpdateItem: onUpdateItem,
-                    onRemoveItem: { onRemoveItem(item.id, nil) }
-                )
+                itemCard(item: item)
             }
         }
+    }
+    
+    private func itemCard(item: BudgetItem) -> some View {
+        BudgetItemCard(
+            item: item,
+            isExpanded: expandedItemIds.contains(item.id),
+            categories: parentCategoryNames,
+            subcategories: subcategoryNames(for: item.category),
+            taxRates: budgetStore.taxRates,
+            weddingEvents: budgetStore.weddingEvents,
+            responsibleOptions: responsibleOptions,
+            onToggleExpand: { toggleExpand(item.id) },
+            onUpdateItem: onUpdateItem,
+            onRemoveItem: { onRemoveItem(item.id, nil) }
+        )
     }
     
     private func categoryHeader(category: String, items: [BudgetItem]) -> some View {
@@ -255,6 +386,7 @@ struct BudgetItemCard: View {
     let categories: [String]
     let subcategories: [String]
     let taxRates: [TaxInfo]
+    let weddingEvents: [WeddingEvent]
     let responsibleOptions: [String]
     let onToggleExpand: () -> Void
     let onUpdateItem: (String, String, Any) -> Void
@@ -330,6 +462,7 @@ struct BudgetItemCard: View {
                 .padding(.horizontal, Spacing.sm)
             
             VStack(spacing: Spacing.sm) {
+                itemNameRow
                 categoryRow
                 estimateRow
                 responsibleRow
@@ -338,6 +471,23 @@ struct BudgetItemCard: View {
             }
             .padding(Spacing.sm)
             .background(Color(NSColor.controlBackgroundColor).opacity(0.3))
+        }
+    }
+    
+    // MARK: - Item Name Row
+    
+    private var itemNameRow: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("Item Name")
+                .font(.caption)
+                .foregroundColor(.secondary)
+            
+            TextField("Item name", text: Binding(
+                get: { item.itemName },
+                set: { onUpdateItem(item.id, "itemName", $0) }
+            ))
+            .textFieldStyle(.roundedBorder)
+            .font(.subheadline)
         }
     }
     
@@ -433,8 +583,11 @@ struct BudgetItemCard: View {
             get: { currentTaxRate },
             set: { onUpdateItem(item.id, "taxRate", $0) }
         )) {
+            // Add a "No Tax" option
+            Text("No Tax (0%)").tag(0.0)
+            
             ForEach(taxRates, id: \.id) { rate in
-                Text("\(rate.region)")
+                Text("\(rate.region) (\(String(format: "%.2f", rate.taxRate))%)")
                     .tag(rate.taxRate)
             }
         }
@@ -460,10 +613,7 @@ struct BudgetItemCard: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
                 
-                Text(item.eventIds?.joined(separator: ", ") ?? "None")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
+                eventsDisplay
             }
             .frame(maxWidth: .infinity)
         }
@@ -481,6 +631,35 @@ struct BudgetItemCard: View {
         }
         .pickerStyle(.menu)
         .labelsHidden()
+    }
+    
+    /// Display event names instead of IDs
+    private var eventsDisplay: some View {
+        let eventNames = resolveEventNames()
+        
+        return Group {
+            if eventNames.isEmpty {
+                Text("None")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            } else {
+                Text(eventNames.joined(separator: ", "))
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                    .lineLimit(2)
+            }
+        }
+    }
+    
+    /// Resolve event IDs to event names
+    private func resolveEventNames() -> [String] {
+        guard let eventIds = item.eventIds, !eventIds.isEmpty else {
+            return []
+        }
+        
+        return eventIds.compactMap { eventId in
+            weddingEvents.first(where: { $0.id == eventId })?.eventName
+        }
     }
     
     // MARK: - Notes Row
