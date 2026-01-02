@@ -1,0 +1,101 @@
+rules:
+  - id: wedding-pii-logging
+    severity: ERROR
+    metadata:
+      author: I Do Blueprint Security Team
+      references:
+        - https://www.techtarget.com/searchsecurity/definition/personally-identifiable-information-PII
+        - https://www.protecto.ai/blog/personal-data-and-pii-a-guide-to-data-privacy-under-gdpr/
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+      category: security
+      confidence: HIGH
+      likelihood: HIGH
+      impact: HIGH
+      technology: [ios, swift, wedding-planning]
+      cwe: CWE-532
+      owasp: A09:2021-Security Logging and Monitoring Failures
+    message: >-
+      This wedding planning application is logging Personally Identifiable Information (PII)
+      which violates GDPR and privacy best practices. Detected logging of sensitive guest data including:
+      names, email addresses, phone numbers, physical addresses, dietary restrictions (health-related),
+      accessibility needs (medical information), or vendor contact information.
+
+      Under GDPR Article 5, PII must be processed lawfully and stored securely. Logging PII to console
+      or files creates unnecessary data copies that may be:
+      1. Accessible to unauthorized parties (developers, system administrators)
+      2. Retained longer than necessary
+      3. Not covered by encryption at rest
+      4. Subject to unauthorized disclosure via log aggregation systems
+
+      REMEDIATION:
+      - Remove PII from log messages completely
+      - Use anonymized identifiers (UUIDs, guest IDs) instead
+      - For debugging, use redaction: "Guest [ID: \(guest.id)] updated" instead of full details
+      - Implement structured logging with automatic PII scrubbing
+      - Use AppLogger.debug (stripped in production) for detailed logs, never AppLogger.info/error
+
+      EXAMPLE - SECURE LOGGING:
+      ✅ logger.info("Guest updated", metadata: ["guestId": "\(guest.id.uuidString)"])
+      ✅ logger.debug("RSVP status changed to: \(rsvpStatus)") // Debug only, stripped in release
+      ❌ logger.info("Updated guest: \(guest.firstName) \(guest.lastName) - \(guest.email)")
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # Pattern 1: Direct PII property access in logging
+          - patterns:
+              - pattern-either:
+                  # AppLogger patterns
+                  - pattern: $LOGGER.$LEVEL(..., $MSG, ...)
+                  - pattern: $LOGGER.$LEVEL($MSG, ...)
+                  # Print statements (should never be in production)
+                  - pattern: print($MSG)
+                  - pattern: NSLog($MSG, ...)
+                  # Swift Logger
+                  - pattern: $LOGGER.log(..., $MSG, ...)
+              - metavariable-regex:
+                  metavariable: $LOGGER
+                  regex: (?i)(logger|applogger|Logger)
+              - metavariable-regex:
+                  metavariable: $LEVEL
+                  regex: (?i)(info|error|warning|critical|notice|trace)
+              - metavariable-regex:
+                  metavariable: $MSG
+                  regex: (?i).*(firstName|lastName|fullName|email|phone|phoneNumber|formattedPhone|addressLine|address|city|state|zipCode|postalCode|country|dietaryRestrictions|accessibilityNeeds|contactName|streetAddress|plusOneName).*
+
+          # Pattern 2: String interpolation with Guest/Vendor PII
+          - patterns:
+              - pattern: $LOGGER.$LEVEL("...\($OBJ.$FIELD)...", ...)
+              - metavariable-regex:
+                  metavariable: $LOGGER
+                  regex: (?i)(logger|applogger|Logger)
+              - metavariable-regex:
+                  metavariable: $LEVEL
+                  regex: (?i)(info|error|warning|critical|notice)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (guest|vendor|contact|user|collaborator)
+              - metavariable-regex:
+                  metavariable: $FIELD
+                  regex: (?i)(firstName|lastName|fullName|email|phone|phoneNumber|formattedPhone|address|addressLine1|addressLine2|city|state|zipCode|country|dietaryRestrictions|accessibilityNeeds|contactName|streetAddress|plusOneName|notes|preparationNotes)
+
+          # Pattern 3: Logging entire objects
+          - patterns:
+              - pattern-either:
+                  - pattern: $LOGGER.$LEVEL("...\($OBJ)...", ...)
+                  - pattern: print("...\($OBJ)...")
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (guest|vendor|contact|guestGroup|collaborator)
+              - metavariable-regex:
+                  metavariable: $LOGGER
+                  regex: (?i)(logger|applogger|Logger)
+              - metavariable-regex:
+                  metavariable: $LEVEL
+                  regex: (?i)(info|error|warning|critical|notice)
+
+          # Pattern 4: Print statements with PII (debugging left in production)
+          - patterns:
+              - pattern: print($MSG)
+              - metavariable-regex:
+                  metavariable: $MSG
+                  regex: (?i).*(guest|vendor|email|phone|address|dietary).*

@@ -1,0 +1,130 @@
+rules:
+  - id: wedding-health-data-exposure
+    severity: WARNING
+    metadata:
+      author: I Do Blueprint Security Team
+      references:
+        - https://www.americanbar.org/groups/health_law/resources/esource/2024-november/six-current-data-privacy-challenges/
+        - https://www.ey.com/en_us/insights/health/navigating-data-privacy-evolution-in-health-care
+        - https://pmc.ncbi.nlm.nih.gov/articles/PMC11923453/
+      category: security
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+      technology: [ios, swift, wedding-planning, health-data]
+      cwe: CWE-359
+      owasp: A01:2021-Broken Access Control
+    message: >-
+      This wedding planning application may be exposing health-related Personally Identifiable
+      Information (PII) without proper safeguards.
+
+      HEALTH DATA IDENTIFIED:
+      - Dietary restrictions (may reveal medical conditions: allergies, diabetes, celiac disease)
+      - Accessibility needs (may reveal disabilities, mobility issues, medical equipment needs)
+      - Preparation notes (may contain medical/health information)
+
+      REGULATORY CONTEXT (2024):
+      Since the Supreme Court Dobbs decision, federal and state policymakers have focused on
+      protecting "consumer health data" broadly defined. Many U.S. states now have specific
+      health data privacy laws that apply to ANY app collecting health information, including:
+      - Washington My Health My Data Act
+      - Nevada SB370
+      - Connecticut SB3
+
+      These laws define "consumer health data" to include information about diet, wellness,
+      and disability status - ALL of which are collected by wedding planning apps for guest
+      dietary restrictions and accessibility needs.
+
+      PRIVACY RISKS:
+      1. Network transmission without encryption (even with HTTPS, intermediate proxies may log)
+      2. Logging health data to console/files (creates unauthorized copies)
+      3. Sharing with third-party services (analytics, crash reporting) without consent
+      4. Exporting to insecure formats (CSV, Excel) without warning
+
+      REMEDIATION:
+      ✅ Add explicit user consent for health data collection (GDPR Article 9)
+      ✅ Implement Row Level Security on Supabase for dietary/accessibility fields
+      ✅ Add audit logging for access to health-related fields
+      ✅ Exclude health data from analytics/crash reports (SentryService scrubbing)
+      ✅ Add export warnings: "This file contains health information. Encrypt before sharing."
+      ✅ Use @HealthDataProtected property wrapper to mark sensitive fields
+      ✅ Implement data minimization: only collect what's strictly necessary
+
+      EXAMPLE - SECURE HANDLING:
+      ✅ Display warnings before exporting guest lists with dietary/accessibility data
+      ✅ Scrub health data from error logs sent to Sentry
+      ✅ Require explicit consent toggle: "I consent to storing health-related preferences"
+      ❌ Blindly exporting all guest data to CSV without warnings
+      ❌ Logging "Guest has peanut allergy" to console
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # Pattern 1: Direct access to health-related fields without consent checks
+          - patterns:
+              - pattern-either:
+                  - pattern: $GUEST.dietaryRestrictions
+                  - pattern: $GUEST.accessibilityNeeds
+                  - pattern: $GUEST.preparationNotes
+              - pattern-not-inside: |
+                  if $CONSENT {
+                    ...
+                  }
+              - pattern-not-inside: |
+                  guard $CONSENT else { ... }
+
+          # Pattern 2: Analytics/crash reporting including health data
+          - patterns:
+              - pattern-inside: |
+                  $ANALYTICS.$METHOD(..., $PARAMS, ...)
+              - metavariable-regex:
+                  metavariable: $ANALYTICS
+                  regex: (?i)(analytics|sentry|crashlytics|firebase)
+              - metavariable-regex:
+                  metavariable: $PARAMS
+                  regex: (?i).*(dietaryRestrictions|accessibilityNeeds|preparationNotes|dietary|accessibility|health).*
+
+          # Pattern 3: CSV/Excel export without health data warnings
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC(...) {
+                    ...
+                    $CSV = $GUESTS.map { ... }
+                    ...
+                  }
+              - pattern: $CSV = $GUESTS.map { ... }
+              - metavariable-regex:
+                  metavariable: $FUNC
+                  regex: (?i)(export|csv|excel|download)
+              - pattern-not-inside: |
+                  // WARNING: Contains health data
+                  ...
+
+          # Pattern 4: Network requests with health data in URL params (major violation)
+          - patterns:
+              - pattern-either:
+                  - pattern: URLRequest(url: URL(string: "...\($GUEST.dietaryRestrictions)...")...)
+                  - pattern: URLRequest(url: URL(string: "...\($GUEST.accessibilityNeeds)...")...)
+              - pattern-not-inside: |
+                  // Encrypted health data transmission
+                  ...
+
+          # Pattern 5: Storing health data in UserDefaults (covered by other rule, but double-check)
+          - patterns:
+              - pattern: |
+                  UserDefaults.standard.set($VALUE, forKey: $KEY)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i).*(dietary|accessibility|health|medical|allergy|disability).*
+
+          # Pattern 6: Third-party API calls with health data
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC(...) {
+                    ...
+                    $CLIENT.$METHOD(..., dietary: $DIETARY, ...)
+                    ...
+                  }
+              - pattern: $CLIENT.$METHOD(..., dietary: $DIETARY, ...)
+              - metavariable-regex:
+                  metavariable: $CLIENT
+                  regex: (?i)(google|sheets|mailchimp|sendgrid|twilio|analytics)

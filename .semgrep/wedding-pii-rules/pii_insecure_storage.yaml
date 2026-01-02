@@ -1,0 +1,121 @@
+rules:
+  - id: wedding-pii-insecure-storage
+    severity: ERROR
+    metadata:
+      author: I Do Blueprint Security Team
+      references:
+        - https://mas.owasp.org/MASTG/iOS/0x06d-Testing-Data-Storage/
+        - https://www.protecto.ai/blog/personal-data-and-pii-a-guide-to-data-privacy-under-gdpr/
+        - https://support.apple.com/guide/security/keychain-data-protection-secb0694df1a/web
+      category: security
+      confidence: HIGH
+      likelihood: MEDIUM
+      impact: CRITICAL
+      technology: [ios, swift, wedding-planning]
+      cwe: CWE-311
+      owasp: A02:2021-Cryptographic Failures
+    message: >-
+      This wedding planning application is storing Personally Identifiable Information (PII)
+      using an insecure storage mechanism that does not guarantee confidentiality.
+
+      DETECTED ISSUES:
+      - Storing guest/vendor PII in UserDefaults (unencrypted, easily accessible)
+      - Storing health-related data (dietary restrictions, accessibility needs) in cleartext
+      - Storing contact information (email, phone, addresses) without encryption
+      - Using NSKeyedArchiver without encryption wrapper
+
+      GDPR VIOLATION:
+      Article 32 requires "appropriate technical measures" to ensure data security. UserDefaults
+      and NSKeyedArchiver store data in cleartext on disk, accessible via:
+      - Jailbroken devices
+      - iTunes/Finder backups (may sync to cloud)
+      - macOS: ~/Library/Containers/com.jessicaclark.I-Do-Blueprint/Data/Library/Preferences/
+
+      HEALTH DATA SENSITIVITY:
+      Under 2024 state health privacy laws, dietary restrictions and accessibility needs qualify
+      as "consumer health data" and require enhanced protection.
+
+      REMEDIATION:
+      ✅ Use Keychain Services for sensitive data (encrypted, protected by OS)
+      ✅ Use encrypted Core Data with NSPersistentCloudKitContainer
+      ✅ For Supabase: Data is encrypted in transit (TLS) and at rest (AES-256)
+      ✅ Local caching: Use RepositoryCache (in-memory only, no disk persistence)
+
+      EXAMPLE - SECURE PATTERNS:
+      ✅ Store session tokens in Keychain (already done via SessionManager)
+      ✅ Fetch PII from Supabase on-demand (don't persist locally)
+      ✅ Cache in RepositoryCache (memory-only, TTL-based expiration)
+      ❌ UserDefaults.standard.set(guest.email, forKey: "guestEmail")
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # Pattern 1: UserDefaults with PII field names
+          - patterns:
+              - pattern: |
+                  UserDefaults.standard.set($VALUE, forKey: $KEY)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i).*(guest|vendor|contact|firstName|lastName|email|phone|address|dietary|accessibility|health|medical|name|contact).*
+
+          # Pattern 2: NSUserDefaults (old API) with PII
+          - patterns:
+              - pattern: |
+                  NSUserDefaults.standardUserDefaults().setObject($VALUE, forKey: $KEY)
+              - metavariable-regex:
+                  metavariable: $KEY
+                  regex: (?i).*(guest|vendor|contact|firstName|lastName|email|phone|address|dietary|accessibility|health|medical).*
+
+          # Pattern 3: NSKeyedArchiver with Guest/Vendor models
+          - patterns:
+              - pattern-either:
+                  - pattern: |
+                      $DATA = try NSKeyedArchiver.archivedData(withRootObject: $OBJ, ...)
+                  - pattern: |
+                      $DATA = NSKeyedArchiver.archivedData(withRootObject: $OBJ)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (guest|vendor|guestList|vendorList|contactInfo)
+
+          # Pattern 4: FileManager writing PII to disk without encryption
+          - patterns:
+              - pattern-inside: |
+                  func $FUNC(...) {
+                    ...
+                    try $DATA.write(to: $URL, ...)
+                    ...
+                  }
+              - pattern: try $DATA.write(to: $URL, ...)
+              - metavariable-regex:
+                  metavariable: $FUNC
+                  regex: (?i).*(guest|vendor|contact|export|save).*
+
+          # Pattern 5: Plist files containing PII
+          - patterns:
+              - pattern-inside: |
+                  $FILEPATH = URL(fileURLWithPath: $X + ... + $TYPE)
+                  ...
+                  $RESULT = $OBJ.$WRITE(to: $FILEPATH, ...)
+              - metavariable-regex:
+                  metavariable: $TYPE
+                  regex: (?i)".*plist"
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (guest|vendor|contact)
+              - metavariable-regex:
+                  metavariable: $WRITE
+                  regex: (?i)(write|writeToFile)
+
+          # Pattern 6: Codable encoding to disk without encryption
+          - patterns:
+              - pattern-inside: |
+                  let encoder = $ENCODER()
+                  ...
+                  let data = try encoder.encode($OBJ)
+                  ...
+                  try data.write(to: $URL)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (guest|vendor|guestList|vendorList)
+              - metavariable-regex:
+                  metavariable: $ENCODER
+                  regex: (JSONEncoder|PropertyListEncoder)

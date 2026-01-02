@@ -1,0 +1,140 @@
+rules:
+  - id: wedding-pii-hardcoded-data
+    severity: ERROR
+    metadata:
+      author: I Do Blueprint Security Team
+      references:
+        - https://owasp.org/www-community/vulnerabilities/Use_of_hard-coded_password
+        - https://cwe.mitre.org/data/definitions/798.html
+        - https://www.protecto.ai/blog/personal-data-and-pii-a-guide-to-data-privacy-under-gdpr/
+      category: security
+      confidence: HIGH
+      likelihood: LOW
+      impact: CRITICAL
+      technology: [ios, swift, wedding-planning]
+      cwe: CWE-798
+      owasp: A07:2021-Identification and Authentication Failures
+    message: >-
+      This wedding planning application contains hardcoded Personally Identifiable Information (PII)
+      in source code. Hardcoded PII is a critical security vulnerability because:
+
+      1. SOURCE CODE EXPOSURE: Code is visible to all developers, in version control (git),
+         and in compiled binaries (reverse engineering)
+      2. IMMUTABILITY: Can't be changed without recompiling and redeploying the app
+      3. GDPR VIOLATION: Article 32 requires "pseudonymisation and encryption of personal data"
+      4. DATA RESIDENCY: PII in code may violate data localization laws (GDPR, CCPA)
+
+      DETECTED PATTERNS:
+      - Hardcoded guest names, emails, or phone numbers (test data left in production code)
+      - Hardcoded vendor contact information
+      - Hardcoded addresses, dietary restrictions, or accessibility needs
+      - Sample/demo data with real-looking PII (even if fake, looks unprofessional)
+
+      COMMON SCENARIOS:
+      ❌ Test data for UI previews: `Guest.makeTest(email: "john.doe@example.com")`
+      ❌ Demo guests: `let sampleGuests = [Guest(firstName: "Jane", ...)]`
+      ❌ Vendor examples: `Vendor(contactName: "John Smith", phone: "555-1234")`
+
+      REMEDIATION:
+      ✅ Use randomized test data generators (Faker, UUID-based names)
+      ✅ Load sample data from secure backend (Supabase test tenant)
+      ✅ Use `.makeTest()` factory methods with random/placeholder values
+      ✅ For UI previews: Use generic placeholders ("Guest 1", "test@example.com")
+      ✅ Add .swiftlint.yml rule to ban hardcoded emails/phones in production code
+
+      EXAMPLE - SECURE TEST DATA:
+      ✅ Guest.makeTest(firstName: "Test", email: "test-\(UUID().uuidString)@example.com")
+      ✅ Vendor.makeTest(contactName: "Sample Vendor \(Int.random(in: 1...100))")
+      ❌ Guest(firstName: "John", lastName: "Doe", email: "john.doe@gmail.com")
+    languages: [swift]
+    patterns:
+      - pattern-either:
+          # Pattern 1: Hardcoded email addresses (realistic looking)
+          - patterns:
+              - pattern-either:
+                  - pattern: $VAR = "=~/.*@.*\..*/"
+                  - pattern: let $VAR: String = "=~/.*@.*\..*/"
+                  - pattern: var $VAR: String = "=~/.*@.*\..*/"
+              - metavariable-regex:
+                  metavariable: $VAR
+                  regex: (?i)(email|contact|userEmail|guestEmail|vendorEmail)
+              - pattern-not: $VAR = "=~/.*@example\.(com|org|net)/"
+              - pattern-not: $VAR = "=~/test.*@.*/"
+
+          # Pattern 2: Hardcoded phone numbers (US format detection)
+          - patterns:
+              - pattern-either:
+                  - pattern: $VAR = "=~/\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/"
+                  - pattern: $VAR = "=~/\(\d{3}\)\s?\d{3}[-.\s]?\d{4}/"
+                  - pattern: let $VAR: String = "=~/\d{10}/"
+              - metavariable-regex:
+                  metavariable: $VAR
+                  regex: (?i)(phone|phoneNumber|contact|mobile|cell)
+              - pattern-not: $VAR = "555-"
+
+          # Pattern 3: Hardcoded names in Guest/Vendor initialization
+          - patterns:
+              - pattern-inside: |
+                  $OBJ(..., firstName: $FIRST, lastName: $LAST, ...)
+              - metavariable-regex:
+                  metavariable: $OBJ
+                  regex: (Guest|Vendor|Contact)
+              - metavariable-regex:
+                  metavariable: $FIRST
+                  regex: "(?!Test|Sample|Demo|Guest|User|Vendor).*"
+              - metavariable-regex:
+                  metavariable: $LAST
+                  regex: "(?!Test|Sample|Demo|Guest|User|Vendor|\\d+).*"
+
+          # Pattern 4: Hardcoded addresses (street addresses)
+          - patterns:
+              - pattern-either:
+                  - pattern: $VAR = "=~/\d+\s+[A-Z].*\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr)/"
+                  - pattern: let $VAR: String = "=~/\d+\s+[A-Z].*/"
+              - metavariable-regex:
+                  metavariable: $VAR
+                  regex: (?i)(address|street|addressLine|location)
+              - pattern-not: $VAR = "=~/.*(Sample|Test|Demo|Example).*/"
+
+          # Pattern 5: Hardcoded dietary restrictions (may reveal health info)
+          - patterns:
+              - pattern-either:
+                  - pattern: $VAR = "=~/.*(peanut|gluten|dairy|shellfish|vegan|vegetarian|kosher|halal|allergy|lactose|celiac).*/"
+                  - pattern: dietaryRestrictions: "..."
+              - metavariable-regex:
+                  metavariable: $VAR
+                  regex: (?i)(dietary|restriction|allergy|food)
+              - pattern-not-inside: |
+                  // Test data
+                  ...
+              - pattern-not-inside: |
+                  #if DEBUG
+                  ...
+                  #endif
+
+          # Pattern 6: Arrays of hardcoded Guest/Vendor objects
+          - patterns:
+              - pattern-inside: |
+                  let $VAR: [$TYPE] = [...]
+              - metavariable-regex:
+                  metavariable: $TYPE
+                  regex: (Guest|Vendor|Contact|Collaborator)
+              - metavariable-regex:
+                  metavariable: $VAR
+                  regex: (?i)(sample|demo|test|default|initial).*
+              - pattern-not-inside: |
+                  #if DEBUG
+                  ...
+                  #endif
+              - pattern-not-inside: |
+                  // Test fixtures
+                  ...
+
+          # Pattern 7: Hardcoded contact info in Vendor model
+          - patterns:
+              - pattern: Vendor(..., contactName: $NAME, email: $EMAIL, phone: $PHONE, ...)
+              - metavariable-regex:
+                  metavariable: $NAME
+                  regex: "(?!Test|Sample|Vendor|Contact).*"
+              - pattern-not-inside: |
+                  .makeTest(...)

@@ -587,29 +587,44 @@ struct BudgetItemCard: View {
         .font(.subheadline)
     }
     
-    /// Tax rate display - shows just the percentage, picker shows full name
+    /// Tax rate picker - uses ID for selection (same approach as full-size view)
+    /// TaxInfo.taxRate is stored as decimal (0.1035), BudgetItem.taxRate is stored as percentage (10.35)
     private var taxRateDisplay: some View {
-        let currentTaxRate = item.taxRate
-        return Picker("", selection: Binding(
-            get: { currentTaxRate },
-            set: { onUpdateItem(item.id, "taxRate", $0) }
+        Picker("", selection: Binding<Int64?>(
+            get: {
+                // Find the closest matching tax rate by comparing stored percentage to TaxInfo decimal * 100
+                let closestRate = taxRates.min(by: {
+                    abs(($0.taxRate * 100) - item.taxRate) < abs(($1.taxRate * 100) - item.taxRate)
+                })
+                return closestRate?.id
+            },
+            set: { newId in
+                // Only update if we have a valid ID and can find the rate
+                guard let newId = newId,
+                      let selectedRate = taxRates.first(where: { $0.id == newId }) else {
+                    return
+                }
+                // Convert decimal to percentage for storage (0.1035 -> 10.35)
+                onUpdateItem(item.id, "taxRate", selectedRate.taxRate * 100)
+            }
         )) {
-            // No Tax option
-            Text("0%").tag(0.0)
-            
-            // Tax rates from settings - multiply by 100 to show as percentage
-            ForEach(taxRates, id: \.id) { rate in
-                // Picker shows full name with percentage
-                Text("\(rate.region) (\(formatTaxRate(rate.taxRate)))")
-                    .tag(rate.taxRate)
+            if taxRates.isEmpty {
+                Text("No tax rates").tag(nil as Int64?)
+            } else {
+                // Show each tax rate with region name and percentage
+                ForEach(taxRates, id: \.id) { rate in
+                    Text("\(rate.region) (\(formatTaxRate(rate.taxRate)))")
+                        .tag(rate.id as Int64?)
+                }
             }
         }
         .pickerStyle(.menu)
         .labelsHidden()
         .frame(maxWidth: .infinity, alignment: .leading)
+        .disabled(taxRates.isEmpty)
     }
     
-    /// Format tax rate as percentage (multiply by 100 since stored as decimal)
+    /// Format tax rate as percentage (multiply by 100 since TaxInfo stores as decimal)
     private func formatTaxRate(_ rate: Double) -> String {
         let percentage = rate * 100
         if percentage == 0 {
