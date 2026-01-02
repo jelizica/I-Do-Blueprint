@@ -184,7 +184,7 @@ struct BudgetDevelopmentView: View {
                 .padding(.horizontal, horizontalPadding)
                 .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
             }
-        }
+            }
         }
         .task {
             await loadInitialData()
