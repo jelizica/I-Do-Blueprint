@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct IndividualPaymentsListView: View {
+    let windowSize: WindowSize
     let filteredPayments: [PaymentSchedule]
     let expenses: [Expense]
     let onUpdate: (PaymentSchedule) -> Void
@@ -27,6 +28,7 @@ struct IndividualPaymentsListView: View {
                     Section(group.key) {
                         ForEach(group.value, id: \.id) { payment in
                             PaymentScheduleRowView(
+                                windowSize: windowSize,
                                 payment: payment,
                                 expense: getExpenseForPayment(payment),
                                 onUpdate: onUpdate,

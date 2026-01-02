@@ -177,6 +177,7 @@ struct PaymentScheduleView: View {
                     )
                 } else {
                     IndividualPaymentsListView(
+                        windowSize: windowSize,
                         filteredPayments: filteredPayments,
                         expenses: budgetStore.expenseStore.expenses,
                         onUpdate: { updatedPayment in

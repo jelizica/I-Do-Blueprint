@@ -4,8 +4,8 @@
 > **Started:** January 2, 2026  
 > **Target Completion:** January 2, 2026  
 > **Total Estimated Time:** 5 hours  
-> **Time Spent:** 2 hours 45 minutes  
-> **Completion:** 50% (4/8 phases)
+> **Time Spent:** 3 hours 15 minutes  
+> **Completion:** 62.5% (5/8 phases)
 
 ---
 
@@ -127,22 +127,33 @@ Implementation of responsive compact window optimization for the Payment Schedul
 
 ---
 
-### ⏳ Phase 5: Compact Payment Row (30 min)
-**Status:** PENDING  
-**Beads Issue:** Not created yet
+### ✅ Phase 5: Compact Payment Row (30 min)
+**Status:** COMPLETE  
+**Beads Issue:** `I Do Blueprint-8vtq` (closed)  
+**Commit:** TBD
 
-**Objectives:**
-- Create PaymentScheduleRowViewV2.swift with WindowSize support
-- Compact mode: Prioritize essential info (name, amount, date, status)
-- Move secondary info to expandable section or reduce density
-- Ensure quick action buttons remain accessible
-- Apply expandable row pattern if needed
+**Completed:**
+- ✅ Updated PaymentScheduleRowView to accept WindowSize parameter
+- ✅ Implemented compact layout: Vertical stack with essential info prioritized
+- ✅ Implemented regular layout: Horizontal row with all details
+- ✅ Compact mode: Vendor name, amount, date, status badge, notes (if present)
+- ✅ Action buttons: Icon-only with .help() tooltips in compact
+- ✅ Currency values with .lineLimit(1).minimumScaleFactor(0.8)
+- ✅ Updated IndividualPaymentsListView to pass windowSize
+- ✅ Updated PaymentScheduleView to pass windowSize
 
-**Files to Create:**
-- `Views/Budget/Components/PaymentScheduleRowViewV2.swift` (~180 lines)
+**Files Modified:**
+- `Views/Budget/Components/PaymentScheduleRowView.swift` (~100 lines changes)
+- `Views/Budget/Components/IndividualPaymentsListView.swift`
+- `Views/Budget/PaymentScheduleView.swift`
 
-**Files to Modify:**
-- `IndividualPaymentsListView.swift` (use V2 component)
+**Layout Patterns:**
+- Compact: Vertical stack, 10px status indicator, smaller fonts
+- Regular: Horizontal row, 12px status indicator, larger fonts
+- Shared components: togglePaidButton, statusBadge
+- Computed properties: vendorName, formattedAmount
+
+**Build Status:** ✅ BUILD SUCCEEDED
 
 ---
 
@@ -201,14 +212,14 @@ Implementation of responsive compact window optimization for the Payment Schedul
 | Phase 2: Unified Header | ✅ Complete | 45 min | 25vc | f0d8e84 |
 | Phase 3: Overview Cards | ✅ Complete | 45 min | maj4 | 22d5c28 |
 | Phase 4: Filter Bar | ✅ Complete | 45 min | u9ig | TBD |
-| Phase 5: Payment Row | ⏳ Pending | 30 min | - | - |
+| Phase 5: Payment Row | ✅ Complete | 30 min | 8vtq | TBD |
 | Phase 6: Plan Cards | ⏳ Pending | 45 min | - | - |
 | Phase 7: Modal Sizing | ⏳ Pending | 30 min | - | - |
 | Phase 8: Polish & Testing | ⏳ Pending | 30 min | - | - |
 
-**Total:** 4/8 phases complete (50%)  
-**Time Spent:** 2 hours 45 minutes / 5 hours estimated  
-**Remaining:** 2 hours 15 minutes
+**Total:** 5/8 phases complete (62.5%)  
+**Time Spent:** 3 hours 15 minutes / 5 hours estimated  
+**Remaining:** 1 hour 45 minutes
 
 ---
 
@@ -288,5 +299,5 @@ No new errors or warnings introduced.
 
 ---
 
-**Last Updated:** January 2, 2026 - After Phase 4 completion  
-**Next Update:** After Phase 5 completion
+**Last Updated:** January 2, 2026 - After Phase 5 completion  
+**Next Update:** After Phase 6 completion
