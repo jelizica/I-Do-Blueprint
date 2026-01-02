@@ -124,22 +124,23 @@ struct BudgetDevelopmentView: View {
                                 .cornerRadius(12)
                             } else {
                                 BudgetItemsTable(
-                                    budgetItems: $budgetItems,
-                                    newCategoryNames: $newCategoryNames,
-                                    newSubcategoryNames: $newSubcategoryNames,
-                                    newEventNames: $newEventNames,
-                                    budgetStore: budgetStore,
-                                    selectedTaxRate: selectedTaxRate,
-                                    currentScenarioId: currentScenarioId,
-                                    coupleId: SessionManager.shared.currentTenantId!.uuidString,
-                                    onAddItem: addBudgetItem,
-                                    onUpdateItem: updateBudgetItem,
-                                    onRemoveItem: removeBudgetItem,
-                                    onAddCategory: handleNewCategoryName,
-                                    onAddSubcategory: handleNewSubcategoryName,
-                                    onAddEvent: handleNewEventName,
-                                    onAddFolder: addFolder,
-                                    responsibleOptions: personOptions
+                                windowSize: windowSize,
+                                budgetItems: $budgetItems,
+                                newCategoryNames: $newCategoryNames,
+                                newSubcategoryNames: $newSubcategoryNames,
+                                newEventNames: $newEventNames,
+                                budgetStore: budgetStore,
+                                selectedTaxRate: selectedTaxRate,
+                                currentScenarioId: currentScenarioId,
+                                coupleId: SessionManager.shared.currentTenantId!.uuidString,
+                                onAddItem: addBudgetItem,
+                                onUpdateItem: updateBudgetItem,
+                                onRemoveItem: removeBudgetItem,
+                                onAddCategory: handleNewCategoryName,
+                                onAddSubcategory: handleNewSubcategoryName,
+                                onAddEvent: handleNewEventName,
+                                onAddFolder: addFolder,
+                                responsibleOptions: personOptions
                                 )
                             }
                         } else {

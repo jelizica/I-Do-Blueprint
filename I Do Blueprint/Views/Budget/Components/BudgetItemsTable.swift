@@ -3,6 +3,8 @@
 import SwiftUI
 
 struct BudgetItemsTable: View {
+    let windowSize: WindowSize
+    
     @Binding var budgetItems: [BudgetItem]
     @Binding var newCategoryNames: [String: String]
     @Binding var newSubcategoryNames: [String: String]
@@ -28,6 +30,35 @@ struct BudgetItemsTable: View {
     @State private var selectedParentFolder: String?
 
     var body: some View {
+        // Use card view for compact mode, table view for regular/large
+        if windowSize == .compact {
+            BudgetItemsCardView(
+                budgetItems: $budgetItems,
+                newCategoryNames: $newCategoryNames,
+                newSubcategoryNames: $newSubcategoryNames,
+                newEventNames: $newEventNames,
+                budgetStore: budgetStore,
+                selectedTaxRate: selectedTaxRate,
+                currentScenarioId: currentScenarioId,
+                coupleId: coupleId,
+                onAddItem: onAddItem,
+                onUpdateItem: onUpdateItem,
+                onRemoveItem: onRemoveItem,
+                onAddCategory: onAddCategory,
+                onAddSubcategory: onAddSubcategory,
+                onAddEvent: onAddEvent,
+                onAddFolder: onAddFolder,
+                responsibleOptions: responsibleOptions
+            )
+        } else {
+            tableView
+        }
+    }
+    
+    // MARK: - Table View (Regular/Large mode)
+    
+    @ViewBuilder
+    private var tableView: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 // Add Folder button
