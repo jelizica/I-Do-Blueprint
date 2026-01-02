@@ -225,9 +225,6 @@ struct PaymentScheduleView: View {
             },
             getVendorName: getVendorNameById
         )
-        #if os(macOS)
-        .frame(minWidth: 1000, maxWidth: 1200, minHeight: 600, maxHeight: 650)
-        #endif
     }
 
     // MARK: - Computed Properties
