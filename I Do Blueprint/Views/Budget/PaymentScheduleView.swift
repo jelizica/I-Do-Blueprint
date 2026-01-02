@@ -9,6 +9,15 @@ import SwiftUI
 
 struct PaymentScheduleView: View {
     @EnvironmentObject var budgetStore: BudgetStoreV2
+    
+    // Support both embedded and standalone usage (dual initializer pattern)
+    var externalCurrentPage: Binding<BudgetPage>?
+    @State private var internalCurrentPage: BudgetPage = .paymentSchedule
+    
+    private var currentPage: Binding<BudgetPage> {
+        externalCurrentPage ?? $internalCurrentPage
+    }
+    
     @State private var paymentPlanSummaries: [PaymentPlanSummary] = []
     @State private var paymentPlanGroups: [PaymentPlanGroup] = []
     @State private var isLoadingPlans = false
@@ -30,6 +39,18 @@ struct PaymentScheduleView: View {
     private var userTimezone: TimeZone {
         DateFormatting.userTimeZone(from: AppStores.shared.settings.settings)
     }
+    
+    // MARK: - Initializers
+    
+    /// Embedded usage (from BudgetDashboardHubView)
+    init(currentPage: Binding<BudgetPage>) {
+        self.externalCurrentPage = currentPage
+    }
+    
+    /// Standalone usage (for previews/testing)
+    init() {
+        self.externalCurrentPage = nil
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -37,12 +58,8 @@ struct PaymentScheduleView: View {
             let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
             let availableWidth = geometry.size.width - (horizontalPadding * 2)
             
-            NavigationStack {
+            VStack(spacing: 0) {
                 contentView(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
-                    .navigationTitle("Payment Schedule")
-                    .toolbar {
-                        toolbarContent
-                    }
                     .sheet(isPresented: $showingAddPayment) {
                         addPaymentSheet
                     }
@@ -66,6 +83,14 @@ struct PaymentScheduleView: View {
     
     private func contentView(windowSize: WindowSize, availableWidth: CGFloat, horizontalPadding: CGFloat) -> some View {
         VStack(spacing: 0) {
+            // Unified header
+            PaymentScheduleUnifiedHeader(
+                windowSize: windowSize,
+                currentPage: currentPage,
+                onAddPayment: { showingAddPayment = true },
+                onRefresh: { await budgetStore.refresh() }
+            )
+            
             headerView(windowSize: windowSize)
             Divider()
             paymentListView(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
@@ -181,29 +206,7 @@ struct PaymentScheduleView: View {
         }
     }
 
-    // MARK: - Toolbar
     
-    @ToolbarContentBuilder
-    private var toolbarContent: some ToolbarContent {
-        ToolbarItem(placement: .primaryAction) {
-            Button(action: {
-                showingAddPayment = true
-            }) {
-                Label("Add Payment", systemImage: "plus")
-            }
-        }
-
-        ToolbarItem(placement: .secondaryAction) {
-            Button(action: {
-                Task {
-                    await budgetStore.refresh()
-                }
-            }) {
-                Image(systemName: "arrow.clockwise")
-            }
-        }
-    }
-
     private var addPaymentSheet: some View {
         AddPaymentScheduleView(
             expenses: budgetStore.expenseStore.expenses.filter { $0.paymentStatus != .paid },

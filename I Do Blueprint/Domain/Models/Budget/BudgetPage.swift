@@ -99,7 +99,7 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         case .expenseCategories:
             ExpenseCategoriesView()
         case .paymentSchedule:
-            PaymentScheduleView()
+            PaymentScheduleView(currentPage: currentPage)
 
         // Income group
         case .moneyTracker:
