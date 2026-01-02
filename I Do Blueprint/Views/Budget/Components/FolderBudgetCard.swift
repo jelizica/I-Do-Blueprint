@@ -48,40 +48,25 @@ struct FolderBudgetCard: View {
                         .font(.system(size: 20))
                         .foregroundColor(.orange)
                     
-                    // Folder icon
-                    Image(systemName: "folder.fill")
-                        .font(.system(size: 18))
-                        .foregroundColor(.orange)
+                    // Folder icon with count badge overlay
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "folder.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(.orange)
+                        
+                        // Badge with count
+                        Text("\(childCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(4)
+                            .background(Circle().fill(Color.orange))
+                            .offset(x: 8, y: -8)
+                    }
                     
                     Spacer()
-                    
-                    // FOLDER badge
-                    Text("FOLDER")
-                        .font(.caption2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            LinearGradient(
-                                colors: [Color.orange, Color.orange.opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .cornerRadius(6)
-                    
-                    // Item count badge
-                    Text("\(childCount) items")
-                        .font(.caption2)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color(NSColor.controlBackgroundColor))
-                        .cornerRadius(4)
                 }
-                .padding(.horizontal, Spacing.md)
-                .padding(.top, Spacing.md)
+                .padding(.horizontal, Spacing.sm)
+                .padding(.top, Spacing.xs)
                 
                 // Circular progress indicator
                 ZStack {
@@ -133,6 +118,8 @@ struct FolderBudgetCard: View {
                         Spacer()
                         Text("$\(budgeted, specifier: "%.2f")")
                             .font(.system(size: 14, weight: .medium))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     
                     HStack {
@@ -143,6 +130,8 @@ struct FolderBudgetCard: View {
                         Text("$\(effectiveSpent, specifier: "%.2f")")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(progressColor)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                     
                     Divider()
@@ -156,6 +145,8 @@ struct FolderBudgetCard: View {
                         Text("$\(remaining, specifier: "%.2f")")
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(remaining >= 0 ? .green : .red)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
                     }
                 }
                 .padding(.horizontal, Spacing.md)

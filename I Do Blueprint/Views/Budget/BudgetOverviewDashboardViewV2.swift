@@ -11,6 +11,9 @@ import SwiftUI
 @MainActor
 struct BudgetOverviewDashboardViewV2: View {
     @EnvironmentObject var budgetStore: BudgetStoreV2
+    
+    // Navigation state - receives binding from parent (BudgetDashboardHubView)
+    @Binding var currentPage: BudgetPage
 
     // State for scenario selection
     @State private var allScenarios: [SavedScenario] = []
@@ -51,19 +54,25 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header section
-            headerSection
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
+            
+            VStack(spacing: 0) {
+                // Header section
+                headerSection(windowSize: windowSize)
 
-            if loading {
-                loadingView
-            } else if let error {
-                errorView(error)
-            } else {
-                overviewContent
+                if loading {
+                    loadingView
+                } else if let error {
+                    errorView(error)
+                } else {
+                    overviewContent(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
+                }
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
             logger.info("Budget Overview: View appeared, current tenant: \(SessionManager.shared.getTenantId()?.uuidString ?? "none")")
             Task {
@@ -166,20 +175,19 @@ struct BudgetOverviewDashboardViewV2: View {
 
     // MARK: - View Components
 
-    private var headerSection: some View {
-        BudgetOverviewHeader(
+    private func headerSection(windowSize: WindowSize) -> some View {
+        BudgetOverviewUnifiedHeader(
+            windowSize: windowSize,
+            currentPage: $currentPage,
             selectedScenarioId: $selectedScenarioId,
             searchQuery: $searchQuery,
             viewMode: $viewMode,
             allScenarios: allScenarios,
             currentScenario: currentScenario,
             primaryScenario: primaryScenario,
-            isRefreshing: isRefreshing,
             loading: loading,
-            activeFilters: activeFilters,
-            onRefresh: {
-                Task { await refreshData() }
-            })
+            activeFilters: activeFilters
+        )
     }
 
     private var loadingView: some View {
@@ -217,32 +225,35 @@ struct BudgetOverviewDashboardViewV2: View {
         .padding()
     }
 
-    private var overviewContent: some View {
+    private func overviewContent(windowSize: WindowSize, availableWidth: CGFloat, horizontalPadding: CGFloat) -> some View {
         ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: 24) {
+            VStack(spacing: windowSize == .compact ? Spacing.lg : 24) {
                 // Summary cards
-                summaryCardsSection
+                summaryCardsSection(windowSize: windowSize)
 
                 // Budget items grid
-                budgetItemsSection
+                budgetItemsSection(windowSize: windowSize)
             }
-            .padding(.horizontal, Spacing.xl)
-            .padding(.vertical, Spacing.lg)
-            .frame(maxWidth: .infinity)
+            // ⭐ CRITICAL: Constrain to available width to prevent edge clipping
+            .frame(width: availableWidth)
+            .padding(.horizontal, horizontalPadding)
+            .padding(.vertical, windowSize == .compact ? Spacing.md : Spacing.lg)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var summaryCardsSection: some View {
+    private func summaryCardsSection(windowSize: WindowSize) -> some View {
         BudgetOverviewSummaryCards(
+            windowSize: windowSize,
             totalBudget: totalBudget,
             totalExpenses: totalExpenses,
             totalRemaining: totalRemaining,
             itemCount: filteredBudgetItems.count)
     }
 
-    private var budgetItemsSection: some View {
+    private func budgetItemsSection(windowSize: WindowSize) -> some View {
         BudgetOverviewItemsSection(
+            windowSize: windowSize,
             filteredBudgetItems: filteredBudgetItems,
             budgetItems: budgetItems,
             expandedFolderIds: $expandedFolderIds,
@@ -468,6 +479,8 @@ struct BudgetOverviewDashboardViewV2: View {
 }
 
 #Preview {
-    BudgetOverviewDashboardViewV2()
+    @Previewable @State var currentPage: BudgetPage = .budgetOverview
+    
+    BudgetOverviewDashboardViewV2(currentPage: $currentPage)
         .environmentObject(BudgetStoreV2())
 }

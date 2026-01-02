@@ -73,7 +73,7 @@ enum BudgetPage: String, CaseIterable, Identifiable {
     }
 
     @ViewBuilder
-    var view: some View {
+    func view(currentPage: Binding<BudgetPage>) -> some View {
         switch self {
         // Hub
         case .hub:
@@ -81,9 +81,9 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         
         // Planning & Analysis group
         case .budgetOverview:
-            BudgetOverviewDashboardViewV2()
+            BudgetOverviewDashboardViewV2(currentPage: currentPage)
         case .budgetBuilder:
-            BudgetDevelopmentView()
+            BudgetDevelopmentView(currentPage: currentPage)
         case .analytics:
             BudgetAnalyticsView()
         case .cashFlow:
@@ -93,7 +93,7 @@ enum BudgetPage: String, CaseIterable, Identifiable {
 
         // Expenses group
         case .expenseTracker:
-            ExpenseTrackerView()
+            ExpenseTrackerView(currentPage: currentPage)
         case .expenseReports:
             ExpenseReportsView()
         case .expenseCategories:

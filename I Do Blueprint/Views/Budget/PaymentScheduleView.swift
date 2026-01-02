@@ -32,41 +32,47 @@ struct PaymentScheduleView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            contentView
-                .navigationTitle("Payment Schedule")
-                .toolbar {
-                    toolbarContent
-                }
-                .sheet(isPresented: $showingAddPayment) {
-                    addPaymentSheet
-                }
-                .alert("Error Loading Payment Plans", isPresented: $showErrorAlert) {
-                    Button("OK") {
-                        loadError = nil
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
+            
+            NavigationStack {
+                contentView(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
+                    .navigationTitle("Payment Schedule")
+                    .toolbar {
+                        toolbarContent
                     }
-                } message: {
-                    if let loadError {
-                        Text(loadError)
+                    .sheet(isPresented: $showingAddPayment) {
+                        addPaymentSheet
                     }
-                }
-        }
-        .task {
-            await budgetStore.loadBudgetData(force: true)
+                    .alert("Error Loading Payment Plans", isPresented: $showErrorAlert) {
+                        Button("OK") {
+                            loadError = nil
+                        }
+                    } message: {
+                        if let loadError {
+                            Text(loadError)
+                        }
+                    }
+            }
+            .task {
+                await budgetStore.loadBudgetData(force: true)
+            }
         }
     }
 
     // MARK: - Content Views
     
-    private var contentView: some View {
+    private func contentView(windowSize: WindowSize, availableWidth: CGFloat, horizontalPadding: CGFloat) -> some View {
         VStack(spacing: 0) {
-            headerView
+            headerView(windowSize: windowSize)
             Divider()
-            paymentListView
+            paymentListView(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
         }
     }
 
-    private var headerView: some View {
+    private func headerView(windowSize: WindowSize) -> some View {
         VStack(spacing: 0) {
             PaymentSummaryHeaderView(
                 totalUpcoming: upcomingPaymentsTotal,
@@ -96,76 +102,82 @@ struct PaymentScheduleView: View {
     }
 
     @ViewBuilder
-    private var paymentListView: some View {
-        if showPlanView {
-            PaymentPlansListView(
-                isLoadingPlans: isLoadingPlans,
-                loadError: loadError,
-                groupingStrategy: groupingStrategy,
-                paymentPlanSummaries: paymentPlanSummaries,
-                paymentPlanGroups: paymentPlanGroups,
-                paymentSchedules: budgetStore.paymentSchedules,
-                expandedPlanIds: expandedPlanIds,
-                onRetry: {
-                    Task {
-                        await loadPaymentPlanSummaries()
-                    }
-                },
-                onToggleExpansion: toggleExpansion,
-                onTogglePaidStatus: { schedule in
-                    Task {
-                        do {
-                            try await budgetStore.payments.updatePayment(schedule)
-                        } catch {
-                            AppLogger.ui.error("Failed to update payment status", error: error)
-                        }
-                    }
-                },
-                onUpdate: { schedule in
-                    Task {
-                        do {
-                            try await budgetStore.payments.updatePayment(schedule)
-                        } catch {
-                            AppLogger.ui.error("Failed to update payment", error: error)
-                        }
-                    }
-                },
-                onDelete: { schedule in
-                    Task {
-                        do {
-                            try await budgetStore.payments.deletePayment(id: schedule.id)
-                        } catch {
-                            AppLogger.ui.error("Failed to delete payment", error: error)
-                        }
-                    }
-                },
-                getVendorName: getVendorNameById
-            )
-        } else {
-            IndividualPaymentsListView(
-                filteredPayments: filteredPayments,
-                expenses: budgetStore.expenseStore.expenses,
-                onUpdate: { updatedPayment in
-                    Task {
-                        do {
-                            try await budgetStore.payments.updatePayment(updatedPayment)
-                        } catch {
-                            AppLogger.ui.error("Failed to update payment", error: error)
-                        }
-                    }
-                },
-                onDelete: { paymentToDelete in
-                    Task {
-                        do {
-                            try await budgetStore.payments.deletePayment(id: paymentToDelete.id)
-                        } catch {
-                            AppLogger.ui.error("Failed to delete payment", error: error)
-                        }
-                    }
-                },
-                getVendorName: getVendorNameById,
-                userTimezone: userTimezone
-            )
+    private func paymentListView(windowSize: WindowSize, availableWidth: CGFloat, horizontalPadding: CGFloat) -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                if showPlanView {
+                    PaymentPlansListView(
+                        isLoadingPlans: isLoadingPlans,
+                        loadError: loadError,
+                        groupingStrategy: groupingStrategy,
+                        paymentPlanSummaries: paymentPlanSummaries,
+                        paymentPlanGroups: paymentPlanGroups,
+                        paymentSchedules: budgetStore.paymentSchedules,
+                        expandedPlanIds: expandedPlanIds,
+                        onRetry: {
+                            Task {
+                                await loadPaymentPlanSummaries()
+                            }
+                        },
+                        onToggleExpansion: toggleExpansion,
+                        onTogglePaidStatus: { schedule in
+                            Task {
+                                do {
+                                    try await budgetStore.payments.updatePayment(schedule)
+                                } catch {
+                                    AppLogger.ui.error("Failed to update payment status", error: error)
+                                }
+                            }
+                        },
+                        onUpdate: { schedule in
+                            Task {
+                                do {
+                                    try await budgetStore.payments.updatePayment(schedule)
+                                } catch {
+                                    AppLogger.ui.error("Failed to update payment", error: error)
+                                }
+                            }
+                        },
+                        onDelete: { schedule in
+                            Task {
+                                do {
+                                    try await budgetStore.payments.deletePayment(id: schedule.id)
+                                } catch {
+                                    AppLogger.ui.error("Failed to delete payment", error: error)
+                                }
+                            }
+                        },
+                        getVendorName: getVendorNameById
+                    )
+                } else {
+                    IndividualPaymentsListView(
+                        filteredPayments: filteredPayments,
+                        expenses: budgetStore.expenseStore.expenses,
+                        onUpdate: { updatedPayment in
+                            Task {
+                                do {
+                                    try await budgetStore.payments.updatePayment(updatedPayment)
+                                } catch {
+                                    AppLogger.ui.error("Failed to update payment", error: error)
+                                }
+                            }
+                        },
+                        onDelete: { paymentToDelete in
+                            Task {
+                                do {
+                                    try await budgetStore.payments.deletePayment(id: paymentToDelete.id)
+                                } catch {
+                                    AppLogger.ui.error("Failed to delete payment", error: error)
+                                }
+                            }
+                        },
+                        getVendorName: getVendorNameById,
+                        userTimezone: userTimezone
+                    )
+                }
+            }
+            .frame(width: availableWidth)
+            .padding(.horizontal, horizontalPadding)
         }
     }
 

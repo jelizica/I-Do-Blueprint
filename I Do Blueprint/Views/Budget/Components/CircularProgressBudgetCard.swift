@@ -124,35 +124,35 @@ struct CircularProgressBudgetCard: View {
                 .buttonStyle(.plain)
             }
 
-            // Circular progress indicator
+            // Circular progress indicator (responsive size)
             HStack {
                 Spacer()
 
                 ZStack {
                     // Background circle
                     Circle()
-                        .stroke(categoryColor.opacity(0.2), lineWidth: 8)
-                        .frame(width: 100, height: 100)
+                        .stroke(categoryColor.opacity(0.2), lineWidth: 6)
+                        .frame(width: 80, height: 80)
 
                     // Progress circle
                     Circle()
                         .trim(from: 0, to: min(progress, 1.0))
                         .stroke(
                             categoryColor,
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
                         )
-                        .frame(width: 100, height: 100)
+                        .frame(width: 80, height: 80)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut(duration: 0.8), value: progress)
 
                     // Center text
                     VStack(spacing: 2) {
                         Text("\(Int(progressPercentage))%")
-                            .font(.system(size: 20, weight: .bold, design: .rounded))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
                             .foregroundColor(.primary)
 
                         Text("spent")
-                            .font(.caption2)
+                            .font(.system(size: 9))
                             .foregroundColor(.secondary)
                     }
                 }
@@ -179,6 +179,8 @@ struct CircularProgressBudgetCard: View {
                     Text(formatCurrency(item.budgeted))
                         .font(.subheadline)
                         .fontWeight(.semibold)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
 
                 HStack {
@@ -191,6 +193,8 @@ struct CircularProgressBudgetCard: View {
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(categoryColor)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
                 }
             }
 
@@ -274,14 +278,14 @@ struct CircularProgressBudgetCard: View {
             }
             .frame(minHeight: 60)
         }
-        .padding(Spacing.lg)
-        .frame(minHeight: 380)
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
         .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(16)
+        .cornerRadius(12)
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 12)
                 .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
-        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
     }
 
     private func formatCurrency(_ amount: Double) -> String {

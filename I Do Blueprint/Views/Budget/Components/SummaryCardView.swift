@@ -14,10 +14,47 @@ struct SummaryCardView: View {
     let icon: String
     let color: Color
     var formatAsCurrency: Bool = true
+    var compact: Bool = false
 
     @State private var isHovered = false
 
     var body: some View {
+        if compact {
+            compactLayout
+        } else {
+            regularLayout
+        }
+    }
+    
+    // MARK: - Compact Layout
+    
+    private var compactLayout: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .foregroundColor(color)
+                Spacer()
+            }
+            
+            Text(formatAsCurrency ? formatCurrency(value) : String(format: "%.0f", value))
+                .font(Typography.title3)
+                .fontWeight(.bold)
+            
+            Text(title)
+                .font(Typography.caption)
+                .foregroundColor(.secondary)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.md)
+        .background(AppColors.cardBackground)
+        .cornerRadius(CornerRadius.md)
+        .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+    }
+    
+    // MARK: - Regular Layout
+    
+    private var regularLayout: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 // Enhanced icon with background circle

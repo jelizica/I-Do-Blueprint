@@ -5,6 +5,7 @@ struct ExpenseTrackerEditView: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var budgetStore: BudgetStoreV2
     @EnvironmentObject var settingsStore: SettingsStoreV2
+    @EnvironmentObject private var coordinator: AppCoordinator
 
     let expense: Expense
 
@@ -52,6 +53,23 @@ struct ExpenseTrackerEditView: View {
         (.overdue, "Overdue"),
         (.cancelled, "Cancelled")
     ]
+    
+    // MARK: - Size Constants (from Guest/Vendor modal pattern)
+    
+    private let minWidth: CGFloat = 400
+    private let maxWidth: CGFloat = 700
+    private let minHeight: CGFloat = 350
+    private let maxHeight: CGFloat = 850
+    private let windowChromeBuffer: CGFloat = 40
+    
+    /// Calculate dynamic size based on parent window size from coordinator
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        // Use 60% of parent width and 75% of parent height (minus chrome buffer), clamped to min/max bounds
+        let targetWidth = min(maxWidth, max(minWidth, parentSize.width * 0.6))
+        let targetHeight = min(maxHeight, max(minHeight, parentSize.height * 0.75 - windowChromeBuffer))
+        return CGSize(width: targetWidth, height: targetHeight)
+    }
 
     var body: some View {
         NavigationStack {
@@ -135,6 +153,7 @@ struct ExpenseTrackerEditView: View {
                 await loadVendors()
             }
         }
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
     }
 
     private func loadVendors() async {
