@@ -240,6 +240,99 @@ No new errors or warnings introduced.
 
 ---
 
-**Last Updated:** January 2, 2026 - IMPLEMENTATION COMPLETE  
-**Status:** ✅ All 4 phases completed successfully  
+**Last Updated:** January 2, 2026 - IMPLEMENTATION COMPLETE + NITPICK FIXES  
+**Status:** ✅ All 4 phases + 3 nitpick fixes completed successfully  
 **Next Steps:** None - refinement complete
+
+---
+
+## Nitpick Fixes (Post-Implementation)
+
+### ✅ Bug 1: Overdue Badge Tab Switching (I Do Blueprint-u3o1)
+**Status:** COMPLETE | **Commit:** `8f340e3`
+
+**Problem:** Clicking overdue badge while on Plans tab applied filter but didn't show results (Plans view doesn't display filtered data).
+
+**Solution:**
+- Added `showPlanView` binding to `PaymentScheduleStaticHeader`
+- Updated `onOverdueClick` handler to switch to Individual tab before applying filter
+- Now: Click overdue badge → switches to Individual tab → applies overdue filter → shows results
+
+**Files Modified:**
+- `PaymentScheduleStaticHeader.swift` (added binding parameter)
+- `PaymentScheduleView.swift` (updated handler logic)
+
+---
+
+### ✅ Bug 2: Modal Proportional Sizing (I Do Blueprint-f9kf)
+**Status:** COMPLETE | **Commit:** `8f340e3`
+
+**Problem:** AddPaymentScheduleView modal didn't adapt to window size in compact view (remained full-size).
+
+**Solution:**
+- Wrapped modal in `GeometryReader`
+- Applied Proportional Modal Sizing Pattern:
+  - **Compact (640px):** 90% width, 85% height
+  - **Regular (900px):** 70% width, 80% height
+  - **Large (1200px+):** 60% width, 75% height
+- Modal now properly adapts to window resizing
+
+**Files Modified:**
+- `AddPaymentScheduleView.swift` (~20 lines added)
+
+**Reference:** Proportional Modal Sizing Pattern (architecture/patterns/component-patterns in Basic Memory)
+
+---
+
+### ✅ Bug 3: Summary Cards Compact Layout (I Do Blueprint-rxrg)
+**Status:** COMPLETE | **Commit:** `8f340e3`
+
+**Problem:** Summary cards matched Budget Overview in full-screen but not in compact view. Cards should stack vertically with full width in compact.
+
+**Solution:**
+- Changed compact layout from `LazyVGrid` to `VStack`
+- Cards now stack vertically with `.frame(maxWidth: .infinity)` in compact
+- Regular/Large views unchanged (still use grid layout)
+- Now matches Budget Overview and Budget Development compact pattern
+
+**Files Modified:**
+- `PaymentSummaryHeaderViewV2.swift` (~30 lines changed)
+
+**Visual Consistency:** Now matches Budget Overview compact card layout exactly
+
+---
+
+## Summary of All Work
+
+| Phase/Fix | Status | Time | Beads | Commit |
+|-----------|--------|------|-------|--------|
+| Phase 1: Fix Missing Content | ✅ Complete | 1 hour | t5p5 | 03e4eb4 |
+| Phase 2: Resize Overview Cards | ✅ Complete | 45 min | py0m | 0bc948e |
+| Phase 3: Static Header Bar | ✅ Complete | 1.5 hours | 05to | e03d6f0 |
+| Phase 4: Optimistic Updates | ✅ Complete | 30 min | j53p | 5a2f8be |
+| **Nitpick 1:** Overdue Badge Tab Switch | ✅ Complete | 15 min | u3o1 | 8f340e3 |
+| **Nitpick 2:** Modal Proportional Sizing | ✅ Complete | 30 min | f9kf | 8f340e3 |
+| **Nitpick 3:** Summary Cards Compact | ✅ Complete | 30 min | rxrg | 8f340e3 |
+
+**Total:** 7/7 items complete (100%)  
+**Total Time:** 5 hours 30 minutes  
+**Remaining:** 0 hours
+
+---
+
+## Future Work (P3 - Not Blocking)
+
+### Export Functionality (I Do Blueprint-hwtn)
+**Priority:** P3 (nice-to-have)  
+**Estimated Time:** 2-3 hours
+
+**Scope:**
+- Export payment schedules to CSV/Excel/Google Sheets
+- Support filtering (export only visible/filtered payments)
+- Follow existing export patterns from Guest/Vendor modules
+
+**Reference Implementations:**
+- `Services/Export/GuestExportService.swift`
+- `Services/Export/VendorExportService.swift`
+
+**Status:** Beads issue created with comprehensive description. Not blocking current work.
