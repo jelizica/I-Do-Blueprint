@@ -23,6 +23,7 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
     var confidenceLevel: Double
     var lockedAllocation: Bool
     var description: String?
+    var color: String // Stored color (hex code like "#3B82F6")
     var createdAt: Date
     var updatedAt: Date?
 
@@ -33,24 +34,6 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         case 2: .medium
         default: .low
         }
-    }
-
-    var color: String {
-        // Generate a color based on category name hash for consistency
-        let colors = [
-            "#3B82F6",
-            "#10B981",
-            "#8B5CF6",
-            "#F59E0B",
-            "#EF4444",
-            "#06B6D4",
-            "#84CC16",
-            "#F97316",
-            "#EC4899",
-            "#6366F1"
-        ]
-        let index = abs(categoryName.hashValue) % colors.count
-        return colors[index]
     }
 
     var remainingAmount: Double {
@@ -82,6 +65,7 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         confidenceLevel: Double,
         lockedAllocation: Bool,
         description: String? = nil,
+        color: String = "#3B82F6", // Default to blue
         createdAt: Date,
         updatedAt: Date? = nil
     ) {
@@ -99,6 +83,7 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         self.confidenceLevel = confidenceLevel
         self.lockedAllocation = lockedAllocation
         self.description = description
+        self.color = color
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -121,6 +106,7 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         confidenceLevel = try container.decode(Double.self, forKey: .confidenceLevel)
         lockedAllocation = try container.decode(Bool.self, forKey: .lockedAllocation)
         description = try container.decodeIfPresent(String.self, forKey: .description)
+        color = try container.decodeIfPresent(String.self, forKey: .color) ?? "#3B82F6" // Default to blue if missing
 
         // Custom date decoding using shared DateDecodingHelpers (refactored from duplicated code)
         createdAt = try DateDecodingHelpers.decodeDate(from: container, forKey: .createdAt)
@@ -142,6 +128,7 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         case confidenceLevel = "confidence_level"
         case lockedAllocation = "locked_allocation"
         case description = "description"
+        case color = "color"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }

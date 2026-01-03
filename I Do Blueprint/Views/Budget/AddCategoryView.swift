@@ -26,6 +26,7 @@ struct AddCategoryView: View {
     private let minHeight: CGFloat = 400
     private let maxHeight: CGFloat = 700
     private let windowChromeBuffer: CGFloat = 40
+    private let compactHeightThreshold: CGFloat = 550
     
     private var dynamicSize: CGSize {
         let parentSize = coordinator.parentWindowSize
@@ -33,6 +34,10 @@ struct AddCategoryView: View {
         let targetWidth = min(maxWidth, max(minWidth, parentSize.width * 0.6))
         let targetHeight = min(maxHeight, max(minHeight, parentSize.height * 0.75 - windowChromeBuffer))
         return CGSize(width: targetWidth, height: targetHeight)
+    }
+    
+    private var isCompactMode: Bool {
+        dynamicSize.height < compactHeightThreshold
     }
 
     private let predefinedColors: [Color] = [
@@ -73,6 +78,8 @@ struct AddCategoryView: View {
                     predefinedColors: predefinedColors
                 )
             }
+            .formStyle(.grouped) // Match AddExpenseView style
+            .padding(.horizontal, isCompactMode ? Spacing.md : Spacing.lg) // Add horizontal padding
             .navigationTitle("Add Category")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -111,6 +118,7 @@ struct AddCategoryView: View {
             confidenceLevel: 0.8,
             lockedAllocation: false,
             description: description.isEmpty ? nil : description,
+            color: selectedColor.hexString, // Use selected color
             createdAt: Date(),
             updatedAt: nil)
 

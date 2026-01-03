@@ -44,7 +44,7 @@ struct ExpenseCategoriesStaticHeader: View {
             // Row 1: Search bar (full-width)
             searchField
             
-            // Row 2: Hierarchy counts + Over-budget alert + Add button
+            // Row 2: Hierarchy counts + Over-budget alert/success + Add button
             HStack(spacing: Spacing.sm) {
                 hierarchyCountsCompact
                 
@@ -52,6 +52,9 @@ struct ExpenseCategoriesStaticHeader: View {
                 
                 if overBudgetCount > 0 {
                     overBudgetBadge
+                } else {
+                    // Show success indicator in compact mode too
+                    successIndicatorCompact
                 }
                 
                 addButton
@@ -227,6 +230,40 @@ struct ExpenseCategoriesStaticHeader: View {
             RoundedRectangle(cornerRadius: 8)
                 .fill(AppColors.Budget.underBudget.opacity(0.1))
         )
+    }
+    
+    // MARK: - Success Indicator (Compact)
+    
+    private var successIndicatorCompact: some View {
+        GeometryReader { geometry in
+            // Show full text if width > 500px, otherwise just icon
+            if geometry.size.width > 500 {
+                HStack(spacing: 4) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.caption2)
+                    Text("All on track")
+                        .font(.caption2.weight(.medium))
+                }
+                .foregroundColor(AppColors.Budget.underBudget)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(AppColors.Budget.underBudget.opacity(0.1))
+                )
+            } else {
+                // Just icon for very narrow widths
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.caption)
+                    .foregroundColor(AppColors.Budget.underBudget)
+                    .padding(4)
+                    .background(
+                        Circle()
+                            .fill(AppColors.Budget.underBudget.opacity(0.1))
+                    )
+            }
+        }
+        .frame(height: 24) // Fixed height to prevent layout shifts
     }
     
     // MARK: - Add Button
