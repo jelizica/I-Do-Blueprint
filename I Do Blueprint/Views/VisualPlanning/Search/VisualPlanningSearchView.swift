@@ -189,7 +189,7 @@ struct VisualPlanningSearchView: View {
                         }
                         .padding(.horizontal, Spacing.md)
                         .padding(.vertical, Spacing.sm)
-                        .background(AppColors.textSecondary.opacity(0.1))
+                        .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
                         .cornerRadius(16)
                     }
                     .buttonStyle(.plain)
