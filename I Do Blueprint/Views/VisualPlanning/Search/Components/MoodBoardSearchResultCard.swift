@@ -81,7 +81,7 @@ struct MoodBoardSearchResultCard: View {
                                         .font(.caption2)
                                         .padding(.horizontal, Spacing.sm)
                                         .padding(.vertical, Spacing.xxs)
-                                        .background(AppColors.textSecondary.opacity(0.15))
+                                        .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
                                         .cornerRadius(4)
                                 }
 
@@ -107,7 +107,7 @@ struct MoodBoardSearchResultCard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isHovered ? Color.blue : Color.clear, lineWidth: 2)
             )
-            .shadow(color: AppColors.textPrimary.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
+            .shadow(color: SemanticColors.textPrimary.opacity(isHovered ? Opacity.subtle : Opacity.verySubtle), radius: isHovered ? 8 : 4, y: 2)
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
@@ -150,7 +150,7 @@ struct MoodBoardSearchResultCard: View {
 
             // Overlay gradient for better text visibility
             LinearGradient(
-                colors: [AppColors.textPrimary.opacity(0.3), Color.clear],
+                colors: [SemanticColors.textPrimary.opacity(Opacity.light), Color.clear],
                 startPoint: .bottom,
                 endPoint: .center
             )
@@ -174,9 +174,9 @@ struct MoodBoardSearchResultCard: View {
                             Text("+\(moodBoard.elements.count - 4)")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                                 .padding(Spacing.sm)
-                                .background(AppColors.textPrimary.opacity(0.6))
+                                .background(SemanticColors.textPrimary.opacity(Opacity.medium))
                                 .cornerRadius(8)
                                 .padding(Spacing.sm)
                         }
@@ -223,7 +223,7 @@ struct MoodBoardSearchResultCard: View {
                     .font(.caption)
                     .lineLimit(2)
                     .frame(width: 60, height: 60)
-                    .background(AppColors.textPrimary.opacity(0.9))
+                    .background(SemanticColors.textPrimary.opacity(Opacity.strong))
                     .cornerRadius(8)
             )
         case .color:
@@ -249,11 +249,11 @@ struct MoodBoardSearchResultCard: View {
 
     private var elementPlaceholder: some View {
         RoundedRectangle(cornerRadius: 8)
-            .fill(AppColors.textSecondary.opacity(0.3))
+            .fill(SemanticColors.textSecondary.opacity(Opacity.light))
             .frame(width: 60, height: 60)
             .overlay(
                 Image(systemName: "photo")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             )
     }
 
@@ -268,7 +268,7 @@ struct MoodBoardSearchResultCard: View {
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.textSecondary.opacity(0.1))
+        .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
     }
 }
 
