@@ -233,6 +233,40 @@
 
 ---
 
+### ✅ Phase 11: Additional UI Fixes (COMPLETE)
+**Objective:** Address additional user feedback from testing
+
+**Issues Fixed:**
+1. ✅ Checkmark indicator sizing and position in compact mode
+   - Removed `GeometryReader` (was causing layout issues)
+   - Now uses same styling as Add button (same size, padding)
+   - Added `overBudgetBadgeCompact` for consistent compact mode styling
+   - Both indicators positioned left of Add button
+
+2. ✅ Total Allocated calculation double-counting
+   - Fixed to only sum leaf categories (categories without children)
+   - Parent folders are aggregates of subcategories, so excluded
+   - Optimized algorithm from O(n²) to O(n) using Set lookup
+   - Added `categoriesWithChildren` computed property for efficiency
+
+3. ⏳ App crash when adding category (investigation)
+   - Changed `.task` to use `force: false` (use cached data)
+   - Optimistic updates from CategoryStoreV2 should still work
+   - Need user testing to confirm fix
+
+**Files Modified:**
+- ✅ `ExpenseCategoriesStaticHeader.swift` - New compact indicators
+- ✅ `ExpenseCategoriesView.swift` - Fixed totalAllocated, optimized computed properties
+
+**Build Status:** ✅ BUILD SUCCEEDED
+
+**Commits:** 
+- `48a8f8d` - Fix UI issues and potential crash
+
+**Beads Issue:** I Do Blueprint-r3ce (IN PROGRESS - awaiting user testing)
+
+---
+
 ## Testing Checklist
 
 ### Window Size Testing
