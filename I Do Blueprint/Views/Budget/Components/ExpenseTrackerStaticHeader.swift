@@ -134,23 +134,23 @@ struct ExpenseTrackerStaticHeader: View {
                     // Enhanced icon with background
                     ZStack {
                         Circle()
-                            .fill(Color.pink.opacity(0.15))
+                            .fill(SemanticColors.primaryAction.opacity(Opacity.light))
                             .frame(width: 36, height: 36)
-                        
+
                         Image(systemName: "heart.circle.fill")
-                            .foregroundColor(.pink)
+                            .foregroundColor(SemanticColors.primaryAction)
                             .font(.system(size: 18, weight: .medium))
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text(weddingCountdownText(days: days))
                             .font(.headline)
-                            .foregroundColor(AppColors.textPrimary)
-                        
+                            .foregroundColor(SemanticColors.textPrimary)
+
                         if days > 0 {
                             Text("until your big day")
                                 .font(.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                     }
                 }
@@ -158,17 +158,17 @@ struct ExpenseTrackerStaticHeader: View {
                 HStack(spacing: 10) {
                     ZStack {
                         Circle()
-                            .fill(Color.orange.opacity(0.15))
+                            .fill(SemanticColors.statusWarning.opacity(Opacity.light))
                             .frame(width: 36, height: 36)
-                        
+
                         Image(systemName: "calendar.badge.exclamationmark")
-                            .foregroundColor(.orange)
+                            .foregroundColor(SemanticColors.statusWarning)
                             .font(.system(size: 16, weight: .medium))
                     }
                     
                     Text("Wedding Date Not Set")
                         .font(.subheadline)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
         }
@@ -267,15 +267,15 @@ struct ExpenseTrackerStaticHeader: View {
             HStack(alignment: .firstTextBaseline, spacing: 6) {
                 Text(formatCurrency(totalSpent))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(AppColors.textPrimary)
-                
+                    .foregroundColor(SemanticColors.textPrimary)
+
                 Text("/")
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(AppColors.textSecondary)
-                
+                    .foregroundColor(SemanticColors.textSecondary)
+
                 Text(formatCurrency(totalBudget))
                     .font(.system(size: 18, weight: .medium, design: .rounded))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             // Enhanced progress bar
@@ -307,7 +307,7 @@ struct ExpenseTrackerStaticHeader: View {
             // Percentage text
             Text("\(Int(spentPercentage))% of budget spent")
                 .font(.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
     }
     
@@ -337,17 +337,17 @@ struct ExpenseTrackerStaticHeader: View {
                 // Badge with count
                 ZStack {
                     Circle()
-                        .fill(Color.red)
+                        .fill(SemanticColors.statusWarning)
                         .frame(width: 32, height: 32)
-                    
+
                     Text("\(overdueCount)")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
                 }
-                
+
                 Text("overdue")
                     .font(.caption.weight(.medium))
-                    .foregroundColor(.red)
+                    .foregroundColor(SemanticColors.statusWarning)
             }
         }
         .buttonStyle(.plain)
@@ -359,21 +359,21 @@ struct ExpenseTrackerStaticHeader: View {
             // Icon with background
             ZStack {
                 Circle()
-                    .fill(AppColors.Budget.pending.opacity(0.15))
+                    .fill(SemanticColors.statusPending.opacity(Opacity.light))
                     .frame(width: 32, height: 32)
-                
+
                 Image(systemName: "clock.fill")
-                    .foregroundColor(AppColors.Budget.pending)
+                    .foregroundColor(SemanticColors.statusPending)
                     .font(.system(size: 14, weight: .medium))
             }
-            
+
             Text(formatCurrencyCompact(pendingAmount))
                 .font(.subheadline.weight(.semibold))
-                .foregroundColor(AppColors.textPrimary)
-            
+                .foregroundColor(SemanticColors.textPrimary)
+
             Text("pending")
                 .font(.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
     }
     
@@ -382,17 +382,17 @@ struct ExpenseTrackerStaticHeader: View {
             // Icon with background
             ZStack {
                 Circle()
-                    .fill(Color.purple.opacity(0.15))
+                    .fill(SemanticColors.primaryAction.opacity(Opacity.light))
                     .frame(width: 32, height: 32)
-                
+
                 Image(systemName: "person.2.fill")
-                    .foregroundColor(.purple)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .font(.system(size: 12, weight: .medium))
             }
-            
+
             Text(formatCurrencyCompact(perGuestCost))
                 .font(.subheadline.weight(.semibold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             // Guest count mode toggle
             guestCountToggle
@@ -417,10 +417,10 @@ struct ExpenseTrackerStaticHeader: View {
             HStack(spacing: 2) {
                 Text("/\(guestCountMode.rawValue.lowercased())")
                     .font(.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 Image(systemName: "chevron.down")
                     .font(.system(size: 8, weight: .semibold))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .buttonStyle(.plain)
@@ -438,10 +438,10 @@ struct ExpenseTrackerStaticHeader: View {
                     HStack(spacing: 4) {
                         Image(systemName: "heart.fill")
                             .font(.caption2)
-                            .foregroundColor(.pink)
+                            .foregroundColor(SemanticColors.primaryAction)
                         Text("\(days)d")
                             .font(.caption.weight(.semibold))
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
                 
@@ -449,13 +449,13 @@ struct ExpenseTrackerStaticHeader: View {
                 HStack(spacing: 4) {
                     Text(formatCurrencyCompact(totalSpent))
                         .font(.subheadline.weight(.bold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     Text("/")
                         .font(.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     Text(formatCurrencyCompact(totalBudget))
                         .font(.caption.weight(.medium))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 // Progress percentage with color
@@ -562,9 +562,9 @@ enum BudgetHealthStatus {
     
     var color: Color {
         switch self {
-        case .onTrack: return AppColors.Budget.underBudget
-        case .caution: return AppColors.Budget.pending
-        case .overBudget: return AppColors.Budget.overBudget
+        case .onTrack: return SemanticColors.statusSuccess
+        case .caution: return SemanticColors.statusPending
+        case .overBudget: return SemanticColors.statusWarning
         }
     }
     
