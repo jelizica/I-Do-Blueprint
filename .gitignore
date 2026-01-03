@@ -53,6 +53,7 @@ coverage.json
 build.log
 build_log.txt
 *.log
+logs/
 
 # Auto-generated MCP server context (added automatically)
 .mcp-server-context.md
@@ -74,6 +75,7 @@ _project_specs/session/archive/*.md
 .claude/
 .gemini/
 .qodo/
+claude-statusline
 
 # Personal Knowledge Base
 knowledge-repo-bm/
