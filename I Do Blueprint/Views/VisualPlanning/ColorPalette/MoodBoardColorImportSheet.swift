@@ -90,12 +90,12 @@ struct MoodBoardColorImportSheet: View {
             if extractedColors.isEmpty {
                 VStack {
                     Image(systemName: "paintpalette")
-                        .font(.system(size: 48))
-                        .foregroundColor(AppColors.textSecondary)
-
+                    .font(.system(size: 48))
+                    .foregroundColor(SemanticColors.textSecondary)
+                    
                     Text("Select a mood board to extract colors")
-                        .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(SemanticColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
@@ -107,8 +107,8 @@ struct MoodBoardColorImportSheet: View {
                         Spacer()
 
                         Text("\(selectedColors.count) selected")
-                            .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
                     }
                     .padding(.horizontal)
                     .padding(.top)
@@ -211,23 +211,23 @@ struct MoodBoardRow: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(moodBoard.boardName)
-                        .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
-
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(SemanticColors.textPrimary)
+                    
                     Text("\(moodBoard.elements.count) elements")
-                        .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                    .font(Typography.caption)
+                    .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 }
             }
             .padding()
-            .background(isSelected ? AppColors.primary.opacity(0.1) : Color.clear)
+            .background(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : Color.clear)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -250,11 +250,11 @@ struct ColorSelectionCard: View {
                     .frame(width: 60, height: 60)
                     .overlay(
                         Circle()
-                            .stroke(isSelected ? AppColors.primary : AppColors.textPrimary.opacity(0.1), lineWidth: isSelected ? 3 : 1))
+                            .stroke(isSelected ? SemanticColors.primaryAction : SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: isSelected ? 3 : 1))
 
                 Text(color.hexString)
                     .font(.system(.caption2, design: .monospaced))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .buttonStyle(.plain)
