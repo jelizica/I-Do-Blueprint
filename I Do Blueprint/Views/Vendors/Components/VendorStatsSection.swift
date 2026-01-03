@@ -41,7 +41,7 @@ struct VendorStatsSection: View {
                         title: "Total Vendors",
                         value: "\(activeVendors.count)",
                         subtitle: nil,
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.statusSuccess,
                         icon: "building.2.fill"
                     )
 
@@ -49,7 +49,7 @@ struct VendorStatsSection: View {
                         title: "Total Quoted",
                         value: formatCurrency(totalQuoted),
                         subtitle: nil,
-                        subtitleColor: AppColors.textSecondary,
+                        subtitleColor: SemanticColors.textSecondary,
                         icon: "dollarsign.circle.fill"
                     )
                 }
@@ -60,7 +60,7 @@ struct VendorStatsSection: View {
                         title: "Booked",
                         value: "\(bookedVendors.count)",
                         subtitle: "Confirmed vendors",
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.statusSuccess,
                         icon: "checkmark.seal.fill"
                     )
 
@@ -68,7 +68,7 @@ struct VendorStatsSection: View {
                         title: "Available",
                         value: "\(availableVendors.count)",
                         subtitle: "Still considering",
-                        subtitleColor: AppColors.warning,
+                        subtitleColor: SemanticColors.statusWarning,
                         icon: "clock.fill"
                     )
                 }
@@ -78,7 +78,7 @@ struct VendorStatsSection: View {
                     title: "Archived",
                     value: "\(archivedVendors.count)",
                     subtitle: "No longer needed",
-                    subtitleColor: AppColors.textSecondary,
+                    subtitleColor: SemanticColors.textSecondary,
                     icon: "archivebox.fill"
                 )
             }
@@ -91,7 +91,7 @@ struct VendorStatsSection: View {
                         title: "Total Vendors",
                         value: "\(activeVendors.count)",
                         subtitle: nil,
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.statusSuccess,
                         icon: "building.2.fill"
                     )
 
@@ -99,7 +99,7 @@ struct VendorStatsSection: View {
                         title: "Total Quoted",
                         value: formatCurrency(totalQuoted),
                         subtitle: nil,
-                        subtitleColor: AppColors.textSecondary,
+                        subtitleColor: SemanticColors.textSecondary,
                         icon: "dollarsign.circle.fill"
                     )
                 }
@@ -110,7 +110,7 @@ struct VendorStatsSection: View {
                         title: "Booked",
                         value: "\(bookedVendors.count)",
                         subtitle: "Confirmed vendors",
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.statusSuccess,
                         icon: "checkmark.seal.fill"
                     )
 
@@ -118,7 +118,7 @@ struct VendorStatsSection: View {
                         title: "Available",
                         value: "\(availableVendors.count)",
                         subtitle: "Still considering",
-                        subtitleColor: AppColors.warning,
+                        subtitleColor: SemanticColors.statusWarning,
                         icon: "clock.fill"
                     )
 
@@ -126,7 +126,7 @@ struct VendorStatsSection: View {
                         title: "Archived",
                         value: "\(archivedVendors.count)",
                         subtitle: "No longer needed",
-                        subtitleColor: AppColors.textSecondary,
+                        subtitleColor: SemanticColors.textSecondary,
                         icon: "archivebox.fill"
                     )
                 }
@@ -158,11 +158,11 @@ struct VendorManagementStatCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(title)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text(value)
                         .font(Typography.displayMedium)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     if let subtitle = subtitle {
                         Text(subtitle)
@@ -175,12 +175,12 @@ struct VendorManagementStatCard: View {
 
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundColor(AppColors.primary.opacity(0.2))
+                    .foregroundColor(SemanticColors.primaryAction.opacity(Opacity.light))
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
