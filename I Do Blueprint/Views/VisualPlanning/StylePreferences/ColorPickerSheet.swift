@@ -73,7 +73,7 @@ struct PrimaryColorPickerSheet: View {
 
             Text("\(colors.count)/\(maxColors)")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding()
     }
@@ -105,7 +105,7 @@ struct PrimaryColorPickerSheet: View {
             }
             .frame(maxWidth: .infinity)
             .padding()
-            .background(AppColors.primary.opacity(0.1))
+            .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
             .cornerRadius(8)
         }
         .buttonStyle(.plain)
@@ -133,7 +133,7 @@ struct PrimaryColorPickerSheet: View {
 
             Text("Based on your selected colors")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             // Show complementary, analogous, triadic suggestions
             HStack(spacing: Spacing.sm) {
@@ -149,7 +149,7 @@ struct PrimaryColorPickerSheet: View {
                             .frame(width: 40, height: 40)
                             .overlay(
                                 Circle()
-                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                                    .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .disabled(colors.count >= maxColors)
@@ -165,14 +165,14 @@ struct PrimaryColorPickerSheet: View {
         VStack(spacing: Spacing.md) {
             Image(systemName: "paintpalette")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("No Colors Selected")
                 .font(Typography.subheading)
 
             Text("Choose 2-4 primary colors that will define your wedding palette")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding()
@@ -280,7 +280,7 @@ struct ColorRow: View {
                 .frame(width: 50, height: 50)
                 .overlay(
                     Circle()
-                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                        .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
 
             // Color info
             VStack(alignment: .leading, spacing: 4) {
@@ -288,8 +288,8 @@ struct ColorRow: View {
                     .font(Typography.bodyRegular)
 
                 Text(color.hexString)
-                    .font(.system(.caption, design: .monospaced))
-                    .foregroundColor(AppColors.textSecondary)
+                .font(.system(.caption, design: .monospaced))
+                .foregroundColor(SemanticColors.textSecondary)
             }
 
             Spacer()
@@ -298,21 +298,21 @@ struct ColorRow: View {
             HStack(spacing: Spacing.sm) {
                 Button(action: onEdit) {
                     Image(systemName: "pencil")
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Edit color \(index + 1)")
 
                 Button(action: onDelete) {
                     Image(systemName: "trash")
-                        .foregroundColor(AppColors.error)
+                        .foregroundColor(SemanticColors.statusWarning)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Delete color \(index + 1)")
             }
         }
         .padding()
-        .background(AppColors.textSecondary.opacity(0.05))
+        .background(SemanticColors.textSecondary.opacity(Opacity.verySubtle))
         .cornerRadius(8)
     }
 }
@@ -337,7 +337,7 @@ struct ColorPickerModal: View {
             // Show hex value
             Text(selectedColor.hexString)
                 .font(.system(.body, design: .monospaced))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             HStack {
                 Button("Cancel", action: onCancel)
