@@ -25,7 +25,7 @@ struct VendorCardV3: View {
             // Vendor Name
             Text(vendor.vendorName)
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(1)
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.top, Spacing.sm)
@@ -34,7 +34,7 @@ struct VendorCardV3: View {
             if let email = vendor.email, !email.isEmpty {
                 Text(email)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .lineLimit(1)
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.top, Spacing.xs)
@@ -44,7 +44,7 @@ struct VendorCardV3: View {
             if let vendorType = vendor.vendorType, !vendorType.isEmpty {
                 Text(vendorType)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.top, Spacing.sm)
             }
@@ -56,11 +56,11 @@ struct VendorCardV3: View {
         }
         .frame(minWidth: 250, maxWidth: .infinity) // Flexible width (matches GuestCardV4)
         .frame(height: 243)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppColors.borderLight, lineWidth: 0.5)
+                .stroke(SemanticColors.borderLight, lineWidth: 0.5)
         )
         .accessibleListItem(
             label: vendor.vendorName,
@@ -76,7 +76,7 @@ struct VendorCardV3: View {
     
     private var avatarSection: some View {
         Circle()
-            .fill(AppColors.controlBackground)
+            .fill(SemanticColors.backgroundSecondary)
             .frame(width: 48, height: 48)
             .overlay(
                 Group {
@@ -89,7 +89,7 @@ struct VendorCardV3: View {
                     } else {
                         Image(systemName: "person.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             )
@@ -105,26 +105,26 @@ struct VendorCardV3: View {
             if vendor.isArchived {
                 Text("Archived")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.error)
+                    .foregroundColor(SemanticColors.statusWarning)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.xs)
-                    .background(AppColors.errorLight)
+                    .background(SemanticColors.statusWarning.opacity(Opacity.light))
                     .cornerRadius(9999)
             } else if vendor.isBooked == true {
                 Text("Booked")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.success)
+                    .foregroundColor(SemanticColors.statusSuccess)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.xs)
-                    .background(AppColors.successLight)
+                    .background(SemanticColors.statusSuccess.opacity(Opacity.light))
                     .cornerRadius(9999)
             } else {
                 Text("Available")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.warning)
+                    .foregroundColor(SemanticColors.statusPending)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.xs)
-                    .background(AppColors.warningLight)
+                    .background(SemanticColors.statusPending.opacity(Opacity.light))
                     .cornerRadius(9999)
             }
         }
@@ -135,18 +135,18 @@ struct VendorCardV3: View {
     private var quotedAmountSection: some View {
         VStack(spacing: 0) {
             Divider()
-                .background(AppColors.borderLight)
+                .background(SemanticColors.borderLight)
 
             HStack {
                 Text("Quoted Amount")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Spacer()
 
                 Text(formatCurrency(vendor.quotedAmount ?? 0))
                     .font(Typography.numberMedium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             .padding(.horizontal, Spacing.xxl)
             .padding(.vertical, Spacing.md)
