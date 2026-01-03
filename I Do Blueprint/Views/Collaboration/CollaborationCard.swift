@@ -20,7 +20,7 @@ struct CollaborationCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(collaboration.coupleName)
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     if let weddingDate = collaboration.weddingDate {
                         HStack(spacing: Spacing.xs) {
@@ -29,7 +29,7 @@ struct CollaborationCard: View {
                             Text(collaboration.formattedWeddingDate)
                         }
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
 
@@ -50,7 +50,7 @@ struct CollaborationCard: View {
                         Text("Invited by \(invitedBy)")
                     }
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 HStack(spacing: Spacing.xs) {
@@ -59,7 +59,7 @@ struct CollaborationCard: View {
                     Text(collaboration.relativeInvitationTime)
                 }
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             }
 
             Divider()
@@ -70,10 +70,10 @@ struct CollaborationCard: View {
                     // Show "Currently Viewing" indicator
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(AppColors.success)
+                            .foregroundColor(SemanticColors.statusSuccess)
                         Text("Currently Viewing")
                             .font(Typography.bodyRegular)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 } else {
                     // Show switch button
@@ -98,14 +98,14 @@ struct CollaborationCard: View {
                     .font(Typography.bodyRegular)
                 }
                 .buttonStyle(.bordered)
-                .tint(AppColors.error)
+                .tint(SemanticColors.statusWarning)
                 .accessibilityLabel("Leave \(collaboration.coupleName)'s wedding")
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(12)
-        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 4, x: 0, y: 2)
+        .shadow(color: SemanticColors.textPrimary.opacity(Opacity.verySubtle), radius: 4, x: 0, y: 2)
     }
 
     // MARK: - Role Badge
@@ -124,13 +124,13 @@ struct CollaborationCard: View {
     private var roleColor: Color {
         switch collaboration.role {
         case .owner:
-            return AppColors.primary
+            return SemanticColors.primaryAction
         case .partner:
-            return AppColors.primary.opacity(0.7)
+            return SemanticColors.primaryAction.opacity(0.7)
         case .planner:
-            return AppColors.success
+            return SemanticColors.statusSuccess
         case .viewer:
-            return AppColors.textSecondary
+            return SemanticColors.textSecondary
         }
     }
 }
