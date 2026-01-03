@@ -45,6 +45,29 @@ struct ExpenseCategoriesView: View {
         filteredCategories.filter { $0.parentCategoryId == parent.id }
     }
     
+    // MARK: - Computed Properties for Summary Cards
+    
+    private var totalCategoryCount: Int {
+        budgetStore.categoryStore.categories.count
+    }
+    
+    private var totalAllocated: Double {
+        budgetStore.categoryStore.categories.reduce(0) { $0 + $1.allocatedAmount }
+    }
+    
+    private var totalSpent: Double {
+        budgetStore.categoryStore.categories.reduce(0) { total, category in
+            total + budgetStore.categoryStore.spentAmount(for: category.id, expenses: budgetStore.expenseStore.expenses)
+        }
+    }
+    
+    private var overBudgetCount: Int {
+        budgetStore.categoryStore.categories.filter { category in
+            let spent = budgetStore.categoryStore.spentAmount(for: category.id, expenses: budgetStore.expenseStore.expenses)
+            return spent > category.allocatedAmount && category.allocatedAmount > 0
+        }.count
+    }
+    
     // MARK: - Section Management
     
     private func expandAllSections() {
