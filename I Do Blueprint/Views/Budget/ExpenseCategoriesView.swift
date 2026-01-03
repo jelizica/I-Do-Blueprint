@@ -74,12 +74,32 @@ struct ExpenseCategoriesView: View {
         budgetStore.categoryStore.categories.count
     }
     
-    private var totalAllocated: Double {
-        budgetStore.categoryStore.categories.reduce(0) { $0 + $1.allocatedAmount }
+    /// Set of category IDs that ARE parents (have children pointing to them)
+    /// Computed once and reused to avoid O(n²) complexity
+    private var categoriesWithChildren: Set<UUID> {
+        // Collect all parent_category_id values - these are the IDs of categories that have children
+        Set(budgetStore.categoryStore.categories.compactMap { $0.parentCategoryId })
     }
     
+    /// Leaf categories (categories that have no children)
+    /// A category is a leaf if its ID is NOT in the set of parent IDs
+    private var leafCategories: [BudgetCategory] {
+        let parentIds = categoriesWithChildren
+        return budgetStore.categoryStore.categories.filter { category in
+            // A category is a leaf if no other category has it as a parent
+            !parentIds.contains(category.id)
+        }
+    }
+    
+    /// Total allocated amount - only counts leaf categories (subcategories) to avoid double-counting
+    /// Parent folders are aggregates of their subcategories, so we exclude them
+    private var totalAllocated: Double {
+        leafCategories.reduce(0) { $0 + $1.allocatedAmount }
+    }
+    
+    /// Total spent amount - only counts leaf categories to avoid double-counting
     private var totalSpent: Double {
-        budgetStore.categoryStore.categories.reduce(0) { total, category in
+        leafCategories.reduce(0) { total, category in
             total + budgetStore.categoryStore.spentAmount(for: category.id, expenses: budgetStore.expenseStore.expenses)
         }
     }
@@ -200,7 +220,9 @@ struct ExpenseCategoriesView: View {
                 }
             }
             .task {
-                await budgetStore.loadBudgetData(force: true)
+                // Don't force reload - use cached data if available
+                // Force reload can cause hangs when navigating back to this view
+                await budgetStore.loadBudgetData(force: false)
             }
             .sheet(isPresented: $showingAddCategory) {
                 AddCategoryView(budgetStore: budgetStore)

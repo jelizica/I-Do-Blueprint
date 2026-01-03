@@ -50,10 +50,10 @@ struct ExpenseCategoriesStaticHeader: View {
                 
                 Spacer()
                 
+                // Status indicator (left of Add button, same size)
                 if overBudgetCount > 0 {
-                    overBudgetBadge
+                    overBudgetBadgeCompact
                 } else {
-                    // Show success indicator in compact mode too
                     successIndicatorCompact
                 }
                 
@@ -232,38 +232,42 @@ struct ExpenseCategoriesStaticHeader: View {
         )
     }
     
-    // MARK: - Success Indicator (Compact)
+    // MARK: - Success Indicator (Compact) - Same size as Add button
     
     private var successIndicatorCompact: some View {
-        GeometryReader { geometry in
-            // Show full text if width > 500px, otherwise just icon
-            if geometry.size.width > 500 {
-                HStack(spacing: 4) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.caption2)
-                    Text("All on track")
-                        .font(.caption2.weight(.medium))
-                }
-                .foregroundColor(AppColors.Budget.underBudget)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(AppColors.Budget.underBudget.opacity(0.1))
-                )
-            } else {
-                // Just icon for very narrow widths
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.caption)
-                    .foregroundColor(AppColors.Budget.underBudget)
-                    .padding(4)
-                    .background(
-                        Circle()
-                            .fill(AppColors.Budget.underBudget.opacity(0.1))
-                    )
+        Image(systemName: "checkmark.circle.fill")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(AppColors.Budget.underBudget)
+            .cornerRadius(6)
+    }
+    
+    // MARK: - Over Budget Badge (Compact) - Same size as Add button
+    
+    private var overBudgetBadgeCompact: some View {
+        Button {
+            showOnlyOverBudget.toggle()
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("\(overBudgetCount)")
+                    .font(.system(size: 12, weight: .semibold))
             }
+            .foregroundColor(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(AppColors.Budget.overBudget.opacity(showOnlyOverBudget ? 1.0 : 0.8))
+            .cornerRadius(6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.white.opacity(showOnlyOverBudget ? 0.5 : 0), lineWidth: 2)
+            )
         }
-        .frame(height: 24) // Fixed height to prevent layout shifts
+        .buttonStyle(.plain)
+        .help(showOnlyOverBudget ? "Click to show all categories" : "Click to filter to over-budget categories")
     }
     
     // MARK: - Add Button
