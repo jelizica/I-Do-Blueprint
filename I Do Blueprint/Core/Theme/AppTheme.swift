@@ -221,6 +221,8 @@ enum AppTheme: String, Codable, CaseIterable, Sendable {
     var quickActionNote: Color { accentElegantShade600 }
     var quickActionEvent: Color { secondaryShade700 }
     var quickActionGuest: Color { primaryShade700 }
+    var quickActionBudget: Color { statusSuccess }        // Budget uses success green (consistent)
+    var quickActionVendor: Color { accentElegantShade600 } // Vendor uses elegant accent
 
     // MARK: - Helper Methods
 

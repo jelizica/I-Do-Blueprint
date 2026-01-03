@@ -606,6 +606,16 @@ enum QuickActions {
     static var guest: Color { ThemeManager.shared.quickActionGuest }
     static var guestBackground: Color { ThemeManager.shared.primaryShade50 }
     static var guestBorder: Color { ThemeManager.shared.primaryShade700.opacity(Opacity.light) }
+
+    // Budget management (Success color - consistent across themes)
+    static var budget: Color { ThemeManager.shared.quickActionBudget }
+    static var budgetBackground: Color { ThemeManager.shared.statusSuccess.opacity(Opacity.verySubtle) }
+    static var budgetBorder: Color { ThemeManager.shared.statusSuccess.opacity(Opacity.light) }
+
+    // Vendor management (Elegant accent)
+    static var vendor: Color { ThemeManager.shared.quickActionVendor }
+    static var vendorBackground: Color { ThemeManager.shared.accentElegantColor.opacity(Opacity.verySubtle) }
+    static var vendorBorder: Color { ThemeManager.shared.accentElegantShade600.opacity(Opacity.light) }
 }
 
 /// Budget category colors (Blush Romance theme)

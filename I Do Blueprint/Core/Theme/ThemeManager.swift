@@ -112,4 +112,6 @@ final class ThemeManager: ObservableObject {
     var quickActionNote: Color { currentTheme.quickActionNote }
     var quickActionEvent: Color { currentTheme.quickActionEvent }
     var quickActionGuest: Color { currentTheme.quickActionGuest }
+    var quickActionBudget: Color { currentTheme.quickActionBudget }
+    var quickActionVendor: Color { currentTheme.quickActionVendor }
 }

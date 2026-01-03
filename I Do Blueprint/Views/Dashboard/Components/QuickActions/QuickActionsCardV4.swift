@@ -21,25 +21,25 @@ struct QuickActionsCardV4: View {
                 DashboardV4QuickActionButton(
                     icon: "envelope.fill",
                     title: "Send Invites",
-                    color: AppColors.info
+                    color: QuickActions.guest
                 )
 
                 DashboardV4QuickActionButton(
                     icon: "calendar.badge.plus",
                     title: "Add Event",
-                    color: AppColors.info
+                    color: QuickActions.event
                 )
 
                 DashboardV4QuickActionButton(
                     icon: "dollarsign.circle.fill",
                     title: "Update Budget",
-                    color: AppColors.success
+                    color: QuickActions.budget
                 )
 
                 DashboardV4QuickActionButton(
                     icon: "person.badge.plus",
                     title: "Find Vendors",
-                    color: AppColors.info
+                    color: QuickActions.vendor
                 )
             }
         }
