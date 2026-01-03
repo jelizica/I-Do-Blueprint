@@ -104,7 +104,7 @@ struct MoodBoardListView: View {
                         .padding(.horizontal, Spacing.lg)
                         .padding(.vertical, Spacing.sm)
                         .background(Color.blue)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .cornerRadius(8)
                     }
                 }
