@@ -166,6 +166,10 @@ class SettingsStoreV2: ObservableObject {
             localValue: localSettings.theme,
             saveOperation: { try await self.repository.updateThemeSettings($0) }
         )
+
+        // Notify ThemeManager to update all views with new theme
+        let newTheme = AppTheme(from: localSettings.theme.colorScheme)
+        ThemeManager.shared.setTheme(newTheme, animated: true)
     }
     
     func saveBudgetSettings() async {

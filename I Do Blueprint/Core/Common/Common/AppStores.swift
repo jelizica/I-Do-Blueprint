@@ -144,6 +144,17 @@ final class AppStores: ObservableObject {
         // ✅ Only create settings store (needed immediately for app configuration)
         _ = self.settings
 
+        // ✅ Initialize ThemeManager with user's saved theme preference
+        Task { @MainActor in
+            // Wait for settings to load first
+            await self.settings.loadSettings()
+
+            // Initialize theme from saved preference
+            let colorScheme = self.settings.settings.theme.colorScheme
+            ThemeManager.shared.initializeTheme(from: colorScheme)
+            logger.info("🎨 ThemeManager initialized with theme: \(colorScheme)")
+        }
+
         // ✅ Other stores created on-demand via lazy accessors
         logger.info("✅ AppStores ready (lazy loading enabled)")
 

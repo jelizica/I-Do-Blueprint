@@ -540,71 +540,72 @@ enum WarmGray {
 
 /// Semantic colors for common UI patterns
 /// Maps color scales to specific use cases for consistency
+/// Theme-aware: Delegates to ThemeManager for dynamic theme switching
 enum SemanticColors {
-    // MARK: - Primary Actions
-    static let primaryAction = BlushPink.base
-    static let primaryActionHover = BlushPink.hover
-    static let primaryActionActive = BlushPink.active
-    static let primaryActionDisabled = BlushPink.disabled
+    // MARK: - Primary Actions (Theme-Aware)
+    static var primaryAction: Color { ThemeManager.shared.primaryColor }
+    static var primaryActionHover: Color { ThemeManager.shared.primaryHover }
+    static var primaryActionActive: Color { ThemeManager.shared.primaryShade800 }
+    static var primaryActionDisabled: Color { ThemeManager.shared.primaryShade50 }
 
-    // MARK: - Secondary Actions
-    static let secondaryAction = SageGreen.base
-    static let secondaryActionHover = SageGreen.hover
-    static let secondaryActionActive = SageGreen.active
+    // MARK: - Secondary Actions (Theme-Aware)
+    static var secondaryAction: Color { ThemeManager.shared.secondaryColor }
+    static var secondaryActionHover: Color { ThemeManager.shared.secondaryHover }
+    static var secondaryActionActive: Color { ThemeManager.shared.secondaryShade800 }
 
-    // MARK: - Status Indicators (Color Blind Safe - Blue/Orange instead of Red/Green)
-    static let statusSuccess = SageGreen.shade700       // ✅ Confirmed (WCAG AA)
-    static let statusPending = SoftLavender.shade600    // ⏳ Pending (WCAG AA)
-    static let statusWarning = Terracotta.shade700      // ⚠️ Declined/Over Budget (WCAG AA)
-    static let statusInfo = BlushPink.shade600          // ℹ️ Info
+    // MARK: - Status Indicators (Color Blind Safe - Consistent Across Themes)
+    static var statusSuccess: Color { ThemeManager.shared.statusSuccess }      // ✅ Confirmed (WCAG AA)
+    static var statusPending: Color { ThemeManager.shared.statusPending }      // ⏳ Pending (WCAG AA)
+    static var statusWarning: Color { ThemeManager.shared.statusWarning }      // ⚠️ Declined/Over Budget (WCAG AA)
+    static var statusInfo: Color { ThemeManager.shared.primaryShade700 }       // ℹ️ Info (theme-specific)
 
-    // MARK: - Text Colors
-    static let textPrimary = WarmGray.textPrimary       // Main body text (WCAG AAA)
-    static let textSecondary = WarmGray.textSecondary   // Supporting text (WCAG AA)
-    static let textTertiary = WarmGray.textTertiary     // Subtle labels
-    static let textDisabled = WarmGray.textDisabled     // Disabled text
-    static let textOnPrimary = Color.white              // Text on BlushPink buttons
-    static let textOnSecondary = Color.white            // Text on SageGreen buttons
+    // MARK: - Text Colors (Consistent Across Themes)
+    static var textPrimary: Color { ThemeManager.shared.textPrimary }          // Main body text (WCAG AAA)
+    static var textSecondary: Color { ThemeManager.shared.textSecondary }      // Supporting text (WCAG AA)
+    static var textTertiary: Color { ThemeManager.shared.textTertiary }        // Subtle labels
+    static var textDisabled: Color { WarmGray.textDisabled }                   // Disabled text
+    static var textOnPrimary: Color { Color.white }                            // Text on primary buttons
+    static var textOnSecondary: Color { Color.white }                          // Text on secondary buttons
 
-    // MARK: - Backgrounds
-    static let backgroundPrimary = WarmGray.background
-    static let backgroundSecondary = WarmGray.surface
-    static let backgroundTintBlush = BlushPink.background
-    static let backgroundTintSage = SageGreen.background
-    static let backgroundTintTerracotta = Terracotta.background
-    static let backgroundTintLavender = SoftLavender.background
+    // MARK: - Backgrounds (Theme-Aware Tints)
+    static var backgroundPrimary: Color { ThemeManager.shared.backgroundPrimary }
+    static var backgroundSecondary: Color { ThemeManager.shared.backgroundSecondary }
+    static var backgroundTintPrimary: Color { ThemeManager.shared.primaryShade50 }
+    static var backgroundTintSecondary: Color { ThemeManager.shared.secondaryShade50 }
+    static var backgroundTintWarm: Color { ThemeManager.shared.accentWarmColor.opacity(Opacity.verySubtle) }
+    static var backgroundTintElegant: Color { ThemeManager.shared.accentElegantColor.opacity(Opacity.verySubtle) }
 
-    // MARK: - Borders
-    static let borderPrimary = WarmGray.border
-    static let borderLight = WarmGray.borderLight
-    static let borderFocus = BlushPink.shade500
-    static let borderError = Terracotta.shade500
+    // MARK: - Borders (Theme-Aware)
+    static var borderPrimary: Color { ThemeManager.shared.border }
+    static var borderLight: Color { ThemeManager.shared.borderLight }
+    static var borderFocus: Color { ThemeManager.shared.primaryShade700 }
+    static var borderError: Color { Terracotta.shade500 }
 }
 
 // MARK: - Feature-Specific Semantic Colors
 // Maps colors to specific app features for domain-specific usage
 
-/// Dashboard Quick Action colors
+/// Dashboard Quick Action colors (Theme-Aware)
 enum QuickActions {
-    // Task creation
-    static let task = Terracotta.shade600           // Warm, energetic
-    static let taskBackground = Terracotta.background
-    static let taskBorder = Terracotta.border
+    // Task creation (Warm accent)
+    static var task: Color { ThemeManager.shared.quickActionTask }
+    static var taskBackground: Color { ThemeManager.shared.accentWarmColor.opacity(Opacity.verySubtle) }
+    static var taskBorder: Color { ThemeManager.shared.accentWarmShade600.opacity(Opacity.light) }
 
-    // Note creation
-    static let note = SoftLavender.shade600         // Creative, thoughtful
-    static let noteBackground = SoftLavender.background
-    static let noteBorder = SoftLavender.border
+    // Note creation (Elegant accent)
+    static var note: Color { ThemeManager.shared.quickActionNote }
+    static var noteBackground: Color { ThemeManager.shared.accentElegantColor.opacity(Opacity.verySubtle) }
+    static var noteBorder: Color { ThemeManager.shared.accentElegantShade600.opacity(Opacity.light) }
 
-    // Event scheduling
-    static let event = SageGreen.shade600           // Calm, organized
-    static let eventBackground = SageGreen.background
-    static let eventBorder = SageGreen.border
+    // Event scheduling (Secondary color)
+    static var event: Color { ThemeManager.shared.quickActionEvent }
+    static var eventBackground: Color { ThemeManager.shared.secondaryShade50 }
+    static var eventBorder: Color { ThemeManager.shared.secondaryShade700.opacity(Opacity.light) }
 
-    // Guest management
-    static let guest = BlushPink.shade600           // Personal, warm
-    static let guestBackground = BlushPink.background
-    static let guestBorder = BlushPink.border
+    // Guest management (Primary color)
+    static var guest: Color { ThemeManager.shared.quickActionGuest }
+    static var guestBackground: Color { ThemeManager.shared.primaryShade50 }
+    static var guestBorder: Color { ThemeManager.shared.primaryShade700.opacity(Opacity.light) }
 }
 
 /// Budget category colors (Blush Romance theme)
