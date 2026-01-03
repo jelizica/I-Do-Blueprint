@@ -224,6 +224,173 @@ enum AppTheme: String, Codable, CaseIterable, Sendable {
     var quickActionBudget: Color { statusSuccess }        // Budget uses success green (consistent)
     var quickActionVendor: Color { accentElegantShade600 } // Vendor uses elegant accent
 
+    // MARK: - Dashboard Colors (Theme-Aware)
+
+    var dashboardBackground: Color {
+        switch self {
+        case .blushRomance: return Color.fromHex("1A1A1A")      // Dark charcoal (unchanged)
+        case .sageSerenity: return Color.fromHex("1A1F1A")     // Dark green-tinted
+        case .lavenderDream: return Color.fromHex("1A1A1F")    // Dark purple-tinted
+        case .terracottaWarm: return Color.fromHex("1F1A1A")   // Dark warm-tinted
+        }
+    }
+
+    var dashboardQuickActionsBackground: Color {
+        dashboardBackground // Same as main background
+    }
+
+    var dashboardBudgetCard: Color {
+        switch self {
+        case .blushRomance: return BlushPink.shade200          // Soft pink
+        case .sageSerenity: return SageGreen.shade200          // Soft sage
+        case .lavenderDream: return SoftLavender.shade200      // Soft lavender
+        case .terracottaWarm: return Terracotta.shade200       // Soft terracotta
+        }
+    }
+
+    var dashboardRsvpCard: Color {
+        switch self {
+        case .blushRomance: return BlushPink.shade600          // Vibrant pink
+        case .sageSerenity: return SageGreen.shade600          // Vibrant sage
+        case .lavenderDream: return SoftLavender.shade600      // Vibrant lavender
+        case .terracottaWarm: return Terracotta.shade600       // Vibrant terracotta
+        }
+    }
+
+    var dashboardVendorCard: Color {
+        switch self {
+        case .blushRomance: return Color.fromHex("2A2A2A")     // Dark gray (unchanged)
+        case .sageSerenity: return Color.fromHex("2A2F2A")     // Dark green-tinted
+        case .lavenderDream: return Color.fromHex("2A2A2F")    // Dark purple-tinted
+        case .terracottaWarm: return Color.fromHex("2F2A2A")   // Dark warm-tinted
+        }
+    }
+
+    var dashboardGuestCard: Color {
+        switch self {
+        case .blushRomance: return Color.fromHex("4A4A4A")     // Medium gray (unchanged)
+        case .sageSerenity: return Color.fromHex("4A4F4A")     // Medium green-tinted
+        case .lavenderDream: return Color.fromHex("4A4A4F")    // Medium purple-tinted
+        case .terracottaWarm: return Color.fromHex("4F4A4A")   // Medium warm-tinted
+        }
+    }
+
+    var dashboardCountdownCard: Color {
+        switch self {
+        case .blushRomance: return BlushPink.shade700          // Deep pink
+        case .sageSerenity: return SageGreen.shade700          // Deep sage
+        case .lavenderDream: return SoftLavender.shade700      // Deep lavender
+        case .terracottaWarm: return Terracotta.shade700       // Deep terracotta
+        }
+    }
+
+    var dashboardBudgetVisualizationCard: Color {
+        switch self {
+        case .blushRomance: return BlushPink.shade50           // Very light pink
+        case .sageSerenity: return SageGreen.shade50           // Very light sage
+        case .lavenderDream: return SoftLavender.shade50       // Very light lavender
+        case .terracottaWarm: return Terracotta.shade50        // Very light terracotta
+        }
+    }
+
+    var dashboardTaskProgressCard: Color {
+        // Use secondary color for task progress
+        secondaryShade700
+    }
+
+    // MARK: - Category Tints (Theme-Aware for Budget Charts)
+
+    var categoryTintVenue: Color {
+        switch self {
+        case .blushRomance: return BlushPink.shade400          // Pink
+        case .sageSerenity: return SageGreen.shade400          // Sage
+        case .lavenderDream: return SoftLavender.shade400      // Lavender
+        case .terracottaWarm: return Terracotta.shade400       // Terracotta
+        }
+    }
+
+    var categoryTintCatering: Color {
+        switch self {
+        case .blushRomance: return SageGreen.shade400          // Sage (secondary)
+        case .sageSerenity: return BlushPink.shade400          // Pink (secondary)
+        case .lavenderDream: return BlushPink.shade400         // Pink (secondary)
+        case .terracottaWarm: return SageGreen.shade400        // Sage (secondary)
+        }
+    }
+
+    var categoryTintPhotography: Color {
+        switch self {
+        case .blushRomance: return SoftLavender.shade400       // Lavender (accent)
+        case .sageSerenity: return SoftLavender.shade400       // Lavender (accent)
+        case .lavenderDream: return SageGreen.shade400         // Sage (accent)
+        case .terracottaWarm: return SoftLavender.shade400     // Lavender (accent)
+        }
+    }
+
+    var categoryTintFlorals: Color {
+        switch self {
+        case .blushRomance: return Terracotta.shade300         // Soft terracotta
+        case .sageSerenity: return Terracotta.shade300         // Soft terracotta
+        case .lavenderDream: return Terracotta.shade300        // Soft terracotta
+        case .terracottaWarm: return BlushPink.shade300        // Soft pink
+        }
+    }
+
+    var categoryTintMusic: Color {
+        switch self {
+        case .blushRomance: return SoftLavender.shade500       // Vibrant lavender
+        case .sageSerenity: return SoftLavender.shade500       // Vibrant lavender
+        case .lavenderDream: return Terracotta.shade500        // Vibrant terracotta
+        case .terracottaWarm: return SoftLavender.shade500     // Vibrant lavender
+        }
+    }
+
+    var categoryTintOther: Color {
+        WarmGray.shade400 // Neutral gray (consistent across themes)
+    }
+
+    // MARK: - Vendor Type Tints (Theme-Aware for Badges/Avatars)
+
+    var vendorTintPhotography: Color {
+        switch self {
+        case .blushRomance: return BlushPink.shade100          // Very light pink
+        case .sageSerenity: return SageGreen.shade100          // Very light sage
+        case .lavenderDream: return SoftLavender.shade100      // Very light lavender
+        case .terracottaWarm: return Terracotta.shade100       // Very light terracotta
+        }
+    }
+
+    var vendorTintCatering: Color {
+        switch self {
+        case .blushRomance: return SageGreen.shade100          // Very light sage
+        case .sageSerenity: return BlushPink.shade100          // Very light pink
+        case .lavenderDream: return BlushPink.shade100         // Very light pink
+        case .terracottaWarm: return SageGreen.shade100        // Very light sage
+        }
+    }
+
+    var vendorTintFlorals: Color {
+        switch self {
+        case .blushRomance: return Terracotta.shade100         // Very light terracotta
+        case .sageSerenity: return Terracotta.shade100         // Very light terracotta
+        case .lavenderDream: return Terracotta.shade100        // Very light terracotta
+        case .terracottaWarm: return BlushPink.shade100        // Very light pink
+        }
+    }
+
+    var vendorTintMusic: Color {
+        switch self {
+        case .blushRomance: return SoftLavender.shade100       // Very light lavender
+        case .sageSerenity: return SoftLavender.shade100       // Very light lavender
+        case .lavenderDream: return SageGreen.shade100         // Very light sage
+        case .terracottaWarm: return SoftLavender.shade100     // Very light lavender
+        }
+    }
+
+    var vendorTintGeneric: Color {
+        WarmGray.shade100 // Neutral (consistent across themes)
+    }
+
     // MARK: - Helper Methods
 
     /// Initialize from SettingsModel string value

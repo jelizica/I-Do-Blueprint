@@ -114,4 +114,34 @@ final class ThemeManager: ObservableObject {
     var quickActionGuest: Color { currentTheme.quickActionGuest }
     var quickActionBudget: Color { currentTheme.quickActionBudget }
     var quickActionVendor: Color { currentTheme.quickActionVendor }
+
+    // MARK: - Dashboard Colors (Theme-Aware)
+
+    var dashboardBackground: Color { currentTheme.dashboardBackground }
+    var dashboardQuickActionsBackground: Color { currentTheme.dashboardQuickActionsBackground }
+
+    var dashboardBudgetCard: Color { currentTheme.dashboardBudgetCard }
+    var dashboardRsvpCard: Color { currentTheme.dashboardRsvpCard }
+    var dashboardVendorCard: Color { currentTheme.dashboardVendorCard }
+    var dashboardGuestCard: Color { currentTheme.dashboardGuestCard }
+    var dashboardCountdownCard: Color { currentTheme.dashboardCountdownCard }
+    var dashboardBudgetVisualizationCard: Color { currentTheme.dashboardBudgetVisualizationCard }
+    var dashboardTaskProgressCard: Color { currentTheme.dashboardTaskProgressCard }
+
+    // MARK: - Category Tints (Theme-Aware)
+
+    var categoryTintVenue: Color { currentTheme.categoryTintVenue }
+    var categoryTintCatering: Color { currentTheme.categoryTintCatering }
+    var categoryTintPhotography: Color { currentTheme.categoryTintPhotography }
+    var categoryTintFlorals: Color { currentTheme.categoryTintFlorals }
+    var categoryTintMusic: Color { currentTheme.categoryTintMusic }
+    var categoryTintOther: Color { currentTheme.categoryTintOther }
+
+    // MARK: - Vendor Type Tints (Theme-Aware)
+
+    var vendorTintPhotography: Color { currentTheme.vendorTintPhotography }
+    var vendorTintCatering: Color { currentTheme.vendorTintCatering }
+    var vendorTintFlorals: Color { currentTheme.vendorTintFlorals }
+    var vendorTintMusic: Color { currentTheme.vendorTintMusic }
+    var vendorTintGeneric: Color { currentTheme.vendorTintGeneric }
 }

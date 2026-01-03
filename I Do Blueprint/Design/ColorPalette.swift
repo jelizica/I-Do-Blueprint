@@ -711,7 +711,66 @@ enum Opacity {
     static let almostOpaque: Double = 0.95  // Tertiary text, very slight transparency
 }
 
+// MARK: - Theme-Aware Dashboard Colors
+
+/// Dashboard colors that adapt to the current theme
+/// Use these instead of AppColors.Dashboard.* for theme integration
+enum ThemeAwareDashboard {
+    static var background: Color { ThemeManager.shared.dashboardBackground }
+    static var quickActionsBackground: Color { ThemeManager.shared.dashboardQuickActionsBackground }
+    
+    static var budgetCard: Color { ThemeManager.shared.dashboardBudgetCard }
+    static var rsvpCard: Color { ThemeManager.shared.dashboardRsvpCard }
+    static var vendorCard: Color { ThemeManager.shared.dashboardVendorCard }
+    static var guestCard: Color { ThemeManager.shared.dashboardGuestCard }
+    static var countdownCard: Color { ThemeManager.shared.dashboardCountdownCard }
+    static var budgetVisualizationCard: Color { ThemeManager.shared.dashboardBudgetVisualizationCard }
+    static var taskProgressCard: Color { ThemeManager.shared.dashboardTaskProgressCard }
+}
+
+// MARK: - Theme-Aware Category Tints
+
+/// Budget category tints that adapt to the current theme
+/// Use these instead of AppColors.Budget.CategoryTint.* for theme integration
+enum ThemeAwareCategoryTint {
+    static var venue: Color { ThemeManager.shared.categoryTintVenue }
+    static var catering: Color { ThemeManager.shared.categoryTintCatering }
+    static var photography: Color { ThemeManager.shared.categoryTintPhotography }
+    static var florals: Color { ThemeManager.shared.categoryTintFlorals }
+    static var music: Color { ThemeManager.shared.categoryTintMusic }
+    static var other: Color { ThemeManager.shared.categoryTintOther }
+}
+
+// MARK: - Theme-Aware Vendor Type Tints
+
+/// Vendor type tints that adapt to the current theme
+/// Use these instead of AppColors.Vendor.TypeTint.* for theme integration
+enum ThemeAwareVendorTint {
+    static var photography: Color { ThemeManager.shared.vendorTintPhotography }
+    static var catering: Color { ThemeManager.shared.vendorTintCatering }
+    static var florals: Color { ThemeManager.shared.vendorTintFlorals }
+    static var music: Color { ThemeManager.shared.vendorTintMusic }
+    static var generic: Color { ThemeManager.shared.vendorTintGeneric }
+}
+
 // MARK: - Color System Documentation
+//
+// ## Domain Color Architecture
+//
+// ### Status Colors (NOT Theme-Aware)
+// These remain constant across all themes for universal recognition:
+// - AppColors.success (green) - Confirmed, income, under budget
+// - AppColors.error (red) - Declined, expense, over budget
+// - AppColors.warning (orange) - Pending states
+//
+// ### Tint Colors (Theme-Aware)
+// These adapt to the current theme for visual harmony:
+// - ThemeAwareCategoryTint.* - Budget category colors in charts
+// - ThemeAwareVendorTint.* - Vendor type badge backgrounds
+//
+// ### Dashboard Colors (Theme-Aware)
+// These fully adapt to the current theme:
+// - ThemeAwareDashboard.* - All dashboard card backgrounds
 //
 // ## Blush Romance Theme (2026)
 //
@@ -720,6 +779,9 @@ enum Opacity {
 // **DO:**
 // - Use semantic color names (SemanticColors.primaryAction)
 // - Use feature-specific colors (QuickActions.task)
+// - Use ThemeAwareDashboard.* for dashboard cards
+// - Use ThemeAwareCategoryTint.* for budget charts
+// - Use ThemeAwareVendorTint.* for vendor badges
 // - Use shade700+ for text on light backgrounds (WCAG AA)
 // - Use shade900+ for enhanced accessibility (WCAG AAA)
 // - Pair status colors with icons (✓/✗/⏳)
@@ -729,6 +791,7 @@ enum Opacity {
 // - Use hardcoded opacity values (use Opacity enum)
 // - Rely solely on color to convey information
 // - Use red/green for status (color blind unsafe)
+// - Use AppColors.Dashboard.* (deprecated, use ThemeAwareDashboard.*)
 //
 // ### Example Usage
 // ```swift
