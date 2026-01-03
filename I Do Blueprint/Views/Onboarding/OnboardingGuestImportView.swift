@@ -9,6 +9,14 @@ import SwiftUI
 import UniformTypeIdentifiers
 import Dependencies
 
+// MARK: - Theme Migration
+// Migrated from AppColors to SemanticColors for theme support
+// Status colors: success → statusSuccess, warning → statusWarning, error → statusWarning
+// Text hierarchy: primary → textPrimary, secondary → textSecondary
+// Backgrounds: background → backgroundPrimary, cardBackground → backgroundSecondary
+// Actions: primary → primaryAction
+// Opacity values: 0.1 → Opacity.subtle, 0.5 → Opacity.medium
+
 struct OnboardingGuestImportView: View {
     @State private var importService = FileImportService()
     @State private var selectedFileURL: URL?
@@ -38,7 +46,7 @@ struct OnboardingGuestImportView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .fileImporter(
             isPresented: $showFilePicker,
             allowedContentTypes: [.commaSeparatedText, .xlsx],
@@ -61,15 +69,15 @@ struct OnboardingGuestImportView: View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: "person.2.fill")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             Text("Import Guest List")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Upload a CSV or Excel file with your guest list to get started quickly")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
         }
@@ -83,25 +91,25 @@ struct OnboardingGuestImportView: View {
                 VStack(spacing: Spacing.md) {
                     Image(systemName: "doc.badge.plus")
                         .font(.system(size: 48))
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("Choose File")
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("Supported formats: CSV, Excel (.xlsx)")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .frame(maxWidth: 400)
                 .padding(.vertical, Spacing.xxl)
                 .padding(.horizontal, Spacing.xl)
-                .background(AppColors.primary.opacity(0.1))
+                .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppColors.primary, style: StrokeStyle(lineWidth: 2, dash: [8]))
+                        .stroke(SemanticColors.primaryAction, style: StrokeStyle(lineWidth: 2, dash: [8]))
                 )
             }
             .buttonStyle(.plain)
@@ -113,23 +121,23 @@ struct OnboardingGuestImportView: View {
                 Text("Expected CSV Format:")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("• First row should contain column headers")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text("• Required: Full Name or First Name + Last Name")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text("• Optional: Email, Phone, Address, RSVP Status")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(Spacing.lg)
             .frame(maxWidth: 400)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
         }
         .padding(.horizontal, Spacing.xl)
@@ -140,30 +148,30 @@ struct OnboardingGuestImportView: View {
             // File info
             HStack {
                 Image(systemName: "doc.text.fill")
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
 
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(preview.fileName)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text("\(preview.totalRows) guests • \(preview.headers.count) columns")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
 
                 Button(action: { clearImport() }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear import")
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             // Preview table
@@ -175,10 +183,10 @@ struct OnboardingGuestImportView: View {
                             Text(header)
                                 .font(Typography.bodySmall)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                                 .padding(Spacing.sm)
                                 .frame(minWidth: 120, alignment: .leading)
-                                .background(AppColors.cardBackground)
+                                .background(SemanticColors.backgroundSecondary)
                         }
                     }
 
@@ -190,23 +198,23 @@ struct OnboardingGuestImportView: View {
                             ForEach(Array(row.enumerated()), id: \.offset) { _, cell in
                                 Text(cell)
                                     .font(Typography.bodySmall)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .padding(Spacing.sm)
                                     .frame(minWidth: 120, alignment: .leading)
                             }
                         }
-                        .background(index % 2 == 0 ? Color.clear : AppColors.cardBackground.opacity(0.5))
+                        .background(index % 2 == 0 ? Color.clear : SemanticColors.backgroundSecondary.opacity(Opacity.medium))
                     }
                 }
             }
             .frame(maxHeight: 300)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             if preview.totalRows > 10 {
                 Text("Showing first 10 of \(preview.totalRows) guests")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             // Validation results
@@ -229,10 +237,10 @@ struct OnboardingGuestImportView: View {
                             .font(Typography.bodyRegular)
                             .fontWeight(.semibold)
                     }
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(maxWidth: 400)
                     .padding(.vertical, Spacing.md)
-                    .background(isImporting ? AppColors.textSecondary : AppColors.primary)
+                    .background(isImporting ? SemanticColors.textSecondary : SemanticColors.primaryAction)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -302,32 +310,32 @@ struct OnboardingGuestImportView: View {
             if validation.isValid {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
+                        .foregroundColor(SemanticColors.statusSuccess)
                     Text("Validation passed! Ready to import.")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
             } else {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     HStack {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.red)
+                            .foregroundColor(SemanticColors.statusWarning)
                         Text("Validation errors found:")
                             .font(Typography.bodySmall)
                             .fontWeight(.semibold)
-                            .foregroundColor(.red)
+                            .foregroundColor(SemanticColors.statusWarning)
                     }
 
                     ForEach(Array(validation.errors.prefix(5).enumerated()), id: \.offset) { _, error in
                         Text("• Row \(error.row): \(error.message)")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
 
                     if validation.errors.count > 5 {
                         Text("... and \(validation.errors.count - 5) more errors")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -336,30 +344,30 @@ struct OnboardingGuestImportView: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     HStack {
                         Image(systemName: "exclamationmark.circle.fill")
-                            .foregroundColor(.orange)
+                            .foregroundColor(SemanticColors.statusPending)
                         Text("Warnings:")
                             .font(Typography.bodySmall)
                             .fontWeight(.semibold)
-                            .foregroundColor(.orange)
+                            .foregroundColor(SemanticColors.statusPending)
                     }
 
                     ForEach(Array(validation.warnings.prefix(3).enumerated()), id: \.offset) { _, warning in
                         Text("• Row \(warning.row): \(warning.message)")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
 
                     if validation.warnings.count > 3 {
                         Text("... and \(validation.warnings.count - 3) more warnings")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
         }
         .padding(Spacing.md)
         .frame(maxWidth: 400)
-        .background(validation.isValid ? Color.green.opacity(0.1) : Color.red.opacity(0.1))
+        .background(validation.isValid ? SemanticColors.statusSuccess.opacity(Opacity.subtle) : SemanticColors.statusWarning.opacity(Opacity.subtle))
         .cornerRadius(8)
     }
 
@@ -367,24 +375,24 @@ struct OnboardingGuestImportView: View {
         VStack(spacing: Spacing.md) {
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 60))
-                .foregroundColor(.green)
+                .foregroundColor(SemanticColors.statusSuccess)
 
             Text("Import Successful!")
                 .font(Typography.title2)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Successfully imported \(importedCount) guests")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Button(action: { clearImport() }) {
                 Text("Import Another File")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .frame(maxWidth: 400)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary.opacity(0.1))
+                    .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
