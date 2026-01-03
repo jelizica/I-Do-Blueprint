@@ -4,8 +4,18 @@
 //
 //  Main view for managing budget expense categories with responsive compact window support
 //
+//  ARCHITECTURE NOTE (2026-01-03):
+//  This view follows the same pattern as ExpenseTrackerView, PaymentScheduleView, and
+//  BudgetDevelopmentView - NO timer-based polling. Data is loaded once on appear and
+//  recalculated only when user actions occur (search, filter, add/edit/delete).
+//  
+//  The previous timer-based polling caused freezes after ~5 minutes due to:
+//  1. Timer firing every 0.5s accessing store properties
+//  2. Store access triggering objectWillChange (via @EnvironmentObject subscription)
+//  3. objectWillChange forwarding from sub-stores to BudgetStoreV2
+//  4. Feedback loop accumulating over time
+//
 
-import Combine
 import SwiftUI
 
 struct ExpenseCategoriesView: View {
@@ -20,7 +30,8 @@ struct ExpenseCategoriesView: View {
     @State private var expandedSections: Set<UUID> = []
     @State private var showOnlyOverBudget = false
     
-    // MARK: - Cached Values (to avoid expensive recalculations on scroll and updates)
+    // MARK: - Cached Values (to avoid expensive recalculations on scroll)
+    // These are populated once on load and updated only when user actions occur
     @State private var cachedTotalAllocated: Double = 0
     @State private var cachedTotalSpent: Double = 0
     @State private var cachedOverBudgetCount: Int = 0
@@ -33,15 +44,8 @@ struct ExpenseCategoriesView: View {
     @State private var cachedTotalCategoryCount: Int = 0
     @State private var hasCategories: Bool = false
     
-    // Track last known state to detect changes
-    @State private var lastKnownCategoryCount: Int = -1
-    @State private var lastKnownExpenseCount: Int = -1
-    @State private var lastKnownSearchText: String = ""
-    @State private var lastKnownShowOnlyOverBudget: Bool = false
-    @State private var isRecalculating: Bool = false
-    
-    // Track the recalculation task to cancel it if needed
-    @State private var recalculationTask: Task<Void, Error>?
+    // Loading state
+    @State private var isLoading: Bool = true
     
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
@@ -51,179 +55,94 @@ struct ExpenseCategoriesView: View {
     init() {
         self._currentPage = .constant(.expenseCategories)
     }
-
-    private var filteredCategories: [BudgetCategory] {
-        let categories = budgetStore.categoryStore.categories
-
-        let searchFiltered = searchText.isEmpty ? categories : categories.filter { category in
-            category.categoryName.localizedCaseInsensitiveContains(searchText)
-        }
-
-        return searchFiltered.sorted { $0.categoryName < $1.categoryName }
-    }
-
-    private var parentCategories: [BudgetCategory] {
-        let parents = filteredCategories.filter { $0.parentCategoryId == nil }
-        
-        // Apply over-budget filter if active
-        if showOnlyOverBudget {
-            return parents.filter { parent in
-                isOverBudget(parent)
-            }
-        }
-        
-        return parents
-    }
     
-    private var parentCategoryCount: Int {
-        budgetStore.categoryStore.categories.filter { $0.parentCategoryId == nil }.count
-    }
+    // MARK: - Data Calculation
     
-    private var subcategoryCount: Int {
-        budgetStore.categoryStore.categories.filter { $0.parentCategoryId != nil }.count
-    }
-    
-    private func isOverBudget(_ category: BudgetCategory) -> Bool {
-        let spent = budgetStore.categoryStore.spentAmount(for: category.id, expenses: budgetStore.expenseStore.expenses)
-        return spent > category.allocatedAmount && category.allocatedAmount > 0
-    }
-
-    private func subcategories(for parent: BudgetCategory) -> [BudgetCategory] {
-        filteredCategories.filter { $0.parentCategoryId == parent.id }
-    }
-    
-    // MARK: - Computed Properties for Summary Cards
-    
-    private var totalCategoryCount: Int {
-        budgetStore.categoryStore.categories.count
-    }
-    
-    /// Recalculate ALL cached values - call this when data changes, not on every render
-    /// Runs asynchronously to avoid blocking main thread
-    /// Uses debouncing to prevent multiple rapid recalculations
-    /// - Parameter forceRecalculate: If true, skip the change detection check (for filter/search changes)
-    private func recalculateSummaryValues(forceRecalculate: Bool = false) {
-        // Prevent re-entrant calls - if already recalculating, skip
-        guard !isRecalculating else { return }
-        
-        // Capture current state ONCE at the start (this is the only store access)
+    /// Recalculate ALL cached values synchronously on main thread
+    /// Called only when:
+    /// 1. View first appears (.task)
+    /// 2. User changes search text (.onChange)
+    /// 3. User changes filter (.onChange)
+    /// 4. After add/edit/delete operations (sheet onDismiss)
+    private func recalculateCachedValues() {
+        // Capture current state ONCE (single store access)
         let allCategories = budgetStore.categoryStore.categories
         let expenses = budgetStore.expenseStore.expenses
         let currentSearchText = searchText
         let currentShowOnlyOverBudget = showOnlyOverBudget
         
-        // Check if data actually changed - skip if same (unless forced)
-        let newCategoryCount = allCategories.count
-        let newExpenseCount = expenses.count
-        let searchChanged = currentSearchText != lastKnownSearchText
-        let filterChanged = currentShowOnlyOverBudget != lastKnownShowOnlyOverBudget
-        
-        if !forceRecalculate && 
-           !searchChanged && 
-           !filterChanged &&
-           newCategoryCount == lastKnownCategoryCount && 
-           newExpenseCount == lastKnownExpenseCount &&
-           lastKnownCategoryCount >= 0 {
-            // Nothing changed, skip recalculation
-            return
+        // Build spent-by-category dictionary ONCE (O(n) for expenses)
+        var spentByCategory: [UUID: Double] = [:]
+        for expense in expenses {
+            let categoryId = expense.budgetCategoryId
+            spentByCategory[categoryId, default: 0] += expense.amount
         }
         
-        // Cancel any previous recalculation task to prevent accumulation
-        recalculationTask?.cancel()
+        // Build set of parent IDs (categories that have children)
+        let parentIds = Set(allCategories.compactMap { $0.parentCategoryId })
         
-        // Mark as recalculating
-        isRecalculating = true
+        // Find leaf categories (no children) - for accurate totals
+        let leaves = allCategories.filter { !parentIds.contains($0.id) }
         
-        // Run expensive calculations off main thread
-        recalculationTask = Task.detached(priority: .userInitiated) {
-            // Build spent-by-category dictionary ONCE (O(n) for expenses)
-            var spentByCategory: [UUID: Double] = [:]
-            for expense in expenses {
-                let categoryId = expense.budgetCategoryId
-                spentByCategory[categoryId, default: 0] += expense.amount
-            }
-            
-            // Build set of parent IDs (categories that have children)
-            let parentIds = Set(allCategories.compactMap { $0.parentCategoryId })
-            
-            // Find leaf categories (no children)
-            let leaves = allCategories.filter { !parentIds.contains($0.id) }
-            
-            // Calculate totals using the pre-computed dictionary
-            let totalAllocated = leaves.reduce(0) { $0 + $1.allocatedAmount }
-            
-            let totalSpent = leaves.reduce(0) { total, category in
-                total + (spentByCategory[category.id] ?? 0)
-            }
-            
-            let overBudgetCount = allCategories.filter { category in
+        // Calculate totals using the pre-computed dictionary
+        let totalAllocated = leaves.reduce(0) { $0 + $1.allocatedAmount }
+        
+        let totalSpent = leaves.reduce(0) { total, category in
+            total + (spentByCategory[category.id] ?? 0)
+        }
+        
+        let overBudgetCount = allCategories.filter { category in
+            let spent = spentByCategory[category.id] ?? 0
+            return spent > category.allocatedAmount && category.allocatedAmount > 0
+        }.count
+        
+        // Calculate parent/subcategory counts
+        let parentCount = allCategories.filter { $0.parentCategoryId == nil }.count
+        let subcategoryCountVal = allCategories.filter { $0.parentCategoryId != nil }.count
+        
+        // Calculate filtered categories (with search)
+        let searchFiltered = currentSearchText.isEmpty ? allCategories : allCategories.filter { category in
+            category.categoryName.localizedCaseInsensitiveContains(currentSearchText)
+        }
+        let filtered = searchFiltered.sorted { $0.categoryName < $1.categoryName }
+        
+        // Calculate parent categories from filtered list
+        var parents = filtered.filter { $0.parentCategoryId == nil }
+        
+        // Apply over-budget filter if active (using pre-computed spentByCategory)
+        if currentShowOnlyOverBudget {
+            parents = parents.filter { category in
                 let spent = spentByCategory[category.id] ?? 0
                 return spent > category.allocatedAmount && category.allocatedAmount > 0
-            }.count
-            
-            // Calculate parent/subcategory counts
-            let parentCount = allCategories.filter { $0.parentCategoryId == nil }.count
-            let subcategoryCountVal = allCategories.filter { $0.parentCategoryId != nil }.count
-            
-            // Calculate filtered categories (with search)
-            let searchFiltered = currentSearchText.isEmpty ? allCategories : allCategories.filter { category in
-                category.categoryName.localizedCaseInsensitiveContains(currentSearchText)
-            }
-            let filtered = searchFiltered.sorted { $0.categoryName < $1.categoryName }
-            
-            // Calculate parent categories from filtered list
-            var parents = filtered.filter { $0.parentCategoryId == nil }
-            
-            // Apply over-budget filter if active (using pre-computed spentByCategory)
-            if currentShowOnlyOverBudget {
-                parents = parents.filter { category in
-                    let spent = spentByCategory[category.id] ?? 0
-                    return spent > category.allocatedAmount && category.allocatedAmount > 0
-                }
-            }
-            
-            // Build subcategories-by-parent dictionary
-            var subcategoriesByParent: [UUID: [BudgetCategory]] = [:]
-            for parent in parents {
-                subcategoriesByParent[parent.id] = filtered.filter { $0.parentCategoryId == parent.id }
-            }
-            
-            // Calculate total count and hasCategories flag
-            let totalCount = allCategories.count
-            let hasCats = !allCategories.isEmpty
-            
-            // Update cached values on main thread
-            await MainActor.run {
-                self.cachedSpentByCategory = spentByCategory
-                self.cachedTotalAllocated = totalAllocated
-                self.cachedTotalSpent = totalSpent
-                self.cachedOverBudgetCount = overBudgetCount
-                self.cachedParentCount = parentCount
-                self.cachedSubcategoryCount = subcategoryCountVal
-                self.cachedFilteredCategories = filtered
-                self.cachedParentCategories = parents
-                self.cachedSubcategoriesByParent = subcategoriesByParent
-                self.cachedTotalCategoryCount = totalCount
-                self.hasCategories = hasCats
-                // Update tracking variables
-                self.lastKnownCategoryCount = totalCount
-                self.lastKnownExpenseCount = expenses.count
-                self.lastKnownSearchText = currentSearchText
-                self.lastKnownShowOnlyOverBudget = currentShowOnlyOverBudget
-                self.isRecalculating = false
             }
         }
-    }
-    
-    /// Get cached spent amount for a category (O(1) lookup)
-    private func cachedSpentAmount(for categoryId: UUID) -> Double {
-        cachedSpentByCategory[categoryId] ?? 0
+        
+        // Build subcategories-by-parent dictionary
+        var subcategoriesByParent: [UUID: [BudgetCategory]] = [:]
+        for parent in parents {
+            subcategoriesByParent[parent.id] = filtered.filter { $0.parentCategoryId == parent.id }
+        }
+        
+        // Update all cached values at once
+        cachedSpentByCategory = spentByCategory
+        cachedTotalAllocated = totalAllocated
+        cachedTotalSpent = totalSpent
+        cachedOverBudgetCount = overBudgetCount
+        cachedParentCount = parentCount
+        cachedSubcategoryCount = subcategoryCountVal
+        cachedFilteredCategories = filtered
+        cachedParentCategories = parents
+        cachedSubcategoriesByParent = subcategoriesByParent
+        cachedTotalCategoryCount = allCategories.count
+        hasCategories = !allCategories.isEmpty
+        isLoading = false
     }
     
     // MARK: - Section Management
     
     private func expandAllSections() {
-        expandedSections = Set(parentCategories.map { $0.id })
+        // Use cached parent categories to avoid store access
+        expandedSections = Set(cachedParentCategories.map { $0.id })
     }
     
     private func collapseAllSections() {
@@ -246,7 +165,6 @@ struct ExpenseCategoriesView: View {
         GeometryReader { geometry in
             let windowSize = geometry.size.width.windowSize
             let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
-            let availableWidth = geometry.size.width - (horizontalPadding * 2)
             
             VStack(spacing: 0) {
                 // Unified Header
@@ -259,7 +177,7 @@ struct ExpenseCategoriesView: View {
                     onImport: importCategories
                 )
                 
-                // Static Header - use cached counts to avoid expensive filtering
+                // Static Header - use cached counts
                 ExpenseCategoriesStaticHeader(
                     windowSize: windowSize,
                     searchText: $searchText,
@@ -270,8 +188,16 @@ struct ExpenseCategoriesView: View {
                     onAddCategory: { showingAddCategory = true }
                 )
 
-                // Content: Summary Cards + Categories - USE ONLY CACHED VALUES (no store access in body!)
-                if cachedFilteredCategories.isEmpty && !hasCategories {
+                // Content: Summary Cards + Categories - USE ONLY CACHED VALUES
+                if isLoading {
+                    // Loading state
+                    VStack {
+                        Spacer()
+                        ProgressView("Loading categories...")
+                        Spacer()
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if cachedFilteredCategories.isEmpty && !hasCategories {
                     ContentUnavailableView(
                         searchText.isEmpty ? "No Categories" : "No Results",
                         systemImage: searchText.isEmpty ? "folder" : "magnifyingglass",
@@ -281,7 +207,7 @@ struct ExpenseCategoriesView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
-                            // Summary Cards - use cached values to avoid expensive recalculations on scroll
+                            // Summary Cards - use cached values
                             ExpenseCategoriesSummaryCards(
                                 windowSize: windowSize,
                                 totalCategories: cachedParentCount + cachedSubcategoryCount,
@@ -329,35 +255,31 @@ struct ExpenseCategoriesView: View {
                     }
                 }
             }
+            // MARK: - Data Loading (follows ExpenseTrackerView pattern)
+            // Load data ONCE on appear, no timer-based polling
             .task {
-                // Don't force reload - use cached data if available
-                // Force reload can cause hangs when navigating back to this view
                 await budgetStore.loadBudgetData(force: false)
-                // Calculate initial summary values with force to ensure first load
-                recalculateSummaryValues(forceRecalculate: true)
+                recalculateCachedValues()
             }
-            // REMOVED: onReceive was causing issues because @EnvironmentObject already
-            // subscribes to budgetStore.objectWillChange, and categoryStore.objectWillChange
-            // is forwarded to budgetStore.objectWillChange. This created double-updates.
-            // 
-            // Instead, we use a simple timer to periodically check for changes.
-            // This is less reactive but avoids the infinite loop issue.
-            .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
-                // Only recalculate if data actually changed (checked inside the function)
-                recalculateSummaryValues()
-            }
+            // Recalculate when search text changes (debounced by SwiftUI)
             .onChange(of: searchText) { _, _ in
-                // Recalculate filtered categories when search changes
-                recalculateSummaryValues()
+                recalculateCachedValues()
             }
+            // Recalculate when over-budget filter changes
             .onChange(of: showOnlyOverBudget) { _, _ in
-                // Recalculate when over-budget filter changes
-                recalculateSummaryValues()
+                recalculateCachedValues()
             }
-            .sheet(isPresented: $showingAddCategory) {
+            // MARK: - Sheets with onDismiss to refresh data
+            .sheet(isPresented: $showingAddCategory, onDismiss: {
+                // Refresh data after adding a category
+                recalculateCachedValues()
+            }) {
                 AddCategoryView(budgetStore: budgetStore)
             }
-            .sheet(item: $editingCategory) { category in
+            .sheet(item: $editingCategory, onDismiss: {
+                // Refresh data after editing a category
+                recalculateCachedValues()
+            }) { category in
                 EditCategoryView(category: category, budgetStore: budgetStore)
             }
             .alert("Delete Category", isPresented: $showingDeleteAlert) {
@@ -367,6 +289,8 @@ struct ExpenseCategoriesView: View {
                         Task {
                             do {
                                 try await budgetStore.categoryStore.deleteCategory(id: category.id)
+                                // Refresh data after deletion
+                                recalculateCachedValues()
                             } catch {
                                 AppLogger.ui.error("Failed to delete category", error: error)
                             }
@@ -382,7 +306,7 @@ struct ExpenseCategoriesView: View {
     }
 }
 
-// MARK: - Header View
+// MARK: - Header View (Legacy - kept for reference)
 
 private struct ExpenseCategoriesHeaderView: View {
     let categoryCount: Int
