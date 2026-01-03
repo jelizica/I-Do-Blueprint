@@ -167,7 +167,8 @@ struct ExpenseCategoriesView: View {
                             // Categories List
                             LazyVStack(spacing: Spacing.sm) {
                                 ForEach(parentCategories, id: \.id) { parentCategory in
-                                    CategorySectionView(
+                                    CategorySectionViewV2(
+                                        windowSize: windowSize,
                                         parentCategory: parentCategory,
                                         subcategories: subcategories(for: parentCategory),
                                         budgetStore: budgetStore,
@@ -177,7 +178,18 @@ struct ExpenseCategoriesView: View {
                                         onDelete: { category in
                                             categoryToDelete = category
                                             showingDeleteAlert = true
-                                        })
+                                        },
+                                        isExpanded: Binding(
+                                            get: { expandedSections.contains(parentCategory.id) },
+                                            set: { isExpanded in
+                                                if isExpanded {
+                                                    expandedSections.insert(parentCategory.id)
+                                                } else {
+                                                    expandedSections.remove(parentCategory.id)
+                                                }
+                                            }
+                                        )
+                                    )
                                     .padding(.horizontal, horizontalPadding)
                                 }
                             }
