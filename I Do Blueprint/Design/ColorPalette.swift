@@ -598,6 +598,14 @@ enum SemanticColors {
     static var backgroundTintWarm: Color { ThemeManager.shared.accentWarmColor.opacity(Opacity.verySubtle) }
     static var backgroundTintElegant: Color { ThemeManager.shared.accentElegantColor.opacity(Opacity.verySubtle) }
 
+    // MARK: - Control Backgrounds (macOS System Colors)
+    /// Control background - for control surfaces like buttons, toggles, form fields
+    /// Uses macOS system color that adapts to light/dark mode
+    static var controlBackground: Color { Color(nsColor: NSColor.controlBackgroundColor) }
+    /// Content background - for text fields, text views, and content areas
+    /// Uses macOS system color that adapts to light/dark mode
+    static var contentBackground: Color { Color(nsColor: NSColor.textBackgroundColor) }
+
     // MARK: - Borders (Theme-Aware)
     static var borderPrimary: Color { ThemeManager.shared.border }
     static var borderPrimaryLight: Color { ThemeManager.shared.borderLight }  // Alias for borderLight

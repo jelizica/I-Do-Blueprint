@@ -28,7 +28,7 @@ struct MarkdownToolbar: View {
         .padding(.horizontal, Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(AppColors.controlBackground.opacity(0.5))
+                .fill(SemanticColors.controlBackground.opacity(Opacity.medium))
         )
     }
     
@@ -102,7 +102,7 @@ struct MarkdownToolbarButton: View {
                 .frame(width: 28, height: 28)
                 .background(
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(AppColors.controlBackground)
+                        .fill(SemanticColors.controlBackground)
                 )
         }
         .buttonStyle(.plain)

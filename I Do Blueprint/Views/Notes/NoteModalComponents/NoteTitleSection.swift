@@ -21,7 +21,7 @@ struct NoteTitleSection: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.controlBackground)
+                        .fill(SemanticColors.controlBackground)
                 )
         }
     }

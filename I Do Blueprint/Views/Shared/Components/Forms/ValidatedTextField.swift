@@ -183,7 +183,7 @@ struct ValidatedTextEditor: View {
                     }
             }
             .padding(Spacing.xs)
-            .background(AppColors.contentBackground)
+            .background(SemanticColors.contentBackground)
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)

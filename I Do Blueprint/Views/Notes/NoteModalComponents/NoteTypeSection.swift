@@ -48,7 +48,7 @@ struct NoteTypeSection: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.controlBackground)
+                .fill(SemanticColors.controlBackground)
         )
         .onChange(of: selectedType) { oldType, newType in
             if oldType != newType {
@@ -92,7 +92,7 @@ struct NoteTypeSection: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.controlBackground)
+                .fill(SemanticColors.controlBackground)
         )
     }
     
@@ -104,7 +104,7 @@ struct NoteTypeSection: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(AppColors.controlBackground)
+                    .fill(SemanticColors.controlBackground)
             )
     }
     
@@ -120,7 +120,7 @@ struct NoteTypeSection: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.controlBackground)
+                .fill(SemanticColors.controlBackground)
         )
     }
 }

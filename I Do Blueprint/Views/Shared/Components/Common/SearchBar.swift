@@ -57,7 +57,7 @@ struct SearchBar: View {
         .padding(.vertical, Spacing.sm)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(AppColors.contentBackground)
+                .fill(SemanticColors.contentBackground)
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
@@ -102,7 +102,7 @@ struct CompactSearchBar: View {
                 .padding(.vertical, Spacing.sm)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.sm)
-                        .fill(AppColors.contentBackground)
+                        .fill(SemanticColors.contentBackground)
                 )
                 .transition(.move(edge: .trailing).combined(with: .opacity))
             } else {
