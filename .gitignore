@@ -80,6 +80,9 @@ _project_specs/session/archive/*.md
 .qodo/
 claude-statusline
 
+# Home directory files (should never be committed)
+~/
+
 # Personal Knowledge Base
 knowledge-repo-bm/
 
