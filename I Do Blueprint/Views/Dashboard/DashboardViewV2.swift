@@ -50,7 +50,7 @@ struct DashboardViewV2: View {
                     .padding()
                 }
             }
-            .background(AppColors.Dashboard.mainBackground)
+            .background(ThemeAwareDashboard.background)
             .navigationTitle("")
             .toolbar {
                 DashboardToolbar(

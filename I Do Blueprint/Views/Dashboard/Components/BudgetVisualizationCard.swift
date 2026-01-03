@@ -69,7 +69,7 @@ struct BudgetVisualizationCard: View {
                         .frame(width: 120)
 
                     Rectangle()
-                        .fill(AppColors.Dashboard.rsvpCard)
+                        .fill(ThemeAwareDashboard.rsvpCard)
                         .frame(width: 120, height: CGFloat(spent / totalBudget * 240))
                 }
                 .frame(height: 240)

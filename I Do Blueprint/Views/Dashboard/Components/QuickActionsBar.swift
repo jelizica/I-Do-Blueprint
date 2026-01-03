@@ -55,7 +55,7 @@ struct QuickActionsBar: View {
             Spacer()
         }
         .padding()
-        .background(AppColors.Dashboard.quickActionsBackground)
+        .background(ThemeAwareDashboard.quickActionsBackground)
     }
 }
 

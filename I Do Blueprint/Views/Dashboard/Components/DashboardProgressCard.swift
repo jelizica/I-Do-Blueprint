@@ -79,7 +79,7 @@ struct DashboardProgressCard: View {
         value: "30/50",
         percentage: 60,
         label: "Tasks Complete",
-        backgroundColor: AppColors.Dashboard.taskProgressCard,
+        backgroundColor: ThemeAwareDashboard.taskProgressCard,
         foregroundColor: .white
     )
     .frame(width: 400, height: 240)

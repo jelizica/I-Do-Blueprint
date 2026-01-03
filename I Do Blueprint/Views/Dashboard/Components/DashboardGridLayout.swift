@@ -31,7 +31,7 @@ struct DashboardGridLayout: View {
                     value: "\(budgetMetrics.percentageUsed)%",
                     subtitle: "Budget Spent",
                     detail: "$\(Int(budgetMetrics.spent)) of $\(Int(budgetMetrics.totalBudget))",
-                    backgroundColor: AppColors.Dashboard.budgetCard,
+                    backgroundColor: ThemeAwareDashboard.budgetCard,
                     foregroundColor: .black)
                 .accessibilityLabel("Budget Summary")
                 .accessibilityValue("Spent \(budgetMetrics.percentageUsed)% of total budget")
@@ -45,7 +45,7 @@ struct DashboardGridLayout: View {
                     value: String(format: "%.1f%%", rsvpRate),
                     subtitle: "RSVP Response Rate",
                     detail: "\(guestMetrics.rsvpYes) attending",
-                    backgroundColor: AppColors.Dashboard.rsvpCard,
+                    backgroundColor: ThemeAwareDashboard.rsvpCard,
                     foregroundColor: .white)
                 .accessibilityLabel("RSVP Response Rate")
                 .accessibilityValue("\(Int(rsvpRate))% of guests have responded")
@@ -65,7 +65,7 @@ struct DashboardGridLayout: View {
                         title: "Vendors Booked",
                         value: "\(vendorMetrics.totalVendors)",
                         icon: "briefcase.fill",
-                        color: AppColors.Dashboard.vendorCard
+                        color: ThemeAwareDashboard.vendorCard
                     )
                 }
 
@@ -75,7 +75,7 @@ struct DashboardGridLayout: View {
                         title: "Total Guests",
                         value: "\(guestMetrics.totalGuests)",
                         icon: "person.3.fill",
-                        color: AppColors.Dashboard.guestCard
+                        color: ThemeAwareDashboard.guestCard
                     )
                 }
             }
@@ -85,7 +85,7 @@ struct DashboardGridLayout: View {
                 LargeCountdownCard(
                     daysRemaining: daysUntilWedding,
                     weddingDate: weddingDate,
-                    backgroundColor: AppColors.Dashboard.countdownCard,
+                    backgroundColor: ThemeAwareDashboard.countdownCard,
                     foregroundColor: .white)
                 .accessibilityLabel("Wedding Countdown")
                 .accessibilityValue("\(daysUntilWedding) days until wedding")
@@ -104,7 +104,7 @@ struct DashboardGridLayout: View {
                     totalBudget: budgetMetrics.totalBudget,
                     spent: budgetMetrics.spent,
                     remaining: budgetMetrics.remaining,
-                    backgroundColor: AppColors.Dashboard.budgetVisualizationCard,
+                    backgroundColor: ThemeAwareDashboard.budgetVisualizationCard,
                     foregroundColor: .black)
                 .accessibilityLabel("Budget Breakdown")
                 .accessibilityValue("Spent $\(Int(budgetMetrics.spent)), remaining $\(Int(budgetMetrics.remaining))")
@@ -118,7 +118,7 @@ struct DashboardGridLayout: View {
                     value: "\(taskMetrics.completed)/\(taskMetrics.total)",
                     percentage: completionRate,
                     label: "Tasks Complete",
-                    backgroundColor: AppColors.Dashboard.taskProgressCard,
+                    backgroundColor: ThemeAwareDashboard.taskProgressCard,
                     foregroundColor: .white)
             }
         }
