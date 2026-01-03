@@ -165,7 +165,7 @@ struct StatPill: View {
         }
         .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.xs)
-        .background(AppColors.textSecondary.opacity(0.1))
+        .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
         .cornerRadius(8)
     }
 }
