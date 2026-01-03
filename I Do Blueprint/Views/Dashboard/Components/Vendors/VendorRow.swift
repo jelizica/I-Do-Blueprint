@@ -94,19 +94,19 @@ struct VendorRow: View {
 
     private var vendorColor: Color {
         guard let vendorType = vendor.vendorType?.lowercased() else {
-            return AppColors.Vendor.TypeTint.generic
+            return ThemeAwareVendorTint.generic
         }
 
         if vendorType.contains("photo") {
-            return AppColors.Vendor.TypeTint.photography
+            return ThemeAwareVendorTint.photography
         } else if vendorType.contains("cater") {
-            return AppColors.Vendor.TypeTint.catering
+            return ThemeAwareVendorTint.catering
         } else if vendorType.contains("flower") {
-            return AppColors.Vendor.TypeTint.florals
+            return ThemeAwareVendorTint.florals
         } else if vendorType.contains("music") {
-            return AppColors.Vendor.TypeTint.music
+            return ThemeAwareVendorTint.music
         } else {
-            return AppColors.Vendor.TypeTint.generic
+            return ThemeAwareVendorTint.generic
         }
     }
 }
