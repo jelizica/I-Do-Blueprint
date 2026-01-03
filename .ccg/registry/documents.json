@@ -1,0 +1,1574 @@
+{
+  "documents": [
+    {
+      "id": "fc5f7fa9-e417-4419-a047-3052b6c04d47",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/README.md",
+      "name": "README.md",
+      "type": "readme",
+      "createdAt": "2025-11-01T07:30:26.295Z",
+      "updatedAt": "2025-12-30T07:17:03.283Z",
+      "hash": "8df4151b01a4309aac29671457f52972",
+      "size": 5821,
+      "description": "A macOS SwiftUI app backed by Supabase.",
+      "tags": [
+        "i do blueprint",
+        "available mcp servers",
+        "workflow integration",
+        "key workflow tools"
+      ],
+      "linkedFiles": [
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/mcp_tools_info.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/BASIC-MEMORY-AND-BEADS-GUIDE.md"
+      ]
+    },
+    {
+      "id": "07b8adcb-8663-4ac0-91cd-60300dd51d3f",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_STORE_MIGRATION_GUIDE.md",
+      "name": "BUDGET_STORE_MIGRATION_GUIDE.md",
+      "type": "guide",
+      "createdAt": "2025-12-28T12:23:22.909Z",
+      "updatedAt": "2025-12-28T13:20:21.287Z",
+      "hash": "6f4bca88aa5b3a3c553c8595afcf208d",
+      "size": 14070,
+      "description": "This guide explains how to migrate from the old delegation pattern to direct sub-store access for better code clarity and reduced indirection.",
+      "tags": [
+        "budgetstorev2 migration guide",
+        "overview",
+        "what changed?"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "146a6929-c41b-4ab5-ad65-e925d00de57a",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/CACHE_ARCHITECTURE.md",
+      "name": "CACHE_ARCHITECTURE.md",
+      "type": "architecture",
+      "createdAt": "2025-11-02T16:49:58.852Z",
+      "updatedAt": "2025-11-02T16:49:58.853Z",
+      "hash": "42107420b321741112ee7a6fab0949cd",
+      "size": 6061,
+      "description": "This document describes the centralized, strategy-based cache invalidation architecture used in the app. It replaces scattered, duplicated cache key removals across repositories with cohesive, test...",
+      "tags": [
+        "cache architecture",
+        "goals",
+        "core concepts",
+        "file index",
+        "cache key conventions"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "93e91830-8349-4b98-8dfb-7cf1c655f54e",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/DOMAIN_SERVICES_ARCHITECTURE.md",
+      "name": "DOMAIN_SERVICES_ARCHITECTURE.md",
+      "type": "architecture",
+      "createdAt": "2025-11-02T17:17:45.707Z",
+      "updatedAt": "2025-11-02T17:17:45.707Z",
+      "hash": "a344130ba10e2e941593a61ceb7892e9",
+      "size": 4081,
+      "description": "This document describes the Domain Services layer introduced in JES-210 to separate business logic from data access.",
+      "tags": [
+        "domain services architecture",
+        "goals",
+        "layout",
+        "responsibilities"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "269ebc09-87cb-4391-9e7a-a83a9c9aeda2",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/SETTINGS_ARCHITECTURE.md",
+      "name": "SETTINGS_ARCHITECTURE.md",
+      "type": "architecture",
+      "createdAt": "2025-12-28T07:35:23.384Z",
+      "updatedAt": "2025-12-28T07:35:23.384Z",
+      "hash": "89f9f43373b3ba3759ae05955a85386f",
+      "size": 6956,
+      "description": "The settings system in I Do Blueprint uses a hierarchical structure with expandable sections. This document explains the architecture and the relationship between different settings representations.",
+      "tags": [
+        "settings architecture",
+        "overview",
+        "settings structure",
+        "main settings sections",
+        "expandable sections"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "9e93309b-607b-4fb6-8ce8-b80c00c148c7",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/TIMEZONE_SUPPORT.md",
+      "name": "TIMEZONE_SUPPORT.md",
+      "type": "architecture",
+      "createdAt": "2025-12-28T01:04:30.237Z",
+      "updatedAt": "2025-12-28T01:04:30.237Z",
+      "hash": "72cdca51c0cb59908f1696fd2b745cff",
+      "size": 9937,
+      "description": "I Do Blueprint now has comprehensive timezone support that allows users to configure their preferred timezone and have all dates/times displayed in that timezone throughout the app.",
+      "tags": [
+        "overview",
+        "default timezone",
+        "architecture",
+        "storage vs display"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "4d954206-7495-4805-960c-14a0f967e6e0",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/database/RLS_POLICIES.md",
+      "name": "RLS_POLICIES.md",
+      "type": "other",
+      "createdAt": "2025-12-24T17:54:09.537Z",
+      "updatedAt": "2025-12-24T17:54:09.541Z",
+      "hash": "253758f5cba2e666a34c968cceab058b",
+      "size": 13181,
+      "description": "This document describes the Row Level Security (RLS) policy structure for the I Do Blueprint database. All policies follow a consistent, secure pattern to ensure proper multi-tenant isolation.",
+      "tags": [
+        "rls policy documentation",
+        "overview",
+        "standard policy structure",
+        "policy naming convention"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "d91c488d-11f4-4cde-9d08-e87b56ec8e73",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/V2_TO_V3_MIGRATION_STEPS.md",
+      "name": "V2_TO_V3_MIGRATION_STEPS.md",
+      "type": "other",
+      "createdAt": "2025-12-28T21:50:50.217Z",
+      "updatedAt": "2025-12-28T21:52:07.131Z",
+      "hash": "60065dc5022d21fef7d8e806a4d8142e",
+      "size": 3049,
+      "description": "",
+      "tags": [
+        "v2 to v3 migration steps",
+        "current status",
+        "migration strategy"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "79e5acc3-7ed5-4731-a7ad-355288d2b998",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/VENDOR_DETAIL_VIEW_V3_PLAN.md",
+      "name": "VENDOR_DETAIL_VIEW_V3_PLAN.md",
+      "type": "other",
+      "createdAt": "2025-12-28T21:33:31.092Z",
+      "updatedAt": "2025-12-28T23:54:28.453Z",
+      "hash": "3b1c2f357caefa378a3d0e6b33417318",
+      "size": 14022,
+      "description": "",
+      "tags": [
+        "✅ implementation status",
+        "✅ completed implementation",
+        "recent tweaks & improvements"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "2e198c9c-290f-4107-ad51-25f561d4235a",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/VENDOR_V3_CLEANUP_ANALYSIS.md",
+      "name": "VENDOR_V3_CLEANUP_ANALYSIS.md",
+      "type": "other",
+      "createdAt": "2025-12-29T01:34:10.212Z",
+      "updatedAt": "2025-12-29T01:34:10.212Z",
+      "hash": "7ff31687c966c0becf188c8db71abdff",
+      "size": 9322,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "key findings",
+        "detailed analysis"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "e9895920-72fd-41d2-8517-dbb653887cbc",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/ADDITIONAL_OPTIMIZATION_OPPORTUNITIES.md",
+      "name": "ADDITIONAL_OPTIMIZATION_OPPORTUNITIES.md",
+      "type": "other",
+      "createdAt": "2025-12-28T16:22:00.691Z",
+      "updatedAt": "2025-12-28T16:22:00.692Z",
+      "hash": "d49a5021d9f774a0c71a4c53a60d7122",
+      "size": 34812,
+      "description": "This document identifies **additional optimization opportunities** beyond those already documented in `CODEBASE_OPTIMIZATION_PLAN.md`. These recommendations are based on deep analysis of the codeba...",
+      "tags": [
+        "executive summary",
+        "issue",
+        "current state"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "cd68be98-eb87-451a-a171-50b4e8d3a8f2",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/BUDGET_STORE_V2_PROGRESS_ANALYSIS.md",
+      "name": "BUDGET_STORE_V2_PROGRESS_ANALYSIS.md",
+      "type": "other",
+      "createdAt": "2025-12-28T16:26:55.111Z",
+      "updatedAt": "2025-12-28T16:32:03.375Z",
+      "hash": "62d4162648bd5c0d1c880061d05e3dcb",
+      "size": 37611,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "key achievements"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "bfb8f84b-0211-4aeb-8b50-d576765a20ab",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/BUDGET_STORE_V2_PROGRESS_ANALYSIS_WITH_BEST_PRACTICES.md",
+      "name": "BUDGET_STORE_V2_PROGRESS_ANALYSIS_WITH_BEST_PRACTICES.md",
+      "type": "other",
+      "createdAt": "2025-12-28T16:34:11.613Z",
+      "updatedAt": "2025-12-28T16:53:32.360Z",
+      "hash": "81a565a86d733d98690e0118978b23e8",
+      "size": 32270,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "key achievements"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "d8bd5636-d266-45e8-b92c-47af788390cd",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/CODEBASE_OPTIMIZATION_PLAN.md",
+      "name": "CODEBASE_OPTIMIZATION_PLAN.md",
+      "type": "other",
+      "createdAt": "2025-12-28T08:40:11.867Z",
+      "updatedAt": "2025-12-28T19:49:20.794Z",
+      "hash": "69d853d17acc1f650cd64ee339a81a61",
+      "size": 58923,
+      "description": "This document outlines optimization opportunities for the \"I Do Blueprint\" SwiftUI macOS app, based on analysis of large files (>300 lines), codebase patterns, and SwiftUI performance best practice...",
+      "tags": [
+        "codebase optimization plan",
+        "overview"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "5783ae22-b2bf-4a07-9a49-1860efa38237",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/DASHBOARD_V4_DECOMPOSITION_TRACKER.md",
+      "name": "DASHBOARD_V4_DECOMPOSITION_TRACKER.md",
+      "type": "architecture",
+      "createdAt": "2025-12-28T17:24:53.795Z",
+      "updatedAt": "2025-12-28T18:23:32.696Z",
+      "hash": "0f11b7cb881e55e4da3c585b606e8482",
+      "size": 17763,
+      "description": "",
+      "tags": [
+        "overview",
+        "current state analysis",
+        "file statistics"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "975646fc-87fa-4235-acb5-a307d3c34351",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/DEPRECATED_METHOD_CLEANUP_TRACKER.md",
+      "name": "DEPRECATED_METHOD_CLEANUP_TRACKER.md",
+      "type": "other",
+      "createdAt": "2025-12-28T16:38:23.998Z",
+      "updatedAt": "2025-12-28T16:52:53.888Z",
+      "hash": "db4323234be0808f806dd92045556ae0",
+      "size": 7839,
+      "description": "",
+      "tags": [
+        "overview",
+        "phase 1: migrate call sites"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "acc6d7f0-d3e8-4183-8dca-6b1d060365af",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/fileimport-phase2-completion-2025-12-28.md",
+      "name": "fileimport-phase2-completion-2025-12-28.md",
+      "type": "api",
+      "createdAt": "2025-12-28T19:10:25.205Z",
+      "updatedAt": "2025-12-28T19:10:25.205Z",
+      "hash": "3884f18c94db63b81beee69f28219704",
+      "size": 10481,
+      "description": "Successfully decomposed `FileImportService.swift` from a monolithic 901-line service into a clean façade pattern with 6 focused, protocol-based services. Achieved 80% reduction in main file size wh...",
+      "tags": [
+        "executive summary",
+        "metrics",
+        "architecture",
+        "before (monolithic)"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "26c2a7df-ad83-410e-87f9-1f2f2c3dc4b6",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/archive/2025-12-28-cleanup/optimization-2025-12-28-quickstart-1766946624283.md",
+      "name": "optimization-2025-12-28-quickstart-1766946624283.md",
+      "type": "other",
+      "createdAt": "2025-12-28T18:30:24.324Z",
+      "updatedAt": "2025-12-28T18:30:24.324Z",
+      "hash": "448142b99fd9cd6d3fee4cd2e82a16e1",
+      "size": 4555,
+      "description": "",
+      "tags": [
+        "overview",
+        "top large files",
+        "metrics",
+        "current metrics"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "e4357d80-6977-4adb-80b3-c28735345d24",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/ASSIGNMENT_EDITOR_REFACTORING_SUMMARY.md",
+      "name": "ASSIGNMENT_EDITOR_REFACTORING_SUMMARY.md",
+      "type": "architecture",
+      "createdAt": "2025-12-29T19:41:56.149Z",
+      "updatedAt": "2025-12-29T19:41:56.150Z",
+      "hash": "274bf8329e02e8253d896b48f61ee8cc",
+      "size": 8411,
+      "description": "",
+      "tags": [
+        "overview",
+        "metrics",
+        "before refactoring",
+        "after refactoring"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "bc69ab4f-6eaa-440b-85eb-3b6dac9c9b44",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/ANALYTICS_SERVICE_REFACTORING_SUMMARY.md",
+      "name": "ANALYTICS_SERVICE_REFACTORING_SUMMARY.md",
+      "type": "architecture",
+      "createdAt": "2025-12-29T23:19:15.114Z",
+      "updatedAt": "2025-12-29T23:19:15.115Z",
+      "hash": "e78f35b70b42a1b678fca909998af5af",
+      "size": 7758,
+      "description": "",
+      "tags": [
+        "overview",
+        "metrics",
+        "before refactoring",
+        "after refactoring"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "971e46d6-6bcd-4e76-969a-bfe72af00b3d",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/QUICK_START_GUIDE.md",
+      "name": "QUICK_START_GUIDE.md",
+      "type": "guide",
+      "createdAt": "2025-12-29T20:49:49.497Z",
+      "updatedAt": "2025-12-30T07:18:16.938Z",
+      "hash": "f4ce32c634ebd5e3cd43e605fd1aba10",
+      "size": 11089,
+      "description": "```bash",
+      "tags": [
+        "quick start guide",
+        "for new contributors",
+        "1. verify your environment",
+        "2. read the documentation"
+      ],
+      "linkedFiles": [
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/BASIC-MEMORY-AND-BEADS-GUIDE.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/mcp_tools_info.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/BASIC-MEMORY-AND-BEADS-GUIDE.md"
+      ]
+    },
+    {
+      "id": "237492da-7445-4e36-816b-4ade194d5e09",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/VENDOR_DETAIL_MODAL_REFACTORING_SUMMARY.md",
+      "name": "VENDOR_DETAIL_MODAL_REFACTORING_SUMMARY.md",
+      "type": "api",
+      "createdAt": "2025-12-29T23:27:21.610Z",
+      "updatedAt": "2025-12-29T23:27:21.610Z",
+      "hash": "6c9e1efc190381fde092b7497de8d039",
+      "size": 11676,
+      "description": "",
+      "tags": [
+        "📊 overview",
+        "metrics",
+        "🎯 goals achieved",
+        "📁 file structure"
+      ],
+      "linkedFiles": [
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/ARCHITECTURE_IMPROVEMENT_PLAN.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/best_practices.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/I Do Blueprint/Design/DESIGN_README.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/ASSIGNMENT_EDITOR_REFACTORING_SUMMARY.md"
+      ]
+    },
+    {
+      "id": "1995a5e0-1bd4-44cd-9e9f-aa89ce2e056c",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/TODO_AUDIT_REPORT.md",
+      "name": "TODO_AUDIT_REPORT.md",
+      "type": "other",
+      "createdAt": "2025-12-30T00:17:45.377Z",
+      "updatedAt": "2025-12-30T00:17:45.377Z",
+      "hash": "8f5bbfc5d84620e61d780aea540e3be6",
+      "size": 4337,
+      "description": "The codebase contains 44 TODO comments, primarily in two categories:",
+      "tags": [
+        "todo/fixme audit report",
+        "summary",
+        "category breakdown"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "46a86a4e-7c18-43e5-94e5-b48a33591125",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-001-repository-pattern-with-domain-services.md",
+      "name": "ADR-001-repository-pattern-with-domain-services.md",
+      "type": "other",
+      "createdAt": "2025-12-30T00:46:42.356Z",
+      "updatedAt": "2025-12-30T00:46:42.356Z",
+      "hash": "65078e5e4a5e6899d7d96526fa73f9f1",
+      "size": 3000,
+      "description": "Accepted",
+      "tags": [
+        "status",
+        "context",
+        "decision",
+        "consequences"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "7f144358-72b3-4d65-847f-5aa57e4de9f2",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-002-multi-tenant-security-with-supabase-rls.md",
+      "name": "ADR-002-multi-tenant-security-with-supabase-rls.md",
+      "type": "other",
+      "createdAt": "2025-12-30T00:47:05.337Z",
+      "updatedAt": "2025-12-30T00:47:05.338Z",
+      "hash": "61244a1964d8d7bbf4a9d74d54737946",
+      "size": 3250,
+      "description": "Accepted",
+      "tags": [
+        "status",
+        "context",
+        "decision",
+        "consequences"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "82d1a4ef-4f2c-4fcc-a09f-cb0fcb002c9c",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-003-v2-store-pattern-and-state-management.md",
+      "name": "ADR-003-v2-store-pattern-and-state-management.md",
+      "type": "other",
+      "createdAt": "2025-12-30T00:47:34.080Z",
+      "updatedAt": "2025-12-30T00:47:34.080Z",
+      "hash": "5fdcc1507241f9cc592d670cc17bc1c0",
+      "size": 4293,
+      "description": "Accepted",
+      "tags": [
+        "status",
+        "context",
+        "decision",
+        "consequences"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "3dcfe118-1de3-4120-b29a-608e0c8fa57d",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-004-cache-invalidation-strategy-pattern.md",
+      "name": "ADR-004-cache-invalidation-strategy-pattern.md",
+      "type": "other",
+      "createdAt": "2025-12-30T00:47:59.980Z",
+      "updatedAt": "2025-12-30T00:47:59.981Z",
+      "hash": "6c5f182d62030f46bc9db2081fecc6e8",
+      "size": 4745,
+      "description": "Accepted",
+      "tags": [
+        "status",
+        "context",
+        "decision",
+        "consequences"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "3521c623-d776-46f5-8744-4d873befb466",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-005-timezone-aware-date-handling.md",
+      "name": "ADR-005-timezone-aware-date-handling.md",
+      "type": "other",
+      "createdAt": "2025-12-30T00:48:25.887Z",
+      "updatedAt": "2025-12-30T00:48:25.887Z",
+      "hash": "e8de3def3ba9d109989a925b2ad41030",
+      "size": 4293,
+      "description": "Accepted",
+      "tags": [
+        "status",
+        "context",
+        "decision",
+        "consequences"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "0472af77-79c2-464d-a2e6-163812500d0a",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-006-error-handling-and-sentry-integration.md",
+      "name": "ADR-006-error-handling-and-sentry-integration.md",
+      "type": "other",
+      "createdAt": "2025-12-30T00:48:57.080Z",
+      "updatedAt": "2025-12-30T00:48:57.080Z",
+      "hash": "8148b645d0eaa1f96a8b72fd3eb560ce",
+      "size": 5697,
+      "description": "Accepted",
+      "tags": [
+        "status",
+        "context",
+        "decision",
+        "consequences"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "7a98f0d2-a777-45ca-807a-9c3b34c96bfe",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/README.md",
+      "name": "README.md",
+      "type": "readme",
+      "createdAt": "2025-12-30T00:49:17.906Z",
+      "updatedAt": "2025-12-30T00:49:17.906Z",
+      "hash": "bbbc689e717a3f2f0efa69a12b3e821e",
+      "size": 3475,
+      "description": "This directory contains Architectural Decision Records (ADRs) for I Do Blueprint. ADRs document significant architectural decisions made during the development of the application.",
+      "tags": [
+        "what is an adr?",
+        "adr format",
+        "index of adrs",
+        "active adrs"
+      ],
+      "linkedFiles": [
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-001-repository-pattern-with-domain-services.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-002-multi-tenant-security-with-supabase-rls.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-003-v2-store-pattern-and-state-management.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-004-cache-invalidation-strategy-pattern.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-005-timezone-aware-date-handling.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-006-error-handling-and-sentry-integration.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/best_practices.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/ARCHITECTURE_IMPROVEMENT_PLAN.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/CACHE_ARCHITECTURE.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/DOMAIN_SERVICES_ARCHITECTURE.md",
+        "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/TIMEZONE_SUPPORT.md"
+      ]
+    },
+    {
+      "id": "01c87b97-45a7-42e0-a186-3f192876098b",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/ERROR_HANDLING_AUDIT.md",
+      "name": "ERROR_HANDLING_AUDIT.md",
+      "type": "api",
+      "createdAt": "2025-12-30T04:08:07.470Z",
+      "updatedAt": "2025-12-30T04:08:07.470Z",
+      "hash": "a3c150cbf19d90e26b581721fde0bea0",
+      "size": 7991,
+      "description": "Audit of all stores to ensure consistent use of the `StoreErrorHandling` extension's `handleError` method instead of direct `self.error` assignment.",
+      "tags": [
+        "overview",
+        "storeerrorhandling extension",
+        "completed stores",
+        "✅ affordabilitystore.swift"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "0ac7d7c8-e1e6-41b8-b60c-aa4a62efc203",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/API_DOCUMENTATION.md",
+      "name": "API_DOCUMENTATION.md",
+      "type": "api",
+      "createdAt": "2025-12-30T07:39:03.040Z",
+      "updatedAt": "2025-12-30T07:39:03.040Z",
+      "hash": "87d636d61fb8aab8b6ac81cca328f6f2",
+      "size": 32505,
+      "description": "Comprehensive reference for I Do Blueprint's internal APIs, including repository interfaces, store APIs, domain services, and utilities.",
+      "tags": [
+        "api documentation",
+        "table of contents",
+        "repository layer",
+        "common repository patterns",
+        "budget repository"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "1fe1baf8-bfb7-40a1-a18c-324add15c292",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/FAQ.md",
+      "name": "FAQ.md",
+      "type": "architecture",
+      "createdAt": "2025-12-30T07:34:33.143Z",
+      "updatedAt": "2025-12-30T07:34:33.143Z",
+      "hash": "d3d2b0ec7d9613dc792dde829f6569e3",
+      "size": 19231,
+      "description": "",
+      "tags": [
+        "table of contents",
+        "setup & installation"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "a48ff390-7030-4f61-b85b-f5907fe6cc7c",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/GLOSSARY.md",
+      "name": "GLOSSARY.md",
+      "type": "architecture",
+      "createdAt": "2025-12-30T07:36:15.105Z",
+      "updatedAt": "2025-12-30T07:36:15.105Z",
+      "hash": "352c886652d22a6f7e80047000dc5cfd",
+      "size": 15015,
+      "description": "A comprehensive reference of technical terms, architecture concepts, and domain-specific terminology used in the I Do Blueprint project.",
+      "tags": [
+        "glossary",
+        "table of contents",
+        "actor",
+        "cache strategy"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "a4ae2636-bbb8-472b-b835-95f598cfadaa",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/CONTEXT_ENGINEERING_ANALYSIS.md",
+      "name": "CONTEXT_ENGINEERING_ANALYSIS.md",
+      "type": "other",
+      "createdAt": "2025-12-31T01:47:53.630Z",
+      "updatedAt": "2025-12-31T01:47:53.630Z",
+      "hash": "10378ce47022a5fb84b49b7af1c944f8",
+      "size": 12873,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "links extracted from article",
+        "primary resources"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "b30045a6-1ebc-4ff3-9735-c4b66fc02bd3",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/CONTEXT_ENGINEERING_QUICK_START.md",
+      "name": "CONTEXT_ENGINEERING_QUICK_START.md",
+      "type": "architecture",
+      "createdAt": "2025-12-31T01:53:29.771Z",
+      "updatedAt": "2025-12-31T01:53:29.771Z",
+      "hash": "d1784f1ae38f629110e87121305d0021",
+      "size": 9495,
+      "description": "",
+      "tags": [
+        "5-minute setup",
+        "1. start a new session",
+        "choose your template",
+        "or"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "c6157a73-b07d-4437-91b9-25d153d017c2",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/CONTEXT_ENGINEERING_WORKFLOW.md",
+      "name": "CONTEXT_ENGINEERING_WORKFLOW.md",
+      "type": "architecture",
+      "createdAt": "2025-12-31T01:55:41.948Z",
+      "updatedAt": "2025-12-31T01:55:41.948Z",
+      "hash": "db11d517507d7673acd5597bdd34c1a6",
+      "size": 29753,
+      "description": "This document visualizes how context engineering integrates with our existing tools (Basic Memory, Beads, Claude Code, Qodo Gen).",
+      "tags": [
+        "complete workflow",
+        "context update frequency"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "ca763186-afd2-4bfb-ad83-2593cc7578b1",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/context-templates/README.md",
+      "name": "README.md",
+      "type": "readme",
+      "createdAt": "2025-12-31T01:51:32.250Z",
+      "updatedAt": "2025-12-31T01:51:32.251Z",
+      "hash": "e5522af5a1d2ef4ce73f98d7730dda4e",
+      "size": 8406,
+      "description": "This directory contains templates for implementing **Intent-Based Context Engineering** as described in [Taras Yarema's benchmark research](https://www.tarasyarema.com/blog/agent-context-engineering).",
+      "tags": [
+        "context engineering templates",
+        "available templates",
+        "1. coding session template",
+        "2. test generation template"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "af75f12d-2f84-4d07-aa46-950a142ee11b",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/context-templates/architecture-decision-template.md",
+      "name": "architecture-decision-template.md",
+      "type": "architecture",
+      "createdAt": "2025-12-31T01:50:37.016Z",
+      "updatedAt": "2025-12-31T01:50:37.016Z",
+      "hash": "b0a3de3bef993660dd40040181582d44",
+      "size": 8076,
+      "description": "",
+      "tags": [
+        "decision overview",
+        "decision statement",
+        "context",
+        "problem statement"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "5bf68ecc-b73b-4741-ab88-aebd918775c9",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/context-templates/coding-session-template.md",
+      "name": "coding-session-template.md",
+      "type": "architecture",
+      "createdAt": "2025-12-31T01:48:21.893Z",
+      "updatedAt": "2025-12-31T01:48:21.893Z",
+      "hash": "7548284b46924c33b5e7c22f29075287",
+      "size": 3671,
+      "description": "[One-sentence description of what we're trying to achieve]",
+      "tags": [
+        "current goal",
+        "session progress",
+        "completed milestones",
+        "active context"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "96a90e54-0ce6-46f5-b6be-d1243063fb1a",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/context-templates/debugging-session-template.md",
+      "name": "debugging-session-template.md",
+      "type": "other",
+      "createdAt": "2025-12-31T01:49:49.674Z",
+      "updatedAt": "2025-12-31T01:49:49.674Z",
+      "hash": "8dfa111e0631cf92741598bd2762d1eb",
+      "size": 6590,
+      "description": "",
+      "tags": [
+        "bug description",
+        "symptoms",
+        "expected behavior",
+        "reproduction steps"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "ac381577-6b58-4c1f-97b0-99c0d30e7dfd",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/context-templates/test-generation-template.md",
+      "name": "test-generation-template.md",
+      "type": "other",
+      "createdAt": "2025-12-31T01:49:06.986Z",
+      "updatedAt": "2025-12-31T01:49:06.986Z",
+      "hash": "2f1bbed60839264e38f04148f7d2ffa6",
+      "size": 8668,
+      "description": "[What component/feature needs testing]",
+      "tags": [
+        "test generation goal",
+        "project architecture context",
+        "pattern in use",
+        "key conventions"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "40a5f394-cae5-4617-a3ad-154f2cbef689",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/CLAUDE_CONFIG_SECURITY_SETUP.md",
+      "name": "CLAUDE_CONFIG_SECURITY_SETUP.md",
+      "type": "config",
+      "createdAt": "2025-12-31T06:43:35.837Z",
+      "updatedAt": "2025-12-31T06:43:35.837Z",
+      "hash": "b34e947db4fb8813fbe9aad375cc6762",
+      "size": 4259,
+      "description": "Migrated API keys from hardcoded values in `.claude.json` to environment variables for better security.",
+      "tags": [
+        "what was done",
+        "changes made",
+        "next steps for you",
+        "1. add your rotated api keys"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "a0f80d4f-f2e8-4373-9daa-0a08457afaab",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/CANCELLATION_ERROR_FIX.md",
+      "name": "CANCELLATION_ERROR_FIX.md",
+      "type": "other",
+      "createdAt": "2025-12-31T19:27:11.140Z",
+      "updatedAt": "2025-12-31T20:01:54.978Z",
+      "hash": "ca887900794e5ba80150ab1a9c7e8748",
+      "size": 12413,
+      "description": "This fix has been fully implemented and tested. Users can now switch between Settings tabs without seeing false error dialogs.",
+      "tags": [
+        "problem summary",
+        "root cause",
+        "solution"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "8a51e692-50f9-4e9c-b863-ad64874d66a2",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/ADR-007-settings-ui-nested-hierarchy.md",
+      "name": "ADR-007-settings-ui-nested-hierarchy.md",
+      "type": "other",
+      "createdAt": "2025-12-31T19:11:10.898Z",
+      "updatedAt": "2025-12-31T19:11:10.898Z",
+      "hash": "cd039d7c7b7cb4610d13d4839c00ee98",
+      "size": 5715,
+      "description": "2025-12-31",
+      "tags": [
+        "date",
+        "status",
+        "context",
+        "decision"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "5b06adc4-24c8-4b8e-876e-f74af3b88ae5",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/adrs/adr-0007-settings-ui-restructure-nested-hierarchy-pattern.md",
+      "name": "adr-0007-settings-ui-restructure-nested-hierarchy-pattern.md",
+      "type": "other",
+      "createdAt": "2025-12-31T19:08:41.435Z",
+      "updatedAt": "2025-12-31T19:08:41.458Z",
+      "hash": "f3524bd8e89bf8c2942385950978c380",
+      "size": 25,
+      "description": "[ADR_CONTENT_PLACEHOLDER]",
+      "tags": [],
+      "linkedFiles": []
+    },
+    {
+      "id": "e59bbb35-85c1-494e-9ea8-b966ebae54ce",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/reports/GUEST_DETAIL_VIEW_ENHANCEMENT_COMPLETE_REPORT.md",
+      "name": "GUEST_DETAIL_VIEW_ENHANCEMENT_COMPLETE_REPORT.md",
+      "type": "architecture",
+      "createdAt": "2026-01-01T01:10:44.782Z",
+      "updatedAt": "2026-01-01T01:10:44.782Z",
+      "hash": "ca2a351b110b3cad4fbab4fd543d6f36",
+      "size": 29443,
+      "description": "",
+      "tags": [
+        "table of contents",
+        "executive summary",
+        "key achievements",
+        "problem statement"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "d992b23d-b897-41d3-b7e7-d638d16c96c7",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/GUEST_MANAGEMENT_COMPACT_WINDOW_PLAN.md",
+      "name": "GUEST_MANAGEMENT_COMPACT_WINDOW_PLAN.md",
+      "type": "architecture",
+      "createdAt": "2026-01-01T02:56:53.233Z",
+      "updatedAt": "2026-01-01T10:12:33.533Z",
+      "hash": "0f5711b2bc829dd78252b0ed5dadafec",
+      "size": 49125,
+      "description": "The Guest Management view (`GuestManagementViewV4.swift`) needs optimization for compact windows (half of 13\" MacBook Air screen, ~640-680px width). Currently uses fixed spacing and multi-column la...",
+      "tags": [
+        "context",
+        "why this approach?",
+        "implementation strategy"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "188c1b0d-e775-4c0a-bf41-406d72189d9c",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/SECURITY-SCANNING-SETUP.md",
+      "name": "SECURITY-SCANNING-SETUP.md",
+      "type": "other",
+      "createdAt": "2026-01-01T04:24:06.595Z",
+      "updatedAt": "2026-01-01T04:24:06.597Z",
+      "hash": "03bdc1dd005039fcaa864a4b478d7001",
+      "size": 6928,
+      "description": "This project uses **Semgrep Pro (free Team tier)** for comprehensive security scanning, including:",
+      "tags": [
+        "security scanning setup",
+        "overview",
+        "setup complete ✅",
+        "quick start",
+        "run security checks"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "06c93845-b10c-49a7-9a58-3df37a4bfa82",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/gemini_CLI_MCP.md",
+      "name": "gemini_CLI_MCP.md",
+      "type": "other",
+      "createdAt": "2026-01-01T08:10:22.708Z",
+      "updatedAt": "2026-01-01T08:10:22.708Z",
+      "hash": "d41d8cd98f00b204e9800998ecf8427e",
+      "size": 0,
+      "description": "",
+      "tags": [],
+      "linkedFiles": []
+    },
+    {
+      "id": "2fca72ba-452b-45de-8469-3a7809723e6f",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/VENDOR_CARD_SPACING_IMPLEMENTATION_PLAN.md",
+      "name": "VENDOR_CARD_SPACING_IMPLEMENTATION_PLAN.md",
+      "type": "architecture",
+      "createdAt": "2026-01-01T20:55:09.327Z",
+      "updatedAt": "2026-01-01T20:55:09.327Z",
+      "hash": "08ad1964ce98016c78743e3daa60e38c",
+      "size": 18864,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "deep dive analysis",
+        "visual comparison"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "3b15c595-745c-447b-836f-ca210e044a51",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/VENDOR_CARD_SPACING_IMPLEMENTATION_SUMMARY.md",
+      "name": "VENDOR_CARD_SPACING_IMPLEMENTATION_SUMMARY.md",
+      "type": "architecture",
+      "createdAt": "2026-01-01T20:58:41.854Z",
+      "updatedAt": "2026-01-01T20:58:41.854Z",
+      "hash": "3660f0e104053ba865a8881e0ab053fc",
+      "size": 6001,
+      "description": "",
+      "tags": [
+        "changes made",
+        "results"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "2541d4fa-81d5-4632-858d-c42f8846bd77",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/VENDOR_MANAGEMENT_COMPACT_WINDOW_PLAN.md",
+      "name": "VENDOR_MANAGEMENT_COMPACT_WINDOW_PLAN.md",
+      "type": "other",
+      "createdAt": "2026-01-01T19:04:55.912Z",
+      "updatedAt": "2026-01-01T19:04:55.912Z",
+      "hash": "619da69d071d1ba63668dd6967d52d91",
+      "size": 36730,
+      "description": "2026-01-01",
+      "tags": [
+        "date",
+        "executive summary",
+        "background",
+        "guest management success"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "f4233e30-cc6a-49f2-8df7-245b51e9b3e5",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_MODULE_OPTIMIZATION_PLAN.md",
+      "name": "BUDGET_MODULE_OPTIMIZATION_PLAN.md",
+      "type": "other",
+      "createdAt": "2026-01-01T21:41:04.517Z",
+      "updatedAt": "2026-01-01T21:41:04.517Z",
+      "hash": "620c674709821020901e4a4168ad7f2b",
+      "size": 40354,
+      "description": "2026-01-01",
+      "tags": [
+        "date",
+        "executive summary",
+        "current state analysis"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "bfc5b717-c841-4804-ab7a-e3ec7e40b6c5",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_COMPLETE_SUMMARY.md",
+      "name": "BUDGET_OVERVIEW_COMPLETE_SUMMARY.md",
+      "type": "other",
+      "createdAt": "2026-01-02T03:57:14.066Z",
+      "updatedAt": "2026-01-02T03:57:14.067Z",
+      "hash": "f0fbf0c71411a045b87c900a51c093f3",
+      "size": 8893,
+      "description": "> **Status:** ✅ ALL TASKS COMPLETE",
+      "tags": [
+        "overview",
+        "completed tasks summary",
+        "v1 implementation (7 tasks) ✅",
+        "v2 fixes (2 tasks) ✅"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "eca15209-f595-447d-9497-1ca9178e0207",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_DASHBOARD_COMPACT_IMPLEMENTATION_SUMMARY.md",
+      "name": "BUDGET_OVERVIEW_DASHBOARD_COMPACT_IMPLEMENTATION_SUMMARY.md",
+      "type": "architecture",
+      "createdAt": "2026-01-02T02:50:39.492Z",
+      "updatedAt": "2026-01-02T02:50:39.492Z",
+      "hash": "9d009c906bbf753291b18ad3e19e8c68",
+      "size": 10216,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "overview"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "3118ae6b-9c75-41b9-a1fd-6c38aa72ed32",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_FINAL_OPTIMIZATIONS.md",
+      "name": "BUDGET_OVERVIEW_FINAL_OPTIMIZATIONS.md",
+      "type": "architecture",
+      "createdAt": "2026-01-02T04:19:23.542Z",
+      "updatedAt": "2026-01-02T04:19:23.542Z",
+      "hash": "b79a4a5daff254ae427cf60f0bb70124",
+      "size": 12589,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "overview",
+        "changes summary"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "2124a380-bb88-457d-9fb6-7bbf6661685b",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_FOLLOW_UP_ISSUES.md",
+      "name": "BUDGET_OVERVIEW_FOLLOW_UP_ISSUES.md",
+      "type": "architecture",
+      "createdAt": "2026-01-02T02:56:25.102Z",
+      "updatedAt": "2026-01-02T02:56:25.102Z",
+      "hash": "18c6bca12f9f9cc656a3ab237a982fb6",
+      "size": 9476,
+      "description": "> **Created:** January 2026",
+      "tags": [
+        "overview",
+        "created issues",
+        "1. advanced filter system",
+        "2. export summary feature"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "ad11c262-559c-4864-bbfc-d955cc5b738a",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_SESSION_FINAL_REPORT.md",
+      "name": "BUDGET_OVERVIEW_SESSION_FINAL_REPORT.md",
+      "type": "other",
+      "createdAt": "2026-01-02T04:32:37.861Z",
+      "updatedAt": "2026-01-02T04:32:37.861Z",
+      "hash": "d4b3a0c8b3b2cdf6cbb0f9a129c16ec7",
+      "size": 8915,
+      "description": "> **Session Date:** January 2026",
+      "tags": [
+        "executive summary",
+        "p1 - critical",
+        "p2 - high"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "9bdf7a8a-f9ad-49e5-9642-4fad573556f5",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_V2_FIXES_SUMMARY.md",
+      "name": "BUDGET_OVERVIEW_V2_FIXES_SUMMARY.md",
+      "type": "other",
+      "createdAt": "2026-01-02T03:19:54.108Z",
+      "updatedAt": "2026-01-02T03:19:54.108Z",
+      "hash": "98740dccdceb8dc98073856def02d74e",
+      "size": 4948,
+      "description": "> **Status:** ✅ PARTIAL COMPLETE - 3 of 5 issues fixed",
+      "tags": [
+        "issues fixed"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "9639be8a-f2c8-4a27-89ec-191271155de4",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_V3_COMPLETE.md",
+      "name": "BUDGET_OVERVIEW_V3_COMPLETE.md",
+      "type": "other",
+      "createdAt": "2026-01-02T03:48:30.606Z",
+      "updatedAt": "2026-01-02T03:48:30.606Z",
+      "hash": "7c42900625b455de4237e195533302fa",
+      "size": 7384,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "summary",
+        "completed tasks"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "b63398c4-0c32-470b-a01a-1090ea482af0",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/BUDGET_OVERVIEW_V3_PROGRESS.md",
+      "name": "BUDGET_OVERVIEW_V3_PROGRESS.md",
+      "type": "other",
+      "createdAt": "2026-01-02T03:39:54.040Z",
+      "updatedAt": "2026-01-02T03:39:54.040Z",
+      "hash": "a138ccc84c1af2bf031d1bce3ff6f27a",
+      "size": 5623,
+      "description": "> **Status:** 🔄 IN PROGRESS (2 of 6 tasks complete)",
+      "tags": [
+        "completed tasks",
+        "remaining tasks"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "bfb47f9f-69fb-4db7-9411-f4ac0ccea339",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_COMPACT_IMPLEMENTATION_COMPLETE.md",
+      "name": "EXPENSE_TRACKER_COMPACT_IMPLEMENTATION_COMPLETE.md",
+      "type": "other",
+      "createdAt": "2026-01-02T07:04:47.353Z",
+      "updatedAt": "2026-01-02T07:04:47.354Z",
+      "hash": "7665ab43f04393212fe61cd7121dfc25",
+      "size": 12459,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "executive summary",
+        "✅ all phases complete"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "3c175246-103f-4421-bd95-76e4007098ee",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_COMPACT_IMPLEMENTATION_PROGRESS.md",
+      "name": "EXPENSE_TRACKER_COMPACT_IMPLEMENTATION_PROGRESS.md",
+      "type": "other",
+      "createdAt": "2026-01-02T06:28:06.933Z",
+      "updatedAt": "2026-01-02T06:45:10.244Z",
+      "hash": "043835cb3acc906bfd4ba136c7dee924",
+      "size": 12760,
+      "description": "> **Status:** 🚧 IN PROGRESS (Phases 1-2 Complete)",
+      "tags": [
+        "executive summary",
+        "✅ completed phases"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "dc60f93b-99a7-47ff-b824-ebabbb7a3d14",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_FIXES_IMPLEMENTATION_PLAN.md",
+      "name": "EXPENSE_TRACKER_FIXES_IMPLEMENTATION_PLAN.md",
+      "type": "other",
+      "createdAt": "2026-01-02T07:32:09.380Z",
+      "updatedAt": "2026-01-02T07:32:09.380Z",
+      "hash": "85729c8f311a36a73734a6250f5a041d",
+      "size": 6845,
+      "description": "> **Status:** 🚧 IN PROGRESS",
+      "tags": [
+        "issues to fix"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "f8e074e2-5d3d-40ee-9483-0f8b04eb48ab",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_FIXES_LESSONS_LEARNED.md",
+      "name": "EXPENSE_TRACKER_FIXES_LESSONS_LEARNED.md",
+      "type": "other",
+      "createdAt": "2026-01-02T07:42:46.920Z",
+      "updatedAt": "2026-01-02T07:51:55.380Z",
+      "hash": "13f91837391c43a744cdfc01355c0566",
+      "size": 16096,
+      "description": "> **Session Date:** January 2026",
+      "tags": [
+        "key lessons"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "cc6276dd-f652-474b-8e3f-86b21d81917e",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_FIXES_PROGRESS.md",
+      "name": "EXPENSE_TRACKER_FIXES_PROGRESS.md",
+      "type": "other",
+      "createdAt": "2026-01-02T07:35:21.880Z",
+      "updatedAt": "2026-01-02T07:51:20.419Z",
+      "hash": "400ab0486af62b9f4b3b344570b65bb7",
+      "size": 9571,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "implementation notes"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "8c5ff548-cf38-4f40-98f4-8d352bdac249",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_ROUND2_PROGRESS.md",
+      "name": "EXPENSE_TRACKER_ROUND2_PROGRESS.md",
+      "type": "other",
+      "createdAt": "2026-01-02T08:13:15.824Z",
+      "updatedAt": "2026-01-02T09:44:35.923Z",
+      "hash": "550780b2c575b78bc35f9b4cbe4358da",
+      "size": 8904,
+      "description": "> **Status:** 🚧 IN PROGRESS",
+      "tags": [
+        "feedback items"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "139f8ab6-05cc-4fcf-83c7-b934be3d1ff6",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_OPTIMIZATION_COMPLETE.md",
+      "name": "EXPENSE_TRACKER_OPTIMIZATION_COMPLETE.md",
+      "type": "other",
+      "createdAt": "2026-01-02T09:43:58.728Z",
+      "updatedAt": "2026-01-02T09:43:58.728Z",
+      "hash": "0ec41f2e42d9f7b6d172913b6fd9e93f",
+      "size": 9128,
+      "description": "",
+      "tags": [
+        "overview",
+        "completed work",
+        "phase 2: modal sizing fix ✅"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "aa2b74e7-5988-42c9-b795-728d1f623c33",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_ROUND2_COMPLETE_SUMMARY.md",
+      "name": "EXPENSE_TRACKER_ROUND2_COMPLETE_SUMMARY.md",
+      "type": "other",
+      "createdAt": "2026-01-02T08:56:32.781Z",
+      "updatedAt": "2026-01-02T08:56:32.781Z",
+      "hash": "9acd585e486a1fbb48047e9db885b2c3",
+      "size": 7972,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "overview",
+        "completed items"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "4b8d4af8-5eb1-47fb-9275-8d65048f09b9",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_TRACKER_STATIC_HEADER_IMPLEMENTATION_PLAN.md",
+      "name": "EXPENSE_TRACKER_STATIC_HEADER_IMPLEMENTATION_PLAN.md",
+      "type": "architecture",
+      "createdAt": "2026-01-02T08:41:33.708Z",
+      "updatedAt": "2026-01-02T08:41:33.708Z",
+      "hash": "44f93a7e7cd49a6353c9c630cb699122",
+      "size": 13529,
+      "description": "> **Status:** 🚧 READY TO IMPLEMENT",
+      "tags": [
+        "design overview",
+        "row 1: context + actions",
+        "row 2: health dashboard"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "68a40eee-bf1d-4913-a696-83b58b14dc16",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/LLM_COUNCIL_EXPENSE_TRACKER_HEADER_DESIGN.md",
+      "name": "LLM_COUNCIL_EXPENSE_TRACKER_HEADER_DESIGN.md",
+      "type": "architecture",
+      "createdAt": "2026-01-02T08:27:46.075Z",
+      "updatedAt": "2026-01-02T08:27:46.075Z",
+      "hash": "33162975ca4fbff98cc72ebf754695d8",
+      "size": 18994,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "⚠️ critical correction",
+        "current state analysis",
+        "expense tracker architecture"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "fc51ebd3-4018-46b7-a67d-0bf30c3cbc41",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/PAYMENT_SCHEDULE_COMPACT_IMPLEMENTATION_PROGRESS.md",
+      "name": "PAYMENT_SCHEDULE_COMPACT_IMPLEMENTATION_PROGRESS.md",
+      "type": "other",
+      "createdAt": "2026-01-02T21:30:56.890Z",
+      "updatedAt": "2026-01-02T21:55:12.430Z",
+      "hash": "105b6112aa70570475e6fb5150108bf8",
+      "size": 11242,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "overview",
+        "implementation phases"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "5d4f47cc-5aff-4c75-bfd6-76c42818603e",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/COLOR_SYSTEM_AUDIT_2026.md",
+      "name": "COLOR_SYSTEM_AUDIT_2026.md",
+      "type": "other",
+      "createdAt": "2026-01-02T23:23:49.987Z",
+      "updatedAt": "2026-01-02T23:23:49.988Z",
+      "hash": "7b1c1759fa4407a27b89a449a7a2df75",
+      "size": 17375,
+      "description": "Your color system is **well-structured** with semantic naming and WCAG compliance built-in. However, there are opportunities to improve **scalability, consistency, and accessibility** using color s...",
+      "tags": [
+        "executive summary",
+        "🔍 audit findings",
+        "✅ strengths",
+        "⚠️ issues found"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "f6071701-7c06-42f6-88df-2b110c0dfebf",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/PAYMENT_SCHEDULE_REFINEMENT_PROGRESS.md",
+      "name": "PAYMENT_SCHEDULE_REFINEMENT_PROGRESS.md",
+      "type": "other",
+      "createdAt": "2026-01-02T23:11:17.060Z",
+      "updatedAt": "2026-01-02T23:51:40.647Z",
+      "hash": "3e9a1f99246ef84109102d4f5e368e1d",
+      "size": 13882,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "overview",
+        "implementation phases"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "4c2c1781-2b19-43af-a12d-754d849e55e6",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/COLOR_MIGRATION_QUICK_START.md",
+      "name": "COLOR_MIGRATION_QUICK_START.md",
+      "type": "other",
+      "createdAt": "2026-01-03T05:48:03.833Z",
+      "updatedAt": "2026-01-03T05:48:03.833Z",
+      "hash": "f9eee28a8ea2639df92c6e1385603659",
+      "size": 10938,
+      "description": "Migrate the I Do Blueprint app from legacy color patterns to the new Blush Romance semantic color system.",
+      "tags": [
+        "🎯 goal",
+        "✅ prerequisites",
+        "🚀 quick start (5 minutes)",
+        "step 1: scan current state"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "541d8c98-29a1-4048-858e-59044c60cca9",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/COLOR_SCHEME_RESEARCH_RECOMMENDATIONS_2026.md",
+      "name": "COLOR_SCHEME_RESEARCH_RECOMMENDATIONS_2026.md",
+      "type": "other",
+      "createdAt": "2026-01-03T02:46:47.544Z",
+      "updatedAt": "2026-01-03T02:46:47.545Z",
+      "hash": "7c718cc287e24926b3c158834b5e7b43",
+      "size": 30594,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "📊 research findings"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "350f747b-02a2-4ceb-a505-a41a0f4706ff",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/COLOR_SYSTEM_IMPLEMENTATION_STATUS.md",
+      "name": "COLOR_SYSTEM_IMPLEMENTATION_STATUS.md",
+      "type": "other",
+      "createdAt": "2026-01-03T05:45:59.249Z",
+      "updatedAt": "2026-01-03T05:45:59.249Z",
+      "hash": "9fb7b483c59f132b89e7892945017244",
+      "size": 13110,
+      "description": "✅ **Color scales and semantic mappings are fully implemented** in `ColorPalette.swift`",
+      "tags": [
+        "executive summary",
+        "✅ completed work"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "8414e4a2-dedf-45db-9e20-6ce989178a00",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/COLOR_SYSTEM_IMPLEMENTATION_SUMMARY.md",
+      "name": "COLOR_SYSTEM_IMPLEMENTATION_SUMMARY.md",
+      "type": "other",
+      "createdAt": "2026-01-03T05:49:35.489Z",
+      "updatedAt": "2026-01-03T05:49:35.489Z",
+      "hash": "83a89aff306a78553fcc919c5c9fc8cd",
+      "size": 9897,
+      "description": "",
+      "tags": [
+        "📊 current state",
+        "✅ what's complete",
+        "⚠️ what's pending",
+        "🎯 implementation roadmap"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "8677dc79-3b4b-4a62-b5e0-7cc71af57130",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/COLOR_SYSTEM_SETTINGS_UPDATE.md",
+      "name": "COLOR_SYSTEM_SETTINGS_UPDATE.md",
+      "type": "other",
+      "createdAt": "2026-01-03T05:57:52.208Z",
+      "updatedAt": "2026-01-03T05:57:52.208Z",
+      "hash": "cb2e8a781122e238253d4696f546d90f",
+      "size": 4986,
+      "description": "Updated the Settings → Theme section to include the new Blush Romance color system theme options.",
+      "tags": [
+        "color system settings update",
+        "summary",
+        "changes made",
+        "1. themesettingsview.swift ✅",
+        "2. settingsmodel.swift ✅"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "114aaf09-bd00-4ffd-9af3-fa2875d07680",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/COLOR_SYSTEM_VISUAL_REFERENCE.md",
+      "name": "COLOR_SYSTEM_VISUAL_REFERENCE.md",
+      "type": "other",
+      "createdAt": "2026-01-03T05:51:05.878Z",
+      "updatedAt": "2026-01-03T05:51:05.879Z",
+      "hash": "930d8802618de50494f45695ae85ff55",
+      "size": 16594,
+      "description": "",
+      "tags": [
+        "color system visual reference",
+        "🎨 color scales",
+        "blushpink (primary)",
+        "sagegreen (secondary)",
+        "terracotta (accent warm)"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "e819708b-2ca0-40e9-a2b4-dc6ea40adb82",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_CATEGORIES_COMPACT_IMPLEMENTATION_COMPLETE.md",
+      "name": "EXPENSE_CATEGORIES_COMPACT_IMPLEMENTATION_COMPLETE.md",
+      "type": "other",
+      "createdAt": "2026-01-03T02:28:41.412Z",
+      "updatedAt": "2026-01-03T05:07:27.511Z",
+      "hash": "c394794ea21ef465035d318bb11fb311",
+      "size": 26485,
+      "description": "> **Status:** ✅ IMPLEMENTATION COMPLETE - Ready for Manual Testing",
+      "tags": [
+        "executive summary",
+        "key achievements",
+        "implementation overview",
+        "phases completed"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "127947cc-4b4d-44e5-a9d8-d6031d56d586",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_CATEGORIES_COMPACT_IMPLEMENTATION_PROGRESS.md",
+      "name": "EXPENSE_CATEGORIES_COMPACT_IMPLEMENTATION_PROGRESS.md",
+      "type": "other",
+      "createdAt": "2026-01-03T01:59:57.335Z",
+      "updatedAt": "2026-01-03T05:05:11.211Z",
+      "hash": "3ebfe28ea49ee0d1596a39f2382a2d16",
+      "size": 24679,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "implementation phases"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "0c513a04-b0a4-453e-8e31-acaf4098da1b",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/EXPENSE_CATEGORIES_PHASE_10_COMPLETE.md",
+      "name": "EXPENSE_CATEGORIES_PHASE_10_COMPLETE.md",
+      "type": "other",
+      "createdAt": "2026-01-03T03:22:40.779Z",
+      "updatedAt": "2026-01-03T03:22:40.779Z",
+      "hash": "bb62c63fd93b33c9e94f862971c75bef",
+      "size": 10016,
+      "description": "> **Status:** ✅ COMPLETE",
+      "tags": [
+        "overview",
+        "issues fixed"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "443462b6-5a8a-4fb0-87f8-f193abe115ae",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/TAILWIND_COLOR_IMPLEMENTATION_GUIDE.md",
+      "name": "TAILWIND_COLOR_IMPLEMENTATION_GUIDE.md",
+      "type": "guide",
+      "createdAt": "2026-01-03T02:56:35.756Z",
+      "updatedAt": "2026-01-03T02:56:35.756Z",
+      "hash": "d1b1c623222d000004ea0a940897dd34",
+      "size": 20900,
+      "description": "This guide provides **step-by-step instructions** for using the Tailwind Shade Generator to create production-ready color scales for the I Do Blueprint app based on our research-backed recommendati...",
+      "tags": [
+        "🎯 overview",
+        "📋 quick start workflow",
+        "step 1: open the tool"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "8844d124-be6a-48e8-82f6-7d6f99d0b7de",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/THEME_MANAGER_COMPLETE.md",
+      "name": "THEME_MANAGER_COMPLETE.md",
+      "type": "architecture",
+      "createdAt": "2026-01-03T06:20:07.352Z",
+      "updatedAt": "2026-01-03T06:20:07.353Z",
+      "hash": "0d0d0efe83f7d4addd7448bf60d85e67",
+      "size": 8532,
+      "description": "",
+      "tags": [
+        "summary",
+        "what works now",
+        "user experience",
+        "technical implementation"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "94ca30fe-b32d-400f-84a6-71a0081c7ec1",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/THEME_MANAGER_IMPLEMENTATION_PLAN.md",
+      "name": "THEME_MANAGER_IMPLEMENTATION_PLAN.md",
+      "type": "architecture",
+      "createdAt": "2026-01-03T06:11:45.696Z",
+      "updatedAt": "2026-01-03T06:11:45.696Z",
+      "hash": "6e80d63064d693f8d62c6abd7727b37f",
+      "size": 24524,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "architecture overview",
+        "core components",
+        "implementation steps"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "d37a8247-0f2c-41f8-9328-729dcd46d341",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/WCAG_COMPLIANCE_REPORT_2026.md",
+      "name": "WCAG_COMPLIANCE_REPORT_2026.md",
+      "type": "other",
+      "createdAt": "2026-01-03T04:12:14.950Z",
+      "updatedAt": "2026-01-03T04:12:14.950Z",
+      "hash": "3edf9f835bce17891832f6de1a8ed6c3",
+      "size": 7532,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "blushpink color family",
+        "sagegreen color family"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "21c37dd9-6b31-4efa-b390-fa20b23c8369",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/WCAG_COMPLIANCE_CONSOLIDATED_REPORT_2026.md",
+      "name": "WCAG_COMPLIANCE_CONSOLIDATED_REPORT_2026.md",
+      "type": "other",
+      "createdAt": "2026-01-03T20:42:59.352Z",
+      "updatedAt": "2026-01-03T20:42:59.352Z",
+      "hash": "21f6e5977b8736a12b6083e8c70aaa87",
+      "size": 23025,
+      "description": "",
+      "tags": [
+        "table of contents",
+        "executive summary"
+      ],
+      "linkedFiles": []
+    },
+    {
+      "id": "31722624-e263-4a71-8bcd-dcdf96745824",
+      "path": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint/docs/WEDDING_PALETTE_WCAG_COMPLIANCE_2026.md",
+      "name": "WEDDING_PALETTE_WCAG_COMPLIANCE_2026.md",
+      "type": "other",
+      "createdAt": "2026-01-03T20:38:18.338Z",
+      "updatedAt": "2026-01-03T20:38:18.355Z",
+      "hash": "c668880e37006b39102e37c71fa3d079",
+      "size": 23013,
+      "description": "",
+      "tags": [
+        "executive summary",
+        "option 1: warm & vibrant",
+        "overview"
+      ],
+      "linkedFiles": []
+    }
+  ],
+  "lastScanned": "2026-01-03T21:00:42.988Z",
+  "locations": {
+    "readme": "README.md",
+    "docs": "docs",
+    "api": "docs/api",
+    "specs": "docs/specs"
+  }
+}

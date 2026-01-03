@@ -1,0 +1,14 @@
+{
+  "version": "1",
+  "sessionId": "dbb54730-1f47-44fb-94d5-8d7c709b8426",
+  "createdAt": "2025-12-29T05:38:52.723Z",
+  "updatedAt": "2025-12-30T00:01:27.760Z",
+  "modules": {},
+  "latestCheckpointId": null,
+  "timeline": [],
+  "metadata": {
+    "projectRoot": "/Users/jessicaclark/Development/nextjs-projects/I Do Blueprint",
+    "ccgVersion": "4.0.0",
+    "resumeCount": 0
+  }
+}

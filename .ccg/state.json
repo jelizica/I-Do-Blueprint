@@ -1,0 +1,27 @@
+{
+  "installId": "9894ba3a-dfe1-4ec0-8a33-9b4b26e3bad5",
+  "firstRun": false,
+  "stats": {
+    "totalSessions": 2,
+    "totalTasksCompleted": 0,
+    "totalFilesModified": 0,
+    "totalTestsRun": 0,
+    "totalGuardBlocks": 0,
+    "totalCheckpoints": 0
+  },
+  "lastSessionId": "65124d02-a618-4506-b71a-d91dfb0a0e6d",
+  "session": {
+    "id": "65124d02-a618-4506-b71a-d91dfb0a0e6d",
+    "startedAt": "2025-12-29T23:57:58.598Z",
+    "projectPath": "/",
+    "status": "active",
+    "tokenUsage": {
+      "used": 0,
+      "estimated": 200000,
+      "percentage": 0,
+      "lastUpdated": "2025-12-29T23:57:58.598Z"
+    },
+    "metadata": {},
+    "timeline": []
+  }
+}
