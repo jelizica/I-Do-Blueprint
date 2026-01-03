@@ -20,25 +20,25 @@ struct VendorStatusSectionHeader: View {
                 Text(status)
                     .font(Typography.subheading)
             }
-            .foregroundColor(status == "Booked" ? AppColors.success : AppColors.warning)
+            .foregroundColor(status == "Booked" ? SemanticColors.statusSuccess : SemanticColors.statusWarning)
 
             Spacer()
 
             Text("\(count)")
                 .font(Typography.caption)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .padding(.horizontal, Spacing.sm)
                 .padding(.vertical, Spacing.xxs)
                 .background(
                     Capsule()
-                        .fill((status == "Booked" ? AppColors.success : AppColors.warning).opacity(0.15))
+                        .fill((status == "Booked" ? SemanticColors.statusSuccess : SemanticColors.statusWarning).opacity(Opacity.verySubtle))
                 )
                 .accessibilityLabel("\(count) vendors")
         }
         .padding(.horizontal, Spacing.lg)
         .padding(.vertical, Spacing.sm)
-        .background(AppColors.background.opacity(0.95))
+        .background(SemanticColors.backgroundPrimary.opacity(Opacity.strong))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(status) section")
         .accessibilityValue("\(count) vendors")
