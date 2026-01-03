@@ -41,14 +41,14 @@ struct V3VendorCompactHeader: View {
                 Text(vendor.vendorName)
                     .font(Typography.title3)
                     .fontWeight(.bold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
                 
                 HStack(spacing: Spacing.sm) {
                     if let vendorType = vendor.vendorType {
                         Text(vendorType)
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                     
                     // Status Badge (compact)
@@ -74,7 +74,7 @@ struct V3VendorCompactHeader: View {
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.title2)
-                    .foregroundStyle(AppColors.textSecondary)
+                    .foregroundStyle(SemanticColors.textSecondary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
@@ -86,7 +86,7 @@ struct V3VendorCompactHeader: View {
             LinearGradient(
                 colors: [
                     vendor.statusColor.opacity(0.1),
-                    AppColors.background
+                    SemanticColors.backgroundPrimary
                 ],
                 startPoint: .leading,
                 endPoint: .trailing

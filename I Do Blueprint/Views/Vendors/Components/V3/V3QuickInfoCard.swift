@@ -25,19 +25,19 @@ struct V3QuickInfoCard: View {
             // Value
             Text(value)
                 .font(.system(size: 18, weight: .bold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(2)
                 .minimumScaleFactor(0.8)
 
             // Title/Label
             Text(title.uppercased())
                 .font(Typography.caption2)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .tracking(0.5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
@@ -67,24 +67,24 @@ struct V3QuickInfoCard: View {
                 icon: "dollarsign.circle.fill",
                 title: "Quoted Amount",
                 value: "$400",
-                color: AppColors.Vendor.booked
+                color: SemanticColors.statusSuccess
             )
 
             V3QuickInfoCard(
                 icon: "checkmark.seal.fill",
                 title: "Status",
                 value: "Booked",
-                color: AppColors.Vendor.booked
+                color: SemanticColors.statusSuccess
             )
 
             V3QuickInfoCard(
                 icon: "calendar.badge.checkmark",
                 title: "Booked On",
                 value: "Apr 14, 2025",
-                color: AppColors.Vendor.contacted
+                color: SemanticColors.primaryAction
             )
         }
     }
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
