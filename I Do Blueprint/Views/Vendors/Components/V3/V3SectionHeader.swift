@@ -11,7 +11,7 @@ import SwiftUI
 struct V3SectionHeader: View {
     let title: String
     let icon: String
-    var color: Color = AppColors.primary
+    var color: Color = SemanticColors.primaryAction
     var showDivider: Bool = true
 
     var body: some View {
@@ -23,7 +23,7 @@ struct V3SectionHeader: View {
 
                 Text(title)
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
             }
@@ -54,34 +54,34 @@ struct V3SectionHeader: View {
         V3SectionHeader(
             title: "Quick Info",
             icon: "info.circle.fill",
-            color: AppColors.Vendor.contacted
+            color: SemanticColors.primaryAction
         )
 
         V3SectionHeader(
             title: "Contact",
             icon: "envelope.circle.fill",
-            color: AppColors.Vendor.contacted
+            color: SemanticColors.primaryAction
         )
 
         V3SectionHeader(
             title: "Expenses",
             icon: "receipt.fill",
-            color: AppColors.Vendor.booked
+            color: SemanticColors.statusSuccess
         )
 
         V3SectionHeader(
             title: "Payment Schedule",
             icon: "calendar.badge.clock",
-            color: AppColors.Vendor.pending
+            color: SemanticColors.statusPending
         )
 
         V3SectionHeader(
             title: "Documents",
             icon: "doc.text.fill",
-            color: AppColors.primary,
+            color: SemanticColors.primaryAction,
             showDivider: false
         )
     }
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }

@@ -38,7 +38,7 @@ struct V3VendorTabBar: View {
                 Spacer()
             }
             .padding(.vertical, Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
         }
         .frame(height: 60) // Fixed height for tab bar
     }
@@ -72,21 +72,21 @@ private struct V3TabButton: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, Spacing.sm)
                         .padding(.vertical, Spacing.xxs)
-                        .background(AppColors.primary)
+                        .background(SemanticColors.primaryAction)
                         .clipShape(Capsule())
                 }
             }
             .padding(.horizontal, showIconOnly ? Spacing.md : Spacing.md)
             .padding(.vertical, Spacing.sm)
-            .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+            .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? AppColors.primary.opacity(0.1) : (isHovering ? AppColors.cardBackground : Color.clear))
+                    .fill(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : (isHovering ? SemanticColors.backgroundSecondary : Color.clear))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(
-                        isSelected ? AppColors.primary.opacity(0.3) : Color.clear,
+                        isSelected ? SemanticColors.primaryAction.opacity(Opacity.light) : Color.clear,
                         lineWidth: 1
                     )
             )
