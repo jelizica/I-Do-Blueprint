@@ -13,14 +13,16 @@ struct CategorySectionViewV2: View {
     let parentCategory: BudgetCategory
     let subcategories: [BudgetCategory]
     let budgetStore: BudgetStoreV2
+    let spentByCategory: [UUID: Double] // Pre-computed spent amounts for O(1) lookup
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
     @Binding var isExpanded: Bool
 
     // Parent categories should only show sum of subcategories (not their own allocated amount)
+    // Uses pre-computed dictionary for O(1) lookups instead of O(n) per subcategory
     private var totalSpent: Double {
         subcategories.reduce(0) { total, subcategory in
-            total + budgetStore.categoryStore.spentAmount(for: subcategory.id, expenses: budgetStore.expenseStore.expenses)
+            total + (spentByCategory[subcategory.id] ?? 0)
         }
     }
 
@@ -60,17 +62,14 @@ struct CategorySectionViewV2: View {
                     .fill(Color(nsColor: .controlBackgroundColor))
             )
 
-            // Subcategories
+            // Subcategories - use pre-computed spent amounts for O(1) lookup
             if isExpanded, !subcategories.isEmpty {
                 VStack(spacing: Spacing.xs) {
                     ForEach(subcategories, id: \.id) { subcategory in
                         CategoryRowViewV2(
                             windowSize: windowSize,
                             category: subcategory,
-                            spentAmount: budgetStore.categoryStore.spentAmount(
-                                for: subcategory.id,
-                                expenses: budgetStore.expenseStore.expenses
-                            ),
+                            spentAmount: spentByCategory[subcategory.id] ?? 0,
                             budgetStore: budgetStore,
                             onEdit: onEdit,
                             onDelete: onDelete

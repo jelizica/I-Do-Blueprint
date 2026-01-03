@@ -19,10 +19,11 @@ struct ExpenseCategoriesView: View {
     @State private var expandedSections: Set<UUID> = []
     @State private var showOnlyOverBudget = false
     
-    // MARK: - Cached Summary Values (to avoid expensive recalculations on scroll)
+    // MARK: - Cached Values (to avoid expensive recalculations on scroll)
     @State private var cachedTotalAllocated: Double = 0
     @State private var cachedTotalSpent: Double = 0
     @State private var cachedOverBudgetCount: Int = 0
+    @State private var cachedSpentByCategory: [UUID: Double] = [:]
     
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
@@ -84,24 +85,36 @@ struct ExpenseCategoriesView: View {
         let allCategories = budgetStore.categoryStore.categories
         let expenses = budgetStore.expenseStore.expenses
         
+        // Build spent-by-category dictionary ONCE (O(n) for expenses)
+        var spentByCategory: [UUID: Double] = [:]
+        for expense in expenses {
+            let categoryId = expense.budgetCategoryId
+            spentByCategory[categoryId, default: 0] += expense.amount
+        }
+        cachedSpentByCategory = spentByCategory
+        
         // Build set of parent IDs (categories that have children)
         let parentIds = Set(allCategories.compactMap { $0.parentCategoryId })
         
         // Find leaf categories (no children)
         let leaves = allCategories.filter { !parentIds.contains($0.id) }
         
-        // Calculate totals
+        // Calculate totals using the pre-computed dictionary
         cachedTotalAllocated = leaves.reduce(0) { $0 + $1.allocatedAmount }
         
         cachedTotalSpent = leaves.reduce(0) { total, category in
-            let spent = expenses.filter { $0.budgetCategoryId == category.id }.reduce(0) { $0 + $1.amount }
-            return total + spent
+            total + (spentByCategory[category.id] ?? 0)
         }
         
         cachedOverBudgetCount = allCategories.filter { category in
-            let spent = expenses.filter { $0.budgetCategoryId == category.id }.reduce(0) { $0 + $1.amount }
+            let spent = spentByCategory[category.id] ?? 0
             return spent > category.allocatedAmount && category.allocatedAmount > 0
         }.count
+    }
+    
+    /// Get cached spent amount for a category (O(1) lookup)
+    private func cachedSpentAmount(for categoryId: UUID) -> Double {
+        cachedSpentByCategory[categoryId] ?? 0
     }
     
     // MARK: - Section Management
@@ -177,7 +190,7 @@ struct ExpenseCategoriesView: View {
                             .padding(.top, Spacing.lg)
                             .padding(.bottom, Spacing.md)
                             
-                            // Categories List
+                            // Categories List - pass pre-computed spent amounts for O(1) lookups
                             LazyVStack(spacing: Spacing.sm) {
                                 ForEach(parentCategories, id: \.id) { parentCategory in
                                     CategorySectionViewV2(
@@ -185,6 +198,7 @@ struct ExpenseCategoriesView: View {
                                         parentCategory: parentCategory,
                                         subcategories: subcategories(for: parentCategory),
                                         budgetStore: budgetStore,
+                                        spentByCategory: cachedSpentByCategory,
                                         onEdit: { category in
                                             editingCategory = category
                                         },
