@@ -163,8 +163,8 @@ struct ColorPaletteBaseColorSection: View {
                                                             Circle()
                                                                 .stroke(
                                                                     selectedColor.hexString == extractedColor
-                                                                        .hexString ? Color.blue : AppColors.textPrimary
-                                                                        .opacity(0.1),
+                                                                        .hexString ? Color.blue : SemanticColors.textPrimary
+                                                                        .opacity(Opacity.subtle),
                                                                     lineWidth: selectedColor.hexString == extractedColor
                                                                         .hexString ? 2 : 1))
                                                         .onTapGesture {
