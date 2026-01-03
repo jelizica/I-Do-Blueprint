@@ -45,7 +45,7 @@ struct ExpandablePaymentPlanCardView: View {
                     HStack(spacing: Spacing.sm) {
                         // Expansion chevron
                         Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .font(.caption)
                             .frame(width: 20)
                             .accessibilityHidden(true)
@@ -57,11 +57,11 @@ struct ExpandablePaymentPlanCardView: View {
                                 VStack(alignment: .leading, spacing: Spacing.xs) {
                                     Text(plan.vendor)
                                         .font(Typography.heading)
-                                        .foregroundColor(AppColors.textPrimary)
-                                    
+                                        .foregroundColor(SemanticColors.textPrimary)
+
                                     Text(plan.planTypeDisplay)
                                         .font(Typography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
+                                        .foregroundColor(SemanticColors.textSecondary)
                                 }
                                 
                                 Spacer()
@@ -77,13 +77,13 @@ struct ExpandablePaymentPlanCardView: View {
                                 HStack {
                                     Text(plan.progressText)
                                         .font(Typography.caption)
-                                        .foregroundColor(AppColors.textPrimary)
-                                    
+                                        .foregroundColor(SemanticColors.textPrimary)
+
                                     Spacer()
-                                    
+
                                     Text("\(Int(plan.percentPaid))% paid")
                                         .font(Typography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
+                                        .foregroundColor(SemanticColors.textSecondary)
                                 }
                                 
                                 ProgressView(value: plan.percentPaid, total: 100)
@@ -101,57 +101,57 @@ struct ExpandablePaymentPlanCardView: View {
                             if plan.isOverdue {
                                 HStack(spacing: Spacing.sm) {
                                     Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundColor(.red)
-                                    
+                                        .foregroundColor(SemanticColors.statusWarning)
+
                                     Text("\(plan.overdueCount) payment\(plan.overdueCount == 1 ? "" : "s") overdue")
                                         .font(Typography.caption)
-                                        .foregroundColor(.red)
-                                    
+                                        .foregroundColor(SemanticColors.statusWarning)
+
                                     if plan.overdueAmount > 0 {
                                         Text("(\(plan.overdueAmount, format: .currency(code: "USD")))")
                                             .font(Typography.caption)
-                                            .foregroundColor(.red)
+                                            .foregroundColor(SemanticColors.statusWarning)
                                     }
                                 }
                                 .padding(.vertical, Spacing.xs)
                                 .padding(.horizontal, Spacing.sm)
-                                .background(Color.red.opacity(0.1))
+                                .background(SemanticColors.statusWarning.opacity(Opacity.subtle))
                                 .cornerRadius(CornerRadius.sm)
                                 .accessibilityElement(children: .combine)
                                 .accessibilityLabel("Overdue: \(plan.overdueCount) payment\(plan.overdueCount == 1 ? "" : "s"), \(plan.overdueAmount, format: .currency(code: "USD"))")
                             } else if let nextDate = plan.nextPaymentDate, let nextAmount = plan.nextPaymentAmount {
                                 HStack(spacing: Spacing.sm) {
                                     Image(systemName: "calendar")
-                                        .foregroundColor(.blue)
-                                    
+                                        .foregroundColor(SemanticColors.statusPending)
+
                                     Text("Next: \(nextAmount, format: .currency(code: "USD")) on \(nextDate, format: .dateTime.month().day())")
                                         .font(Typography.caption)
-                                        .foregroundColor(AppColors.textPrimary)
-                                    
+                                        .foregroundColor(SemanticColors.textPrimary)
+
                                     if let daysUntil = plan.daysUntilNextPayment {
                                         Text("(\(daysUntil) day\(daysUntil == 1 ? "" : "s"))")
                                             .font(Typography.caption)
-                                            .foregroundColor(AppColors.textSecondary)
+                                            .foregroundColor(SemanticColors.textSecondary)
                                     }
                                 }
                                 .padding(.vertical, Spacing.xs)
                                 .padding(.horizontal, Spacing.sm)
-                                .background(Color.blue.opacity(0.1))
+                                .background(SemanticColors.statusPending.opacity(Opacity.subtle))
                                 .cornerRadius(CornerRadius.sm)
                                 .accessibilityElement(children: .combine)
                                 .accessibilityLabel("Next payment: \(nextAmount, format: .currency(code: "USD")) on \(nextDate, format: .dateTime.month().day().year())")
                             } else if plan.planStatus == .completed {
                                 HStack(spacing: Spacing.sm) {
                                     Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(.green)
-                                    
+                                        .foregroundColor(SemanticColors.statusSuccess)
+
                                     Text("All payments completed")
                                         .font(Typography.caption)
-                                        .foregroundColor(.green)
+                                        .foregroundColor(SemanticColors.statusSuccess)
                                 }
                                 .padding(.vertical, Spacing.xs)
                                 .padding(.horizontal, Spacing.sm)
-                                .background(Color.green.opacity(0.1))
+                                .background(SemanticColors.statusSuccess.opacity(Opacity.subtle))
                                 .cornerRadius(CornerRadius.sm)
                                 .accessibilityLabel("All payments completed")
                             }
@@ -177,10 +177,10 @@ struct ExpandablePaymentPlanCardView: View {
                             Text("View/Edit Plan")
                                 .font(Typography.caption)
                         }
-                        .foregroundColor(.blue)
+                        .foregroundColor(SemanticColors.statusPending)
                         .padding(.vertical, Spacing.xs)
                         .padding(.horizontal, Spacing.sm)
-                        .background(Color.blue.opacity(0.1))
+                        .background(SemanticColors.statusPending.opacity(Opacity.subtle))
                         .cornerRadius(CornerRadius.sm)
                     }
                     .buttonStyle(.plain)
@@ -202,13 +202,13 @@ struct ExpandablePaymentPlanCardView: View {
                         Text("Individual Payments")
                             .font(Typography.subheading)
                             .fontWeight(.semibold)
-                            .foregroundColor(AppColors.textPrimary)
-                        
+                            .foregroundColor(SemanticColors.textPrimary)
+
                         Spacer()
-                        
+
                         Text("\(planPayments.count) payment\(planPayments.count == 1 ? "" : "s")")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                     .padding(.horizontal, Spacing.md)
                     .padding(.top, Spacing.sm)
@@ -220,11 +220,11 @@ struct ExpandablePaymentPlanCardView: View {
                             VStack(spacing: Spacing.sm) {
                                 Image(systemName: "calendar.badge.exclamationmark")
                                     .font(.title2)
-                                    .foregroundColor(AppColors.textSecondary)
-                                
+                                    .foregroundColor(SemanticColors.textSecondary)
+
                                 Text("No individual payments found")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                             .padding(.vertical, Spacing.lg)
                             Spacer()
@@ -269,9 +269,9 @@ struct ExpandablePaymentPlanCardView: View {
         if windowSize == .compact {
             // Compact: Vertical stack
             VStack(alignment: .leading, spacing: Spacing.sm) {
-                financialMetric(label: "Total", value: plan.totalAmount, color: AppColors.textPrimary)
-                financialMetric(label: "Paid", value: plan.amountPaid, color: .green)
-                financialMetric(label: "Remaining", value: plan.amountRemaining, color: .orange)
+                financialMetric(label: "Total", value: plan.totalAmount, color: SemanticColors.textPrimary)
+                financialMetric(label: "Paid", value: plan.amountPaid, color: SemanticColors.statusSuccess)
+                financialMetric(label: "Remaining", value: plan.amountRemaining, color: SemanticColors.statusPending)
             }
         } else {
             // Regular/Large: Horizontal row
@@ -279,36 +279,36 @@ struct ExpandablePaymentPlanCardView: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Total")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
-                    
+                        .foregroundColor(SemanticColors.textSecondary)
+
                     Text(plan.totalAmount, format: .currency(code: "USD"))
                         .font(Typography.subheading)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Paid")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
-                    
+                        .foregroundColor(SemanticColors.textSecondary)
+
                     Text(plan.amountPaid, format: .currency(code: "USD"))
                         .font(Typography.subheading)
-                        .foregroundColor(.green)
+                        .foregroundColor(SemanticColors.statusSuccess)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
-                
+
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Remaining")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
-                    
+                        .foregroundColor(SemanticColors.textSecondary)
+
                     Text(plan.amountRemaining, format: .currency(code: "USD"))
                         .font(Typography.subheading)
-                        .foregroundColor(.orange)
+                        .foregroundColor(SemanticColors.statusPending)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
                 }
@@ -320,10 +320,10 @@ struct ExpandablePaymentPlanCardView: View {
         HStack {
             Text(label)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
-            
+                .foregroundColor(SemanticColors.textSecondary)
+
             Spacer()
-            
+
             Text(value, format: .currency(code: "USD"))
                 .font(Typography.bodyRegular)
                 .fontWeight(.semibold)
@@ -350,7 +350,7 @@ private struct PaymentPlanSummaryButtonStyle: ButtonStyle {
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
                     .stroke(
-                        configuration.isPressed ? AppColors.primary.opacity(0.5) : Color.clear,
+                        configuration.isPressed ? SemanticColors.primaryAction.opacity(Opacity.medium) : Color.clear,
                         lineWidth: 2
                     )
             )
@@ -368,30 +368,30 @@ private struct IndividualPaymentRowCard: View {
         HStack(spacing: Spacing.md) {
             // Status indicator
             Image(systemName: schedule.paid ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(schedule.paid ? .green : .gray)
+                .foregroundColor(schedule.paid ? SemanticColors.statusSuccess : SemanticColors.textTertiary)
                 .font(.body)
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: Spacing.xs) {
                     Text(schedule.paymentDate, format: .dateTime.month().day().year())
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textPrimary)
-                    
+                        .foregroundColor(SemanticColors.textPrimary)
+
                     if schedule.isDeposit {
                         Text("• Deposit")
                             .font(Typography.caption)
-                            .foregroundColor(.blue)
+                            .foregroundColor(SemanticColors.statusPending)
                     } else if schedule.isRetainer {
                         Text("• Retainer")
                             .font(Typography.caption)
-                            .foregroundColor(.purple)
+                            .foregroundColor(SemanticColors.primaryAction)
                     }
                 }
-                
+
                 if let notes = schedule.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.caption2)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -401,11 +401,11 @@ private struct IndividualPaymentRowCard: View {
             Text(schedule.paymentAmount, format: .currency(code: "USD"))
                 .font(Typography.bodyRegular)
                 .fontWeight(.medium)
-                .foregroundColor(schedule.paid ? .green : AppColors.textPrimary)
+                .foregroundColor(schedule.paid ? SemanticColors.statusSuccess : SemanticColors.textPrimary)
         }
         .padding(.vertical, Spacing.xs)
         .padding(.horizontal, Spacing.sm)
-        .background(schedule.paid ? Color.green.opacity(0.05) : Color.clear)
+        .background(schedule.paid ? SemanticColors.statusSuccess.opacity(Opacity.verySubtle) : Color.clear)
         .cornerRadius(CornerRadius.sm)
         .onTapGesture {
             onTogglePaidStatus()
