@@ -104,26 +104,26 @@ struct RoleSelectionRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(role.roleName.displayName)
                         .font(.body)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(role.description ?? role.roleName.description)
                         .font(.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
                     // Permissions
                     HStack(spacing: 8) {
                         if role.canEdit {
-                            PermissionBadge(text: "Edit", color: AppColors.success)
+                            PermissionBadge(text: "Edit", color: SemanticColors.statusSuccess)
                         }
                         if role.canDelete {
-                            PermissionBadge(text: "Delete", color: AppColors.warning)
+                            PermissionBadge(text: "Delete", color: SemanticColors.statusWarning)
                         }
                         if role.canInvite {
-                            PermissionBadge(text: "Invite", color: AppColors.info)
+                            PermissionBadge(text: "Invite", color: SemanticColors.statusInfo)
                         }
                         if role.canManageRoles {
-                            PermissionBadge(text: "Manage", color: AppColors.primary)
+                            PermissionBadge(text: "Manage", color: SemanticColors.primaryAction)
                         }
                     }
                 }
@@ -132,7 +132,7 @@ struct RoleSelectionRow: View {
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 }
             }
             .padding(.vertical, Spacing.xs)
@@ -156,7 +156,7 @@ struct PermissionBadge: View {
             .foregroundColor(color)
             .padding(.horizontal, Spacing.sm)
             .padding(.vertical, Spacing.xxs)
-            .background(color.opacity(0.1))
+            .background(color.opacity(Opacity.subtle))
             .cornerRadius(4)
     }
 }
