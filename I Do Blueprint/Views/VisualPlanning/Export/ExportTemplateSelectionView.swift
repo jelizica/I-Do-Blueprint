@@ -234,7 +234,7 @@ struct ExportTemplateSelectionView: View {
             // Preview container
             ZStack {
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(AppColors.textPrimary)
+                    .fill(SemanticColors.textPrimary)
                     .shadow(color: .black.opacity(0.1), radius: 5, x: 0, y: 2)
 
                 // Template preview view
@@ -320,7 +320,7 @@ struct TemplateCard: View {
                 // Preview image or placeholder
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(AppColors.textSecondary.opacity(0.1))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.subtle))
                         .frame(height: 120)
 
                     if let previewImage {
@@ -362,7 +362,7 @@ struct TemplateCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding()
-            .background(isSelected ? Color.blue.opacity(0.1) : AppColors.textPrimary)
+            .background(isSelected ? Color.blue.opacity(0.1) : SemanticColors.textPrimary)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)

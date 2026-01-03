@@ -90,7 +90,7 @@ struct SeatingChartCard: View {
                     ZStack {
                         // Background circle
                         Circle()
-                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 4)
+                            .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 4)
                             .frame(width: 50, height: 50)
 
                         // Progress circle
@@ -123,7 +123,7 @@ struct SeatingChartCard: View {
                         ZStack(alignment: .leading) {
                             // Background
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(AppColors.textSecondary.opacity(0.15))
+                                .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                                 .frame(height: 8)
 
                             // Progress bar with gradient

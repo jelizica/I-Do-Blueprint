@@ -33,7 +33,7 @@ struct DefaultSettingsView: View {
                 formSection
             }
         }
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .onAppear {
             loadExistingSettings()
         }
@@ -57,11 +57,11 @@ struct DefaultSettingsView: View {
         VStack(spacing: Spacing.sm) {
             Text("Default Settings")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Configure your preferences")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding(.top, Spacing.xl)
     }
@@ -87,12 +87,12 @@ struct DefaultSettingsView: View {
             Text("Theme Preferences")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Color Scheme")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Picker("Color Scheme", selection: $selectedColorScheme) {
                     Text("Default").tag("default")
@@ -105,7 +105,7 @@ struct DefaultSettingsView: View {
                 .accessibilityValue(selectedColorScheme)
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             SettingsToggle(
@@ -127,7 +127,7 @@ struct DefaultSettingsView: View {
             }
             .pickerStyle(.menu)
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
             .accessibilityLabel("Currency selection")
             .accessibilityValue(selectedCurrency)
@@ -145,7 +145,7 @@ struct DefaultSettingsView: View {
             }
             .pickerStyle(.menu)
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
             .accessibilityLabel("Timezone selection")
             .accessibilityValue(selectedTimezone)
@@ -157,7 +157,7 @@ struct DefaultSettingsView: View {
             Text("Budget Preferences")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             SettingsToggle(
                 title: "Track Payments",
@@ -182,26 +182,26 @@ struct DefaultSettingsView: View {
             HStack {
                 Text("Alert Threshold")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
                 Text("\(Int(alertThreshold * 100))%")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
             }
 
             Slider(value: $alertThreshold, in: 0.5...1.0, step: 0.05)
-                .tint(AppColors.primary)
+                .tint(SemanticColors.primaryAction)
                 .accessibilityLabel("Budget alert threshold")
                 .accessibilityValue("\(Int(alertThreshold * 100)) percent")
 
             Text("Alert when spending reaches \(Int(alertThreshold * 100))% of budget")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(8)
     }
 
@@ -210,7 +210,7 @@ struct DefaultSettingsView: View {
             Text("Notification Preferences")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             SettingsToggle(
                 title: "Email Notifications",
@@ -227,7 +227,7 @@ struct DefaultSettingsView: View {
             Text("Reminder Types")
                 .font(Typography.bodyRegular)
                 .fontWeight(.medium)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(.top, Spacing.sm)
 
             SettingsToggle(
@@ -313,11 +313,11 @@ struct SettingsToggle: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(title)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(description)
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -325,10 +325,10 @@ struct SettingsToggle: View {
 
             Toggle("", isOn: $isOn)
                 .labelsHidden()
-                .tint(AppColors.primary)
+                .tint(SemanticColors.primaryAction)
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(8)
         .accessibilityElement(children: .combine)
         .accessibilityLabel(title)

@@ -135,7 +135,7 @@ struct GuestRow: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(assignedTable != nil ? Color.green.opacity(0.3) : AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                .stroke(assignedTable != nil ? Color.green.opacity(0.3) : SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
         )
     }
 }

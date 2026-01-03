@@ -33,7 +33,7 @@ struct CategoryBenchmarksSectionV2: View {
                         .foregroundColor(.secondary)
                 }
                 .padding(Spacing.lg)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(isExpanded ? CornerRadius.lg : CornerRadius.lg)
             }
             .buttonStyle(.plain)
@@ -50,7 +50,7 @@ struct CategoryBenchmarksSectionV2: View {
                     }
                 }
                 .padding(Spacing.md)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(CornerRadius.lg)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
@@ -101,7 +101,7 @@ struct CategoryBenchmarkRowV2: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(AppColors.textSecondary.opacity(0.15))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(height: 6)
                         .cornerRadius(3)
                     

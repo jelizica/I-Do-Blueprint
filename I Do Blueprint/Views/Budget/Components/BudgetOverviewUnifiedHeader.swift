@@ -47,22 +47,22 @@ struct BudgetOverviewUnifiedHeader: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Budget")
                     .font(Typography.displaySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 HStack(spacing: 8) {
                     Text("Budget Overview")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     if let scenario = currentScenario {
                         Text("•")
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                         Image(systemName: "star.fill")
                             .foregroundColor(.yellow)
                             .font(.caption)
                         Text(scenario.scenarioName)
                             .font(Typography.bodySmall)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -114,7 +114,7 @@ struct BudgetOverviewUnifiedHeader: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.title3)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
         .buttonStyle(.plain)
     }
@@ -156,7 +156,7 @@ struct BudgetOverviewUnifiedHeader: View {
                 Image(systemName: "chevron.down")
                     .font(.caption)
             }
-            .foregroundColor(AppColors.textPrimary)
+            .foregroundColor(SemanticColors.textPrimary)
             .frame(width: windowSize == .compact ? 44 : nil, height: 44)
         }
         .buttonStyle(.plain)
@@ -277,7 +277,7 @@ struct BudgetOverviewUnifiedHeader: View {
     private var searchField: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             
             TextField("Search budget items...", text: $searchQuery)
                 .textFieldStyle(.plain)
@@ -287,7 +287,7 @@ struct BudgetOverviewUnifiedHeader: View {
                     searchQuery = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
             }

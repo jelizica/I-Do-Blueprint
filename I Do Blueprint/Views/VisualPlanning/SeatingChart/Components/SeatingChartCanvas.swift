@@ -24,7 +24,7 @@ struct SeatingChartCanvas: View {
         GeometryReader { geometry in
             ZStack {
                 // Background
-                AppColors.textPrimary
+                SemanticColors.textPrimary
 
                 // Grid overlay
                 if editableChart.layoutSettings.snapToGrid {

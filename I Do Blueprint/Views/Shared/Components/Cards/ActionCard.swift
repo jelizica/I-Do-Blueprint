@@ -51,11 +51,11 @@ struct ActionCard: View {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text(title)
                     .font(Typography.title3)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(description)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -69,7 +69,7 @@ struct ActionCard: View {
                     Image(systemName: "arrow.right")
                         .font(.caption)
                 }
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(.horizontal, Spacing.lg)
                 .padding(.vertical, Spacing.md)
                 .background(color)
@@ -85,9 +85,9 @@ struct ActionCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.cardBackground)
+                .fill(SemanticColors.backgroundSecondary)
                 .shadow(
-                    color: isHovering ? AppColors.shadowMedium : AppColors.shadowLight,
+                    color: isHovering ? SemanticColors.shadow : SemanticColors.shadowLight,
                     radius: isHovering ? 6 : 3,
                     x: 0,
                     y: isHovering ? 3 : 2
@@ -132,20 +132,20 @@ struct CompactActionCard: View {
                 Text(title)
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(SemanticColors.textTertiary)
             }
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(AppColors.cardBackground)
+                    .fill(SemanticColors.backgroundSecondary)
                     .shadow(
-                        color: isHovering ? AppColors.shadowMedium : AppColors.shadowLight,
+                        color: isHovering ? SemanticColors.shadow : SemanticColors.shadowLight,
                         radius: isHovering ? 4 : 2,
                         x: 0,
                         y: 2

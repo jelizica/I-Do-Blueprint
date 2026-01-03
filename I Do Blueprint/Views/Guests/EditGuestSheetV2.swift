@@ -224,7 +224,7 @@ struct EditGuestSheetV2: View {
                                 .padding(Spacing.sm)
                                 .background(
                                     RoundedRectangle(cornerRadius: 8)
-                                        .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 1)
+                                        .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
                                 )
                         }
                     }

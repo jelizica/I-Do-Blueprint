@@ -262,7 +262,7 @@ struct QuickAccessCard: View {
                 Text(page.rawValue)
                     .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(2)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }

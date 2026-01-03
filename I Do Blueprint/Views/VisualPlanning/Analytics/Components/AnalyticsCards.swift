@@ -108,7 +108,7 @@ struct InsightCard: View {
             }
         }
         .padding()
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)
@@ -164,7 +164,7 @@ struct PerformanceMetricCard: View {
             }
         }
         .padding()
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)

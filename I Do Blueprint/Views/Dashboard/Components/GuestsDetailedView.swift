@@ -52,7 +52,7 @@ struct GuestsDetailedView: View {
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Recent Guests")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 ForEach(Array(store.guests.prefix(10))) { guest in
                     DashboardGuestRow(guest: guest)
@@ -65,8 +65,8 @@ struct GuestsDetailedView: View {
             .padding(Spacing.xl)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(AppColors.textPrimary.opacity(0.6))
-                    .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                    .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                    .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
             )
         }
     }
@@ -81,12 +81,12 @@ struct DashboardGuestRow: View {
                 Text(guest.fullName)
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if let email = guest.email, !email.isEmpty {
                     Text(email)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 
@@ -138,7 +138,7 @@ struct RSVPStatusBadge: View {
         case .maybe:
             return AppColors.Guest.pending
         default:
-            return AppColors.textSecondary
+            return SemanticColors.textSecondary
         }
     }
 }

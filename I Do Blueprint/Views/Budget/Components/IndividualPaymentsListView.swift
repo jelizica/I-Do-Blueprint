@@ -30,7 +30,7 @@ struct IndividualPaymentsListView: View {
                         // Section header
                         Text(group.key)
                             .font(Typography.bodySmall.weight(.semibold))
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .padding(.horizontal, windowSize == .compact ? Spacing.md : Spacing.lg)
                             .padding(.vertical, Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)

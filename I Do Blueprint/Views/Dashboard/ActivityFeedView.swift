@@ -77,12 +77,12 @@ struct ActivityFeedHeader: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Recent Activity")
                     .font(.headline)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if unreadCount > 0 {
                     Text("\(unreadCount) unread")
                         .font(.caption)
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 }
             }
 
@@ -99,7 +99,7 @@ struct ActivityFeedHeader: View {
 
                 Button(action: onShowFilters) {
                     Image(systemName: hasFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
-                        .foregroundColor(hasFilters ? AppColors.primary : AppColors.textSecondary)
+                        .foregroundColor(hasFilters ? SemanticColors.primaryAction : SemanticColors.textSecondary)
                 }
                 .accessibilityLabel("Filter activities")
             }
@@ -155,11 +155,11 @@ struct CollaborationActivityRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(activity.description)
                     .font(.body)
-                    .foregroundColor(activity.isRead ? AppColors.textSecondary : AppColors.textPrimary)
+                    .foregroundColor(activity.isRead ? SemanticColors.textSecondary : SemanticColors.textPrimary)
 
                 Text(activity.createdAt.formatted(.relative(presentation: .named)))
                     .font(.caption)
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(SemanticColors.textTertiary)
             }
 
             Spacer()
@@ -167,7 +167,7 @@ struct CollaborationActivityRow: View {
             // Unread indicator
             if !activity.isRead {
                 Circle()
-                    .fill(AppColors.primary)
+                    .fill(SemanticColors.primaryAction)
                     .frame(width: 8, height: 8)
             }
         }
@@ -205,13 +205,13 @@ struct ActivityIcon: View {
 
     var iconColor: Color {
         switch actionType {
-        case .created: return AppColors.success
-        case .updated: return AppColors.info
-        case .deleted: return AppColors.error
-        case .viewed: return AppColors.textSecondary
-        case .commented: return AppColors.primary
-        case .invited, .joined: return AppColors.success
-        case .left: return AppColors.warning
+        case .created: return SemanticColors.success
+        case .updated: return SemanticColors.info
+        case .deleted: return SemanticColors.error
+        case .viewed: return SemanticColors.textSecondary
+        case .commented: return SemanticColors.primaryAction
+        case .invited, .joined: return SemanticColors.success
+        case .left: return SemanticColors.warning
         }
     }
 
@@ -280,7 +280,7 @@ struct ActivityFilterSheet: View {
                         store.clearFilters()
                         dismiss()
                     }
-                    .foregroundColor(AppColors.error)
+                    .foregroundColor(SemanticColors.error)
                 }
             }
             .navigationTitle("Filter Activities")

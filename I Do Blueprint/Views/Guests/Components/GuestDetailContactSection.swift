@@ -16,7 +16,7 @@ struct GuestDetailContactSection: View {
             if let email = guest.email {
                 GuestDetailContactRow(
                     icon: "envelope.fill",
-                    iconColor: AppColors.errorLight,
+                    iconColor: SemanticColors.errorLight,
                     label: "Email",
                     value: email
                 )
@@ -26,7 +26,7 @@ struct GuestDetailContactSection: View {
             if let phone = guest.phone {
                 GuestDetailContactRow(
                     icon: "phone.fill",
-                    iconColor: AppColors.errorLight,
+                    iconColor: SemanticColors.errorLight,
                     label: "Phone",
                     value: phone
                 )
@@ -36,7 +36,7 @@ struct GuestDetailContactSection: View {
             if guest.plusOneAllowed {
                 GuestDetailContactRow(
                     icon: "person.2.fill",
-                    iconColor: AppColors.errorLight,
+                    iconColor: SemanticColors.errorLight,
                     label: "Plus One",
                     value: guest.plusOneName ?? "Not specified"
                 )
@@ -62,18 +62,18 @@ struct GuestDetailContactRow: View {
                 .overlay(
                     Image(systemName: icon)
                         .font(.system(size: 16))
-                        .foregroundColor(AppColors.error)
+                        .foregroundColor(SemanticColors.error)
                 )
             
             // Label and Value
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(.system(size: 14))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 
                 Text(value)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             
             Spacer()

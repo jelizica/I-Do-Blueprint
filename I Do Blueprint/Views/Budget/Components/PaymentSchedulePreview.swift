@@ -90,7 +90,7 @@ struct PaymentSchedulePreview: View {
         VStack(spacing: 16) {
             Image(systemName: "calendar.badge.clock")
                 .font(.title)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("Configure payment details to see schedule")
                 .font(.subheadline)
@@ -171,7 +171,7 @@ struct PaymentScheduleItemRow: View {
                     item.description.contains("Deposit") || item.description.contains("Retainer") ? AppColors.Budget.allocated
                         .opacity(0.3) :
                         item.description.contains("Final") ? AppColors.Budget.income.opacity(0.3) :
-                        AppColors.textSecondary.opacity(0.2),
+                        SemanticColors.textSecondary.opacity(Opacity.light),
                     lineWidth: 1))
     }
 }

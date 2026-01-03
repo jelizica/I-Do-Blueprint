@@ -25,7 +25,7 @@ struct MinimapView: View {
 
             // Border
             RoundedRectangle(cornerRadius: 8)
-                .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 1)
+                .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
 
             // Tables at small scale
             ForEach(tables) { table in

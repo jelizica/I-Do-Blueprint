@@ -72,7 +72,7 @@ struct CategoryBenchmarkRow: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(AppColors.textSecondary.opacity(0.2))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(height: 8)
                         .cornerRadius(4)
 

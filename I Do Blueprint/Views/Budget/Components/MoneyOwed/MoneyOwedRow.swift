@@ -23,7 +23,7 @@ struct OwedRowView: View {
                     .frame(width: 40, height: 40)
 
                 Text(owed.priority.abbreviation)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .font(.system(size: 12, weight: .bold))
             }
 
@@ -38,7 +38,7 @@ struct OwedRowView: View {
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.overBudget)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .cornerRadius(4)
                     }
 
@@ -48,7 +48,7 @@ struct OwedRowView: View {
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.income)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .cornerRadius(4)
                     }
                 }
@@ -158,7 +158,7 @@ struct OwedDetailView: View {
                         .padding(.horizontal, Spacing.md)
                         .padding(.vertical, Spacing.sm)
                         .background(owed.isPaid ? AppColors.Budget.income : AppColors.Budget.pending)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .cornerRadius(8)
                     }
                 }

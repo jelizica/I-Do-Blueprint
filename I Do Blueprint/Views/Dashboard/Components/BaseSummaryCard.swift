@@ -48,7 +48,7 @@ struct BaseSummaryCard<Content: View>: View {
 
                     Image(systemName: icon)
                         .font(.system(size: 20, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -88,8 +88,8 @@ struct BaseSummaryCard<Content: View>: View {
                 .stroke(
                     .linearGradient(
                         colors: isHovered ? [color.opacity(0.3), color.opacity(0.2)] : [
-                            AppColors.textSecondary.opacity(0.1),
-                            AppColors.textSecondary.opacity(0.1)
+                            SemanticColors.textSecondary.opacity(Opacity.subtle),
+                            SemanticColors.textSecondary.opacity(Opacity.subtle)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing),

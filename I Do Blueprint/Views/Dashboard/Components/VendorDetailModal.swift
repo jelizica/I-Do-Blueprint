@@ -76,9 +76,9 @@ struct VendorDetailModal: View {
                 }
                 .padding(Spacing.xl)
             }
-            .background(AppColors.background)
+            .background(SemanticColors.backgroundPrimary)
         }
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
         .sheet(isPresented: $showingEditSheet) {
             EditVendorSheetV2(vendor: vendor, vendorStore: vendorStore) { _ in
                 // Reload will happen automatically through the store

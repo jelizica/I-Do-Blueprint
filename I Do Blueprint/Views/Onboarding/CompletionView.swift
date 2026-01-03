@@ -24,7 +24,7 @@ struct CompletionView: View {
 
                 Image(systemName: "checkmark.circle.fill")
                     .font(.system(size: 80))
-                    .foregroundColor(AppColors.success)
+                    .foregroundColor(SemanticColors.success)
             }
             .accessibilityLabel("Setup complete")
 
@@ -32,11 +32,11 @@ struct CompletionView: View {
             VStack(spacing: Spacing.md) {
                 Text("All Set!")
                     .font(.system(size: 36, weight: .bold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("Your wedding planning journey begins now")
                     .font(Typography.bodyLarge)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .multilineTextAlignment(.center)
             }
 
@@ -74,7 +74,7 @@ struct CompletionView: View {
                 )
             }
             .padding(Spacing.lg)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(12)
             .padding(.horizontal, Spacing.xl)
 
@@ -82,7 +82,7 @@ struct CompletionView: View {
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Next Steps")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 NextStepItem(
                     icon: "list.bullet",
@@ -135,10 +135,10 @@ struct CompletionView: View {
                     Image(systemName: "arrow.right")
                         .font(.system(size: 16, weight: .semibold))
                 }
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .frame(maxWidth: 400)
                 .padding(.vertical, Spacing.lg)
-                .background(AppColors.primary)
+                .background(SemanticColors.primaryAction)
                 .cornerRadius(12)
             }
             .padding(.horizontal, Spacing.xl)
@@ -147,7 +147,7 @@ struct CompletionView: View {
             .accessibilityHint("Completes onboarding and navigates to the main dashboard")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .task {
             // Automatically complete onboarding when this view appears
             if !store.isCompleted {
@@ -174,18 +174,18 @@ struct SummaryRow: View {
         HStack(spacing: Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
                 .frame(width: 24)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(title)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text(value)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
 
             Spacer()
@@ -206,7 +206,7 @@ struct NextStepItem: View {
         HStack(alignment: .top, spacing: Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 20))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
                 .frame(width: 24)
                 .accessibilityHidden(true)
 
@@ -214,11 +214,11 @@ struct NextStepItem: View {
                 Text(title)
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(description)
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 

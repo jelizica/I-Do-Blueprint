@@ -149,7 +149,7 @@ struct TemplatePreviewView: View {
             HStack(spacing: 8) {
                 ForEach(0 ..< 3, id: \.self) { _ in
                     Rectangle()
-                        .fill(AppColors.textSecondary.opacity(0.3))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                         .aspectRatio(1, contentMode: .fit)
                 }
             }
@@ -208,7 +208,7 @@ struct TemplatePreviewView: View {
             // Chart preview
             ZStack {
                 Rectangle()
-                    .fill(AppColors.textSecondary.opacity(0.1))
+                    .fill(SemanticColors.textSecondary.opacity(Opacity.subtle))
                     .frame(height: 80)
 
                 ForEach(0 ..< 6, id: \.self) { index in

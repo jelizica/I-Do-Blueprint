@@ -40,7 +40,7 @@ struct BudgetDetailedView: View {
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Budget by Category")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 ForEach(store.categoryStore.categories) { category in
                     CategoryRow(category: category)
@@ -49,8 +49,8 @@ struct BudgetDetailedView: View {
             .padding(Spacing.xl)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(AppColors.textPrimary.opacity(0.6))
-                    .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                    .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                    .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
             )
         }
     }
@@ -71,19 +71,19 @@ struct DashboardSummaryCard: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(value)
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(title)
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
     }
 }
@@ -102,13 +102,13 @@ struct CategoryRow: View {
                 Text(category.categoryName)
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
                 Text("$\(Int(category.spentAmount).formatted()) / $\(Int(category.allocatedAmount).formatted())")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             ProgressView(value: percentage, total: 100)
@@ -119,11 +119,11 @@ struct CategoryRow: View {
 
     private var progressColor: Color {
         if percentage >= 100 {
-            return AppColors.error
+            return SemanticColors.error
         } else if percentage >= 90 {
-            return AppColors.warning
+            return SemanticColors.warning
         } else {
-            return AppColors.success
+            return SemanticColors.success
         }
     }
 }

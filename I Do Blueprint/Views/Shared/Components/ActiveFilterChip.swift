@@ -15,19 +15,19 @@ struct ActiveFilterChip: View {
         HStack(spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Remove \(label) filter")
         }
         .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.xs)
-        .background(AppColors.primaryLight)
+        .background(SemanticColors.primaryActionLight)
         .cornerRadius(CornerRadius.pill)
     }
 }

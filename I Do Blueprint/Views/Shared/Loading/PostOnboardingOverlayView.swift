@@ -17,7 +17,7 @@ struct PostOnboardingOverlayView: View {
                 .font(Typography.title3)
             Text(loader.currentMessage)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 360)
 
@@ -36,8 +36,8 @@ struct PostOnboardingOverlayView: View {
         .padding(Spacing.xxl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.cardBackground)
-                .shadow(color: AppColors.shadowMedium, radius: 8, x: 0, y: 4)
+                .fill(SemanticColors.backgroundSecondary)
+                .shadow(color: SemanticColors.shadow, radius: 8, x: 0, y: 4)
         )
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)

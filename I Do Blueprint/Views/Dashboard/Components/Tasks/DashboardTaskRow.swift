@@ -15,11 +15,11 @@ struct DashboardTaskRow: View {
     var body: some View {
         HStack(spacing: Spacing.md) {
             Image(systemName: task.status == .completed ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(task.status == .completed ? AppColors.success : AppColors.textSecondary)
+                .foregroundColor(task.status == .completed ? SemanticColors.success : SemanticColors.textSecondary)
 
             Text(task.taskName)
                 .font(Typography.caption)
-                .foregroundColor(task.status == .completed ? AppColors.textSecondary : AppColors.textPrimary)
+                .foregroundColor(task.status == .completed ? SemanticColors.textSecondary : SemanticColors.textPrimary)
                 .strikethrough(task.status == .completed)
 
             Spacer()
@@ -57,11 +57,11 @@ struct DashboardTaskRow: View {
         let days = DateFormatting.daysBetween(from: Date(), to: date, in: userTimezone)
 
         if days < 0 {
-            return AppColors.error
+            return SemanticColors.error
         } else if days <= 1 {
-            return AppColors.warning
+            return SemanticColors.warning
         } else {
-            return AppColors.textSecondary
+            return SemanticColors.textSecondary
         }
     }
 }

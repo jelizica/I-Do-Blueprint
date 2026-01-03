@@ -65,7 +65,7 @@ struct GiftDetailView: View {
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
                 .background(gift.isThankYouSent ? AppColors.Budget.income : AppColors.Budget.pending)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .cornerRadius(8)
             }
         }

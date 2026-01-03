@@ -122,7 +122,7 @@ struct DocumentCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .fill(Color(NSColor.controlBackgroundColor))
                 .shadow(
-                    color: isHovered || isSelected ? Color.blue.opacity(0.2) : AppColors.textPrimary.opacity(0.05),
+                    color: isHovered || isSelected ? Color.blue.opacity(0.2) : SemanticColors.textPrimary.opacity(Opacity.verySubtle),
                     radius: isHovered || isSelected ? 8 : 4,
                     x: 0,
                     y: isHovered || isSelected ? 4 : 2))

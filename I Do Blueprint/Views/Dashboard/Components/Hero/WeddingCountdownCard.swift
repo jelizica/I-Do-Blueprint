@@ -36,12 +36,12 @@ struct WeddingCountdownCard: View {
                 VStack(alignment: .leading, spacing: Spacing.md) {
                     Text(weddingTitle)
                         .font(Typography.displaySmall)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     if let weddingDate = weddingDate {
                         Text(formatWeddingDate(weddingDate))
                             .font(Typography.bodyRegular)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -52,11 +52,11 @@ struct WeddingCountdownCard: View {
                 VStack(spacing: Spacing.xs) {
                     Text("\(daysUntil)")
                         .font(Typography.displayLarge)
-                        .foregroundColor(AppColors.info)
+                        .foregroundColor(SemanticColors.info)
 
                     Text("Days Until")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .textCase(.uppercase)
                         .tracking(1.2)
                 }
@@ -64,8 +64,8 @@ struct WeddingCountdownCard: View {
                 .padding(.vertical, Spacing.lg)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.cardBackground)
-                        .shadow(color: AppColors.textPrimary.opacity(0.08), radius: 12, x: 0, y: 4)
+                        .fill(SemanticColors.backgroundSecondary)
+                        .shadow(color: SemanticColors.textPrimary.opacity(Opacity.verySubtle), radius: 12, x: 0, y: 4)
                 )
             }
             .padding(.horizontal, Spacing.xxl * 1.5)

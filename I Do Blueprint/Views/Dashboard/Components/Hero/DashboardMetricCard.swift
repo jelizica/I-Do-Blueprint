@@ -30,28 +30,28 @@ struct DashboardMetricCard: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(title)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 
                 Text(value)
                     .font(Typography.numberMedium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
 
                 Text(subtitle)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, minHeight: 120, alignment: .leading)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(title))
         .accessibilityValue(Text("\(value), \(subtitle)"))

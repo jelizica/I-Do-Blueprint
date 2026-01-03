@@ -103,7 +103,7 @@ struct BudgetConfigurationHeader: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.title3)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
         .buttonStyle(.plain)
     }

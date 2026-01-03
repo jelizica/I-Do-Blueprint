@@ -202,7 +202,7 @@ struct CircularProgressBudgetCard: View {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(AppColors.textSecondary.opacity(0.2))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(height: 6)
 
                     RoundedRectangle(cornerRadius: 4)
@@ -284,8 +284,8 @@ struct CircularProgressBudgetCard: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
-        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 2, x: 0, y: 1)
+                .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
+        .shadow(color: SemanticColors.textPrimary.opacity(Opacity.verySubtle), radius: 2, x: 0, y: 1)
     }
 
     private func formatCurrency(_ amount: Double) -> String {

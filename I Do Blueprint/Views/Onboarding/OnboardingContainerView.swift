@@ -23,7 +23,7 @@ struct OnboardingContainerView: View {
     var body: some View {
         ZStack {
             // Background
-            AppColors.background
+            SemanticColors.backgroundPrimary
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -136,7 +136,7 @@ struct OnboardingProgressBar: View {
             // Current step label
             Text(currentStep.title)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Progress: \(currentStep.title)")
@@ -149,7 +149,7 @@ struct OnboardingProgressBar: View {
         let isCurrent = step == currentStep
 
         RoundedRectangle(cornerRadius: 2)
-            .fill(isCompleted || isCurrent ? AppColors.primary : AppColors.textSecondary.opacity(0.3))
+            .fill(isCompleted || isCurrent ? SemanticColors.primaryAction : SemanticColors.textSecondary.opacity(Opacity.light))
             .frame(height: 4)
             .frame(maxWidth: .infinity)
             .animation(.easeInOut(duration: 0.3), value: isCompleted)
@@ -178,10 +178,10 @@ struct OnboardingNavigationBar: View {
                     Text("Back")
                         .font(Typography.bodyRegular)
                 }
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(.horizontal, Spacing.lg)
                 .padding(.vertical, Spacing.md)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(8)
             }
             .disabled(!canGoBack || isLoading)
@@ -196,7 +196,7 @@ struct OnboardingNavigationBar: View {
                 Button(action: onSkip) {
                     Text("Skip")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .padding(.horizontal, Spacing.lg)
                         .padding(.vertical, Spacing.md)
                 }
@@ -213,10 +213,10 @@ struct OnboardingNavigationBar: View {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
                 }
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(.horizontal, Spacing.xl)
                 .padding(.vertical, Spacing.md)
-                .background(canGoForward ? AppColors.primary : AppColors.textSecondary.opacity(0.5))
+                .background(canGoForward ? SemanticColors.primaryAction : SemanticColors.textSecondary.opacity(Opacity.medium))
                 .cornerRadius(8)
             }
             .disabled(!canGoForward || isLoading)
@@ -237,27 +237,27 @@ struct GuestImportPlaceholderView: View {
 
             Image(systemName: "person.2.fill")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             Text("Import Guest List")
                 .font(Typography.title2)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("You can import your guest list from a CSV or Excel file, or skip this step and add guests later.")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
 
             Text("Guest import functionality coming in Stage 4")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .padding(.top, Spacing.lg)
 
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 }
 
@@ -270,27 +270,27 @@ struct VendorImportPlaceholderView: View {
 
             Image(systemName: "briefcase.fill")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             Text("Import Vendor List")
                 .font(Typography.title2)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("You can import your vendor list from a CSV or Excel file, or skip this step and add vendors later.")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
 
             Text("Vendor import functionality coming in Stage 4")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .padding(.top, Spacing.lg)
 
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 }
 
@@ -303,27 +303,27 @@ struct BudgetSetupPlaceholderView: View {
 
             Image(systemName: "dollarsign.circle.fill")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             Text("Budget Setup")
                 .font(Typography.title2)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Set up your wedding budget with categories and allocations, or skip this step and configure it later.")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
 
             Text("Budget wizard coming in Stage 4")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .padding(.top, Spacing.lg)
 
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 }
 

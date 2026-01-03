@@ -18,7 +18,7 @@ struct ProgressBar: View {
     init(
         value: Double,
         color: Color = .blue,
-        backgroundColor: Color = AppColors.border,
+        backgroundColor: Color = SemanticColors.borderPrimary,
         height: CGFloat = 8,
         showPercentage: Bool = false
     ) {
@@ -50,7 +50,7 @@ struct ProgressBar: View {
             if showPercentage {
                 Text("\(Int(value * 100))%")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .accessibilityElement(children: .ignore)
@@ -105,11 +105,11 @@ struct CircularProgress: View {
                 VStack(spacing: 2) {
                     Text("\(Int(value * 100))")
                         .font(.system(size: size * 0.3, weight: .bold, design: .rounded))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text("%")
                         .font(.system(size: size * 0.15, weight: .medium))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
         }
@@ -182,7 +182,7 @@ struct LabeledStepProgress: View {
                                 if index < currentStep {
                                     Image(systemName: "checkmark")
                                         .font(.caption)
-                                        .foregroundColor(AppColors.textPrimary)
+                                        .foregroundColor(SemanticColors.textPrimary)
                                 } else if index == currentStep {
                                     Circle()
                                         .stroke(color, lineWidth: 2)
@@ -190,7 +190,7 @@ struct LabeledStepProgress: View {
                                 } else {
                                     Text("\(index + 1)")
                                         .font(.caption2)
-                                        .foregroundColor(AppColors.textTertiary)
+                                        .foregroundColor(SemanticColors.textTertiary)
                                 }
                             }
                         )
@@ -209,7 +209,7 @@ struct LabeledStepProgress: View {
                 ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
                     Text(step)
                         .font(Typography.caption)
-                        .foregroundColor(index <= currentStep ? AppColors.textPrimary : AppColors.textTertiary)
+                        .foregroundColor(index <= currentStep ? SemanticColors.textPrimary : SemanticColors.textTertiary)
                         .fontWeight(index == currentStep ? .semibold : .regular)
                         .frame(maxWidth: .infinity)
                         .multilineTextAlignment(.center)

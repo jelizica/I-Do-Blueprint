@@ -83,7 +83,7 @@ extension ExpenseLinkingView {
         .background(
             RoundedRectangle(cornerRadius: 8)
                 .fill(isSelected ? Color.accentColor.opacity(0.1) :
-                    (isLinked ? AppColors.textSecondary.opacity(0.05) : Color(NSColor.controlBackgroundColor)))
+                    (isLinked ? SemanticColors.textSecondary.opacity(Opacity.verySubtle) : Color(NSColor.controlBackgroundColor)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)))

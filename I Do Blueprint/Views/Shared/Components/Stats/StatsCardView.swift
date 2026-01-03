@@ -32,14 +32,14 @@ struct StatsCardView: View {
             // Value
             Text(stat.value)
                 .font(Typography.numberLarge)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
 
             // Label
             Text(stat.label)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
         }

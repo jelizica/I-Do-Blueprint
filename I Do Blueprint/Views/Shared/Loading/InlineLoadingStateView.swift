@@ -52,7 +52,7 @@ struct InlineLoadingStateView<Content: View, Data>: View {
         Text(data)
     }
     .frame(width: 100, height: 100)
-    .border(AppColors.textSecondary)
+    .border(SemanticColors.textSecondary)
 }
 
 #Preview("Inline Loaded") {
@@ -62,7 +62,7 @@ struct InlineLoadingStateView<Content: View, Data>: View {
         Text(data)
     }
     .frame(width: 100, height: 100)
-    .border(AppColors.textSecondary)
+    .border(SemanticColors.textSecondary)
 }
 
 #Preview("Inline Error") {
@@ -72,5 +72,5 @@ struct InlineLoadingStateView<Content: View, Data>: View {
         Text(data)
     }
     .frame(width: 100, height: 100)
-    .border(AppColors.textSecondary)
+    .border(SemanticColors.textSecondary)
 }

@@ -78,7 +78,7 @@ struct RecentActivityCard: View {
 
                 Text("Recent Activity")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
             }
@@ -101,7 +101,7 @@ struct RecentActivityCard: View {
                 Text("Quick Actions")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 QuickActionButton(icon: "plus", text: "Add New Task")
@@ -128,7 +128,7 @@ struct RecentActivityCard: View {
                             endPoint: .trailing
                         )
                     )
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .cornerRadius(CornerRadius.md)
                 }
                 .buttonStyle(.plain)
@@ -137,8 +137,8 @@ struct RecentActivityCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
     }
 
@@ -171,11 +171,11 @@ struct DashboardActivityRow: View {
                 Text(activity.text)
                     .font(Typography.bodySmall)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(activity.time)
                     .font(Typography.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
     }
@@ -202,13 +202,13 @@ struct QuickActionButton: View {
             .padding(.horizontal, Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(AppColors.textPrimary.opacity(0.5))
+                    .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
                     .overlay(
                         RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(AppColors.borderLight, lineWidth: 1)
+                            .stroke(SemanticColors.borderPrimaryLight, lineWidth: 1)
                     )
             )
-            .foregroundColor(AppColors.textPrimary)
+            .foregroundColor(SemanticColors.textPrimary)
         }
         .buttonStyle(.plain)
     }

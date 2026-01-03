@@ -138,7 +138,7 @@ struct FilterSheet: View {
                                             .background(
                                                 Capsule()
                                                     .fill(tempFilters.tags.contains(tag) ? Color.blue
-                                                        .opacity(0.2) : AppColors.textSecondary.opacity(0.1)))
+                                                        .opacity(0.2) : SemanticColors.textSecondary.opacity(Opacity.subtle)))
                                             .foregroundColor(tempFilters.tags.contains(tag) ? .blue : .primary)
                                         }
                                         .buttonStyle(.plain)

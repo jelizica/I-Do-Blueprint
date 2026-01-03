@@ -36,7 +36,7 @@ struct VendorDetailDocumentsTab: View {
             
             Text("Loading documents...")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
     }
@@ -46,7 +46,7 @@ struct VendorDetailDocumentsTab: View {
             SectionHeaderV2(
                 title: "Documents (\(documents.count))",
                 icon: "doc.text.fill",
-                color: AppColors.primary
+                color: SemanticColors.primaryAction
             )
             
             VStack(spacing: Spacing.sm) {
@@ -55,7 +55,7 @@ struct VendorDetailDocumentsTab: View {
                 }
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(CornerRadius.md)
         }
     }
@@ -70,26 +70,26 @@ struct DocumentRow: View {
         HStack(spacing: Spacing.md) {
             Image(systemName: "doc.fill")
                 .font(.system(size: 16))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
             
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(document.originalFilename)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 Text(document.documentType.displayName)
                     .font(Typography.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             Spacer()
             
             Text(document.uploadedAt.formatted(date: .abbreviated, time: .omitted))
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding(Spacing.sm)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
         .cornerRadius(CornerRadius.sm)
     }
 }

@@ -24,12 +24,12 @@ struct TableSelectorSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Select Table for \(guest.fullName)")
                         .font(Typography.title2)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .accessibleHeading(level: 1)
 
                     Text("Choose a table with available seats")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
@@ -52,7 +52,7 @@ struct TableSelectorSheet: View {
                 // Search
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     TextField("Search tables...", text: $searchText)
                         .textFieldStyle(.plain)
                         .accessibleFormField(
@@ -63,7 +63,7 @@ struct TableSelectorSheet: View {
                 .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(AppColors.cardBackground)
+                        .fill(SemanticColors.backgroundSecondary)
                 )
 
                 // Filter toggle
@@ -100,11 +100,11 @@ struct TableSelectorSheet: View {
                         VStack(spacing: Spacing.md) {
                             Image(systemName: "tablecells.badge.ellipsis")
                                 .font(.system(size: 48))
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
 
                             Text(emptyStateMessage)
                                 .font(Typography.bodyRegular)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                                 .multilineTextAlignment(.center)
                         }
                         .frame(maxWidth: .infinity)
@@ -190,18 +190,18 @@ private struct TableCard: View {
                 // Table Icon
                 ZStack {
                     Circle()
-                        .fill(isFull ? AppColors.errorLight : AppColors.primaryLight)
+                        .fill(isFull ? SemanticColors.errorLight : SemanticColors.primaryActionLight)
                         .frame(width: 60, height: 60)
 
                     VStack(spacing: Spacing.xs) {
                         Image(systemName: tableShapeIcon)
                             .font(.system(size: 20))
-                            .foregroundColor(isFull ? AppColors.error : AppColors.primary)
+                            .foregroundColor(isFull ? SemanticColors.error : SemanticColors.primaryAction)
 
                         Text("\(table.tableNumber)")
                             .font(Typography.caption)
                             .fontWeight(.semibold)
-                            .foregroundColor(isFull ? AppColors.error : AppColors.primary)
+                            .foregroundColor(isFull ? SemanticColors.error : SemanticColors.primaryAction)
                     }
                 }
 
@@ -210,12 +210,12 @@ private struct TableCard: View {
                     HStack {
                         Text("Table \(table.tableNumber)")
                             .font(Typography.heading)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
 
                         if let tableName = table.tableName, !tableName.isEmpty {
                             Text("(\(tableName))")
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
 
                         Spacer()
@@ -224,12 +224,12 @@ private struct TableCard: View {
                             Text("FULL")
                                 .font(Typography.caption)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(SemanticColors.error)
                                 .padding(.horizontal, Spacing.sm)
                                 .padding(.vertical, Spacing.xs)
                                 .background(
                                     Capsule()
-                                        .fill(AppColors.errorLight)
+                                        .fill(SemanticColors.errorLight)
                                 )
                         }
                     }
@@ -239,20 +239,20 @@ private struct TableCard: View {
                         HStack(spacing: Spacing.xs) {
                             Image(systemName: "person.2")
                                 .font(.system(size: 12))
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             Text("\(assignedGuestsCount) / \(table.capacity)")
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
 
                         // Shape
                         HStack(spacing: Spacing.xs) {
                             Image(systemName: tableShapeIcon)
                                 .font(.system(size: 12))
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             Text(table.tableShape.displayName)
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
 
                         Spacer()
@@ -262,7 +262,7 @@ private struct TableCard: View {
                             Text("\(availableSeats) seat\(availableSeats == 1 ? "" : "s") available")
                                 .font(Typography.bodySmall)
                                 .fontWeight(.medium)
-                                .foregroundColor(AppColors.success)
+                                .foregroundColor(SemanticColors.success)
                         }
                     }
 
@@ -271,12 +271,12 @@ private struct TableCard: View {
                         ZStack(alignment: .leading) {
                             // Background
                             RoundedRectangle(cornerRadius: CornerRadius.sm)
-                                .fill(AppColors.borderLight)
+                                .fill(SemanticColors.borderPrimaryLight)
                                 .frame(height: 4)
 
                             // Fill
                             RoundedRectangle(cornerRadius: CornerRadius.sm)
-                                .fill(isFull ? AppColors.error : AppColors.success)
+                                .fill(isFull ? SemanticColors.error : SemanticColors.success)
                                 .frame(width: geometry.size.width * fillPercentage, height: 4)
                         }
                     }
@@ -287,15 +287,15 @@ private struct TableCard: View {
                 if !isFull {
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
             .padding(Spacing.lg)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(AppColors.cardBackground)
+                    .fill(SemanticColors.backgroundSecondary)
                     .shadow(
-                        color: isHovering && !isFull ? AppColors.shadowMedium : AppColors.shadowLight,
+                        color: isHovering && !isFull ? SemanticColors.shadow : SemanticColors.shadowLight,
                         radius: isHovering && !isFull ? 6 : 3,
                         x: 0,
                         y: isHovering && !isFull ? 3 : 2
@@ -304,7 +304,7 @@ private struct TableCard: View {
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .stroke(
-                        isHovering && !isFull ? AppColors.primary : AppColors.borderLight,
+                        isHovering && !isFull ? SemanticColors.primaryAction : SemanticColors.borderPrimaryLight,
                         lineWidth: isHovering && !isFull ? 2 : 1
                     )
             )

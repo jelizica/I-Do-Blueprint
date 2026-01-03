@@ -119,7 +119,7 @@ struct SeatingAssignmentRow: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
         )
         .alert("Remove Assignment", isPresented: $showingRemoveConfirmation) {
             Button("Cancel", role: .cancel) { }

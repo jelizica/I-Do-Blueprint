@@ -156,7 +156,7 @@ struct DashboardViewV4: View {
                         } label: {
                             Image(systemName: "arrow.clockwise")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         }
                         .buttonStyle(.plain)
                         .accessibleActionButton(

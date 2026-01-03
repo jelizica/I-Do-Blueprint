@@ -124,7 +124,7 @@ struct SVGAvatarView<Fallback: View>: View {
             } else if loader.isLoading {
                 // Loading state
                 Circle()
-                    .fill(AppColors.textSecondary.opacity(0.2))
+                    .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                     .frame(width: size, height: size)
                     .overlay {
                         ProgressView()

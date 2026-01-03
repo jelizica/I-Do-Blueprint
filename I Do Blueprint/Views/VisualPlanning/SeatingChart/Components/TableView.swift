@@ -22,23 +22,23 @@ struct TableView: View {
                 switch table.tableShape {
                 case .round:
                     Circle()
-                        .fill(AppColors.textPrimary)
-                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
+                        .fill(SemanticColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : SemanticColors.textSecondary, lineWidth: 2)
                         .frame(width: 80 * scale, height: 80 * scale)
                 case .rectangular:
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(AppColors.textPrimary)
-                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
+                        .fill(SemanticColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : SemanticColors.textSecondary, lineWidth: 2)
                         .frame(width: 120 * scale, height: 60 * scale)
                 case .square:
                     Rectangle()
-                        .fill(AppColors.textPrimary)
-                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
+                        .fill(SemanticColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : SemanticColors.textSecondary, lineWidth: 2)
                         .frame(width: 80 * scale, height: 80 * scale)
                 case .oval:
                     Ellipse()
-                        .fill(AppColors.textPrimary)
-                        .stroke(isSelected ? Color.blue : AppColors.textSecondary, lineWidth: 2)
+                        .fill(SemanticColors.textPrimary)
+                        .stroke(isSelected ? Color.blue : SemanticColors.textSecondary, lineWidth: 2)
                         .frame(width: 100 * scale, height: 70 * scale)
                 }
             }
@@ -57,16 +57,16 @@ struct TableView: View {
 
                 ZStack {
                     Circle()
-                        .fill(guest != nil ? Color.blue : AppColors.textSecondary.opacity(0.3))
+                        .fill(guest != nil ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(width: 20 * scale, height: 20 * scale)
                         .overlay(
                             Circle()
-                                .stroke(AppColors.textSecondary, lineWidth: 1))
+                                .stroke(SemanticColors.textSecondary, lineWidth: 1))
 
                     if let guest {
                         Text(guest.initials)
                             .font(.system(size: 8 * scale, weight: .semibold))
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                     }
                 }
                 .offset(x: position.x, y: position.y)

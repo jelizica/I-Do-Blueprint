@@ -132,19 +132,19 @@ struct PaymentOverviewCardV2: View {
                     .font(.system(size: 11))
                     .textCase(.uppercase)
                     .tracking(0.5)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(value)
                     .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
                 Text(subtitle)
                     .font(.system(size: 11))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

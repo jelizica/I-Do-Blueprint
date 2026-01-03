@@ -32,7 +32,7 @@ struct NavigationBarV2: View {
         .background(
             RoundedRectangle(cornerRadius: 50)
                 .fill(Color(NSColor.windowBackgroundColor))
-                .shadow(color: AppColors.textPrimary.opacity(0.1), radius: 10, x: 0, y: 4)
+                .shadow(color: SemanticColors.textPrimary.opacity(Opacity.subtle), radius: 10, x: 0, y: 4)
         )
     }
 }
@@ -72,7 +72,7 @@ struct NavigationPill: View {
             .background(
                 Capsule()
                     .fill(isSelected ? Color(NSColor.controlBackgroundColor) : Color.clear)
-                    .shadow(color: isSelected ? AppColors.textPrimary.opacity(0.1) : .clear, radius: 8, x: 0, y: 2)
+                    .shadow(color: isSelected ? SemanticColors.textPrimary.opacity(Opacity.subtle) : .clear, radius: 8, x: 0, y: 2)
             )
             .scaleEffect(isHovered && !isSelected ? 1.05 : 1.0)
         }

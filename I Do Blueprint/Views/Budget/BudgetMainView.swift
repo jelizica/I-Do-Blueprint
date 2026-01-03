@@ -291,7 +291,7 @@ struct TaxRateSettingsView: View {
                                      .padding(.horizontal, Spacing.sm)
                                      .padding(.vertical, Spacing.xxs)
                                      .background(Color.accentColor)
-                                     .foregroundColor(AppColors.textPrimary)
+                                     .foregroundColor(SemanticColors.textPrimary)
                                      .cornerRadius(4)
                              } */
                         }

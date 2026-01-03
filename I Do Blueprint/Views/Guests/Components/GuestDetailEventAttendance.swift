@@ -84,13 +84,13 @@ struct GuestDetailEventAttendance: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Event Attendance")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(isGuestAttending ? AppColors.textPrimary : AppColors.textTertiary)
+                .foregroundColor(isGuestAttending ? SemanticColors.textPrimary : SemanticColors.textTertiary)
             
             if attendableEvents.isEmpty {
                 // No events configured
                 Text("No events have been set up yet")
                     .font(.system(size: 14))
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(SemanticColors.textTertiary)
                     .italic()
             } else if isGuestAttending {
                 // Show attendance details when guest is attending
@@ -112,7 +112,7 @@ struct GuestDetailEventAttendance: View {
                 
                 Text("Event attendance will be available once RSVP is confirmed")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(SemanticColors.textTertiary)
                     .italic()
                     .padding(.top, Spacing.xs)
             }
@@ -129,10 +129,10 @@ struct AttendanceItem: View {
     var body: some View {
         HStack(spacing: Spacing.xs) {
             Image(systemName: isAttending ? "checkmark.circle.fill" : "xmark.circle")
-                .foregroundColor(isAttending ? AppColors.success : AppColors.textTertiary)
+                .foregroundColor(isAttending ? SemanticColors.success : SemanticColors.textTertiary)
             Text(label)
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
     }
 }

@@ -42,7 +42,7 @@ struct GiftRowView: View {
                 .frame(width: 40, height: 40)
             
             Image(systemName: giftTypeIcon)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .font(.system(size: 16, weight: .medium))
         }
     }
@@ -59,7 +59,7 @@ struct GiftRowView: View {
                         .padding(.horizontal, Spacing.sm)
                         .padding(.vertical, Spacing.xxs)
                         .background(AppColors.Budget.pending)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .cornerRadius(4)
                 }
             }

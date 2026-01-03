@@ -6,24 +6,24 @@ struct NoteCardSkeleton: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Note title
             RoundedRectangle(cornerRadius: 4)
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 180, height: 18)
                 .shimmer()
 
             // Note content preview
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(height: 12)
                     .shimmer()
 
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(height: 12)
                     .shimmer()
 
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 200, height: 12)
                     .shimmer()
             }
@@ -31,7 +31,7 @@ struct NoteCardSkeleton: View {
             // Footer with date and tags
             HStack {
                 Capsule()
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 80, height: 14)
                     .shimmer()
 
@@ -39,12 +39,12 @@ struct NoteCardSkeleton: View {
 
                 HStack(spacing: Spacing.xs) {
                     Capsule()
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 50, height: 18)
                         .shimmer()
 
                     Capsule()
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 60, height: 18)
                         .shimmer()
                 }
@@ -61,5 +61,5 @@ struct NoteCardSkeleton: View {
         NoteCardSkeleton()
     }
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }

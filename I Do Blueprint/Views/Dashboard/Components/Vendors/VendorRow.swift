@@ -34,18 +34,18 @@ struct VendorRow: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(vendor.vendorName)
                     .font(Typography.caption.weight(.semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(vendor.vendorType ?? "Vendor")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             Spacer()
 
             Text(vendor.isBooked == true ? "✓ Booked" : "Pending")
                 .font(Typography.caption)
-                .foregroundColor(vendor.isBooked == true ? AppColors.success : AppColors.warning)
+                .foregroundColor(vendor.isBooked == true ? SemanticColors.success : SemanticColors.warning)
         }
         .task(id: vendor.imageUrl) {
             await loadVendorImage()

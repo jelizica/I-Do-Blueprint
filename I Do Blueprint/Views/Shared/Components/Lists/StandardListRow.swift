@@ -71,7 +71,7 @@ struct StandardListRow: View {
                         Text(title)
                             .font(Typography.bodyRegular)
                             .fontWeight(.medium)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
 
                         if let badge = badge {
                             Text(badge)
@@ -90,7 +90,7 @@ struct StandardListRow: View {
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(Typography.bodySmall)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .lineLimit(2)
                     }
                 }
@@ -104,7 +104,7 @@ struct StandardListRow: View {
             .padding(.vertical, Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(isHovering ? AppColors.hoverBackground : Color.clear)
+                    .fill(isHovering ? SemanticColors.hover : Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -128,12 +128,12 @@ struct StandardListRow: View {
         case .chevron:
             Image(systemName: "chevron.right")
                 .font(.caption)
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundColor(SemanticColors.textTertiary)
 
         case .checkmark:
             Image(systemName: "checkmark")
                 .font(.body)
-                .foregroundColor(AppColors.success)
+                .foregroundColor(SemanticColors.success)
 
         case .toggle(let binding):
             Toggle("", isOn: binding)
@@ -189,7 +189,7 @@ struct SelectableListRow: View {
                 // Selection indicator
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.title3)
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textTertiary)
+                    .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textTertiary)
 
                 // Icon
                 if let icon = icon {
@@ -208,12 +208,12 @@ struct SelectableListRow: View {
                     Text(title)
                         .font(Typography.bodyRegular)
                         .fontWeight(.medium)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     if let subtitle = subtitle {
                         Text(subtitle)
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
 
@@ -223,7 +223,7 @@ struct SelectableListRow: View {
             .padding(.vertical, Spacing.sm)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(isSelected ? AppColors.primaryLight : (isHovering ? AppColors.hoverBackground : Color.clear))
+                    .fill(isSelected ? SemanticColors.primaryActionLight : (isHovering ? SemanticColors.hover : Color.clear))
             )
         }
         .buttonStyle(.plain)

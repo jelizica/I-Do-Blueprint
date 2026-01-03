@@ -17,11 +17,11 @@ struct GuestResponsesCardV4: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Guest Responses")
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("\(respondedCount) of \(totalGuests) guests responded")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(.top, Spacing.md)
             .padding(.bottom, Spacing.sm)
@@ -30,9 +30,9 @@ struct GuestResponsesCardV4: View {
 
             // Stats
             HStack(spacing: Spacing.xl) {
-                StatColumn(value: attendingCount, label: "Attending", color: AppColors.success)
-                StatColumn(value: declinedCount, label: "Declined", color: AppColors.error)
-                StatColumn(value: pendingCount, label: "Pending", color: AppColors.textSecondary)
+                StatColumn(value: attendingCount, label: "Attending", color: SemanticColors.success)
+                StatColumn(value: declinedCount, label: "Declined", color: SemanticColors.error)
+                StatColumn(value: pendingCount, label: "Pending", color: SemanticColors.textSecondary)
             }
             .padding(.vertical, Spacing.md)
 
@@ -49,8 +49,8 @@ struct GuestResponsesCardV4: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, minHeight: 407)
-        .background(AppColors.cardBackground)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .background(SemanticColors.backgroundSecondary)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .cornerRadius(CornerRadius.md)
     }
 

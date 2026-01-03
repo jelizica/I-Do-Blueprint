@@ -140,7 +140,7 @@ struct ContentsItem: View {
                 path.addLine(to: CGPoint(x: 100, y: 10))
             }
             .stroke(style: StrokeStyle(lineWidth: 1, dash: [2, 3]))
-            .foregroundColor(AppColors.textSecondary)
+            .foregroundColor(SemanticColors.textSecondary)
             .frame(height: 20)
 
             Text("\(pageNumber)")

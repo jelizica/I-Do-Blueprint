@@ -98,7 +98,7 @@ struct MarkdownToolbarButton: View {
         Button(action: action) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .frame(width: 28, height: 28)
                 .background(
                     RoundedRectangle(cornerRadius: 6)

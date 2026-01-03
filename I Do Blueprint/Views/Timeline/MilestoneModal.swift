@@ -138,7 +138,7 @@ struct MilestoneModal: View {
 
                             if selectedColor == colorName {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .fontWeight(.bold)
                             }
                         }

@@ -146,7 +146,7 @@ struct GuestImportView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(filterByGroup != nil ? Color.blue : AppColors.textSecondary.opacity(0.3), lineWidth: 1)
+                            .stroke(filterByGroup != nil ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -181,7 +181,7 @@ struct GuestImportView: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(filterByRelationship != nil ? Color.blue : AppColors.textSecondary.opacity(0.3), lineWidth: 1)
+                            .stroke(filterByRelationship != nil ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -369,7 +369,7 @@ struct GuestImportRow: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? Color.blue : AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                    .stroke(isSelected ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

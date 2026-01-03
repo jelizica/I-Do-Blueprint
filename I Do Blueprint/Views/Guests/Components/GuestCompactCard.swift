@@ -27,12 +27,12 @@ struct GuestCompactCard: View {
                             .clipShape(Circle())
                     } else {
                         Circle()
-                            .fill(AppColors.cardBackground)
+                            .fill(SemanticColors.backgroundSecondary)
                             .frame(width: 48, height: 48)
                             .overlay(
                                 Text(guest.firstName.prefix(1) + guest.lastName.prefix(1))
                                     .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             )
                     }
                 }
@@ -56,7 +56,7 @@ struct GuestCompactCard: View {
             // Guest Name (centered, 2 lines max)
             Text(guest.fullName)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -66,11 +66,11 @@ struct GuestCompactCard: View {
         // 1. First, constrain the content to max 130px
         .frame(maxWidth: 130)
         // 2. Apply visual styling to the constrained size (background uses 130px max)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.borderLight, lineWidth: 0.5)
+                .stroke(SemanticColors.borderPrimaryLight, lineWidth: 0.5)
         )
         // 3. Then allow the card to center within the grid column
         .frame(maxWidth: .infinity, alignment: .center)
@@ -86,13 +86,13 @@ struct GuestCompactCard: View {
     private var statusColor: Color {
         switch guest.rsvpStatus {
         case .attending, .confirmed:
-            return AppColors.success // Green
+            return SemanticColors.success // Green
         case .declined, .noResponse:
-            return AppColors.error // Red
+            return SemanticColors.error // Red
         case .pending, .maybe, .invited:
-            return AppColors.warning // Yellow/Orange
+            return SemanticColors.warning // Yellow/Orange
         default:
-            return AppColors.textSecondary.opacity(0.4)
+            return SemanticColors.textSecondary.opacity(Opacity.medium)
         }
     }
 

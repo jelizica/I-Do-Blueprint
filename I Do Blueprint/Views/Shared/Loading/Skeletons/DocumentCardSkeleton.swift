@@ -6,7 +6,7 @@ struct DocumentCardSkeleton: View {
         HStack(spacing: Spacing.lg) {
             // File icon skeleton
             RoundedRectangle(cornerRadius: 8)
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 48, height: 48)
                 .shimmer()
 
@@ -14,19 +14,19 @@ struct DocumentCardSkeleton: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Document name
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 160, height: 16)
                     .shimmer()
 
                 // File type and size
                 HStack(spacing: Spacing.sm) {
                     Capsule()
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 40, height: 14)
                         .shimmer()
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 60, height: 12)
                         .shimmer()
                 }
@@ -36,7 +36,7 @@ struct DocumentCardSkeleton: View {
 
             // Upload date skeleton
             RoundedRectangle(cornerRadius: 4)
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 70, height: 12)
                 .shimmer()
         }
@@ -52,5 +52,5 @@ struct DocumentCardSkeleton: View {
         DocumentCardSkeleton()
     }
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }

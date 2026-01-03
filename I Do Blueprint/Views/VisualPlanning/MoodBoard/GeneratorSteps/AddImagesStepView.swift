@@ -99,7 +99,7 @@ struct AddImagesStepView: View {
                 .padding(.horizontal, Spacing.xl)
                 .padding(.vertical, Spacing.md)
                 .background(Color.blue)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .cornerRadius(8)
             }
 
@@ -320,9 +320,9 @@ struct DropZone: View {
 
     var body: some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(dragOver ? Color.blue.opacity(0.2) : AppColors.textSecondary.opacity(0.1))
+            .fill(dragOver ? Color.blue.opacity(0.2) : SemanticColors.textSecondary.opacity(Opacity.subtle))
             .stroke(
-                dragOver ? Color.blue : AppColors.textSecondary.opacity(0.3),
+                dragOver ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.light),
                 style: StrokeStyle(lineWidth: 2, dash: [8]))
             .frame(height: 200)
             .overlay(
@@ -367,12 +367,12 @@ struct SelectedImageCard: View {
                     .cornerRadius(8)
             } else {
                 Rectangle()
-                    .fill(AppColors.textSecondary.opacity(0.3))
+                    .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                     .frame(width: 80, height: 80)
                     .cornerRadius(8)
                     .overlay(
                         Image(systemName: "photo")
-                            .foregroundColor(AppColors.textSecondary))
+                            .foregroundColor(SemanticColors.textSecondary))
             }
 
             // File info
@@ -477,11 +477,11 @@ struct StockPhotoLibraryView: View {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 12) {
                 ForEach(0 ..< 6, id: \.self) { _ in
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(AppColors.textSecondary.opacity(0.2))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(height: 100)
                         .overlay(
                             Image(systemName: "photo")
-                                .foregroundColor(AppColors.textSecondary))
+                                .foregroundColor(SemanticColors.textSecondary))
                 }
             }
         }

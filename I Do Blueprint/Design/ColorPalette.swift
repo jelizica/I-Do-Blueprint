@@ -547,17 +547,38 @@ enum SemanticColors {
     static var primaryActionHover: Color { ThemeManager.shared.primaryHover }
     static var primaryActionActive: Color { ThemeManager.shared.primaryShade800 }
     static var primaryActionDisabled: Color { ThemeManager.shared.primaryShade50 }
+    static var primaryActionLight: Color { ThemeManager.shared.primaryShade100 }  // Light variant for selected states
 
     // MARK: - Secondary Actions (Theme-Aware)
     static var secondaryAction: Color { ThemeManager.shared.secondaryColor }
     static var secondaryActionHover: Color { ThemeManager.shared.secondaryHover }
     static var secondaryActionActive: Color { ThemeManager.shared.secondaryShade800 }
 
+    // MARK: - Accent Colors (Theme-Aware)
+    static var accent: Color { ThemeManager.shared.accentWarmColor }
+    static var accentLight: Color { ThemeManager.shared.accentWarmColor.opacity(Opacity.subtle) }
+
     // MARK: - Status Indicators (Color Blind Safe - Consistent Across Themes)
     static var statusSuccess: Color { ThemeManager.shared.statusSuccess }      // ✅ Confirmed (WCAG AA)
+    static var statusSuccessLight: Color { SageGreen.shade100 }                // Light green for backgrounds
     static var statusPending: Color { ThemeManager.shared.statusPending }      // ⏳ Pending (WCAG AA)
+    static var statusPendingLight: Color { SoftLavender.shade100 }             // Light lavender for backgrounds
     static var statusWarning: Color { ThemeManager.shared.statusWarning }      // ⚠️ Declined/Over Budget (WCAG AA)
+    static var statusWarningLight: Color { Terracotta.shade100 }               // Light orange for backgrounds
+    static var statusError: Color { AppColors.error }                          // ❌ Error (WCAG AA)
+    static var statusErrorLight: Color { AppColors.errorLight }                // Light red for backgrounds
     static var statusInfo: Color { ThemeManager.shared.primaryShade700 }       // ℹ️ Info (theme-specific)
+    static var statusInfoLight: Color { ThemeManager.shared.primaryShade100 }  // Light primary for backgrounds
+
+    // MARK: - Legacy Status Aliases (for migration compatibility)
+    static var success: Color { statusSuccess }
+    static var successLight: Color { statusSuccessLight }
+    static var warning: Color { statusWarning }
+    static var warningLight: Color { statusWarningLight }
+    static var error: Color { statusError }
+    static var errorLight: Color { statusErrorLight }
+    static var info: Color { statusInfo }
+    static var infoLight: Color { statusInfoLight }
 
     // MARK: - Text Colors (Consistent Across Themes)
     static var textPrimary: Color { ThemeManager.shared.textPrimary }          // Main body text (WCAG AAA)
@@ -570,6 +591,8 @@ enum SemanticColors {
     // MARK: - Backgrounds (Theme-Aware Tints)
     static var backgroundPrimary: Color { ThemeManager.shared.backgroundPrimary }
     static var backgroundSecondary: Color { ThemeManager.shared.backgroundSecondary }
+    static var backgroundTertiary: Color { ThemeManager.shared.backgroundTertiary }
+    static var backgroundDisabled: Color { WarmGray.shade100 }
     static var backgroundTintPrimary: Color { ThemeManager.shared.primaryShade50 }
     static var backgroundTintSecondary: Color { ThemeManager.shared.secondaryShade50 }
     static var backgroundTintWarm: Color { ThemeManager.shared.accentWarmColor.opacity(Opacity.verySubtle) }
@@ -577,9 +600,22 @@ enum SemanticColors {
 
     // MARK: - Borders (Theme-Aware)
     static var borderPrimary: Color { ThemeManager.shared.border }
+    static var borderPrimaryLight: Color { ThemeManager.shared.borderLight }  // Alias for borderLight
     static var borderLight: Color { ThemeManager.shared.borderLight }
     static var borderFocus: Color { ThemeManager.shared.primaryShade700 }
     static var borderError: Color { Terracotta.shade500 }
+    static var divider: Color { ThemeManager.shared.border }
+
+    // MARK: - Shadow Colors
+    static var shadow: Color { AppColors.shadowMedium }
+    static var shadowLight: Color { AppColors.shadowLight }
+    static var shadowHeavy: Color { AppColors.shadowHeavy }
+
+    // MARK: - Interactive States
+    static var hover: Color { AppColors.hoverBackground }
+    static var pressed: Color { ThemeManager.shared.primaryShade700 }
+    static var selected: Color { ThemeManager.shared.primaryShade100 }
+    static var disabled: Color { WarmGray.textDisabled }
 }
 
 // MARK: - Feature-Specific Semantic Colors

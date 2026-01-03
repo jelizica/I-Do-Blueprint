@@ -182,17 +182,17 @@ struct BudgetSidebarView: View {
                             HStack(spacing: 8) {
                                 Image(systemName: group.icon)
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(AppColors.primary)
+                                    .foregroundColor(SemanticColors.primaryAction)
 
                                 Text(group.rawValue)
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
 
                                 Spacer()
 
                                 Image(systemName: expandedGroups.contains(group) ? "chevron.down" : "chevron.right")
                                     .font(.system(size: 11, weight: .semibold))
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                             .contentShape(Rectangle())
                         }

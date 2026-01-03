@@ -186,7 +186,7 @@ struct SeatingChartCanvasV2: View {
                         // Tables in minimap
                         ForEach(chart.tables) { table in
                             Rectangle()
-                                .fill(selectedTableId == table.id ? Color.seatingAccentTeal : AppColors.textSecondary)
+                                .fill(selectedTableId == table.id ? Color.seatingAccentTeal : SemanticColors.textSecondary)
                                 .frame(width: 8, height: 8)
                                 .position(
                                     x: (table.position.x / canvasSize.width) * 120 + 60,
@@ -200,7 +200,7 @@ struct SeatingChartCanvasV2: View {
                             .frame(width: 120 / canvasScale, height: 90 / canvasScale)
                     }
                     .frame(width: 120, height: 90)
-                    .background(AppColors.textPrimary.opacity(0.1))
+                    .background(SemanticColors.textPrimary.opacity(Opacity.subtle))
                     .cornerRadius(4)
                     .shadow(radius: 2)
                 }

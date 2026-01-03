@@ -30,7 +30,7 @@ struct GuestDetailCompactHeader: View {
             LinearGradient(
                 colors: [
                     AppColors.error.opacity(0.9),
-                    AppColors.error
+                    SemanticColors.error
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -47,16 +47,16 @@ struct GuestDetailCompactHeader: View {
                             .clipShape(Circle())
                             .overlay(
                                 Circle()
-                                    .stroke(AppColors.textPrimary.opacity(0.3), lineWidth: 1)
+                                    .stroke(SemanticColors.textPrimary.opacity(Opacity.light), lineWidth: 1)
                             )
                     } else {
                         Circle()
-                            .fill(AppColors.textPrimary.opacity(0.2))
+                            .fill(SemanticColors.textPrimary.opacity(Opacity.light))
                             .frame(width: 50, height: 50)
                             .overlay(
                                 Text(guest.firstName.prefix(1) + guest.lastName.prefix(1))
                                     .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                             )
                     }
                 }
@@ -69,12 +69,12 @@ struct GuestDetailCompactHeader: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(guest.fullName)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
                     
                     Text("\(invitedByText) • \(relationshipText)")
                         .font(.system(size: 12))
-                        .foregroundColor(AppColors.textPrimary.opacity(0.9))
+                        .foregroundColor(SemanticColors.textPrimary.opacity(Opacity.strong))
                         .lineLimit(1)
                 }
                 
@@ -86,9 +86,9 @@ struct GuestDetailCompactHeader: View {
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .frame(width: 28, height: 28)
-                        .background(AppColors.textPrimary.opacity(0.2))
+                        .background(SemanticColors.textPrimary.opacity(Opacity.light))
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)

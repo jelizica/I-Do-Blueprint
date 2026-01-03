@@ -52,11 +52,11 @@ struct TimelineMilestonesCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Wedding Timeline")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text("Your journey to the big day")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
@@ -76,8 +76,8 @@ struct TimelineMilestonesCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
     }
 }
@@ -94,9 +94,9 @@ struct TimelineMilestoneRow: View {
             VStack(spacing: 0) {
                 ZStack {
                     Circle()
-                        .fill(AppColors.textPrimary)
+                        .fill(SemanticColors.textPrimary)
                         .frame(width: 40, height: 40)
-                        .shadow(color: AppColors.shadowLight, radius: 4)
+                        .shadow(color: SemanticColors.shadowLight, radius: 4)
 
                     Circle()
                         .fill(
@@ -132,11 +132,11 @@ struct TimelineMilestoneRow: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(milestone.title)
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(milestone.description)
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 // Progress bar if applicable
@@ -147,7 +147,7 @@ struct TimelineMilestoneRow: View {
 
                         Text("\(Int(animatedProgress * 100))% of planning complete")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
 
@@ -157,15 +157,15 @@ struct TimelineMilestoneRow: View {
                         ForEach(milestone.items, id: \.self) { item in
                             Text(item)
                                 .font(Typography.caption2)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                                 .padding(.horizontal, Spacing.sm)
                                 .padding(.vertical, Spacing.xxs)
                                 .background(
                                     RoundedRectangle(cornerRadius: CornerRadius.sm)
-                                        .fill(AppColors.textPrimary.opacity(0.5))
+                                        .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
                                         .overlay(
                                             RoundedRectangle(cornerRadius: CornerRadius.sm)
-                                                .stroke(AppColors.borderLight, lineWidth: 1)
+                                                .stroke(SemanticColors.borderPrimaryLight, lineWidth: 1)
                                         )
                                 )
                         }

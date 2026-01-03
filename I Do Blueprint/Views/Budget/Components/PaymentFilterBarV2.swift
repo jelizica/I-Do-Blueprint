@@ -53,7 +53,7 @@ struct PaymentFilterBarV2: View {
         HStack(spacing: Spacing.md) {
             Text("View")
                 .font(.system(size: 13))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             
             viewModeToggle
                 .frame(width: 200)
@@ -63,7 +63,7 @@ struct PaymentFilterBarV2: View {
             HStack(spacing: Spacing.xs) {
                 Text(showPlanView ? "Group By" : "Filter")
                     .font(.system(size: 13))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 
                 if showPlanView {
                     groupingInfoButton
@@ -118,7 +118,7 @@ struct PaymentFilterBarV2: View {
             .frame(maxWidth: .infinity)
         }
         .buttonStyle(.bordered)
-        .tint(AppColors.primary)
+        .tint(SemanticColors.primaryAction)
     }
     
     // MARK: - Filter Picker (Regular)
@@ -184,7 +184,7 @@ struct PaymentFilterBarV2: View {
         Button(action: { showGroupingInfo = true }) {
             Image(systemName: "info.circle")
                 .font(.system(size: windowSize == .compact ? 16 : 13))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .frame(width: windowSize == .compact ? 36 : nil, height: windowSize == .compact ? 36 : nil)
                 .background(windowSize == .compact ? Color(NSColor.controlBackgroundColor) : Color.clear)
                 .cornerRadius(windowSize == .compact ? 6 : 0)

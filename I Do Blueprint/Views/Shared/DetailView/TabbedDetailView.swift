@@ -26,7 +26,7 @@ struct TabbedDetailView<Content: View>: View {
                 .padding(.horizontal, Spacing.lg)
                 .padding(.vertical, Spacing.md)
             }
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
 
             Divider()
 
@@ -73,24 +73,24 @@ private struct DetailTabButton: View {
                 if let badge = tab.badge, badge > 0 {
                     Text("\(badge)")
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .padding(.horizontal, Spacing.sm)
                         .padding(.vertical, Spacing.xxs)
-                        .background(AppColors.primary)
+                        .background(SemanticColors.primaryAction)
                         .clipShape(Capsule())
                 }
             }
             .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.sm)
-            .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+            .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? AppColors.primary.opacity(0.1) : Color.clear)
+                    .fill(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
                     .strokeBorder(
-                        isSelected ? AppColors.primary.opacity(0.3) : Color.clear,
+                        isSelected ? SemanticColors.primaryAction.opacity(Opacity.light) : Color.clear,
                         lineWidth: 1
                     )
             )

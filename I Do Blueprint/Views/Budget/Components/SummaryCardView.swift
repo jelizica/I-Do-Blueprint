@@ -47,7 +47,7 @@ struct SummaryCardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
     }

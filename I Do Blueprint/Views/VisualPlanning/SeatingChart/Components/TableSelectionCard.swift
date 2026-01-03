@@ -40,7 +40,7 @@ struct TableSelectionCard: View {
             HStack {
                 Text("Table")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .accessibleHeading(level: 2)
 
                 Spacer()
@@ -48,7 +48,7 @@ struct TableSelectionCard: View {
                 if let table = selectedTable {
                     Text("\(availableSeats(for: table)) / \(table.capacity) available")
                         .font(Typography.bodySmall)
-                        .foregroundColor(availableSeats(for: table) > 0 ? AppColors.success : AppColors.error)
+                        .foregroundColor(availableSeats(for: table) > 0 ? SemanticColors.success : SemanticColors.error)
                 }
             }
 
@@ -57,7 +57,7 @@ struct TableSelectionCard: View {
             // Search
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 TextField("Search tables...", text: $searchText)
                     .textFieldStyle(.plain)
                     .accessibleFormField(
@@ -68,7 +68,7 @@ struct TableSelectionCard: View {
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(AppColors.backgroundSecondary)
+                    .fill(SemanticColors.backgroundSecondary)
             )
 
             // Table List
@@ -93,7 +93,7 @@ struct TableSelectionCard: View {
                     if filteredTables.isEmpty {
                         Text("No tables found")
                             .font(Typography.bodySmall)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, Spacing.lg)
                     }
@@ -104,9 +104,9 @@ struct TableSelectionCard: View {
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.cardBackground)
+                .fill(SemanticColors.backgroundSecondary)
                 .shadow(
-                    color: AppColors.shadowLight,
+                    color: SemanticColors.shadowLight,
                     radius: ShadowStyle.light.radius,
                     x: 0,
                     y: 2
@@ -114,7 +114,7 @@ struct TableSelectionCard: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .stroke(AppColors.borderLight, lineWidth: 1)
+                .stroke(SemanticColors.borderPrimaryLight, lineWidth: 1)
         )
     }
     
@@ -169,13 +169,13 @@ struct TableSelectionRow: View {
                 // Table Icon
                 ZStack {
                     Circle()
-                        .fill(isFull ? AppColors.errorLight : AppColors.primaryLight)
+                        .fill(isFull ? SemanticColors.errorLight : SemanticColors.primaryActionLight)
                         .frame(width: 40, height: 40)
 
                     Text("\(table.tableNumber)")
                         .font(Typography.bodySmall)
                         .fontWeight(.semibold)
-                        .foregroundColor(isFull ? AppColors.error : AppColors.primary)
+                        .foregroundColor(isFull ? SemanticColors.error : SemanticColors.primaryAction)
                 }
 
                 // Table Info
@@ -183,42 +183,42 @@ struct TableSelectionRow: View {
                     HStack {
                         Text("Table \(table.tableNumber)")
                             .font(Typography.bodyRegular)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
 
                         if isFull {
                             Text("FULL")
                                 .font(Typography.caption2)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(SemanticColors.error)
                                 .padding(.horizontal, Spacing.xs)
                                 .padding(.vertical, Spacing.xxs)
                                 .background(
                                     Capsule()
-                                        .fill(AppColors.errorLight)
+                                        .fill(SemanticColors.errorLight)
                                 )
                         }
                     }
 
                     Text("\(assignedCount) / \(table.capacity) seats • \(availableSeats) available")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(AppColors.success)
+                        .foregroundColor(SemanticColors.success)
                 }
             }
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(isSelected ? AppColors.primaryLight : (isHovering ? AppColors.hoverBackground : Color.clear))
+                    .fill(isSelected ? SemanticColors.primaryActionLight : (isHovering ? SemanticColors.hover : Color.clear))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? SemanticColors.primaryAction : Color.clear, lineWidth: 2)
             )
             .animation(AnimationStyle.fast, value: isHovering)
             .animation(AnimationStyle.fast, value: isSelected)

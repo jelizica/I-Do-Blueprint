@@ -86,7 +86,7 @@ struct NoteTypeSection: View {
                 .scaleEffect(0.7)
             Text("Loading...")
                 .font(.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,7 +99,7 @@ struct NoteTypeSection: View {
     private var emptyStateView: some View {
         Text("No \(selectedType?.displayName.lowercased() ?? "items") available")
             .font(.caption)
-            .foregroundColor(AppColors.textSecondary)
+            .foregroundColor(SemanticColors.textSecondary)
             .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(

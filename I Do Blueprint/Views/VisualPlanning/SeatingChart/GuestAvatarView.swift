@@ -49,7 +49,7 @@ struct GuestAvatarView: View {
                 if showBorder {
                     Circle()
                         .stroke(
-                            isHovering ? Color.seatingAccentTeal : AppColors.textPrimary,
+                            isHovering ? Color.seatingAccentTeal : SemanticColors.textPrimary,
                             lineWidth: isHovering ? 3 : 2
                         )
                         .frame(width: size, height: size)
@@ -102,7 +102,7 @@ struct GuestAvatarView: View {
 
             Text(guest.initials)
                 .font(.system(size: size * 0.4, weight: .semibold, design: .rounded))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
     }
 

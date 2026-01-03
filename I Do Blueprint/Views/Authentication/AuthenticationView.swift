@@ -185,7 +185,7 @@ struct LoginView: View {
             .padding(Spacing.xxxl)
             .background(Color(nsColor: .windowBackgroundColor))
             .cornerRadius(16)
-            .shadow(color: AppColors.textPrimary.opacity(0.1), radius: 20, x: 0, y: 10)
+            .shadow(color: SemanticColors.textPrimary.opacity(Opacity.subtle), radius: 20, x: 0, y: 10)
         }
     }
 
@@ -321,7 +321,7 @@ struct SignUpView: View {
             .padding(Spacing.xxxl)
             .background(Color(nsColor: .windowBackgroundColor))
             .cornerRadius(16)
-            .shadow(color: AppColors.textPrimary.opacity(0.1), radius: 20, x: 0, y: 10)
+            .shadow(color: SemanticColors.textPrimary.opacity(Opacity.subtle), radius: 20, x: 0, y: 10)
         }
     }
 

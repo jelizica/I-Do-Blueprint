@@ -49,7 +49,7 @@ struct ListSection<Content: View>: View {
             if let footer = footer {
                 Text(footer)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(SemanticColors.textTertiary)
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.sm)
             }
@@ -124,7 +124,7 @@ struct CardListSection<Content: View>: View {
                 HStack {
                     Text(title)
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Spacer()
 
@@ -139,7 +139,7 @@ struct CardListSection<Content: View>: View {
                                     .font(Typography.bodySmall)
                                     .fontWeight(.medium)
                             }
-                            .foregroundColor(AppColors.primary)
+                            .foregroundColor(SemanticColors.primaryAction)
                         }
                         .buttonStyle(.plain)
                     }
@@ -148,7 +148,7 @@ struct CardListSection<Content: View>: View {
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 

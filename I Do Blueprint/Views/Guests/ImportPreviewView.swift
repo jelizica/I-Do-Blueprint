@@ -37,7 +37,7 @@ struct ImportPreviewView: View {
                         .scaleEffect(0.8)
                     Text("Importing guests...")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .padding(Spacing.md)
             }
@@ -58,17 +58,17 @@ private struct ImportFileInfoView: View {
     var body: some View {
         HStack {
             Image(systemName: "doc.text.fill")
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(fileName)
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("\(totalRows) guests • \(importMode == .addOnly ? "Add Only" : "Sync") Mode")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             Spacer()
@@ -76,13 +76,13 @@ private struct ImportFileInfoView: View {
             if !isImporting {
                 Button(action: onClear) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(8)
     }
 }
@@ -102,10 +102,10 @@ private struct ImportDataTableView: View {
                             Text(header)
                                 .font(Typography.bodySmall)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                                 .padding(Spacing.sm)
                                 .frame(minWidth: 120, alignment: .leading)
-                                .background(AppColors.cardBackground)
+                                .background(SemanticColors.backgroundSecondary)
                         }
                     }
 
@@ -117,7 +117,7 @@ private struct ImportDataTableView: View {
                             ForEach(Array(row.enumerated()), id: \.offset) { _, cell in
                                 Text(cell)
                                     .font(Typography.bodySmall)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .padding(Spacing.sm)
                                     .frame(minWidth: 120, alignment: .leading)
                             }
@@ -127,13 +127,13 @@ private struct ImportDataTableView: View {
                 }
             }
             .frame(maxHeight: 250)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             if preview.totalRows > 10 {
                 Text("Showing first 10 of \(preview.totalRows) guests")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .padding(.top, Spacing.xs)
             }
         }
@@ -153,7 +153,7 @@ private struct ImportValidationView: View {
                         .foregroundColor(.green)
                     Text("Validation passed! Importing...")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
             } else {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -169,13 +169,13 @@ private struct ImportValidationView: View {
                     ForEach(Array(validation.errors.prefix(5).enumerated()), id: \.offset) { _, error in
                         Text("• Row \(error.row): \(error.message)")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
 
                     if validation.errors.count > 5 {
                         Text("... and \(validation.errors.count - 5) more errors")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }

@@ -16,18 +16,18 @@ struct CredentialsErrorView: View {
             // Error icon
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 64))
-                .foregroundColor(AppColors.warning)
+                .foregroundColor(SemanticColors.warning)
 
             // Title
             Text("Setup Required")
                 .font(.title)
                 .fontWeight(.bold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             // Description
             Text("Google OAuth credentials are not configured. Please complete the setup to enable Google Sign-In.")
                 .font(.body)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.huge)
 
@@ -77,13 +77,13 @@ struct CredentialsErrorView: View {
                 }
                 .buttonStyle(.borderless)
                 .controlSize(.large)
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundColor(SemanticColors.textTertiary)
                 #endif
             }
             .padding(.top, Spacing.sm)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 }
 

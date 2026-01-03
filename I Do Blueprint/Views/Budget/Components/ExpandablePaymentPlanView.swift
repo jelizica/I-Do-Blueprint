@@ -37,7 +37,7 @@ struct ExpandablePaymentPlanView: View {
                 HStack(spacing: Spacing.sm) {
                     // Expansion chevron
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .font(.caption)
                         .frame(width: 20)
                         .accessibilityHidden(true)
@@ -49,11 +49,11 @@ struct ExpandablePaymentPlanView: View {
                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                 Text(plan.vendor)
                                     .font(Typography.heading)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                 
                                 Text(plan.planTypeDisplay)
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                             
                             Spacer()
@@ -69,13 +69,13 @@ struct ExpandablePaymentPlanView: View {
                             HStack {
                                 Text(plan.progressText)
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                 
                                 Spacer()
                                 
                                 Text("\(Int(plan.percentPaid))% paid")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                             
                             ProgressView(value: plan.percentPaid, total: 100)
@@ -88,18 +88,18 @@ struct ExpandablePaymentPlanView: View {
                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                 Text("Total")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                                 
                                 Text(plan.totalAmount, format: .currency(code: currencyCode))
                                     .font(Typography.subheading)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                             }
                             
                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                 Text("Paid")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                                 
                                 Text(plan.amountPaid, format: .currency(code: currencyCode))
                                     .font(Typography.subheading)
@@ -109,7 +109,7 @@ struct ExpandablePaymentPlanView: View {
                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                 Text("Remaining")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                                 
                                 Text(plan.amountRemaining, format: .currency(code: currencyCode))
                                     .font(Typography.subheading)
@@ -148,12 +148,12 @@ struct ExpandablePaymentPlanView: View {
                                 
                                 Text("Next: \(nextAmount, format: .currency(code: currencyCode)) on \(nextDate, format: .dateTime.month().day())")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                 
                                 if let daysUntil = plan.daysUntilNextPayment {
                                     Text("(\(daysUntil) day\(daysUntil == 1 ? "" : "s"))")
                                         .font(Typography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
+                                        .foregroundColor(SemanticColors.textSecondary)
                                 }
                             }
                             .padding(.vertical, Spacing.xs)
@@ -196,13 +196,13 @@ struct ExpandablePaymentPlanView: View {
                         Text("Individual Payments")
                             .font(Typography.subheading)
                             .fontWeight(.semibold)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                         
                         Spacer()
                         
                         Text("\(planPayments.count) payment\(planPayments.count == 1 ? "" : "s")")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                     .padding(.horizontal, Spacing.md)
                     .padding(.top, Spacing.sm)
@@ -214,11 +214,11 @@ struct ExpandablePaymentPlanView: View {
                             VStack(spacing: Spacing.sm) {
                                 Image(systemName: "calendar.badge.exclamationmark")
                                     .font(.title2)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                                 
                                 Text("No individual payments found")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                             .padding(.vertical, Spacing.lg)
                             Spacer()
@@ -262,7 +262,7 @@ private struct IndividualPaymentRow: View {
                 HStack(spacing: Spacing.xs) {
                     Text(schedule.paymentDate, format: .dateTime.month().day().year())
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     if schedule.isDeposit {
                         Text("• Deposit")
@@ -278,7 +278,7 @@ private struct IndividualPaymentRow: View {
                 if let notes = schedule.notes, !notes.isEmpty {
                     Text(notes)
                         .font(.caption2)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -288,7 +288,7 @@ private struct IndividualPaymentRow: View {
             Text(schedule.paymentAmount, format: .currency(code: "USD"))
                 .font(Typography.bodyRegular)
                 .fontWeight(.medium)
-                .foregroundColor(schedule.paid ? .green : AppColors.textPrimary)
+                .foregroundColor(schedule.paid ? .green : SemanticColors.textPrimary)
         }
         .padding(.vertical, Spacing.xs)
         .padding(.horizontal, Spacing.sm)

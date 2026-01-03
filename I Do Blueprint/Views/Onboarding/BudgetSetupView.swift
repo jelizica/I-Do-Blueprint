@@ -30,7 +30,7 @@ struct BudgetSetupView: View {
             .padding(.horizontal, Spacing.xl)
             .padding(.bottom, Spacing.xxl)
         }
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 
     // MARK: - View Sections
@@ -39,15 +39,15 @@ struct BudgetSetupView: View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: "dollarsign.circle.fill")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             Text("Budget Setup")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Set up your wedding budget and select categories to track")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, Spacing.xl)
@@ -58,24 +58,24 @@ struct BudgetSetupView: View {
             Text("Total Budget (Optional)")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             HStack {
                 Text("$")
                     .font(Typography.bodyLarge)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 TextField("Enter total budget", text: $totalBudget)
                     .textFieldStyle(.plain)
                     .font(Typography.bodyRegular)
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             Text("You can set this later or adjust it anytime")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
     }
 
@@ -84,11 +84,11 @@ struct BudgetSetupView: View {
             Text("Budget Categories")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Select categories you want to track")
                 .font(Typography.bodySmall)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.md) {
                 ForEach(defaultCategories, id: \.self) { category in
@@ -111,10 +111,10 @@ struct BudgetSetupView: View {
     private var noteSection: some View {
         Text("Note: Full budget wizard with category allocations and detailed setup will be available in the main budget section after onboarding.")
             .font(Typography.bodySmall)
-            .foregroundColor(AppColors.textSecondary)
+            .foregroundColor(SemanticColors.textSecondary)
             .multilineTextAlignment(.center)
             .padding(Spacing.md)
-            .background(AppColors.primary.opacity(0.1))
+            .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
             .cornerRadius(8)
     }
 }
@@ -130,20 +130,20 @@ struct CategoryToggle: View {
         Button(action: onToggle) {
             HStack {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                    .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
 
                 Text(category)
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
             }
             .padding(Spacing.md)
-            .background(isSelected ? AppColors.primary.opacity(0.1) : AppColors.cardBackground)
+            .background(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : SemanticColors.backgroundSecondary)
             .cornerRadius(8)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 1)
+                    .stroke(isSelected ? SemanticColors.primaryAction : Color.clear, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

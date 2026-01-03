@@ -22,7 +22,7 @@ struct PaymentPlanListView: View {
                 Text("Payments")
                     .font(Typography.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 Spacer()
                 
@@ -65,11 +65,11 @@ struct PaymentPlanListView: View {
                     
                     Text("Error Loading Payments")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     Text(error.localizedDescription)
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Spacing.xl)
                     
@@ -118,15 +118,15 @@ struct PaymentPlanListView: View {
                     Spacer()
                     Image(systemName: "calendar.badge.clock")
                         .font(.system(size: 48))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     Text("No Payment Plans")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     Text("Payment plans will appear here when you have multiple payments for the same expense.")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Spacing.xl)
                     
@@ -173,15 +173,15 @@ struct PaymentPlanListView: View {
                     Spacer()
                     Image(systemName: "calendar.badge.plus")
                         .font(.system(size: 48))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     Text("No Payments")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     Text("Add payment schedules to track your wedding expenses.")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, Spacing.xl)
                     
@@ -219,11 +219,11 @@ private struct PaymentPlanScheduleRowView: View {
                 Text(schedule.vendor ?? "Unknown Vendor")
                     .font(Typography.subheading)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 Text(schedule.paymentDate, format: .dateTime.month().day().year())
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             Spacer()
@@ -231,7 +231,7 @@ private struct PaymentPlanScheduleRowView: View {
             Text(schedule.paymentAmount, format: .currency(code: "USD"))
                 .font(Typography.subheading)
                 .fontWeight(.semibold)
-                .foregroundColor(schedule.paid ? .green : AppColors.textPrimary)
+                .foregroundColor(schedule.paid ? .green : SemanticColors.textPrimary)
         }
         .padding(Spacing.sm)
         .background(Color(NSColor.controlBackgroundColor))
@@ -262,7 +262,7 @@ private struct PaymentPlanDetailView: View {
                 Text(plan.vendor)
                     .font(Typography.title2)
                     .fontWeight(.bold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 Spacer()
                 
@@ -284,7 +284,7 @@ private struct PaymentPlanDetailView: View {
                     VStack(alignment: .leading, spacing: Spacing.md) {
                         Text("Individual Payments")
                             .font(Typography.heading)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                         
                         // Filter payments for this specific payment plan
                         let planPayments = paymentStore.paymentSchedules.filter { $0.paymentPlanId == plan.id }
@@ -292,7 +292,7 @@ private struct PaymentPlanDetailView: View {
                         if planPayments.isEmpty {
                             Text("No individual payments found")
                                 .font(Typography.bodyRegular)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         } else {
                             ForEach(planPayments.sorted(by: { $0.paymentDate < $1.paymentDate })) { schedule in
                                 PaymentPlanScheduleRowView(schedule: schedule, paymentStore: paymentStore)

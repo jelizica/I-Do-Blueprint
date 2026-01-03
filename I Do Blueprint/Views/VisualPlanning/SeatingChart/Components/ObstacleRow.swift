@@ -86,7 +86,7 @@ struct ObstacleRow: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
         )
         .alert("Delete Obstacle", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }

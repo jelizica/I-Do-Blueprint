@@ -135,7 +135,7 @@ struct EditGiftSheet: View {
                             .fontWeight(.medium)
                         TextEditor(text: $editedDescription)
                             .frame(height: 80)
-                            .border(AppColors.textSecondary.opacity(0.3))
+                            .border(SemanticColors.textSecondary.opacity(Opacity.light))
                     }
                 }
             }

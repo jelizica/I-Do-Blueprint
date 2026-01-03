@@ -23,20 +23,20 @@ struct BudgetProgressRow: View {
 
                 Text(label)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
                 Text("$\(formatAmount(amount))")
                     .font(Typography.caption.weight(.semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
 
             // Progress Bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Rectangle()
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(height: 8)
                         .cornerRadius(4)
 

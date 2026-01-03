@@ -48,7 +48,7 @@ struct GuestsSummaryCard: View {
                 .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.textSecondary.opacity(0.05)))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.verySubtle)))
             }
         }
     }
@@ -173,7 +173,7 @@ struct DashboardBudgetSummaryCard: View {
                 .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.textSecondary.opacity(0.05)))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.verySubtle)))
             }
         }
     }
@@ -217,7 +217,7 @@ struct GiftsSummaryCard: View {
                 .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.textSecondary.opacity(0.05)))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.verySubtle)))
 
                 LazyVGrid(columns: [
                     GridItem(.flexible()),
@@ -276,7 +276,7 @@ struct NotesSummaryCard: View {
                 .padding(Spacing.md)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
-                        .fill(AppColors.textSecondary.opacity(0.05)))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.verySubtle)))
 
                 if !metrics.notesByType.isEmpty {
                     VStack(alignment: .leading, spacing: 6) {

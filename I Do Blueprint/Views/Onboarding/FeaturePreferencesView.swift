@@ -37,7 +37,7 @@ struct FeaturePreferencesView: View {
                 formSection
             }
         }
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .onAppear {
             loadExistingPreferences()
         }
@@ -52,15 +52,15 @@ struct FeaturePreferencesView: View {
         VStack(spacing: Spacing.sm) {
             Text("Feature Preferences")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Customize how you want to use each feature")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("You can change these later in Settings")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding(.top, Spacing.xl)
     }
@@ -84,12 +84,12 @@ struct FeaturePreferencesView: View {
             Text("Tasks")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Default View")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Picker("Default View", selection: $tasksDefaultView) {
                     Text("Kanban Board").tag("kanban")
@@ -99,7 +99,7 @@ struct FeaturePreferencesView: View {
                 .accessibilityLabel("Tasks default view")
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             SettingsToggle(
@@ -121,12 +121,12 @@ struct FeaturePreferencesView: View {
             Text("Vendors")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Default View")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Picker("Default View", selection: $vendorsDefaultView) {
                     Text("Grid View").tag("grid")
@@ -136,7 +136,7 @@ struct FeaturePreferencesView: View {
                 .accessibilityLabel("Vendors default view")
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             SettingsToggle(
@@ -158,12 +158,12 @@ struct FeaturePreferencesView: View {
             Text("Guests")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Default View")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Picker("Default View", selection: $guestsDefaultView) {
                     Text("List View").tag("list")
@@ -173,7 +173,7 @@ struct FeaturePreferencesView: View {
                 .accessibilityLabel("Guests default view")
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             SettingsToggle(
@@ -195,7 +195,7 @@ struct FeaturePreferencesView: View {
             Text("Documents")
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             SettingsToggle(
                 title: "Auto-Organize Documents",
@@ -212,30 +212,30 @@ struct FeaturePreferencesView: View {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Document Retention")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 HStack {
                     TextField("Days", text: $documentsRetentionDays)
                         .textFieldStyle(.plain)
                         .font(Typography.bodyRegular)
                         .padding(Spacing.md)
-                        .background(AppColors.background)
+                        .background(SemanticColors.backgroundPrimary)
                         .cornerRadius(4)
                         .frame(width: 100)
 
                     Text("days")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Spacer()
                 }
 
                 Text("How long to keep documents after the wedding")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
         }
     }

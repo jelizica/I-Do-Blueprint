@@ -42,7 +42,7 @@ struct CoupleSwitcherMenu: View {
                                 if let weddingDate = couple.weddingDate {
                                     Text(formatWeddingDate(weddingDate))
                                         .font(Typography.caption)
-                                        .foregroundColor(AppColors.textSecondary)
+                                        .foregroundColor(SemanticColors.textSecondary)
                                 }
                             }
 
@@ -50,15 +50,15 @@ struct CoupleSwitcherMenu: View {
 
                             if couple.coupleId == currentCoupleId {
                                 Image(systemName: "checkmark")
-                                    .foregroundColor(AppColors.primary)
+                                    .foregroundColor(SemanticColors.primaryAction)
                             }
 
                             Text(couple.role)
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                                 .padding(.horizontal, Spacing.sm)
                                 .padding(.vertical, Spacing.xxs)
-                                .background(AppColors.primary.opacity(0.1))
+                                .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                                 .cornerRadius(4)
                         }
                     }
@@ -88,11 +88,11 @@ struct CoupleSwitcherMenu: View {
 
                 Image(systemName: "chevron.down")
                     .font(.system(size: 10))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.sm)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
         }
         .menuStyle(.borderlessButton)

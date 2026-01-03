@@ -19,12 +19,12 @@ struct GuestManagementHeader: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Guest Management")
                     .font(Typography.displaySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if windowSize != .compact {
                     Text("Manage and track all your guests in one place")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 
@@ -45,7 +45,7 @@ struct GuestManagementHeader: View {
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .font(.system(size: 20))
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
@@ -55,7 +55,7 @@ struct GuestManagementHeader: View {
                     Button(action: onAddGuest) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(AppColors.primary)
+                            .foregroundColor(SemanticColors.primaryAction)
                             .frame(width: 44, height: 44)
                     }
                     .buttonStyle(.plain)
@@ -69,14 +69,14 @@ struct GuestManagementHeader: View {
                             Text("Import")
                                 .font(Typography.bodyRegular)
                         }
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .frame(height: 42)
                         .padding(.horizontal, Spacing.lg)
-                        .background(AppColors.cardBackground)
+                        .background(SemanticColors.backgroundSecondary)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(AppColors.borderLight, lineWidth: 0.5)
+                                .stroke(SemanticColors.borderPrimaryLight, lineWidth: 0.5)
                         )
                     }
                     .buttonStyle(.plain)
@@ -88,14 +88,14 @@ struct GuestManagementHeader: View {
                             Text("Export")
                                 .font(Typography.bodyRegular)
                         }
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .frame(height: 42)
                         .padding(.horizontal, Spacing.lg)
-                        .background(AppColors.cardBackground)
+                        .background(SemanticColors.backgroundSecondary)
                         .cornerRadius(8)
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(AppColors.borderLight, lineWidth: 0.5)
+                                .stroke(SemanticColors.borderPrimaryLight, lineWidth: 0.5)
                         )
                     }
                     .buttonStyle(.plain)
@@ -107,10 +107,10 @@ struct GuestManagementHeader: View {
                             Text("Add Guest")
                                 .font(Typography.bodyRegular)
                         }
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .frame(height: 42)
                         .padding(.horizontal, Spacing.xl)
-                        .background(AppColors.primary)
+                        .background(SemanticColors.primaryAction)
                         .cornerRadius(8)
                     }
                     .buttonStyle(.plain)

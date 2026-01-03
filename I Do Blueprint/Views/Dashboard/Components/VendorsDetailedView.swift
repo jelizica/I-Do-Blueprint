@@ -71,7 +71,7 @@ struct VendorCard: View {
 
                     Image(systemName: vendorIcon)
                         .font(.system(size: 20))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
 
                 Spacer()
@@ -79,12 +79,12 @@ struct VendorCard: View {
                 Text(vendor.isBooked == true ? "Booked" : "Pending")
                     .font(Typography.caption2)
                     .fontWeight(.medium)
-                    .foregroundColor(vendor.isBooked == true ? AppColors.success : AppColors.warning)
+                    .foregroundColor(vendor.isBooked == true ? SemanticColors.success : SemanticColors.warning)
                     .padding(.horizontal, Spacing.sm)
                     .padding(.vertical, Spacing.xxs)
                     .background(
                         Capsule()
-                            .fill((vendor.isBooked == true ? AppColors.success : AppColors.warning).opacity(0.1))
+                            .fill((vendor.isBooked == true ? SemanticColors.success : SemanticColors.warning).opacity(0.1))
                     )
             }
 
@@ -92,18 +92,18 @@ struct VendorCard: View {
                 Text(vendor.vendorName)
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(2)
 
                 Text(vendor.vendorType ?? "Other")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 if let amount = vendor.quotedAmount {
                     Text("$\(Int(amount).formatted())")
                         .font(Typography.bodySmall)
                         .fontWeight(.medium)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
             }
         }
@@ -111,8 +111,8 @@ struct VendorCard: View {
         .frame(height: 160)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
     }
 

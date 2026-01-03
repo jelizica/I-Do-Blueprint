@@ -22,10 +22,10 @@ struct GuestDetailActionButtons: View {
                     Text("Edit Guest")
                         .font(.system(size: 16, weight: .medium))
                 }
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, Spacing.lg)
-                .background(AppColors.primary)
+                .background(SemanticColors.primaryAction)
                 .cornerRadius(CornerRadius.md)
             }
             .buttonStyle(.plain)
@@ -36,9 +36,9 @@ struct GuestDetailActionButtons: View {
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(width: 48, height: 48)
-                    .background(AppColors.error)
+                    .background(SemanticColors.error)
                     .cornerRadius(CornerRadius.md)
             }
             .buttonStyle(.plain)

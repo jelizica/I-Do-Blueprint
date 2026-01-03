@@ -71,30 +71,30 @@ struct GuestEmptyState: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "person.3")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundColor(SemanticColors.textTertiary)
 
             Text("No guests found")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Add your first guest to get started")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Button(action: onAddGuest) {
                 Text("Add Guest")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .padding(.horizontal, Spacing.xl)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(CornerRadius.md)
             }
             .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, minHeight: 300)
         .padding(Spacing.xl)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
     }
 }
@@ -109,31 +109,31 @@ struct GuestErrorView: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "exclamationmark.triangle")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.error)
+                .foregroundColor(SemanticColors.error)
 
             Text("Error Loading Guests")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text(error.localizedDescription)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
 
             Button(action: retry) {
                 Text("Try Again")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .padding(.horizontal, Spacing.xl)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(CornerRadius.md)
             }
             .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, minHeight: 300)
         .padding(Spacing.xl)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
     }
 }

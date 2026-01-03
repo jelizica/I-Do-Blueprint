@@ -28,11 +28,11 @@ struct TaskProgressCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Task Tracker")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text("Keep track of your wedding to-dos")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
@@ -45,24 +45,24 @@ struct TaskProgressCard: View {
                     Text("Task")
                         .font(Typography.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text("Status")
                         .font(Typography.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .frame(width: 100, alignment: .leading)
 
                     Text("Due Date")
                         .font(Typography.caption)
                         .fontWeight(.medium)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .frame(width: 100, alignment: .leading)
                 }
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
-                .background(AppColors.backgroundSecondary)
+                .background(SemanticColors.backgroundSecondary)
 
                 Divider()
 
@@ -77,14 +77,14 @@ struct TaskProgressCard: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(AppColors.textPrimary.opacity(0.5))
+                    .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
             )
         }
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
     }
 }
@@ -98,7 +98,7 @@ struct TaskRow: View {
             Text(task.taskName)
                 .font(Typography.bodySmall)
                 .fontWeight(.medium)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             TaskStatusBadge(status: task.status)
@@ -107,12 +107,12 @@ struct TaskRow: View {
             if let dueDate = task.dueDate {
                 Text(formattedDate(dueDate))
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .frame(width: 100, alignment: .leading)
             } else {
                 Text("No date")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(SemanticColors.textTertiary)
                     .frame(width: 100, alignment: .leading)
             }
         }
@@ -156,11 +156,11 @@ struct TaskStatusBadge: View {
 
     private var statusColor: Color {
         switch status {
-        case .completed: return AppColors.success
-        case .inProgress: return AppColors.info
-        case .notStarted: return AppColors.textSecondary
-        case .onHold: return AppColors.warning
-        case .cancelled: return AppColors.error
+        case .completed: return SemanticColors.success
+        case .inProgress: return SemanticColors.info
+        case .notStarted: return SemanticColors.textSecondary
+        case .onHold: return SemanticColors.warning
+        case .cancelled: return SemanticColors.error
         }
     }
 }

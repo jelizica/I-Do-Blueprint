@@ -55,7 +55,7 @@ struct PaymentScheduleRowView: View {
                     Text(vendorName)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
                     
                     Spacer(minLength: Spacing.sm)
@@ -71,7 +71,7 @@ struct PaymentScheduleRowView: View {
                 HStack(spacing: Spacing.xs) {
                     Text(formatDateInUserTimezone(payment.paymentDate))
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     Spacer()
                     
@@ -82,7 +82,7 @@ struct PaymentScheduleRowView: View {
                 if let notes = payment.notes, !notes.isEmpty {
                     Text(notes)
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -94,7 +94,7 @@ struct PaymentScheduleRowView: View {
                 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .padding(.vertical, Spacing.sm)

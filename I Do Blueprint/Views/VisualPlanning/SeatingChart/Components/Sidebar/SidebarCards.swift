@@ -30,7 +30,7 @@ struct SectionCard<Content: View>: View {
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.textPrimary)
+                .fill(SemanticColors.textPrimary)
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }
@@ -69,7 +69,7 @@ struct AssignmentProgressCard: View {
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.textPrimary)
+                .fill(SemanticColors.textPrimary)
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         )
     }

@@ -12,11 +12,11 @@ import SwiftUI
 struct DashboardHeroSkeleton: View {
     var body: some View {
         RoundedRectangle(cornerRadius: 12)
-            .fill(AppColors.cardBackground)
+            .fill(SemanticColors.backgroundSecondary)
             .frame(height: 180)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .opacity(0.6)
                     .shimmer()
             )
@@ -31,7 +31,7 @@ struct DashboardBudgetCardSkeleton: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             RoundedRectangle(cornerRadius: 6)
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 140, height: 14)
                 .shimmer()
             ForEach(0..<4, id: \.self) { _ in
@@ -39,9 +39,9 @@ struct DashboardBudgetCardSkeleton: View {
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .accessibilityIdentifier("dashboard.skeleton.budget")
         .accessibilityHidden(true)
     }
@@ -53,7 +53,7 @@ struct DashboardTasksCardSkeleton: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             RoundedRectangle(cornerRadius: 6)
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 120, height: 14)
                 .shimmer()
             ForEach(0..<5, id: \.self) { _ in
@@ -61,9 +61,9 @@ struct DashboardTasksCardSkeleton: View {
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .accessibilityIdentifier("dashboard.skeleton.tasks")
         .accessibilityHidden(true)
     }
@@ -75,7 +75,7 @@ struct DashboardGuestsCardSkeleton: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             RoundedRectangle(cornerRadius: 6)
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 160, height: 14)
                 .shimmer()
             ForEach(0..<6, id: \.self) { _ in
@@ -83,9 +83,9 @@ struct DashboardGuestsCardSkeleton: View {
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .accessibilityIdentifier("dashboard.skeleton.guests")
         .accessibilityHidden(true)
     }
@@ -97,7 +97,7 @@ struct DashboardVendorsCardSkeleton: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             RoundedRectangle(cornerRadius: 6)
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 140, height: 14)
                 .shimmer()
             ForEach(0..<5, id: \.self) { _ in
@@ -105,9 +105,9 @@ struct DashboardVendorsCardSkeleton: View {
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .accessibilityIdentifier("dashboard.skeleton.vendors")
         .accessibilityHidden(true)
     }
@@ -121,17 +121,17 @@ struct DashboardQuickActionsSkeleton: View {
             ForEach(0..<4, id: \.self) { _ in
                 VStack(spacing: Spacing.md) {
                     Circle()
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 32, height: 32)
                         .shimmer()
                     RoundedRectangle(cornerRadius: 6)
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 80, height: 12)
                         .shimmer()
                 }
                 .frame(maxWidth: .infinity)
                 .padding(Spacing.lg)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(CornerRadius.md)
             }
         }

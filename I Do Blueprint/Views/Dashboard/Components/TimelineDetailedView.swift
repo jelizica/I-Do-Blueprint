@@ -44,7 +44,7 @@ struct TimelineDetailedView: View {
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("Timeline")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 ForEach(sortedItems) { item in
                     DashboardTimelineItemRow(item: item)
@@ -53,8 +53,8 @@ struct TimelineDetailedView: View {
             .padding(Spacing.xl)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(AppColors.textPrimary.opacity(0.6))
-                    .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                    .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                    .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
             )
         }
     }
@@ -69,11 +69,11 @@ struct DashboardTimelineItemRow: View {
             VStack(spacing: Spacing.xxs) {
                 Text(monthDay)
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundColor(item.completed ? AppColors.success : AppColors.textPrimary)
+                    .foregroundColor(item.completed ? SemanticColors.success : SemanticColors.textPrimary)
 
                 Text(year)
                     .font(Typography.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .frame(width: 60)
 
@@ -83,20 +83,20 @@ struct DashboardTimelineItemRow: View {
                     Text(item.title)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Spacer()
 
                     if item.completed {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(AppColors.success)
+                            .foregroundColor(SemanticColors.success)
                     }
                 }
 
                 if let description = item.description, !description.isEmpty {
                     Text(description)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 HStack(spacing: Spacing.xs) {
@@ -105,16 +105,16 @@ struct DashboardTimelineItemRow: View {
                     Text(typeText)
                 }
                 .font(Typography.caption2)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(AppColors.textPrimary.opacity(0.5))
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
                 .overlay(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .stroke(item.completed ? AppColors.success.opacity(0.3) : AppColors.borderLight, lineWidth: 1)
+                        .stroke(item.completed ? AppColors.success.opacity(0.3) : SemanticColors.borderPrimaryLight, lineWidth: 1)
                 )
         )
     }

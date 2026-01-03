@@ -26,7 +26,7 @@ struct GuestSelectionCard: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Guest")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .accessibleHeading(level: 2)
 
             Divider()
@@ -34,7 +34,7 @@ struct GuestSelectionCard: View {
             // Search
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 TextField("Search guests...", text: $searchText)
                     .textFieldStyle(.plain)
                     .accessibleFormField(
@@ -45,7 +45,7 @@ struct GuestSelectionCard: View {
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(AppColors.backgroundSecondary)
+                    .fill(SemanticColors.backgroundSecondary)
             )
 
             // Guest List
@@ -64,7 +64,7 @@ struct GuestSelectionCard: View {
                     if filteredGuests.isEmpty {
                         Text("No guests found")
                             .font(Typography.bodySmall)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, Spacing.lg)
                     }
@@ -75,9 +75,9 @@ struct GuestSelectionCard: View {
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.cardBackground)
+                .fill(SemanticColors.backgroundSecondary)
                 .shadow(
-                    color: AppColors.shadowLight,
+                    color: SemanticColors.shadowLight,
                     radius: ShadowStyle.light.radius,
                     x: 0,
                     y: 2
@@ -85,7 +85,7 @@ struct GuestSelectionCard: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .stroke(AppColors.borderLight, lineWidth: 1)
+                .stroke(SemanticColors.borderPrimaryLight, lineWidth: 1)
         )
     }
 }
@@ -118,28 +118,28 @@ struct GuestSelectionRow: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(guest.fullName)
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(guest.relationship.displayName)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(AppColors.success)
+                        .foregroundColor(SemanticColors.success)
                 }
             }
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(isSelected ? AppColors.primaryLight : (isHovering ? AppColors.hoverBackground : Color.clear))
+                    .fill(isSelected ? SemanticColors.primaryActionLight : (isHovering ? SemanticColors.hover : Color.clear))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? SemanticColors.primaryAction : Color.clear, lineWidth: 2)
             )
             .animation(AnimationStyle.fast, value: isHovering)
             .animation(AnimationStyle.fast, value: isSelected)

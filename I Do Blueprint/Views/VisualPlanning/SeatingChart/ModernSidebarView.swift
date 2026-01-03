@@ -77,7 +77,7 @@ struct ModernSidebarView: View {
                 .font(.seatingBody)
         }
         .padding(Spacing.md)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
     }
 
     // MARK: - Tab Selection

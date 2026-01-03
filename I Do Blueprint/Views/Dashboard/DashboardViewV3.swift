@@ -90,7 +90,7 @@ struct DashboardViewV3: View {
                                     total: Double(taskStore.tasks.count),
                                     format: .fraction,
                                     icon: "checkmark.circle.fill",
-                                    color: AppColors.success
+                                    color: SemanticColors.success
                                 )
 
                                 let bookedCount = vendorStore.vendors.filter { $0.isBooked == true }.count
@@ -271,14 +271,14 @@ struct DashboardViewV3: View {
     }
 
     private var budgetColor: Color {
-        guard hasLoaded else { return AppColors.textSecondary }
+        guard hasLoaded else { return SemanticColors.textSecondary }
         let percentage = budgetStore.percentageSpent
         if percentage >= 100 {
-            return AppColors.error
+            return SemanticColors.error
         } else if percentage >= 90 {
-            return AppColors.warning
+            return SemanticColors.warning
         } else {
-            return AppColors.success
+            return SemanticColors.success
         }
     }
 

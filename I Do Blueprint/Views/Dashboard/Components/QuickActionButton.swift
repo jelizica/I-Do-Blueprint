@@ -35,7 +35,7 @@ struct DashboardQuickActionButton: View {
 
                     Image(systemName: icon)
                         .font(.system(size: 26, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 .scaleEffect(isHovered ? 1.05 : 1.0)
 
@@ -55,7 +55,7 @@ struct DashboardQuickActionButton: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(
-                        isHovered ? color.opacity(0.3) : AppColors.textSecondary.opacity(0.1),
+                        isHovered ? color.opacity(0.3) : SemanticColors.textSecondary.opacity(Opacity.subtle),
                         lineWidth: isHovered ? 2 : 1))
         }
         .buttonStyle(.plain)

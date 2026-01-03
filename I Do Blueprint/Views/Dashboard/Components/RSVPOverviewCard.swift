@@ -42,11 +42,11 @@ struct RSVPOverviewCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Guest Responses")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text("\(store.guests.count) guests invited")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
@@ -97,7 +97,7 @@ struct RSVPOverviewCard: View {
 
                         Text("\(item.name): \(item.value)")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -106,8 +106,8 @@ struct RSVPOverviewCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
     }
 }

@@ -14,10 +14,15 @@ Options:
     --file PATH  Process only a specific file instead of all files
 
 Patterns Implemented:
-    - Text colors: textPrimary, textSecondary
-    - Action colors: primary → primaryAction
+    - Text colors: textPrimary, textSecondary, textTertiary
+    - Action colors: primary → primaryAction, secondary → secondaryAction
+    - Status colors: success → statusSuccess, warning → statusWarning, etc.
+    - Background colors: background → backgroundPrimary, cardBackground → backgroundSecondary
+    - Border colors: border → borderPrimary, divider → divider
+    - Shadow colors: shadow → shadow, shadowLight → shadowLight
+    - Interactive states: hover → hover, disabled → disabled
     - Opacity mappings: 0.05 → verySubtle, 0.1 → subtle, 0.3 → light, 0.5/0.6 → medium, 0.9 → strong
-    - Skips: AppColors.Budget.* (budget-specific colors)
+    - Skips: AppColors.Budget.*, AppColors.Vendor.*, AppColors.Guest.*, AppColors.Avatar.*, AppColors.Task.*
 """
 
 import os
@@ -42,6 +47,7 @@ SKIP_PATTERNS = [
     "AppColors.Guest.",   # Guest-specific colors - don't migrate
     "AppColors.Avatar.",  # Avatar-specific colors - don't migrate
     "AppColors.Task.",    # Task-specific colors - don't migrate
+    "AppColors.Dashboard.",  # Dashboard-specific colors - don't migrate
 ]
 
 # ============================================================================
@@ -98,7 +104,7 @@ DIRECT_MAPPINGS = [
         description="Accent color"
     ),
     
-    # Status colors
+    # Status colors (now using SemanticColors with legacy aliases)
     ReplacementRule(
         name="success",
         pattern=r"AppColors\.success(?!\.)",
@@ -124,7 +130,7 @@ DIRECT_MAPPINGS = [
         description="Info color"
     ),
     
-    # Light variants
+    # Light variants (now using SemanticColors with legacy aliases)
     ReplacementRule(
         name="errorLight",
         pattern=r"AppColors\.errorLight(?!\.)",
@@ -154,7 +160,7 @@ DIRECT_MAPPINGS = [
     ReplacementRule(
         name="background",
         pattern=r"AppColors\.background(?!\.)",
-        replacement="SemanticColors.background",
+        replacement="SemanticColors.backgroundPrimary",
         description="Background color"
     ),
     ReplacementRule(
@@ -166,7 +172,7 @@ DIRECT_MAPPINGS = [
     ReplacementRule(
         name="cardBackground",
         pattern=r"AppColors\.cardBackground(?!\.)",
-        replacement="SemanticColors.cardBackground",
+        replacement="SemanticColors.backgroundSecondary",
         description="Card background color"
     ),
     
@@ -174,8 +180,14 @@ DIRECT_MAPPINGS = [
     ReplacementRule(
         name="border",
         pattern=r"AppColors\.border(?!\.)",
-        replacement="SemanticColors.border",
+        replacement="SemanticColors.borderPrimary",
         description="Border color"
+    ),
+    ReplacementRule(
+        name="borderLight",
+        pattern=r"AppColors\.borderLight(?!\.)",
+        replacement="SemanticColors.borderLight",
+        description="Light border color"
     ),
     ReplacementRule(
         name="divider",
@@ -192,36 +204,30 @@ DIRECT_MAPPINGS = [
         description="Light shadow color"
     ),
     ReplacementRule(
-        name="shadow",
-        pattern=r"AppColors\.shadow(?!\.)",
+        name="shadowMedium",
+        pattern=r"AppColors\.shadowMedium(?!\.)",
         replacement="SemanticColors.shadow",
-        description="Shadow color"
+        description="Medium shadow color"
+    ),
+    ReplacementRule(
+        name="shadowHeavy",
+        pattern=r"AppColors\.shadowHeavy(?!\.)",
+        replacement="SemanticColors.shadowHeavy",
+        description="Heavy shadow color"
     ),
     
     # Interactive states
     ReplacementRule(
         name="hover",
-        pattern=r"AppColors\.hover(?!\.)",
+        pattern=r"AppColors\.hoverBackground(?!\.)",
         replacement="SemanticColors.hover",
         description="Hover state color"
     ),
     ReplacementRule(
-        name="pressed",
-        pattern=r"AppColors\.pressed(?!\.)",
-        replacement="SemanticColors.pressed",
-        description="Pressed state color"
-    ),
-    ReplacementRule(
-        name="disabled",
-        pattern=r"AppColors\.disabled(?!\.)",
+        name="controlDisabled",
+        pattern=r"AppColors\.controlDisabled(?!\.)",
         replacement="SemanticColors.disabled",
         description="Disabled state color"
-    ),
-    ReplacementRule(
-        name="selected",
-        pattern=r"AppColors\.selected(?!\.)",
-        replacement="SemanticColors.selected",
-        description="Selected state color"
     ),
 ]
 
@@ -230,16 +236,17 @@ OPACITY_MAPPINGS = {
     "0.05": "Opacity.verySubtle",
     "0.08": "Opacity.verySubtle",  # Close to 0.05
     "0.1": "Opacity.subtle",
-    "0.15": "Opacity.subtle",      # Close to 0.1
-    "0.2": "Opacity.subtle",       # Close to 0.1
-    "0.25": "Opacity.light",       # Close to 0.3
-    "0.3": "Opacity.light",
-    "0.4": "Opacity.light",        # Close to 0.3
+    "0.15": "Opacity.light",       # Matches Opacity.light
+    "0.2": "Opacity.light",        # Close to 0.15
+    "0.25": "Opacity.light",       # Close to 0.15
+    "0.3": "Opacity.light",        # Close to 0.15
+    "0.4": "Opacity.medium",       # Close to 0.5
     "0.5": "Opacity.medium",
     "0.6": "Opacity.medium",
-    "0.7": "Opacity.medium",       # Close to 0.6
-    "0.8": "Opacity.strong",       # Close to 0.9
+    "0.7": "Opacity.medium",       # Close to 0.5
+    "0.8": "Opacity.strong",       # Close to 0.95
     "0.9": "Opacity.strong",
+    "0.95": "Opacity.strong",
 }
 
 # Colors that support opacity mappings
@@ -254,8 +261,8 @@ COLORS_WITH_OPACITY = [
     ("warning", "SemanticColors.warning"),
     ("error", "SemanticColors.error"),
     ("info", "SemanticColors.info"),
-    ("background", "SemanticColors.background"),
-    ("border", "SemanticColors.border"),
+    ("background", "SemanticColors.backgroundPrimary"),
+    ("border", "SemanticColors.borderPrimary"),
     ("divider", "SemanticColors.divider"),
 ]
 

@@ -23,19 +23,19 @@ struct ErrorStateView: View {
             // Error icon
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 64))
-                .foregroundColor(AppColors.error)
+                .foregroundColor(SemanticColors.error)
                 .accessibilityHidden(true)
 
             // Error message
             VStack(spacing: Spacing.sm) {
                 Text("Something Went Wrong")
                     .font(Typography.title2)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .accessibleHeading(level: 2)
 
                 Text(error.localizedDescription)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -75,22 +75,22 @@ struct InlineErrorView: View {
     var body: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundColor(AppColors.error)
+                .foregroundColor(SemanticColors.error)
                 .accessibilityHidden(true)
 
             Text(message)
                 .font(Typography.bodySmall)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             if let onRetry = onRetry {
                 Button("Retry", action: onRetry)
                     .font(Typography.bodySmall)
                     .buttonStyle(.plain)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.errorLight)
+        .background(SemanticColors.errorLight)
         .cornerRadius(CornerRadius.md)
         .accessibilityElement(children: .contain)
     }
@@ -109,12 +109,12 @@ struct ErrorBannerView: View {
     var body: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "exclamationmark.circle.fill")
-                .foregroundColor(AppColors.error)
+                .foregroundColor(SemanticColors.error)
                 .accessibilityHidden(true)
 
             Text(message)
                 .font(Typography.bodySmall)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(2)
 
             Spacer()
@@ -123,16 +123,16 @@ struct ErrorBannerView: View {
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
                         .font(.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Dismiss error")
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.errorLight)
+        .background(SemanticColors.errorLight)
         .cornerRadius(CornerRadius.md)
-        .shadow(color: AppColors.shadowLight, radius: 4, y: 2)
+        .shadow(color: SemanticColors.shadowLight, radius: 4, y: 2)
         .accessibilityElement(children: .contain)
     }
 }

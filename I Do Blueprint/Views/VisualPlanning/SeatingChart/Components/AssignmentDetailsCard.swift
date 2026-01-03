@@ -17,7 +17,7 @@ struct AssignmentDetailsCard: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Additional Details")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .accessibleHeading(level: 2)
 
             Divider()
@@ -27,7 +27,7 @@ struct AssignmentDetailsCard: View {
                 Text("Seat Number (Optional)")
                     .font(Typography.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .textCase(.uppercase)
 
                 HStack {
@@ -42,7 +42,7 @@ struct AssignmentDetailsCard: View {
                     if let table = selectedTable {
                         Text("(1-\(table.capacity))")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -54,7 +54,7 @@ struct AssignmentDetailsCard: View {
                 Text("Notes")
                     .font(Typography.caption)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .textCase(.uppercase)
 
                 TextEditor(text: $notes)
@@ -62,7 +62,7 @@ struct AssignmentDetailsCard: View {
                     .padding(Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: CornerRadius.sm)
-                            .stroke(AppColors.border, lineWidth: 1)
+                            .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                     )
                     .accessibleFormField(
                         label: "Assignment notes",
@@ -78,17 +78,17 @@ struct AssignmentDetailsCard: View {
                     Text("Guest Information")
                         .font(Typography.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .textCase(.uppercase)
 
                     if !guest.dietaryRestrictions.isEmpty {
                         HStack(spacing: Spacing.xs) {
                             Image(systemName: "fork.knife")
                                 .font(.system(size: 12))
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             Text("Dietary: \(guest.dietaryRestrictions)")
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                     }
 
@@ -97,10 +97,10 @@ struct AssignmentDetailsCard: View {
                         HStack(spacing: Spacing.xs) {
                             Image(systemName: "figure.roll")
                                 .font(.system(size: 12))
-                                .foregroundColor(AppColors.info)
+                                .foregroundColor(SemanticColors.info)
                             Text("Accessibility needs")
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.info)
+                                .foregroundColor(SemanticColors.info)
                         }
                     }
 
@@ -108,10 +108,10 @@ struct AssignmentDetailsCard: View {
                         HStack(spacing: Spacing.xs) {
                             Image(systemName: "star")
                                 .font(.system(size: 12))
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             Text("Special: \(guest.specialRequests)")
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                     }
                 }
@@ -120,9 +120,9 @@ struct AssignmentDetailsCard: View {
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.cardBackground)
+                .fill(SemanticColors.backgroundSecondary)
                 .shadow(
-                    color: AppColors.shadowLight,
+                    color: SemanticColors.shadowLight,
                     radius: ShadowStyle.light.radius,
                     x: 0,
                     y: 2
@@ -130,7 +130,7 @@ struct AssignmentDetailsCard: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .stroke(AppColors.borderLight, lineWidth: 1)
+                .stroke(SemanticColors.borderPrimaryLight, lineWidth: 1)
         )
     }
 }

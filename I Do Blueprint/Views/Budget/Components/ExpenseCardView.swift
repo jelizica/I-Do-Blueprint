@@ -96,7 +96,7 @@ struct ExpenseCardView: View {
                         Image(systemName: "ellipsis")
                             .foregroundColor(.secondary)
                             .padding(Spacing.xs)
-                            .background(AppColors.textPrimary.opacity(0.05))
+                            .background(SemanticColors.textPrimary.opacity(Opacity.verySubtle))
                             .clipShape(Circle())
                     }
                     .buttonStyle(PlainButtonStyle())
@@ -164,7 +164,7 @@ struct ExpenseCardView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
+                    .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
             .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())

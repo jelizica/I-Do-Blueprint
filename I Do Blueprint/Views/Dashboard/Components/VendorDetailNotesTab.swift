@@ -31,15 +31,15 @@ struct VendorDetailNotesTab: View {
             SectionHeaderV2(
                 title: "Notes",
                 icon: "note.text.fill",
-                color: AppColors.primary
+                color: SemanticColors.primaryAction
             )
             
             Text(notes)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(Spacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(CornerRadius.md)
         }
     }

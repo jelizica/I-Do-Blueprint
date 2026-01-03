@@ -75,7 +75,7 @@ struct V3VendorExportToggle: View {
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .fill(SemanticColors.backgroundSecondary)
-                    .shadow(color: AppColors.shadowLight, radius: 3, y: 2)
+                    .shadow(color: SemanticColors.shadowLight, radius: 3, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)

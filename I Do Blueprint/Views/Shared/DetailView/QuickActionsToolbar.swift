@@ -12,9 +12,9 @@ struct QuickActionsToolbar: View {
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(12)
-        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 8, y: 2)
+        .shadow(color: SemanticColors.textPrimary.opacity(Opacity.verySubtle), radius: 8, y: 2)
     }
 }
 
@@ -26,7 +26,7 @@ struct QuickAction: Identifiable {
     let color: Color
     let action: () -> Void
 
-    init(icon: String, title: String, color: Color = AppColors.primary, action: @escaping () -> Void) {
+    init(icon: String, title: String, color: Color = SemanticColors.primaryAction, action: @escaping () -> Void) {
         self.icon = icon
         self.title = title
         self.color = color
@@ -57,7 +57,7 @@ private struct DetailQuickActionButton: View {
 
                 Text(action.title)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             .frame(minWidth: 70)
         }

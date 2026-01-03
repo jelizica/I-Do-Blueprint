@@ -113,7 +113,7 @@ struct SeatingChartSidebar: View {
                         .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                        .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
 
                 // Venue elements card
                 VStack(alignment: .leading, spacing: 12) {
@@ -146,7 +146,7 @@ struct SeatingChartSidebar: View {
                         .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                        .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
 
                 // Grid settings card
                 VStack(alignment: .leading, spacing: 12) {
@@ -178,7 +178,7 @@ struct SeatingChartSidebar: View {
                         .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                        .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
             }
             .padding()
         }

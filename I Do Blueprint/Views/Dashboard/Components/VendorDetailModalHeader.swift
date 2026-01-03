@@ -27,7 +27,7 @@ struct VendorDetailModalHeader: View {
             actionButtons
         }
         .padding(Spacing.xl)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
     }
     
     // MARK: - Components
@@ -53,7 +53,7 @@ struct VendorDetailModalHeader: View {
             } else {
                 Image(systemName: iconForVendorType(vendor.vendorType ?? ""))
                     .font(.system(size: 24))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
         }
     }
@@ -62,18 +62,18 @@ struct VendorDetailModalHeader: View {
         VStack(alignment: .leading, spacing: Spacing.xxs) {
             Text(vendor.vendorName)
                 .font(Typography.title2)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             HStack(spacing: Spacing.sm) {
                 if let type = vendor.vendorType {
                     Text(type)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 if vendor.isBooked == true {
                     Text("•")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     HStack(spacing: Spacing.xxs) {
                         Image(systemName: "checkmark.circle.fill")
@@ -94,9 +94,9 @@ struct VendorDetailModalHeader: View {
             } label: {
                 Image(systemName: "pencil")
                     .font(.system(size: 14))
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .frame(width: 32, height: 32)
-                    .background(AppColors.primary.opacity(0.1))
+                    .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                     .cornerRadius(CornerRadius.sm)
             }
             .buttonStyle(.plain)
@@ -107,9 +107,9 @@ struct VendorDetailModalHeader: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.system(size: 14))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .frame(width: 32, height: 32)
-                    .background(AppColors.cardBackground)
+                    .background(SemanticColors.backgroundSecondary)
                     .cornerRadius(CornerRadius.sm)
             }
             .buttonStyle(.plain)

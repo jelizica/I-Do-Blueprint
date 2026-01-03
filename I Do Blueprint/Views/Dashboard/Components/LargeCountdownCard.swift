@@ -56,7 +56,7 @@ struct LargeCountdownCard: View {
         .background(backgroundColor)
         .overlay(
             Rectangle()
-                .stroke(AppColors.textPrimary, lineWidth: 3)
+                .stroke(SemanticColors.textPrimary, lineWidth: 3)
         )
     }
 }

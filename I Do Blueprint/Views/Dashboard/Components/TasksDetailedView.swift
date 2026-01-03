@@ -79,7 +79,7 @@ struct TasksDetailedView: View {
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text("\(filteredTasks.count) Tasks")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 ForEach(filteredTasks) { task in
                     TaskDetailRow(task: task)
@@ -92,8 +92,8 @@ struct TasksDetailedView: View {
             .padding(Spacing.xl)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(AppColors.textPrimary.opacity(0.6))
-                    .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                    .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                    .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
             )
         }
     }
@@ -114,12 +114,12 @@ struct TaskDetailRow: View {
                 Text(task.taskName)
                     .font(Typography.bodyRegular)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if let description = task.description, !description.isEmpty {
                     Text(description)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .lineLimit(2)
                 }
 
@@ -134,7 +134,7 @@ struct TaskDetailRow: View {
                             Text(formattedDate(dueDate))
                         }
                         .font(Typography.caption2)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -146,10 +146,10 @@ struct TaskDetailRow: View {
 
     private var priorityColor: Color {
         switch task.priority {
-        case .urgent: return AppColors.error
-        case .high: return AppColors.warning
-        case .medium: return AppColors.info
-        case .low: return AppColors.textSecondary
+        case .urgent: return SemanticColors.error
+        case .high: return SemanticColors.warning
+        case .medium: return SemanticColors.info
+        case .low: return SemanticColors.textSecondary
         }
     }
 
@@ -187,10 +187,10 @@ struct TaskPriorityBadge: View {
 
     private var priorityColor: Color {
         switch priority {
-        case .urgent: return AppColors.error
-        case .high: return AppColors.warning
-        case .medium: return AppColors.info
-        case .low: return AppColors.textSecondary
+        case .urgent: return SemanticColors.error
+        case .high: return SemanticColors.warning
+        case .medium: return SemanticColors.info
+        case .low: return SemanticColors.textSecondary
         }
     }
 }

@@ -26,7 +26,7 @@ struct GuestStatsSection: View {
                         title: "Total Guests",
                         value: "\(totalGuestsCount)",
                         subtitle: weeklyChange > 0 ? "+\(weeklyChange) this week" : nil,
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.success,
                         icon: "person.3.fill"
                     )
 
@@ -34,7 +34,7 @@ struct GuestStatsSection: View {
                         title: "Acceptance Rate",
                         value: "\(Int(acceptanceRate * 100))%",
                         subtitle: nil,
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.success,
                         icon: "checkmark.circle.fill"
                     )
                 }
@@ -45,7 +45,7 @@ struct GuestStatsSection: View {
                         title: "Attending",
                         value: "\(attendingCount)",
                         subtitle: "Confirmed & Attending",
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.success,
                         icon: "checkmark.circle.fill"
                     )
 
@@ -53,7 +53,7 @@ struct GuestStatsSection: View {
                         title: "Pending",
                         value: "\(pendingCount)",
                         subtitle: "All other statuses",
-                        subtitleColor: AppColors.warning,
+                        subtitleColor: SemanticColors.warning,
                         icon: "clock.fill"
                     )
                 }
@@ -63,7 +63,7 @@ struct GuestStatsSection: View {
                     title: "Declined",
                     value: "\(declinedCount)",
                     subtitle: "Declined & No Response",
-                    subtitleColor: AppColors.error,
+                    subtitleColor: SemanticColors.error,
                     icon: "xmark.circle.fill"
                 )
             }
@@ -76,7 +76,7 @@ struct GuestStatsSection: View {
                         title: "Total Guests",
                         value: "\(totalGuestsCount)",
                         subtitle: weeklyChange > 0 ? "+\(weeklyChange) this week" : nil,
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.success,
                         icon: "person.3.fill"
                     )
 
@@ -84,7 +84,7 @@ struct GuestStatsSection: View {
                         title: "Acceptance Rate",
                         value: "\(Int(acceptanceRate * 100))%",
                         subtitle: nil,
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.success,
                         icon: "checkmark.circle.fill"
                     )
                 }
@@ -95,7 +95,7 @@ struct GuestStatsSection: View {
                         title: "Attending",
                         value: "\(attendingCount)",
                         subtitle: "Confirmed & Attending",
-                        subtitleColor: AppColors.success,
+                        subtitleColor: SemanticColors.success,
                         icon: "checkmark.circle.fill"
                     )
 
@@ -103,7 +103,7 @@ struct GuestStatsSection: View {
                         title: "Pending",
                         value: "\(pendingCount)",
                         subtitle: "All other statuses",
-                        subtitleColor: AppColors.warning,
+                        subtitleColor: SemanticColors.warning,
                         icon: "clock.fill"
                     )
 
@@ -111,7 +111,7 @@ struct GuestStatsSection: View {
                         title: "Declined",
                         value: "\(declinedCount)",
                         subtitle: "Declined & No Response",
-                        subtitleColor: AppColors.error,
+                        subtitleColor: SemanticColors.error,
                         icon: "xmark.circle.fill"
                     )
                 }
@@ -133,11 +133,11 @@ struct GuestManagementStatCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(title)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text(value)
                         .font(Typography.displayMedium)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     if let subtitle = subtitle {
                         Text(subtitle)
@@ -150,12 +150,12 @@ struct GuestManagementStatCard: View {
 
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundColor(AppColors.primary.opacity(0.2))
+                    .foregroundColor(SemanticColors.primaryAction.opacity(Opacity.light))
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }

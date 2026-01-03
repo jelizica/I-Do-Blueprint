@@ -36,12 +36,12 @@ struct ListHeader: View {
             HStack(spacing: Spacing.xs) {
                 Text(title)
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if let count = count {
                     Text("(\(count))")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 
@@ -58,7 +58,7 @@ struct ListHeader: View {
                             .font(Typography.bodySmall)
                             .fontWeight(.medium)
                     }
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(action.title)
@@ -98,7 +98,7 @@ struct StickyListHeader: View {
             Text(title)
                 .font(Typography.subheading)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             if let count = count {
                 Text("\(count)")
@@ -140,18 +140,18 @@ struct CollapsibleListHeader: View {
             HStack {
                 Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                     .font(.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .frame(width: 16)
 
                 Text(title)
                     .font(Typography.subheading)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if let count = count {
                     Text("(\(count))")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()

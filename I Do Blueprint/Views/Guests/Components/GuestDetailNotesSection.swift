@@ -14,14 +14,14 @@ struct GuestDetailNotesSection: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Notes")
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             
             Text(notes)
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(Spacing.lg)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(CornerRadius.md)
         }
     }

@@ -229,8 +229,8 @@ struct PreviewStepView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, Spacing.md)
-                    .background(canGenerate ? Color.blue : AppColors.textSecondary)
-                    .foregroundColor(AppColors.textPrimary)
+                    .background(canGenerate ? Color.blue : SemanticColors.textSecondary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .cornerRadius(10)
                 }
                 .disabled(!canGenerate)
@@ -363,7 +363,7 @@ struct ColorSwatch: View {
             .frame(width: size, height: size)
             .overlay(
                 Circle()
-                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                    .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
     }
 }
 

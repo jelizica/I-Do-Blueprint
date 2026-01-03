@@ -114,7 +114,7 @@ struct RectangularTableView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(
-                            isSelected ? Color.seatingAccentTeal : AppColors.textSecondary.opacity(0.3),
+                            isSelected ? Color.seatingAccentTeal : SemanticColors.textSecondary.opacity(Opacity.light),
                             lineWidth: isSelected ? 3 : 2
                         )
                 )
@@ -145,9 +145,9 @@ struct RectangularTableView: View {
                 ForEach(0 ..< table.capacity, id: \.self) { seatIndex in
                     let assignment = assignments.first(where: { $0.seatNumber == seatIndex + 1 })
                     Circle()
-                        .fill(assignment != nil ? Color.seatingSuccess : AppColors.textSecondary.opacity(0.3))
+                        .fill(assignment != nil ? Color.seatingSuccess : SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(width: 20 * scale, height: 20 * scale)
-                        .overlay(Circle().stroke(AppColors.textPrimary, lineWidth: 2))
+                        .overlay(Circle().stroke(SemanticColors.textPrimary, lineWidth: 2))
                         .offset(seatPosition(for: seatIndex))
                         .rotationEffect(.degrees(-table.rotation))
                 }
@@ -226,7 +226,7 @@ struct CircularTableView: View {
                 .overlay(
                     Circle()
                         .stroke(
-                            isSelected ? Color.seatingAccentTeal : AppColors.textSecondary.opacity(0.3),
+                            isSelected ? Color.seatingAccentTeal : SemanticColors.textSecondary.opacity(Opacity.light),
                             lineWidth: isSelected ? 3 : 2
                         )
                 )
@@ -264,9 +264,9 @@ struct CircularTableView: View {
                 ForEach(0 ..< table.capacity, id: \.self) { seatIndex in
                     let assignment = assignments.first(where: { $0.seatNumber == seatIndex + 1 })
                     Circle()
-                        .fill(assignment != nil ? Color.seatingSuccess : AppColors.textSecondary.opacity(0.3))
+                        .fill(assignment != nil ? Color.seatingSuccess : SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(width: 20 * scale, height: 20 * scale)
-                        .overlay(Circle().stroke(AppColors.textPrimary, lineWidth: 2))
+                        .overlay(Circle().stroke(SemanticColors.textPrimary, lineWidth: 2))
                         .offset(seatPosition(for: seatIndex))
                         .rotationEffect(.degrees(-table.rotation))
                 }
@@ -322,7 +322,7 @@ struct SquareTableView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
                         .stroke(
-                            isSelected ? Color.seatingAccentTeal : AppColors.textSecondary.opacity(0.3),
+                            isSelected ? Color.seatingAccentTeal : SemanticColors.textSecondary.opacity(Opacity.light),
                             lineWidth: isSelected ? 3 : 2
                         )
                 )
@@ -405,7 +405,7 @@ struct OvalTableView: View {
                 .overlay(
                     Ellipse()
                         .stroke(
-                            isSelected ? Color.seatingAccentTeal : AppColors.textSecondary.opacity(0.3),
+                            isSelected ? Color.seatingAccentTeal : SemanticColors.textSecondary.opacity(Opacity.light),
                             lineWidth: isSelected ? 3 : 2
                         )
                 )
@@ -483,5 +483,5 @@ struct OvalTableView: View {
         )
     }
     .padding()
-    .background(AppColors.textPrimary)
+    .background(SemanticColors.textPrimary)
 }

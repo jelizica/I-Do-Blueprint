@@ -14,15 +14,15 @@ struct GuestDetailAccessibilitySection: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "accessibility")
-                    .foregroundColor(AppColors.info)
+                    .foregroundColor(SemanticColors.info)
                 Text("Accessibility Needs")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             
             Text(accessibilityNeeds)
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(Spacing.lg)

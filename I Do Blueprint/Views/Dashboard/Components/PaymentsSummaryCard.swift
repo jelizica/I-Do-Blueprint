@@ -73,7 +73,7 @@ struct PaymentsSummaryCard: View {
         .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.textSecondary.opacity(0.05)))
+                .fill(SemanticColors.textSecondary.opacity(Opacity.verySubtle)))
     }
 
     private var quickStats: some View {

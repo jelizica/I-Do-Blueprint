@@ -5,12 +5,12 @@
 //  Wedding details form for onboarding
 //
 //  Theme Migration: Migrated to SemanticColors and Opacity constants (30 instances)
-//  - AppColors.background → SemanticColors.backgroundPrimary
-//  - AppColors.textPrimary → SemanticColors.textPrimary
-//  - AppColors.textSecondary → SemanticColors.textSecondary
-//  - AppColors.cardBackground → SemanticColors.backgroundSecondary
-//  - AppColors.primary → SemanticColors.primaryAction
-//  - AppColors.error → SemanticColors.statusWarning
+//  - SemanticColors.backgroundPrimary → SemanticColors.backgroundPrimary
+//  - SemanticColors.textPrimary → SemanticColors.textPrimary
+//  - SemanticColors.textSecondary → SemanticColors.textSecondary
+//  - SemanticColors.backgroundSecondary → SemanticColors.backgroundSecondary
+//  - SemanticColors.primaryAction → SemanticColors.primaryAction
+//  - SemanticColors.error → SemanticColors.statusWarning
 //  - opacity(0.1) → Opacity.subtle
 //
 

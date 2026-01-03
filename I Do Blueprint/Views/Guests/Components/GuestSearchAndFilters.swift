@@ -31,7 +31,7 @@ struct GuestSearchAndFilters: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
@@ -119,7 +119,7 @@ struct GuestSearchAndFilters: View {
             .padding(.vertical, Spacing.sm)
         }
         .buttonStyle(.bordered)
-        .tint(AppColors.primary)
+        .tint(SemanticColors.primaryAction)
         .help("Filter by RSVP status")
     }
     
@@ -164,7 +164,7 @@ struct GuestSearchAndFilters: View {
     private var searchField: some View {
         let content = HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(.body)
 
             TextField("Search guests...", text: $searchText)
@@ -175,7 +175,7 @@ struct GuestSearchAndFilters: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
             }
@@ -187,10 +187,10 @@ struct GuestSearchAndFilters: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(AppColors.cardBackground)
+                        .fill(SemanticColors.backgroundSecondary)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(AppColors.border, lineWidth: 1)
+                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                         )
                 )
         } else {
@@ -198,10 +198,10 @@ struct GuestSearchAndFilters: View {
                 .frame(minWidth: 150, idealWidth: 200, maxWidth: 250)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(AppColors.cardBackground)
+                        .fill(SemanticColors.backgroundSecondary)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(AppColors.border, lineWidth: 1)
+                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                         )
                 )
         }
@@ -247,7 +247,7 @@ struct GuestSearchAndFilters: View {
                                 if selectedSortOption == option {
                                     Spacer()
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(AppColors.primary)
+                                        .foregroundColor(SemanticColors.primaryAction)
                                 }
                             }
                         }
@@ -281,7 +281,7 @@ struct GuestSearchAndFilters: View {
                 .font(Typography.bodySmall)
         }
         .buttonStyle(.borderless)
-        .foregroundColor(AppColors.primary)
+        .foregroundColor(SemanticColors.primaryAction)
     }
     
     // MARK: - Clear Filters Button (Regular Mode)
@@ -296,7 +296,7 @@ struct GuestSearchAndFilters: View {
                 .font(Typography.bodySmall)
         }
         .buttonStyle(.borderless)
-        .foregroundColor(AppColors.primary)
+        .foregroundColor(SemanticColors.primaryAction)
     }
 }
 
@@ -317,12 +317,12 @@ private struct StatusFilterButton: View {
         .buttonStyle(.plain)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .fill(isSelected ? AppColors.primary : AppColors.cardBackground)
+                .fill(isSelected ? SemanticColors.primaryAction : SemanticColors.backgroundSecondary)
         )
-        .foregroundColor(isSelected ? .white : AppColors.textPrimary)
+        .foregroundColor(isSelected ? .white : SemanticColors.textPrimary)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .stroke(isSelected ? AppColors.primary : AppColors.border, lineWidth: 1)
+                .stroke(isSelected ? SemanticColors.primaryAction : SemanticColors.borderPrimary, lineWidth: 1)
         )
     }
 }
@@ -344,12 +344,12 @@ private struct InvitedByFilterButton: View {
         .buttonStyle(.plain)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .fill(isSelected ? Color.teal : AppColors.cardBackground)
+                .fill(isSelected ? Color.teal : SemanticColors.backgroundSecondary)
         )
-        .foregroundColor(isSelected ? .white : AppColors.textPrimary)
+        .foregroundColor(isSelected ? .white : SemanticColors.textPrimary)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .stroke(isSelected ? Color.teal : AppColors.border, lineWidth: 1)
+                .stroke(isSelected ? Color.teal : SemanticColors.borderPrimary, lineWidth: 1)
         )
     }
 }

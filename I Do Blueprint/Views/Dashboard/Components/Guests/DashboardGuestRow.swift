@@ -23,7 +23,7 @@ struct DashboardV4GuestRow: View {
 
             Text(guest.fullName)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Spacer()
 
@@ -47,11 +47,11 @@ struct DashboardV4GuestRow: View {
     private var statusColor: Color {
         switch guest.rsvpStatus {
         case .attending, .confirmed:
-            return AppColors.success
+            return SemanticColors.success
         case .declined:
-            return AppColors.error
+            return SemanticColors.error
         default:
-            return AppColors.textSecondary
+            return SemanticColors.textSecondary
         }
     }
 

@@ -226,7 +226,7 @@ struct GuestDetailViewV4: View {
                 // Dynamic frame size based on parent window size
                 // This explicit frame tells the sheet how big to be
                 .frame(width: dynamicSize.width, height: dynamicSize.height)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(CornerRadius.lg)
                 .sheet(isPresented: $showingEditSheet) {
                     EditGuestSheetV2(guest: guest, guestStore: guestStore) { _ in

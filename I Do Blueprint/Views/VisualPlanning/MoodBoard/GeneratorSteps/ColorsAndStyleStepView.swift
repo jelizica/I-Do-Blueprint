@@ -185,8 +185,8 @@ struct ColorsAndStyleStepView: View {
                             }
                             .padding(.horizontal, Spacing.lg)
                             .padding(.vertical, Spacing.sm)
-                            .background(selectedImageForExtraction != nil ? Color.purple : AppColors.textSecondary)
-                            .foregroundColor(AppColors.textPrimary)
+                            .background(selectedImageForExtraction != nil ? Color.purple : SemanticColors.textSecondary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .cornerRadius(8)
                         }
                         .disabled(selectedImageForExtraction == nil || isExtracting)
@@ -464,7 +464,7 @@ struct ColorSwatchView: View {
                 .frame(width: size, height: size)
                 .overlay(
                     Circle()
-                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                        .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
 
             VStack(spacing: 2) {
                 Text(label)
@@ -525,12 +525,12 @@ struct ExtractionResultCard: View {
                         .frame(width: 32, height: 32)
                         .overlay(
                             Circle()
-                                .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                                .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
                 }
             }
         }
         .padding()
-        .background(isSelected ? Color.blue.opacity(0.1) : AppColors.textSecondary.opacity(0.05))
+        .background(isSelected ? Color.blue.opacity(0.1) : SemanticColors.textSecondary.opacity(Opacity.verySubtle))
         .cornerRadius(8)
         .overlay(
             RoundedRectangle(cornerRadius: 8)

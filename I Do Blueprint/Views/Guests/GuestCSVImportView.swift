@@ -77,7 +77,7 @@ struct GuestCSVImportView: View {
             .padding(.bottom, Spacing.lg)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .fileImporter(
             isPresented: $showFilePicker,
             allowedContentTypes: [.commaSeparatedText, .xlsx],

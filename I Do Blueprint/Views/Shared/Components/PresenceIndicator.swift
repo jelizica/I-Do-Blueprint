@@ -73,25 +73,25 @@ struct PresenceAvatar: View {
     var body: some View {
         ZStack(alignment: .bottomTrailing) {
             Circle()
-                .fill(AppColors.cardBackground)
+                .fill(SemanticColors.backgroundSecondary)
                 .frame(width: size.avatarSize, height: size.avatarSize)
                 .overlay(
                     Text(initials)
                         .font(.system(size: size.avatarSize * 0.4, weight: .medium))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 )
                 .overlay(
                     Circle()
-                        .stroke(AppColors.background, lineWidth: 2)
+                        .stroke(SemanticColors.backgroundPrimary, lineWidth: 2)
                 )
 
             if isOnline {
                 Circle()
-                    .fill(AppColors.success)
+                    .fill(SemanticColors.success)
                     .frame(width: size.statusSize, height: size.statusSize)
                     .overlay(
                         Circle()
-                            .stroke(AppColors.background, lineWidth: 1.5)
+                            .stroke(SemanticColors.backgroundPrimary, lineWidth: 1.5)
                     )
             }
         }
@@ -106,16 +106,16 @@ struct MoreUsersIndicator: View {
 
     var body: some View {
         Circle()
-            .fill(AppColors.cardBackground)
+            .fill(SemanticColors.backgroundSecondary)
             .frame(width: size.avatarSize, height: size.avatarSize)
             .overlay(
                 Text("+\(count)")
                     .font(.system(size: size.avatarSize * 0.35, weight: .medium))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             )
             .overlay(
                 Circle()
-                    .stroke(AppColors.background, lineWidth: 2)
+                    .stroke(SemanticColors.backgroundPrimary, lineWidth: 2)
             )
             .accessibilityLabel("\(count) more users online")
     }
@@ -128,16 +128,16 @@ struct PresenceCountBadge: View {
     var body: some View {
         HStack(spacing: 4) {
             Circle()
-                .fill(AppColors.success)
+                .fill(SemanticColors.success)
                 .frame(width: 8, height: 8)
 
             Text("\(presenceStore.onlineCount)")
                 .font(.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.xs)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(12)
         .accessibilityLabel("\(presenceStore.onlineCount) users online")
         .task {

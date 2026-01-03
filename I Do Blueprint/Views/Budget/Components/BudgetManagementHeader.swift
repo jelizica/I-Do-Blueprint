@@ -32,12 +32,12 @@ struct BudgetManagementHeader<ActionsContent: View>: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Budget")
                     .font(Typography.displaySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 // Subtitle: page name (less bold) or default text for hub
                 Text(currentPage == .hub ? "Your wedding budget at a glance" : currentPage.rawValue)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             Spacer()
@@ -99,7 +99,7 @@ struct BudgetManagementHeader<ActionsContent: View>: View {
                 Image(systemName: "chevron.down")
                     .font(.caption)
             }
-            .foregroundColor(AppColors.textPrimary)
+            .foregroundColor(SemanticColors.textPrimary)
             .frame(width: windowSize == .compact ? 44 : nil, height: 44)
         }
         .buttonStyle(.plain)

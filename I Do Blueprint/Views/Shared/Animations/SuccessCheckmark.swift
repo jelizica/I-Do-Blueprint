@@ -35,7 +35,7 @@ struct SuccessCheckmark: View {
             // Checkmark
             Image(systemName: "checkmark")
                 .font(.system(size: size * 0.5, weight: .bold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .scaleEffect(checkmarkScale)
                 .rotationEffect(.degrees(checkmarkRotation))
         }
@@ -82,13 +82,13 @@ struct SuccessToast: View {
             Text(message)
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
                 .fill(Color.green)
-                .shadow(color: AppColors.textPrimary.opacity(0.2), radius: 10, y: 5)
+                .shadow(color: SemanticColors.textPrimary.opacity(Opacity.light), radius: 10, y: 5)
         )
         .offset(y: offset)
         .opacity(opacity)
@@ -143,5 +143,5 @@ extension View {
         SuccessCheckmark(size: 40, color: .purple)
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.textSecondary.opacity(0.1))
+    .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
 }

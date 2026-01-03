@@ -34,11 +34,11 @@ struct BudgetOverviewCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Budget Overview")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text("Paid payments vs total budget")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
@@ -64,7 +64,7 @@ struct BudgetOverviewCard: View {
                 budgetRow(
                     label: "Total Budget",
                     value: totalBudget,
-                    color: AppColors.textPrimary
+                    color: SemanticColors.textPrimary
                 )
 
                 budgetRow(
@@ -84,32 +84,32 @@ struct BudgetOverviewCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
     }
 
     private var budgetColor: Color {
         let percentage = totalBudget > 0 ? (amountSpent / totalBudget) * 100 : 0
         if percentage >= 100 {
-            return AppColors.error
+            return SemanticColors.error
         } else if percentage >= 90 {
-            return AppColors.warning
+            return SemanticColors.warning
         } else {
-            return AppColors.success
+            return SemanticColors.success
         }
     }
 
     private var remainingColor: Color {
         let remaining = totalBudget - amountSpent
-        return remaining > 0 ? AppColors.success : AppColors.error
+        return remaining > 0 ? SemanticColors.success : SemanticColors.error
     }
 
     private func budgetRow(label: String, value: Double, color: Color) -> some View {
         HStack {
             Text(label)
                 .font(Typography.bodySmall)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Spacer()
 

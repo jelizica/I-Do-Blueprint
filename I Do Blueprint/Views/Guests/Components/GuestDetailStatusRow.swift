@@ -16,7 +16,7 @@ struct GuestDetailStatusRow: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("RSVP Status")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 
                 HStack(spacing: Spacing.xs) {
                     Circle()
@@ -35,11 +35,11 @@ struct GuestDetailStatusRow: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Meal Choice")
                     .font(.system(size: 12))
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 
                 Text(guest.mealOption ?? "Not selected")
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
         }
     }
@@ -49,26 +49,26 @@ struct GuestDetailStatusRow: View {
     private func statusColor(for status: RSVPStatus) -> Color {
         switch status {
         case .confirmed, .attending:
-            return AppColors.success
+            return SemanticColors.success
         case .pending, .invited, .maybe:
-            return AppColors.warning
+            return SemanticColors.warning
         case .declined:
-            return AppColors.error
+            return SemanticColors.error
         default:
-            return AppColors.textSecondary
+            return SemanticColors.textSecondary
         }
     }
     
     private func statusTextColor(for status: RSVPStatus) -> Color {
         switch status {
         case .confirmed, .attending:
-            return AppColors.success
+            return SemanticColors.success
         case .pending, .invited, .maybe:
-            return AppColors.warning
+            return SemanticColors.warning
         case .declined:
-            return AppColors.error
+            return SemanticColors.error
         default:
-            return AppColors.textSecondary
+            return SemanticColors.textSecondary
         }
     }
 }

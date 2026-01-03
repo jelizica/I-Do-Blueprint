@@ -21,25 +21,25 @@ struct ImportFilePickerView: View {
                 VStack(spacing: Spacing.md) {
                     Image(systemName: "doc.badge.plus")
                         .font(.system(size: 40))
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("Choose File")
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("Supported formats: CSV, Excel (.xlsx)")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .frame(maxWidth: 400)
                 .padding(.vertical, Spacing.xl)
                 .padding(.horizontal, Spacing.xl)
-                .background(AppColors.primary.opacity(0.1))
+                .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppColors.primary, style: StrokeStyle(lineWidth: 2, dash: [8]))
+                        .stroke(SemanticColors.primaryAction, style: StrokeStyle(lineWidth: 2, dash: [8]))
                 )
             }
             .buttonStyle(.plain)
@@ -58,7 +58,7 @@ private struct ImportModeSelectionView: View {
             Text("Import Mode:")
                 .font(Typography.bodyRegular)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(spacing: Spacing.sm) {
                 ImportModeOption(
@@ -82,7 +82,7 @@ private struct ImportModeSelectionView: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: 500)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(8)
     }
 }
@@ -102,28 +102,28 @@ private struct ImportModeOption: View {
             HStack(spacing: Spacing.md) {
                 Image(systemName: icon)
                     .font(.system(size: 24))
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                    .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
                     .frame(width: 32)
 
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(title)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(description)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .multilineTextAlignment(.leading)
                 }
 
                 Spacer()
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                    .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
             }
             .padding(Spacing.md)
-            .background(isSelected ? AppColors.primary.opacity(0.1) : Color.clear)
+            .background(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : Color.clear)
             .cornerRadius(8)
         }
         .buttonStyle(.plain)

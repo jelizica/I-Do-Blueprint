@@ -26,7 +26,7 @@ struct ColorPaletteExportView: View {
                     .foregroundColor(.secondary)
 
                 Rectangle()
-                    .fill(AppColors.textSecondary)
+                    .fill(SemanticColors.textSecondary)
                     .frame(height: 2)
                     .frame(maxWidth: 400)
             }
@@ -111,7 +111,7 @@ struct ColorPaletteExportView: View {
             }
         }
         .padding(Spacing.huge)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
     }
 }
 
@@ -129,7 +129,7 @@ struct ColorSwatchExport: View {
                 .frame(width: 80, height: 80)
                 .overlay(
                     Circle()
-                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                        .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
                 .shadow(color: .black.opacity(0.1), radius: 4)
 
             Text(label)

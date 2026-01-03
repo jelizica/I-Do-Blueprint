@@ -191,7 +191,7 @@ extension PhoneNumberTextFieldWrapper {
         
         Text("Type a phone number to see real-time formatting")
             .font(Typography.caption)
-            .foregroundColor(AppColors.textSecondary)
+            .foregroundColor(SemanticColors.textSecondary)
     }
     .padding(Spacing.xl)
     .frame(width: 400)
@@ -210,7 +210,7 @@ extension PhoneNumberTextFieldWrapper {
         
         Text("Number is automatically formatted")
             .font(Typography.caption)
-            .foregroundColor(AppColors.textSecondary)
+            .foregroundColor(SemanticColors.textSecondary)
     }
     .padding(Spacing.xl)
     .frame(width: 400)
@@ -257,7 +257,7 @@ extension PhoneNumberTextFieldWrapper {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Phone Number")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 
                 PhoneNumberTextFieldWrapper(
                     phoneNumber: .constant(""),
@@ -269,7 +269,7 @@ extension PhoneNumberTextFieldWrapper {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Alternative Phone")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 
                 PhoneNumberTextFieldWrapper(
                     phoneNumber: .constant(""),
@@ -298,7 +298,7 @@ extension PhoneNumberTextFieldWrapper {
         
         Text("Field is disabled and cannot be edited")
             .font(Typography.caption)
-            .foregroundColor(AppColors.textSecondary)
+            .foregroundColor(SemanticColors.textSecondary)
     }
     .padding(Spacing.xl)
     .frame(width: 400)

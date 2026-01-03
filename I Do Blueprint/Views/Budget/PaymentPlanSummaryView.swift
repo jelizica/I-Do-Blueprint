@@ -20,11 +20,11 @@ struct PaymentPlanSummaryView: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(plan.vendor)
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     Text(plan.planTypeDisplay)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 Spacer()
@@ -40,13 +40,13 @@ struct PaymentPlanSummaryView: View {
                 HStack {
                     Text(plan.progressText)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     Spacer()
                     
                     Text("\(Int(plan.percentPaid))% paid")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 ProgressView(value: plan.percentPaid, total: 100)
@@ -59,18 +59,18 @@ struct PaymentPlanSummaryView: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Total")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     Text(plan.totalAmount, format: .currency(code: "USD"))
                         .font(Typography.subheading)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Paid")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     Text(plan.amountPaid, format: .currency(code: "USD"))
                         .font(Typography.subheading)
@@ -80,7 +80,7 @@ struct PaymentPlanSummaryView: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Remaining")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     
                     Text(plan.amountRemaining, format: .currency(code: "USD"))
                         .font(Typography.subheading)
@@ -119,12 +119,12 @@ struct PaymentPlanSummaryView: View {
                     
                     Text("Next: \(nextAmount, format: .currency(code: "USD")) on \(nextDate, format: .dateTime.month().day())")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     if let daysUntil = plan.daysUntilNextPayment {
                         Text("(\(daysUntil) day\(daysUntil == 1 ? "" : "s"))")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
                 .padding(.vertical, Spacing.xs)

@@ -48,12 +48,12 @@ struct ObstacleEditorSheet: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Edit Venue Element")
                         .font(Typography.title2)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .accessibleHeading(level: 1)
 
                     Text("Configure obstacle properties")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
@@ -92,7 +92,7 @@ struct ObstacleEditorSheet: View {
                             VStack(alignment: .leading, spacing: Spacing.lg) {
                                 Text("Properties")
                                     .font(Typography.heading)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .accessibleHeading(level: 2)
 
                                 Divider()
@@ -103,7 +103,7 @@ struct ObstacleEditorSheet: View {
                                         Text("Name")
                                             .font(Typography.caption)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(AppColors.textSecondary)
+                                            .foregroundColor(SemanticColors.textSecondary)
                                             .textCase(.uppercase)
 
                                         TextField("Element name", text: $name)
@@ -122,7 +122,7 @@ struct ObstacleEditorSheet: View {
                                         Text("Type")
                                             .font(Typography.caption)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(AppColors.textSecondary)
+                                            .foregroundColor(SemanticColors.textSecondary)
                                             .textCase(.uppercase)
 
                                         Picker("Type", selection: $obstacleType) {
@@ -152,14 +152,14 @@ struct ObstacleEditorSheet: View {
                                         Text("Position")
                                             .font(Typography.caption)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(AppColors.textSecondary)
+                                            .foregroundColor(SemanticColors.textSecondary)
                                             .textCase(.uppercase)
 
                                         HStack(spacing: Spacing.md) {
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("X")
                                                     .font(Typography.caption)
-                                                    .foregroundColor(AppColors.textSecondary)
+                                                    .foregroundColor(SemanticColors.textSecondary)
                                                 TextField("X", text: $positionX)
                                                     .textFieldStyle(.roundedBorder)
                                                     .frame(width: 100)
@@ -172,7 +172,7 @@ struct ObstacleEditorSheet: View {
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("Y")
                                                     .font(Typography.caption)
-                                                    .foregroundColor(AppColors.textSecondary)
+                                                    .foregroundColor(SemanticColors.textSecondary)
                                                 TextField("Y", text: $positionY)
                                                     .textFieldStyle(.roundedBorder)
                                                     .frame(width: 100)
@@ -191,14 +191,14 @@ struct ObstacleEditorSheet: View {
                                         Text("Size")
                                             .font(Typography.caption)
                                             .fontWeight(.semibold)
-                                            .foregroundColor(AppColors.textSecondary)
+                                            .foregroundColor(SemanticColors.textSecondary)
                                             .textCase(.uppercase)
 
                                         HStack(spacing: Spacing.md) {
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("Width")
                                                     .font(Typography.caption)
-                                                    .foregroundColor(AppColors.textSecondary)
+                                                    .foregroundColor(SemanticColors.textSecondary)
                                                 TextField("Width", text: $width)
                                                     .textFieldStyle(.roundedBorder)
                                                     .frame(width: 100)
@@ -212,7 +212,7 @@ struct ObstacleEditorSheet: View {
                                             VStack(alignment: .leading, spacing: Spacing.xs) {
                                                 Text("Height")
                                                     .font(Typography.caption)
-                                                    .foregroundColor(AppColors.textSecondary)
+                                                    .foregroundColor(SemanticColors.textSecondary)
                                                 TextField("Height", text: $height)
                                                     .textFieldStyle(.roundedBorder)
                                                     .frame(width: 100)
@@ -232,10 +232,10 @@ struct ObstacleEditorSheet: View {
                                         VStack(alignment: .leading, spacing: Spacing.xs) {
                                             Text("Movable")
                                                 .font(Typography.bodyRegular)
-                                                .foregroundColor(AppColors.textPrimary)
+                                                .foregroundColor(SemanticColors.textPrimary)
                                             Text("Allow this element to be repositioned")
                                                 .font(Typography.caption)
-                                                .foregroundColor(AppColors.textSecondary)
+                                                .foregroundColor(SemanticColors.textSecondary)
                                         }
                                     }
                                     .disabled(obstacleType == .wall || obstacleType == .column)
@@ -250,9 +250,9 @@ struct ObstacleEditorSheet: View {
                             .padding(Spacing.lg)
                             .background(
                                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                                    .fill(AppColors.cardBackground)
+                                    .fill(SemanticColors.backgroundSecondary)
                                     .shadow(
-                                        color: AppColors.shadowLight,
+                                        color: SemanticColors.shadowLight,
                                         radius: ShadowStyle.light.radius,
                                         x: 0,
                                         y: 2
@@ -260,7 +260,7 @@ struct ObstacleEditorSheet: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                                    .stroke(AppColors.borderLight, lineWidth: 1)
+                                    .stroke(SemanticColors.borderPrimaryLight, lineWidth: 1)
                             )
                         }
                         .padding(Spacing.lg)
@@ -274,7 +274,7 @@ struct ObstacleEditorSheet: View {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
                     Text("Preview")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .padding(.horizontal, Spacing.lg)
                         .padding(.top, Spacing.lg)
                         .accessibleHeading(level: 2)
@@ -282,10 +282,10 @@ struct ObstacleEditorSheet: View {
                     ZStack {
                         // Canvas background
                         RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .fill(AppColors.backgroundSecondary)
+                            .fill(SemanticColors.backgroundSecondary)
                             .overlay(
                                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                                    .stroke(AppColors.border, lineWidth: 1)
+                                    .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                             )
 
                         // Preview obstacle
@@ -314,7 +314,7 @@ struct ObstacleEditorSheet: View {
 
                                             Text(name.isEmpty ? "Unnamed" : name)
                                                 .font(Typography.caption)
-                                                .foregroundColor(AppColors.textPrimary)
+                                                .foregroundColor(SemanticColors.textPrimary)
                                                 .lineLimit(1)
                                         }
                                     )
@@ -322,17 +322,17 @@ struct ObstacleEditorSheet: View {
                                 // Dimensions label
                                 Text("\(Int(previewWidth)) × \(Int(previewHeight)) px")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                         } else {
                             VStack(spacing: Spacing.md) {
                                 Image(systemName: "exclamationmark.triangle")
                                     .font(.system(size: 40))
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
 
                                 Text("Invalid dimensions")
                                     .font(Typography.bodySmall)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                         }
                     }
@@ -346,15 +346,15 @@ struct ObstacleEditorSheet: View {
                     if showValidationError {
                         HStack(spacing: Spacing.sm) {
                             Image(systemName: "exclamationmark.circle.fill")
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(SemanticColors.error)
                             Text(validationMessage)
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(SemanticColors.error)
                         }
                         .padding(Spacing.md)
                         .background(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .fill(AppColors.errorLight)
+                                .fill(SemanticColors.errorLight)
                         )
                         .padding(.horizontal, Spacing.lg)
                         .padding(.bottom, Spacing.lg)

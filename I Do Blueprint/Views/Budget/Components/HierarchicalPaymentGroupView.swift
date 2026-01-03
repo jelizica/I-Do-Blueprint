@@ -65,7 +65,7 @@ struct HierarchicalPaymentGroupView: View {
             HStack(spacing: Spacing.md) {
                 // Expansion chevron
                 Image(systemName: isGroupExpanded ? "chevron.down" : "chevron.right")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .font(.title3)
                     .frame(width: 24)
                     .accessibilityHidden(true)
@@ -77,11 +77,11 @@ struct HierarchicalPaymentGroupView: View {
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             Text(group.groupName)
                                 .font(Typography.title2)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                             
                             Text("\(group.plans.count) payment plan\(group.plans.count == 1 ? "" : "s")")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                         
                         Spacer()
@@ -107,13 +107,13 @@ struct HierarchicalPaymentGroupView: View {
                         HStack {
                             Text("\(group.paymentsCompleted) of \(group.totalPayments) payments")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                             
                             Spacer()
                             
                             Text("\(Int(group.percentPaid))% paid")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                         
                         ProgressView(value: group.percentPaid, total: 100)
@@ -126,18 +126,18 @@ struct HierarchicalPaymentGroupView: View {
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             Text("Total")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             
                             Text(group.totalAmount, format: .currency(code: "USD"))
                                 .font(Typography.heading)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         }
                         
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             Text("Paid")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             
                             Text(group.amountPaid, format: .currency(code: "USD"))
                                 .font(Typography.heading)
@@ -147,7 +147,7 @@ struct HierarchicalPaymentGroupView: View {
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             Text("Remaining")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             
                             Text(group.amountRemaining, format: .currency(code: "USD"))
                                 .font(Typography.heading)
@@ -178,7 +178,7 @@ struct HierarchicalPaymentGroupView: View {
                             
                             Text("Next payment: \(nextDate, format: .dateTime.month().day())")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         }
                         .padding(.vertical, Spacing.xs)
                         .padding(.horizontal, Spacing.sm)

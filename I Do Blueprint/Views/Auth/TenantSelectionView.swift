@@ -166,7 +166,7 @@ struct TenantSelectionView: View {
                                 }
                             }
                             .padding(Spacing.sm)
-                            .background(AppColors.textSecondary.opacity(0.1))
+                            .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
                             .cornerRadius(8)
 
                             // Sort options
@@ -183,7 +183,7 @@ struct TenantSelectionView: View {
                                             .font(.caption)
                                             .padding(.horizontal, Spacing.sm)
                                             .padding(.vertical, Spacing.xs)
-                                            .background(sortOption == option ? Color.blue : AppColors.textSecondary.opacity(0.1))
+                                            .background(sortOption == option ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.subtle))
                                             .foregroundColor(sortOption == option ? .white : .primary)
                                             .cornerRadius(6)
                                     }
@@ -293,7 +293,7 @@ struct TenantSelectionView: View {
                                             .foregroundColor(.secondary)
                                     }
                                     .padding()
-                                    .background(AppColors.textSecondary.opacity(0.1))
+                                    .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
                                     .cornerRadius(12)
                                 }
                                 .buttonStyle(.plain)

@@ -16,7 +16,7 @@ struct GuestDetailAdditionalDetails: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Additional Details")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: Spacing.lg),
@@ -54,14 +54,14 @@ struct GuestDetailAdditionalDetails: View {
                 if guest.plusOneAllowed {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: guest.plusOneAttending ? "person.2.fill" : "person.2")
-                            .foregroundColor(guest.plusOneAttending ? AppColors.success : AppColors.textTertiary)
+                            .foregroundColor(guest.plusOneAttending ? SemanticColors.success : SemanticColors.textTertiary)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Plus One")
                                 .font(.system(size: 12))
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                             Text(guest.plusOneAttending ? "Attending" : "Not Attending")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         }
                     }
                 }
@@ -71,16 +71,16 @@ struct GuestDetailAdditionalDetails: View {
             if guest.giftReceived {
                 HStack(spacing: Spacing.xs) {
                     Image(systemName: "gift.fill")
-                        .foregroundColor(AppColors.success)
+                        .foregroundColor(SemanticColors.success)
                     Text("Gift Received")
                         .font(.system(size: 14))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 .padding(.top, Spacing.xs)
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
     }
 }
@@ -95,10 +95,10 @@ struct DetailItem: View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             Text(label)
                 .font(.system(size: 12))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             Text(value)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
     }
 }

@@ -131,7 +131,7 @@ struct MoodBoardGeneratorView: View {
                         if step.rawValue < currentStep.rawValue {
                             Image(systemName: "checkmark")
                                 .font(.caption)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         } else {
                             Text("\(step.rawValue + 1)")
                                 .font(.caption)
@@ -211,8 +211,8 @@ struct MoodBoardGeneratorView: View {
                     }
                     .padding(.horizontal, Spacing.xl)
                     .padding(.vertical, Spacing.sm)
-                    .background(canProceedToNext ? Color.blue : AppColors.textSecondary)
-                    .foregroundColor(AppColors.textPrimary)
+                    .background(canProceedToNext ? Color.blue : SemanticColors.textSecondary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .cornerRadius(8)
                 }
                 .disabled(!canProceedToNext || isGenerating)

@@ -19,13 +19,13 @@ struct AssignmentEditorHeader: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Edit Seating Assignment")
                     .font(Typography.title2)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .accessibleHeading(level: 1)
 
                 if let guest = selectedGuest {
                     Text("Assigning \(guest.fullName)")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 

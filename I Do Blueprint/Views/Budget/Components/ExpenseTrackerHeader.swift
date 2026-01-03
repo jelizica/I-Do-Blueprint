@@ -25,7 +25,7 @@ struct ExpenseTrackerHeader: View {
                     .padding(.horizontal, Spacing.lg)
                     .padding(.vertical, Spacing.sm)
                     .background(AppColors.Budget.allocated)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .cornerRadius(8)
                 }
             }

@@ -74,7 +74,7 @@ struct PaymentScheduleStaticHeader: View {
     private var searchField: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(.system(size: 14))
             
             TextField("Search payments...", text: $searchQuery)
@@ -86,7 +86,7 @@ struct PaymentScheduleStaticHeader: View {
                     searchQuery = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.plain)
@@ -108,31 +108,31 @@ struct PaymentScheduleStaticHeader: View {
         Button(action: onNextPaymentClick) {
             HStack(spacing: Spacing.xs) {
                 Image(systemName: "calendar.badge.clock")
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .font(.system(size: 14))
                 
                 if let payment = nextPayment {
                     Text("Next: \(payment.vendor)")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
                     
                     Text("•")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .font(Typography.bodySmall)
                     
                     Text(formatCurrency(payment.paymentAmount))
                         .font(Typography.bodySmall.weight(.semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
                     
                     Text("in \(daysUntil(payment.paymentDate)) days")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 } else {
                     Text("No upcoming payments")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
         }

@@ -15,7 +15,7 @@ struct SeatingChartExportView: View {
     var body: some View {
         ZStack {
             // Background
-            AppColors.textPrimary
+            SemanticColors.textPrimary
 
             // Tables
             ForEach(chart.tables) { table in
@@ -46,7 +46,7 @@ struct SeatingChartExportView: View {
                     .padding()
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(AppColors.textPrimary)
+                            .fill(SemanticColors.textPrimary)
                             .shadow(color: .black.opacity(0.1), radius: 4))
 
                     Spacer()
@@ -147,7 +147,7 @@ struct GuestListExportView: View {
                     .foregroundColor(.secondary)
 
                 Rectangle()
-                    .fill(AppColors.textSecondary)
+                    .fill(SemanticColors.textSecondary)
                     .frame(height: 1)
             }
 
@@ -230,7 +230,7 @@ struct GuestListExportView: View {
                             }
                         }
                         .padding()
-                        .background(AppColors.textSecondary.opacity(0.05))
+                        .background(SemanticColors.textSecondary.opacity(Opacity.verySubtle))
                         .cornerRadius(8)
                     }
                 }
@@ -252,6 +252,6 @@ struct GuestListExportView: View {
             }
         }
         .padding(Spacing.huge)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
     }
 }

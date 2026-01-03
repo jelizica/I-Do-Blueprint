@@ -49,9 +49,9 @@ struct StatItem: Identifiable {
 
         var color: Color {
             switch self {
-            case .up: return AppColors.success
-            case .down: return AppColors.error
-            case .neutral: return AppColors.textSecondary
+            case .up: return SemanticColors.success
+            case .down: return SemanticColors.error
+            case .neutral: return SemanticColors.textSecondary
             }
         }
 
@@ -220,7 +220,7 @@ extension StatItem {
             icon: "checkmark.circle.fill",
             label: "Completed",
             value: "\(count)",
-            color: AppColors.success,
+            color: SemanticColors.success,
             accessibilityLabel: "Completed tasks: \(count) out of \(total), \(String(format: "%.0f", percentage))% complete"
         )
     }
@@ -230,7 +230,7 @@ extension StatItem {
             icon: "exclamationmark.triangle.fill",
             label: "Overdue",
             value: "\(count)",
-            color: AppColors.error,
+            color: SemanticColors.error,
             accessibilityLabel: "Overdue tasks: \(count)"
         )
     }

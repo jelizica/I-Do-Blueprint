@@ -43,7 +43,7 @@ struct VendorStatusCard: View {
 
                 Text("Our Vendors")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
             }
@@ -66,8 +66,8 @@ struct VendorStatusCard: View {
         .padding(Spacing.xl)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
         .sheet(item: $selectedVendor) { vendor in
             VendorDetailModal(vendor: vendor, vendorStore: store)
@@ -125,7 +125,7 @@ struct VendorCategoryCard: View {
 
                     Image(systemName: vendor.icon)
                         .font(.system(size: 20))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
 
                 Spacer()
@@ -133,7 +133,7 @@ struct VendorCategoryCard: View {
                 Text(vendor.status)
                     .font(Typography.caption2)
                     .fontWeight(.medium)
-                    .foregroundColor(vendor.status == "Confirmed" ? AppColors.success : AppColors.warning)
+                    .foregroundColor(vendor.status == "Confirmed" ? SemanticColors.success : SemanticColors.warning)
                     .padding(.horizontal, Spacing.sm)
                     .padding(.vertical, Spacing.xxs)
                     .background(
@@ -146,19 +146,19 @@ struct VendorCategoryCard: View {
                 Text(vendor.name)
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
 
                 Text(vendor.category)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .padding(Spacing.md)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(AppColors.textPrimary.opacity(0.8))
-                .shadow(color: AppColors.shadowLight, radius: 4, y: 2)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.strong))
+                .shadow(color: SemanticColors.shadowLight, radius: 4, y: 2)
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)

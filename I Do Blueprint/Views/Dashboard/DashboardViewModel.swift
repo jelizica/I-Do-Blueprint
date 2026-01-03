@@ -216,11 +216,11 @@ final class DashboardViewModel: ObservableObject {
     /// Budget status color based on percentage used
     var budgetColor: Color {
         if budgetPercentage >= 100 {
-            return AppColors.error
+            return SemanticColors.error
         } else if budgetPercentage >= 90 {
-            return AppColors.warning
+            return SemanticColors.warning
         } else {
-            return AppColors.success
+            return SemanticColors.success
         }
     }
     

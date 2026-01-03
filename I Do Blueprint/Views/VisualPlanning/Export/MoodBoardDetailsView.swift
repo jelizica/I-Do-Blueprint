@@ -59,7 +59,7 @@ struct MoodBoardDetailsView: View {
                                     .frame(width: 40, height: 40)
                                     .overlay(
                                         Circle()
-                                            .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
+                                            .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1)
                                     )
 
                                 Text(color.hexString)
@@ -226,7 +226,7 @@ struct ElementDetailRow: View {
                         .frame(width: 12, height: 12)
                         .overlay(
                             Circle()
-                                .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
+                                .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1)
                         )
 
                     Text(color.hexString)

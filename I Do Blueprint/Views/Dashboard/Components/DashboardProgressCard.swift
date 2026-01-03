@@ -64,7 +64,7 @@ struct DashboardProgressCard: View {
         .background(backgroundColor)
         .overlay(
             Rectangle()
-                .stroke(AppColors.textPrimary, lineWidth: 3)
+                .stroke(SemanticColors.textPrimary, lineWidth: 3)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel(label)

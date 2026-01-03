@@ -49,11 +49,11 @@ struct InfoCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(title)
                         .font(Typography.subheading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(content)
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .lineLimit(2)
                 }
 
@@ -63,7 +63,7 @@ struct InfoCard: View {
                 if action != nil {
                     Image(systemName: "chevron.right")
                         .font(.caption)
-                        .foregroundColor(AppColors.textTertiary)
+                        .foregroundColor(SemanticColors.textTertiary)
                 }
             }
             .padding(Spacing.lg)

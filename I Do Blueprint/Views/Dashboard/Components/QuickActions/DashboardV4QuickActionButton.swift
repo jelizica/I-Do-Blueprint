@@ -20,7 +20,7 @@ struct DashboardV4QuickActionButton: View {
 
             Text(title)
                 .font(Typography.caption.weight(.semibold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

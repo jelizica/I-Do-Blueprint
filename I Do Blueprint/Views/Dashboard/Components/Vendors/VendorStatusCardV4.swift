@@ -17,11 +17,11 @@ struct VendorStatusCardV4: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Our Vendors")
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("\(bookedCount) vendors booked")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(.bottom, Spacing.sm)
 
@@ -42,8 +42,8 @@ struct VendorStatusCardV4: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, minHeight: 467)
-        .background(AppColors.cardBackground)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .background(SemanticColors.backgroundSecondary)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .cornerRadius(CornerRadius.md)
         .sheet(item: $selectedVendor) { vendor in
             VendorDetailModal(vendor: vendor, vendorStore: store)

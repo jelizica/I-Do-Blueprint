@@ -81,10 +81,10 @@ struct ExportElementView: View {
             // Note: Image loading from URL would require AsyncImage or pre-loaded data
             // For now, show placeholder
             Rectangle()
-                .fill(AppColors.textSecondary.opacity(0.3))
+                .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                 .overlay(
                     Image(systemName: "photo")
-                        .foregroundColor(AppColors.textSecondary))
+                        .foregroundColor(SemanticColors.textSecondary))
 
         case .color:
             Rectangle()
@@ -93,11 +93,11 @@ struct ExportElementView: View {
         case .text:
             ZStack {
                 Rectangle()
-                    .fill(AppColors.textPrimary.opacity(0.8))
+                    .fill(SemanticColors.textPrimary.opacity(Opacity.strong))
 
                 Text(element.elementData.text ?? "Text")
                     .font(.system(size: max(8, element.size.height * 0.3)))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .multilineTextAlignment(.center)
             }
 

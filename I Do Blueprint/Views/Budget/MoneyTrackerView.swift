@@ -356,7 +356,7 @@ struct TransactionRowView: View {
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.overBudget)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .cornerRadius(4)
                     }
 
@@ -366,7 +366,7 @@ struct TransactionRowView: View {
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xxs)
                             .background(AppColors.Budget.pending)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .cornerRadius(4)
                     }
                 }

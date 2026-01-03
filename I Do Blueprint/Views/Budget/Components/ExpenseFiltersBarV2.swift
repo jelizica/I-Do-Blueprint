@@ -65,7 +65,7 @@ struct ExpenseFiltersBarV2: View {
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
     }
     
@@ -146,7 +146,7 @@ struct ExpenseFiltersBarV2: View {
     private var searchField: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(.system(size: 14))
             
             TextField("Search expenses...", text: $searchText)
@@ -158,7 +158,7 @@ struct ExpenseFiltersBarV2: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.plain)
@@ -194,7 +194,7 @@ struct ExpenseFiltersBarV2: View {
                 .padding(.vertical, Spacing.sm)
             }
             .buttonStyle(.bordered)
-            .tint(AppColors.primary)
+            .tint(SemanticColors.primaryAction)
             
             // X clear button overlay
             if selectedFilterStatus != nil {
@@ -203,7 +203,7 @@ struct ExpenseFiltersBarV2: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.caption)
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, Spacing.sm)
@@ -281,7 +281,7 @@ struct ExpenseFiltersBarV2: View {
         } label: {
             Image(systemName: viewMode.icon)
                 .font(.system(size: 16))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .frame(width: 36, height: 36)
                 .background(Color(NSColor.controlBackgroundColor))
                 .cornerRadius(6)
@@ -298,9 +298,9 @@ struct ExpenseFiltersBarV2: View {
         } label: {
             Image(systemName: showBenchmarks ? "chart.bar.fill" : "chart.bar")
                 .font(.system(size: 16))
-                .foregroundColor(showBenchmarks ? AppColors.primary : AppColors.textPrimary)
+                .foregroundColor(showBenchmarks ? SemanticColors.primaryAction : SemanticColors.textPrimary)
                 .frame(width: 36, height: 36)
-                .background(showBenchmarks ? AppColors.primary.opacity(0.15) : Color(NSColor.controlBackgroundColor))
+                .background(showBenchmarks ? SemanticColors.primaryAction.opacity(Opacity.light) : Color(NSColor.controlBackgroundColor))
                 .cornerRadius(6)
         }
         .buttonStyle(.plain)
@@ -325,7 +325,7 @@ struct ExpenseFiltersBarV2: View {
             }
             .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.xs)
-            .foregroundColor(AppColors.primary)
+            .foregroundColor(SemanticColors.primaryAction)
         }
         .buttonStyle(.plain)
     }

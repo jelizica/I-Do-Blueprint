@@ -73,7 +73,7 @@ struct NoteContentSection: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 8)
-                .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
         )
     }
     
@@ -88,7 +88,7 @@ struct NoteContentSection: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                    .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
             )
             .onChange(of: content) { _, newValue in
                 if newValue.count > characterLimit {

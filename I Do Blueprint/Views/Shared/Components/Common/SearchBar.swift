@@ -29,7 +29,7 @@ struct SearchBar: View {
     var body: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(.body)
 
             TextField(placeholder, text: $text)
@@ -47,7 +47,7 @@ struct SearchBar: View {
                     isFocused = false
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear search")
@@ -61,7 +61,7 @@ struct SearchBar: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(isFocused ? AppColors.primary : AppColors.border, lineWidth: 1)
+                .stroke(isFocused ? SemanticColors.primaryAction : SemanticColors.borderPrimary, lineWidth: 1)
         )
     }
 }
@@ -79,7 +79,7 @@ struct CompactSearchBar: View {
             if isExpanded {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "magnifyingglass")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .font(.callout)
 
                     TextField(placeholder, text: $text)
@@ -92,7 +92,7 @@ struct CompactSearchBar: View {
                             text = ""
                         }) {
                             Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                                 .font(.callout)
                         }
                         .buttonStyle(.plain)

@@ -12,7 +12,7 @@ struct QuickActionsCardV4: View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             Text("Quick Actions")
                 .font(Typography.subheading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(.bottom, Spacing.sm)
 
             Divider()
@@ -45,8 +45,8 @@ struct QuickActionsCardV4: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity)
-        .background(AppColors.cardBackground)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .background(SemanticColors.backgroundSecondary)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .cornerRadius(CornerRadius.md)
     }
 }

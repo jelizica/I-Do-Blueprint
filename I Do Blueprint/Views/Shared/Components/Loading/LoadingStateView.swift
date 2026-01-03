@@ -110,7 +110,7 @@ struct LoadingView: View {
 
             Text(message)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .accessibilityElement(children: .combine)
@@ -135,7 +135,7 @@ struct InlineLoadingView: View {
             if let message = message {
                 Text(message)
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .accessibilityElement(children: .combine)

@@ -92,7 +92,7 @@ struct ExpenseCategoriesStaticHeader: View {
     private var searchField: some View {
         HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(.system(size: 14))
             
             TextField("Search categories...", text: $searchText)
@@ -104,7 +104,7 @@ struct ExpenseCategoriesStaticHeader: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .font(.system(size: 14))
                 }
                 .buttonStyle(.plain)
@@ -131,14 +131,14 @@ struct ExpenseCategoriesStaticHeader: View {
                     .foregroundColor(.purple)
                 Text("\(parentCount)")
                     .font(Typography.bodySmall.weight(.semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 Text("Parents")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             Text("•")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(Typography.bodySmall)
             
             // Subcategory count
@@ -148,10 +148,10 @@ struct ExpenseCategoriesStaticHeader: View {
                     .foregroundColor(.blue)
                 Text("\(subcategoryCount)")
                     .font(Typography.bodySmall.weight(.semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 Text("Subcategories")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
     }
@@ -167,11 +167,11 @@ struct ExpenseCategoriesStaticHeader: View {
                     .foregroundColor(.purple)
                 Text("\(parentCount)")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             
             Text("•")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(.system(size: 12))
             
             // Subcategory count
@@ -181,7 +181,7 @@ struct ExpenseCategoriesStaticHeader: View {
                     .foregroundColor(.blue)
                 Text("\(subcategoryCount)")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
         }
     }
@@ -287,7 +287,7 @@ struct ExpenseCategoriesStaticHeader: View {
             .foregroundColor(.white)
             .padding(.horizontal, windowSize == .compact ? 10 : 12)
             .padding(.vertical, 6)
-            .background(AppColors.primary)
+            .background(SemanticColors.primaryAction)
             .cornerRadius(6)
         }
         .buttonStyle(.plain)

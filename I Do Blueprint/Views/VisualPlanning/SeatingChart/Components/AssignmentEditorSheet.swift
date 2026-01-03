@@ -96,15 +96,15 @@ struct AssignmentEditorSheet: View {
                     if showValidationError {
                         HStack(spacing: Spacing.sm) {
                             Image(systemName: "exclamationmark.circle.fill")
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(SemanticColors.error)
                             Text(validationMessage)
                                 .font(Typography.bodySmall)
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(SemanticColors.error)
                         }
                         .padding(Spacing.md)
                         .background(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .fill(AppColors.errorLight)
+                                .fill(SemanticColors.errorLight)
                         )
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Validation error: \(validationMessage)")

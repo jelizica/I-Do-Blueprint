@@ -37,19 +37,19 @@ struct MetricCard: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(formattedValue)
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(title)
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .padding(Spacing.lg)
         .frame(height: 140)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .fill(AppColors.textPrimary.opacity(0.6))
-                .shadow(color: AppColors.shadowLight, radius: 8, y: 4)
+                .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
+                .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.lg)

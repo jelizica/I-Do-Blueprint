@@ -29,11 +29,11 @@ struct ExpenseTrackerUnifiedHeader: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Budget")
                     .font(Typography.displaySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 Text("Expense Tracker")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             Spacer()
@@ -78,7 +78,7 @@ struct ExpenseTrackerUnifiedHeader: View {
         } label: {
             Image(systemName: "ellipsis.circle")
                 .font(.title3)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
         .buttonStyle(.plain)
     }
@@ -120,7 +120,7 @@ struct ExpenseTrackerUnifiedHeader: View {
                 Image(systemName: "chevron.down")
                     .font(.caption)
             }
-            .foregroundColor(AppColors.textPrimary)
+            .foregroundColor(SemanticColors.textPrimary)
             .frame(width: windowSize == .compact ? 44 : nil, height: 44)
         }
         .buttonStyle(.plain)

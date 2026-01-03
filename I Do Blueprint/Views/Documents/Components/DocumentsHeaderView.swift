@@ -43,7 +43,7 @@ struct DocumentsHeaderView: View {
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xxs)
                             .background(Circle().fill(Color.blue))
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                     }
                 }
             }

@@ -26,7 +26,7 @@ struct SummaryCard: View {
             HStack {
                 Text(title)
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
@@ -34,7 +34,7 @@ struct SummaryCard: View {
                     Button(action: action) {
                         Image(systemName: "chevron.right")
                             .font(.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("View details")
@@ -81,20 +81,20 @@ struct SummaryItemRow: View {
             if let icon = item.icon {
                 Image(systemName: icon)
                     .font(.caption)
-                    .foregroundColor(item.color ?? AppColors.textSecondary)
+                    .foregroundColor(item.color ?? SemanticColors.textSecondary)
                     .frame(width: 20)
             }
 
             Text(item.label)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Spacer()
 
             Text(item.value)
                 .font(Typography.bodyRegular)
                 .fontWeight(.medium)
-                .foregroundColor(item.color ?? AppColors.textPrimary)
+                .foregroundColor(item.color ?? SemanticColors.textPrimary)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(item.label): \(item.value)")
@@ -151,18 +151,18 @@ struct CompactSummaryCard: View {
             // Value
             Text(value)
                 .font(Typography.numberLarge)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             // Title and subtitle
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 if let subtitle = subtitle {
                     Text(subtitle)
                         .font(Typography.caption2)
-                        .foregroundColor(AppColors.textTertiary)
+                        .foregroundColor(SemanticColors.textTertiary)
                 }
             }
         }

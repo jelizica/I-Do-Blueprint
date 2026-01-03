@@ -23,11 +23,11 @@ struct NoteCharacterCount: View {
                 Text("\(currentCount)")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundColor(isNearLimit ? .orange : AppColors.textSecondary)
+                    .foregroundColor(isNearLimit ? .orange : SemanticColors.textSecondary)
                 
                 Text("/ \(limit) characters")
                     .font(.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .padding(.horizontal)

@@ -48,7 +48,7 @@ struct ModernTabButton: View {
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.12) : (isHovering ? AppColors.textSecondary.opacity(0.05) : Color.clear))
+                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.12) : (isHovering ? SemanticColors.textSecondary.opacity(Opacity.verySubtle) : Color.clear))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
@@ -92,7 +92,7 @@ struct ModernTableRow: View {
                 // Progress circle
                 ZStack {
                     Circle()
-                        .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 3)
+                        .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 3)
                         .frame(width: 32, height: 32)
 
                     Circle()
@@ -108,7 +108,7 @@ struct ModernTableRow: View {
             .padding(Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: 8)
-                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.1) : AppColors.textPrimary)
+                    .fill(isSelected ? Color.seatingAccentTeal.opacity(0.1) : SemanticColors.textPrimary)
             )
         }
         .buttonStyle(.plain)
@@ -202,7 +202,7 @@ struct AssignmentRow: View {
         }
         .padding(.vertical, Spacing.sm)
         .padding(.horizontal, Spacing.md)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
         .cornerRadius(8)
     }
 }
@@ -256,7 +256,7 @@ struct LayoutStyleRow: View {
                 Spacer()
             }
             .padding(Spacing.sm)
-            .background(AppColors.textPrimary)
+            .background(SemanticColors.textPrimary)
             .cornerRadius(6)
         }
         .buttonStyle(.plain)

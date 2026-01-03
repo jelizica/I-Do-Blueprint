@@ -147,7 +147,7 @@ struct SkeletonLoader: View {
     
     var body: some View {
         RoundedRectangle(cornerRadius: cornerRadius)
-            .fill(AppColors.textSecondary.opacity(0.3))
+            .fill(SemanticColors.textSecondary.opacity(Opacity.light))
             .frame(width: width, height: height)
             .modifier(ShimmerModifier())
     }
@@ -157,22 +157,22 @@ struct SkeletonCardLoader: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             RoundedRectangle(cornerRadius: 12)
-                .fill(AppColors.textSecondary.opacity(0.3))
+                .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                 .frame(height: 200)
                 .modifier(ShimmerModifier())
             
             RoundedRectangle(cornerRadius: 4)
-                .fill(AppColors.textSecondary.opacity(0.3))
+                .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                 .frame(width: 150, height: 16)
                 .modifier(ShimmerModifier())
             
             RoundedRectangle(cornerRadius: 4)
-                .fill(AppColors.textSecondary.opacity(0.3))
+                .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                 .frame(width: 200, height: 12)
                 .modifier(ShimmerModifier())
             
             RoundedRectangle(cornerRadius: 4)
-                .fill(AppColors.textSecondary.opacity(0.3))
+                .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                 .frame(width: 100, height: 12)
                 .modifier(ShimmerModifier())
         }

@@ -120,7 +120,7 @@ enum SectionPriority {
         Text("Content goes here")
             .frame(maxWidth: .infinity)
             .padding()
-            .background(AppColors.textSecondary.opacity(0.1))
+            .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
             .cornerRadius(12)
     }
     .padding()

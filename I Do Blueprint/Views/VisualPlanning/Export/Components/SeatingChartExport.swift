@@ -42,7 +42,7 @@ struct ExportSeatingChartView: View {
             // Seating chart visualization
             ZStack {
                 Rectangle()
-                    .fill(AppColors.textSecondary.opacity(0.1))
+                    .fill(SemanticColors.textSecondary.opacity(Opacity.subtle))
                     .aspectRatio(16 / 9, contentMode: .fit)
                     .frame(maxHeight: 300)
 

@@ -55,16 +55,16 @@ struct BudgetOverviewCardV4: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Budget Overview")
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if let scenario = store.primaryScenario {
                     Text("$\(formatAmount(totalPaid)) of $\(formatAmount(scenario.totalWithTax)) paid")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 } else {
                     Text("No primary scenario")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
             .padding(.top, Spacing.xs)
@@ -87,20 +87,20 @@ struct BudgetOverviewCardV4: View {
                     label: "Expenses",
                     amount: totalExpenses,
                     total: totalBudget,
-                    color: AppColors.warning
+                    color: SemanticColors.warning
                 )
 
                 // Remaining Budget (moved here)
                 HStack {
                     Text("Remaining Budget")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Spacer()
 
                     Text("$\(formatAmount(remainingBudget))")
                         .font(Typography.caption.weight(.semibold))
-                        .foregroundColor(AppColors.success)
+                        .foregroundColor(SemanticColors.success)
                 }
                 .padding(.top, Spacing.xs)
 
@@ -111,7 +111,7 @@ struct BudgetOverviewCardV4: View {
 
                     Text("Payments Due This Month")
                         .font(Typography.caption.weight(.semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     ForEach(paymentsThisMonth.prefix(5)) { payment in
                         PaymentDueRow(payment: payment, vendorStore: vendorStore, userTimezone: userTimezone)
@@ -123,8 +123,8 @@ struct BudgetOverviewCardV4: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, minHeight: 430)
-        .background(AppColors.cardBackground)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .background(SemanticColors.backgroundSecondary)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .cornerRadius(CornerRadius.md)
     }
 

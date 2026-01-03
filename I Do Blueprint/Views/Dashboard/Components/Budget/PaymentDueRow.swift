@@ -31,11 +31,11 @@ struct PaymentDueRow: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(formatDate(payment.paymentDate))
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(vendorName)
                     .font(Typography.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .lineLimit(1)
             }
 
@@ -44,11 +44,11 @@ struct PaymentDueRow: View {
             VStack(alignment: .trailing, spacing: Spacing.xxs) {
                 Text("$\(formatAmount(payment.paymentAmount))")
                     .font(Typography.caption.weight(.semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(payment.paid ? "Paid" : "Unpaid")
                     .font(Typography.caption2)
-                    .foregroundColor(payment.paid ? AppColors.success : AppColors.warning)
+                    .foregroundColor(payment.paid ? SemanticColors.success : SemanticColors.warning)
             }
         }
         .padding(.vertical, Spacing.xs)

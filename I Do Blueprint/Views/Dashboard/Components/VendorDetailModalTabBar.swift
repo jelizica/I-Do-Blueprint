@@ -25,7 +25,7 @@ struct VendorDetailModalTabBar: View {
                 selectedTab = 3
             }
         }
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
     }
 }
 
@@ -45,16 +45,16 @@ struct VendorModalTabButton: View {
                 Text(title)
                     .font(Typography.bodyRegular)
             }
-            .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+            .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
             .padding(.horizontal, Spacing.lg)
             .padding(.vertical, Spacing.md)
             .background(
                 Rectangle()
-                    .fill(isSelected ? AppColors.primary.opacity(0.1) : Color.clear)
+                    .fill(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : Color.clear)
             )
             .overlay(
                 Rectangle()
-                    .fill(isSelected ? AppColors.primary : Color.clear)
+                    .fill(isSelected ? SemanticColors.primaryAction : Color.clear)
                     .frame(height: 2),
                 alignment: .bottom
             )

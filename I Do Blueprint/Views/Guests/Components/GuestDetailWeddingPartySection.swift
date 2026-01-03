@@ -17,10 +17,10 @@ struct GuestDetailWeddingPartySection: View {
             // Section Header
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "crown.fill")
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                 Text("Wedding Party")
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             
             VStack(alignment: .leading, spacing: Spacing.md) {
@@ -29,10 +29,10 @@ struct GuestDetailWeddingPartySection: View {
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Role")
                             .font(.system(size: 12))
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                         Text(role)
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                     }
                 }
                 
@@ -56,10 +56,10 @@ struct GuestDetailWeddingPartySection: View {
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Preparation Notes")
                             .font(.system(size: 12))
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                         Text(notes)
                             .font(.system(size: 14))
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -68,11 +68,11 @@ struct GuestDetailWeddingPartySection: View {
         .padding(Spacing.lg)
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(AppColors.primary.opacity(0.05))
+                .fill(SemanticColors.primaryAction.opacity(Opacity.verySubtle))
         )
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.primary.opacity(0.2), lineWidth: 1)
+                .stroke(SemanticColors.primaryAction.opacity(Opacity.light), lineWidth: 1)
         )
     }
 }
@@ -88,15 +88,15 @@ struct PreparationStatusItem: View {
         HStack(spacing: Spacing.xs) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(isDone ? AppColors.success : AppColors.textTertiary)
+                .foregroundColor(isDone ? SemanticColors.success : SemanticColors.textTertiary)
             
             Text(label)
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             Image(systemName: isDone ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 12))
-                .foregroundColor(isDone ? AppColors.success : AppColors.textTertiary)
+                .foregroundColor(isDone ? SemanticColors.success : SemanticColors.textTertiary)
         }
     }
 }

@@ -47,7 +47,7 @@ struct VendorDetailOverviewTab: View {
                     icon: "calendar.circle.fill",
                     title: "Booked Date",
                     value: dateBooked.formatted(date: .abbreviated, time: .omitted),
-                    color: AppColors.success
+                    color: SemanticColors.success
                 )
             }
         }
@@ -58,7 +58,7 @@ struct VendorDetailOverviewTab: View {
             SectionHeaderV2(
                 title: "Contact Information",
                 icon: "person.circle.fill",
-                color: AppColors.primary
+                color: SemanticColors.primaryAction
             )
             
             VStack(spacing: Spacing.sm) {
@@ -91,7 +91,7 @@ struct VendorDetailOverviewTab: View {
                 }
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(CornerRadius.md)
         }
     }
@@ -106,10 +106,10 @@ struct VendorDetailOverviewTab: View {
             
             Text(address)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .padding(Spacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(CornerRadius.md)
         }
     }
@@ -142,19 +142,19 @@ struct VendorQuickInfoCard: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(title)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                 
                 Text(value)
                     .font(Typography.bodyRegular)
                     .fontWeight(.bold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             
             Spacer()
         }
         .padding(Spacing.md)
         .frame(maxWidth: .infinity)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
     }
 }
@@ -170,26 +170,26 @@ struct VendorContactRow: View {
         HStack(spacing: Spacing.md) {
             Image(systemName: icon)
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .frame(width: 20)
             
             Text(label)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .frame(width: 80, alignment: .leading)
             
             if isLink, let action = action {
                 Button(action: action) {
                     Text(value)
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                         .underline()
                 }
                 .buttonStyle(.plain)
             } else {
                 Text(value)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             
             Spacer()

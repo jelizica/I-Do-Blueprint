@@ -79,7 +79,7 @@ struct WeddingCountdownHero: View {
                 if let weddingDate = weddingDate {
                     Text(formattedWeddingDate(weddingDate))
                         .font(Typography.title3)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 // Countdown Card
@@ -96,12 +96,12 @@ struct WeddingCountdownHero: View {
 
                     Text("Days Until Forever")
                         .font(Typography.bodyLarge)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .padding(Spacing.xxl)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.lg)
-                        .fill(AppColors.textPrimary.opacity(0.6))
+                        .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
                         .shadow(color: Color.fromHex( "FBCFE8").opacity(0.5), radius: 20, y: 10)
                 )
             }

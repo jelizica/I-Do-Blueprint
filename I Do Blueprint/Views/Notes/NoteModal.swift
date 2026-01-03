@@ -213,7 +213,7 @@ struct NoteModal: View {
                         .fill(Color(NSColor.textBackgroundColor)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
+                        .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
             } else {
                 TextEditor(text: $content)
                     .font(.body)
@@ -224,7 +224,7 @@ struct NoteModal: View {
                             .fill(Color(NSColor.textBackgroundColor)))
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1))
+                            .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
                     .onChange(of: content) { _, newValue in
                         if newValue.count > characterLimit {
                             content = String(newValue.prefix(characterLimit))

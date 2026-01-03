@@ -91,7 +91,7 @@ struct AvatarHelpers {
     // MARK: - VIP Indicator Colors
 
     static let vipBorderColor = AppColors.Avatar.vipBorder
-    static let regularBorderColor = AppColors.textPrimary.opacity(0.3)
+    static let regularBorderColor = SemanticColors.textPrimary.opacity(Opacity.light)
     static let vipBorderWidth: CGFloat = 2
     static let regularBorderWidth: CGFloat = 1
 }

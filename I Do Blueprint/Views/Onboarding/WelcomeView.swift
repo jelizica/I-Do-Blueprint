@@ -20,18 +20,18 @@ struct WelcomeView: View {
                 // App icon/logo
                 Image(systemName: "heart.circle.fill")
                     .font(.system(size: 80))
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .accessibilityHidden(true)
 
                 // Welcome message
                 VStack(spacing: Spacing.md) {
                     Text("Welcome to")
                         .font(Typography.title2)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text("I Do Blueprint")
                         .font(.system(size: 36, weight: .bold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Welcome to I Do Blueprint")
@@ -39,7 +39,7 @@ struct WelcomeView: View {
                 // Description
                 Text("Let's get started planning your perfect wedding. We'll guide you through setting up your account and importing your data.")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, Spacing.xxl)
                     .fixedSize(horizontal: false, vertical: true)
@@ -48,7 +48,7 @@ struct WelcomeView: View {
                 VStack(spacing: Spacing.lg) {
                     Text("Choose your setup style")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     VStack(spacing: Spacing.md) {
                         ModeSelectionCard(
@@ -83,10 +83,10 @@ struct WelcomeView: View {
                         Image(systemName: "arrow.right")
                             .font(.system(size: 16, weight: .semibold))
                     }
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(maxWidth: 400)
                     .padding(.vertical, Spacing.lg)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(12)
                 }
                 .padding(.horizontal, Spacing.xl)
@@ -99,7 +99,7 @@ struct WelcomeView: View {
             }
             .frame(maxWidth: .infinity)
         }
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 }
 
@@ -116,12 +116,12 @@ struct ModeSelectionCard: View {
                 // Selection indicator
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? AppColors.primary : AppColors.textSecondary.opacity(0.3), lineWidth: 2)
+                        .stroke(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 2)
                         .frame(width: 24, height: 24)
 
                     if isSelected {
                         Circle()
-                            .fill(AppColors.primary)
+                            .fill(SemanticColors.primaryAction)
                             .frame(width: 12, height: 12)
                     }
                 }
@@ -132,21 +132,21 @@ struct ModeSelectionCard: View {
                     Text(mode.displayName)
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(mode.description)
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
                 Spacer()
             }
             .padding(Spacing.lg)
-            .background(isSelected ? AppColors.primary.opacity(0.1) : AppColors.cardBackground)
+            .background(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : SemanticColors.backgroundSecondary)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? SemanticColors.primaryAction : Color.clear, lineWidth: 2)
             )
             .cornerRadius(12)
         }

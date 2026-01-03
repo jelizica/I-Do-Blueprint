@@ -12,7 +12,7 @@ struct DashboardCircularProgressView: View {
     let goalValue: Double
     var size: CGFloat = 200
     var strokeWidth: CGFloat = 16
-    var color: Color = AppColors.primary
+    var color: Color = SemanticColors.primaryAction
 
     @State private var animatedProgress: Double = 0
 
@@ -27,7 +27,7 @@ struct DashboardCircularProgressView: View {
         ZStack {
             // Background circle
             Circle()
-                .stroke(AppColors.borderLight, lineWidth: strokeWidth)
+                .stroke(SemanticColors.borderPrimaryLight, lineWidth: strokeWidth)
                 .frame(width: size, height: size)
 
             // Progress circle
@@ -48,11 +48,11 @@ struct DashboardCircularProgressView: View {
             VStack(spacing: Spacing.xs) {
                 Text("\(Int(animatedProgress.isFinite ? animatedProgress : 0))%")
                     .font(.system(size: 40, weight: .bold, design: .rounded))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("$\(Int(currentValue).formatted()) / $\(Int(goalValue).formatted())")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .onAppear {

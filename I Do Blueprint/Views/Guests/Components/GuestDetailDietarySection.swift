@@ -14,7 +14,7 @@ struct GuestDetailDietarySection: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Dietary Restrictions")
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             
             // Parse restrictions and create badges
             HStack(spacing: Spacing.sm) {
@@ -44,8 +44,8 @@ struct DietaryBadge: View {
     private var badgeColor: (background: Color, text: Color) {
         // Alternate colors for variety
         let colors: [(Color, Color)] = [
-            (AppColors.warningLight, AppColors.warning),
-            (AppColors.infoLight, AppColors.info)
+            (SemanticColors.warningLight, SemanticColors.warning),
+            (SemanticColors.infoLight, SemanticColors.info)
         ]
         let index = abs(text.hashValue) % colors.count
         return (colors[index].0, colors[index].1)

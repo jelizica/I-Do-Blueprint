@@ -19,7 +19,7 @@ struct ImportSuccessView: View {
 
             Text("Import Complete!")
                 .font(Typography.title3)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(spacing: Spacing.xs) {
                 if stats.added > 0 {
@@ -43,10 +43,10 @@ struct ImportSuccessView: View {
                 Text("Done")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(maxWidth: 300)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
@@ -67,6 +67,6 @@ private struct ImportStatRow: View {
     var body: some View {
         Text("\(icon) \(label): \(count) \(suffix)")
             .font(Typography.bodyRegular)
-            .foregroundColor(AppColors.textPrimary)
+            .foregroundColor(SemanticColors.textPrimary)
     }
 }

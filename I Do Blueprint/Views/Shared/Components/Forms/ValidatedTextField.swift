@@ -42,12 +42,12 @@ struct ValidatedTextField: View {
             HStack(spacing: 4) {
                 Text(label)
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if isRequired {
                     Text("*")
                         .font(Typography.subheading)
-                        .foregroundColor(AppColors.error)
+                        .foregroundColor(SemanticColors.error)
                 }
             }
 
@@ -69,7 +69,7 @@ struct ValidatedTextField: View {
                 }
                 .overlay(
                     RoundedRectangle(cornerRadius: 6)
-                        .stroke(errorMessage != nil ? AppColors.error : Color.clear, lineWidth: 1)
+                        .stroke(errorMessage != nil ? SemanticColors.error : Color.clear, lineWidth: 1)
                 )
 
             // Error message
@@ -80,7 +80,7 @@ struct ValidatedTextField: View {
                     Text(error)
                         .font(Typography.caption)
                 }
-                .foregroundColor(AppColors.error)
+                .foregroundColor(SemanticColors.error)
                 .transition(.opacity)
             }
         }
@@ -147,12 +147,12 @@ struct ValidatedTextEditor: View {
             HStack(spacing: 4) {
                 Text(label)
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if isRequired {
                     Text("*")
                         .font(Typography.subheading)
-                        .foregroundColor(AppColors.error)
+                        .foregroundColor(SemanticColors.error)
                 }
             }
 
@@ -161,7 +161,7 @@ struct ValidatedTextEditor: View {
                 if text.isEmpty {
                     Text(placeholder)
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textTertiary)
+                        .foregroundColor(SemanticColors.textTertiary)
                         .padding(.horizontal, Spacing.xs)
                         .padding(.vertical, Spacing.sm)
                 }
@@ -187,7 +187,7 @@ struct ValidatedTextEditor: View {
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(errorMessage != nil ? AppColors.error : AppColors.border, lineWidth: 1)
+                    .stroke(errorMessage != nil ? SemanticColors.error : SemanticColors.borderPrimary, lineWidth: 1)
             )
 
             // Error message
@@ -198,7 +198,7 @@ struct ValidatedTextEditor: View {
                     Text(error)
                         .font(Typography.caption)
                 }
-                .foregroundColor(AppColors.error)
+                .foregroundColor(SemanticColors.error)
                 .transition(.opacity)
             }
         }

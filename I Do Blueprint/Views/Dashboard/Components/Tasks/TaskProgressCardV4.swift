@@ -18,11 +18,11 @@ struct TaskProgressCardV4: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Task Manager")
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("\(remainingTasks) tasks remaining")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(.bottom, Spacing.sm)
 
@@ -39,8 +39,8 @@ struct TaskProgressCardV4: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, minHeight: 347)
-        .background(AppColors.cardBackground)
-        .shadow(color: AppColors.shadowLight, radius: 2, x: 0, y: 1)
+        .background(SemanticColors.backgroundSecondary)
+        .shadow(color: SemanticColors.shadowLight, radius: 2, x: 0, y: 1)
         .cornerRadius(CornerRadius.md)
     }
 

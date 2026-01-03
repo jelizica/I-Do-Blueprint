@@ -180,7 +180,7 @@ struct TableEditorSheet: View {
                                     .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                                    .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
                         }
                         .padding(Spacing.lg)
                     }
@@ -248,7 +248,7 @@ struct TableEditorSheet: View {
                             .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                            .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
                     .padding(.horizontal, Spacing.lg)
 
                     // Available guests card
@@ -288,7 +288,7 @@ struct TableEditorSheet: View {
                             .shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                            .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
                     .padding(.horizontal, Spacing.lg)
                     .padding(.bottom, Spacing.lg)
 

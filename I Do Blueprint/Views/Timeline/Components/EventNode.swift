@@ -20,7 +20,7 @@ struct EventNode: View {
             .overlay(
                 Image(systemName: item.itemType.iconName)
                     .font(.system(size: 10))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             )
             .overlay(
                 Circle()

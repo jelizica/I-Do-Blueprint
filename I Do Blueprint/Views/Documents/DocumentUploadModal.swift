@@ -113,7 +113,7 @@ struct DocumentUploadModal: View {
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(
-                        isDragging ? Color.blue : AppColors.textSecondary.opacity(0.3),
+                        isDragging ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.light),
                         style: StrokeStyle(lineWidth: 2, dash: [10]))
                     .background(
                         RoundedRectangle(cornerRadius: 12)
@@ -179,7 +179,7 @@ struct DocumentUploadModal: View {
             HStack {
                 ForEach(0 ..< selectedFiles.count, id: \.self) { index in
                     Circle()
-                        .fill(index <= currentFileIndex ? Color.blue : AppColors.textSecondary.opacity(0.3))
+                        .fill(index <= currentFileIndex ? Color.blue : SemanticColors.textSecondary.opacity(Opacity.light))
                         .frame(width: 8, height: 8)
                 }
             }

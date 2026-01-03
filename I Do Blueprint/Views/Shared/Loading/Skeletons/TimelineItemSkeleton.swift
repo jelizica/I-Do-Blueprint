@@ -7,12 +7,12 @@ struct TimelineItemSkeleton: View {
             // Date indicator skeleton
             VStack(spacing: Spacing.xs) {
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 40, height: 14)
                     .shimmer()
 
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 30, height: 20)
                     .shimmer()
             }
@@ -20,7 +20,7 @@ struct TimelineItemSkeleton: View {
 
             // Timeline dot
             Circle()
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 12, height: 12)
                 .shimmer()
 
@@ -28,13 +28,13 @@ struct TimelineItemSkeleton: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Event title
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 200, height: 16)
                     .shimmer()
 
                 // Event details
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 140, height: 12)
                     .shimmer()
             }
@@ -53,5 +53,5 @@ struct TimelineItemSkeleton: View {
         TimelineItemSkeleton()
     }
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }

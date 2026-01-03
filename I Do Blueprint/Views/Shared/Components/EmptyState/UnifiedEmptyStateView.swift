@@ -17,19 +17,19 @@ struct UnifiedEmptyStateView: View {
             // Icon
             Image(systemName: config.icon)
                 .font(.system(size: 64))
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundColor(SemanticColors.textTertiary)
                 .accessibilityHidden(true)
 
             // Text content
             VStack(spacing: Spacing.sm) {
                 Text(config.title)
                     .font(Typography.title2)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .accessibleHeading(level: 2)
 
                 Text(config.message)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
             }

@@ -29,7 +29,7 @@ struct MoodBoardExportView: View {
                         Text(moodBoard.boardName)
                             .font(.title)
                             .fontWeight(.bold)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .shadow(color: .black.opacity(0.3), radius: 2)
 
                         Text(moodBoard.styleCategory.displayName)
@@ -77,7 +77,7 @@ struct MoodBoardElementExportView: View {
         case .text:
             Text(element.elementData.text ?? "")
                 .font(.system(size: max(12, element.size.height * 0.3)))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .multilineTextAlignment(.center)
 
         case .inspiration:
@@ -115,7 +115,7 @@ struct MoodBoardMetadataView: View {
                     .foregroundColor(.secondary)
 
                 Rectangle()
-                    .fill(AppColors.textSecondary)
+                    .fill(SemanticColors.textSecondary)
                     .frame(height: 1)
             }
 
@@ -192,7 +192,7 @@ struct MoodBoardMetadataView: View {
             }
         }
         .padding(Spacing.huge)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
     }
 
     private func extractDominantColors() -> [Color]? {

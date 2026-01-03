@@ -6,7 +6,7 @@ struct GuestCardSkeleton: View {
         HStack(spacing: Spacing.lg) {
             // Avatar skeleton
             Circle()
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 48, height: 48)
                 .shimmer()
 
@@ -14,19 +14,19 @@ struct GuestCardSkeleton: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Guest name
                 RoundedRectangle(cornerRadius: 4)
-                    .fill(AppColors.borderLight)
+                    .fill(SemanticColors.borderPrimaryLight)
                     .frame(width: 160, height: 16)
                     .shimmer()
 
                 // RSVP status and party size
                 HStack(spacing: Spacing.sm) {
                     Capsule()
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 70, height: 18)
                         .shimmer()
 
                     RoundedRectangle(cornerRadius: 4)
-                        .fill(AppColors.borderLight)
+                        .fill(SemanticColors.borderPrimaryLight)
                         .frame(width: 50, height: 12)
                         .shimmer()
                 }
@@ -36,7 +36,7 @@ struct GuestCardSkeleton: View {
 
             // Plus one indicator skeleton
             Circle()
-                .fill(AppColors.borderLight)
+                .fill(SemanticColors.borderPrimaryLight)
                 .frame(width: 24, height: 24)
                 .shimmer()
         }
@@ -52,5 +52,5 @@ struct GuestCardSkeleton: View {
         GuestCardSkeleton()
     }
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }

@@ -21,7 +21,7 @@ struct StatColumn: View {
 
             Text(label)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .frame(maxWidth: .infinity)
     }

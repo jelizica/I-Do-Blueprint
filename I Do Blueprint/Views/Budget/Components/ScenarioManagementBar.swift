@@ -57,7 +57,7 @@ struct ScenarioManagementBar: View {
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
                 .background(Color.blue)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .cornerRadius(6)
             }
             .disabled(saving)

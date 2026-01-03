@@ -49,7 +49,7 @@ struct EditorTabButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 10)
                     .fill(
-                        isSelected ? Color.blue.opacity(0.12) : (isHovering ? AppColors.textSecondary.opacity(0.08) : Color.clear)))
+                        isSelected ? Color.blue.opacity(0.12) : (isHovering ? SemanticColors.textSecondary.opacity(Opacity.verySubtle) : Color.clear)))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
                     .stroke(isSelected ? Color.blue.opacity(0.3) : Color.clear, lineWidth: 1))

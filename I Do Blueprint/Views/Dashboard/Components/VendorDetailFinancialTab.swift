@@ -38,7 +38,7 @@ struct VendorDetailFinancialTab: View {
             
             Text("Loading financial data...")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
     }
@@ -66,21 +66,21 @@ struct VendorDetailFinancialTab: View {
                 title: "Quoted Amount",
                 amount: vendor.quotedAmount ?? 0,
                 icon: "banknote.fill",
-                color: AppColors.primary
+                color: SemanticColors.primaryAction
             )
             
             FinancialSummaryCard(
                 title: "Total Expenses",
                 amount: totalExpenses,
                 icon: "chart.bar.fill",
-                color: AppColors.warning
+                color: SemanticColors.warning
             )
             
             FinancialSummaryCard(
                 title: "Total Paid",
                 amount: totalPaid,
                 icon: "checkmark.circle.fill",
-                color: AppColors.success
+                color: SemanticColors.success
             )
         }
     }
@@ -90,7 +90,7 @@ struct VendorDetailFinancialTab: View {
             SectionHeaderV2(
                 title: "Expenses (\(expenses.count))",
                 icon: "list.bullet.circle.fill",
-                color: AppColors.warning
+                color: SemanticColors.warning
             )
             
             VStack(spacing: Spacing.sm) {
@@ -99,7 +99,7 @@ struct VendorDetailFinancialTab: View {
                 }
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(CornerRadius.md)
         }
     }
@@ -109,7 +109,7 @@ struct VendorDetailFinancialTab: View {
             SectionHeaderV2(
                 title: "Payment Schedule (\(payments.count))",
                 icon: "calendar.circle.fill",
-                color: AppColors.success
+                color: SemanticColors.success
             )
             
             VStack(spacing: Spacing.sm) {
@@ -118,7 +118,7 @@ struct VendorDetailFinancialTab: View {
                 }
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(CornerRadius.md)
         }
     }
@@ -154,15 +154,15 @@ struct FinancialSummaryCard: View {
             
             Text(title)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             
             Text(amount.formatted(.currency(code: "USD")))
                 .font(.system(size: 20, weight: .bold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
         .frame(maxWidth: .infinity)
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
     }
 }
@@ -175,11 +175,11 @@ struct ExpenseRow: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(expense.expenseName)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 Text(expense.expenseDate.formatted(date: .abbreviated, time: .omitted))
                     .font(Typography.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             Spacer()
@@ -188,13 +188,13 @@ struct ExpenseRow: View {
                 Text(expense.amount.formatted(.currency(code: "USD")))
                     .font(Typography.bodyRegular)
                     .fontWeight(.bold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 VendorStatusBadge(status: expense.paymentStatus)
             }
         }
         .padding(Spacing.sm)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
         .cornerRadius(CornerRadius.sm)
     }
 }
@@ -207,12 +207,12 @@ struct PaymentRow: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 if let notes = payment.notes, !notes.isEmpty {
                     Text(notes)
                         .font(Typography.caption2)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .lineLimit(1)
                 }
             }
@@ -223,7 +223,7 @@ struct PaymentRow: View {
                 Text(payment.paymentAmount.formatted(.currency(code: "USD")))
                     .font(Typography.bodyRegular)
                     .fontWeight(.bold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 HStack(spacing: Spacing.xxs) {
                     Image(systemName: payment.paid == true ? "checkmark.circle.fill" : "circle")
@@ -231,11 +231,11 @@ struct PaymentRow: View {
                     Text(payment.paid == true ? "Paid" : "Pending")
                         .font(Typography.caption2)
                 }
-                .foregroundColor(payment.paid == true ? AppColors.success : AppColors.warning)
+                .foregroundColor(payment.paid == true ? SemanticColors.success : SemanticColors.warning)
             }
         }
         .padding(Spacing.sm)
-        .background(AppColors.textPrimary)
+        .background(SemanticColors.textPrimary)
         .cornerRadius(CornerRadius.sm)
     }
 }
@@ -245,10 +245,10 @@ struct VendorStatusBadge: View {
     
     private var statusColor: Color {
         switch status {
-        case .paid: return AppColors.success
-        case .pending: return AppColors.warning
-        case .overdue: return AppColors.error
-        default: return AppColors.textSecondary
+        case .paid: return SemanticColors.success
+        case .pending: return SemanticColors.warning
+        case .overdue: return SemanticColors.error
+        default: return SemanticColors.textSecondary
         }
     }
     

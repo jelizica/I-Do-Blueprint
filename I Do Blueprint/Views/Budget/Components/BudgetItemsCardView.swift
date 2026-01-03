@@ -425,7 +425,7 @@ struct BudgetItemCard: View {
                     Text(item.itemName)
                         .font(.subheadline)
                         .fontWeight(.medium)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
                     
                     if let subcategory = item.subcategory, !subcategory.isEmpty {
@@ -443,7 +443,7 @@ struct BudgetItemCard: View {
                     Text("$\(String(format: "%.0f", item.vendorEstimateWithTax))")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     if item.taxRate > 0 {
                         Text("incl. tax")

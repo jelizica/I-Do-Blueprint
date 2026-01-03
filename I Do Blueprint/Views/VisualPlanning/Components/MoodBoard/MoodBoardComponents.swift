@@ -20,7 +20,7 @@ struct MoodBoardQuickActionButton: View {
         }) {
             Image(systemName: icon)
                 .font(.body)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
@@ -52,7 +52,7 @@ struct MoodBoardElementPreview: View {
                     .fill(element.elementData.color ?? .gray)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.textPrimary.opacity(0.3), lineWidth: 1))
+                            .stroke(SemanticColors.textPrimary.opacity(Opacity.light), lineWidth: 1))
 
             case .image:
                 // Image preview
@@ -115,7 +115,7 @@ struct MoodBoardFilterChip: View {
                         .fill(isActive ? Color.blue : Color(NSColor.controlBackgroundColor)))
                 .overlay(
                     Capsule()
-                        .stroke(isActive ? Color.clear : AppColors.textSecondary.opacity(0.3), lineWidth: 1))
+                        .stroke(isActive ? Color.clear : SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
@@ -156,7 +156,7 @@ struct EmptyMoodBoardView: View {
                 .padding(.horizontal, Spacing.xl)
                 .padding(.vertical, Spacing.md)
                 .background(Color.blue)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .cornerRadius(10)
             }
 

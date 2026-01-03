@@ -18,20 +18,20 @@ struct ConfigurationErrorView: View {
             // Error Icon
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.warning)
+                .foregroundColor(SemanticColors.warning)
                 .accessibilityLabel("Configuration error icon")
 
             // Title
             Text("Configuration Error")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             // Error Description
             if let description = error.errorDescription {
                 Text(description)
                     .font(Typography.bodyRegular)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -41,12 +41,12 @@ struct ConfigurationErrorView: View {
                     Text("What to do:")
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(suggestion)
                         .font(Typography.bodyRegular)
                         .multilineTextAlignment(.center)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .padding(Spacing.md)
                 .frame(maxWidth: .infinity)
@@ -63,7 +63,7 @@ struct ConfigurationErrorView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppColors.primary)
+                .tint(SemanticColors.primaryAction)
                 .accessibleActionButton(
                     label: "Restart application",
                     hint: "Restarts the application to retry configuration"
@@ -76,7 +76,7 @@ struct ConfigurationErrorView: View {
                         .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                .tint(AppColors.primary)
+                .tint(SemanticColors.primaryAction)
                 .accessibleActionButton(
                     label: "Contact support",
                     hint: "Opens email to contact support team"
@@ -89,11 +89,11 @@ struct ConfigurationErrorView: View {
                     Text("Error Type:")
                         .font(Typography.caption)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(String(describing: error))
                         .font(.system(.caption, design: .monospaced))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     if let failureReason = error.failureReason {
                         Divider()
@@ -102,28 +102,28 @@ struct ConfigurationErrorView: View {
                         Text("Failure Reason:")
                             .font(Typography.caption)
                             .fontWeight(.semibold)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
 
                         Text(failureReason)
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
                 .padding(Spacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(AppColors.backgroundSecondary)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(CornerRadius.sm)
             } label: {
                 Text("Technical Details")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(.top, Spacing.md)
         }
         .padding(Spacing.xxl)
         .frame(maxWidth: 600)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 }
 
