@@ -87,12 +87,12 @@ struct CollaboratorHeaderView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("\(activeCount) Active")
                     .font(.headline)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if pendingCount > 0 {
                     Text("\(pendingCount) Pending")
                         .font(.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 
@@ -166,31 +166,31 @@ struct CollaboratorRow: View {
         HStack(spacing: 12) {
             // Avatar
             Circle()
-                .fill(AppColors.cardBackground)
+                .fill(SemanticColors.backgroundSecondary)
                 .frame(width: 40, height: 40)
                 .overlay(
                     Text(collaborator.name.prefix(1).uppercased())
                         .font(.headline)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 )
 
             // Info
             VStack(alignment: .leading, spacing: 4) {
                 Text(collaborator.name)
                     .font(.body)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 HStack(spacing: 8) {
                     if let role = role {
                         Text(role.roleName.displayName)
                             .font(.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
 
                     if isPending {
                         Text("• Pending")
                             .font(.caption)
-                            .foregroundColor(AppColors.warning)
+                            .foregroundColor(SemanticColors.statusWarning)
                     }
                 }
             }
@@ -200,7 +200,7 @@ struct CollaboratorRow: View {
             if canManage {
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(AppColors.textTertiary)
+                    .foregroundColor(SemanticColors.textTertiary)
             }
         }
         .padding(.vertical, Spacing.xs)
@@ -238,13 +238,13 @@ extension View {
 
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(AppColors.success)
+                                .foregroundColor(SemanticColors.statusSuccess)
                             Text(message)
                                 .font(.body)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         }
                         .padding()
-                        .background(AppColors.cardBackground)
+                        .background(SemanticColors.backgroundSecondary)
                         .cornerRadius(12)
                         .shadow(radius: 8)
                         .padding()
