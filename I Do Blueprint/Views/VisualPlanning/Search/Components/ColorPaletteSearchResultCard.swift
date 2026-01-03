@@ -75,7 +75,7 @@ struct ColorPaletteSearchResultCard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isHovered ? Color.blue : Color.clear, lineWidth: 2)
             )
-            .shadow(color: AppColors.textPrimary.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
+            .shadow(color: SemanticColors.textPrimary.opacity(isHovered ? Opacity.subtle : Opacity.verySubtle), radius: isHovered ? 8 : 4, y: 2)
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
@@ -116,13 +116,13 @@ struct ColorPaletteSearchResultCard: View {
                             .foregroundColor(contrastColor(for: hexColor))
                             .padding(.horizontal, Spacing.xs)
                             .padding(.vertical, Spacing.xxs)
-                            .background(AppColors.textPrimary.opacity(0.5))
+                            .background(SemanticColors.textPrimary.opacity(Opacity.medium))
                             .cornerRadius(4)
                             .padding(.bottom, Spacing.xs)
                     }
                 }
             } else {
-                AppColors.textSecondary.opacity(0.3)
+                SemanticColors.textSecondary.opacity(Opacity.light)
                     .overlay(
                         Image(systemName: "exclamationmark.triangle")
                             .foregroundColor(.red)
@@ -143,7 +143,7 @@ struct ColorPaletteSearchResultCard: View {
                 .foregroundColor(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.textSecondary.opacity(0.1))
+        .background(SemanticColors.textSecondary.opacity(Opacity.subtle))
     }
 
     // MARK: - Helper Methods
