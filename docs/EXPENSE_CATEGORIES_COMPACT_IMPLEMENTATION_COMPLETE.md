@@ -38,9 +38,73 @@ The Expense Categories page has been successfully optimized for compact window l
 | Phase 6: Responsive Category Section | ✅ Complete | 45 min | ✅ SUCCESS |
 | Phase 7: Responsive Category Rows | ✅ Complete | 45 min | ✅ SUCCESS |
 | Phase 8: Modal Sizing | ✅ Complete | 30 min | ✅ SUCCESS |
-| **Phase 9: Integration & Polish** | **🔄 Partial** | **Pending** | **✅ SUCCESS** |
+| Phase 9: Integration & Polish | ✅ Complete | 30 min | ✅ SUCCESS |
+| Phase 10: User Feedback Fixes | ✅ Complete | 60 min | ✅ SUCCESS |
+| Phase 11: Additional UI Fixes | ✅ Complete | 45 min | ✅ SUCCESS |
+| **Phase 12: Critical Freeze Fix** | **✅ Complete** | **90 min** | **✅ SUCCESS** |
 
-**Total Implementation Time:** ~4 hours (estimated 5-6 hours)
+**Total Implementation Time:** ~7.5 hours (estimated 5-6 hours)
+
+---
+
+## Phase 12: Critical Freeze Fix - FINAL
+
+### Problem Identified
+After ~5 minutes on the Expense Categories page, the app would freeze completely. This was a critical performance issue that required thorough investigation.
+
+### Root Cause Analysis
+Compared ExpenseCategoriesView with other working budget pages (ExpenseTrackerView, PaymentScheduleView, BudgetDevelopmentView, BudgetOverviewDashboardViewV2) to identify the difference.
+
+The freeze was caused by **timer-based polling** (`Timer.publish(every: 0.5s)`) combined with:
+1. **Timer firing every 0.5s** → calls `recalculateSummaryValues()`
+2. **Store property access** → `budgetStore.categoryStore.categories` triggers `objectWillChange`
+3. **objectWillChange forwarding** → `categoryStore.objectWillChange` is forwarded to `budgetStore.objectWillChange` via Combine sinks in `BudgetStoreV2.init()`
+4. **@EnvironmentObject subscription** → SwiftUI re-renders view on `objectWillChange`
+5. **Feedback loop accumulates** ��� Over ~5 minutes, this overwhelms the system
+
+### Why Other Views Don't Freeze
+- **ExpenseTrackerView**: Uses `.onAppear` for initial load only, NO timer polling
+- **PaymentScheduleView**: Uses `.task` for initial load only, NO timer polling
+- **BudgetDevelopmentView**: Uses `.task` for initial load only, NO timer polling
+- **BudgetOverviewDashboardViewV2**: Has `setupRealTimeSync()` but it's **DISABLED** ("// Disabled for performance")
+
+### Solution Applied
+Following the same pattern as the working views:
+
+1. ✅ **Removed timer-based polling entirely**
+   - Deleted `Timer.publish(every: 0.5, ...)` and all related code
+   - No more continuous store access
+
+2. ✅ **Load data once on `.task`**
+   - Same pattern as ExpenseTrackerView and PaymentScheduleView
+   - `await budgetStore.loadBudgetData(force: false)` then `recalculateCachedValues()`
+
+3. ✅ **Recalculate only on user actions**
+   - `.onChange(of: searchText)` - when user types in search
+   - `.onChange(of: showOnlyOverBudget)` - when user toggles filter
+   - `.sheet(onDismiss:)` - after add/edit category modal closes
+   - After delete operation completes
+
+4. ✅ **Simplified recalculation function**
+   - Removed `Task.detached` and async complexity
+   - Synchronous calculation on main thread (fast enough for category data)
+   - Single store access at start, then pure computation
+
+### Files Modified
+- `ExpenseCategoriesView.swift` - Complete rewrite of data loading pattern
+
+### Commits
+- `93ef2cc` - Use debounced onReceive instead of onChange + fix leaf category display
+- `1ae794c` - Use timer-based polling with task cancellation (still froze after 5 min)
+- `4e8facb` - **FINAL FIX**: Remove timer-based polling entirely, follow working views pattern
+
+### Beads Issues
+- `I Do Blueprint-yahc` (CLOSED - Freeze fix)
+- `I Do Blueprint-vuio` (CLOSED - Leaf category display fix)
+- `I Do Blueprint-po39` (CLOSED - Final freeze fix documentation)
+
+### Key Lesson Learned
+**Never use timer-based polling in SwiftUI views that have `@EnvironmentObject` subscriptions to stores with `objectWillChange` forwarding.** The combination creates a feedback loop that accumulates over time. Instead, load data once on appear and update only on explicit user actions.
 
 ---
 
