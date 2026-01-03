@@ -96,7 +96,7 @@ struct EditVendorSheetV2: View {
                                 // Logo Display
                                 ZStack {
                                     Circle()
-                                        .fill(AppColors.controlBackground)
+                                        .fill(SemanticColors.backgroundSecondary)
                                         .frame(width: 100, height: 100)
                                     
                                     if let image = selectedImage {
@@ -117,7 +117,7 @@ struct EditVendorSheetV2: View {
                                             case .failure, .empty:
                                                 Image(systemName: "building.2")
                                                     .font(.system(size: 40))
-                                                    .foregroundColor(AppColors.textSecondary)
+                                                    .foregroundColor(SemanticColors.textSecondary)
                                             @unknown default:
                                                 EmptyView()
                                             }
@@ -125,7 +125,7 @@ struct EditVendorSheetV2: View {
                                     } else {
                                         Image(systemName: "building.2")
                                             .font(.system(size: 40))
-                                            .foregroundColor(AppColors.textSecondary)
+                                            .foregroundColor(SemanticColors.textSecondary)
                                     }
                                     
                                     if isUploadingImage {
@@ -285,7 +285,7 @@ struct EditVendorSheetV2: View {
                             .padding(Spacing.sm)
                             .background(
                                 RoundedRectangle(cornerRadius: 8)
-                                    .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 1)
+                                    .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
                             )
                     }
                 }
@@ -474,7 +474,7 @@ struct SectionHeader: View {
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: icon)
-                .foregroundColor(AppColors.Vendor.contacted)
+                .foregroundColor(SemanticColors.primaryAction)
             Text(title)
                 .font(.headline)
         }
