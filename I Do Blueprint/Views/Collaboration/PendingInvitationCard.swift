@@ -20,11 +20,11 @@ struct PendingInvitationCard: View {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "envelope.fill")
                             .font(.system(size: 14))
-                            .foregroundColor(AppColors.warning)
+                            .foregroundColor(SemanticColors.statusWarning)
 
                         Text(invitation.coupleName)
                             .font(Typography.heading)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                     }
 
                     if let weddingDate = invitation.weddingDate {
@@ -34,7 +34,7 @@ struct PendingInvitationCard: View {
                             Text(invitation.formattedWeddingDate)
                         }
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
 
@@ -55,7 +55,7 @@ struct PendingInvitationCard: View {
                         Text("\(invitedBy) invited you to collaborate")
                     }
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 }
 
                 HStack(spacing: Spacing.xs) {
@@ -64,7 +64,7 @@ struct PendingInvitationCard: View {
                     Text("Invited \(invitation.relativeInvitationTime)")
                 }
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
             }
 
             Divider()
@@ -80,7 +80,7 @@ struct PendingInvitationCard: View {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(AppColors.success)
+                .tint(SemanticColors.statusSuccess)
                 .accessibilityLabel("Accept invitation from \(invitation.coupleName)")
 
                 Button(action: onDecline) {
@@ -92,15 +92,15 @@ struct PendingInvitationCard: View {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.bordered)
-                .tint(AppColors.textSecondary)
+                .tint(SemanticColors.textSecondary)
                 .accessibilityLabel("Decline invitation from \(invitation.coupleName)")
             }
         }
         .padding(Spacing.lg)
-        .background(AppColors.warning.opacity(0.05))
+        .background(SemanticColors.statusWarning.opacity(Opacity.verySubtle))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppColors.warning.opacity(0.3), lineWidth: 2)
+                .stroke(SemanticColors.statusWarning.opacity(Opacity.light), lineWidth: 2)
         )
         .cornerRadius(12)
     }
@@ -115,10 +115,10 @@ struct PendingInvitationCard: View {
         }
         .font(Typography.caption)
         .fontWeight(.medium)
-        .foregroundColor(AppColors.warning)
+        .foregroundColor(SemanticColors.statusWarning)
         .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.xs)
-        .background(AppColors.warning.opacity(0.1))
+        .background(SemanticColors.statusWarning.opacity(Opacity.subtle))
         .cornerRadius(6)
     }
 }
