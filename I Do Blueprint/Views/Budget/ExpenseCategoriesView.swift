@@ -9,11 +9,23 @@ import SwiftUI
 
 struct ExpenseCategoriesView: View {
     @EnvironmentObject private var budgetStore: BudgetStoreV2
+    @Binding var currentPage: BudgetPage
+    
     @State private var showingAddCategory = false
     @State private var editingCategory: BudgetCategory?
     @State private var searchText = ""
     @State private var showingDeleteAlert = false
     @State private var categoryToDelete: BudgetCategory?
+    @State private var expandedSections: Set<UUID> = []
+    
+    // Dual initializer pattern
+    init(currentPage: Binding<BudgetPage>) {
+        self._currentPage = currentPage
+    }
+    
+    init() {
+        self._currentPage = .constant(.expenseCategories)
+    }
 
     private var filteredCategories: [BudgetCategory] {
         let categories = budgetStore.categoryStore.categories
@@ -32,6 +44,28 @@ struct ExpenseCategoriesView: View {
     private func subcategories(for parent: BudgetCategory) -> [BudgetCategory] {
         filteredCategories.filter { $0.parentCategoryId == parent.id }
     }
+    
+    // MARK: - Section Management
+    
+    private func expandAllSections() {
+        expandedSections = Set(parentCategories.map { $0.id })
+    }
+    
+    private func collapseAllSections() {
+        expandedSections.removeAll()
+    }
+    
+    // MARK: - Import/Export
+    
+    private func exportCategories() {
+        AppLogger.ui.info("Export categories - Not yet implemented")
+        // TODO: Implement CSV export
+    }
+    
+    private func importCategories() {
+        AppLogger.ui.info("Import categories - Not yet implemented")
+        // TODO: Implement CSV import
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -40,11 +74,14 @@ struct ExpenseCategoriesView: View {
             let availableWidth = geometry.size.width - (horizontalPadding * 2)
             
             VStack(spacing: 0) {
-                // Header
-                ExpenseCategoriesHeaderView(
-                    categoryCount: filteredCategories.count,
-                    searchText: $searchText,
-                    onAddCategory: { showingAddCategory = true }
+                // Unified Header
+                ExpenseCategoriesUnifiedHeader(
+                    windowSize: windowSize,
+                    currentPage: $currentPage,
+                    onExpandAll: expandAllSections,
+                    onCollapseAll: collapseAllSections,
+                    onExport: exportCategories,
+                    onImport: importCategories
                 )
 
                 // Categories List
