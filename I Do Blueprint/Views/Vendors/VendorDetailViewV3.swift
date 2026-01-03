@@ -156,7 +156,7 @@ struct VendorDetailViewV3: View {
         // Dynamic frame size based on parent window size
         // This explicit frame tells the sheet how big to be
         .frame(width: dynamicSize.width, height: dynamicSize.height)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .sheet(isPresented: $showingEditSheet) {
             EditVendorSheetV2(vendor: currentVendor, vendorStore: vendorStore) { updatedVendor in
                 currentVendor = updatedVendor
