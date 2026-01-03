@@ -35,7 +35,7 @@ struct GuestExportView: View {
             HStack {
                 Text("Export Guest List")
                     .font(Typography.displaySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                 
                 Spacer()
                 
@@ -44,15 +44,15 @@ struct GuestExportView: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(AppColors.textTertiary)
+                        .foregroundColor(SemanticColors.textTertiary)
                 }
                 .buttonStyle(.plain)
             }
             .padding(Spacing.xl)
-            .background(AppColors.cardBackground)
-            
+            .background(SemanticColors.backgroundSecondary)
+
             Divider()
-                .background(AppColors.borderLight)
+                .background(SemanticColors.borderPrimary)
             
             // Content
             ScrollView {
@@ -61,23 +61,23 @@ struct GuestExportView: View {
                     HStack {
                         Image(systemName: "person.3.fill")
                             .font(.system(size: 20))
-                            .foregroundColor(AppColors.primary)
-                        
+                            .foregroundColor(SemanticColors.primaryAction)
+
                         Text("\(guests.count) guests will be exported")
                             .font(Typography.bodyRegular)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                         
                         Spacer()
                     }
                     .padding(Spacing.lg)
-                    .background(AppColors.cardBackground)
+                    .background(SemanticColors.backgroundSecondary)
                     .cornerRadius(CornerRadius.lg)
                     
                     // Format selection
                     VStack(alignment: .leading, spacing: Spacing.md) {
                         Text("Export Format")
                             .font(Typography.heading)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                         
                         ForEach(GuestExportFormat.allCases, id: \.self) { format in
                             FormatOptionCard(
@@ -92,16 +92,16 @@ struct GuestExportView: View {
                     if let error = exportError {
                         HStack(spacing: Spacing.md) {
                             Image(systemName: "exclamationmark.triangle.fill")
-                                .foregroundColor(AppColors.error)
-                            
+                                .foregroundColor(SemanticColors.statusWarning)
+
                             Text(error.localizedDescription)
                                 .font(Typography.bodyRegular)
-                                .foregroundColor(AppColors.error)
+                                .foregroundColor(SemanticColors.statusWarning)
                             
                             Spacer()
                         }
                         .padding(Spacing.lg)
-                        .background(AppColors.errorLight)
+                        .background(SemanticColors.statusWarning.opacity(Opacity.subtle))
                         .cornerRadius(CornerRadius.lg)
                     }
                 }
@@ -109,8 +109,8 @@ struct GuestExportView: View {
             }
             
             Divider()
-                .background(AppColors.borderLight)
-            
+                .background(SemanticColors.borderPrimary)
+
             // Footer with action buttons
             HStack(spacing: Spacing.md) {
                 Button {
@@ -118,14 +118,14 @@ struct GuestExportView: View {
                 } label: {
                     Text("Cancel")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .frame(maxWidth: .infinity)
                         .frame(height: 44)
-                        .background(AppColors.cardBackground)
+                        .background(SemanticColors.backgroundSecondary)
                         .cornerRadius(CornerRadius.md)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(AppColors.borderLight, lineWidth: 1)
+                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                         )
                 }
                 .buttonStyle(.plain)
@@ -139,7 +139,7 @@ struct GuestExportView: View {
                         if isExporting {
                             ProgressView()
                                 .scaleEffect(0.8)
-                                .tint(AppColors.textPrimary)
+                                .tint(SemanticColors.textPrimary)
                         } else {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.system(size: 14))
@@ -148,20 +148,20 @@ struct GuestExportView: View {
                         Text(isExporting ? "Exporting..." : "Export")
                             .font(Typography.bodyRegular)
                     }
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(maxWidth: .infinity)
                     .frame(height: 44)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(CornerRadius.md)
                 }
                 .buttonStyle(.plain)
                 .disabled(isExporting || guests.isEmpty)
             }
             .padding(Spacing.xl)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
         }
         .frame(width: 500, height: 600)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
     
     // MARK: - Export Logic
@@ -211,18 +211,18 @@ private struct FormatOptionCard: View {
                 // Icon
                 Image(systemName: format.iconName)
                     .font(.system(size: 24))
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                    .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
                     .frame(width: 40)
                 
                 // Format info
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(format.rawValue)
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
-                    
+                        .foregroundColor(SemanticColors.textPrimary)
+
                     Text(formatDescription(for: format))
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 Spacer()
@@ -231,19 +231,19 @@ private struct FormatOptionCard: View {
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 } else {
                     Circle()
-                        .stroke(AppColors.borderLight, lineWidth: 2)
+                        .stroke(SemanticColors.borderPrimary, lineWidth: 2)
                         .frame(width: 24, height: 24)
                 }
             }
             .padding(Spacing.lg)
-            .background(isSelected ? AppColors.primaryLight : AppColors.cardBackground)
+            .background(isSelected ? SemanticColors.primaryActionHover : SemanticColors.backgroundSecondary)
             .cornerRadius(CornerRadius.lg)
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .stroke(isSelected ? AppColors.primary : AppColors.borderLight, lineWidth: isSelected ? 2 : 1)
+                    .stroke(isSelected ? SemanticColors.primaryAction : SemanticColors.borderPrimary, lineWidth: isSelected ? 2 : 1)
             )
         }
         .buttonStyle(.plain)
