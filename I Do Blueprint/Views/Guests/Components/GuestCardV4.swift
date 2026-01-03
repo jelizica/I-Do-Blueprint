@@ -33,11 +33,11 @@ struct GuestCardV4: View {
         }
         .frame(minWidth: 250, maxWidth: .infinity) // Flexible width with comfortable minimum
         .frame(height: 243) // Keep fixed height
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppColors.borderLight, lineWidth: 0.5)
+                .stroke(SemanticColors.borderPrimary, lineWidth: 0.5)
         )
         .accessibleListItem(
             label: guest.fullName,
@@ -60,12 +60,12 @@ struct GuestCardV4: View {
                         .clipShape(Circle())
                 } else {
                     Circle()
-                        .fill(AppColors.cardBackground)
+                        .fill(SemanticColors.backgroundSecondary)
                         .frame(width: 48, height: 48)
                         .overlay(
                             Text(guest.firstName.prefix(1) + guest.lastName.prefix(1))
                                 .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         )
                 }
             }
@@ -90,7 +90,7 @@ struct GuestCardV4: View {
     private var nameSection: some View {
         Text(guest.fullName)
             .font(Typography.heading)
-            .foregroundColor(AppColors.textPrimary)
+            .foregroundColor(SemanticColors.textPrimary)
             .lineLimit(1)
             .padding(.horizontal, Spacing.xxl)
             .padding(.top, Spacing.sm)
@@ -103,7 +103,7 @@ struct GuestCardV4: View {
         if let email = guest.email, !email.isEmpty {
             Text(email)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .lineLimit(1)
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.top, Spacing.xs)
@@ -117,7 +117,7 @@ struct GuestCardV4: View {
         if let invitedBy = guest.invitedBy {
             Text(invitedBy.displayName(with: settings))
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.top, Spacing.sm)
         }
@@ -128,49 +128,49 @@ struct GuestCardV4: View {
     private var detailsSection: some View {
         VStack(spacing: 0) {
             Divider()
-                .background(AppColors.borderLight)
+                .background(SemanticColors.borderPrimary)
 
             // Table Assignment
             HStack {
                 Text("Table")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Spacer()
 
                 if let table = guest.tableAssignment {
                     Text("\(table)")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 } else {
                     Text("-")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
             .padding(.horizontal, Spacing.xxl)
             .padding(.vertical, Spacing.sm)
 
             Divider()
-                .background(AppColors.borderLight)
+                .background(SemanticColors.borderPrimary)
 
             // Meal Choice
             HStack {
                 Text("Meal Choice")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Spacer()
 
                 if let mealOption = guest.mealOption, !mealOption.isEmpty {
                     Text(mealOption)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
                 } else {
                     Text("Not selected")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
             .padding(.horizontal, Spacing.xxl)
@@ -204,21 +204,21 @@ struct GuestStatusBadge: View {
         Group {
             switch status {
             case .confirmed:
-                badge(text: "Confirmed", color: AppColors.success, background: AppColors.successLight)
+                badge(text: "Confirmed", color: SemanticColors.statusSuccess, background: SemanticColors.statusSuccess.opacity(Opacity.subtle))
             case .attending:
-                badge(text: "Attending", color: AppColors.success, background: AppColors.successLight)
+                badge(text: "Attending", color: SemanticColors.statusSuccess, background: SemanticColors.statusSuccess.opacity(Opacity.subtle))
             case .pending:
-                badge(text: "Pending", color: AppColors.warning, background: AppColors.warningLight)
+                badge(text: "Pending", color: SemanticColors.statusPending, background: SemanticColors.statusPending.opacity(Opacity.subtle))
             case .maybe:
-                badge(text: "Maybe", color: AppColors.warning, background: AppColors.warningLight)
+                badge(text: "Maybe", color: SemanticColors.statusPending, background: SemanticColors.statusPending.opacity(Opacity.subtle))
             case .invited:
-                badge(text: "Invited", color: AppColors.warning, background: AppColors.warningLight)
+                badge(text: "Invited", color: SemanticColors.statusPending, background: SemanticColors.statusPending.opacity(Opacity.subtle))
             case .declined:
-                badge(text: "Declined", color: AppColors.error, background: AppColors.errorLight)
+                badge(text: "Declined", color: SemanticColors.statusWarning, background: SemanticColors.statusWarning.opacity(Opacity.subtle))
             case .noResponse:
-                badge(text: "No Response", color: AppColors.error, background: AppColors.errorLight)
+                badge(text: "No Response", color: SemanticColors.statusWarning, background: SemanticColors.statusWarning.opacity(Opacity.subtle))
             default:
-                badge(text: status.displayName, color: AppColors.textSecondary, background: AppColors.cardBackground)
+                badge(text: status.displayName, color: SemanticColors.textSecondary, background: SemanticColors.backgroundSecondary)
             }
         }
     }
