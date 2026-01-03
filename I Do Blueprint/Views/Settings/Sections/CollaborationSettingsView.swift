@@ -19,11 +19,11 @@ struct CollaborationSettingsView: View {
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("Collaboration")
                     .font(Typography.title1)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("Manage your wedding collaborations and team members")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             Divider()
@@ -35,20 +35,20 @@ struct CollaborationSettingsView: View {
                 HStack(spacing: Spacing.md) {
                     Image(systemName: "person.2.fill")
                         .font(.system(size: 20))
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                         .frame(width: 32, height: 32)
-                        .background(AppColors.primary.opacity(0.1))
+                        .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                         .cornerRadius(8)
 
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("My Collaborations")
                             .font(Typography.bodyRegular)
                             .fontWeight(.medium)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
 
                         Text("View and manage all weddings you're collaborating on")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
 
                     Spacer()
@@ -58,19 +58,19 @@ struct CollaborationSettingsView: View {
                         Text("\(collaborationStore.pendingUserInvitations.count)")
                             .font(Typography.caption)
                             .fontWeight(.semibold)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xs)
-                            .background(AppColors.warning)
+                            .background(SemanticColors.statusWarning)
                             .cornerRadius(12)
                     }
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .padding(Spacing.md)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(12)
             }
             .buttonStyle(.plain)
@@ -88,30 +88,30 @@ struct CollaborationSettingsView: View {
                 HStack(spacing: Spacing.md) {
                     Image(systemName: "person.2.badge.gearshape")
                         .font(.system(size: 20))
-                        .foregroundColor(AppColors.success)
+                        .foregroundColor(SemanticColors.statusSuccess)
                         .frame(width: 32, height: 32)
-                        .background(AppColors.success.opacity(0.1))
+                        .background(SemanticColors.statusSuccess.opacity(Opacity.subtle))
                         .cornerRadius(8)
 
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Team Management")
                             .font(Typography.bodyRegular)
                             .fontWeight(.medium)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
 
                         Text("Manage collaborators for your current wedding")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
 
                     Spacer()
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .padding(Spacing.md)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(12)
             }
             .buttonStyle(.plain)
@@ -125,7 +125,7 @@ struct CollaborationSettingsView: View {
             Spacer()
         }
         .padding(Spacing.xl)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .task {
             // Load pending invitations count
             await collaborationStore.loadUserCollaborations()

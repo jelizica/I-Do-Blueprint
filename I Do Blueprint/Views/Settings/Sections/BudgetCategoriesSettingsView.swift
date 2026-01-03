@@ -342,7 +342,7 @@ struct SettingsFolderRow: View {
             // Folder icon
             Image(systemName: "folder.fill")
                 .font(.body)
-                .foregroundColor(Color(hex: category.color) ?? AppColors.Budget.allocated)
+                .foregroundColor(Color(hex: category.color) ?? SemanticColors.primaryAction)
             
             // Category details
             VStack(alignment: .leading, spacing: 2) {

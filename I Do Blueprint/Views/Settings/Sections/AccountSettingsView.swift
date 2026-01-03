@@ -82,11 +82,11 @@ struct AccountSettingsView: View {
                             Spacer()
                             HStack(spacing: 6) {
                                 Circle()
-                                    .fill(AppColors.textSecondary)
+                                    .fill(SemanticColors.textSecondary)
                                     .frame(width: 8, height: 8)
                                 Text("Not Signed In")
                                     .font(.subheadline)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             }
                         }
                     }
