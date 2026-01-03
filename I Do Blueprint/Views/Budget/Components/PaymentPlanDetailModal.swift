@@ -94,11 +94,11 @@ struct PaymentPlanDetailModal: View {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(plan.vendor)
                         .font(Typography.title1)
-                        .foregroundColor(AppColors.textPrimary)
-                    
+                        .foregroundColor(SemanticColors.textPrimary)
+
                     Text(plan.planTypeDisplay)
                         .font(Typography.subheading)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 Spacer()
@@ -123,13 +123,13 @@ struct PaymentPlanDetailModal: View {
                 HStack {
                     Text(plan.progressText)
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
-                    
+                        .foregroundColor(SemanticColors.textPrimary)
+
                     Spacer()
-                    
+
                     Text("\(Int(plan.percentPaid))% paid")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 ProgressView(value: plan.percentPaid, total: 100)
@@ -141,68 +141,68 @@ struct PaymentPlanDetailModal: View {
             if plan.isOverdue {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundColor(.red)
-                    
+                        .foregroundColor(SemanticColors.statusWarning)
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text("\(plan.overdueCount) payment\(plan.overdueCount == 1 ? "" : "s") overdue")
                             .font(Typography.bodyRegular)
-                            .foregroundColor(.red)
-                        
+                            .foregroundColor(SemanticColors.statusWarning)
+
                         if plan.overdueAmount > 0 {
                             Text(plan.overdueAmount, format: .currency(code: "USD"))
                                 .font(Typography.caption)
-                                .foregroundColor(.red)
+                                .foregroundColor(SemanticColors.statusWarning)
                         }
                     }
                 }
                 .padding(Spacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.red.opacity(0.1))
+                .background(SemanticColors.statusWarning.opacity(Opacity.subtle))
                 .cornerRadius(CornerRadius.md)
             } else if let nextDate = plan.nextPaymentDate, let nextAmount = plan.nextPaymentAmount {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "calendar")
-                        .foregroundColor(.blue)
-                    
+                        .foregroundColor(SemanticColors.statusPending)
+
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Next Payment")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
-                        
+                            .foregroundColor(SemanticColors.textSecondary)
+
                         HStack(spacing: Spacing.xs) {
                             Text(nextAmount, format: .currency(code: "USD"))
                                 .font(Typography.bodyRegular)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.textPrimary)
-                            
+                                .foregroundColor(SemanticColors.textPrimary)
+
                             Text("on \(nextDate, format: .dateTime.month().day().year())")
                                 .font(Typography.bodyRegular)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         }
-                        
+
                         if let daysUntil = plan.daysUntilNextPayment {
                             Text("(\(daysUntil) day\(daysUntil == 1 ? "" : "s") from now)")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                     }
                 }
                 .padding(Spacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.blue.opacity(0.1))
+                .background(SemanticColors.statusPending.opacity(Opacity.subtle))
                 .cornerRadius(CornerRadius.md)
             } else if plan.planStatus == .completed {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                    
+                        .foregroundColor(SemanticColors.statusSuccess)
+
                     Text("All payments completed")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(.green)
+                        .foregroundColor(SemanticColors.statusSuccess)
                 }
                 .padding(Spacing.md)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.green.opacity(0.1))
+                .background(SemanticColors.statusSuccess.opacity(Opacity.subtle))
                 .cornerRadius(CornerRadius.md)
             }
         }
@@ -214,27 +214,27 @@ struct PaymentPlanDetailModal: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Financial Summary")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             HStack(spacing: Spacing.lg) {
                 financialCard(
                     title: "Total Amount",
                     amount: plan.totalAmount,
-                    color: AppColors.textPrimary,
+                    color: SemanticColors.textPrimary,
                     icon: "dollarsign.circle"
                 )
-                
+
                 financialCard(
                     title: "Amount Paid",
                     amount: plan.amountPaid,
-                    color: .green,
+                    color: SemanticColors.statusSuccess,
                     icon: "checkmark.circle.fill"
                 )
-                
+
                 financialCard(
                     title: "Remaining",
                     amount: plan.amountRemaining,
-                    color: .orange,
+                    color: SemanticColors.statusPending,
                     icon: "clock.fill"
                 )
             }
@@ -242,21 +242,21 @@ struct PaymentPlanDetailModal: View {
             if plan.hasDeposit && plan.depositAmount > 0 {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "banknote")
-                        .foregroundColor(.blue)
-                    
+                        .foregroundColor(SemanticColors.statusPending)
+
                     Text("Deposit: \(plan.depositAmount, format: .currency(code: "USD"))")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
-                    
+                        .foregroundColor(SemanticColors.textPrimary)
+
                     if let depositDate = plan.depositDate {
                         Text("• \(depositDate, format: .dateTime.month().day().year())")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
                 .padding(Spacing.sm)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(Color.blue.opacity(0.05))
+                .background(SemanticColors.statusPending.opacity(Opacity.verySubtle))
                 .cornerRadius(CornerRadius.sm)
             }
         }
@@ -271,7 +271,7 @@ struct PaymentPlanDetailModal: View {
                 
                 Text(title)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             Text(amount, format: .currency(code: "USD"))
@@ -298,24 +298,24 @@ struct PaymentPlanDetailModal: View {
             HStack {
                 Text("Payment Schedule")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
-                
+                    .foregroundColor(SemanticColors.textPrimary)
+
                 Spacer()
-                
+
                 Text("\(planPayments.count) payment\(planPayments.count == 1 ? "" : "s")")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             if planPayments.isEmpty {
                 VStack(spacing: Spacing.md) {
                     Image(systemName: "calendar.badge.exclamationmark")
                         .font(.largeTitle)
-                        .foregroundColor(AppColors.textSecondary)
-                    
+                        .foregroundColor(SemanticColors.textSecondary)
+
                     Text("No payments found for this plan")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(Spacing.xl)
@@ -346,7 +346,7 @@ struct PaymentPlanDetailModal: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Plan Details")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 detailRow(label: "Payment Type", value: plan.paymentType.capitalized)
@@ -369,12 +369,12 @@ struct PaymentPlanDetailModal: View {
                 if plan.hasRetainer {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.purple)
+                            .foregroundColor(SemanticColors.primaryAction)
                             .font(.caption)
-                        
+
                         Text("Includes retainer payment")
                             .font(Typography.caption)
-                            .foregroundColor(.purple)
+                            .foregroundColor(SemanticColors.primaryAction)
                     }
                 }
                 
@@ -382,11 +382,11 @@ struct PaymentPlanDetailModal: View {
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text("Notes")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
-                        
+                            .foregroundColor(SemanticColors.textSecondary)
+
                         Text(notes)
                             .font(Typography.bodyRegular)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                             .padding(Spacing.sm)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background({
@@ -419,12 +419,12 @@ struct PaymentPlanDetailModal: View {
         HStack {
             Text(label)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .frame(width: 140, alignment: .leading)
-            
+
             Text(value)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             Spacer()
         }
@@ -444,7 +444,7 @@ private struct PaymentScheduleDetailRow: View {
             // Status indicator
             Button(action: onTogglePaid) {
                 Image(systemName: schedule.paid ? "checkmark.circle.fill" : "circle")
-                    .foregroundColor(schedule.paid ? .green : .gray)
+                    .foregroundColor(schedule.paid ? SemanticColors.statusSuccess : SemanticColors.textTertiary)
                     .font(.title3)
             }
             .buttonStyle(.plain)
@@ -454,29 +454,29 @@ private struct PaymentScheduleDetailRow: View {
                 HStack(spacing: Spacing.sm) {
                     Text(schedule.paymentDate, format: .dateTime.month().day().year())
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
-                    
+                        .foregroundColor(SemanticColors.textPrimary)
+
                     if schedule.isDeposit {
                         Text("• Deposit")
                             .font(Typography.caption)
-                            .foregroundColor(.blue)
+                            .foregroundColor(SemanticColors.statusPending)
                     } else if schedule.isRetainer {
                         Text("• Retainer")
                             .font(Typography.caption)
-                            .foregroundColor(.purple)
+                            .foregroundColor(SemanticColors.primaryAction)
                     }
-                    
+
                     if let order = schedule.paymentOrder {
                         Text("• Payment #\(order)")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
                 
                 if let notes = schedule.notes, !notes.isEmpty {
                     Text(notes)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .lineLimit(2)
                 }
             }
@@ -486,11 +486,11 @@ private struct PaymentScheduleDetailRow: View {
             Text(schedule.paymentAmount, format: .currency(code: "USD"))
                 .font(Typography.heading)
                 .fontWeight(.semibold)
-                .foregroundColor(schedule.paid ? .green : AppColors.textPrimary)
-            
+                .foregroundColor(schedule.paid ? SemanticColors.statusSuccess : SemanticColors.textPrimary)
+
             Button(action: onEdit) {
                 Image(systemName: "pencil")
-                    .foregroundColor(.blue)
+                    .foregroundColor(SemanticColors.statusPending)
                     .font(.body)
             }
             .buttonStyle(.plain)
@@ -499,13 +499,9 @@ private struct PaymentScheduleDetailRow: View {
         .padding(Spacing.md)
         .background({
             if schedule.paid {
-                Color.green.opacity(0.05)
+                SemanticColors.statusSuccess.opacity(Opacity.verySubtle)
             } else {
-                #if os(macOS)
-                Color(NSColor.controlBackgroundColor)
-                #else
-                Color(UIColor.systemBackground)
-                #endif
+                SemanticColors.backgroundSecondary
             }
         }())
         .cornerRadius(CornerRadius.md)
