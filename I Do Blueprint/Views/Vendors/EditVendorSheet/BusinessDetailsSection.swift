@@ -45,7 +45,7 @@ struct BusinessDetailsSection: View {
                 VendorFormField(label: "Quoted Amount") {
                     HStack {
                         Text("$")
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                         TextField("0", text: $quotedAmount)
                             .textFieldStyle(.roundedBorder)
                     }

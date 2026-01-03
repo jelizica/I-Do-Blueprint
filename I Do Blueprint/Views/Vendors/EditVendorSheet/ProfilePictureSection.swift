@@ -36,7 +36,7 @@ struct ProfilePictureSection: View {
     private var profileImageDisplay: some View {
         ZStack {
             Circle()
-                .fill(AppColors.controlBackground)
+                .fill(SemanticColors.backgroundSecondary)
                 .frame(width: 100, height: 100)
             
             imageContent
@@ -121,7 +121,7 @@ struct ProfilePictureSection: View {
     private var placeholderIcon: some View {
         Image(systemName: "building.2")
             .font(.system(size: 40))
-            .foregroundColor(AppColors.textSecondary)
+            .foregroundColor(SemanticColors.textSecondary)
     }
 }
 
