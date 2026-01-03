@@ -160,6 +160,22 @@ enum ContractStatus: String, Codable, CaseIterable {
         case .none: "gray"
         }
     }
+
+    /// SF Symbol icon for accessibility and visual clarity
+    var icon: String {
+        switch self {
+        case .draft:
+            return "doc.text"
+        case .pending:
+            return "clock.fill"
+        case .signed:
+            return "checkmark.seal.fill"
+        case .expired:
+            return "exclamationmark.triangle.fill"
+        case .none:
+            return "minus.circle"
+        }
+    }
 }
 
 // MARK: - Filter and Sort Options

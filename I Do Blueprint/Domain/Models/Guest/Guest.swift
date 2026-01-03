@@ -45,6 +45,26 @@ enum RSVPStatus: String, CaseIterable, Codable {
         case .invited, .saveTheDateSent, .invitationSent, .reminded, .noResponse: AppColors.Guest.invited
         }
     }
+
+    /// SF Symbol icon for accessibility and visual clarity
+    var icon: String {
+        switch self {
+        case .attending, .confirmed:
+            return "checkmark.circle.fill"
+        case .declined:
+            return "xmark.circle.fill"
+        case .maybe:
+            return "questionmark.circle.fill"
+        case .pending:
+            return "clock.fill"
+        case .invited, .saveTheDateSent, .invitationSent:
+            return "envelope.fill"
+        case .reminded:
+            return "bell.fill"
+        case .noResponse:
+            return "ellipsis.circle.fill"
+        }
+    }
 }
 
 enum InvitedBy: String, CaseIterable, Codable {
