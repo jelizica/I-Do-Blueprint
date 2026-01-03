@@ -31,7 +31,7 @@ struct CollaborationMainView: View {
                     Text("Team Management")
                         .font(.largeTitle)
                         .fontWeight(.bold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Spacer()
 
@@ -60,7 +60,7 @@ struct CollaborationMainView: View {
                 }
             }
             .frame(minWidth: 800, minHeight: 600)
-            .background(AppColors.background)
+            .background(SemanticColors.backgroundPrimary)
             .navigationTitle("Team Management")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
