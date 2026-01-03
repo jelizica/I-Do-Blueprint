@@ -232,16 +232,18 @@ struct ExpenseCategoriesStaticHeader: View {
         )
     }
     
-    // MARK: - Success Indicator (Compact) - Same size as Add button
+    // MARK: - Success Indicator (Compact) - Circle badge (non-clickable)
     
     private var successIndicatorCompact: some View {
-        Image(systemName: "checkmark.circle.fill")
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(.white)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(AppColors.Budget.underBudget)
-            .cornerRadius(6)
+        ZStack {
+            Circle()
+                .fill(AppColors.Budget.underBudget)
+                .frame(width: 32, height: 32)
+            
+            Image(systemName: "checkmark")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white)
+        }
     }
     
     // MARK: - Over Budget Badge (Compact) - Same size as Add button
