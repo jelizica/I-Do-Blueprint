@@ -40,6 +40,9 @@ struct ExpenseCategoriesView: View {
     @State private var lastKnownShowOnlyOverBudget: Bool = false
     @State private var isRecalculating: Bool = false
     
+    // Track the recalculation task to cancel it if needed
+    @State private var recalculationTask: Task<Void, Error>?
+    
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
         self._currentPage = currentPage
@@ -100,9 +103,8 @@ struct ExpenseCategoriesView: View {
     /// Uses debouncing to prevent multiple rapid recalculations
     /// - Parameter forceRecalculate: If true, skip the change detection check (for filter/search changes)
     private func recalculateSummaryValues(forceRecalculate: Bool = false) {
-        // Prevent re-entrant calls
+        // Prevent re-entrant calls - if already recalculating, skip
         guard !isRecalculating else { return }
-        isRecalculating = true
         
         // Capture current state ONCE at the start (this is the only store access)
         let allCategories = budgetStore.categoryStore.categories
@@ -123,12 +125,17 @@ struct ExpenseCategoriesView: View {
            newExpenseCount == lastKnownExpenseCount &&
            lastKnownCategoryCount >= 0 {
             // Nothing changed, skip recalculation
-            isRecalculating = false
             return
         }
         
+        // Cancel any previous recalculation task to prevent accumulation
+        recalculationTask?.cancel()
+        
+        // Mark as recalculating
+        isRecalculating = true
+        
         // Run expensive calculations off main thread
-        Task.detached(priority: .userInitiated) {
+        recalculationTask = Task.detached(priority: .userInitiated) {
             // Build spent-by-category dictionary ONCE (O(n) for expenses)
             var spentByCategory: [UUID: Double] = [:]
             for expense in expenses {
@@ -329,12 +336,14 @@ struct ExpenseCategoriesView: View {
                 // Calculate initial summary values with force to ensure first load
                 recalculateSummaryValues(forceRecalculate: true)
             }
-            // Use onReceive with debounce to prevent rapid re-renders
-            // This replaces .onChange which was causing infinite loops
-            .onReceive(
-                budgetStore.categoryStore.objectWillChange
-                    .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
-            ) { _ in
+            // REMOVED: onReceive was causing issues because @EnvironmentObject already
+            // subscribes to budgetStore.objectWillChange, and categoryStore.objectWillChange
+            // is forwarded to budgetStore.objectWillChange. This created double-updates.
+            // 
+            // Instead, we use a simple timer to periodically check for changes.
+            // This is less reactive but avoids the infinite loop issue.
+            .onReceive(Timer.publish(every: 0.5, on: .main, in: .common).autoconnect()) { _ in
+                // Only recalculate if data actually changed (checked inside the function)
                 recalculateSummaryValues()
             }
             .onChange(of: searchText) { _, _ in
