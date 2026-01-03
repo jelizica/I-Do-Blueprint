@@ -1,8 +1,9 @@
 # Expense Categories Compact View Implementation Progress
 
-> **Status:** 🚧 IN PROGRESS  
+> **Status:** ✅ COMPLETE  
 > **Issue:** I Do Blueprint-bs4  
 > **Started:** 2026-01-02  
+> **Completed:** 2026-01-03  
 > **Plan:** knowledge-repo-bm/architecture/plans/Expense Categories Compact View Implementation Plan.md
 
 ---
@@ -277,6 +278,50 @@
 - `fe06305` - Change success checkmark to circle badge to look non-clickable
 
 **Beads Issue:** I Do Blueprint-r3ce (CLOSED - All issues resolved)
+
+---
+
+### ✅ Phase 12: Critical Freeze Fix (COMPLETE)
+**Objective:** Fix app freeze when adding categories or staying on page for 1-2 minutes
+
+**Root Cause Analysis:**
+The freeze was caused by a combination of issues:
+1. **Double-subscription problem**: `@EnvironmentObject` subscribes to `budgetStore.objectWillChange`, and `categoryStore.objectWillChange` is forwarded to `budgetStore.objectWillChange` via Combine sinks. This meant every category change triggered TWO update cycles.
+2. **Task accumulation**: `Task.detached` was creating new Tasks without cancelling previous ones. Over time (1-2 minutes), hundreds of Tasks could accumulate, eventually overwhelming the system.
+3. **`.onChange` infinite loop**: Using `.onChange(of: budgetStore.categoryStore.categories.count)` caused infinite loops because accessing store properties triggers `objectWillChange` subscription.
+
+**Solution Applied:**
+1. ✅ **Timer-based polling** instead of `onReceive(objectWillChange)`
+   - Uses `Timer.publish(every: 0.5, ...)` to periodically check for changes
+   - `recalculateSummaryValues()` checks if data actually changed before doing work
+   - Avoids the double-subscription issue entirely
+
+2. ✅ **Task cancellation**
+   - Track `recalculationTask` in `@State`
+   - Cancel previous task before starting a new one
+   - Prevents Task accumulation over time
+
+3. ✅ **Improved flag management**
+   - Only set `isRecalculating = true` after confirming we need to recalculate
+   - Prevents the flag from blocking legitimate recalculations
+
+**Also Fixed: Leaf Category Display**
+- Categories with no children now display as regular rows (without folder icon/chevron) instead of folder rows
+- Added `isLeafCategory` computed property to `CategorySectionViewV2`
+
+**Files Modified:**
+- ✅ `ExpenseCategoriesView.swift` - Timer-based polling, task cancellation, improved flag management
+- ✅ `CategorySectionViewV2.swift` - Leaf category detection and display
+
+**Build Status:** ✅ BUILD SUCCEEDED
+
+**Commits:**
+- `93ef2cc` - Use debounced onReceive instead of onChange + fix leaf category display
+- `1ae794c` - Use timer-based polling with task cancellation to prevent freeze
+
+**Beads Issues:**
+- I Do Blueprint-yahc (CLOSED - Freeze fix)
+- I Do Blueprint-vuio (CLOSED - Leaf category display fix)
 
 ---
 
