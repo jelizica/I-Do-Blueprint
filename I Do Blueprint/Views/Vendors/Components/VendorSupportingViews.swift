@@ -13,7 +13,7 @@ import SwiftUI
 struct SectionHeaderV2: View {
     let title: String
     let icon: String
-    var color: Color = AppColors.primary
+    var color: Color = SemanticColors.primaryAction
 
     var body: some View {
         HStack(spacing: 8) {
@@ -21,7 +21,7 @@ struct SectionHeaderV2: View {
                 .foregroundColor(color)
             Text(title)
                 .font(.headline)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
     }
 }
@@ -42,7 +42,7 @@ struct VendorHeaderView: View {
                 Rectangle()
                     .fill(
                         LinearGradient(
-                            colors: [AppColors.textSecondary.opacity(0.2), AppColors.textSecondary.opacity(0.15)],
+                            colors: [SemanticColors.textSecondary.opacity(Opacity.subtle), SemanticColors.textSecondary.opacity(Opacity.verySubtle)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing))
                     .overlay(
@@ -55,7 +55,7 @@ struct VendorHeaderView: View {
             .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
             .overlay(
                 RoundedRectangle(cornerRadius: 24)
-                    .stroke(AppColors.textPrimary.opacity(0.5), lineWidth: 2))
+                    .stroke(SemanticColors.textPrimary.opacity(Opacity.medium), lineWidth: 2))
 
             VStack(spacing: 12) {
                 Text(vendor.vendorName)
@@ -106,7 +106,7 @@ struct VendorStatusView: View {
             StatusIndicator(
                 title: "Status",
                 value: vendor.isArchived ? "Archived" : ((vendor.isBooked == true) ? "Booked" : "Available"),
-                color: vendor.isArchived ? AppColors.Vendor.notContacted : ((vendor.isBooked == true) ? AppColors.Vendor.booked : AppColors.Vendor.pending),
+                color: vendor.isArchived ? SemanticColors.textSecondary : ((vendor.isBooked == true) ? SemanticColors.statusSuccess : SemanticColors.statusPending),
                 icon: vendor
                     .isArchived ? "archivebox.fill" : ((vendor.isBooked == true) ? "checkmark.circle.fill" : "circle"))
 
@@ -259,7 +259,7 @@ struct ContactRow: View {
                 .shadow(color: .black.opacity(isHovering ? 0.08 : 0.04), radius: isHovering ? 6 : 3, x: 0, y: 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppColors.textSecondary.opacity(0.15), lineWidth: 1))
+                .stroke(SemanticColors.borderLight, lineWidth: 1))
         .scaleEffect(isHovering ? 1.01 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in

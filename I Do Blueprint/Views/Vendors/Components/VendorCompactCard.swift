@@ -26,12 +26,12 @@ struct VendorCompactCard: View {
                             .clipShape(Circle())
                     } else {
                         Circle()
-                            .fill(AppColors.controlBackground)
+                            .fill(SemanticColors.backgroundSecondary)
                             .frame(width: 48, height: 48)
                             .overlay(
                                 Image(systemName: "building.2")
                                     .font(.system(size: 20))
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
                             )
                     }
                 }
@@ -55,7 +55,7 @@ struct VendorCompactCard: View {
             // Vendor Name (centered, 2 lines max)
             Text(vendor.vendorName)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(2)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -65,11 +65,11 @@ struct VendorCompactCard: View {
         // 1. First, constrain the content to max 130px
         .frame(maxWidth: 130)
         // 2. Apply visual styling to the constrained size (background uses 130px max)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.borderLight, lineWidth: 0.5)
+                .stroke(SemanticColors.borderLight, lineWidth: 0.5)
         )
         // 3. Then allow the card to center within the grid column
         .frame(maxWidth: .infinity, alignment: .center)
@@ -84,11 +84,11 @@ struct VendorCompactCard: View {
 
     private var statusColor: Color {
         if vendor.isArchived {
-            return AppColors.textSecondary.opacity(0.4)
+            return SemanticColors.textSecondary.opacity(Opacity.light)
         } else if vendor.isBooked == true {
-            return AppColors.success
+            return SemanticColors.statusSuccess
         } else {
-            return AppColors.warning
+            return SemanticColors.statusWarning
         }
     }
 
