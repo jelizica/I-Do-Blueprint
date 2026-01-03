@@ -281,47 +281,61 @@
 
 ---
 
-### ✅ Phase 12: Critical Freeze Fix (COMPLETE)
-**Objective:** Fix app freeze when adding categories or staying on page for 1-2 minutes
+### ✅ Phase 12: Critical Freeze Fix - FINAL (COMPLETE)
+**Objective:** Fix app freeze when staying on page for ~5 minutes
 
-**Root Cause Analysis:**
-The freeze was caused by a combination of issues:
-1. **Double-subscription problem**: `@EnvironmentObject` subscribes to `budgetStore.objectWillChange`, and `categoryStore.objectWillChange` is forwarded to `budgetStore.objectWillChange` via Combine sinks. This meant every category change triggered TWO update cycles.
-2. **Task accumulation**: `Task.detached` was creating new Tasks without cancelling previous ones. Over time (1-2 minutes), hundreds of Tasks could accumulate, eventually overwhelming the system.
-3. **`.onChange` infinite loop**: Using `.onChange(of: budgetStore.categoryStore.categories.count)` caused infinite loops because accessing store properties triggers `objectWillChange` subscription.
+**Root Cause Analysis (Thorough Investigation 2026-01-03):**
+Compared ExpenseCategoriesView with other working budget pages (ExpenseTrackerView, PaymentScheduleView, BudgetDevelopmentView, BudgetOverviewDashboardViewV2) to identify the difference.
 
-**Solution Applied:**
-1. ✅ **Timer-based polling** instead of `onReceive(objectWillChange)`
-   - Uses `Timer.publish(every: 0.5, ...)` to periodically check for changes
-   - `recalculateSummaryValues()` checks if data actually changed before doing work
-   - Avoids the double-subscription issue entirely
+The freeze was caused by **timer-based polling** combined with:
+1. **Timer firing every 0.5s** → calls `recalculateSummaryValues()`
+2. **Store property access** → `budgetStore.categoryStore.categories` triggers `objectWillChange`
+3. **objectWillChange forwarding** → `categoryStore.objectWillChange` is forwarded to `budgetStore.objectWillChange` via Combine sinks in `BudgetStoreV2.init()`
+4. **@EnvironmentObject subscription** → SwiftUI re-renders view on `objectWillChange`
+5. **Feedback loop accumulates** → Over ~5 minutes, this overwhelms the system
 
-2. ✅ **Task cancellation**
-   - Track `recalculationTask` in `@State`
-   - Cancel previous task before starting a new one
-   - Prevents Task accumulation over time
+**Why Other Views Don't Freeze:**
+- **ExpenseTrackerView**: Uses `.onAppear` for initial load only, NO timer polling
+- **PaymentScheduleView**: Uses `.task` for initial load only, NO timer polling
+- **BudgetDevelopmentView**: Uses `.task` for initial load only, NO timer polling
+- **BudgetOverviewDashboardViewV2**: Has `setupRealTimeSync()` but it's **DISABLED** ("// Disabled for performance")
 
-3. ✅ **Improved flag management**
-   - Only set `isRecalculating = true` after confirming we need to recalculate
-   - Prevents the flag from blocking legitimate recalculations
+**Solution Applied (Following Working Views Pattern):**
+1. ✅ **Remove timer-based polling entirely**
+   - Deleted `Timer.publish(every: 0.5, ...)` and all related code
+   - No more continuous store access
 
-**Also Fixed: Leaf Category Display**
-- Categories with no children now display as regular rows (without folder icon/chevron) instead of folder rows
-- Added `isLeafCategory` computed property to `CategorySectionViewV2`
+2. ✅ **Load data once on `.task`**
+   - Same pattern as ExpenseTrackerView and PaymentScheduleView
+   - `await budgetStore.loadBudgetData(force: false)` then `recalculateCachedValues()`
+
+3. ✅ **Recalculate only on user actions**
+   - `.onChange(of: searchText)` - when user types in search
+   - `.onChange(of: showOnlyOverBudget)` - when user toggles filter
+   - `.sheet(onDismiss:)` - after add/edit category modal closes
+   - After delete operation completes
+
+4. ✅ **Simplified recalculation function**
+   - Removed `Task.detached` and async complexity
+   - Synchronous calculation on main thread (fast enough for category data)
+   - Single store access at start, then pure computation
 
 **Files Modified:**
-- ✅ `ExpenseCategoriesView.swift` - Timer-based polling, task cancellation, improved flag management
-- ✅ `CategorySectionViewV2.swift` - Leaf category detection and display
+- ✅ `ExpenseCategoriesView.swift` - Complete rewrite following working views pattern
 
 **Build Status:** ✅ BUILD SUCCEEDED
 
 **Commits:**
 - `93ef2cc` - Use debounced onReceive instead of onChange + fix leaf category display
-- `1ae794c` - Use timer-based polling with task cancellation to prevent freeze
+- `1ae794c` - Use timer-based polling with task cancellation (still froze after 5 min)
+- `4e8facb` - **FINAL FIX**: Remove timer-based polling entirely, follow working views pattern
 
 **Beads Issues:**
 - I Do Blueprint-yahc (CLOSED - Freeze fix)
 - I Do Blueprint-vuio (CLOSED - Leaf category display fix)
+
+**Key Lesson Learned:**
+Never use timer-based polling in SwiftUI views that have `@EnvironmentObject` subscriptions to stores with `objectWillChange` forwarding. The combination creates a feedback loop that accumulates over time. Instead, load data once on appear and update only on explicit user actions.
 
 ---
 
