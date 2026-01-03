@@ -29,21 +29,21 @@ struct APIKeysSettingsView: View {
                     HStack(spacing: Spacing.sm) {
                         Image(systemName: "key.fill")
                             .font(.title2)
-                            .foregroundColor(AppColors.primary)
+                            .foregroundColor(SemanticColors.primaryAction)
 
                         Text("API Key Management")
                             .font(Typography.heading)
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                     }
 
                     Text("Configure API keys for third-party integrations. Keys are securely stored in macOS Keychain and never leave your device.")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .fixedSize(horizontal: false, vertical: true)
 
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "info.circle.fill")
-                            .foregroundColor(AppColors.primary)
+                            .foregroundColor(SemanticColors.primaryAction)
                             .font(.caption)
                         Text(
                         """
@@ -52,13 +52,13 @@ struct APIKeysSettingsView: View {
                         """
                     )
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(.top, Spacing.xs)
                     .padding(.horizontal, Spacing.xs)
                     .padding(.vertical, Spacing.xs)
-                    .background(AppColors.primary.opacity(0.05))
+                    .background(SemanticColors.primaryAction.opacity(Opacity.verySubtle))
                     .cornerRadius(CornerRadius.sm)
                 }
                 .padding(.vertical, Spacing.xs)
@@ -140,11 +140,11 @@ struct APIKeysSettingsView: View {
             HStack {
                 Text(type.displayName)
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if isConfigured {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(AppColors.success)
+                        .foregroundColor(SemanticColors.statusSuccess)
                         .font(.caption)
                 }
             }
@@ -152,11 +152,11 @@ struct APIKeysSettingsView: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(description)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Link("Get API Key →", destination: URL(string: type.helpURL)!)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
             }
         }
     }
@@ -167,18 +167,18 @@ struct APIKeysSettingsView: View {
     private func configuredKeyView(for type: SecureAPIKeyManager.APIKeyType) -> some View {
         HStack(spacing: Spacing.md) {
             Image(systemName: "lock.shield.fill")
-                .foregroundColor(AppColors.success)
+                .foregroundColor(SemanticColors.statusSuccess)
                 .font(.title3)
                 .accessibilityHidden(true)
 
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("\(type.displayName) API key configured")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("Stored securely in Keychain")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             Spacer()
@@ -207,20 +207,20 @@ struct APIKeysSettingsView: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "key")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .font(.title3)
                     .accessibilityHidden(true)
 
                 Text("No API key configured")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Text("API Key")
                     .font(Typography.bodySmall)
                     .fontWeight(.medium)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 SecureField("Enter your \(type.displayName) API key", text: keyBinding)
                     .textFieldStyle(.roundedBorder)
