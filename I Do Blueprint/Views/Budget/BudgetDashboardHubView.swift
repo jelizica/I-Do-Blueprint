@@ -56,8 +56,8 @@ struct BudgetDashboardHubView: View {
                 } else {
                     // Child pages render their own content (they have their own ScrollView/GeometryReader)
                     VStack(spacing: 0) {
-                        // Budget Builder, Budget Overview, and Expense Tracker have their own unified headers, other pages use standard header
-                        if currentPage != .budgetBuilder && currentPage != .budgetOverview && currentPage != .expenseTracker && currentPage != .paymentSchedule {
+                        // Budget Builder, Budget Overview, Expense Tracker, Payment Schedule, and Expense Categories have their own unified headers, other pages use standard header
+                        if currentPage != .budgetBuilder && currentPage != .budgetOverview && currentPage != .expenseTracker && currentPage != .paymentSchedule && currentPage != .expenseCategories {
                             BudgetManagementHeader(
                                 windowSize: windowSize,
                                 currentPage: $currentPage

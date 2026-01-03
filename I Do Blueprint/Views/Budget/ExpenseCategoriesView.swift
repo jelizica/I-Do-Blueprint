@@ -2,7 +2,7 @@
 //  ExpenseCategoriesView.swift
 //  I Do Blueprint
 //
-//  Main view for managing budget expense categories
+//  Main view for managing budget expense categories with responsive compact window support
 //
 
 import SwiftUI
@@ -34,66 +34,72 @@ struct ExpenseCategoriesView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            ExpenseCategoriesHeaderView(
-                categoryCount: filteredCategories.count,
-                searchText: $searchText,
-                onAddCategory: { showingAddCategory = true }
-            )
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
+            
+            VStack(spacing: 0) {
+                // Header
+                ExpenseCategoriesHeaderView(
+                    categoryCount: filteredCategories.count,
+                    searchText: $searchText,
+                    onAddCategory: { showingAddCategory = true }
+                )
 
-            // Categories List
-            if filteredCategories.isEmpty {
-                ContentUnavailableView(
-                    searchText.isEmpty ? "No Categories" : "No Results",
-                    systemImage: searchText.isEmpty ? "folder" : "magnifyingglass",
-                    description: Text(searchText.isEmpty ?
-                        "Create your first budget category to start organizing expenses" :
-                        "Try adjusting your search terms"))
-            } else {
-                List {
-                    ForEach(parentCategories, id: \.id) { parentCategory in
-                        CategorySectionView(
-                            parentCategory: parentCategory,
-                            subcategories: subcategories(for: parentCategory),
-                            budgetStore: budgetStore,
-                            onEdit: { category in
-                                editingCategory = category
-                            },
-                            onDelete: { category in
-                                categoryToDelete = category
-                                showingDeleteAlert = true
-                            })
+                // Categories List
+                if filteredCategories.isEmpty {
+                    ContentUnavailableView(
+                        searchText.isEmpty ? "No Categories" : "No Results",
+                        systemImage: searchText.isEmpty ? "folder" : "magnifyingglass",
+                        description: Text(searchText.isEmpty ?
+                            "Create your first budget category to start organizing expenses" :
+                            "Try adjusting your search terms"))
+                } else {
+                    List {
+                        ForEach(parentCategories, id: \.id) { parentCategory in
+                            CategorySectionView(
+                                parentCategory: parentCategory,
+                                subcategories: subcategories(for: parentCategory),
+                                budgetStore: budgetStore,
+                                onEdit: { category in
+                                    editingCategory = category
+                                },
+                                onDelete: { category in
+                                    categoryToDelete = category
+                                    showingDeleteAlert = true
+                                })
+                        }
                     }
+                    .listStyle(PlainListStyle())
                 }
-                .listStyle(PlainListStyle())
             }
-        }
-        .task {
-            await budgetStore.loadBudgetData(force: true)
-        }
-        .sheet(isPresented: $showingAddCategory) {
-            AddCategoryView(budgetStore: budgetStore)
-        }
-        .sheet(item: $editingCategory) { category in
-            EditCategoryView(category: category, budgetStore: budgetStore)
-        }
-        .alert("Delete Category", isPresented: $showingDeleteAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive) {
-                if let category = categoryToDelete {
-                    Task {
-                        do {
-                            try await budgetStore.categoryStore.deleteCategory(id: category.id)
-                        } catch {
-                            AppLogger.ui.error("Failed to delete category", error: error)
+            .task {
+                await budgetStore.loadBudgetData(force: true)
+            }
+            .sheet(isPresented: $showingAddCategory) {
+                AddCategoryView(budgetStore: budgetStore)
+            }
+            .sheet(item: $editingCategory) { category in
+                EditCategoryView(category: category, budgetStore: budgetStore)
+            }
+            .alert("Delete Category", isPresented: $showingDeleteAlert) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    if let category = categoryToDelete {
+                        Task {
+                            do {
+                                try await budgetStore.categoryStore.deleteCategory(id: category.id)
+                            } catch {
+                                AppLogger.ui.error("Failed to delete category", error: error)
+                            }
                         }
                     }
                 }
-            }
-        } message: {
-            if let category = categoryToDelete {
-                Text("Are you sure you want to delete '\(category.categoryName)'? This action cannot be undone.")
+            } message: {
+                if let category = categoryToDelete {
+                    Text("Are you sure you want to delete '\(category.categoryName)'? This action cannot be undone.")
+                }
             }
         }
     }
