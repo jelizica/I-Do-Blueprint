@@ -30,9 +30,9 @@ struct GuestResponsesCardV4: View {
 
             // Stats
             HStack(spacing: Spacing.xl) {
-                StatColumn(value: attendingCount, label: "Attending", color: SemanticColors.success)
-                StatColumn(value: declinedCount, label: "Declined", color: SemanticColors.error)
-                StatColumn(value: pendingCount, label: "Pending", color: SemanticColors.textSecondary)
+                StatColumn(value: attendingCount, label: "Attending", color: SemanticColors.success, icon: "checkmark.circle.fill")
+                StatColumn(value: declinedCount, label: "Declined", color: SemanticColors.error, icon: "xmark.circle.fill")
+                StatColumn(value: pendingCount, label: "Pending", color: SemanticColors.textSecondary, icon: "clock.fill")
             }
             .padding(.vertical, Spacing.md)
 

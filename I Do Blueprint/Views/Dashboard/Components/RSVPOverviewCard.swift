@@ -16,6 +16,7 @@ struct RSVPOverviewCard: View {
         let name: String
         let value: Int
         let color: Color
+        let icon: String
     }
 
     private var rsvpData: [RSVPData] {
@@ -25,9 +26,9 @@ struct RSVPOverviewCard: View {
         let noCount = guests.filter { $0.rsvpStatus == .declined }.count
 
         return [
-            RSVPData(name: "Accepted", value: yesCount, color: AppColors.Guest.confirmed),
-            RSVPData(name: "Pending", value: pendingCount, color: AppColors.Guest.pending),
-            RSVPData(name: "Declined", value: noCount, color: AppColors.Guest.declined)
+            RSVPData(name: "Accepted", value: yesCount, color: AppColors.Guest.confirmed, icon: "checkmark.circle.fill"),
+            RSVPData(name: "Pending", value: pendingCount, color: AppColors.Guest.pending, icon: "clock.fill"),
+            RSVPData(name: "Declined", value: noCount, color: AppColors.Guest.declined, icon: "xmark.circle.fill")
         ]
     }
 
@@ -91,9 +92,9 @@ struct RSVPOverviewCard: View {
             HStack(spacing: Spacing.lg) {
                 ForEach(rsvpData) { item in
                     HStack(spacing: Spacing.xs) {
-                        Circle()
-                            .fill(item.color)
-                            .frame(width: 12, height: 12)
+                        Image(systemName: item.icon)
+                            .font(.system(size: 12))
+                            .foregroundColor(item.color)
 
                         Text("\(item.name): \(item.value)")
                             .font(Typography.caption)

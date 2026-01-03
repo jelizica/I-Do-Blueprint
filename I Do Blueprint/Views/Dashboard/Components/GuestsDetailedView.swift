@@ -102,16 +102,24 @@ struct RSVPStatusBadge: View {
     let status: RSVPStatus
 
     var body: some View {
-        Text(statusText)
-            .font(Typography.caption2)
-            .fontWeight(.medium)
-            .foregroundColor(statusColor)
-            .padding(.horizontal, Spacing.sm)
-            .padding(.vertical, Spacing.xxs)
-            .background(
-                Capsule()
-                    .fill(statusColor.opacity(0.1))
-            )
+        HStack(spacing: Spacing.xxs) {
+            if let icon = statusIcon {
+                Image(systemName: icon)
+                    .font(.system(size: 10))
+                    .foregroundColor(statusColor)
+            }
+
+            Text(statusText)
+                .font(Typography.caption2)
+                .fontWeight(.medium)
+                .foregroundColor(statusColor)
+        }
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xxs)
+        .background(
+            Capsule()
+                .fill(statusColor.opacity(0.1))
+        )
     }
 
     private var statusText: String {
@@ -139,6 +147,19 @@ struct RSVPStatusBadge: View {
             return AppColors.Guest.pending
         default:
             return SemanticColors.textSecondary
+        }
+    }
+
+    private var statusIcon: String? {
+        switch status {
+        case .attending, .confirmed:
+            return "checkmark.circle.fill"
+        case .declined:
+            return "xmark.circle.fill"
+        case .maybe, .pending:
+            return "clock.fill"
+        default:
+            return nil
         }
     }
 }

@@ -27,10 +27,15 @@ struct GuestsSummaryCard: View {
                         Text("RSVP'd")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("\(metrics.rsvpYes)")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(AppColors.Guest.confirmed)
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(AppColors.Guest.confirmed)
+                            Text("\(metrics.rsvpYes)")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(AppColors.Guest.confirmed)
+                        }
                     }
 
                     Spacer()
@@ -39,10 +44,15 @@ struct GuestsSummaryCard: View {
                         Text("Pending")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text("\(metrics.rsvpPending)")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(AppColors.Guest.pending)
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(AppColors.Guest.pending)
+                            Text("\(metrics.rsvpPending)")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(AppColors.Guest.pending)
+                        }
                     }
                 }
                 .padding(Spacing.md)
