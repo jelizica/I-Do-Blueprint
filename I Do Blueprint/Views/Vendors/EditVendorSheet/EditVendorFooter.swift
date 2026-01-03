@@ -40,7 +40,7 @@ struct EditVendorFooter: View {
             .disabled(isSaving || !canSave)
         }
         .padding()
-        .background(AppColors.controlBackground)
+        .background(SemanticColors.backgroundSecondary)
     }
 }
 

@@ -21,7 +21,7 @@ struct EditVendorSheetHeader: View {
                 
                 Text(vendorName)
                     .font(.subheadline)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             Spacer()
@@ -31,13 +31,13 @@ struct EditVendorSheetHeader: View {
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .font(.title2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
         }
         .padding()
-        .background(AppColors.controlBackground)
+        .background(SemanticColors.backgroundSecondary)
     }
 }
 
