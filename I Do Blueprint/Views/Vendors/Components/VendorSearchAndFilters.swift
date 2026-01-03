@@ -27,7 +27,7 @@ struct VendorSearchAndFilters: View {
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
         .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
@@ -100,7 +100,7 @@ struct VendorSearchAndFilters: View {
             .padding(.vertical, Spacing.sm)
         }
         .buttonStyle(.bordered)
-        .tint(AppColors.primary)
+        .tint(SemanticColors.primaryAction)
         .help("Filter by vendor status")
     }
     
@@ -110,7 +110,7 @@ struct VendorSearchAndFilters: View {
     private var searchField: some View {
         let content = HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .font(.body)
 
             TextField("Search vendors...", text: $searchText)
@@ -121,7 +121,7 @@ struct VendorSearchAndFilters: View {
                     searchText = ""
                 } label: {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
             }
@@ -133,10 +133,10 @@ struct VendorSearchAndFilters: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(AppColors.cardBackground)
+                        .fill(SemanticColors.backgroundSecondary)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(AppColors.border, lineWidth: 1)
+                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                         )
                 )
         } else {
@@ -144,10 +144,10 @@ struct VendorSearchAndFilters: View {
                 .frame(minWidth: 150, idealWidth: 200, maxWidth: 250)
                 .background(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(AppColors.cardBackground)
+                        .fill(SemanticColors.backgroundSecondary)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(AppColors.border, lineWidth: 1)
+                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                         )
                 )
         }
@@ -168,12 +168,12 @@ struct VendorSearchAndFilters: View {
             .buttonStyle(.plain)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.pill)
-                    .fill(selectedFilter == filter ? AppColors.primary : AppColors.cardBackground)
+                    .fill(selectedFilter == filter ? SemanticColors.primaryAction : SemanticColors.backgroundSecondary)
             )
-            .foregroundColor(selectedFilter == filter ? .white : AppColors.textPrimary)
+            .foregroundColor(selectedFilter == filter ? .white : SemanticColors.textPrimary)
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.pill)
-                    .stroke(selectedFilter == filter ? AppColors.primary : AppColors.border, lineWidth: 1)
+                    .stroke(selectedFilter == filter ? SemanticColors.primaryAction : SemanticColors.borderPrimary, lineWidth: 1)
             )
         }
     }
@@ -193,7 +193,7 @@ struct VendorSearchAndFilters: View {
                                 if selectedSort == option {
                                     Spacer()
                                     Image(systemName: "checkmark")
-                                        .foregroundColor(AppColors.primary)
+                                        .foregroundColor(SemanticColors.primaryAction)
                                 }
                             }
                         }
@@ -226,7 +226,7 @@ struct VendorSearchAndFilters: View {
                 .font(Typography.bodySmall)
         }
         .buttonStyle(.borderless)
-        .foregroundColor(AppColors.primary)
+        .foregroundColor(SemanticColors.primaryAction)
     }
     
     // MARK: - Clear Filters Button (Regular Mode)
@@ -242,7 +242,7 @@ struct VendorSearchAndFilters: View {
                     .font(Typography.bodySmall)
             }
             .buttonStyle(.borderless)
-            .foregroundColor(AppColors.primary)
+            .foregroundColor(SemanticColors.primaryAction)
         }
     }
 }
