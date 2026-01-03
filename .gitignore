@@ -63,3 +63,39 @@ _project_specs/session/archive/*.md
 # bv (beads viewer) local config and caches
 .bv/
 .env.mcp.local
+
+# ====================================
+# Development Tooling (Not for GitHub)
+# ====================================
+
+# AI Assistant Configurations
+.beads/
+.ccg/
+.claude/
+.gemini/
+.qodo/
+
+# Personal Knowledge Base
+knowledge-repo-bm/
+
+# Project Planning & Documentation
+_project_specs/
+docs/
+
+# Development Scripts (not needed in production)
+Scripts/cleanup-repo.sh
+Scripts/llm-council
+Scripts/verify-tooling.sh
+Scripts/security-check.sh
+Scripts/structurizr-generate-diagrams.py
+
+# Code Analysis Tools
+.semgrep/
+trufflehog_results.json
+
+# Development Documentation
+CLEANUP_SUMMARY.md
+GITHUB_REPO_CLEANUP_PLAN.md
+BASIC-MEMORY-AND-BEADS-GUIDE.md
+CLAUDE.md
+SKILLS_INFO.md
