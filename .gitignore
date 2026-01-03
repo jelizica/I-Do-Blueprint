@@ -92,6 +92,15 @@ Scripts/structurizr-generate-diagrams.py
 # Code Analysis Tools
 .semgrep/
 trufflehog_results.json
+.chunkhound.json
+
+# Shell Configuration & Scripts
+.zshrc-additions
+.qodo-swiftzilla.sh
+.claude-env-setup.txt
+
+# Temporary Files
+temp.swift
 
 # Development Documentation
 CLEANUP_SUMMARY.md
