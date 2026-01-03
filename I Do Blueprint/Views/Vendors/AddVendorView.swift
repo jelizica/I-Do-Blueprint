@@ -234,7 +234,7 @@ struct AddVendorView: View {
                                             .frame(height: 60)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 4)
-                                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                                                    .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
                                             )
                                     }
 
@@ -246,7 +246,7 @@ struct AddVendorView: View {
                                             .frame(height: 60)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 4)
-                                                    .stroke(AppColors.textSecondary.opacity(0.2), lineWidth: 1)
+                                                    .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 1)
                                             )
                                     }
                                 }
@@ -291,7 +291,7 @@ struct AddVendorView: View {
         .overlay {
             if isSaving {
                 ZStack {
-                    AppColors.textPrimary.opacity(0.3)
+                    SemanticColors.textPrimary.opacity(Opacity.light)
                         .ignoresSafeArea()
 
                     ProgressView("Saving vendor...")
