@@ -105,7 +105,7 @@ struct SeatingChartSearchResultCard: View {
                             GeometryReader { geometry in
                                 ZStack(alignment: .leading) {
                                     RoundedRectangle(cornerRadius: 2)
-                                        .fill(AppColors.textSecondary.opacity(0.2))
+                                        .fill(SemanticColors.textSecondary.opacity(Opacity.subtle))
 
                                     RoundedRectangle(cornerRadius: 2)
                                         .fill(Color.blue)
@@ -129,7 +129,7 @@ struct SeatingChartSearchResultCard: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(isHovered ? Color.blue : Color.clear, lineWidth: 2)
             )
-            .shadow(color: AppColors.textPrimary.opacity(isHovered ? 0.15 : 0.08), radius: isHovered ? 8 : 4, y: 2)
+            .shadow(color: SemanticColors.textPrimary.opacity(isHovered ? Opacity.subtle : Opacity.verySubtle), radius: isHovered ? 8 : 4, y: 2)
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 0.2), value: isHovered)
         }
@@ -162,10 +162,10 @@ struct SeatingChartSearchResultCard: View {
                                 Text("+\(chart.tables.count - 12) more")
                                     .font(.caption)
                                     .fontWeight(.medium)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .padding(.horizontal, Spacing.sm)
                                     .padding(.vertical, Spacing.xs)
-                                    .background(AppColors.textPrimary.opacity(0.6))
+                                    .background(SemanticColors.textPrimary.opacity(Opacity.medium))
                                     .cornerRadius(8)
                                     .padding(Spacing.sm)
                             }
