@@ -23,6 +23,28 @@ enum PaymentFilter {
     }
 }
 
+// MARK: - Payment Filter Option (for Payment Schedule)
+
+enum PaymentFilterOption: String, CaseIterable {
+    case all = "all"
+    case upcoming = "upcoming"
+    case overdue = "overdue"
+    case thisWeek = "this_week"
+    case thisMonth = "this_month"
+    case paid = "paid"
+
+    var displayName: String {
+        switch self {
+        case .all: return "All"
+        case .upcoming: return "Upcoming"
+        case .overdue: return "Overdue"
+        case .thisWeek: return "This Week"
+        case .thisMonth: return "This Month"
+        case .paid: return "Paid"
+        }
+    }
+}
+
 // MARK: - Payment Sort Option
 
 enum PaymentSortOption: String, CaseIterable {
