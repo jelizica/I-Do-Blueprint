@@ -38,7 +38,7 @@ struct V3VendorDocumentsContent: View {
 
             Text("Loading documents...")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
     }
@@ -49,15 +49,15 @@ struct V3VendorDocumentsContent: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "doc.text")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("No Documents")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("Documents linked to this vendor will appear here. Upload documents from the Documents page and link them to this vendor.")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xl)
         }
@@ -72,7 +72,7 @@ struct V3VendorDocumentsContent: View {
             V3SectionHeader(
                 title: "Documents",
                 icon: "doc.text.fill",
-                color: AppColors.primary
+                color: SemanticColors.primaryAction
             )
 
             VStack(spacing: Spacing.sm) {
@@ -131,7 +131,7 @@ private struct V3DocumentRow: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(document.originalFilename)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
 
                 HStack(spacing: Spacing.sm) {
@@ -147,16 +147,16 @@ private struct V3DocumentRow: View {
                     // File Size
                     Text(document.formattedSize)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     // Upload Date
                     Text("•")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text(document.uploadedAt.formatted(date: .abbreviated, time: .omitted))
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 
@@ -165,14 +165,14 @@ private struct V3DocumentRow: View {
             // Chevron
             Image(systemName: "chevron.right")
                 .font(.system(size: 14))
-                .foregroundColor(AppColors.textTertiary)
+                .foregroundColor(SemanticColors.textTertiary)
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(isHovering ? AppColors.primary.opacity(0.3) : AppColors.border, lineWidth: 1)
+                .stroke(isHovering ? SemanticColors.primaryAction.opacity(Opacity.light) : SemanticColors.borderPrimary, lineWidth: 1)
         )
         .scaleEffect(isHovering ? 1.01 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
@@ -221,7 +221,7 @@ private struct V3DocumentDetailSheet: View {
             HStack {
                 Text("Document Details")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
@@ -230,12 +230,12 @@ private struct V3DocumentDetailSheet: View {
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.system(size: 24))
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
             }
             .padding(Spacing.xl)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
 
             Divider()
 
@@ -257,11 +257,11 @@ private struct V3DocumentDetailSheet: View {
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             Text(document.originalFilename)
                                 .font(Typography.heading)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
 
                             Text(document.documentType.displayName)
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                     }
 
@@ -278,16 +278,16 @@ private struct V3DocumentDetailSheet: View {
                             VStack(alignment: .leading, spacing: Spacing.sm) {
                                 Text("Tags")
                                     .font(Typography.caption)
-                                    .foregroundColor(AppColors.textSecondary)
+                                    .foregroundColor(SemanticColors.textSecondary)
 
                                 FlowLayout(spacing: Spacing.xs) {
                                     ForEach(document.tags, id: \.self) { tag in
                                         Text(tag)
                                             .font(Typography.caption)
-                                            .foregroundColor(AppColors.primary)
+                                            .foregroundColor(SemanticColors.primaryAction)
                                             .padding(.horizontal, Spacing.sm)
                                             .padding(.vertical, Spacing.xs)
-                                            .background(AppColors.primary.opacity(0.1))
+                                            .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                                             .cornerRadius(CornerRadius.sm)
                                     }
                                 }
@@ -313,7 +313,7 @@ private struct V3DocumentDetailSheet: View {
                             }
                             .frame(maxWidth: .infinity)
                             .padding(Spacing.md)
-                            .background(AppColors.primary)
+                            .background(SemanticColors.primaryAction)
                             .foregroundColor(.white)
                             .cornerRadius(CornerRadius.md)
                         }
@@ -325,7 +325,7 @@ private struct V3DocumentDetailSheet: View {
             }
         }
         .frame(width: 500, height: 600)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
     }
 
     private func downloadDocument() {
@@ -374,13 +374,13 @@ private struct V3DocumentDetailRow: View {
         HStack {
             Text(label)
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Spacer()
 
             Text(value)
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
     }
 }
@@ -438,7 +438,7 @@ private struct V3DocumentDetailRow: View {
         isLoading: false
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
 
 #Preview("Documents Content - Empty") {
@@ -447,5 +447,5 @@ private struct V3DocumentDetailRow: View {
         isLoading: false
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
