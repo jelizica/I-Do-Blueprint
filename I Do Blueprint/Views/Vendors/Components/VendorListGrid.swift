@@ -91,25 +91,25 @@ struct VendorListGrid: View {
         VStack(spacing: 16) {
             Image(systemName: "person.3.fill")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("No Vendors Yet")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Add your first vendor to get started")
                 .font(Typography.bodySmall)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Button {
                 showingAddVendor = true
             } label: {
                 Text("Add Vendor")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textOnPrimary)
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
@@ -123,29 +123,29 @@ struct VendorListGrid: View {
         VStack(spacing: 16) {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("No Vendors Found")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Try adjusting your search or filters")
                 .font(Typography.bodySmall)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Button {
                 onClearFilters()
             } label: {
                 Text("Clear Filters")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.cardBackground)
+                    .background(SemanticColors.backgroundSecondary)
                     .cornerRadius(8)
                     .overlay(
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(AppColors.borderLight, lineWidth: 0.5)
+                            .stroke(SemanticColors.borderLight, lineWidth: 0.5)
                     )
             }
             .buttonStyle(.plain)
@@ -159,15 +159,15 @@ struct VendorListGrid: View {
         VStack(spacing: 16) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.error)
+                .foregroundColor(SemanticColors.statusWarning)
 
             Text("Error Loading Vendors")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text(error.localizedDescription)
                 .font(Typography.bodySmall)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
 
             Button {
@@ -177,10 +177,10 @@ struct VendorListGrid: View {
             } label: {
                 Text("Retry")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textOnPrimary)
                     .padding(.horizontal, Spacing.xxl)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
