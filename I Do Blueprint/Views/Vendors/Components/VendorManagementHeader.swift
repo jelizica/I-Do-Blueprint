@@ -21,12 +21,12 @@ struct VendorManagementHeader: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("Vendor Management")
                     .font(Typography.displaySmall)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if windowSize != .compact {
                     Text("Manage and track all your vendors in one place")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 
@@ -64,7 +64,7 @@ struct VendorManagementHeader: View {
             } label: {
                 Image(systemName: "ellipsis.circle")
                     .font(.system(size: 20))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
@@ -76,7 +76,7 @@ struct VendorManagementHeader: View {
             } label: {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 20))
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
@@ -135,7 +135,7 @@ struct VendorManagementHeader: View {
                 }
             }
             .buttonStyle(.borderedProminent)
-            .tint(AppColors.primary)
+            .tint(SemanticColors.primaryAction)
             .help("Add a new vendor")
         }
         .confirmationDialog("Export Vendors", isPresented: $showingExportOptions) {
