@@ -19,7 +19,7 @@ struct QuickActionsBar: View {
             QuickActionButtonV2(
                 icon: "plus.circle.fill",
                 title: "Task",
-                backgroundColor: QuickActions.task) {
+                backgroundColor: AppColors.Dashboard.taskAction) {
                 showingTaskModal = true
             }
             .accessibilityLabel("Add Task")
@@ -28,7 +28,7 @@ struct QuickActionsBar: View {
             QuickActionButtonV2(
                 icon: "note.text",
                 title: "Note",
-                backgroundColor: QuickActions.note) {
+                backgroundColor: AppColors.Dashboard.noteAction) {
                 showingNoteModal = true
             }
             .accessibilityLabel("Add Note")
@@ -37,7 +37,7 @@ struct QuickActionsBar: View {
             QuickActionButtonV2(
                 icon: "calendar",
                 title: "Event",
-                backgroundColor: QuickActions.event) {
+                backgroundColor: AppColors.Dashboard.eventAction) {
                 showingEventModal = true
             }
             .accessibilityLabel("Add Event")
@@ -46,7 +46,7 @@ struct QuickActionsBar: View {
             QuickActionButtonV2(
                 icon: "person.crop.circle.badge.plus",
                 title: "Guest",
-                backgroundColor: QuickActions.guest) {
+                backgroundColor: AppColors.Dashboard.guestAction) {
                 showingGuestModal = true
             }
             .accessibilityLabel("Add Guest")

@@ -161,7 +161,7 @@ struct ThemeSettings: Codable, Equatable {
     }
 
     static var `default`: ThemeSettings {
-        ThemeSettings(colorScheme: "default", darkMode: false)
+        ThemeSettings(colorScheme: "blush-romance", darkMode: false)
     }
 }
 

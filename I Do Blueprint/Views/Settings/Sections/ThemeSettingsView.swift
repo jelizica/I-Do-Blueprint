@@ -29,13 +29,13 @@ struct ThemeSettingsView: View {
             VStack(alignment: .leading, spacing: 16) {
                 SettingsRow(label: "Color Scheme") {
                     Picker("Color Scheme", selection: $viewModel.localSettings.theme.colorScheme) {
-                        Text("Default").tag("default")
-                        Text("Blue").tag("blue")
-                        Text("Purple").tag("purple")
-                        Text("Pink").tag("pink")
+                        Text("Blush Romance (Default)").tag("blush-romance")
+                        Text("Sage Serenity").tag("sage-serenity")
+                        Text("Lavender Dream").tag("lavender-dream")
+                        Text("Terracotta Warm").tag("terracotta-warm")
                     }
                     .pickerStyle(.menu)
-                    .frame(maxWidth: 200)
+                    .frame(maxWidth: 250)
                 }
 
                 SettingsRow(label: "Dark Mode") {
