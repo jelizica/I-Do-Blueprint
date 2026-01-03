@@ -55,18 +55,18 @@ struct SavedSearchesView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("Saved Searches")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("\(savedSearches.count) saved search\(savedSearches.count == 1 ? "" : "es")")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             Spacer()
 
             Button(action: onDismiss) {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .font(.title3)
             }
             .buttonStyle(.plain)
@@ -82,7 +82,7 @@ struct SavedSearchesView: View {
             // Search field
             HStack {
                 Image(systemName: "magnifyingglass")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 TextField("Search saved searches...", text: $searchFilter)
                     .textFieldStyle(.plain)
@@ -90,7 +90,7 @@ struct SavedSearchesView: View {
                 if !searchFilter.isEmpty {
                     Button(action: { searchFilter = "" }) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                     .buttonStyle(.plain)
                 }
@@ -164,17 +164,17 @@ struct SavedSearchesView: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "bookmark.slash")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text(searchFilter.isEmpty ? "No Saved Searches" : "No Matching Searches")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text(searchFilter.isEmpty ?
                  "Save your frequently used searches for quick access" :
                  "Try adjusting your search filter")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
 
             if !searchFilter.isEmpty {
@@ -194,7 +194,7 @@ struct SavedSearchesView: View {
         HStack {
             Text("Tip: Save searches from the main search view")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Spacer()
 
@@ -277,44 +277,44 @@ struct SavedSearchRow: View {
                 // Icon
                 Image(systemName: "bookmark.fill")
                     .font(.title3)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .frame(width: 30)
 
                 // Content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(search.name)
                         .font(Typography.subheading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .lineLimit(1)
 
                     if !search.query.isEmpty {
                         Text("Query: \"\(search.query)\"")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .lineLimit(1)
                     }
 
                     HStack(spacing: Spacing.sm) {
                         Label(formatDate(search.createdAt), systemImage: "calendar")
                             .font(.caption2)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
 
                         if let lastUsed = search.lastUsed {
                             Text("•")
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
 
                             Label("Used \(formatRelativeDate(lastUsed))", systemImage: "clock")
                                 .font(.caption2)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
 
                         if activeFilterCount > 0 {
                             Text("•")
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
 
                             Label("\(activeFilterCount) filter\(activeFilterCount == 1 ? "" : "s")", systemImage: "line.3.horizontal.decrease")
                                 .font(.caption2)
-                                .foregroundColor(AppColors.primary)
+                                .foregroundColor(SemanticColors.primaryAction)
                         }
                     }
                 }
@@ -326,7 +326,7 @@ struct SavedSearchRow: View {
                     HStack(spacing: 4) {
                         Button(action: onRename) {
                             Image(systemName: "pencil")
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                         .buttonStyle(.plain)
                         .help("Rename")
@@ -342,7 +342,7 @@ struct SavedSearchRow: View {
 
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(Spacing.md)
             .background(
@@ -351,7 +351,7 @@ struct SavedSearchRow: View {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isHovered ? AppColors.primary.opacity(0.3) : Color.clear, lineWidth: 1)
+                    .stroke(isHovered ? SemanticColors.primaryAction.opacity(Opacity.light) : Color.clear, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
