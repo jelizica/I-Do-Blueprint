@@ -19,6 +19,11 @@ struct ExpenseCategoriesView: View {
     @State private var expandedSections: Set<UUID> = []
     @State private var showOnlyOverBudget = false
     
+    // MARK: - Cached Summary Values (to avoid expensive recalculations on scroll)
+    @State private var cachedTotalAllocated: Double = 0
+    @State private var cachedTotalSpent: Double = 0
+    @State private var cachedOverBudgetCount: Int = 0
+    
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
         self._currentPage = currentPage
@@ -74,39 +79,27 @@ struct ExpenseCategoriesView: View {
         budgetStore.categoryStore.categories.count
     }
     
-    /// Set of category IDs that ARE parents (have children pointing to them)
-    /// Computed once and reused to avoid O(n²) complexity
-    private var categoriesWithChildren: Set<UUID> {
-        // Collect all parent_category_id values - these are the IDs of categories that have children
-        Set(budgetStore.categoryStore.categories.compactMap { $0.parentCategoryId })
-    }
-    
-    /// Leaf categories (categories that have no children)
-    /// A category is a leaf if its ID is NOT in the set of parent IDs
-    private var leafCategories: [BudgetCategory] {
-        let parentIds = categoriesWithChildren
-        return budgetStore.categoryStore.categories.filter { category in
-            // A category is a leaf if no other category has it as a parent
-            !parentIds.contains(category.id)
+    /// Recalculate cached summary values - call this when data changes, not on every render
+    private func recalculateSummaryValues() {
+        let allCategories = budgetStore.categoryStore.categories
+        let expenses = budgetStore.expenseStore.expenses
+        
+        // Build set of parent IDs (categories that have children)
+        let parentIds = Set(allCategories.compactMap { $0.parentCategoryId })
+        
+        // Find leaf categories (no children)
+        let leaves = allCategories.filter { !parentIds.contains($0.id) }
+        
+        // Calculate totals
+        cachedTotalAllocated = leaves.reduce(0) { $0 + $1.allocatedAmount }
+        
+        cachedTotalSpent = leaves.reduce(0) { total, category in
+            let spent = expenses.filter { $0.budgetCategoryId == category.id }.reduce(0) { $0 + $1.amount }
+            return total + spent
         }
-    }
-    
-    /// Total allocated amount - only counts leaf categories (subcategories) to avoid double-counting
-    /// Parent folders are aggregates of their subcategories, so we exclude them
-    private var totalAllocated: Double {
-        leafCategories.reduce(0) { $0 + $1.allocatedAmount }
-    }
-    
-    /// Total spent amount - only counts leaf categories to avoid double-counting
-    private var totalSpent: Double {
-        leafCategories.reduce(0) { total, category in
-            total + budgetStore.categoryStore.spentAmount(for: category.id, expenses: budgetStore.expenseStore.expenses)
-        }
-    }
-    
-    private var overBudgetCount: Int {
-        budgetStore.categoryStore.categories.filter { category in
-            let spent = budgetStore.categoryStore.spentAmount(for: category.id, expenses: budgetStore.expenseStore.expenses)
+        
+        cachedOverBudgetCount = allCategories.filter { category in
+            let spent = expenses.filter { $0.budgetCategoryId == category.id }.reduce(0) { $0 + $1.amount }
             return spent > category.allocatedAmount && category.allocatedAmount > 0
         }.count
     }
@@ -157,7 +150,7 @@ struct ExpenseCategoriesView: View {
                     showOnlyOverBudget: $showOnlyOverBudget,
                     parentCount: parentCategoryCount,
                     subcategoryCount: subcategoryCount,
-                    overBudgetCount: overBudgetCount,
+                    overBudgetCount: cachedOverBudgetCount,
                     onAddCategory: { showingAddCategory = true }
                 )
 
@@ -172,13 +165,13 @@ struct ExpenseCategoriesView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 0) {
-                            // Summary Cards
+                            // Summary Cards - use cached values to avoid expensive recalculations on scroll
                             ExpenseCategoriesSummaryCards(
                                 windowSize: windowSize,
                                 totalCategories: totalCategoryCount,
-                                totalAllocated: totalAllocated,
-                                totalSpent: totalSpent,
-                                overBudgetCount: overBudgetCount
+                                totalAllocated: cachedTotalAllocated,
+                                totalSpent: cachedTotalSpent,
+                                overBudgetCount: cachedOverBudgetCount
                             )
                             .padding(.horizontal, horizontalPadding)
                             .padding(.top, Spacing.lg)
@@ -223,6 +216,20 @@ struct ExpenseCategoriesView: View {
                 // Don't force reload - use cached data if available
                 // Force reload can cause hangs when navigating back to this view
                 await budgetStore.loadBudgetData(force: false)
+                // Calculate initial summary values
+                recalculateSummaryValues()
+            }
+            .onAppear {
+                // Recalculate when view appears (in case data changed while away)
+                recalculateSummaryValues()
+            }
+            .onChange(of: budgetStore.categoryStore.categories.count) { _, _ in
+                // Recalculate when categories change
+                recalculateSummaryValues()
+            }
+            .onChange(of: budgetStore.expenseStore.expenses.count) { _, _ in
+                // Recalculate when expenses change
+                recalculateSummaryValues()
             }
             .sheet(isPresented: $showingAddCategory) {
                 AddCategoryView(budgetStore: budgetStore)
