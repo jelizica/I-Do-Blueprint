@@ -20,31 +20,31 @@ struct VendorImportSuccessView: View {
             
             Text("Import Complete!")
                 .font(Typography.title3)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
             
             VStack(spacing: Spacing.xs) {
                 if stats.added > 0 {
                     Text("✅ Added: \(stats.added) vendors")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 
                 if stats.updated > 0 {
                     Text("🔄 Updated: \(stats.updated) vendors")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 
                 if stats.deleted > 0 {
                     Text("🗑️ Removed: \(stats.deleted) vendors")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 
                 if stats.skipped > 0 {
                     Text("⏭️ Skipped: \(stats.skipped) duplicates")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
             
@@ -52,10 +52,10 @@ struct VendorImportSuccessView: View {
                 Text("Done")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(maxWidth: 300)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
