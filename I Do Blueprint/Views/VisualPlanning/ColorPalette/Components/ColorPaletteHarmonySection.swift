@@ -74,7 +74,7 @@ struct ColorPaletteHarmonySection: View {
                                         .frame(width: 40, height: 40)
                                         .overlay(
                                             Circle()
-                                                .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                                                .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
 
                                     Text(selectedPaletteColors[index].role.title)
                                         .font(.caption2)
