@@ -40,7 +40,7 @@ struct V3VendorOverviewContent: View {
             V3SectionHeader(
                 title: "Quick Info",
                 icon: "info.circle.fill",
-                color: AppColors.Vendor.contacted
+                color: SemanticColors.primaryAction
             )
 
             LazyVGrid(
@@ -66,7 +66,7 @@ struct V3VendorOverviewContent: View {
                         icon: "dollarsign.circle.fill",
                         title: "Quoted Amount",
                         value: formattedAmount,
-                        color: AppColors.Vendor.booked
+                        color: SemanticColors.statusSuccess
                     )
                 }
 
@@ -84,7 +84,7 @@ struct V3VendorOverviewContent: View {
                         icon: "calendar.badge.checkmark",
                         title: "Booked On",
                         value: formattedDate,
-                        color: AppColors.Vendor.contacted
+                        color: SemanticColors.primaryAction
                     )
                 }
             }
@@ -116,7 +116,7 @@ struct V3VendorOverviewContent: View {
                         icon: "tag.fill",
                         title: "Service Type",
                         value: vendorType,
-                        color: AppColors.Vendor.contacted
+                        color: SemanticColors.primaryAction
                     )
                 }
 
@@ -126,7 +126,7 @@ struct V3VendorOverviewContent: View {
                         icon: "mappin.circle.fill",
                         title: "Address",
                         value: address,
-                        color: AppColors.Vendor.pending
+                        color: SemanticColors.statusPending
                     )
                 }
             }
@@ -156,21 +156,21 @@ private struct V3BusinessDetailCard: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(title)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text(value)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
 
             Spacer()
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.border, lineWidth: 1)
+                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
         )
     }
 }
@@ -186,5 +186,5 @@ private struct V3BusinessDetailCard: View {
         )
         .padding()
     }
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
