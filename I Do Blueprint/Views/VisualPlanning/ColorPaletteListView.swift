@@ -95,7 +95,7 @@ struct ColorPaletteListView: View {
                         .padding(.horizontal, Spacing.lg)
                         .padding(.vertical, Spacing.sm)
                         .background(Color.purple)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .cornerRadius(8)
                     }
                 }
@@ -327,7 +327,7 @@ struct EmptyColorPaletteView: View {
                 .padding(.horizontal, Spacing.xl)
                 .padding(.vertical, Spacing.md)
                 .background(Color.purple)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
                 .cornerRadius(10)
             }
 
