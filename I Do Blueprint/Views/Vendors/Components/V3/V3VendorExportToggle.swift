@@ -25,31 +25,31 @@ struct V3VendorExportToggle: View {
             V3SectionHeader(
                 title: "Export Settings",
                 icon: "square.and.arrow.up.circle.fill",
-                color: AppColors.Vendor.contacted
+                color: SemanticColors.primaryAction
             )
 
             HStack(spacing: Spacing.lg) {
                 // Icon
                 Image(systemName: "checkmark.circle.fill")
                     .font(.title)
-                    .foregroundColor(localValue ? AppColors.Vendor.booked : AppColors.Vendor.notContacted.opacity(0.3))
+                    .foregroundColor(localValue ? SemanticColors.statusSuccess : SemanticColors.textSecondary.opacity(Opacity.light))
                     .frame(width: 48, height: 48)
                     .background(
                         Circle()
-                            .fill((localValue ? AppColors.Vendor.booked : AppColors.Vendor.notContacted).opacity(0.15))
+                            .fill((localValue ? SemanticColors.statusSuccess : SemanticColors.textSecondary).opacity(Opacity.light))
                     )
 
                 // Text
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Include in Contact List Export")
                         .font(Typography.heading)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text(localValue
                         ? "This vendor will be included when you export contact lists"
                         : "This vendor will not be included in exported contact lists")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
@@ -74,13 +74,13 @@ struct V3VendorExportToggle: View {
             .padding(Spacing.lg)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(AppColors.cardBackground)
+                    .fill(SemanticColors.backgroundSecondary)
                     .shadow(color: AppColors.shadowLight, radius: 3, y: 2)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .strokeBorder(
-                        localValue ? AppColors.Vendor.booked.opacity(0.3) : AppColors.border,
+                        localValue ? SemanticColors.statusSuccess.opacity(Opacity.light) : SemanticColors.borderPrimary,
                         lineWidth: localValue ? 2 : 1
                     )
             )
@@ -89,11 +89,11 @@ struct V3VendorExportToggle: View {
             HStack(spacing: Spacing.xs) {
                 Image(systemName: "info.circle")
                     .font(.caption)
-                    .foregroundColor(AppColors.Vendor.contacted)
+                    .foregroundColor(SemanticColors.primaryAction)
 
                 Text("Use the Export button in the vendor list to create CSV, PDF, or Google Sheets contact lists")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(.horizontal, Spacing.sm)
         }
@@ -111,7 +111,7 @@ struct V3VendorExportToggle: View {
         onToggle: { _ in }
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
 
 #Preview("Export Toggle - Disabled") {
@@ -120,5 +120,5 @@ struct V3VendorExportToggle: View {
         onToggle: { _ in }
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
