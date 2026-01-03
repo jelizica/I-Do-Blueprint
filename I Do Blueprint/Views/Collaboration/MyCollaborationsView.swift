@@ -48,7 +48,7 @@ struct MyCollaborationsView: View {
                 .padding(Spacing.xl)
             }
             .frame(minWidth: 800, minHeight: 600)
-            .background(AppColors.background)
+            .background(SemanticColors.backgroundPrimary)
             .navigationTitle("My Collaborations")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -93,11 +93,11 @@ struct MyCollaborationsView: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text("My Collaborations")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Manage all weddings you're helping to plan")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
     }
 
@@ -108,16 +108,16 @@ struct MyCollaborationsView: View {
             HStack {
                 Label("Pending Invitations", systemImage: "envelope.fill")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
                 Text("\(collaborationStore.pendingUserInvitations.count)")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .padding(.horizontal, Spacing.sm)
                     .padding(.vertical, Spacing.xs)
-                    .background(AppColors.warning.opacity(0.1))
+                    .background(SemanticColors.statusWarning.opacity(Opacity.subtle))
                     .cornerRadius(12)
             }
 
@@ -156,17 +156,17 @@ struct MyCollaborationsView: View {
             HStack {
                 Label("Active Collaborations", systemImage: "person.2.fill")
                     .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
                 if !collaborationStore.userCollaborations.isEmpty {
                     Text("\(collaborationStore.userCollaborations.count)")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                         .padding(.horizontal, Spacing.sm)
                         .padding(.vertical, Spacing.xs)
-                        .background(AppColors.success.opacity(0.1))
+                        .background(SemanticColors.statusSuccess.opacity(Opacity.subtle))
                         .cornerRadius(12)
                 }
             }
@@ -199,15 +199,15 @@ struct MyCollaborationsView: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "person.2.slash")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("No Collaborations Yet")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("You haven't been invited to collaborate on any weddings yet. When someone invites you, their invitation will appear here.")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: 400)
         }
