@@ -227,7 +227,7 @@ struct BudgetOverviewView: View {
                 Text("Sort")
                 Image(systemName: "arrow.up.arrow.down")
             }
-            .foregroundColor(AppColors.Budget.allocated)
+            .foregroundColor(SemanticColors.primaryAction)
         }
     }
 }
@@ -247,20 +247,20 @@ struct BudgetSummaryHeaderView: View {
                         icon: "dollarsign.circle.fill",
                         label: "Total Budget",
                         value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.actualTotalBudget)) ?? "$0",
-                        color: AppColors.Budget.allocated
+                        color: SemanticColors.primaryAction
                     ),
                     StatItem(
                         icon: "creditcard.fill",
                         label: "Total Spent",
                         value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.totalSpent)) ?? "$0",
-                        color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.underBudget,
+                        color: budgetStore.isOverBudget ? SemanticColors.statusWarning : SemanticColors.statusSuccess,
                         trend: .neutral
                     ),
                     StatItem(
                         icon: "banknote.fill",
                         label: "Remaining",
                         value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
-                        color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.pending
+                        color: budgetStore.isOverBudget ? SemanticColors.statusWarning : SemanticColors.statusPending
                     )
                 ],
                 columns: 3
@@ -279,7 +279,7 @@ struct BudgetSummaryHeaderView: View {
 
                 ProgressBar(
                     value: min(budgetStore.percentageSpent / 100, 1.0),
-                    color: budgetStore.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.allocated,
+                    color: budgetStore.isOverBudget ? SemanticColors.statusWarning : SemanticColors.primaryAction,
                     height: 8
                 )
             }
@@ -292,7 +292,7 @@ struct BudgetSummaryHeaderView: View {
                     value: "\(stats.totalCategories)",
                     subtitle: "\(stats.categoriesOverBudget) over budget",
                     icon: "folder.fill",
-                    color: stats.categoriesOverBudget > 0 ? AppColors.Budget.overBudget : AppColors.Budget.allocated
+                    color: stats.categoriesOverBudget > 0 ? SemanticColors.statusWarning : SemanticColors.primaryAction
                 )
 
                 CompactSummaryCard(
@@ -300,7 +300,7 @@ struct BudgetSummaryHeaderView: View {
                     value: "\(stats.totalExpenses)",
                     subtitle: "\(stats.expensesPending) pending",
                     icon: "doc.text.fill",
-                    color: stats.expensesOverdue > 0 ? AppColors.Budget.overBudget : AppColors.Budget.income
+                    color: stats.expensesOverdue > 0 ? SemanticColors.statusWarning : SemanticColors.statusSuccess
                 )
 
                 if stats.expensesOverdue > 0 {
@@ -309,7 +309,7 @@ struct BudgetSummaryHeaderView: View {
                         value: "\(stats.expensesOverdue)",
                         subtitle: "Need attention",
                         icon: "exclamationmark.triangle.fill",
-                        color: AppColors.Budget.overBudget
+                        color: SemanticColors.statusWarning
                     )
                 }
             }
@@ -332,7 +332,7 @@ struct BudgetCategoryRowView: View {
         HStack(spacing: 12) {
             // Category color indicator
             Circle()
-                .fill(Color(hex: category.color) ?? AppColors.Budget.allocated)
+                .fill(Color(hex: category.color) ?? SemanticColors.primaryAction)
                 .frame(width: 12, height: 12)
 
             VStack(alignment: .leading, spacing: 4) {
@@ -348,7 +348,7 @@ struct BudgetCategoryRowView: View {
                             .string(from: NSNumber(value: enhancedCategory.projectedSpending)) ?? "$0")
                             .font(.subheadline)
                             .fontWeight(.semibold)
-                            .foregroundColor(enhancedCategory.isOverBudget ? AppColors.Budget.overBudget : .primary)
+                            .foregroundColor(enhancedCategory.isOverBudget ? SemanticColors.statusWarning : .primary)
 
                         Text(
                             "of \(NumberFormatter.currencyShort.string(from: NSNumber(value: category.allocatedAmount)) ?? "$0")")
@@ -360,7 +360,7 @@ struct BudgetCategoryRowView: View {
                 // Progress bar
                 ProgressBar(
                     value: min(enhancedCategory.projectedPercentageSpent / 100, 1.0),
-                    color: enhancedCategory.isOverBudget ? AppColors.Budget.overBudget : AppColors.Budget.allocated,
+                    color: enhancedCategory.isOverBudget ? SemanticColors.statusWarning : SemanticColors.primaryAction,
                     height: 6
                 )
 
@@ -371,7 +371,7 @@ struct BudgetCategoryRowView: View {
                         .fontWeight(.medium)
                         .padding(.horizontal, Spacing.sm)
                         .padding(.vertical, Spacing.xxs)
-                        .background(priorityColor(category.priority).opacity(0.2))
+                        .background(priorityColor(category.priority).opacity(Opacity.light))
                         .foregroundColor(priorityColor(category.priority))
                         .clipShape(Capsule())
 
@@ -381,8 +381,8 @@ struct BudgetCategoryRowView: View {
                             .fontWeight(.medium)
                             .padding(.horizontal, Spacing.sm)
                             .padding(.vertical, Spacing.xxs)
-                            .background(AppColors.Budget.income.opacity(0.2))
-                            .foregroundColor(AppColors.Budget.income)
+                            .background(SemanticColors.statusSuccess.opacity(Opacity.light))
+                            .foregroundColor(SemanticColors.statusSuccess)
                             .clipShape(Capsule())
                     }
 
@@ -404,9 +404,9 @@ struct BudgetCategoryRowView: View {
 
     private func priorityColor(_ priority: BudgetPriority) -> Color {
         switch priority {
-        case .high: AppColors.Budget.overBudget
-        case .medium: AppColors.Budget.pending
-        case .low: AppColors.Budget.allocated
+        case .high: SemanticColors.statusWarning
+        case .medium: SemanticColors.statusPending
+        case .low: SemanticColors.primaryAction
         }
     }
 }
