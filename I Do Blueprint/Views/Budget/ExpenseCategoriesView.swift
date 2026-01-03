@@ -27,6 +27,8 @@ struct ExpenseCategoriesView: View {
     @State private var cachedParentCount: Int = 0
     @State private var cachedSubcategoryCount: Int = 0
     @State private var cachedFilteredCategories: [BudgetCategory] = []
+    @State private var cachedParentCategories: [BudgetCategory] = []
+    @State private var cachedSubcategoriesByParent: [UUID: [BudgetCategory]] = [:]
     
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
@@ -89,6 +91,7 @@ struct ExpenseCategoriesView: View {
         let allCategories = budgetStore.categoryStore.categories
         let expenses = budgetStore.expenseStore.expenses
         let currentSearchText = searchText
+        let currentShowOnlyOverBudget = showOnlyOverBudget
         
         // Run expensive calculations off main thread
         Task.detached(priority: .userInitiated) {
@@ -119,13 +122,30 @@ struct ExpenseCategoriesView: View {
             
             // Calculate parent/subcategory counts
             let parentCount = allCategories.filter { $0.parentCategoryId == nil }.count
-            let subcategoryCount = allCategories.filter { $0.parentCategoryId != nil }.count
+            let subcategoryCountVal = allCategories.filter { $0.parentCategoryId != nil }.count
             
             // Calculate filtered categories (with search)
             let searchFiltered = currentSearchText.isEmpty ? allCategories : allCategories.filter { category in
                 category.categoryName.localizedCaseInsensitiveContains(currentSearchText)
             }
             let filtered = searchFiltered.sorted { $0.categoryName < $1.categoryName }
+            
+            // Calculate parent categories from filtered list
+            var parents = filtered.filter { $0.parentCategoryId == nil }
+            
+            // Apply over-budget filter if active (using pre-computed spentByCategory)
+            if currentShowOnlyOverBudget {
+                parents = parents.filter { category in
+                    let spent = spentByCategory[category.id] ?? 0
+                    return spent > category.allocatedAmount && category.allocatedAmount > 0
+                }
+            }
+            
+            // Build subcategories-by-parent dictionary
+            var subcategoriesByParent: [UUID: [BudgetCategory]] = [:]
+            for parent in parents {
+                subcategoriesByParent[parent.id] = filtered.filter { $0.parentCategoryId == parent.id }
+            }
             
             // Update cached values on main thread
             await MainActor.run {
@@ -134,8 +154,10 @@ struct ExpenseCategoriesView: View {
                 self.cachedTotalSpent = totalSpent
                 self.cachedOverBudgetCount = overBudgetCount
                 self.cachedParentCount = parentCount
-                self.cachedSubcategoryCount = subcategoryCount
+                self.cachedSubcategoryCount = subcategoryCountVal
                 self.cachedFilteredCategories = filtered
+                self.cachedParentCategories = parents
+                self.cachedSubcategoriesByParent = subcategoriesByParent
             }
         }
     }
@@ -195,8 +217,8 @@ struct ExpenseCategoriesView: View {
                     onAddCategory: { showingAddCategory = true }
                 )
 
-                // Content: Summary Cards + Categories
-                if filteredCategories.isEmpty {
+                // Content: Summary Cards + Categories - USE CACHED VALUES ONLY
+                if cachedFilteredCategories.isEmpty && budgetStore.categoryStore.categories.isEmpty {
                     ContentUnavailableView(
                         searchText.isEmpty ? "No Categories" : "No Results",
                         systemImage: searchText.isEmpty ? "folder" : "magnifyingglass",
@@ -209,7 +231,7 @@ struct ExpenseCategoriesView: View {
                             // Summary Cards - use cached values to avoid expensive recalculations on scroll
                             ExpenseCategoriesSummaryCards(
                                 windowSize: windowSize,
-                                totalCategories: totalCategoryCount,
+                                totalCategories: cachedParentCount + cachedSubcategoryCount,
                                 totalAllocated: cachedTotalAllocated,
                                 totalSpent: cachedTotalSpent,
                                 overBudgetCount: cachedOverBudgetCount
@@ -218,13 +240,13 @@ struct ExpenseCategoriesView: View {
                             .padding(.top, Spacing.lg)
                             .padding(.bottom, Spacing.md)
                             
-                            // Categories List - pass pre-computed spent amounts for O(1) lookups
+                            // Categories List - USE CACHED parent categories and subcategories
                             LazyVStack(spacing: Spacing.sm) {
-                                ForEach(parentCategories, id: \.id) { parentCategory in
+                                ForEach(cachedParentCategories, id: \.id) { parentCategory in
                                     CategorySectionViewV2(
                                         windowSize: windowSize,
                                         parentCategory: parentCategory,
-                                        subcategories: subcategories(for: parentCategory),
+                                        subcategories: cachedSubcategoriesByParent[parentCategory.id] ?? [],
                                         budgetStore: budgetStore,
                                         spentByCategory: cachedSpentByCategory,
                                         onEdit: { category in
@@ -275,6 +297,10 @@ struct ExpenseCategoriesView: View {
             }
             .onChange(of: searchText) { _, _ in
                 // Recalculate filtered categories when search changes
+                recalculateSummaryValues()
+            }
+            .onChange(of: showOnlyOverBudget) { _, _ in
+                // Recalculate when over-budget filter changes
                 recalculateSummaryValues()
             }
             .sheet(isPresented: $showingAddCategory) {
