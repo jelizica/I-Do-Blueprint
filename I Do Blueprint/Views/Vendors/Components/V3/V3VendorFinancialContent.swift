@@ -57,7 +57,7 @@ struct V3VendorFinancialContent: View {
 
             Text("Loading financial data...")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .frame(maxWidth: .infinity, minHeight: 200)
     }
@@ -68,15 +68,15 @@ struct V3VendorFinancialContent: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "dollarsign.circle")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("No Financial Information")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("Add quoted amount, expenses, or payment schedules to track financial details for this vendor.")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xl)
         }
@@ -112,18 +112,18 @@ struct V3VendorFinancialContent: View {
             V3SectionHeader(
                 title: "Quoted Amount",
                 icon: "banknote.fill",
-                color: AppColors.Vendor.booked
+                color: SemanticColors.primaryAction
             )
 
             HStack {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Total Quote")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text(amount.formatted(.currency(code: "USD")))
                         .font(.system(size: 28, weight: .bold))
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 }
 
                 Spacer()
@@ -132,20 +132,20 @@ struct V3VendorFinancialContent: View {
                     VStack(alignment: .trailing, spacing: Spacing.xs) {
                         Text("Category")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
 
                         Text(category)
                             .font(.system(size: 15))
-                            .foregroundColor(AppColors.textPrimary)
+                            .foregroundColor(SemanticColors.textPrimary)
                     }
                 }
             }
             .padding(Spacing.lg)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(CornerRadius.md)
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(AppColors.primary.opacity(0.2), lineWidth: 1)
+                    .stroke(SemanticColors.primaryAction.opacity(Opacity.light), lineWidth: 1)
             )
         }
     }
@@ -157,7 +157,7 @@ struct V3VendorFinancialContent: View {
             V3SectionHeader(
                 title: "Expenses",
                 icon: "receipt.fill",
-                color: AppColors.Vendor.booked
+                color: SemanticColors.primaryAction
             )
 
             // Summary Cards
@@ -166,21 +166,21 @@ struct V3VendorFinancialContent: View {
                     title: "Total",
                     amount: totalExpenses,
                     icon: "sum",
-                    color: AppColors.primary
+                    color: SemanticColors.textPrimary
                 )
 
                 V3ExpenseSummaryCard(
                     title: "Paid",
                     amount: paidAmount,
                     icon: "checkmark.circle.fill",
-                    color: .green
+                    color: SemanticColors.statusSuccess
                 )
 
                 V3ExpenseSummaryCard(
                     title: "Pending",
                     amount: pendingAmount,
                     icon: "clock.fill",
-                    color: .orange
+                    color: SemanticColors.statusPending
                 )
             }
 
@@ -200,7 +200,7 @@ struct V3VendorFinancialContent: View {
             V3SectionHeader(
                 title: "Payment Schedule",
                 icon: "calendar.badge.clock",
-                color: AppColors.Vendor.pending
+                color: SemanticColors.statusPending
             )
 
             // Progress Card
@@ -237,7 +237,7 @@ struct V3VendorFinancialContent: View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
             Text(title)
                 .font(Typography.subheading)
-                .foregroundColor(isOverdue ? .red : AppColors.textSecondary)
+                .foregroundColor(isOverdue ? SemanticColors.statusWarning : SemanticColors.textSecondary)
 
             ForEach(payments.sorted(by: { $0.paymentDate < $1.paymentDate })) { payment in
                 V3PaymentRow(payment: payment, isOverdue: isOverdue)
@@ -256,17 +256,17 @@ struct V3VendorFinancialContent: View {
             HStack {
                 Text("Paid (\(payments.count))")
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Spacer()
 
                 Text(payments.reduce(0) { $0 + $1.paymentAmount }.formatted(.currency(code: "USD")))
                     .font(Typography.caption)
-                    .foregroundColor(.green)
+                    .foregroundColor(SemanticColors.statusSuccess)
             }
         }
         .padding(Spacing.sm)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
     }
 }
@@ -288,16 +288,16 @@ private struct V3ExpenseSummaryCard: View {
 
                 Text(title)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             Text(amount.formatted(.currency(code: "USD")))
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
@@ -313,12 +313,12 @@ private struct V3ExpenseRow: View {
 
     private var statusColor: Color {
         switch expense.paymentStatus {
-        case .paid: return .green
-        case .pending: return .orange
-        case .overdue: return .red
-        case .partial: return .yellow
-        case .cancelled: return .gray
-        case .refunded: return .purple
+        case .paid: return SemanticColors.statusSuccess
+        case .pending: return SemanticColors.statusPending
+        case .overdue: return SemanticColors.statusWarning
+        case .partial: return SemanticColors.statusPending
+        case .cancelled: return SemanticColors.textTertiary
+        case .refunded: return SemanticColors.primaryAction
         }
     }
 
@@ -345,21 +345,21 @@ private struct V3ExpenseRow: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(expense.expenseName)
                     .font(.system(size: 15))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 HStack(spacing: Spacing.xs) {
                     Text(expense.expenseDate.formatted(date: .abbreviated, time: .omitted))
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     if let invoiceNumber = expense.invoiceNumber, !invoiceNumber.isEmpty {
                         Text("•")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
 
                         Text("Invoice: \(invoiceNumber)")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -370,7 +370,7 @@ private struct V3ExpenseRow: View {
             VStack(alignment: .trailing, spacing: Spacing.xxs) {
                 Text(expense.amount.formatted(.currency(code: "USD")))
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text(expense.paymentStatus.displayName)
                     .font(Typography.caption)
@@ -378,11 +378,11 @@ private struct V3ExpenseRow: View {
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.border, lineWidth: 1)
+                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
         )
     }
 }
@@ -402,27 +402,27 @@ private struct V3PaymentProgressCard: View {
                 HStack {
                     Text("Payment Progress")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Spacer()
 
                     Text("\(Int(progressPercentage))%")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
                 }
 
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         // Background
                         RoundedRectangle(cornerRadius: 4)
-                            .fill(AppColors.border.opacity(0.3))
+                            .fill(SemanticColors.borderPrimary.opacity(Opacity.light))
                             .frame(height: 8)
 
                         // Progress
                         RoundedRectangle(cornerRadius: 4)
                             .fill(
                                 LinearGradient(
-                                    colors: [AppColors.primary, AppColors.primary.opacity(0.7)],
+                                    colors: [SemanticColors.primaryAction, SemanticColors.primaryAction.opacity(Opacity.medium)],
                                     startPoint: .leading,
                                     endPoint: .trailing
                                 )
@@ -438,11 +438,11 @@ private struct V3PaymentProgressCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Paid")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text(paidAmount.formatted(.currency(code: "USD")))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.green)
+                        .foregroundColor(SemanticColors.statusSuccess)
                 }
 
                 Divider()
@@ -451,11 +451,11 @@ private struct V3PaymentProgressCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Remaining")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text(remainingAmount.formatted(.currency(code: "USD")))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.orange)
+                        .foregroundColor(SemanticColors.statusPending)
                 }
 
                 Divider()
@@ -464,20 +464,20 @@ private struct V3PaymentProgressCard: View {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
                     Text("Total")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     Text(totalAmount.formatted(.currency(code: "USD")))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.primary.opacity(0.2), lineWidth: 1)
+                .stroke(SemanticColors.primaryAction.opacity(Opacity.light), lineWidth: 1)
         )
     }
 }
@@ -490,11 +490,11 @@ private struct V3PaymentRow: View {
 
     private var statusColor: Color {
         if payment.paid {
-            return .green
+            return SemanticColors.statusSuccess
         } else if isOverdue {
-            return .red
+            return SemanticColors.statusWarning
         } else {
-            return .orange
+            return SemanticColors.statusPending
         }
     }
 
@@ -537,16 +537,16 @@ private struct V3PaymentRow: View {
                 HStack(spacing: Spacing.xs) {
                     Text(payment.paymentDate.formatted(date: .abbreviated, time: .omitted))
                         .font(.system(size: 15))
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     if payment.isDeposit {
                         Text("• Deposit")
                             .font(Typography.caption)
-                            .foregroundColor(.blue)
+                            .foregroundColor(SemanticColors.statusPending)
                     } else if payment.isRetainer {
                         Text("• Retainer")
                             .font(Typography.caption)
-                            .foregroundColor(.purple)
+                            .foregroundColor(SemanticColors.primaryAction)
                     }
                 }
 
@@ -558,16 +558,16 @@ private struct V3PaymentRow: View {
                     if let days = daysUntilDue {
                         Text("•")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
 
                         if days == 0 {
                             Text("Due today")
                                 .font(Typography.caption)
-                                .foregroundColor(.red)
+                                .foregroundColor(SemanticColors.statusWarning)
                         } else if days > 0 {
                             Text("Due in \(days) day\(days == 1 ? "" : "s")")
                                 .font(Typography.caption)
-                                .foregroundColor(AppColors.textSecondary)
+                                .foregroundColor(SemanticColors.textSecondary)
                         }
                     }
                 }
@@ -578,14 +578,14 @@ private struct V3PaymentRow: View {
             // Amount
             Text(payment.paymentAmount.formatted(.currency(code: "USD")))
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(isOverdue ? Color.red.opacity(0.3) : AppColors.border, lineWidth: 1)
+                .stroke(isOverdue ? SemanticColors.statusWarning.opacity(Opacity.light) : SemanticColors.borderPrimary, lineWidth: 1)
         )
     }
 }
@@ -653,7 +653,7 @@ private struct V3PaymentRow: View {
         )
         .padding()
     }
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
 
 #Preview("Financial Content - Empty") {
@@ -664,5 +664,5 @@ private struct V3PaymentRow: View {
         isLoading: false
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
