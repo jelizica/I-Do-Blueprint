@@ -94,6 +94,9 @@ class SettingsStoreV2: ObservableObject {
                 hasLoaded = true
                 error = nil
                 
+                // Initialize ThemeManager with saved theme
+                await ThemeManager.shared.initializeTheme(from: fetchedSettings.theme.colorScheme)
+                
                 AppLogger.ui.info("SettingsStoreV2.loadSettings: Settings base loaded; fetching categories in background…")
                 
                 // Fetch categories without blocking
@@ -169,7 +172,7 @@ class SettingsStoreV2: ObservableObject {
 
         // Notify ThemeManager to update all views with new theme
         let newTheme = AppTheme(from: localSettings.theme.colorScheme)
-        ThemeManager.shared.setTheme(newTheme, animated: true)
+        await ThemeManager.shared.setTheme(newTheme, animated: true)
     }
     
     func saveBudgetSettings() async {
