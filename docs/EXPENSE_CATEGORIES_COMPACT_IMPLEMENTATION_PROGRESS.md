@@ -94,31 +94,34 @@
 
 **Build Status:** ✅ BUILD SUCCEEDED
 
-### 🚧 Phase 5: Replace List with LazyVStack (IN PROGRESS)
+### ✅ Phase 5: Replace List with LazyVStack (COMPLETE)
 **Objective:** Replace SwiftUI List with LazyVStack to avoid scrolling issues
 
 **Tasks:**
-- [ ] Replace `List { ForEach... }` with `ScrollView { LazyVStack { ForEach... } }`
-- [ ] Add summary cards at top of ScrollView
-- [ ] Add custom section styling
-- [ ] Ensure proper spacing and dividers
-- [ ] Apply content width constraint
+- [x] Replace `List { ForEach... }` with `ScrollView { LazyVStack { ForEach... } }`
+- [x] Add summary cards at top of ScrollView
+- [x] Apply responsive horizontal padding to summary cards and category sections
+- [x] Ensure proper spacing (lg between cards and list, sm between sections)
+- [x] Apply content width constraint with maxWidth: .infinity
+- [x] Add bottom padding to ScrollView content
 
-**Files to Modify:**
-- `ExpenseCategoriesView.swift`
+**Files Modified:**
+- `ExpenseCategoriesView.swift` - Replaced List with ScrollView + LazyVStack, integrated summary cards
 
-### ⏳ Phase 5: Replace List with LazyVStack
-**Objective:** Replace SwiftUI List with LazyVStack to avoid scrolling issues
+**Build Status:** ✅ BUILD SUCCEEDED
+
+### 🚧 Phase 6: Responsive Category Section (IN PROGRESS)
+**Objective:** Create CategorySectionViewV2 with responsive parent/subcategory display
 
 **Tasks:**
-- [ ] Replace `List { ForEach... }` with `ScrollView { LazyVStack { ForEach... } }`
-- [ ] Add summary cards at top of ScrollView
-- [ ] Add custom section styling
-- [ ] Ensure proper spacing and dividers
-- [ ] Apply content width constraint
+- [ ] Create new file `CategorySectionViewV2.swift`
+- [ ] Pass windowSize to child components
+- [ ] Implement collapsible section with chevron animation
+- [ ] Add visual card styling for sections
+- [ ] Responsive spacing and padding
 
-**Files to Modify:**
-- `ExpenseCategoriesView.swift`
+**Files to Create:**
+- `Views/Budget/Components/CategorySectionViewV2.swift`
 
 ### ⏳ Phase 6: Responsive Category Section
 **Objective:** Create CategorySectionViewV2 with responsive parent/subcategory display
@@ -253,12 +256,17 @@
 - ✅ Phase 4: Implemented responsive layout (vertical in compact, horizontal in regular)
 - ✅ Phase 4: Integrated static header into ExpenseCategoriesView
 - ✅ Phase 4: Added over-budget filter functionality
-- ✅ Build verification passed
+- ✅ Phase 4: Build verification passed
+- ✅ Phase 5: Replaced List with ScrollView + LazyVStack
+- ✅ Phase 5: Integrated summary cards at top of ScrollView
+- ✅ Phase 5: Applied responsive horizontal padding
+- ✅ Phase 5: Ensured proper spacing between components
+- ✅ Phase 5: Build verification passed
 
 **Next Steps:**
-- Begin Phase 5: Replace List with LazyVStack
-- Add summary cards at top of ScrollView
-- Ensure proper spacing and no horizontal scrolling
+- Begin Phase 6: Create CategorySectionViewV2 with responsive design
+- Pass windowSize to enable compact layouts
+- Implement collapsible sections with chevron animation
 
 ---
 
@@ -273,7 +281,7 @@
 - [ ] `Views/Budget/Components/CategoryRowViewV2.swift`
 
 ### Modified Files (3/5)
-- [x] `ExpenseCategoriesView.swift` - Added GeometryReader, unified header, static header, dual initializer, expand/collapse state, computed properties for metrics, over-budget filter
+- [x] `ExpenseCategoriesView.swift` - Added GeometryReader, unified header, static header, dual initializer, expand/collapse state, computed properties for metrics, over-budget filter, ScrollView + LazyVStack with summary cards
 - [x] `BudgetDashboardHubView.swift` - Added header exclusion for expense categories
 - [x] `BudgetPage.swift` - Pass currentPage binding to ExpenseCategoriesView
 - [ ] `AddCategoryView.swift`
@@ -298,8 +306,8 @@ None yet.
 ## Estimated Time Remaining
 
 - **Total Estimated:** 5-6 hours
-- **Completed:** 3.0 hours (Phases 1-4)
-- **Remaining:** 2.0-3.0 hours
+- **Completed:** 3.5 hours (Phases 1-5)
+- **Remaining:** 1.5-2.5 hours
 
 ---
 

@@ -141,7 +141,7 @@ struct ExpenseCategoriesView: View {
                     onAddCategory: { showingAddCategory = true }
                 )
 
-                // Categories List
+                // Content: Summary Cards + Categories
                 if filteredCategories.isEmpty {
                     ContentUnavailableView(
                         searchText.isEmpty ? "No Categories" : "No Results",
@@ -150,22 +150,41 @@ struct ExpenseCategoriesView: View {
                             "Create your first budget category to start organizing expenses" :
                             "Try adjusting your search terms"))
                 } else {
-                    List {
-                        ForEach(parentCategories, id: \.id) { parentCategory in
-                            CategorySectionView(
-                                parentCategory: parentCategory,
-                                subcategories: subcategories(for: parentCategory),
-                                budgetStore: budgetStore,
-                                onEdit: { category in
-                                    editingCategory = category
-                                },
-                                onDelete: { category in
-                                    categoryToDelete = category
-                                    showingDeleteAlert = true
-                                })
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            // Summary Cards
+                            ExpenseCategoriesSummaryCards(
+                                windowSize: windowSize,
+                                totalCategories: totalCategoryCount,
+                                totalAllocated: totalAllocated,
+                                totalSpent: totalSpent,
+                                overBudgetCount: overBudgetCount
+                            )
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.top, Spacing.lg)
+                            .padding(.bottom, Spacing.md)
+                            
+                            // Categories List
+                            LazyVStack(spacing: Spacing.sm) {
+                                ForEach(parentCategories, id: \.id) { parentCategory in
+                                    CategorySectionView(
+                                        parentCategory: parentCategory,
+                                        subcategories: subcategories(for: parentCategory),
+                                        budgetStore: budgetStore,
+                                        onEdit: { category in
+                                            editingCategory = category
+                                        },
+                                        onDelete: { category in
+                                            categoryToDelete = category
+                                            showingDeleteAlert = true
+                                        })
+                                    .padding(.horizontal, horizontalPadding)
+                                }
+                            }
+                            .padding(.bottom, Spacing.lg)
                         }
+                        .frame(maxWidth: .infinity)
                     }
-                    .listStyle(PlainListStyle())
                 }
             }
             .task {
