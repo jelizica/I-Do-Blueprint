@@ -177,7 +177,7 @@ struct KanbanColumn: View {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         Rectangle()
-                            .fill(AppColors.textSecondary.opacity(0.2))
+                            .fill(SemanticColors.textSecondary.opacity(Opacity.light))
                             .frame(height: 4)
 
                         Rectangle()
@@ -211,7 +211,7 @@ struct KanbanColumn: View {
                 .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isDraggingOver ? statusConfig.color : AppColors.textSecondary.opacity(0.2), lineWidth: 2))
+                .stroke(isDraggingOver ? statusConfig.color : SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 2))
     }
 
     private var emptyState: some View {
