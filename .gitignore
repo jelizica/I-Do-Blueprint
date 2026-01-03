@@ -109,6 +109,8 @@ trufflehog_results.json
 
 # Temporary Files
 temp.swift
+.temp/
+*/.temp/
 
 # Development Documentation
 CLEANUP_SUMMARY.md
