@@ -45,9 +45,12 @@ coverage.json
 .mcp.json
 
 # IDE
-.vscode/
 .idea/
 *.swiftpm/
+
+# Personal tool configs (keep .vscode/settings.json for team)
+.obsidian/
+.codacy/
 
 # Build logs
 build.log
