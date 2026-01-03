@@ -25,7 +25,7 @@ struct EditCategoryView: View {
         _categoryName = State(initialValue: category.categoryName)
         _description = State(initialValue: category.description ?? "")
         _allocatedAmount = State(initialValue: String(category.allocatedAmount))
-        _selectedColor = State(initialValue: AppColors.Budget.allocated)
+        _selectedColor = State(initialValue: Color.fromHex(category.color)) // Load existing color
         _typicalPercentage = State(initialValue: String(category.typicalPercentage ?? 0.0))
     }
     
@@ -36,6 +36,7 @@ struct EditCategoryView: View {
     private let minHeight: CGFloat = 400
     private let maxHeight: CGFloat = 700
     private let windowChromeBuffer: CGFloat = 40
+    private let compactHeightThreshold: CGFloat = 550
     
     private var dynamicSize: CGSize {
         let parentSize = coordinator.parentWindowSize
@@ -43,6 +44,10 @@ struct EditCategoryView: View {
         let targetWidth = min(maxWidth, max(minWidth, parentSize.width * 0.6))
         let targetHeight = min(maxHeight, max(minHeight, parentSize.height * 0.75 - windowChromeBuffer))
         return CGSize(width: targetWidth, height: targetHeight)
+    }
+    
+    private var isCompactMode: Bool {
+        dynamicSize.height < compactHeightThreshold
     }
 
     private let predefinedColors: [Color] = [
@@ -100,6 +105,8 @@ struct EditCategoryView: View {
                     }
                 }
             }
+            .formStyle(.grouped) // Match AddExpenseView style
+            .padding(.horizontal, isCompactMode ? Spacing.md : Spacing.lg) // Add horizontal padding
             .navigationTitle("Edit Category")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -124,6 +131,7 @@ struct EditCategoryView: View {
         updatedCategory.description = description.isEmpty ? nil : description
         updatedCategory.allocatedAmount = Double(allocatedAmount) ?? 0
         updatedCategory.typicalPercentage = Double(typicalPercentage)
+        updatedCategory.color = selectedColor.hexString // Save selected color
 
         Task {
             do {
