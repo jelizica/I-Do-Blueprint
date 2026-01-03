@@ -56,14 +56,14 @@ struct BudgetDashboardView: View {
                             icon: "chart.pie.fill",
                             label: "Budget Used",
                             value: "\(Int(budgetStore.budgetUtilization))%",
-                            color: budgetStore.budgetUtilization > 80 ? AppColors.Budget.overBudget : AppColors.Budget.allocated,
+                            color: budgetStore.budgetUtilization > 80 ? SemanticColors.statusWarning : SemanticColors.statusSuccess,
                             trend: .neutral
                         ),
                         StatItem(
                             icon: "calendar",
                             label: "Avg Monthly Spend",
                             value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.averageMonthlySpend)) ?? "$0",
-                            color: AppColors.Budget.pending,
+                            color: SemanticColors.statusPending,
                             trend: .down("-5%")
                         ),
                         StatItem(
@@ -77,21 +77,21 @@ struct BudgetDashboardView: View {
                             icon: "clock.fill",
                             label: "Pending Payments",
                             value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.pendingPayments)) ?? "$0",
-                            color: AppColors.Budget.pending,
+                            color: SemanticColors.statusPending,
                             trend: .neutral
                         ),
                         StatItem(
                             icon: "person.3.fill",
                             label: "Vendors",
                             value: "See Vendors",
-                            color: AppColors.Budget.income,
+                            color: SemanticColors.statusSuccess,
                             trend: nil
                         ),
                         StatItem(
                             icon: "dollarsign.circle.fill",
                             label: "Budget Remaining",
                             value: NumberFormatter.currencyShort.string(from: NSNumber(value: budgetStore.remainingBudget)) ?? "$0",
-                            color: budgetStore.remainingBudget > 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget,
+                            color: budgetStore.remainingBudget > 0 ? SemanticColors.statusSuccess : SemanticColors.statusWarning,
                             trend: nil
                         )
                     ],
@@ -113,7 +113,7 @@ struct BudgetDashboardView: View {
                         CompactActionCard(
                             icon: "plus.circle",
                             title: "Add Expense",
-                            color: AppColors.Budget.allocated,
+                            color: QuickActions.budget,
                             action: {
                                 // Add expense action
                             }
@@ -122,7 +122,7 @@ struct BudgetDashboardView: View {
                         CompactActionCard(
                             icon: "calendar.badge.plus",
                             title: "Schedule Payment",
-                            color: AppColors.Budget.pending,
+                            color: SemanticColors.statusPending,
                             action: {
                                 // Schedule payment action
                             }
@@ -131,7 +131,7 @@ struct BudgetDashboardView: View {
                         CompactActionCard(
                             icon: "list.bullet.rectangle",
                             title: "View Categories",
-                            color: .purple,
+                            color: SemanticColors.primaryAction,
                             action: {
                                 // View categories action
                             }
@@ -140,7 +140,7 @@ struct BudgetDashboardView: View {
                         CompactActionCard(
                             icon: "square.and.arrow.up",
                             title: "Export Data",
-                            color: AppColors.Budget.income,
+                            color: SemanticColors.statusSuccess,
                             action: {
                                 // Export data action
                             }
@@ -211,12 +211,12 @@ struct SpendingTrendDashboardChart: View {
                 AreaMark(
                     x: .value("Date", dataPoint.date),
                     y: .value("Amount", dataPoint.amount))
-                    .foregroundStyle(AppColors.Budget.allocated.opacity(0.3))
+                    .foregroundStyle(QuickActions.budget.opacity(Opacity.light))
 
                 LineMark(
                     x: .value("Date", dataPoint.date),
                     y: .value("Amount", dataPoint.amount))
-                    .foregroundStyle(AppColors.Budget.allocated)
+                    .foregroundStyle(QuickActions.budget)
                     .symbol(.circle)
             }
             .frame(height: 200)
@@ -405,10 +405,10 @@ struct BudgetActivity: Identifiable {
 
         var color: Color {
             switch self {
-            case .expense: AppColors.Budget.expense
-            case .payment: AppColors.Budget.income
-            case .category: AppColors.Budget.allocated
-            case .vendor: .purple
+            case .expense: SemanticColors.statusWarning
+            case .payment: SemanticColors.statusSuccess
+            case .category: QuickActions.budget
+            case .vendor: QuickActions.vendor
             }
         }
     }
@@ -434,9 +434,9 @@ struct BudgetAlert: Identifiable {
 
         var color: Color {
             switch self {
-            case .info: AppColors.Budget.allocated
-            case .warning: AppColors.Budget.pending
-            case .critical: AppColors.Budget.overBudget
+            case .info: QuickActions.budget
+            case .warning: SemanticColors.statusPending
+            case .critical: SemanticColors.statusWarning
             }
         }
     }
