@@ -81,7 +81,7 @@ struct StyleOverviewCard: View {
                                 .frame(width: 30, height: 30)
                                 .overlay(
                                     Circle()
-                                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                                        .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
                         }
                     }
                 }
@@ -217,7 +217,7 @@ struct EmptyStateView: View {
         }
         .padding(Spacing.xxxl)
         .frame(maxWidth: .infinity)
-        .background(AppColors.textSecondary.opacity(0.05))
+        .background(SemanticColors.textSecondary.opacity(Opacity.verySubtle))
         .cornerRadius(12)
     }
 }
@@ -256,7 +256,7 @@ struct StyleCategoryCard: View {
                             .frame(width: 12, height: 12)
                             .overlay(
                                 Circle()
-                                    .stroke(isSelected ? AppColors.textPrimary.opacity(0.3) : AppColors.textPrimary.opacity(0.1),
+                                    .stroke(isSelected ? SemanticColors.textPrimary.opacity(Opacity.light) : SemanticColors.textPrimary.opacity(Opacity.subtle),
                                     lineWidth: 1)
                             )
                     }
@@ -336,7 +336,7 @@ struct SeasonalColorSuggestions: View {
                             .frame(width: 40, height: 40)
                             .overlay(
                                 Circle()
-                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                                    .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
 
                         Text(color.hexString)
                             .font(.system(.caption2, design: .monospaced))
@@ -345,7 +345,7 @@ struct SeasonalColorSuggestions: View {
             }
         }
         .padding()
-        .background(season.colors.first?.opacity(0.1) ?? AppColors.textSecondary.opacity(0.1))
+        .background(season.colors.first?.opacity(Opacity.subtle) ?? SemanticColors.textSecondary.opacity(Opacity.subtle))
         .cornerRadius(12)
     }
 }
@@ -359,7 +359,7 @@ struct CircularProgressView: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(AppColors.textSecondary.opacity(0.3), lineWidth: 2)
+                .stroke(SemanticColors.textSecondary.opacity(Opacity.light), lineWidth: 2)
 
             Circle()
                 .trim(from: 0, to: progress)
@@ -415,7 +415,7 @@ struct StyleGuideView: View {
                                 }
                             }
                             .padding()
-                            .background(AppColors.textSecondary.opacity(0.05))
+                            .background(SemanticColors.textSecondary.opacity(Opacity.verySubtle))
                             .cornerRadius(12)
                         }
                     }
@@ -533,7 +533,7 @@ struct ColorAnalysisView: View {
                                     }
                                 }
                                 .padding()
-                                .background(AppColors.textSecondary.opacity(0.05))
+                                .background(SemanticColors.textSecondary.opacity(Opacity.verySubtle))
                                 .cornerRadius(8)
                             }
                         }
