@@ -17,6 +17,7 @@ struct ExpenseCategoriesView: View {
     @State private var showingDeleteAlert = false
     @State private var categoryToDelete: BudgetCategory?
     @State private var expandedSections: Set<UUID> = []
+    @State private var showOnlyOverBudget = false
     
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
@@ -38,7 +39,29 @@ struct ExpenseCategoriesView: View {
     }
 
     private var parentCategories: [BudgetCategory] {
-        filteredCategories.filter { $0.parentCategoryId == nil }
+        let parents = filteredCategories.filter { $0.parentCategoryId == nil }
+        
+        // Apply over-budget filter if active
+        if showOnlyOverBudget {
+            return parents.filter { parent in
+                isOverBudget(parent)
+            }
+        }
+        
+        return parents
+    }
+    
+    private var parentCategoryCount: Int {
+        budgetStore.categoryStore.categories.filter { $0.parentCategoryId == nil }.count
+    }
+    
+    private var subcategoryCount: Int {
+        budgetStore.categoryStore.categories.filter { $0.parentCategoryId != nil }.count
+    }
+    
+    private func isOverBudget(_ category: BudgetCategory) -> Bool {
+        let spent = budgetStore.categoryStore.spentAmount(for: category.id, expenses: budgetStore.expenseStore.expenses)
+        return spent > category.allocatedAmount && category.allocatedAmount > 0
     }
 
     private func subcategories(for parent: BudgetCategory) -> [BudgetCategory] {
@@ -105,6 +128,17 @@ struct ExpenseCategoriesView: View {
                     onCollapseAll: collapseAllSections,
                     onExport: exportCategories,
                     onImport: importCategories
+                )
+                
+                // Static Header
+                ExpenseCategoriesStaticHeader(
+                    windowSize: windowSize,
+                    searchText: $searchText,
+                    showOnlyOverBudget: $showOnlyOverBudget,
+                    parentCount: parentCategoryCount,
+                    subcategoryCount: subcategoryCount,
+                    overBudgetCount: overBudgetCount,
+                    onAddCategory: { showingAddCategory = true }
                 )
 
                 // Categories List
