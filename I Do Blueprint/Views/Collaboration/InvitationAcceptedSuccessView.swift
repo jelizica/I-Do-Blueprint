@@ -20,47 +20,47 @@ struct InvitationAcceptedSuccessView: View {
             // Success Icon
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
-                .foregroundColor(AppColors.success)
+                .foregroundColor(SemanticColors.statusSuccess)
 
             // Title
             Text("Welcome to the Team!")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             // Message
             VStack(spacing: Spacing.sm) {
                 Text("You've successfully joined")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text(coupleName)
                     .font(Typography.bodyLarge)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
             }
 
             // Info Card
             VStack(alignment: .leading, spacing: Spacing.md) {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "info.circle.fill")
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("You now have access to this couple's wedding planning data")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "arrow.triangle.2.circlepath")
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("You can switch between couples anytime using the couple switcher")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
             .padding(Spacing.md)
-            .background(AppColors.primary.opacity(0.1))
+            .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
             .cornerRadius(8)
 
             Spacer()
