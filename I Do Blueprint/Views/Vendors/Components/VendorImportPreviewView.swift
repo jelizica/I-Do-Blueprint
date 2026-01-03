@@ -20,17 +20,17 @@ struct VendorImportPreviewView: View {
             // File info
             HStack {
                 Image(systemName: "doc.text.fill")
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                 
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(preview.fileName)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                     
                     Text("\(preview.totalRows) vendors • \(importMode == .addOnly ? "Add Only" : "Sync") Mode")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 
                 Spacer()
@@ -38,13 +38,13 @@ struct VendorImportPreviewView: View {
                 if !isImporting {
                     Button(action: onClear) {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
             
             // Preview table
@@ -56,10 +56,10 @@ struct VendorImportPreviewView: View {
                             Text(header)
                                 .font(Typography.bodySmall)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                                 .padding(Spacing.sm)
                                 .frame(minWidth: 120, alignment: .leading)
-                                .background(AppColors.cardBackground)
+                                .background(SemanticColors.backgroundSecondary)
                         }
                     }
                     
@@ -71,23 +71,23 @@ struct VendorImportPreviewView: View {
                             ForEach(Array(row.enumerated()), id: \.offset) { _, cell in
                                 Text(cell)
                                     .font(Typography.bodySmall)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .padding(Spacing.sm)
                                     .frame(minWidth: 120, alignment: .leading)
                             }
                         }
-                        .background(index % 2 == 0 ? Color.clear : AppColors.cardBackground.opacity(0.5))
+                        .background(index % 2 == 0 ? Color.clear : SemanticColors.backgroundSecondary.opacity(Opacity.medium))
                     }
                 }
             }
             .frame(maxHeight: 250)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
             
             if preview.totalRows > 10 {
                 Text("Showing first 10 of \(preview.totalRows) vendors")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             
             // Validation or importing status
@@ -99,7 +99,7 @@ struct VendorImportPreviewView: View {
                         .scaleEffect(0.8)
                     Text("Importing vendors...")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .padding(Spacing.md)
             }
@@ -121,7 +121,7 @@ struct VendorImportValidationSection: View {
                         .foregroundColor(.green)
                     Text("Validation passed! Importing...")
                         .font(Typography.bodySmall)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
             } else {
                 VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -137,13 +137,13 @@ struct VendorImportValidationSection: View {
                     ForEach(Array(validation.errors.prefix(5).enumerated()), id: \.offset) { _, error in
                         Text("• Row \(error.row): \(error.message)")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                     
                     if validation.errors.count > 5 {
                         Text("... and \(validation.errors.count - 5) more errors")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
