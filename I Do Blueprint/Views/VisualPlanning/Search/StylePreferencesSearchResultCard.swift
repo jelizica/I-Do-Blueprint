@@ -44,24 +44,24 @@ struct StylePreferencesSearchResultCard: View {
         HStack {
             Image(systemName: "star.square.fill")
                 .font(.title2)
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Style Preferences")
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 if let style = stylePreferences.primaryStyle {
                     Text(style.displayName)
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .opacity(isHovered ? 1.0 : 0.5)
         }
     }
@@ -72,7 +72,7 @@ struct StylePreferencesSearchResultCard: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Primary Colors")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 HStack(spacing: 4) {
                     ForEach(Array(stylePreferences.primaryColors.prefix(6).enumerated()), id: \.offset) { _, color in
@@ -81,14 +81,14 @@ struct StylePreferencesSearchResultCard: View {
                             .frame(width: 24, height: 24)
                             .overlay(
                                 Circle()
-                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
+                                    .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1)
                             )
                     }
 
                     if stylePreferences.primaryColors.count > 6 {
                         Text("+\(stylePreferences.primaryColors.count - 6)")
                             .font(.caption2)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -101,11 +101,11 @@ struct StylePreferencesSearchResultCard: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Style Influences")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text(stylePreferences.styleInfluences.map { $0.displayName }.joined(separator: ", "))
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
             }
         }
@@ -125,11 +125,11 @@ struct StylePreferencesSearchResultCard: View {
             HStack(spacing: 4) {
                 Image(systemName: "star.fill")
                     .font(.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text(formality.displayName)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
         }
     }
@@ -140,11 +140,11 @@ struct StylePreferencesSearchResultCard: View {
             HStack(spacing: 4) {
                 Image(systemName: seasonIcon(for: season))
                     .font(.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text(season.displayName)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
         }
     }
@@ -155,11 +155,11 @@ struct StylePreferencesSearchResultCard: View {
             HStack(spacing: 4) {
                 Image(systemName: "paintpalette")
                     .font(.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text(harmony.displayName)
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
         }
     }
@@ -170,23 +170,23 @@ struct StylePreferencesSearchResultCard: View {
             HStack(spacing: 4) {
                 Image(systemName: "sparkles")
                     .font(.caption2)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
 
                 Text("\(stylePreferences.visualThemes.count) visual theme\(stylePreferences.visualThemes.count == 1 ? "" : "s")")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
             }
         }
     }
 
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 8)
-            .fill(isHovered ? Color(NSColor.controlBackgroundColor) : AppColors.textSecondary.opacity(0.05))
+            .fill(isHovered ? Color(NSColor.controlBackgroundColor) : SemanticColors.textSecondary.opacity(Opacity.verySubtle))
     }
 
     private var cardBorder: some View {
         RoundedRectangle(cornerRadius: 8)
-            .stroke(isHovered ? AppColors.primary.opacity(0.3) : Color.clear, lineWidth: 1)
+            .stroke(isHovered ? SemanticColors.primaryAction.opacity(Opacity.light) : Color.clear, lineWidth: 1)
     }
 
     private func seasonIcon(for season: WeddingSeason) -> String {
