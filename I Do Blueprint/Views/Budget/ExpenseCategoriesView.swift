@@ -5,6 +5,7 @@
 //  Main view for managing budget expense categories with responsive compact window support
 //
 
+import Combine
 import SwiftUI
 
 struct ExpenseCategoriesView: View {
@@ -325,19 +326,15 @@ struct ExpenseCategoriesView: View {
                 // Don't force reload - use cached data if available
                 // Force reload can cause hangs when navigating back to this view
                 await budgetStore.loadBudgetData(force: false)
-                // Calculate initial summary values
-                recalculateSummaryValues()
+                // Calculate initial summary values with force to ensure first load
+                recalculateSummaryValues(forceRecalculate: true)
             }
-            .onAppear {
-                // Recalculate when view appears (in case data changed while away)
-                recalculateSummaryValues()
-            }
-            .onChange(of: budgetStore.categoryStore.categories.count) { _, _ in
-                // Recalculate when categories change
-                recalculateSummaryValues()
-            }
-            .onChange(of: budgetStore.expenseStore.expenses.count) { _, _ in
-                // Recalculate when expenses change
+            // Use onReceive with debounce to prevent rapid re-renders
+            // This replaces .onChange which was causing infinite loops
+            .onReceive(
+                budgetStore.categoryStore.objectWillChange
+                    .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
+            ) { _ in
                 recalculateSummaryValues()
             }
             .onChange(of: searchText) { _, _ in

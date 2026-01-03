@@ -41,49 +41,73 @@ struct CategorySectionViewV2: View {
         windowSize == .compact ? Spacing.sm : Spacing.md
     }
 
+    /// Check if this is a leaf category (no subcategories)
+    private var isLeafCategory: Bool {
+        subcategories.isEmpty
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
-            // Parent category (folder) - clickable to expand/collapse
-            CategoryFolderRowViewV2(
-                windowSize: windowSize,
-                category: parentCategory,
-                subcategoryCount: subcategories.count,
-                totalSpent: totalSpent,
-                totalBudgeted: totalBudgeted,
-                isExpanded: $isExpanded,
-                budgetStore: budgetStore,
-                onEdit: onEdit,
-                onDelete: onDelete
-            )
-            .padding(.horizontal, sectionPadding)
-            .padding(.vertical, Spacing.sm)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(nsColor: .controlBackgroundColor))
-            )
+            // For leaf categories (no children), show as a regular row, not a folder
+            if isLeafCategory {
+                // Leaf category - show as regular row without folder icon or chevron
+                CategoryRowViewV2(
+                    windowSize: windowSize,
+                    category: parentCategory,
+                    spentAmount: spentByCategory[parentCategory.id] ?? 0,
+                    budgetStore: budgetStore,
+                    onEdit: onEdit,
+                    onDelete: onDelete
+                )
+                .padding(.horizontal, sectionPadding)
+                .padding(.vertical, Spacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                )
+            } else {
+                // Parent category with children (folder) - clickable to expand/collapse
+                CategoryFolderRowViewV2(
+                    windowSize: windowSize,
+                    category: parentCategory,
+                    subcategoryCount: subcategories.count,
+                    totalSpent: totalSpent,
+                    totalBudgeted: totalBudgeted,
+                    isExpanded: $isExpanded,
+                    budgetStore: budgetStore,
+                    onEdit: onEdit,
+                    onDelete: onDelete
+                )
+                .padding(.horizontal, sectionPadding)
+                .padding(.vertical, Spacing.sm)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(nsColor: .controlBackgroundColor))
+                )
 
-            // Subcategories - use pre-computed spent amounts for O(1) lookup
-            if isExpanded, !subcategories.isEmpty {
-                VStack(spacing: Spacing.xs) {
-                    ForEach(subcategories, id: \.id) { subcategory in
-                        CategoryRowViewV2(
-                            windowSize: windowSize,
-                            category: subcategory,
-                            spentAmount: spentByCategory[subcategory.id] ?? 0,
-                            budgetStore: budgetStore,
-                            onEdit: onEdit,
-                            onDelete: onDelete
-                        )
-                        .padding(.horizontal, sectionPadding)
-                        .padding(.vertical, Spacing.xs)
-                        .padding(.leading, windowSize == .compact ? Spacing.lg : Spacing.xl)
-                        .background(
-                            RoundedRectangle(cornerRadius: 6)
-                                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-                        )
+                // Subcategories - use pre-computed spent amounts for O(1) lookup
+                if isExpanded {
+                    VStack(spacing: Spacing.xs) {
+                        ForEach(subcategories, id: \.id) { subcategory in
+                            CategoryRowViewV2(
+                                windowSize: windowSize,
+                                category: subcategory,
+                                spentAmount: spentByCategory[subcategory.id] ?? 0,
+                                budgetStore: budgetStore,
+                                onEdit: onEdit,
+                                onDelete: onDelete
+                            )
+                            .padding(.horizontal, sectionPadding)
+                            .padding(.vertical, Spacing.xs)
+                            .padding(.leading, windowSize == .compact ? Spacing.lg : Spacing.xl)
+                            .background(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+                            )
+                        }
                     }
+                    .padding(.top, Spacing.xs)
                 }
-                .padding(.top, Spacing.xs)
             }
         }
         .background(
