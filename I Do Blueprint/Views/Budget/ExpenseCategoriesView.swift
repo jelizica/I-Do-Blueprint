@@ -29,6 +29,15 @@ struct ExpenseCategoriesView: View {
     @State private var cachedFilteredCategories: [BudgetCategory] = []
     @State private var cachedParentCategories: [BudgetCategory] = []
     @State private var cachedSubcategoriesByParent: [UUID: [BudgetCategory]] = [:]
+    @State private var cachedTotalCategoryCount: Int = 0
+    @State private var hasCategories: Bool = false
+    
+    // Track last known state to detect changes
+    @State private var lastKnownCategoryCount: Int = -1
+    @State private var lastKnownExpenseCount: Int = -1
+    @State private var lastKnownSearchText: String = ""
+    @State private var lastKnownShowOnlyOverBudget: Bool = false
+    @State private var isRecalculating: Bool = false
     
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
@@ -87,11 +96,35 @@ struct ExpenseCategoriesView: View {
     
     /// Recalculate ALL cached values - call this when data changes, not on every render
     /// Runs asynchronously to avoid blocking main thread
-    private func recalculateSummaryValues() {
+    /// Uses debouncing to prevent multiple rapid recalculations
+    /// - Parameter forceRecalculate: If true, skip the change detection check (for filter/search changes)
+    private func recalculateSummaryValues(forceRecalculate: Bool = false) {
+        // Prevent re-entrant calls
+        guard !isRecalculating else { return }
+        isRecalculating = true
+        
+        // Capture current state ONCE at the start (this is the only store access)
         let allCategories = budgetStore.categoryStore.categories
         let expenses = budgetStore.expenseStore.expenses
         let currentSearchText = searchText
         let currentShowOnlyOverBudget = showOnlyOverBudget
+        
+        // Check if data actually changed - skip if same (unless forced)
+        let newCategoryCount = allCategories.count
+        let newExpenseCount = expenses.count
+        let searchChanged = currentSearchText != lastKnownSearchText
+        let filterChanged = currentShowOnlyOverBudget != lastKnownShowOnlyOverBudget
+        
+        if !forceRecalculate && 
+           !searchChanged && 
+           !filterChanged &&
+           newCategoryCount == lastKnownCategoryCount && 
+           newExpenseCount == lastKnownExpenseCount &&
+           lastKnownCategoryCount >= 0 {
+            // Nothing changed, skip recalculation
+            isRecalculating = false
+            return
+        }
         
         // Run expensive calculations off main thread
         Task.detached(priority: .userInitiated) {
@@ -147,6 +180,10 @@ struct ExpenseCategoriesView: View {
                 subcategoriesByParent[parent.id] = filtered.filter { $0.parentCategoryId == parent.id }
             }
             
+            // Calculate total count and hasCategories flag
+            let totalCount = allCategories.count
+            let hasCats = !allCategories.isEmpty
+            
             // Update cached values on main thread
             await MainActor.run {
                 self.cachedSpentByCategory = spentByCategory
@@ -158,6 +195,14 @@ struct ExpenseCategoriesView: View {
                 self.cachedFilteredCategories = filtered
                 self.cachedParentCategories = parents
                 self.cachedSubcategoriesByParent = subcategoriesByParent
+                self.cachedTotalCategoryCount = totalCount
+                self.hasCategories = hasCats
+                // Update tracking variables
+                self.lastKnownCategoryCount = totalCount
+                self.lastKnownExpenseCount = expenses.count
+                self.lastKnownSearchText = currentSearchText
+                self.lastKnownShowOnlyOverBudget = currentShowOnlyOverBudget
+                self.isRecalculating = false
             }
         }
     }
@@ -217,8 +262,8 @@ struct ExpenseCategoriesView: View {
                     onAddCategory: { showingAddCategory = true }
                 )
 
-                // Content: Summary Cards + Categories - USE CACHED VALUES ONLY
-                if cachedFilteredCategories.isEmpty && budgetStore.categoryStore.categories.isEmpty {
+                // Content: Summary Cards + Categories - USE ONLY CACHED VALUES (no store access in body!)
+                if cachedFilteredCategories.isEmpty && !hasCategories {
                     ContentUnavailableView(
                         searchText.isEmpty ? "No Categories" : "No Results",
                         systemImage: searchText.isEmpty ? "folder" : "magnifyingglass",
