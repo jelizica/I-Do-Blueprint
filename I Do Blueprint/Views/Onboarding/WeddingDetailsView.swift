@@ -4,6 +4,15 @@
 //
 //  Wedding details form for onboarding
 //
+//  Theme Migration: Migrated to SemanticColors and Opacity constants (30 instances)
+//  - AppColors.background → SemanticColors.backgroundPrimary
+//  - AppColors.textPrimary → SemanticColors.textPrimary
+//  - AppColors.textSecondary → SemanticColors.textSecondary
+//  - AppColors.cardBackground → SemanticColors.backgroundSecondary
+//  - AppColors.primary → SemanticColors.primaryAction
+//  - AppColors.error → SemanticColors.statusWarning
+//  - opacity(0.1) → Opacity.subtle
+//
 
 import SwiftUI
 import Combine
@@ -38,7 +47,7 @@ struct WeddingDetailsView: View {
                 formSection
             }
         }
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .onAppear {
             loadExistingData()
         }
@@ -58,11 +67,11 @@ struct WeddingDetailsView: View {
         VStack(spacing: Spacing.sm) {
             Text("Wedding Details")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Tell us about your special day")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
         }
         .padding(.top, Spacing.xl)
     }
@@ -148,10 +157,10 @@ struct WeddingDetailsView: View {
             } else {
                 Text("Wedding date is to be determined")
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .padding(Spacing.md)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(AppColors.cardBackground)
+                    .background(SemanticColors.backgroundSecondary)
                     .cornerRadius(8)
             }
         }
@@ -161,7 +170,7 @@ struct WeddingDetailsView: View {
         Button(action: { showDatePicker.toggle() }) {
             HStack {
                 let dateText = weddingDate.map { formatDate($0) } ?? "Select date"
-                let textColor = weddingDate == nil ? AppColors.textSecondary : AppColors.textPrimary
+                let textColor = weddingDate == nil ? SemanticColors.textSecondary : SemanticColors.textPrimary
 
                 Text(dateText)
                     .foregroundColor(textColor)
@@ -169,11 +178,11 @@ struct WeddingDetailsView: View {
                 Spacer()
 
                 Image(systemName: "calendar")
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
             }
             .font(Typography.bodyRegular)
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
         }
         .accessibilityLabel("Wedding date")
@@ -199,7 +208,7 @@ struct WeddingDetailsView: View {
         )
         .datePickerStyle(.graphical)
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(8)
     }
 
@@ -238,7 +247,7 @@ struct WeddingDetailsView: View {
 
             Text("Configure your ceremony and reception details")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             if weddingEvents.isEmpty {
                 Button(action: initializeDefaultEvents) {
@@ -247,10 +256,10 @@ struct WeddingDetailsView: View {
                         Text("Add Default Events")
                     }
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                     .padding(Spacing.md)
                     .frame(maxWidth: .infinity)
-                    .background(AppColors.cardBackground)
+                    .background(SemanticColors.backgroundSecondary)
                     .cornerRadius(8)
                 }
                 .buttonStyle(.plain)
@@ -376,12 +385,12 @@ struct FormSectionHeader: View {
             Text(title)
                 .font(Typography.bodyLarge)
                 .fontWeight(.semibold)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             if isRequired {
                 Text("*")
                     .font(Typography.bodyLarge)
-                    .foregroundColor(AppColors.error)
+                    .foregroundColor(SemanticColors.statusWarning)
             }
         }
         .accessibilityElement(children: .combine)
@@ -401,7 +410,7 @@ struct FormTextField: View {
                 .textFieldStyle(.plain)
                 .font(Typography.bodyRegular)
                 .padding(Spacing.md)
-                .background(AppColors.cardBackground)
+                .background(SemanticColors.backgroundSecondary)
                 .cornerRadius(8)
                 .accessibilityLabel(title)
                 .accessibilityValue(text.isEmpty ? "Empty" : text)
@@ -420,18 +429,18 @@ struct WeddingStyleCard: View {
             VStack(spacing: Spacing.sm) {
                 Image(systemName: style.icon)
                     .font(.system(size: 32))
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textSecondary)
+                    .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
 
                 Text(style.displayName)
                     .font(Typography.bodySmall)
-                    .foregroundColor(isSelected ? AppColors.primary : AppColors.textPrimary)
+                    .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textPrimary)
             }
             .frame(maxWidth: .infinity)
             .padding(Spacing.md)
-            .background(isSelected ? AppColors.primary.opacity(0.1) : AppColors.cardBackground)
+            .background(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : SemanticColors.backgroundSecondary)
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? AppColors.primary : Color.clear, lineWidth: 2)
+                    .stroke(isSelected ? SemanticColors.primaryAction : Color.clear, lineWidth: 2)
             )
             .cornerRadius(8)
         }
@@ -496,10 +505,10 @@ struct WeddingEventCard: View {
                 if event.isMainEvent {
                     Text("Main Event")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                         .padding(.horizontal, Spacing.sm)
                         .padding(.vertical, Spacing.xs)
-                        .background(AppColors.primary)
+                        .background(SemanticColors.primaryAction)
                         .cornerRadius(4)
                 }
             }
@@ -510,7 +519,7 @@ struct WeddingEventCard: View {
                 .fontWeight(.semibold)
                 .textFieldStyle(.plain)
                 .padding(Spacing.sm)
-                .background(AppColors.background)
+                .background(SemanticColors.backgroundPrimary)
                 .cornerRadius(4)
             
             // Notes field (required for "other" type)
@@ -519,16 +528,16 @@ struct WeddingEventCard: View {
                     HStack {
                         Text("Event Description")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                         Text("*")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.error)
+                            .foregroundColor(SemanticColors.statusWarning)
                     }
                     TextField("Describe this event...", text: $event.notes)
                         .font(Typography.bodyRegular)
                         .textFieldStyle(.plain)
                         .padding(Spacing.sm)
-                        .background(AppColors.background)
+                        .background(SemanticColors.backgroundPrimary)
                         .cornerRadius(4)
                 }
             }
@@ -538,7 +547,7 @@ struct WeddingEventCard: View {
                 .font(Typography.bodyRegular)
                 .textFieldStyle(.plain)
                 .padding(Spacing.sm)
-                .background(AppColors.background)
+                .background(SemanticColors.backgroundPrimary)
                 .cornerRadius(4)
 
             // Date and Time
@@ -549,7 +558,7 @@ struct WeddingEventCard: View {
                         Text(event.eventDate.map { formatDate($0) } ?? "Set Date")
                             .font(Typography.bodySmall)
                     }
-                    .foregroundColor(event.eventDate == nil ? AppColors.textSecondary : AppColors.textPrimary)
+                    .foregroundColor(event.eventDate == nil ? SemanticColors.textSecondary : SemanticColors.textPrimary)
                 }
                 .buttonStyle(.plain)
 
@@ -557,7 +566,7 @@ struct WeddingEventCard: View {
                     .font(Typography.bodySmall)
                     .textFieldStyle(.plain)
                     .padding(Spacing.sm)
-                    .background(AppColors.background)
+                    .background(SemanticColors.backgroundPrimary)
                     .cornerRadius(4)
             }
 
@@ -574,12 +583,12 @@ struct WeddingEventCard: View {
                 )
                 .datePickerStyle(.graphical)
                 .padding(Spacing.sm)
-                .background(AppColors.background)
+                .background(SemanticColors.backgroundPrimary)
                 .cornerRadius(4)
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(8)
     }
 
