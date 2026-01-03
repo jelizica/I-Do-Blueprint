@@ -311,7 +311,7 @@ struct StylePreferencesView: View {
                                             .frame(width: 60, height: 60)
                                             .overlay(
                                                 Circle()
-                                                    .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1))
+                                                    .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1))
 
                                         Text(color.hexString)
                                             .font(.system(.caption2, design: .monospaced))
@@ -377,7 +377,7 @@ struct StylePreferencesView: View {
                                             .foregroundColor(.secondary)
                                     }
                                     .padding()
-                                    .background(AppColors.textSecondary.opacity(0.05))
+                                    .background(SemanticColors.textSecondary.opacity(Opacity.verySubtle))
                                     .cornerRadius(8)
                                 }
                                 .buttonStyle(.plain)
