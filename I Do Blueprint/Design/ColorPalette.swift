@@ -691,11 +691,24 @@ enum VisualPlanning {
 // Use these instead of hardcoded opacity values for consistency
 
 enum Opacity {
-    static let verySubtle: Double = 0.05    // Barely visible tints
-    static let subtle: Double = 0.1         // Hover backgrounds
-    static let light: Double = 0.15         // Status backgrounds
-    static let medium: Double = 0.5         // Borders, dividers
-    static let strong: Double = 0.95        // Tertiary text
+    // Very light opacities (0.0 - 0.1)
+    static let verySubtle: Double = 0.05    // Barely visible tints, subtle highlights
+    static let subtle: Double = 0.1         // Hover backgrounds, light status backgrounds
+
+    // Light opacities (0.1 - 0.3)
+    static let light: Double = 0.15         // Status backgrounds, light borders
+    static let lightMedium: Double = 0.2    // Slightly more visible than light
+    static let semiLight: Double = 0.3      // Visible but still subtle
+
+    // Medium opacities (0.3 - 0.7)
+    static let medium: Double = 0.5         // Borders, dividers, overlays
+    static let semiStrong: Double = 0.6     // Overlay backgrounds
+
+    // Strong opacities (0.7 - 1.0)
+    static let strong: Double = 0.8         // Near-opaque overlays
+    static let veryStrong: Double = 0.85    // Almost fully opaque
+    static let nearOpaque: Double = 0.9     // Nearly solid
+    static let almostOpaque: Double = 0.95  // Tertiary text, very slight transparency
 }
 
 // MARK: - Color System Documentation
