@@ -15,7 +15,7 @@ struct V3VendorContactCard: View {
             V3SectionHeader(
                 title: "Contact",
                 icon: "envelope.circle.fill",
-                color: AppColors.Vendor.contacted
+                color: SemanticColors.primaryAction
             )
 
             VStack(spacing: Spacing.sm) {
@@ -33,7 +33,7 @@ struct V3VendorContactCard: View {
                         icon: "envelope.fill",
                         label: "EMAIL",
                         value: email,
-                        color: AppColors.Vendor.contacted,
+                        color: SemanticColors.primaryAction,
                         isLink: true
                     ) {
                         if let url = vendor.emailURL {
@@ -47,7 +47,7 @@ struct V3VendorContactCard: View {
                         icon: "phone.fill",
                         label: "PHONE",
                         value: phone,
-                        color: AppColors.Vendor.booked,
+                        color: SemanticColors.statusSuccess,
                         isLink: true
                     ) {
                         if let url = vendor.phoneURL {
@@ -102,14 +102,14 @@ private struct V3ContactRow: View {
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(label)
                     .font(Typography.caption2)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .tracking(0.5)
 
                 if isLink, let action = action {
                     Button(action: action) {
                         Text(value)
                             .font(Typography.bodyRegular)
-                            .foregroundColor(isHovering ? AppColors.primary : AppColors.textPrimary)
+                            .foregroundColor(isHovering ? SemanticColors.primaryAction : SemanticColors.textPrimary)
                             .underline(isHovering)
                     }
                     .buttonStyle(.plain)
@@ -119,18 +119,18 @@ private struct V3ContactRow: View {
                 } else {
                     Text(value)
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
             }
 
             Spacer()
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(AppColors.border, lineWidth: 1)
+                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
@@ -145,7 +145,7 @@ private struct V3ContactRow: View {
         vendor: .makeTest()
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
 
 #Preview("Contact Card - Minimal") {
@@ -157,5 +157,5 @@ private struct V3ContactRow: View {
         )
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
