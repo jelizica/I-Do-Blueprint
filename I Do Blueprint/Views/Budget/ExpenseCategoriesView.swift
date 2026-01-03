@@ -19,11 +19,14 @@ struct ExpenseCategoriesView: View {
     @State private var expandedSections: Set<UUID> = []
     @State private var showOnlyOverBudget = false
     
-    // MARK: - Cached Values (to avoid expensive recalculations on scroll)
+    // MARK: - Cached Values (to avoid expensive recalculations on scroll and updates)
     @State private var cachedTotalAllocated: Double = 0
     @State private var cachedTotalSpent: Double = 0
     @State private var cachedOverBudgetCount: Int = 0
     @State private var cachedSpentByCategory: [UUID: Double] = [:]
+    @State private var cachedParentCount: Int = 0
+    @State private var cachedSubcategoryCount: Int = 0
+    @State private var cachedFilteredCategories: [BudgetCategory] = []
     
     // Dual initializer pattern
     init(currentPage: Binding<BudgetPage>) {
@@ -80,36 +83,61 @@ struct ExpenseCategoriesView: View {
         budgetStore.categoryStore.categories.count
     }
     
-    /// Recalculate cached summary values - call this when data changes, not on every render
+    /// Recalculate ALL cached values - call this when data changes, not on every render
+    /// Runs asynchronously to avoid blocking main thread
     private func recalculateSummaryValues() {
         let allCategories = budgetStore.categoryStore.categories
         let expenses = budgetStore.expenseStore.expenses
+        let currentSearchText = searchText
         
-        // Build spent-by-category dictionary ONCE (O(n) for expenses)
-        var spentByCategory: [UUID: Double] = [:]
-        for expense in expenses {
-            let categoryId = expense.budgetCategoryId
-            spentByCategory[categoryId, default: 0] += expense.amount
+        // Run expensive calculations off main thread
+        Task.detached(priority: .userInitiated) {
+            // Build spent-by-category dictionary ONCE (O(n) for expenses)
+            var spentByCategory: [UUID: Double] = [:]
+            for expense in expenses {
+                let categoryId = expense.budgetCategoryId
+                spentByCategory[categoryId, default: 0] += expense.amount
+            }
+            
+            // Build set of parent IDs (categories that have children)
+            let parentIds = Set(allCategories.compactMap { $0.parentCategoryId })
+            
+            // Find leaf categories (no children)
+            let leaves = allCategories.filter { !parentIds.contains($0.id) }
+            
+            // Calculate totals using the pre-computed dictionary
+            let totalAllocated = leaves.reduce(0) { $0 + $1.allocatedAmount }
+            
+            let totalSpent = leaves.reduce(0) { total, category in
+                total + (spentByCategory[category.id] ?? 0)
+            }
+            
+            let overBudgetCount = allCategories.filter { category in
+                let spent = spentByCategory[category.id] ?? 0
+                return spent > category.allocatedAmount && category.allocatedAmount > 0
+            }.count
+            
+            // Calculate parent/subcategory counts
+            let parentCount = allCategories.filter { $0.parentCategoryId == nil }.count
+            let subcategoryCount = allCategories.filter { $0.parentCategoryId != nil }.count
+            
+            // Calculate filtered categories (with search)
+            let searchFiltered = currentSearchText.isEmpty ? allCategories : allCategories.filter { category in
+                category.categoryName.localizedCaseInsensitiveContains(currentSearchText)
+            }
+            let filtered = searchFiltered.sorted { $0.categoryName < $1.categoryName }
+            
+            // Update cached values on main thread
+            await MainActor.run {
+                self.cachedSpentByCategory = spentByCategory
+                self.cachedTotalAllocated = totalAllocated
+                self.cachedTotalSpent = totalSpent
+                self.cachedOverBudgetCount = overBudgetCount
+                self.cachedParentCount = parentCount
+                self.cachedSubcategoryCount = subcategoryCount
+                self.cachedFilteredCategories = filtered
+            }
         }
-        cachedSpentByCategory = spentByCategory
-        
-        // Build set of parent IDs (categories that have children)
-        let parentIds = Set(allCategories.compactMap { $0.parentCategoryId })
-        
-        // Find leaf categories (no children)
-        let leaves = allCategories.filter { !parentIds.contains($0.id) }
-        
-        // Calculate totals using the pre-computed dictionary
-        cachedTotalAllocated = leaves.reduce(0) { $0 + $1.allocatedAmount }
-        
-        cachedTotalSpent = leaves.reduce(0) { total, category in
-            total + (spentByCategory[category.id] ?? 0)
-        }
-        
-        cachedOverBudgetCount = allCategories.filter { category in
-            let spent = spentByCategory[category.id] ?? 0
-            return spent > category.allocatedAmount && category.allocatedAmount > 0
-        }.count
     }
     
     /// Get cached spent amount for a category (O(1) lookup)
@@ -156,13 +184,13 @@ struct ExpenseCategoriesView: View {
                     onImport: importCategories
                 )
                 
-                // Static Header
+                // Static Header - use cached counts to avoid expensive filtering
                 ExpenseCategoriesStaticHeader(
                     windowSize: windowSize,
                     searchText: $searchText,
                     showOnlyOverBudget: $showOnlyOverBudget,
-                    parentCount: parentCategoryCount,
-                    subcategoryCount: subcategoryCount,
+                    parentCount: cachedParentCount,
+                    subcategoryCount: cachedSubcategoryCount,
                     overBudgetCount: cachedOverBudgetCount,
                     onAddCategory: { showingAddCategory = true }
                 )
@@ -243,6 +271,10 @@ struct ExpenseCategoriesView: View {
             }
             .onChange(of: budgetStore.expenseStore.expenses.count) { _, _ in
                 // Recalculate when expenses change
+                recalculateSummaryValues()
+            }
+            .onChange(of: searchText) { _, _ in
+                // Recalculate filtered categories when search changes
                 recalculateSummaryValues()
             }
             .sheet(isPresented: $showingAddCategory) {
