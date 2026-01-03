@@ -26,15 +26,15 @@ struct V3VendorNotesContent: View {
         VStack(spacing: Spacing.lg) {
             Image(systemName: "note.text")
                 .font(.system(size: 48))
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("No Notes")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Text("Add notes to keep track of important details about this vendor.")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xl)
         }
@@ -49,23 +49,23 @@ struct V3VendorNotesContent: View {
             V3SectionHeader(
                 title: "Notes",
                 icon: "note.text.fill",
-                color: AppColors.primary
+                color: SemanticColors.primaryAction
             )
 
             VStack(alignment: .leading, spacing: Spacing.md) {
                 Text(notes)
                     .font(Typography.bodyRegular)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .lineSpacing(4)
                     .textSelection(.enabled)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Spacing.lg)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(CornerRadius.md)
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(AppColors.border, lineWidth: 1)
+                    .stroke(SemanticColors.borderPrimary, lineWidth: 1)
             )
         }
     }
@@ -78,11 +78,11 @@ struct V3VendorNotesContent: View {
         notes: "3-Tier Cake (72 people)\n\nFlavors discussed:\n- Vanilla with raspberry filling\n- Chocolate with ganache\n\nDelivery scheduled for 2pm on wedding day."
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
 
 #Preview("Notes Content - Empty") {
     V3VendorNotesContent(notes: nil)
         .padding()
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
 }
