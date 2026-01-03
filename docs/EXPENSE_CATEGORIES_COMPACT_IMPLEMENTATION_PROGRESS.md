@@ -148,18 +148,22 @@
 
 **Build Status:** ✅ BUILD SUCCEEDED
 
-### ⏳ Phase 8: Modal Sizing
+### ✅ Phase 8: Modal Sizing (COMPLETE)
 **Objective:** Apply proportional modal sizing to Add/Edit category views
 
 **Tasks:**
-- [ ] Update `AddCategoryView.swift` with proportional sizing
-- [ ] Update `EditCategoryView.swift` with proportional sizing
-- [ ] Add GeometryReader or use AppCoordinator for parent window size
-- [ ] Apply min/max bounds
+- [x] Update `AddCategoryView.swift` with proportional sizing
+- [x] Update `EditCategoryView.swift` with proportional sizing
+- [x] Use AppCoordinator for parent window size tracking
+- [x] Apply min/max bounds (400-600px width, 400-700px height)
+- [x] Applied Proportional Modal Sizing Pattern from Basic Memory
+- [x] 60% width, 75% height proportions with 40px chrome buffer
 
-**Files to Modify:**
-- `AddCategoryView.swift`
-- `EditCategoryView.swift`
+**Files Modified:**
+- `AddCategoryView.swift` - Added proportional sizing with dynamicSize computed property
+- `EditCategoryView.swift` - Added proportional sizing with dynamicSize computed property
+
+**Build Status:** ✅ BUILD SUCCEEDED
 
 ### ⏳ Phase 9: Integration & Polish
 **Objective:** Final integration, testing, and polish
@@ -273,10 +277,18 @@
 - ✅ Phase 7: Updated ExpenseCategoriesView to use V2 components
 - ✅ Build verification passed
 
+- ✅ Phase 8: Read Proportional Modal Sizing Pattern from Basic Memory
+- ✅ Phase 8: Applied pattern to AddCategoryView (400-600px width, 400-700px height)
+- ✅ Phase 8: Applied pattern to EditCategoryView (400-600px width, 400-700px height)
+- ✅ Phase 8: Integrated with AppCoordinator for parent window size tracking
+- ✅ Phase 8: Added dynamicSize computed property with 60% width, 75% height proportions
+- ✅ Phase 8: Applied 40px window chrome buffer
+- ✅ Build verification passed
+
 **Next Steps:**
-- Begin Phase 8: Apply proportional modal sizing to Add/Edit category views
-- Check Basic Memory for Proportional Modal Sizing Pattern
-- Apply pattern to AddCategoryView and EditCategoryView
+- Begin Phase 9: Final integration, testing, and polish
+- Verify all functionality works at different window sizes
+- Complete testing checklist
 
 ---
 
@@ -290,12 +302,12 @@
 - [x] `Views/Budget/Components/CategoryFolderRowViewV2.swift` - Responsive parent category row
 - [x] `Views/Budget/Components/CategoryRowViewV2.swift` - Responsive subcategory row
 
-### Modified Files (3/5)
+### Modified Files (5/5)
 - [x] `ExpenseCategoriesView.swift` - Added GeometryReader, unified header, static header, dual initializer, expand/collapse state, computed properties for metrics, over-budget filter, ScrollView + LazyVStack with summary cards, integrated V2 components
 - [x] `BudgetDashboardHubView.swift` - Added header exclusion for expense categories
 - [x] `BudgetPage.swift` - Pass currentPage binding to ExpenseCategoriesView
-- [ ] `AddCategoryView.swift`
-- [ ] `EditCategoryView.swift`
+- [x] `AddCategoryView.swift` - Added proportional modal sizing with AppCoordinator integration
+- [x] `EditCategoryView.swift` - Added proportional modal sizing with AppCoordinator integration
 
 ---
 

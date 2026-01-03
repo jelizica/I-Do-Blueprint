@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AddCategoryView: View {
     @ObservedObject var budgetStore: BudgetStoreV2
+    @EnvironmentObject var coordinator: AppCoordinator
     @Environment(\.dismiss) private var dismiss
 
     @State private var categoryName = ""
@@ -17,6 +18,22 @@ struct AddCategoryView: View {
     @State private var selectedColor = AppColors.Budget.allocated
     @State private var typicalPercentage = ""
     @State private var parentCategory: BudgetCategory?
+    
+    // MARK: - Proportional Modal Sizing
+    
+    private let minWidth: CGFloat = 400
+    private let maxWidth: CGFloat = 600
+    private let minHeight: CGFloat = 400
+    private let maxHeight: CGFloat = 700
+    private let windowChromeBuffer: CGFloat = 40
+    
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        // Use 60% of parent width and 75% of parent height (minus chrome buffer), clamped to min/max bounds
+        let targetWidth = min(maxWidth, max(minWidth, parentSize.width * 0.6))
+        let targetHeight = min(maxHeight, max(minHeight, parentSize.height * 0.75 - windowChromeBuffer))
+        return CGSize(width: targetWidth, height: targetHeight)
+    }
 
     private let predefinedColors: [Color] = [
         AppColors.Budget.allocated,
@@ -69,6 +86,7 @@ struct AddCategoryView: View {
                 }
             }
         }
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
     }
 
     private func saveCategory() {
