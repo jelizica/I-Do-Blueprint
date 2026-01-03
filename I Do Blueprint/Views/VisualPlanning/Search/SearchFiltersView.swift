@@ -64,13 +64,13 @@ struct SearchFiltersView: View {
         HStack {
             Text("Search Filters")
                 .font(Typography.heading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Spacer()
 
             Button(action: onDismiss) {
                 Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .font(.title3)
             }
             .buttonStyle(.plain)
@@ -85,7 +85,7 @@ struct SearchFiltersView: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Content Types")
                 .font(Typography.subheading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 ForEach(VisualPlanningType.allCases, id: \.self) { type in
@@ -101,12 +101,12 @@ struct SearchFiltersView: View {
                     )) {
                         HStack(spacing: Spacing.sm) {
                             Image(systemName: type.icon)
-                                .foregroundColor(AppColors.primary)
+                                .foregroundColor(SemanticColors.primaryAction)
                                 .frame(width: 20)
 
                             Text(type.rawValue)
                                 .font(Typography.bodyRegular)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                         }
                     }
                     .toggleStyle(.checkbox)
@@ -126,7 +126,7 @@ struct SearchFiltersView: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Date Range")
                 .font(Typography.subheading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Picker("Date Range", selection: $selectedDateRangeOption) {
                 ForEach(DateRangeOption.allCases, id: \.self) { option in
@@ -143,7 +143,7 @@ struct SearchFiltersView: View {
                     HStack {
                         Text("From:")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .frame(width: 50, alignment: .leading)
 
                         DatePicker("", selection: $customStartDate, displayedComponents: .date)
@@ -153,7 +153,7 @@ struct SearchFiltersView: View {
                     HStack {
                         Text("To:")
                             .font(Typography.caption)
-                            .foregroundColor(AppColors.textSecondary)
+                            .foregroundColor(SemanticColors.textSecondary)
                             .frame(width: 50, alignment: .leading)
 
                         DatePicker("", selection: $customEndDate, displayedComponents: .date)
@@ -176,7 +176,7 @@ struct SearchFiltersView: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Wedding Seasons")
                 .font(Typography.subheading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: Spacing.sm) {
                 ForEach(WeddingSeason.allCases, id: \.self) { season in
@@ -215,7 +215,7 @@ struct SearchFiltersView: View {
             HStack {
                 Text("Colors")
                     .font(Typography.subheading)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Spacer()
 
@@ -225,7 +225,7 @@ struct SearchFiltersView: View {
                         Text("Add Color")
                     }
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
                 }
                 .buttonStyle(.plain)
             }
@@ -233,7 +233,7 @@ struct SearchFiltersView: View {
             if localFilters.colors.isEmpty {
                 Text("No color filters applied")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, Spacing.md)
             } else {
@@ -245,7 +245,7 @@ struct SearchFiltersView: View {
                                 .frame(width: 40, height: 40)
                                 .overlay(
                                     Circle()
-                                        .stroke(AppColors.textPrimary.opacity(0.1), lineWidth: 1)
+                                        .stroke(SemanticColors.textPrimary.opacity(Opacity.subtle), lineWidth: 1)
                                 )
 
                             Button(action: {
@@ -253,10 +253,10 @@ struct SearchFiltersView: View {
                             }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .font(.caption2)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .background(
                                         Circle()
-                                            .fill(AppColors.textPrimary.opacity(0.6))
+                                            .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
                                             .frame(width: 16, height: 16)
                                     )
                             }
@@ -288,7 +288,7 @@ struct SearchFiltersView: View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Additional Options")
                 .font(Typography.subheading)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 Toggle(isOn: $localFilters.favoritesOnly) {
@@ -305,7 +305,7 @@ struct SearchFiltersView: View {
                 Toggle(isOn: $localFilters.showTemplatesOnly) {
                     HStack(spacing: Spacing.sm) {
                         Image(systemName: "doc.on.doc")
-                            .foregroundColor(AppColors.primary)
+                            .foregroundColor(SemanticColors.primaryAction)
                             .frame(width: 20)
                         Text("Templates Only")
                             .font(Typography.bodyRegular)
@@ -346,7 +346,7 @@ struct SearchFiltersView: View {
 
             Text("\(activeFilterCount) active filter\(activeFilterCount == 1 ? "" : "s")")
                 .font(Typography.caption)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             Spacer()
 
