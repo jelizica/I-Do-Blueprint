@@ -18,7 +18,7 @@ struct V3VendorQuickActions: View {
                 V3QuickActionButton(
                     icon: "phone.fill",
                     title: "Call",
-                    color: AppColors.Vendor.booked
+                    color: SemanticColors.statusSuccess
                 ) {
                     NSWorkspace.shared.open(phoneURL)
                 }
@@ -29,7 +29,7 @@ struct V3VendorQuickActions: View {
                 V3QuickActionButton(
                     icon: "envelope.fill",
                     title: "Email",
-                    color: AppColors.Vendor.contacted
+                    color: SemanticColors.primaryAction
                 ) {
                     NSWorkspace.shared.open(emailURL)
                 }
@@ -40,7 +40,7 @@ struct V3VendorQuickActions: View {
                 V3QuickActionButton(
                     icon: "globe",
                     title: "Website",
-                    color: AppColors.Vendor.pending
+                    color: SemanticColors.statusPending
                 ) {
                     NSWorkspace.shared.open(websiteURL)
                 }
@@ -50,15 +50,15 @@ struct V3VendorQuickActions: View {
             V3QuickActionButton(
                 icon: "pencil",
                 title: "Edit",
-                color: AppColors.primary
+                color: SemanticColors.primaryAction
             ) {
                 onEdit()
             }
         }
         .padding(Spacing.md)
-        .background(AppColors.cardBackground)
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
-        .shadow(color: AppColors.textPrimary.opacity(0.05), radius: 8, y: 2)
+        .shadow(color: SemanticColors.textPrimary.opacity(Opacity.verySubtle), radius: 8, y: 2)
     }
 }
 
@@ -90,7 +90,7 @@ private struct V3QuickActionButton: View {
 
                 Text(title)
                     .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
             }
             .frame(minWidth: 70)
         }
@@ -113,7 +113,7 @@ private struct V3QuickActionButton: View {
         onEdit: { }
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }
 
 #Preview("Quick Actions - No Contact") {
@@ -126,5 +126,5 @@ private struct V3QuickActionButton: View {
         onEdit: { }
     )
     .padding()
-    .background(AppColors.background)
+    .background(SemanticColors.backgroundPrimary)
 }

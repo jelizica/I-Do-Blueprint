@@ -74,7 +74,7 @@ struct V3VendorHeroHeader: View {
             colors: [
                 vendor.statusColor.opacity(0.3),
                 vendor.statusColor.opacity(0.1),
-                AppColors.background
+                SemanticColors.backgroundPrimary
             ],
             startPoint: .top,
             endPoint: .bottom
@@ -110,7 +110,7 @@ struct V3VendorHeroHeader: View {
             VStack(spacing: Spacing.sm) {
                 Text(vendor.vendorName)
                     .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
 
@@ -197,7 +197,7 @@ struct V3VendorHeroHeader: View {
 
     private var hoverOverlay: some View {
         Circle()
-            .fill(AppColors.textPrimary.opacity(0.6))
+            .fill(SemanticColors.textPrimary.opacity(Opacity.medium))
             .frame(width: 120, height: 120)
             .overlay(
                 VStack(spacing: Spacing.sm) {
@@ -265,7 +265,7 @@ struct V3VendorHeroHeader: View {
                 .foregroundStyle(.white)
                 .background(
                     Circle()
-                        .fill(AppColors.textSecondary.opacity(0.8))
+                        .fill(SemanticColors.textSecondary.opacity(Opacity.strong))
                         .frame(width: 36, height: 36)
                 )
         }
