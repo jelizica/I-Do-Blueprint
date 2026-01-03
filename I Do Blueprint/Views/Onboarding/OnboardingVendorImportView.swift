@@ -9,6 +9,14 @@ import SwiftUI
 import UniformTypeIdentifiers
 import Dependencies
 
+// MARK: - Theme Migration
+// Migrated from AppColors to SemanticColors for theme support
+// Status colors: success → statusSuccess
+// Text hierarchy: primary → textPrimary, secondary → textSecondary
+// Backgrounds: background → backgroundPrimary, cardBackground → backgroundSecondary
+// Actions: primary → primaryAction
+// Opacity values: 0.1 → Opacity.subtle, 0.5 → Opacity.medium
+
 struct OnboardingVendorImportView: View {
     @Dependency(\.vendorRepository) var repository
     @State private var importService = FileImportService()
@@ -40,7 +48,7 @@ struct OnboardingVendorImportView: View {
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.background)
+        .background(SemanticColors.backgroundPrimary)
         .fileImporter(
             isPresented: $showFilePicker,
             allowedContentTypes: [.commaSeparatedText, .xlsx],
@@ -72,26 +80,26 @@ struct OnboardingVendorImportView: View {
             // Success icon
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 80))
-                .foregroundColor(.green)
+                .foregroundColor(SemanticColors.statusSuccess)
 
             // Success message
             Text("Import Successful!")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Successfully imported \(importedCount) vendor\(importedCount == 1 ? "" : "s")")
                 .font(Typography.bodyLarge)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
 
             // Import another file button
             Button(action: { resetForNewImport() }) {
                 Text("Import Another File")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
                     .frame(maxWidth: 300)
                     .padding(.vertical, Spacing.md)
-                    .background(AppColors.primary)
+                    .background(SemanticColors.primaryAction)
                     .cornerRadius(8)
             }
             .buttonStyle(.plain)
@@ -105,15 +113,15 @@ struct OnboardingVendorImportView: View {
         VStack(spacing: Spacing.sm) {
             Image(systemName: "briefcase.fill")
                 .font(.system(size: 60))
-                .foregroundColor(AppColors.primary)
+                .foregroundColor(SemanticColors.primaryAction)
 
             Text("Import Vendor List")
                 .font(Typography.title1)
-                .foregroundColor(AppColors.textPrimary)
+                .foregroundColor(SemanticColors.textPrimary)
 
             Text("Upload a CSV or Excel file with your vendor contacts to get started quickly")
                 .font(Typography.bodyRegular)
-                .foregroundColor(AppColors.textSecondary)
+                .foregroundColor(SemanticColors.textSecondary)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal, Spacing.xxl)
         }
@@ -127,25 +135,25 @@ struct OnboardingVendorImportView: View {
                 VStack(spacing: Spacing.md) {
                     Image(systemName: "doc.badge.plus")
                         .font(.system(size: 48))
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("Choose File")
                         .font(Typography.bodyLarge)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.primary)
+                        .foregroundColor(SemanticColors.primaryAction)
 
                     Text("Supported formats: CSV, Excel (.xlsx)")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .frame(maxWidth: 400)
                 .padding(.vertical, Spacing.xxl)
                 .padding(.horizontal, Spacing.xl)
-                .background(AppColors.primary.opacity(0.1))
+                .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppColors.primary, style: StrokeStyle(lineWidth: 2, dash: [8]))
+                        .stroke(SemanticColors.primaryAction, style: StrokeStyle(lineWidth: 2, dash: [8]))
                 )
             }
             .buttonStyle(.plain)
@@ -157,27 +165,27 @@ struct OnboardingVendorImportView: View {
                 Text("Expected CSV Format:")
                     .font(Typography.bodyRegular)
                     .fontWeight(.semibold)
-                    .foregroundColor(AppColors.textPrimary)
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 Text("• First row should contain column headers")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text("• Required: Vendor Name, Category")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text("• Optional: Contact Name, Email, Phone, Website, Notes")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 Text("• Categories: Venue, Catering, Photography, Videography, Florist, Music, etc.")
                     .font(Typography.bodySmall)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .padding(Spacing.lg)
             .frame(maxWidth: 400)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
         }
         .padding(.horizontal, Spacing.xl)
@@ -188,30 +196,30 @@ struct OnboardingVendorImportView: View {
             // File info
             HStack {
                 Image(systemName: "doc.text.fill")
-                    .foregroundColor(AppColors.primary)
+                    .foregroundColor(SemanticColors.primaryAction)
 
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(preview.fileName)
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
-                        .foregroundColor(AppColors.textPrimary)
+                        .foregroundColor(SemanticColors.textPrimary)
 
                     Text("\(preview.totalRows) vendors • \(preview.headers.count) columns")
                         .font(Typography.caption)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
 
                 Button(action: { clearImport() }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Clear import")
             }
             .padding(Spacing.md)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             // Preview table
@@ -223,10 +231,10 @@ struct OnboardingVendorImportView: View {
                             Text(header)
                                 .font(Typography.bodySmall)
                                 .fontWeight(.semibold)
-                                .foregroundColor(AppColors.textPrimary)
+                                .foregroundColor(SemanticColors.textPrimary)
                                 .padding(Spacing.sm)
                                 .frame(minWidth: 120, alignment: .leading)
-                                .background(AppColors.cardBackground)
+                                .background(SemanticColors.backgroundSecondary)
                         }
                     }
 
@@ -238,23 +246,23 @@ struct OnboardingVendorImportView: View {
                             ForEach(Array(row.enumerated()), id: \.offset) { _, cell in
                                 Text(cell)
                                     .font(Typography.bodySmall)
-                                    .foregroundColor(AppColors.textPrimary)
+                                    .foregroundColor(SemanticColors.textPrimary)
                                     .padding(Spacing.sm)
                                     .frame(minWidth: 120, alignment: .leading)
                             }
                         }
-                        .background(index % 2 == 0 ? Color.clear : AppColors.cardBackground.opacity(0.5))
+                        .background(index % 2 == 0 ? Color.clear : SemanticColors.backgroundSecondary.opacity(Opacity.medium))
                     }
                 }
             }
             .frame(maxHeight: 300)
-            .background(AppColors.cardBackground)
+            .background(SemanticColors.backgroundSecondary)
             .cornerRadius(8)
 
             if preview.totalRows > 10 {
                 Text("Showing first 10 of \(preview.totalRows) vendors")
                     .font(Typography.caption)
-                    .foregroundColor(AppColors.textSecondary)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
 
             // Importing indicator
@@ -264,10 +272,10 @@ struct OnboardingVendorImportView: View {
                         .scaleEffect(0.8)
                     Text("Importing vendors...")
                         .font(Typography.bodyRegular)
-                        .foregroundColor(AppColors.textSecondary)
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
                 .padding(Spacing.md)
-                .background(AppColors.primary.opacity(0.1))
+                .background(SemanticColors.primaryAction.opacity(Opacity.subtle))
                 .cornerRadius(8)
             }
         }
