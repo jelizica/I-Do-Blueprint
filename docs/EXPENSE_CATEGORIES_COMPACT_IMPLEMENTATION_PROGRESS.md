@@ -339,6 +339,76 @@ Never use timer-based polling in SwiftUI views that have `@EnvironmentObject` su
 
 ---
 
+## Known Issues & Future Enhancements
+
+### Issue: Categories Show "0 / $XXX" - Payment Calculation Incorrect
+**Beads Issue:** I Do Blueprint-sp8d  
+**Priority:** P2 (Medium)  
+**Status:** Open - Documented for future implementation
+
+**Problem:**
+All categories currently show "0 spent" (e.g., "0 / $5,000") because the spent calculation uses `expenses.amount` directly, but should calculate based on **paid payments** from the `payment_plans` table.
+
+**Current Behavior:**
+- `spentByCategory` dictionary sums `expenses.amount` for each category
+- This shows total expense amount, not what's actually been paid
+- Progress bars show 0% even when payments have been made
+
+**Expected Behavior:**
+- Should show percentage of expenses that have been **PAID**
+- Calculate: `(sum of paid payments for category expenses) / (total allocated for category) * 100`
+
+**Database Schema:**
+```
+expenses table:
+  - budget_category_id (UUID) → links to budget_categories
+  - amount (numeric) → total expense amount
+  - payment_status (text) → pending, partial, paid, overdue, cancelled, refunded
+
+payment_plans table:
+  - expense_id (UUID) → links to expenses
+  - payment_amount (numeric) → amount of this payment
+  - paid (boolean) → whether this payment is paid
+  - payment_status (text) → pending, overdue, paid, cancelled, refunded
+
+Relationship: payment_plans.expense_id → expenses.id → budget_categories.id
+```
+
+**Solution Approach:**
+1. Create new repository method: `fetchPaidAmountsByCategory()`
+   - Query `payment_plans WHERE paid = true`
+   - Join to `expenses` to get `budget_category_id`
+   - Sum `payment_amount` by category
+   - Return dictionary: `[UUID: Double]` (categoryId → paidAmount)
+
+2. Update `ExpenseCategoriesView.recalculateCachedValues()`:
+   - Replace `spentByCategory` calculation
+   - Use new repository method instead of summing expense amounts
+   - Calculate percentage: `(paidAmount / allocatedAmount) * 100`
+
+3. Update `CategoryStoreV2.spentAmount()`:
+   - Add parameter to choose calculation method
+   - Support both "total expenses" and "paid payments" modes
+   - Default to "paid payments" for accurate progress tracking
+
+**Affected Files:**
+- `ExpenseCategoriesView.swift` - Update `recalculateCachedValues()` function
+- `Services/Stores/Budget/CategoryStoreV2.swift` - Update `spentAmount()` function
+- `Domain/Repositories/Protocols/BudgetRepositoryProtocol.swift` - Add new method
+- `Domain/Repositories/Live/LiveBudgetRepository.swift` - Implement new method
+
+**Why Not Fixed Now:**
+This is a data calculation issue that requires careful consideration of:
+1. Whether other views (Budget Overview, Expense Tracker) expect the current behavior
+2. Whether to show "total expenses" vs "paid payments" as a toggle option
+3. Cache invalidation strategy when payments are marked as paid
+4. Performance implications of joining payment_plans + expenses + categories
+
+**Workaround:**
+Users can view actual payment status in the Payment Schedule view, which correctly shows paid vs unpaid payments.
+
+---
+
 ## Testing Checklist
 
 ### Window Size Testing
