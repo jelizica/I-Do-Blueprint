@@ -299,7 +299,7 @@ struct VendorStatusCardV6: View {
             }
         }
         .sheet(item: $selectedVendor) { vendor in
-            VendorDetailModal(vendor: vendor, vendorStore: store)
+            VendorDetailModalV6(vendor: vendor, vendorStore: store)
         }
     }
 }
