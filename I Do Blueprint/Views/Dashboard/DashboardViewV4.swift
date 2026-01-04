@@ -113,7 +113,7 @@ struct DashboardViewV4: View {
                         LazyVGrid(columns: columns, alignment: .center, spacing: Spacing.lg) {
                             if effectiveHasLoaded {
                                 // Main cards
-                                BudgetOverviewCardV4(store: budgetStore, vendorStore: vendorStore, userTimezone: viewModel.userTimezone)
+                                BudgetOverviewCardV6(store: budgetStore, vendorStore: vendorStore, userTimezone: viewModel.userTimezone)
                                 TaskProgressCardV4(store: taskStore, userTimezone: viewModel.userTimezone)
                                 GuestResponsesCardV4(store: guestStore)
                                 VendorStatusCardV4(store: vendorStore)
