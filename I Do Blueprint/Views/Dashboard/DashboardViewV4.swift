@@ -11,6 +11,8 @@ import Sentry
 
 struct DashboardViewV4: View {
     @Environment(\.appStores) private var appStores
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
+    @EnvironmentObject private var coordinator: AppCoordinator
     
     // Preview control (optional). When set, overrides loading state for previews.
     private let previewForceLoading: Bool?
@@ -116,6 +118,9 @@ struct DashboardViewV4: View {
                                 BudgetOverviewCardV6(store: budgetStore, vendorStore: vendorStore, userTimezone: viewModel.userTimezone)
                                 TaskProgressCardV6(store: taskStore, userTimezone: viewModel.userTimezone)
                                 GuestResponsesCardV6(store: guestStore)
+                                    .environmentObject(settingsStore)
+                                    .environmentObject(budgetStore)
+                                    .environmentObject(coordinator)
                                 VendorStatusCardV6(store: vendorStore)
 
                             } else {

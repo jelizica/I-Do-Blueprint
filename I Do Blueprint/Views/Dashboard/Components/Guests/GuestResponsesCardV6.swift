@@ -16,10 +16,17 @@ import SwiftUI
 
 struct GuestResponsesCardV6: View {
     @ObservedObject var store: GuestStoreV2
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
+    @EnvironmentObject private var coordinator: AppCoordinator
     
     // Animation state
     @State private var hasAppeared = false
     @State private var isHovered = false
+    
+    // Sheet presentation state
+    @State private var selectedGuestId: UUID?
+    @State private var showingGuestDetail = false
 
     var body: some View {
         let totalGuests = store.guests.count
@@ -153,10 +160,13 @@ struct GuestResponsesCardV6: View {
 
                     // Guest rows
                     ForEach(Array(store.guests.prefix(8).enumerated()), id: \.element.id) { index, guest in
-                        NativeGuestRow(guest: guest)
-                            .opacity(hasAppeared ? 1 : 0)
-                            .offset(y: hasAppeared ? 0 : 10)
-                            .animation(.easeOut(duration: 0.4).delay(0.45 + Double(index) * 0.04), value: hasAppeared)
+                        NativeGuestRow(guest: guest) {
+                            selectedGuestId = guest.id
+                            showingGuestDetail = true
+                        }
+                        .opacity(hasAppeared ? 1 : 0)
+                        .offset(y: hasAppeared ? 0 : 10)
+                        .animation(.easeOut(duration: 0.4).delay(0.45 + Double(index) * 0.04), value: hasAppeared)
                     }
                 }
             } else {
@@ -246,6 +256,14 @@ struct GuestResponsesCardV6: View {
                 hasAppeared = true
             }
         }
+        .sheet(isPresented: $showingGuestDetail) {
+            if let guestId = selectedGuestId {
+                GuestDetailViewV4(guestId: guestId, guestStore: store)
+                    .environmentObject(settingsStore)
+                    .environmentObject(budgetStore)
+                    .environmentObject(coordinator)
+            }
+        }
     }
 }
 
@@ -304,11 +322,13 @@ private struct NativeStatColumn: View {
 
 private struct NativeGuestRow: View {
     let guest: Guest
+    let action: () -> Void
     @State private var avatarImage: NSImage?
     @State private var isHovered = false
 
     var body: some View {
-        HStack(spacing: Spacing.md) {
+        Button(action: action) {
+            HStack(spacing: Spacing.md) {
             // Avatar with native styling
             avatarView
                 .task {
@@ -343,15 +363,22 @@ private struct NativeGuestRow: View {
         }
         .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.sm)
+        }
+        .buttonStyle(.plain)
         .background(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(isHovered ? Color(nsColor: .controlBackgroundColor).opacity(0.5) : Color.clear)
+        RoundedRectangle(cornerRadius: CornerRadius.md)
+        .fill(isHovered ? Color(nsColor: .controlBackgroundColor).opacity(0.5) : Color.clear)
         )
         .animation(.easeInOut(duration: 0.15), value: isHovered)
         .onHover { hovering in
-            isHovered = hovering
+        isHovered = hovering
         }
-    }
+        .accessibleActionButton(
+        label: "View details for \(guest.fullName)",
+        hint: "Opens guest detail modal",
+        isDestructive: false
+        )
+        }
 
     private var statusText: String {
         switch guest.rsvpStatus {
