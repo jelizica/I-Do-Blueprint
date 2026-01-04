@@ -407,66 +407,67 @@ private struct NativePaymentRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.md) {
-            // Date badge with native styling (matching guest/vendor row circular elements)
-            VStack(spacing: 2) {
-                Text(formatDay(payment.paymentDate))
-                    .font(Typography.numberSmall.weight(.bold))
-                    .foregroundColor(Color(nsColor: .labelColor))
-                
-                Text(formatMonth(payment.paymentDate))
-                    .font(Typography.caption2.weight(.medium))
-                    .foregroundColor(Color(nsColor: .secondaryLabelColor))
-                    .textCase(.uppercase)
-            }
-            .frame(width: 44, height: 44)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                AppColors.Budget.allocated.opacity(0.15),
-                                AppColors.Budget.allocated.opacity(0.08)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                // Date badge with native styling (matching guest/vendor row circular elements)
+                VStack(spacing: 2) {
+                    Text(formatDay(payment.paymentDate))
+                        .font(Typography.numberSmall.weight(.bold))
+                        .foregroundColor(Color(nsColor: .labelColor))
+                    
+                    Text(formatMonth(payment.paymentDate))
+                        .font(Typography.caption2.weight(.medium))
+                        .foregroundColor(Color(nsColor: .secondaryLabelColor))
+                        .textCase(.uppercase)
+                }
+                .frame(width: 44, height: 44)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    AppColors.Budget.allocated.opacity(0.15),
+                                    AppColors.Budget.allocated.opacity(0.08)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-            )
-            .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
-            
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(vendorName)
-                    .font(Typography.caption.weight(.medium))
-                    .foregroundColor(Color(nsColor: .labelColor))
-                    .lineLimit(1)
+                )
+                .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+                
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text(vendorName)
+                        .font(Typography.caption.weight(.medium))
+                        .foregroundColor(Color(nsColor: .labelColor))
+                        .lineLimit(1)
 
-                Text(formatFullDate(payment.paymentDate))
-                    .font(Typography.caption2)
-                    .foregroundColor(Color(nsColor: .secondaryLabelColor))
-            }
+                    Text(formatFullDate(payment.paymentDate))
+                        .font(Typography.caption2)
+                        .foregroundColor(Color(nsColor: .secondaryLabelColor))
+                }
 
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: Spacing.xxs) {
-                Text("$\(formatAmount(payment.paymentAmount))")
-                    .font(Typography.caption.weight(.bold))
-                    .foregroundColor(Color(nsColor: .labelColor))
+                Spacer()
 
                 HStack(spacing: 4) {
                     Circle()
                         .fill(payment.paid ? SemanticColors.success : SemanticColors.warning)
                         .frame(width: 6, height: 6)
+                        .shadow(color: (payment.paid ? SemanticColors.success : SemanticColors.warning).opacity(0.5), radius: 2, x: 0, y: 0)
                     
                     Text(payment.paid ? "Paid" : "Unpaid")
-                        .font(Typography.caption2)
+                        .font(Typography.caption2.weight(.medium))
                         .foregroundColor(payment.paid ? SemanticColors.success : SemanticColors.warning)
                 }
+                .padding(.horizontal, Spacing.sm)
+                .padding(.vertical, Spacing.xxs)
+                .background(
+                    RoundedRectangle(cornerRadius: CornerRadius.sm)
+                        .fill((payment.paid ? SemanticColors.success : SemanticColors.warning).opacity(0.1))
+                )
             }
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.sm)
         }
         .buttonStyle(.plain)
-        .padding(.horizontal, Spacing.sm)
-        .padding(.vertical, Spacing.sm)
-        }
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
                 .fill(isHovered ? Color(nsColor: .controlBackgroundColor).opacity(0.5) : Color.clear)

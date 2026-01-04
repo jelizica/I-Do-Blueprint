@@ -1,0 +1,45 @@
+{
+  "session_id": "a47e32c9-06cf-4c57-a8ba-1962f867f76e",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-04T21:02:04.497820+00:00",
+  "vectors": {
+    "engagement": 0.9,
+    "know": 0.85,
+    "do": 0.9,
+    "context": 0.85,
+    "clarity": 0.9,
+    "coherence": 0.85,
+    "signal": 0.8,
+    "density": 0.75,
+    "state": 0.9,
+    "change": 0.85,
+    "completion": 1.0,
+    "impact": 0.8,
+    "uncertainty": 0.15
+  },
+  "overall_confidence": 0.867,
+  "meta": {
+    "reasoning": "Completed full CASCADE cycle for dashboard styling fix. Root cause: NativePaymentRow date badge used .ultraThinMaterial with stroke creating hard outline. Fix: Changed to gradient fill with shadow matching NativeGuestRow/NativeVendorRow patterns. Build succeeded, Beads issue closed, changes pushed to remote.",
+    "task_summary": "Completed full CASCADE cycle for dashboard styling fix. Root cause: NativePaymentRow date badge used .ultraThinMaterial with stroke creating hard outline. Fix: Changed to gradient fill with shadow matching NativeGuestRow/NativeVendorRow patterns. Build succeeded, Beads issue closed, changes pushed to remote.",
+    "postflight_confidence": 0.85,
+    "calibration_accuracy": "good",
+    "deltas": {},
+    "calibration_issues": [],
+    "git_commit_sha": "6073c0671bdee31a157ff0ddc44c1c9ca06c6964",
+    "git_notes_ref": "empirica/session/a47e32c9-06cf-4c57-a8ba-1962f867f76e/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "504abaa384f29f15e5ba073a284c8b2ed7be345c",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ""
+    }
+  },
+  "learning_delta": {},
+  "token_count": 187
+}
