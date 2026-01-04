@@ -179,7 +179,8 @@ struct WeddingColorPickerModal: View {
                 set: { if let newColor = $0 { currentColor = newColor } }
             ))
                 .environment(\.swatchColors, presetColors)
-                .frame(width: 500, height: 500)
+                .frame(width: 600, height: 600)
+                .frame(minWidth: 600, minHeight: 600)
             
             // Hex code below picker
             VStack(spacing: Spacing.xs) {
@@ -194,7 +195,6 @@ struct WeddingColorPickerModal: View {
                     .textSelection(.enabled)
             }
         }
-        .padding(.horizontal, Spacing.xl)
     }
     
     // MARK: - Presets Section (Wrapped Grid)
