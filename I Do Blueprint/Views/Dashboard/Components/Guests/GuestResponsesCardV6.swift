@@ -35,7 +35,7 @@ struct GuestResponsesCardV6: View {
                 // Native icon badge
                 NativeIconBadge(
                     systemName: "person.2.fill",
-                    color: AppColors.Guest.attending,
+                    color: AppColors.Guest.confirmed,
                     size: 44
                 )
                 
@@ -60,8 +60,8 @@ struct GuestResponsesCardV6: View {
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [
-                                        AppColors.Guest.attending,
-                                        AppColors.Guest.attending.opacity(0.8)
+                                        AppColors.Guest.confirmed,
+                                        AppColors.Guest.confirmed.opacity(0.8)
                                     ],
                                     startPoint: .top,
                                     endPoint: .bottom
@@ -80,7 +80,7 @@ struct GuestResponsesCardV6: View {
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(AppColors.Guest.attending.opacity(0.2), lineWidth: 0.5)
+                            .stroke(AppColors.Guest.confirmed.opacity(0.2), lineWidth: 0.5)
                     )
                 }
             }
@@ -141,7 +141,7 @@ struct GuestResponsesCardV6: View {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "person.3.fill")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(AppColors.Guest.attending)
+                            .foregroundColor(AppColors.Guest.confirmed)
                         
                         Text("Recent Responses")
                             .font(Typography.caption.weight(.semibold))
@@ -172,8 +172,8 @@ struct GuestResponsesCardV6: View {
                                 .fill(
                                     LinearGradient(
                                         colors: [
-                                            AppColors.Guest.attending.opacity(0.15),
-                                            AppColors.Guest.attending.opacity(0.05)
+                                            AppColors.Guest.confirmed.opacity(0.15),
+                                            AppColors.Guest.confirmed.opacity(0.05)
                                         ],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
@@ -186,15 +186,15 @@ struct GuestResponsesCardV6: View {
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
-                                            AppColors.Guest.attending,
-                                            AppColors.Guest.attending.opacity(0.7)
+                                            AppColors.Guest.confirmed,
+                                            AppColors.Guest.confirmed.opacity(0.7)
                                         ],
                                         startPoint: .top,
                                         endPoint: .bottom
                                     )
                                 )
                         }
-                        .shadow(color: AppColors.Guest.attending.opacity(0.2), radius: 8, x: 0, y: 4)
+                        .shadow(color: AppColors.Guest.confirmed.opacity(0.2), radius: 8, x: 0, y: 4)
                         
                         Text("No guests added yet")
                             .font(Typography.caption)

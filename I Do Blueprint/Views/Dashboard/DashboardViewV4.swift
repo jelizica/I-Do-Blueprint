@@ -112,11 +112,11 @@ struct DashboardViewV4: View {
                         // Adaptive grid content (main cards)
                         LazyVGrid(columns: columns, alignment: .center, spacing: Spacing.lg) {
                             if effectiveHasLoaded {
-                                // Main cards
+                                // Main cards (V6 versions with native macOS materials)
                                 BudgetOverviewCardV6(store: budgetStore, vendorStore: vendorStore, userTimezone: viewModel.userTimezone)
-                                TaskProgressCardV4(store: taskStore, userTimezone: viewModel.userTimezone)
-                                GuestResponsesCardV4(store: guestStore)
-                                VendorStatusCardV4(store: vendorStore)
+                                TaskProgressCardV6(store: taskStore, userTimezone: viewModel.userTimezone)
+                                GuestResponsesCardV6(store: guestStore)
+                                VendorStatusCardV6(store: vendorStore)
 
                             } else {
                                 DashboardBudgetCardSkeleton()

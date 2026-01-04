@@ -33,7 +33,7 @@ struct TaskProgressCardV6: View {
                 // Native icon badge
                 NativeIconBadge(
                     systemName: "checklist",
-                    color: AppColors.Task.inProgress,
+                    color: AppColors.Dashboard.taskProgressCard,
                     size: 44
                 )
                 
@@ -100,7 +100,7 @@ struct TaskProgressCardV6: View {
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [AppColors.Task.inProgress, AppColors.Task.inProgress.opacity(0.8)],
+                                    colors: [AppColors.Dashboard.taskProgressCard, AppColors.Dashboard.taskProgressCard.opacity(0.8)],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
@@ -133,13 +133,13 @@ struct TaskProgressCardV6: View {
                             RoundedRectangle(cornerRadius: 5)
                                 .fill(
                                     LinearGradient(
-                                        colors: [AppColors.Task.inProgress, AppColors.Task.inProgress.opacity(0.85)],
+                                        colors: [AppColors.Dashboard.taskProgressCard, AppColors.Dashboard.taskProgressCard.opacity(0.85)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
                                 )
                                 .frame(width: max(geometry.size.width * completionProgress, 10), height: 10)
-                                .shadow(color: AppColors.Task.inProgress.opacity(0.4), radius: 4, x: 0, y: 0)
+                                .shadow(color: AppColors.Dashboard.taskProgressCard.opacity(0.4), radius: 4, x: 0, y: 0)
                                 .animation(.spring(response: 0.6, dampingFraction: 0.8), value: completionProgress)
                         }
                     }
@@ -164,7 +164,7 @@ struct TaskProgressCardV6: View {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "list.bullet.clipboard")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(AppColors.Task.inProgress)
+                            .foregroundColor(AppColors.Dashboard.taskProgressCard)
                         
                         Text("Recent Tasks")
                             .font(Typography.caption.weight(.semibold))
