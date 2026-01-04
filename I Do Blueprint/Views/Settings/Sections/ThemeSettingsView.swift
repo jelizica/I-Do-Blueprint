@@ -143,14 +143,12 @@ struct ThemeSettingsView: View {
                     VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text(previewWeddingTitle)
                             .font(Typography.title3)
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                            .foregroundColor(previewTextColor)
 
                         if let dateText = previewWeddingDate {
                             Text(dateText)
                                 .font(Typography.caption)
-                                .foregroundColor(.white.opacity(0.9))
-                                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                                .foregroundColor(previewTextColor.opacity(0.85))
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -161,26 +159,52 @@ struct ThemeSettingsView: View {
                     VStack(spacing: 2) {
                         Text("\(previewDaysUntil)")
                             .font(Typography.numberLarge)
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                            .foregroundColor(previewTextColor)
 
                         Text("DAYS UNTIL")
                             .font(Typography.caption2)
-                            .foregroundColor(.white.opacity(0.9))
+                            .foregroundColor(previewTextColor.opacity(0.85))
                             .tracking(1.0)
-                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                     }
                     .padding(.horizontal, Spacing.md)
                     .padding(.vertical, Spacing.sm)
                     .background(
                         RoundedRectangle(cornerRadius: 8)
-                            .fill(.white.opacity(0.2))
+                            .fill(previewBadgeBackground)
                     )
                 }
                 .padding(.horizontal, Spacing.lg)
             }
         }
         .padding(.leading, 120) // Align with other settings content
+    }
+
+    /// Adaptive text color for theme preview (matches dashboard logic)
+    private var previewTextColor: Color {
+        switch viewModel.localSettings.theme.colorScheme {
+        case "sage-serenity":
+            return SageGreen.text
+        case "lavender-dream":
+            return SoftLavender.text
+        case "terracotta-warm":
+            return Terracotta.text
+        default: // blush-romance
+            return BlushPink.text
+        }
+    }
+
+    /// Badge background for theme preview
+    private var previewBadgeBackground: Color {
+        switch viewModel.localSettings.theme.colorScheme {
+        case "sage-serenity":
+            return SageGreen.shade100.opacity(0.6)
+        case "lavender-dream":
+            return SoftLavender.shade100.opacity(0.6)
+        case "terracotta-warm":
+            return Terracotta.shade100.opacity(0.6)
+        default: // blush-romance
+            return BlushPink.shade100.opacity(0.6)
+        }
     }
 
     // MARK: - Custom Wedding Colors Section
