@@ -10,6 +10,33 @@ import SwiftUI
 // MARK: - Gradients
 
 enum AppGradients {
+    // MARK: - Mesh Gradient Background (V7 Dashboard)
+    
+    /// Mesh gradient background inspired by glassmorphism design
+    /// Creates a soft, multi-color background with blurred color blobs
+    /// Use for: Dashboard V7 background, premium screens
+    static let meshGradientBackground = LinearGradient(
+        colors: [
+            Color.fromHex("F3F4F6"),  // Base gray
+            Color.fromHex("F4D0D0").opacity(0.6),  // Soft pink
+            Color.fromHex("D0E8D0").opacity(0.6),  // Soft sage
+            Color.fromHex("F5F5DC").opacity(0.4)   // Soft cream
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+    
+    /// Wedding pink accent color for glassmorphism UI
+    static let weddingPink = Color.fromHex("FF5C8D")
+    
+    /// Soft pink for backgrounds
+    static let softPink = Color.fromHex("F0C8C8")
+    
+    /// Sage green for accents
+    static let sageGreen = Color.fromHex("C8E1C8")
+    
+    /// Dark sage for text/icons
+    static let sageDark = Color.fromHex("8FAE8F")
     /// App-wide background gradient used on the dashboard background
     static let appBackground = LinearGradient(
         colors: [

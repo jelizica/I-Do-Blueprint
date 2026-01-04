@@ -1,0 +1,130 @@
+{
+  "session_id": "d9253702-3c58-4ac0-ad95-e806ae8e3b5b",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-04T22:01:01.746604+00:00",
+  "vectors": {
+    "engagement": 0.95,
+    "know": 0.85,
+    "do": 0.9,
+    "context": 0.88,
+    "clarity": 0.85,
+    "coherence": 0.9,
+    "signal": 0.85,
+    "density": 0.8,
+    "state": 0.9,
+    "change": 0.85,
+    "completion": 0.9,
+    "impact": 0.85,
+    "uncertainty": 0.15
+  },
+  "overall_confidence": 0.877,
+  "meta": {
+    "reasoning": "Successfully implemented DashboardViewV7 with glassmorphism design matching HTML reference. Extended design system with GlassPanelStyle modifier and mesh gradient colors. All components use existing design tokens (Typography, Spacing, CornerRadius, SemanticColors). Build succeeded. Key learnings: ViewModel uses totalPaid not totalSpent, AppCoordinator has private init.",
+    "task_summary": "Successfully implemented DashboardViewV7 with glassmorphism design matching HTML reference. Extended design system with GlassPanelStyle modifier and mesh gradient colors. All components use existing design tokens (Typography, Spacing, CornerRadius, SemanticColors). Build succeeded. Key learnings: ViewModel uses totalPaid not totalSpent, AppCoordinator has private init.",
+    "postflight_confidence": 0.85,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "engagement": 0.15,
+      "know": 0.45,
+      "do": 0.2,
+      "context": 0.38,
+      "clarity": 0.25,
+      "coherence": 0.3,
+      "signal": 0.15,
+      "density": 0.3,
+      "state": 0.4,
+      "change": 0.55,
+      "completion": 0.9,
+      "impact": 0.15,
+      "uncertainty": -0.35
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "fa578192ea716140a8345783b8b437a3f46850b9",
+    "git_notes_ref": "empirica/session/d9253702-3c58-4ac0-ad95-e806ae8e3b5b/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "2dd6ffb182a8d53270e41bf28b04f20b93dcdab3",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Design/Components.swift\"",
+        "\"I Do Blueprint/Design/Gradients.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 651264 -> 663552 bytes\n .../storage.sqlite                                 | Bin 700416 -> 749568 bytes\n I Do Blueprint/Design/Components.swift             |  64 +++++++++++++++++++++\n I Do Blueprint/Design/Gradients.swift              |  27 +++++++++\n 4 files changed, 91 insertions(+)"
+    }
+  },
+  "learning_delta": {
+    "engagement": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "know": {
+      "prev": 0.75,
+      "curr": 0.85,
+      "delta": 0.1
+    },
+    "do": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "context": {
+      "prev": 0.8,
+      "curr": 0.88,
+      "delta": 0.08
+    },
+    "clarity": {
+      "prev": 0.85,
+      "curr": 0.85,
+      "delta": 0.0
+    },
+    "coherence": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "signal": {
+      "prev": 0.85,
+      "curr": 0.85,
+      "delta": 0.0
+    },
+    "density": {
+      "prev": 0.7,
+      "curr": 0.8,
+      "delta": 0.1
+    },
+    "state": {
+      "prev": 0.7,
+      "curr": 0.9,
+      "delta": 0.2
+    },
+    "change": {
+      "prev": 0.5,
+      "curr": 0.85,
+      "delta": 0.35
+    },
+    "completion": {
+      "prev": 0.1,
+      "curr": 0.9,
+      "delta": 0.8
+    },
+    "impact": {
+      "prev": 0.8,
+      "curr": 0.85,
+      "delta": 0.05
+    },
+    "uncertainty": {
+      "prev": 0.25,
+      "curr": 0.15,
+      "delta": -0.1
+    }
+  },
+  "token_count": 392
+}

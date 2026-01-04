@@ -36,6 +36,59 @@ public enum MacOSMaterial {
     }
 }
 
+// MARK: - Glassmorphism Panel Style (V7 Dashboard)
+
+/// Glassmorphism panel style inspired by modern web design
+/// Features:
+/// - Frosted glass effect with blur
+/// - Semi-transparent white background
+/// - Subtle white border for depth
+/// - Soft shadow for elevation
+/// - Hover animation with scale effect
+public struct GlassPanelStyle: ViewModifier {
+    let cornerRadius: CGFloat
+    let padding: CGFloat
+    @State private var isHovered = false
+    
+    public init(cornerRadius: CGFloat = 20, padding: CGFloat = Spacing.lg) {
+        self.cornerRadius = cornerRadius
+        self.padding = padding
+    }
+    
+    public func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .background(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(.ultraThinMaterial)
+                    .background(
+                        RoundedRectangle(cornerRadius: cornerRadius)
+                            .fill(Color.white.opacity(0.45))
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(isHovered ? 0.7 : 0.6),
+                                Color.white.opacity(isHovered ? 0.4 : 0.3)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(color: Color.black.opacity(0.05), radius: 30, x: 0, y: 4)
+            .scaleEffect(isHovered ? 1.005 : 1.0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
+            .onHover { hovering in
+                isHovered = hovering
+            }
+    }
+}
+
 // MARK: - Native Card Style (macOS)
 
 /// Premium card style inspired by native macOS apps (Finder, Notes, Calendar)
@@ -424,6 +477,17 @@ public struct AccessibleHeading: ViewModifier {
 // MARK: - View Extensions
 
 extension View {
+    // MARK: - Glassmorphism Styles (V7 Dashboard)
+    
+    /// Apply glassmorphism panel style with frosted glass effect
+    /// - Parameters:
+    ///   - cornerRadius: Corner radius for the panel (default: 20)
+    ///   - padding: Internal padding (default: Spacing.lg)
+    /// - Returns: View with glassmorphism styling applied
+    public func glassPanel(cornerRadius: CGFloat = 20, padding: CGFloat = Spacing.lg) -> some View {
+        modifier(GlassPanelStyle(cornerRadius: cornerRadius, padding: padding))
+    }
+    
     // MARK: - Native macOS Card Styles
     
     /// Apply native macOS card style with material background and hover effects
