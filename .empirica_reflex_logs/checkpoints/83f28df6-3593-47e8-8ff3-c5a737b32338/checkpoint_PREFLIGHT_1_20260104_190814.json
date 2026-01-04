@@ -1,0 +1,43 @@
+{
+  "session_id": "83f28df6-3593-47e8-8ff3-c5a737b32338",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-04T19:08:13.396225+00:00",
+  "vectors": {
+    "engagement": 0.85,
+    "know": 0.65,
+    "do": 0.7,
+    "context": 0.75,
+    "clarity": 0.7,
+    "coherence": 0.75,
+    "signal": 0.7,
+    "density": 0.65,
+    "state": 0.8,
+    "change": 0.6,
+    "completion": 0.0,
+    "impact": 0.75,
+    "uncertainty": 0.4
+  },
+  "overall_confidence": 0.7,
+  "meta": {
+    "reasoning": "I understand the V6 pattern from BudgetOverviewCardV6 (native macOS materials, gradient borders, multi-layer shadows, hover animations, staggered appearance animations). I need to identify the other dashboard cards (Task Manager, Guest Responses, Our Vendors) and apply these patterns. Uncertainty exists around unique components in each card that may require special handling.",
+    "prompt": "I understand the V6 pattern from BudgetOverviewCardV6 (native macOS materials, gradient borders, multi-layer shadows, hover animations, staggered appearance animations). I need to identify the other dashboard cards (Task Manager, Guest Responses, Our Vendors) and apply these patterns. Uncertainty exists around unique components in each card that may require special handling.",
+    "git_commit_sha": "021b861c32bd749739bdb62a1ed5737609415321",
+    "git_notes_ref": "empirica/session/83f28df6-3593-47e8-8ff3-c5a737b32338/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "27a57834f15189e06ed1d166c230b5a9d560be2d",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db | Bin 491520 -> 491520 bytes\n 1 file changed, 0 insertions(+), 0 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 222
+}

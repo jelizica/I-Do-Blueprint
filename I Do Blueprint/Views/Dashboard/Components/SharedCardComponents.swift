@@ -102,3 +102,58 @@ struct StatRow: View {
         }
     }
 }
+
+// MARK: - Native Icon Badge (V6)
+
+struct NativeIconBadge: View {
+    let systemName: String
+    let color: Color
+    let size: CGFloat
+    
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [color.opacity(0.15), color.opacity(0.05)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: size, height: size)
+            
+            Image(systemName: systemName)
+                .font(.system(size: size * 0.5, weight: .semibold))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [color, color.opacity(0.8)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+        }
+        .shadow(color: color.opacity(0.2), radius: 4, x: 0, y: 2)
+    }
+}
+
+// MARK: - Native Divider Style (V6)
+
+struct NativeDividerStyle: View {
+    let opacity: Double
+    
+    var body: some View {
+        Rectangle()
+            .fill(
+                LinearGradient(
+                    colors: [
+                        Color(nsColor: .separatorColor).opacity(opacity),
+                        Color(nsColor: .separatorColor).opacity(opacity * 0.5),
+                        Color(nsColor: .separatorColor).opacity(opacity)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .frame(height: 0.5)
+    }
+}
