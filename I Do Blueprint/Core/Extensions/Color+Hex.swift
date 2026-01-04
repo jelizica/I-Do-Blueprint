@@ -84,4 +84,57 @@ extension Color {
         // WCAG relative luminance formula
         return 0.2126 * r + 0.7152 * g + 0.0722 * b
     }
+
+    /// Darken a color by a percentage
+    /// - Parameter percentage: Amount to darken (0.0 to 1.0, where 0.3 = 30% darker)
+    /// - Returns: A darker version of the color
+    func darkened(by percentage: Double = 0.3) -> Color {
+        let nsColor = NSColor(self)
+        guard let rgb = nsColor.usingColorSpace(.sRGB) else { return self }
+
+        let factor = 1.0 - percentage
+        return Color(
+            .sRGB,
+            red: rgb.redComponent * factor,
+            green: rgb.greenComponent * factor,
+            blue: rgb.blueComponent * factor,
+            opacity: rgb.alphaComponent
+        )
+    }
+
+    /// Lighten a color by a percentage
+    /// - Parameter percentage: Amount to lighten (0.0 to 1.0, where 0.3 = 30% lighter)
+    /// - Returns: A lighter version of the color
+    func lightened(by percentage: Double = 0.3) -> Color {
+        let nsColor = NSColor(self)
+        guard let rgb = nsColor.usingColorSpace(.sRGB) else { return self }
+
+        let factor = percentage
+        return Color(
+            .sRGB,
+            red: rgb.redComponent + (1.0 - rgb.redComponent) * factor,
+            green: rgb.greenComponent + (1.0 - rgb.greenComponent) * factor,
+            blue: rgb.blueComponent + (1.0 - rgb.blueComponent) * factor,
+            opacity: rgb.alphaComponent
+        )
+    }
+
+    /// Adjust color saturation
+    /// - Parameter percentage: Amount to adjust (-1.0 to 1.0, where -0.5 = 50% less saturated, 0.5 = 50% more saturated)
+    /// - Returns: A color with adjusted saturation
+    func adjustedSaturation(by percentage: Double) -> Color {
+        let nsColor = NSColor(self)
+        guard let rgb = nsColor.usingColorSpace(.sRGB) else { return self }
+
+        var hue: CGFloat = 0
+        var saturation: CGFloat = 0
+        var brightness: CGFloat = 0
+        var alpha: CGFloat = 0
+
+        NSColor(self).getHue(&hue, saturation: &saturation, brightness: &brightness, alpha: &alpha)
+
+        let newSaturation = max(0, min(1, saturation + CGFloat(percentage)))
+
+        return Color(hue: Double(hue), saturation: Double(newSaturation), brightness: Double(brightness), opacity: Double(alpha))
+    }
 }

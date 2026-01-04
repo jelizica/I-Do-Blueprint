@@ -34,40 +34,33 @@ struct WeddingCountdownCard: View {
     }
 
     /// Calculate appropriate text color based on gradient luminance
-    /// Returns dark text for light backgrounds, light text for dark backgrounds
+    /// Uses theme-specific text shades for cohesive appearance
     private var adaptiveTextColor: Color {
-        // Get the gradient colors
-        let color1: Color
-        let color2: Color
-        
         if themeSettings.useCustomWeddingColors {
-            color1 = Color.fromHex(themeSettings.weddingColor1.replacingOccurrences(of: "#", with: ""))
-            color2 = Color.fromHex(themeSettings.weddingColor2.replacingOccurrences(of: "#", with: ""))
+            // For custom colors, calculate luminance and use generic dark/light
+            let color1 = Color.fromHex(themeSettings.weddingColor1.replacingOccurrences(of: "#", with: ""))
+            let color2 = Color.fromHex(themeSettings.weddingColor2.replacingOccurrences(of: "#", with: ""))
+            let avgLuminance = (color1.luminance + color2.luminance) / 2
+            
+            // Use darker shade of the darker gradient color for light backgrounds
+            if avgLuminance > 0.5 {
+                return color1.luminance < color2.luminance ? color1.darkened(by: 0.4) : color2.darkened(by: 0.4)
+            } else {
+                return .white
+            }
         } else {
-            // Use theme-specific colors
+            // Use theme-specific text shades from design system
             switch themeSettings.colorScheme {
             case "sage-serenity":
-                color1 = Color.fromHex("B8D4C8")
-                color2 = Color.fromHex("5A9070")
+                return SageGreen.text  // shade800 - WCAG AAA compliant
             case "lavender-dream":
-                color1 = Color.fromHex("E6D5F5")
-                color2 = Color.fromHex("9B7EBD")
+                return SoftLavender.text  // shade800 - WCAG AAA compliant
             case "terracotta-warm":
-                color1 = Color.fromHex("F4C2A0")
-                color2 = Color.fromHex("D17A4F")
+                return Terracotta.text  // shade800 - WCAG AAA compliant
             default: // blush-romance
-                color1 = Color.fromHex("EAE2FF")
-                color2 = Color.fromHex("FFB6C1")
+                return BlushPink.text  // shade800 - WCAG AAA compliant
             }
         }
-        
-        // Calculate average luminance
-        let lum1 = color1.luminance
-        let lum2 = color2.luminance
-        let avgLuminance = (lum1 + lum2) / 2
-        
-        // Use dark text on light backgrounds (luminance > 0.5), light text on dark backgrounds
-        return avgLuminance > 0.5 ? Color(red: 0.2, green: 0.2, blue: 0.25) : .white
     }
 
     /// Secondary text color with appropriate opacity
@@ -77,7 +70,24 @@ struct WeddingCountdownCard: View {
 
     /// Badge background that contrasts with text
     private var adaptiveBadgeBackground: Color {
-        adaptiveTextColor == .white ? Color.white.opacity(0.2) : Color.black.opacity(0.08)
+        if themeSettings.useCustomWeddingColors {
+            let color1 = Color.fromHex(themeSettings.weddingColor1.replacingOccurrences(of: "#", with: ""))
+            let color2 = Color.fromHex(themeSettings.weddingColor2.replacingOccurrences(of: "#", with: ""))
+            let avgLuminance = (color1.luminance + color2.luminance) / 2
+            return avgLuminance > 0.5 ? Color.black.opacity(0.08) : Color.white.opacity(0.2)
+        } else {
+            // Use theme-specific lighter shade for badge background
+            switch themeSettings.colorScheme {
+            case "sage-serenity":
+                return SageGreen.shade100.opacity(0.6)
+            case "lavender-dream":
+                return SoftLavender.shade100.opacity(0.6)
+            case "terracotta-warm":
+                return Terracotta.shade100.opacity(0.6)
+            default: // blush-romance
+                return BlushPink.shade100.opacity(0.6)
+            }
+        }
     }
 
     var body: some View {
