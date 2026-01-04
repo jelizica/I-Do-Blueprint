@@ -1,5 +1,5 @@
 {
-  "originHash" : "8e4085def4dff954cfde3041cd9a7f9642c6fd5377d899ae5b431dd9f6fdcbea",
+  "originHash" : "d51edd606486eda985ed55a9e5ffcb3e48f6ceb8c85cf4105b0ea144f87bb321",
   "pins" : [
     {
       "identity" : "appauth-ios",
@@ -17,6 +17,15 @@
       "state" : {
         "revision" : "ed9f7acbbd54dc3ab70585c0cd006974b532e998",
         "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "colorselector",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/jaywcjlove/ColorSelector.git",
+      "state" : {
+        "branch" : "main",
+        "revision" : "aab17ad00c01f4e635e23cc9a61cbea6c70cd8eb"
       }
     },
     {

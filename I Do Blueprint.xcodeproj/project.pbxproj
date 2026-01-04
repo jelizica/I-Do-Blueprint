@@ -31,6 +31,7 @@
 		169ADEDB2EA817330097916E /* SentrySwiftUI in Frameworks */ = {isa = PBXBuildFile; productRef = 169ADEDA2EA817330097916E /* SentrySwiftUI */; };
 		16D71EC62F03E3C000F7FF4F /* themis in Frameworks */ = {isa = PBXBuildFile; productRef = 16D71EC52F03E3C000F7FF4F /* themis */; };
 		16E7F84B2F05098F0077D523 /* PhoneNumberKit in Frameworks */ = {isa = PBXBuildFile; productRef = 16E7F84A2F05098F0077D523 /* PhoneNumberKit */; };
+		16F2FFD32F0A03BC00687704 /* ColorSelector in Frameworks */ = {isa = PBXBuildFile; productRef = 16F2FFD22F0A03BC00687704 /* ColorSelector */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -114,6 +115,7 @@
 				169ADED92EA817330097916E /* Sentry in Frameworks */,
 				162469862E9051C100920873 /* Realtime in Frameworks */,
 				162469962E9052DB00920873 /* MarkdownUI in Frameworks */,
+				16F2FFD32F0A03BC00687704 /* ColorSelector in Frameworks */,
 				1624699F2E90535100920873 /* AxisTooltip in Frameworks */,
 				1624699C2E90533300920873 /* Lottie in Frameworks */,
 			);
@@ -201,6 +203,7 @@
 				1692110A2EAEF20000239461 /* CoreXLSX */,
 				16D71EC52F03E3C000F7FF4F /* themis */,
 				16E7F84A2F05098F0077D523 /* PhoneNumberKit */,
+				16F2FFD22F0A03BC00687704 /* ColorSelector */,
 			);
 			productName = "I Do Blueprint";
 			productReference = 1624653D2E904FFC00920873 /* I Do Blueprint.app */;
@@ -303,6 +306,7 @@
 				169211092EAEF20000239461 /* XCRemoteSwiftPackageReference "CoreXLSX" */,
 				16D71EC42F03E3C000F7FF4F /* XCRemoteSwiftPackageReference "themis" */,
 				16E7F8492F05098F0077D523 /* XCRemoteSwiftPackageReference "PhoneNumberKit" */,
+				16F2FFD12F0A03BC00687704 /* XCRemoteSwiftPackageReference "ColorSelector" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1624653E2E904FFC00920873 /* Products */;
@@ -890,6 +894,14 @@
 				minimumVersion = 4.2.2;
 			};
 		};
+		16F2FFD12F0A03BC00687704 /* XCRemoteSwiftPackageReference "ColorSelector" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/jaywcjlove/ColorSelector.git";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -1012,6 +1024,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 16E7F8492F05098F0077D523 /* XCRemoteSwiftPackageReference "PhoneNumberKit" */;
 			productName = PhoneNumberKit;
+		};
+		16F2FFD22F0A03BC00687704 /* ColorSelector */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 16F2FFD12F0A03BC00687704 /* XCRemoteSwiftPackageReference "ColorSelector" */;
+			productName = ColorSelector;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

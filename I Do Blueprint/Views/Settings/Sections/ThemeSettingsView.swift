@@ -216,65 +216,39 @@ struct ThemeSettingsView: View {
                 .foregroundColor(SemanticColors.textPrimary)
 
             HStack(spacing: Spacing.xl) {
-                // Color 1
+                // Color 1 - Using WeddingColorPickerView
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Color 1 (Left)")
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textSecondary)
 
-                    HStack(spacing: Spacing.sm) {
-                        ColorPicker("", selection: $weddingColor1, supportsOpacity: false)
-                            .labelsHidden()
-                            .frame(width: 44, height: 44)
-                            .onChange(of: weddingColor1) { _, newColor in
-                                let hex = newColor.toHex()
-                                viewModel.localSettings.theme.weddingColor1 = hex
-                                hexInput1 = hex
-                            }
-
-                        if showHexInput {
-                            TextField("#RRGGBB", text: $hexInput1)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 100)
-                                .onChange(of: hexInput1) { _, newValue in
-                                    let cleaned = newValue.replacingOccurrences(of: "#", with: "")
-                                    if cleaned.count == 6, cleaned.allSatisfy({ $0.isHexDigit }) {
-                                        weddingColor1 = Color.fromHex(cleaned)
-                                        viewModel.localSettings.theme.weddingColor1 = "#\(cleaned.uppercased())"
-                                    }
-                                }
-                        }
+                    WeddingColorPickerView(
+                        label: "",
+                        selectedColor: $weddingColor1,
+                        showLabel: false,
+                        showHexInput: showHexInput
+                    )
+                    .onChange(of: weddingColor1) { _, newColor in
+                        let hex = newColor.toHex()
+                        viewModel.localSettings.theme.weddingColor1 = hex
                     }
                 }
 
-                // Color 2
+                // Color 2 - Using WeddingColorPickerView
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Color 2 (Right)")
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textSecondary)
 
-                    HStack(spacing: Spacing.sm) {
-                        ColorPicker("", selection: $weddingColor2, supportsOpacity: false)
-                            .labelsHidden()
-                            .frame(width: 44, height: 44)
-                            .onChange(of: weddingColor2) { _, newColor in
-                                let hex = newColor.toHex()
-                                viewModel.localSettings.theme.weddingColor2 = hex
-                                hexInput2 = hex
-                            }
-
-                        if showHexInput {
-                            TextField("#RRGGBB", text: $hexInput2)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 100)
-                                .onChange(of: hexInput2) { _, newValue in
-                                    let cleaned = newValue.replacingOccurrences(of: "#", with: "")
-                                    if cleaned.count == 6, cleaned.allSatisfy({ $0.isHexDigit }) {
-                                        weddingColor2 = Color.fromHex(cleaned)
-                                        viewModel.localSettings.theme.weddingColor2 = "#\(cleaned.uppercased())"
-                                    }
-                                }
-                        }
+                    WeddingColorPickerView(
+                        label: "",
+                        selectedColor: $weddingColor2,
+                        showLabel: false,
+                        showHexInput: showHexInput
+                    )
+                    .onChange(of: weddingColor2) { _, newColor in
+                        let hex = newColor.toHex()
+                        viewModel.localSettings.theme.weddingColor2 = hex
                     }
                 }
 
