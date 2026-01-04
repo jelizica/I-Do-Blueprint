@@ -173,13 +173,46 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     // MARK: - Granular Settings Updates
 
     func updateGlobalSettings(_ settings: GlobalSettings) async throws {
-        let payload: [String: Any] = ["global": settings]
+        logger.debug("updateGlobalSettings called")
+        
+        // Convert GlobalSettings to dictionary for proper merging
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        
+        guard let globalDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            logger.error("Failed to convert GlobalSettings to dictionary")
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert GlobalSettings to dictionary"])
+        }
+        
+        let payload: [String: Any] = ["global": globalDict]
         _ = try await updateSettings(payload)
+        
+        logger.info("Global settings updated successfully")
     }
 
     func updateThemeSettings(_ settings: ThemeSettings) async throws {
-        let payload: [String: Any] = ["theme": settings]
+        logger.debug("updateThemeSettings called with colorScheme: \(settings.colorScheme)")
+        
+        // Convert ThemeSettings to dictionary for proper merging
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        
+        guard let themeDict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            logger.error("Failed to convert ThemeSettings to dictionary")
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert ThemeSettings to dictionary"])
+        }
+        
+        logger.debug("Theme dict keys: \(themeDict.keys.joined(separator: ", "))")
+        if let colorScheme = themeDict["color_scheme"] as? String {
+            logger.debug("color_scheme in dict: \(colorScheme)")
+        }
+        
+        let payload: [String: Any] = ["theme": themeDict]
         _ = try await updateSettings(payload)
+        
+        logger.info("Theme settings updated successfully")
     }
 
     func updateBudgetSettings(_ settings: BudgetSettings) async throws {
@@ -212,38 +245,87 @@ actor LiveSettingsRepository: SettingsRepositoryProtocol {
     }
 
     func updateCashFlowSettings(_ settings: CashFlowSettings) async throws {
-        let payload: [String: Any] = ["cash_flow": settings]
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert CashFlowSettings to dictionary"])
+        }
+        let payload: [String: Any] = ["cash_flow": dict]
         _ = try await updateSettings(payload)
+        logger.info("Cash flow settings updated successfully")
     }
 
     func updateTasksSettings(_ settings: TasksSettings) async throws {
-        let payload: [String: Any] = ["tasks": settings]
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert TasksSettings to dictionary"])
+        }
+        let payload: [String: Any] = ["tasks": dict]
         _ = try await updateSettings(payload)
+        logger.info("Tasks settings updated successfully")
     }
 
     func updateVendorsSettings(_ settings: VendorsSettings) async throws {
-        let payload: [String: Any] = ["vendors": settings]
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert VendorsSettings to dictionary"])
+        }
+        let payload: [String: Any] = ["vendors": dict]
         _ = try await updateSettings(payload)
+        logger.info("Vendors settings updated successfully")
     }
 
     func updateGuestsSettings(_ settings: GuestsSettings) async throws {
-        let payload: [String: Any] = ["guests": settings]
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert GuestsSettings to dictionary"])
+        }
+        let payload: [String: Any] = ["guests": dict]
         _ = try await updateSettings(payload)
+        logger.info("Guests settings updated successfully")
     }
 
     func updateDocumentsSettings(_ settings: DocumentsSettings) async throws {
-        let payload: [String: Any] = ["documents": settings]
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert DocumentsSettings to dictionary"])
+        }
+        let payload: [String: Any] = ["documents": dict]
         _ = try await updateSettings(payload)
+        logger.info("Documents settings updated successfully")
     }
 
     func updateNotificationsSettings(_ settings: NotificationsSettings) async throws {
-        let payload: [String: Any] = ["notifications": settings]
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert NotificationsSettings to dictionary"])
+        }
+        let payload: [String: Any] = ["notifications": dict]
         _ = try await updateSettings(payload)
+        logger.info("Notifications settings updated successfully")
     }
 
     func updateLinksSettings(_ settings: LinksSettings) async throws {
-        let payload: [String: Any] = ["links": settings]
+        let encoder = JSONEncoder()
+        encoder.keyEncodingStrategy = .convertToSnakeCase
+        let data = try encoder.encode(settings)
+        guard let dict = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            throw NSError(domain: "SettingsRepository", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to convert LinksSettings to dictionary"])
+        }
+        let payload: [String: Any] = ["links": dict]
         _ = try await updateSettings(payload)
+        logger.info("Links settings updated successfully")
     }
 
     // MARK: - Custom Vendor Categories
