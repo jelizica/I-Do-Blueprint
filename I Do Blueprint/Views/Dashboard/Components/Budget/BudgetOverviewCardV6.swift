@@ -206,7 +206,6 @@ struct BudgetOverviewCardV6: View {
                         .animation(.easeOut(duration: 0.4).delay(0.7 + Double(index) * 0.05), value: hasAppeared)
                     }
                 }
-                .background(Color.clear) // Ensure transparent background to match card
             } else {
                 // Empty state
                 VStack(spacing: Spacing.md) {
