@@ -3,7 +3,7 @@
 //  I Do Blueprint
 //
 //  SwiftUI wrapper for ColorSelector package by jaywcjlove
-//  Provides a macOS-optimized color picker for wedding colors
+//  Provides a macOS-optimized color picker for wedding colors with adaptive modal presentation
 //
 
 import SwiftUI
@@ -12,9 +12,10 @@ import ColorSelector
 // MARK: - Wedding Color Picker View
 
 /// A macOS-optimized color picker using ColorSelector package
-/// Replaces the native ColorPicker with better UX and centered modal presentation
+/// Opens in an adaptive modal sheet matching the guest management pattern
 struct WeddingColorPickerView: View {
     @Binding var selectedColor: Color
+    @State private var showingPicker = false
     
     let label: String
     let showLabel: Bool
@@ -39,16 +40,23 @@ struct WeddingColorPickerView: View {
     
     var body: some View {
         HStack(spacing: Spacing.sm) {
-            // ColorSelector with wedding presets
-            ColorSelector(selection: $selectedColor)
-                .environment(\.swatchColors, presetColors)
-                .frame(width: 44, height: 44)
-                .accessibilityLabel("\(label) color picker")
-                .accessibilityHint("Opens color picker popover")
+            // Color preview button
+            Button(action: { showingPicker = true }) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(selectedColor)
+                    .frame(width: 44, height: 44)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 8)
+                            .stroke(SemanticColors.borderPrimary, lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("\(label) color picker")
+            .accessibilityHint("Opens color picker modal")
             
             if showLabel {
                 Text(label)
-                    .font(Typography.body)
+                    .font(Typography.bodyRegular)
                     .foregroundColor(SemanticColors.textPrimary)
             }
             
@@ -68,9 +76,293 @@ struct WeddingColorPickerView: View {
                     .accessibilityLabel("Hex color code")
             }
         }
+        .sheet(isPresented: $showingPicker) {
+            WeddingColorPickerModal(
+                selectedColor: $selectedColor,
+                presetColors: presetColors
+            )
+        }
         .onAppear {
             hexInput = selectedColor.toHex()
         }
+    }
+}
+
+// MARK: - Wedding Color Picker Modal
+
+/// Adaptive modal presentation of ColorSelector with wedding color presets
+/// Matches the guest management modal pattern with GeometryReader for responsive sizing
+struct WeddingColorPickerModal: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var selectedColor: Color
+    let presetColors: [NSColor]
+    
+    @State private var currentColor: Color
+    @State private var isSaving = false
+    
+    init(
+        selectedColor: Binding<Color>,
+        presetColors: [NSColor]
+    ) {
+        self._selectedColor = selectedColor
+        self.presetColors = presetColors
+        self._currentColor = State(initialValue: selectedColor.wrappedValue)
+    }
+    
+    var body: some View {
+        GeometryReader { geometry in
+            let modalSize = adaptiveModalSize(for: geometry.size)
+            
+            NavigationStack {
+                VStack(spacing: 0) {
+                    // Header
+                    modalHeader
+                    
+                    Divider()
+                    
+                    // Content
+                    ScrollView {
+                        VStack(spacing: Spacing.xl) {
+                            // Color Selector
+                            colorSelectorSection(width: modalSize.width)
+                            
+                            Divider()
+                                .padding(.horizontal, Spacing.xl)
+                            
+                            // Wedding Color Presets
+                            presetsSection(width: modalSize.width)
+                            
+                            Divider()
+                                .padding(.horizontal, Spacing.xl)
+                            
+                            // Current Color Preview
+                            previewSection
+                        }
+                        .padding(.vertical, Spacing.xl)
+                    }
+                    
+                    Divider()
+                    
+                    // Footer
+                    modalFooter
+                }
+            }
+            .frame(width: modalSize.width, height: modalSize.height)
+        }
+    }
+    
+    // MARK: - Header
+    
+    private var modalHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Choose Wedding Color")
+                    .font(Typography.title2)
+                    .fontWeight(.bold)
+                    .foregroundColor(SemanticColors.textPrimary)
+                
+                Text("Select from presets or use the color wheel")
+                    .font(Typography.caption)
+                    .foregroundColor(SemanticColors.textSecondary)
+            }
+            
+            Spacer()
+            
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundColor(SemanticColors.textSecondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Close color picker")
+        }
+        .padding(Spacing.lg)
+        .background(SemanticColors.controlBackground)
+    }
+    
+    // MARK: - Color Selector Section
+    
+    private func colorSelectorSection(width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("Color Wheel")
+                .font(Typography.subheading)
+                .foregroundColor(SemanticColors.textPrimary)
+                .padding(.horizontal, Spacing.xl)
+            
+            ColorSelector(selection: Binding(
+                get: { currentColor },
+                set: { if let newColor = $0 { currentColor = newColor } }
+            ))
+                .environment(\.swatchColors, presetColors)
+                .frame(height: min(300, width * 0.5))
+                .padding(.horizontal, Spacing.xl)
+        }
+    }
+    
+    // MARK: - Presets Section
+    
+    private func presetsSection(width: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("Wedding Color Presets")
+                .font(Typography.subheading)
+                .foregroundColor(SemanticColors.textPrimary)
+                .padding(.horizontal, Spacing.xl)
+            
+            Text("Quick selection of popular wedding color combinations")
+                .font(Typography.caption)
+                .foregroundColor(SemanticColors.textSecondary)
+                .padding(.horizontal, Spacing.xl)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Spacing.md) {
+                    ForEach(Array(presetColors.enumerated()), id: \.offset) { index, nsColor in
+                        let color = Color(nsColor: nsColor)
+                        Button(action: {
+                            currentColor = color
+                        }) {
+                            VStack(spacing: Spacing.xs) {
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(color)
+                                    .frame(width: 60, height: 60)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(
+                                                currentColor.toHex() == color.toHex()
+                                                    ? SemanticColors.primaryAction
+                                                    : SemanticColors.borderPrimary,
+                                                lineWidth: currentColor.toHex() == color.toHex() ? 3 : 1
+                                            )
+                                    )
+                                
+                                if currentColor.toHex() == color.toHex() {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(SemanticColors.primaryAction)
+                                        .font(.caption)
+                                }
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Preset color \(index + 1)")
+                    }
+                }
+                .padding(.horizontal, Spacing.xl)
+            }
+        }
+    }
+    
+    // MARK: - Preview Section
+    
+    private var previewSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("Selected Color")
+                .font(Typography.subheading)
+                .foregroundColor(SemanticColors.textPrimary)
+                .padding(.horizontal, Spacing.xl)
+            
+            HStack(spacing: Spacing.lg) {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(currentColor)
+                    .frame(width: 80, height: 80)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(SemanticColors.borderPrimary, lineWidth: 1)
+                    )
+                
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Hex Code")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
+                    
+                    Text(currentColor.toHex())
+                        .font(Typography.bodyLarge)
+                        .fontWeight(.medium)
+                        .foregroundColor(SemanticColors.textPrimary)
+                        .textSelection(.enabled)
+                    
+                    Text("Tap to copy")
+                        .font(Typography.caption2)
+                        .foregroundColor(SemanticColors.textTertiary)
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal, Spacing.xl)
+        }
+    }
+    
+    // MARK: - Footer
+    
+    private var modalFooter: some View {
+        HStack(spacing: Spacing.md) {
+            Button("Cancel") {
+                dismiss()
+            }
+            .keyboardShortcut(.cancelAction)
+            
+            Spacer()
+            
+            Button {
+                saveColor()
+            } label: {
+                if isSaving {
+                    HStack {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Applying...")
+                    }
+                } else {
+                    Text("Select Color")
+                }
+            }
+            .keyboardShortcut(.defaultAction)
+            .buttonStyle(.borderedProminent)
+            .disabled(isSaving)
+        }
+        .padding(Spacing.lg)
+        .background(SemanticColors.controlBackground)
+    }
+    
+    // MARK: - Actions
+    
+    private func saveColor() {
+        isSaving = true
+        // Small delay for visual feedback
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            selectedColor = currentColor
+            isSaving = false
+            dismiss()
+        }
+    }
+    
+    // MARK: - Adaptive Sizing
+    
+    /// Calculate adaptive modal size based on available window space
+    /// Matches the guest management modal sizing pattern
+    private func adaptiveModalSize(for availableSize: CGSize) -> CGSize {
+        let width: CGFloat
+        let height: CGFloat
+        
+        // Width calculation
+        if availableSize.width >= 900 {
+            width = 700  // Large window
+        } else if availableSize.width >= 700 {
+            width = 600  // Medium window
+        } else {
+            width = min(500, availableSize.width * 0.9)  // Small window
+        }
+        
+        // Height calculation
+        if availableSize.height >= 800 {
+            height = 700  // Large window
+        } else if availableSize.height >= 600 {
+            height = 600  // Medium window
+        } else {
+            height = min(500, availableSize.height * 0.9)  // Small window
+        }
+        
+        return CGSize(width: width, height: height)
     }
 }
 
@@ -194,4 +486,19 @@ extension NSColor {
         )
     }
     .padding()
+}
+
+#Preview("Color Picker Modal") {
+    @Previewable @State var selectedColor = Color.fromHex("FFE5E5")
+    @Previewable @State var showModal = true
+    
+    return Button("Show Color Picker") {
+        showModal = true
+    }
+    .sheet(isPresented: $showModal) {
+        WeddingColorPickerModal(
+            selectedColor: $selectedColor,
+            presetColors: WeddingColorPresets.allNSColors
+        )
+    }
 }
