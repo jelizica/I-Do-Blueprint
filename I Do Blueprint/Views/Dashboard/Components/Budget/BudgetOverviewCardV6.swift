@@ -23,73 +23,232 @@ struct BudgetOverviewCardV6: View {
     @State private var hasAppeared = false
     @State private var isHovered = false
 
-    // MARK: - Computed Properties
-    
-    private var totalBudget: Double {
-        guard let primaryScenario = store.primaryScenario else {
-            return 0
-        }
-        return primaryScenario.totalWithTax
-    }
-
-    private var totalPaid: Double {
-        return store.payments.totalPaid
-    }
-
-    private var totalExpenses: Double {
-        guard case .loaded(let budgetData) = store.loadingState else {
-            return 0
-        }
-        return budgetData.expenses.reduce(0) { $0 + $1.amount }
-    }
-
-    private var remainingBudget: Double {
-        return totalBudget - totalPaid
-    }
-    
-    private var paymentProgress: Double {
-        guard totalBudget > 0 else { return 0 }
-        return min(totalPaid / totalBudget, 1.0)
-    }
-    
-    private var expenseProgress: Double {
-        guard totalBudget > 0 else { return 0 }
-        return min(totalExpenses / totalBudget, 1.0)
-    }
-
-    private var paymentsThisMonth: [PaymentSchedule] {
-        var calendar = Calendar.current
-        calendar.timeZone = userTimezone
-        
-        let now = Date()
-        let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
-        let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
-
-        return store.payments.paymentSchedules.filter { payment in
-            payment.paymentDate >= startOfMonth && payment.paymentDate <= endOfMonth
-        }.sorted { $0.paymentDate < $1.paymentDate }
-    }
-
     // MARK: - Body
     
     var body: some View {
+        // Calculate all values directly in body to ensure proper observation
+        let primaryScenario = store.primaryScenario
+        let payments = store.payments
+        let loadingState = store.loadingState
+        
+        let totalBudget: Double = primaryScenario?.totalWithTax ?? 0
+        let totalPaid: Double = payments.totalPaid
+        
+        let totalExpenses: Double = {
+            guard case .loaded(let budgetData) = loadingState else { return 0 }
+            return budgetData.expenses.reduce(0) { $0 + $1.amount }
+        }()
+        
+        let remainingBudget = totalBudget - totalPaid
+        let paymentProgress = totalBudget > 0 ? min(totalPaid / totalBudget, 1.0) : 0
+        let expenseProgress = totalBudget > 0 ? min(totalExpenses / totalBudget, 1.0) : 0
+        
+        let paymentsThisMonth: [PaymentSchedule] = {
+            var calendar = Calendar.current
+            calendar.timeZone = userTimezone
+            let now = Date()
+            let startOfMonth = calendar.date(from: calendar.dateComponents([.year, .month], from: now))!
+            let endOfMonth = calendar.date(byAdding: DateComponents(month: 1, day: -1), to: startOfMonth)!
+            return payments.paymentSchedules.filter { payment in
+                payment.paymentDate >= startOfMonth && payment.paymentDate <= endOfMonth
+            }.sorted { $0.paymentDate < $1.paymentDate }
+        }()
+        
         VStack(alignment: .leading, spacing: Spacing.lg) {
-            // Header with native icon badge
-            headerSection
+            // MARK: - Header Section
+            HStack(spacing: Spacing.md) {
+                // Native icon badge
+                NativeIconBadge(
+                    systemName: "dollarsign.circle.fill",
+                    color: AppColors.Budget.allocated,
+                    size: 44
+                )
+                
+                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                    Text("Budget Overview")
+                        .font(Typography.subheading)
+                        .fontWeight(.semibold)
+                        .foregroundColor(Color(nsColor: .labelColor))
+
+                    if let scenario = primaryScenario {
+                        Text("$\(formatAmount(totalPaid)) of $\(formatAmount(scenario.totalWithTax)) paid")
+                            .font(Typography.caption)
+                            .foregroundColor(Color(nsColor: .secondaryLabelColor))
+                    } else {
+                        Text("No primary scenario")
+                            .font(Typography.caption)
+                            .foregroundColor(Color(nsColor: .secondaryLabelColor))
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding(.top, Spacing.xs)
+            .padding(.bottom, Spacing.sm)
+            .opacity(hasAppeared ? 1 : 0)
+            .offset(y: hasAppeared ? 0 : -10)
             
             // Native gradient divider
             NativeDividerStyle(opacity: 0.4)
                 .opacity(hasAppeared ? 1 : 0)
                 .animation(.easeOut(duration: 0.4).delay(0.1), value: hasAppeared)
             
-            // Progress section
-            progressSection
+            // MARK: - Progress Section
+            VStack(spacing: Spacing.md) {
+                // Payments Progress
+                NativeProgressRow(
+                    label: "Payments",
+                    amount: totalPaid,
+                    progress: paymentProgress,
+                    color: AppColors.Budget.allocated,
+                    icon: "creditcard.fill"
+                )
+                .opacity(hasAppeared ? 1 : 0)
+                .offset(y: hasAppeared ? 0 : 10)
+                .animation(.easeOut(duration: 0.4).delay(0.2), value: hasAppeared)
+
+                // Expenses Progress
+                NativeProgressRow(
+                    label: "Expenses",
+                    amount: totalExpenses,
+                    progress: expenseProgress,
+                    color: SemanticColors.warning,
+                    icon: "chart.bar.fill"
+                )
+                .opacity(hasAppeared ? 1 : 0)
+                .offset(y: hasAppeared ? 0 : 10)
+                .animation(.easeOut(duration: 0.4).delay(0.3), value: hasAppeared)
+            }
             
-            // Remaining budget highlight
-            remainingBudgetSection
+            // MARK: - Remaining Budget Section
+            HStack(spacing: Spacing.sm) {
+                Image(systemName: "banknote.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [SemanticColors.success, SemanticColors.success.opacity(0.8)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                
+                Text("Remaining Budget")
+                    .font(Typography.caption)
+                    .foregroundColor(Color(nsColor: .secondaryLabelColor))
+
+                Spacer()
+
+                Text("$\(formatAmount(remainingBudget))")
+                    .font(Typography.bodyRegular.weight(.bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [
+                                SemanticColors.success,
+                                SemanticColors.success.opacity(0.8)
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(.ultraThinMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(SemanticColors.success.opacity(0.2), lineWidth: 0.5)
+            )
+            .padding(.top, Spacing.xs)
+            .opacity(hasAppeared ? 1 : 0)
+            .offset(y: hasAppeared ? 0 : 10)
+            .animation(.easeOut(duration: 0.4).delay(0.4), value: hasAppeared)
             
-            // Payments due this month
-            paymentsSection
+            // MARK: - Payments Section
+            if !paymentsThisMonth.isEmpty {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    // Section divider
+                    NativeDividerStyle(opacity: 0.3)
+                        .padding(.vertical, Spacing.sm)
+                        .opacity(hasAppeared ? 1 : 0)
+                        .animation(.easeOut(duration: 0.4).delay(0.5), value: hasAppeared)
+
+                    // Section header
+                    HStack(spacing: Spacing.xs) {
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(AppColors.Budget.allocated)
+                        
+                        Text("Payments Due This Month")
+                            .font(Typography.caption.weight(.semibold))
+                            .foregroundColor(Color(nsColor: .labelColor))
+                    }
+                    .opacity(hasAppeared ? 1 : 0)
+                    .offset(y: hasAppeared ? 0 : 10)
+                    .animation(.easeOut(duration: 0.4).delay(0.6), value: hasAppeared)
+
+                    // Payment rows
+                    ForEach(Array(paymentsThisMonth.prefix(5).enumerated()), id: \.element.id) { index, payment in
+                        NativePaymentRow(
+                            payment: payment,
+                            vendorStore: vendorStore,
+                            userTimezone: userTimezone
+                        )
+                        .opacity(hasAppeared ? 1 : 0)
+                        .offset(y: hasAppeared ? 0 : 10)
+                        .animation(.easeOut(duration: 0.4).delay(0.7 + Double(index) * 0.05), value: hasAppeared)
+                    }
+                }
+            } else {
+                // Empty state
+                VStack(spacing: Spacing.md) {
+                    NativeDividerStyle(opacity: 0.3)
+                        .padding(.vertical, Spacing.sm)
+                    
+                    VStack(spacing: Spacing.sm) {
+                        // Success icon with gradient
+                        ZStack {
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [
+                                            SemanticColors.success.opacity(0.15),
+                                            SemanticColors.success.opacity(0.05)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 48, height: 48)
+                            
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 28))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            SemanticColors.success,
+                                            SemanticColors.success.opacity(0.7)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                        }
+                        .shadow(color: SemanticColors.success.opacity(0.2), radius: 8, x: 0, y: 4)
+                        
+                        Text("No payments due this month")
+                            .font(Typography.caption)
+                            .foregroundColor(Color(nsColor: .secondaryLabelColor))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, Spacing.lg)
+                }
+                .opacity(hasAppeared ? 1 : 0)
+                .offset(y: hasAppeared ? 0 : 10)
+                .animation(.easeOut(duration: 0.4).delay(0.5), value: hasAppeared)
+            }
             
             Spacer(minLength: 0)
         }
@@ -129,216 +288,6 @@ struct BudgetOverviewCardV6: View {
                 hasAppeared = true
             }
         }
-    }
-    
-    // MARK: - Header Section
-    
-    private var headerSection: some View {
-        HStack(spacing: Spacing.md) {
-            // Native icon badge
-            NativeIconBadge(
-                systemName: "dollarsign.circle.fill",
-                color: AppColors.Budget.allocated,
-                size: 44
-            )
-            
-            VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text("Budget Overview")
-                    .font(Typography.subheading)
-                    .fontWeight(.semibold)
-                    .foregroundColor(Color(nsColor: .labelColor))
-
-                if let scenario = store.primaryScenario {
-                    Text("$\(formatAmount(totalPaid)) of $\(formatAmount(scenario.totalWithTax)) paid")
-                        .font(Typography.caption)
-                        .foregroundColor(Color(nsColor: .secondaryLabelColor))
-                } else {
-                    Text("No primary scenario")
-                        .font(Typography.caption)
-                        .foregroundColor(Color(nsColor: .secondaryLabelColor))
-                }
-            }
-            
-            Spacer()
-        }
-        .padding(.top, Spacing.xs)
-        .padding(.bottom, Spacing.sm)
-        .opacity(hasAppeared ? 1 : 0)
-        .offset(y: hasAppeared ? 0 : -10)
-    }
-    
-    // MARK: - Progress Section
-    
-    private var progressSection: some View {
-        VStack(spacing: Spacing.md) {
-            // Payments Progress
-            NativeProgressRow(
-                label: "Payments",
-                amount: totalPaid,
-                progress: paymentProgress,
-                color: AppColors.Budget.allocated,
-                icon: "creditcard.fill"
-            )
-            .opacity(hasAppeared ? 1 : 0)
-            .offset(y: hasAppeared ? 0 : 10)
-            .animation(.easeOut(duration: 0.4).delay(0.2), value: hasAppeared)
-
-            // Expenses Progress
-            NativeProgressRow(
-                label: "Expenses",
-                amount: totalExpenses,
-                progress: expenseProgress,
-                color: SemanticColors.warning,
-                icon: "chart.bar.fill"
-            )
-            .opacity(hasAppeared ? 1 : 0)
-            .offset(y: hasAppeared ? 0 : 10)
-            .animation(.easeOut(duration: 0.4).delay(0.3), value: hasAppeared)
-        }
-    }
-    
-    // MARK: - Remaining Budget Section
-    
-    private var remainingBudgetSection: some View {
-        HStack(spacing: Spacing.sm) {
-            Image(systemName: "banknote.fill")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [SemanticColors.success, SemanticColors.success.opacity(0.8)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-            
-            Text("Remaining Budget")
-                .font(Typography.caption)
-                .foregroundColor(Color(nsColor: .secondaryLabelColor))
-
-            Spacer()
-
-            Text("$\(formatAmount(remainingBudget))")
-                .font(Typography.bodyRegular.weight(.bold))
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [
-                            SemanticColors.success,
-                            SemanticColors.success.opacity(0.8)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-        }
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.sm)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(.ultraThinMaterial)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(SemanticColors.success.opacity(0.2), lineWidth: 0.5)
-        )
-        .padding(.top, Spacing.xs)
-        .opacity(hasAppeared ? 1 : 0)
-        .offset(y: hasAppeared ? 0 : 10)
-        .animation(.easeOut(duration: 0.4).delay(0.4), value: hasAppeared)
-    }
-    
-    // MARK: - Payments Section
-    
-    private var paymentsSection: some View {
-        Group {
-            if !paymentsThisMonth.isEmpty {
-                VStack(alignment: .leading, spacing: Spacing.sm) {
-                    // Section divider
-                    NativeDividerStyle(opacity: 0.3)
-                        .padding(.vertical, Spacing.sm)
-                        .opacity(hasAppeared ? 1 : 0)
-                        .animation(.easeOut(duration: 0.4).delay(0.5), value: hasAppeared)
-
-                    // Section header
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "calendar.badge.clock")
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(AppColors.Budget.allocated)
-                        
-                        Text("Payments Due This Month")
-                            .font(Typography.caption.weight(.semibold))
-                            .foregroundColor(Color(nsColor: .labelColor))
-                    }
-                    .opacity(hasAppeared ? 1 : 0)
-                    .offset(y: hasAppeared ? 0 : 10)
-                    .animation(.easeOut(duration: 0.4).delay(0.6), value: hasAppeared)
-
-                    // Payment rows
-                    ForEach(Array(paymentsThisMonth.prefix(5).enumerated()), id: \.element.id) { index, payment in
-                        NativePaymentRow(
-                            payment: payment,
-                            vendorStore: vendorStore,
-                            userTimezone: userTimezone
-                        )
-                        .opacity(hasAppeared ? 1 : 0)
-                        .offset(y: hasAppeared ? 0 : 10)
-                        .animation(.easeOut(duration: 0.4).delay(0.7 + Double(index) * 0.05), value: hasAppeared)
-                    }
-                }
-            } else {
-                // Empty state
-                emptyPaymentsState
-            }
-        }
-    }
-    
-    // MARK: - Empty State
-    
-    private var emptyPaymentsState: some View {
-        VStack(spacing: Spacing.md) {
-            NativeDividerStyle(opacity: 0.3)
-                .padding(.vertical, Spacing.sm)
-            
-            VStack(spacing: Spacing.sm) {
-                // Success icon with gradient
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    SemanticColors.success.opacity(0.15),
-                                    SemanticColors.success.opacity(0.05)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 48, height: 48)
-                    
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [
-                                    SemanticColors.success,
-                                    SemanticColors.success.opacity(0.7)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                }
-                .shadow(color: SemanticColors.success.opacity(0.2), radius: 8, x: 0, y: 4)
-                
-                Text("No payments due this month")
-                    .font(Typography.caption)
-                    .foregroundColor(Color(nsColor: .secondaryLabelColor))
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, Spacing.lg)
-        }
-        .opacity(hasAppeared ? 1 : 0)
-        .offset(y: hasAppeared ? 0 : 10)
-        .animation(.easeOut(duration: 0.4).delay(0.5), value: hasAppeared)
     }
 
     // MARK: - Helpers
@@ -568,33 +517,4 @@ private struct NativePaymentRow: View {
         .padding()
     }
     .preferredColorScheme(.dark)
-}
-
-#Preview("Budget Overview V6 - With Gradient Background") {
-    ZStack {
-        // Colorful background to demonstrate vibrancy
-        Image(systemName: "photo.artframe")
-            .resizable()
-            .aspectRatio(contentMode: .fill)
-            .frame(width: 500, height: 600)
-            .overlay(
-                LinearGradient(
-                    colors: [
-                        Color.pink.opacity(0.4),
-                        Color.orange.opacity(0.3),
-                        Color.yellow.opacity(0.2)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-        
-        BudgetOverviewCardV6(
-            store: BudgetStoreV2(),
-            vendorStore: VendorStoreV2(),
-            userTimezone: .current
-        )
-        .frame(width: 400, height: 500)
-        .padding()
-    }
 }
