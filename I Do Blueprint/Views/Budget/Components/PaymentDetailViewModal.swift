@@ -143,7 +143,7 @@ struct PaymentDetailViewModal: View {
                     .frame(width: 64, height: 64)
                 
                 Image(systemName: payment.paid ? "checkmark.circle.fill" : "clock.fill")
-                    .font(.system(size: 32))
+                    .font(.seatingDisplay)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [statusColor, statusColor.opacity(0.8)],
@@ -218,7 +218,7 @@ struct PaymentDetailViewModal: View {
                 }
                 
                 Text("$\(formatAmount(payment.paymentAmount))")
-                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                    .font(Typography.displayMedium)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [SemanticColors.textPrimary, SemanticColors.textPrimary.opacity(0.8)],

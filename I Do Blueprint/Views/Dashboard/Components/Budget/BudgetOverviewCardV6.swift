@@ -125,7 +125,7 @@ struct BudgetOverviewCardV6: View {
             // MARK: - Remaining Budget Section
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "banknote.fill")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(Typography.caption.weight(.semibold))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [SemanticColors.success, SemanticColors.success.opacity(0.8)],
@@ -180,7 +180,7 @@ struct BudgetOverviewCardV6: View {
                     // Section header
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: "calendar.badge.clock")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(Typography.caption2.weight(.semibold))
                             .foregroundColor(AppColors.Budget.allocated)
                         
                         Text("Payments Due This Month")
@@ -230,7 +230,7 @@ struct BudgetOverviewCardV6: View {
                                 .frame(width: 48, height: 48)
                             
                             Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 28))
+                                .font(Typography.displaySmall)
                                 .foregroundStyle(
                                     LinearGradient(
                                         colors: [
@@ -326,7 +326,7 @@ private struct NativeProgressRow: View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: icon)
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(Typography.caption2.weight(.semibold))
                     .foregroundStyle(
                         LinearGradient(
                             colors: [color, color.opacity(0.8)],
@@ -411,11 +411,11 @@ private struct NativePaymentRow: View {
             // Date badge with native styling
             VStack(spacing: 2) {
                 Text(formatDay(payment.paymentDate))
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(Typography.numberSmall.weight(.bold))
                     .foregroundColor(Color(nsColor: .labelColor))
                 
                 Text(formatMonth(payment.paymentDate))
-                    .font(.system(size: 10, weight: .medium))
+                    .font(Typography.caption2.weight(.medium))
                     .foregroundColor(Color(nsColor: .secondaryLabelColor))
                     .textCase(.uppercase)
             }
