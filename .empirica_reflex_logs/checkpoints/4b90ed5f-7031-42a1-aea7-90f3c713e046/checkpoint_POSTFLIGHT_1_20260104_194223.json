@@ -1,0 +1,130 @@
+{
+  "session_id": "4b90ed5f-7031-42a1-aea7-90f3c713e046",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-04T19:42:22.453926+00:00",
+  "vectors": {
+    "engagement": 0.9,
+    "know": 0.9,
+    "do": 0.95,
+    "context": 0.95,
+    "clarity": 0.95,
+    "coherence": 0.95,
+    "signal": 0.9,
+    "density": 0.9,
+    "state": 0.95,
+    "change": 0.9,
+    "completion": 1.0,
+    "impact": 0.95,
+    "uncertainty": 0.05
+  },
+  "overall_confidence": 0.933,
+  "meta": {
+    "reasoning": "Successfully fixed Financial and Documents tabs dark backgrounds. Root cause was .background(SemanticColors.textPrimary) in ExpenseRow, PaymentRow, and DocumentRow. Replaced with Color(nsColor: .controlBackgroundColor).opacity(0.5) for proper light/dark mode adaptation. Build verified successful.",
+    "task_summary": "Successfully fixed Financial and Documents tabs dark backgrounds. Root cause was .background(SemanticColors.textPrimary) in ExpenseRow, PaymentRow, and DocumentRow. Replaced with Color(nsColor: .controlBackgroundColor).opacity(0.5) for proper light/dark mode adaptation. Build verified successful.",
+    "postflight_confidence": 0.95,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "engagement": 0.05,
+      "know": 0.15,
+      "do": 0.15,
+      "context": 0.1,
+      "clarity": 0.1,
+      "coherence": 0.1,
+      "signal": 0.1,
+      "density": 0.15,
+      "state": 0.1,
+      "change": 0.2,
+      "completion": 1.0,
+      "impact": 0.1,
+      "uncertainty": -0.25
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "5c48e754b443d3cf05dbe7a3603d4d0672ca3668",
+    "git_notes_ref": "empirica/session/4b90ed5f-7031-42a1-aea7-90f3c713e046/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "73c69b862a4e07e2fc003706b750796662e2e713",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Dashboard/Components/VendorDetailDocumentsTab.swift\"",
+        "\"I Do Blueprint/Views/Dashboard/Components/VendorDetailFinancialTab.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 516096 -> 520192 bytes\n .../storage.sqlite                                 | Bin 372736 -> 405504 bytes\n .../Components/VendorDetailDocumentsTab.swift      |   2 +-\n .../Components/VendorDetailFinancialTab.swift      |   4 ++--\n 4 files changed, 3 insertions(+), 3 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "engagement": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "know": {
+      "prev": 0.75,
+      "curr": 0.9,
+      "delta": 0.15
+    },
+    "do": {
+      "prev": 0.8,
+      "curr": 0.95,
+      "delta": 0.15
+    },
+    "context": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "clarity": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "coherence": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "signal": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "density": {
+      "prev": 0.75,
+      "curr": 0.9,
+      "delta": 0.15
+    },
+    "state": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "change": {
+      "prev": 0.7,
+      "curr": 0.9,
+      "delta": 0.2
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 1.0,
+      "delta": 1.0
+    },
+    "impact": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "uncertainty": {
+      "prev": 0.3,
+      "curr": 0.05,
+      "delta": -0.25
+    }
+  },
+  "token_count": 356
+}
