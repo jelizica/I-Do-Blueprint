@@ -1,0 +1,44 @@
+{
+  "session_id": "4b04784a-3a57-4a2d-97df-2d2bc9cc9bbf",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-04T20:22:47.908100+00:00",
+  "vectors": {
+    "engagement": 0.85,
+    "know": 0.75,
+    "do": 0.8,
+    "context": 0.8,
+    "clarity": 0.85,
+    "coherence": 0.8,
+    "signal": 0.75,
+    "density": 0.7,
+    "state": 0.75,
+    "change": 0.3,
+    "completion": 0.0,
+    "impact": 0.6,
+    "uncertainty": 0.4
+  },
+  "overall_confidence": 0.783,
+  "meta": {
+    "reasoning": "Starting build verification session. Need to check if recent changes compile successfully. Moderate uncertainty about potential build issues.",
+    "prompt": "Starting build verification session. Need to check if recent changes compile successfully. Moderate uncertainty about potential build issues.",
+    "git_commit_sha": "9c995f3e1cd263edc86ac7e167f55dd27833c0b0",
+    "git_notes_ref": "empirica/session/4b04784a-3a57-4a2d-97df-2d2bc9cc9bbf/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "097c85105efe90d2f74405459fe73c35103f10d5",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 577536 -> 593920 bytes\n .../storage.sqlite                                 | Bin 503808 -> 585728 bytes\n 2 files changed, 0 insertions(+), 0 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 149
+}

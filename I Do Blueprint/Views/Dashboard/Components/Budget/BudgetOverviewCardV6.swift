@@ -407,7 +407,7 @@ private struct NativePaymentRow: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.md) {
-            // Date badge with native styling
+            // Date badge with native styling (matching guest/vendor row circular elements)
             VStack(spacing: 2) {
                 Text(formatDay(payment.paymentDate))
                     .font(Typography.numberSmall.weight(.bold))
@@ -421,12 +421,18 @@ private struct NativePaymentRow: View {
             .frame(width: 44, height: 44)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(.ultraThinMaterial)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                AppColors.Budget.allocated.opacity(0.15),
+                                AppColors.Budget.allocated.opacity(0.08)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
             )
-            .overlay(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(Color(nsColor: .separatorColor).opacity(0.3), lineWidth: 0.5)
-            )
+            .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
             
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text(vendorName)
