@@ -26,7 +26,6 @@ struct GuestResponsesCardV6: View {
     
     // Sheet presentation state
     @State private var selectedGuestId: UUID?
-    @State private var showingGuestDetail = false
 
     var body: some View {
         let totalGuests = store.guests.count
@@ -162,7 +161,6 @@ struct GuestResponsesCardV6: View {
                     ForEach(Array(store.guests.prefix(8).enumerated()), id: \.element.id) { index, guest in
                         NativeGuestRow(guest: guest) {
                             selectedGuestId = guest.id
-                            showingGuestDetail = true
                         }
                         .opacity(hasAppeared ? 1 : 0)
                         .offset(y: hasAppeared ? 0 : 10)
@@ -256,13 +254,11 @@ struct GuestResponsesCardV6: View {
                 hasAppeared = true
             }
         }
-        .sheet(isPresented: $showingGuestDetail) {
-            if let guestId = selectedGuestId {
-                GuestDetailViewV4(guestId: guestId, guestStore: store)
-                    .environmentObject(settingsStore)
-                    .environmentObject(budgetStore)
-                    .environmentObject(coordinator)
-            }
+        .sheet(item: $selectedGuestId) { guestId in
+            GuestDetailViewV4(guestId: guestId, guestStore: store)
+                .environmentObject(settingsStore)
+                .environmentObject(budgetStore)
+                .environmentObject(coordinator)
         }
     }
 }
