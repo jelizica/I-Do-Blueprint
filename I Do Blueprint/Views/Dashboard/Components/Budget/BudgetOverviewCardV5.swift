@@ -122,9 +122,9 @@ struct BudgetOverviewCardV5: View {
                     LinearGradient(
                         colors: [
                             .clear,
-                            SemanticColors.border.opacity(0.5),
-                            SemanticColors.border,
-                            SemanticColors.border.opacity(0.5),
+                            SemanticColors.divider.opacity(0.5),
+                            SemanticColors.divider,
+                            SemanticColors.divider.opacity(0.5),
                             .clear
                         ],
                         startPoint: .leading,
@@ -209,7 +209,7 @@ struct BudgetOverviewCardV5: View {
                             LinearGradient(
                                 colors: [
                                     .clear,
-                                    SemanticColors.border.opacity(0.3),
+                                    SemanticColors.divider.opacity(0.3),
                                     .clear
                                 ],
                                 startPoint: .leading,
@@ -252,7 +252,7 @@ struct BudgetOverviewCardV5: View {
                                 LinearGradient(
                                     colors: [
                                         .clear,
-                                        SemanticColors.border.opacity(0.3),
+                                        SemanticColors.divider.opacity(0.3),
                                         .clear
                                     ],
                                     startPoint: .leading,
