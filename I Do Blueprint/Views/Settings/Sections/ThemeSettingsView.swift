@@ -99,6 +99,7 @@ struct ThemeSettingsView: View {
 
                     // Theme preview
                     themePreviewCard
+                        .id(viewModel.localSettings.theme.colorScheme) // Force update when scheme changes
                 }
 
                 // MARK: - Custom Wedding Colors (shown when using custom colors)
