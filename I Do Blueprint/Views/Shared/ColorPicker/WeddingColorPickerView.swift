@@ -99,6 +99,7 @@ struct WeddingColorPickerModal: View {
     
     @State private var currentColor: Color
     @State private var isSaving = false
+    @State private var pickerSize = CGSize(width: 600, height: 600)
     
     init(
         selectedColor: Binding<Color>,
@@ -178,9 +179,9 @@ struct WeddingColorPickerModal: View {
                 get: { currentColor },
                 set: { if let newColor = $0 { currentColor = newColor } }
             ))
+                .pickerSize($pickerSize)
                 .environment(\.swatchColors, presetColors)
-                .controlSize(.extraLarge)
-                .frame(width: 600, height: 600)
+                .fixedSize()
             
             // Hex code below picker
             VStack(spacing: Spacing.xs) {
