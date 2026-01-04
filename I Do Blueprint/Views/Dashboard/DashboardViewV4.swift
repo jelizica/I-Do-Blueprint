@@ -68,7 +68,8 @@ struct DashboardViewV4: View {
                                     daysUntil: viewModel.daysUntilWedding,
                                     partner1Name: viewModel.partner1DisplayName,
                                     partner2Name: viewModel.partner2DisplayName,
-                                    userTimezone: viewModel.userTimezone
+                                    userTimezone: viewModel.userTimezone,
+                                    themeSettings: viewModel.themeSettings
                                 )
                             } else {
                                 DashboardHeroSkeleton()

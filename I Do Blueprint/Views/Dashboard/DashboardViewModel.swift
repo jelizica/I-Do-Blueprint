@@ -55,6 +55,11 @@ final class DashboardViewModel: ObservableObject {
     var userTimezone: TimeZone {
         DateFormatting.userTimeZone(from: settingsStore.settings)
     }
+
+    /// User's theme settings for dashboard customization
+    var themeSettings: ThemeSettings {
+        settingsStore.settings.theme
+    }
     
     /// Wedding date parsed from settings (cached for performance)
     var weddingDate: Date? {

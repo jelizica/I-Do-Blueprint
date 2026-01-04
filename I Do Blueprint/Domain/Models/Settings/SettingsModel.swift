@@ -134,10 +134,16 @@ struct SettingsWeddingEvent: Codable, Equatable, Identifiable {
 struct ThemeSettings: Codable, Equatable {
     var colorScheme: String
     var darkMode: Bool
+    var useCustomWeddingColors: Bool
+    var weddingColor1: String  // Hex color code (e.g., "#EAE2FF")
+    var weddingColor2: String  // Hex color code (e.g., "#5A9070")
 
     enum CodingKeys: String, CodingKey {
         case colorScheme = "color_scheme"
         case darkMode = "dark_mode"
+        case useCustomWeddingColors = "use_custom_wedding_colors"
+        case weddingColor1 = "wedding_color_1"
+        case weddingColor2 = "wedding_color_2"
     }
 
     // Custom decoder to handle both boolean and string values from database
@@ -153,15 +159,31 @@ struct ThemeSettings: Codable, Equatable {
         } else {
             darkMode = false
         }
+
+        // Handle use_custom_wedding_colors
+        if let boolValue = try? container.decode(Bool.self, forKey: .useCustomWeddingColors) {
+            useCustomWeddingColors = boolValue
+        } else if let stringValue = try? container.decode(String.self, forKey: .useCustomWeddingColors) {
+            useCustomWeddingColors = stringValue.lowercased() == "true"
+        } else {
+            useCustomWeddingColors = false
+        }
+
+        // Decode wedding colors with defaults
+        weddingColor1 = (try? container.decode(String.self, forKey: .weddingColor1)) ?? "#EAE2FF"
+        weddingColor2 = (try? container.decode(String.self, forKey: .weddingColor2)) ?? "#5A9070"
     }
 
-    init(colorScheme: String, darkMode: Bool) {
+    init(colorScheme: String, darkMode: Bool, useCustomWeddingColors: Bool = false, weddingColor1: String = "#EAE2FF", weddingColor2: String = "#5A9070") {
         self.colorScheme = colorScheme
         self.darkMode = darkMode
+        self.useCustomWeddingColors = useCustomWeddingColors
+        self.weddingColor1 = weddingColor1
+        self.weddingColor2 = weddingColor2
     }
 
     static var `default`: ThemeSettings {
-        ThemeSettings(colorScheme: "blush-romance", darkMode: false)
+        ThemeSettings(colorScheme: "blush-romance", darkMode: false, useCustomWeddingColors: false, weddingColor1: "#EAE2FF", weddingColor2: "#5A9070")
     }
 }
 

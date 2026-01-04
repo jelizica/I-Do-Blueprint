@@ -27,6 +27,11 @@ struct SettingsMergeHelper {
         var merged = current
         if let colorScheme = updates["color_scheme"] as? String { merged.colorScheme = colorScheme }
         if let darkMode = updates["dark_mode"] as? Bool { merged.darkMode = darkMode }
+        if let useCustomWeddingColors = updates["use_custom_wedding_colors"] as? Bool {
+            merged.useCustomWeddingColors = useCustomWeddingColors
+        }
+        if let weddingColor1 = updates["wedding_color_1"] as? String { merged.weddingColor1 = weddingColor1 }
+        if let weddingColor2 = updates["wedding_color_2"] as? String { merged.weddingColor2 = weddingColor2 }
         return merged
     }
 

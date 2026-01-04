@@ -13,6 +13,7 @@ struct WeddingCountdownCard: View {
     let partner1Name: String
     let partner2Name: String
     let userTimezone: TimeZone
+    let themeSettings: ThemeSettings
 
     private var weddingTitle: String {
         if !partner1Name.isEmpty && !partner2Name.isEmpty {
@@ -26,10 +27,16 @@ struct WeddingCountdownCard: View {
         }
     }
 
+    /// Dynamic gradient based on user's theme settings
+    /// Uses custom wedding colors if enabled, otherwise uses theme-based gradient
+    private var bannerGradient: LinearGradient {
+        AppGradients.dashboardHeader(for: themeSettings)
+    }
+
     var body: some View {
         ZStack {
-            // Colorful header gradient (Design System)
-            AppGradients.dashboardHeader
+            // Colorful header gradient (Design System - now dynamic based on settings)
+            bannerGradient
 
             HStack(spacing: Spacing.xxl * 2) {
                 // Left side - Wedding info
