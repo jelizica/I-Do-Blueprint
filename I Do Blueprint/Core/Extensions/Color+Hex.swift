@@ -60,4 +60,28 @@ extension Color {
             return String(format: "#%02X%02X%02X", red, green, blue)
         }
     }
+
+    /// Calculate relative luminance using WCAG formula
+    /// Used to determine if text should be light or dark for accessibility
+    /// - Returns: A value between 0 (darkest) and 1 (lightest)
+    var luminance: Double {
+        let nsColor = NSColor(self)
+        guard let rgb = nsColor.usingColorSpace(.sRGB) else { return 0 }
+
+        // Convert to linear RGB
+        func linearize(_ component: Double) -> Double {
+            if component <= 0.03928 {
+                return component / 12.92
+            } else {
+                return pow((component + 0.055) / 1.055, 2.4)
+            }
+        }
+
+        let r = linearize(rgb.redComponent)
+        let g = linearize(rgb.greenComponent)
+        let b = linearize(rgb.blueComponent)
+
+        // WCAG relative luminance formula
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
 }
