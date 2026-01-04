@@ -91,7 +91,7 @@ struct WeddingColorPickerView: View {
 // MARK: - Wedding Color Picker Modal
 
 /// Modal presentation of ColorSelector with wedding color presets
-/// Follows the AddGuestView pattern with simple VStack structure
+/// Redesigned layout: Selected Color (with integrated picker) + Wedding Presets (wrapped grid)
 struct WeddingColorPickerModal: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedColor: Color
@@ -119,20 +119,14 @@ struct WeddingColorPickerModal: View {
             // Content
             ScrollView {
                 VStack(spacing: Spacing.xl) {
-                    // Color Selector
-                    colorSelectorSection
+                    // Selected Color with Integrated Picker
+                    selectedColorSection
                     
                     Divider()
                         .padding(.horizontal, Spacing.xl)
                     
-                    // Wedding Color Presets
+                    // Wedding Color Presets (Wrapped Grid)
                     presetsSection
-                    
-                    Divider()
-                        .padding(.horizontal, Spacing.xl)
-                    
-                    // Current Color Preview
-                    previewSection
                 }
                 .padding(.vertical, Spacing.xl)
             }
@@ -175,26 +169,52 @@ struct WeddingColorPickerModal: View {
         .background(SemanticColors.controlBackground)
     }
     
-    // MARK: - Color Selector Section
+    // MARK: - Selected Color Section (with Integrated Picker)
     
-    private var colorSelectorSection: some View {
+    private var selectedColorSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            Text("Color Wheel")
+            Text("Selected Color")
                 .font(Typography.subheading)
                 .foregroundColor(SemanticColors.textPrimary)
                 .padding(.horizontal, Spacing.xl)
             
-            ColorSelector(selection: Binding(
-                get: { currentColor },
-                set: { if let newColor = $0 { currentColor = newColor } }
-            ))
-                .environment(\.swatchColors, presetColors)
-                .frame(height: 300)
-                .padding(.horizontal, Spacing.xl)
+            HStack(alignment: .top, spacing: Spacing.xl) {
+                // Left: Color Preview and Hex Info
+                VStack(alignment: .leading, spacing: Spacing.md) {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(currentColor)
+                        .frame(width: 120, height: 120)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
+                        )
+                    
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text("Hex Code")
+                            .font(Typography.caption)
+                            .foregroundColor(SemanticColors.textSecondary)
+                        
+                        Text(currentColor.toHex())
+                            .font(Typography.bodyLarge)
+                            .fontWeight(.medium)
+                            .foregroundColor(SemanticColors.textPrimary)
+                            .textSelection(.enabled)
+                    }
+                }
+                
+                // Right: Integrated Color Picker
+                ColorSelector(selection: Binding(
+                    get: { currentColor },
+                    set: { if let newColor = $0 { currentColor = newColor } }
+                ))
+                    .environment(\.swatchColors, presetColors)
+                    .frame(width: 280, height: 280)
+            }
+            .padding(.horizontal, Spacing.xl)
         }
     }
     
-    // MARK: - Presets Section
+    // MARK: - Presets Section (Wrapped Grid)
     
     private var presetsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
@@ -208,78 +228,46 @@ struct WeddingColorPickerModal: View {
                 .foregroundColor(SemanticColors.textSecondary)
                 .padding(.horizontal, Spacing.xl)
             
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: Spacing.md) {
-                    ForEach(Array(presetColors.enumerated()), id: \.offset) { index, nsColor in
-                        let color = Color(nsColor: nsColor)
-                        Button(action: {
-                            currentColor = color
-                        }) {
-                            VStack(spacing: Spacing.xs) {
-                                RoundedRectangle(cornerRadius: 8)
-                                    .fill(color)
-                                    .frame(width: 60, height: 60)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 8)
-                                            .stroke(
-                                                currentColor.toHex() == color.toHex()
-                                                    ? SemanticColors.primaryAction
-                                                    : SemanticColors.borderPrimary,
-                                                lineWidth: currentColor.toHex() == color.toHex() ? 3 : 1
-                                            )
-                                    )
-                                
-                                if currentColor.toHex() == color.toHex() {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(SemanticColors.primaryAction)
-                                        .font(.caption)
-                                }
+            // Wrapped Grid Layout
+            LazyVGrid(
+                columns: [
+                    GridItem(.adaptive(minimum: 80, maximum: 100), spacing: Spacing.md)
+                ],
+                spacing: Spacing.md
+            ) {
+                ForEach(Array(presetColors.enumerated()), id: \.offset) { index, nsColor in
+                    let color = Color(nsColor: nsColor)
+                    Button(action: {
+                        currentColor = color
+                    }) {
+                        VStack(spacing: Spacing.xs) {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(color)
+                                .frame(height: 60)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(
+                                            currentColor.toHex() == color.toHex()
+                                                ? SemanticColors.primaryAction
+                                                : SemanticColors.borderPrimary,
+                                            lineWidth: currentColor.toHex() == color.toHex() ? 3 : 1
+                                        )
+                                )
+                            
+                            if currentColor.toHex() == color.toHex() {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundColor(SemanticColors.primaryAction)
+                                    .font(.caption)
+                            } else {
+                                // Spacer to maintain consistent height
+                                Color.clear
+                                    .frame(height: 16)
                             }
                         }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel("Preset color \(index + 1)")
                     }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Preset color \(index + 1)")
                 }
-                .padding(.horizontal, Spacing.xl)
-            }
-        }
-    }
-    
-    // MARK: - Preview Section
-    
-    private var previewSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            Text("Selected Color")
-                .font(Typography.subheading)
-                .foregroundColor(SemanticColors.textPrimary)
-                .padding(.horizontal, Spacing.xl)
-            
-            HStack(spacing: Spacing.lg) {
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(currentColor)
-                    .frame(width: 80, height: 80)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(SemanticColors.borderPrimary, lineWidth: 1)
-                    )
-                
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Hex Code")
-                        .font(Typography.caption)
-                        .foregroundColor(SemanticColors.textSecondary)
-                    
-                    Text(currentColor.toHex())
-                        .font(Typography.bodyLarge)
-                        .fontWeight(.medium)
-                        .foregroundColor(SemanticColors.textPrimary)
-                        .textSelection(.enabled)
-                    
-                    Text("Tap to copy")
-                        .font(Typography.caption2)
-                        .foregroundColor(SemanticColors.textTertiary)
-                }
-                
-                Spacer()
             }
             .padding(.horizontal, Spacing.xl)
         }
