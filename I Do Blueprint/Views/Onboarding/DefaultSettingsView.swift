@@ -12,7 +12,7 @@ struct DefaultSettingsView: View {
 
     @State private var selectedCurrency: String = "USD"
     @State private var selectedTimezone: String = TimeZone.current.identifier
-    @State private var selectedColorScheme: String = "default"
+    @State private var selectedColorScheme: String = "blush-romance"
     @State private var darkModeEnabled: Bool = false
     @State private var trackPayments: Bool = true
     @State private var enableBudgetAlerts: Bool = true
@@ -254,7 +254,7 @@ struct DefaultSettingsView: View {
         let settings = store.defaultSettings
         selectedCurrency = settings.currency
         selectedTimezone = settings.timezone
-        selectedColorScheme = settings.themePreferences?.colorScheme ?? "default"
+        selectedColorScheme = settings.themePreferences?.colorScheme ?? "blush-romance"
         darkModeEnabled = settings.themePreferences?.darkMode ?? false
 
         if let budgetPrefs = settings.budgetPreferences {
