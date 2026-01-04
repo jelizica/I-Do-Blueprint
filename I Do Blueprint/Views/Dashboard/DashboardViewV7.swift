@@ -728,6 +728,33 @@ struct BudgetOverviewCardV7: View {
 struct TaskManagerCardV7: View {
     @ObservedObject var store: TaskStoreV2
     
+    private var recentTasks: [WeddingTask] {
+        // Get up to 5 most recent tasks, prioritizing incomplete tasks
+        store.tasks
+            .sorted { (t1, t2) in
+                // Incomplete tasks first
+                if t1.status != .completed && t2.status == .completed {
+                    return true
+                } else if t1.status == .completed && t2.status != .completed {
+                    return false
+                }
+                // Then by due date (soonest first)
+                if let date1 = t1.dueDate, let date2 = t2.dueDate {
+                    return date1 < date2
+                }
+                // Tasks with due dates come before those without
+                if t1.dueDate != nil {
+                    return true
+                } else if t2.dueDate != nil {
+                    return false
+                }
+                // Finally by creation date (newest first)
+                return t1.createdAt > t2.createdAt
+            }
+            .prefix(5)
+            .map { $0 }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -744,12 +771,21 @@ struct TaskManagerCardV7: View {
                 .foregroundColor(AppGradients.weddingPink)
             }
             
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                TaskRowV7(title: "Send invites to All Guests", isCompleted: false)
-                TaskRowV7(title: "Check Confirmants", isCompleted: true)
-                TaskRowV7(title: "Pending Emails", isCompleted: true)
-                TaskRowV7(title: "Review Task Manager", isCompleted: false)
-                TaskRowV7(title: "Guest Management", isCompleted: false)
+            if recentTasks.isEmpty {
+                Text("No tasks yet")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Spacing.lg)
+            } else {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    ForEach(recentTasks) { task in
+                        TaskRowV7(
+                            title: task.title,
+                            isCompleted: task.status == .completed
+                        )
+                    }
+                }
             }
         }
         .glassPanel()
@@ -790,6 +826,25 @@ struct TaskRowV7: View {
 
 struct GuestResponsesCardV7: View {
     @ObservedObject var store: GuestStoreV2
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
+    
+    private var recentGuests: [Guest] {
+        // Get up to 3 most recent guests sorted by RSVP date or creation date
+        store.guests
+            .sorted { (g1, g2) in
+                if let date1 = g1.rsvpDate, let date2 = g2.rsvpDate {
+                    return date1 > date2
+                } else if g1.rsvpDate != nil {
+                    return true
+                } else if g2.rsvpDate != nil {
+                    return false
+                } else {
+                    return g1.createdAt > g2.createdAt
+                }
+            }
+            .prefix(3)
+            .map { $0 }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
@@ -804,28 +859,37 @@ struct GuestResponsesCardV7: View {
                     .foregroundColor(SemanticColors.textTertiary)
             }
             
-            VStack(spacing: Spacing.md) {
-                GuestRowV7(
-                    initials: "SJ",
-                    name: "Sarah Jenkins",
-                    invitedBy: "Invited by Bride",
-                    status: .confirmed
-                )
-                GuestRowV7(
-                    initials: "MR",
-                    name: "Michael Ross",
-                    invitedBy: "Invited by Groom",
-                    status: .pending
-                )
-                GuestRowV7(
-                    initials: "DM",
-                    name: "David Miller",
-                    invitedBy: "Invited by Bride",
-                    status: .declined
-                )
+            if recentGuests.isEmpty {
+                Text("No guest responses yet")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Spacing.lg)
+            } else {
+                VStack(spacing: Spacing.md) {
+                    ForEach(recentGuests) { guest in
+                        GuestRowV7(
+                            initials: "\(guest.firstName.prefix(1))\(guest.lastName.prefix(1))",
+                            name: guest.fullName,
+                            invitedBy: guest.invitedBy?.displayName(with: settingsStore.settings) ?? "Unknown",
+                            status: mapRSVPStatus(guest.rsvpStatus)
+                        )
+                    }
+                }
             }
         }
         .glassPanel()
+    }
+    
+    private func mapRSVPStatus(_ status: RSVPStatus) -> GuestStatusV7 {
+        switch status {
+        case .attending, .confirmed:
+            return .confirmed
+        case .declined, .noResponse:
+            return .declined
+        default:
+            return .pending
+        }
     }
 }
 
@@ -910,12 +974,43 @@ struct GuestRowV7: View {
 // MARK: - Payments Due Card
 
 struct PaymentsDueCardV7: View {
-    @ObservedObject var store: VendorStoreV2
+    @Environment(\.appStores) private var appStores
+    
+    private var budgetStore: BudgetStoreV2 { appStores.budget }
+    
+    private var upcomingPayments: [(vendor: String, amount: Double, dueDate: Date)] {
+        let now = Date()
+        let thirtyDaysFromNow = Calendar.current.date(byAdding: .day, value: 30, to: now) ?? now
+        
+        // Get unpaid payment schedules due within next 30 days
+        return budgetStore.payments.paymentSchedules
+            .filter { !$0.paid && $0.paymentDate >= now && $0.paymentDate <= thirtyDaysFromNow }
+            .sorted { $0.paymentDate < $1.paymentDate }
+            .prefix(3)
+            .map { (vendor: $0.vendor, amount: $0.paymentAmount, dueDate: $0.paymentDate) }
+    }
+    
+    private var currentMonthName: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM"
+        return formatter.string(from: Date())
+    }
+    
+    private func formatAmount(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
+    }
+    
+    private func isOverdue(_ date: Date) -> Bool {
+        return date < Date()
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
-                Text("Payments Due (Feb)")
+                Text("Payments Due (\(currentMonthName))")
                     .font(Typography.heading)
                     .foregroundColor(SemanticColors.textPrimary)
                 
@@ -945,12 +1040,25 @@ struct PaymentsDueCardV7: View {
                 .buttonStyle(.plain)
             }
             
-            VStack(spacing: 0) {
-                PaymentRowV7(title: "Floral Arrangements", amount: "$0.00", isHighlighted: false)
-                Divider().opacity(0.5)
-                PaymentRowV7(title: "Catering Deposit", amount: "$0.00", isHighlighted: false)
-                Divider().opacity(0.5)
-                PaymentRowV7(title: "DJ & Music", amount: "$20.00", isHighlighted: true)
+            if upcomingPayments.isEmpty {
+                Text("No upcoming payments")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Spacing.lg)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(upcomingPayments.enumerated()), id: \.offset) { index, payment in
+                        PaymentRowV7(
+                            title: payment.vendor,
+                            amount: formatAmount(payment.amount),
+                            isHighlighted: isOverdue(payment.dueDate)
+                        )
+                        if index < upcomingPayments.count - 1 {
+                            Divider().opacity(0.5)
+                        }
+                    }
+                }
             }
         }
         .glassPanel()
@@ -984,6 +1092,36 @@ struct PaymentRowV7: View {
 struct RecentResponsesCardV7: View {
     @ObservedObject var store: GuestStoreV2
     
+    private var recentActivity: [(guest: Guest, action: String, color: Color)] {
+        // Get guests with RSVP dates, sorted by most recent
+        let guestsWithRSVP = store.guests
+            .filter { $0.rsvpDate != nil }
+            .sorted { ($0.rsvpDate ?? Date.distantPast) > ($1.rsvpDate ?? Date.distantPast) }
+            .prefix(3)
+        
+        return guestsWithRSVP.map { guest in
+            let action: String
+            let color: Color
+            
+            switch guest.rsvpStatus {
+            case .attending, .confirmed:
+                action = "\(guest.fullName) confirmed attendance."
+                color = AppGradients.sageDark
+            case .declined, .noResponse:
+                action = "\(guest.fullName) declined."
+                color = Terracotta.shade400
+            case .maybe:
+                action = "\(guest.fullName) responded maybe."
+                color = SoftLavender.shade400
+            default:
+                action = "\(guest.fullName) viewed the invitation."
+                color = SoftLavender.shade400
+            }
+            
+            return (guest, action, color)
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -997,25 +1135,40 @@ struct RecentResponsesCardV7: View {
                     .foregroundColor(SemanticColors.textTertiary)
             }
             
-            VStack(alignment: .leading, spacing: Spacing.md) {
-                ActivityRowV7(
-                    color: AppGradients.sageDark,
-                    text: "Emily White confirmed attendance.",
-                    time: "2 hours ago"
-                )
-                ActivityRowV7(
-                    color: SoftLavender.shade400,
-                    text: "John Doe viewed the invitation.",
-                    time: "5 hours ago"
-                )
-                ActivityRowV7(
-                    color: Terracotta.shade400,
-                    text: "Alice Blue declined.",
-                    time: "1 day ago"
-                )
+            if recentActivity.isEmpty {
+                Text("No recent responses")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Spacing.lg)
+            } else {
+                VStack(alignment: .leading, spacing: Spacing.md) {
+                    ForEach(recentActivity, id: \.guest.id) { item in
+                        ActivityRowV7(
+                            color: item.color,
+                            text: item.action,
+                            time: timeAgo(from: item.guest.rsvpDate ?? item.guest.createdAt)
+                        )
+                    }
+                }
             }
         }
         .glassPanel()
+    }
+    
+    private func timeAgo(from date: Date) -> String {
+        let interval = Date().timeIntervalSince(date)
+        
+        if interval < 3600 {
+            let minutes = Int(interval / 60)
+            return "\(minutes) minute\(minutes == 1 ? "" : "s") ago"
+        } else if interval < 86400 {
+            let hours = Int(interval / 3600)
+            return "\(hours) hour\(hours == 1 ? "" : "s") ago"
+        } else {
+            let days = Int(interval / 86400)
+            return "\(days) day\(days == 1 ? "" : "s") ago"
+        }
     }
 }
 
@@ -1049,6 +1202,70 @@ struct ActivityRowV7: View {
 struct VendorListCardV7: View {
     @ObservedObject var store: VendorStoreV2
     
+    private var recentVendors: [Vendor] {
+        // Get up to 3 most recent vendors, prioritizing booked vendors
+        store.vendors
+            .sorted { (v1, v2) in
+                // Booked vendors first
+                if v1.status == .booked && v2.status != .booked {
+                    return true
+                } else if v1.status != .booked && v2.status == .booked {
+                    return false
+                }
+                // Then by creation date (newest first)
+                return v1.createdAt > v2.createdAt
+            }
+            .prefix(3)
+            .map { $0 }
+    }
+    
+    private func vendorIcon(for category: String) -> String {
+        let lowercased = category.lowercased()
+        if lowercased.contains("photo") {
+            return "camera.fill"
+        } else if lowercased.contains("music") || lowercased.contains("dj") || lowercased.contains("band") {
+            return "music.note"
+        } else if lowercased.contains("cater") || lowercased.contains("food") {
+            return "fork.knife"
+        } else if lowercased.contains("flor") {
+            return "leaf.fill"
+        } else if lowercased.contains("venue") {
+            return "building.2.fill"
+        } else if lowercased.contains("decor") {
+            return "sparkles"
+        } else {
+            return "briefcase.fill"
+        }
+    }
+    
+    private func vendorIconColor(for category: String) -> Color {
+        let lowercased = category.lowercased()
+        if lowercased.contains("photo") {
+            return Color.blue
+        } else if lowercased.contains("music") || lowercased.contains("dj") || lowercased.contains("band") {
+            return AppGradients.weddingPink
+        } else if lowercased.contains("cater") || lowercased.contains("food") {
+            return Terracotta.shade500
+        } else if lowercased.contains("flor") {
+            return AppGradients.sageDark
+        } else {
+            return SoftLavender.shade500
+        }
+    }
+    
+    private func mapVendorStatus(_ status: VendorStatus) -> VendorStatusV7 {
+        switch status {
+        case .booked:
+            return .booked
+        case .pending:
+            return .pending
+        case .declined:
+            return .declined
+        default:
+            return .pending
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -1065,31 +1282,27 @@ struct VendorListCardV7: View {
                 .foregroundColor(AppGradients.weddingPink)
             }
             
-            VStack(spacing: Spacing.md) {
-                VendorRowV7(
-                    icon: "camera.fill",
-                    iconColor: Color.blue,
-                    iconBackground: Color.blue.opacity(0.1),
-                    name: "Vendor Smith",
-                    category: "Photography",
-                    status: .booked
-                )
-                VendorRowV7(
-                    icon: "music.note",
-                    iconColor: AppGradients.weddingPink,
-                    iconBackground: BlushPink.shade100,
-                    name: "Louis Sitt",
-                    category: "Music/Band",
-                    status: .pending
-                )
-                VendorRowV7(
-                    icon: "fork.knife",
-                    iconColor: Terracotta.shade500,
-                    iconBackground: Terracotta.shade100,
-                    name: "Gourmet Co.",
-                    category: "Catering",
-                    status: .declined
-                )
+            if recentVendors.isEmpty {
+                Text("No vendors yet")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Spacing.lg)
+            } else {
+                VStack(spacing: Spacing.md) {
+                    ForEach(recentVendors) { vendor in
+                        let icon = vendorIcon(for: vendor.category)
+                        let iconColor = vendorIconColor(for: vendor.category)
+                        VendorRowV7(
+                            icon: icon,
+                            iconColor: iconColor,
+                            iconBackground: iconColor.opacity(0.1),
+                            name: vendor.name,
+                            category: vendor.category,
+                            status: mapVendorStatus(vendor.status)
+                        )
+                    }
+                }
             }
         }
         .glassPanel()
