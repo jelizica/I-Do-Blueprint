@@ -191,6 +191,9 @@ struct DashboardViewV7: View {
 
 // MARK: - Mesh Gradient Background
 
+/// Enhanced mesh gradient background with vibrant, saturated colors
+/// Inspired by guest_management.png glassmorphism design
+/// Features larger blobs, higher saturation, and stronger blur for depth
 struct MeshGradientBackgroundV7: View {
     @EnvironmentObject private var settingsStore: SettingsStoreV2
     
@@ -198,39 +201,53 @@ struct MeshGradientBackgroundV7: View {
         let colors = AppGradients.meshGradientColors(for: settingsStore.settings.theme)
         
         return ZStack {
-            // Base color
+            // Base color with subtle warmth
             colors.base
             
-            // Animated color blobs
+            // Vibrant color blobs - larger and more saturated for glassmorphism effect
             GeometryReader { geometry in
                 ZStack {
-                    // Blob 1 - top left
+                    // Blob 1 - Large pink/primary blob top-left area
                     Circle()
                         .fill(colors.blob1)
-                        .frame(width: 300, height: 300)
-                        .blur(radius: 80)
-                        .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
+                        .frame(width: 500, height: 500)
+                        .blur(radius: 120)
+                        .position(x: geometry.size.width * 0.15, y: geometry.size.height * 0.15)
                     
-                    // Blob 2 - bottom right
+                    // Blob 2 - Large green/secondary blob bottom-right
                     Circle()
                         .fill(colors.blob2)
-                        .frame(width: 400, height: 400)
-                        .blur(radius: 80)
-                        .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.8)
+                        .frame(width: 600, height: 600)
+                        .blur(radius: 130)
+                        .position(x: geometry.size.width * 0.85, y: geometry.size.height * 0.75)
                     
-                    // Blob 3 - center
+                    // Blob 3 - Purple/accent blob center-right
                     Circle()
                         .fill(colors.blob3)
-                        .frame(width: 250, height: 250)
-                        .blur(radius: 80)
-                        .position(x: geometry.size.width * 0.5, y: geometry.size.height * 0.4)
+                        .frame(width: 450, height: 450)
+                        .blur(radius: 110)
+                        .position(x: geometry.size.width * 0.7, y: geometry.size.height * 0.35)
                     
-                    // Blob 1 (lighter) - bottom left
+                    // Blob 4 - Secondary pink blob bottom-left for balance
                     Circle()
-                        .fill(colors.blob1.opacity(0.7))
+                        .fill(colors.blob1.opacity(0.6))
+                        .frame(width: 400, height: 400)
+                        .blur(radius: 100)
+                        .position(x: geometry.size.width * 0.2, y: geometry.size.height * 0.85)
+                    
+                    // Blob 5 - Small accent blob top-right
+                    Circle()
+                        .fill(colors.blob3.opacity(0.5))
                         .frame(width: 300, height: 300)
-                        .blur(radius: 80)
-                        .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.9)
+                        .blur(radius: 90)
+                        .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.1)
+                    
+                    // Blob 6 - Center green accent for depth
+                    Circle()
+                        .fill(colors.blob2.opacity(0.4))
+                        .frame(width: 350, height: 350)
+                        .blur(radius: 100)
+                        .position(x: geometry.size.width * 0.4, y: geometry.size.height * 0.55)
                 }
             }
         }

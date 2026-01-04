@@ -38,13 +38,19 @@ public enum MacOSMaterial {
 
 // MARK: - Glassmorphism Panel Style (V7 Dashboard)
 
-/// Glassmorphism panel style inspired by modern web design
+/// Enhanced glassmorphism panel style matching guest_management.png design
 /// Features:
-/// - Frosted glass effect with blur
-/// - Semi-transparent white background
-/// - Subtle white border for depth
-/// - Soft shadow for elevation
+/// - Strong frosted glass effect with prominent blur
+/// - More transparent white background for better gradient visibility
+/// - Subtle white border with gradient for depth
+/// - Multi-layer shadow for floating effect
 /// - Hover animation with scale effect
+/// 
+/// Key differences from previous version:
+/// - Reduced white opacity (0.25 vs 0.45) for more transparency
+/// - Added inner glow effect for depth
+/// - Stronger shadow for floating appearance
+/// - More visible blur effect
 public struct GlassPanelStyle: ViewModifier {
     let cornerRadius: CGFloat
     let padding: CGFloat
@@ -59,29 +65,48 @@ public struct GlassPanelStyle: ViewModifier {
         content
             .padding(padding)
             .background(
-                RoundedRectangle(cornerRadius: cornerRadius)
-                    .fill(.ultraThinMaterial)
-                    .background(
-                        RoundedRectangle(cornerRadius: cornerRadius)
-                            .fill(Color.white.opacity(0.45))
-                    )
+                ZStack {
+                    // Base blur layer - more prominent
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(.ultraThinMaterial)
+                    
+                    // Semi-transparent white overlay - reduced opacity for more transparency
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(Color.white.opacity(0.25))
+                    
+                    // Inner glow for depth
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    Color.white.opacity(0.15),
+                                    Color.clear
+                                ],
+                                center: .topLeading,
+                                startRadius: 0,
+                                endRadius: 300
+                            )
+                        )
+                }
             )
             .overlay(
                 RoundedRectangle(cornerRadius: cornerRadius)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(isHovered ? 0.7 : 0.6),
-                                Color.white.opacity(isHovered ? 0.4 : 0.3)
+                                Color.white.opacity(isHovered ? 0.8 : 0.7),
+                                Color.white.opacity(isHovered ? 0.3 : 0.2)
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 1
+                        lineWidth: 1.5
                     )
             )
-            .shadow(color: Color.black.opacity(0.05), radius: 30, x: 0, y: 4)
-            .scaleEffect(isHovered ? 1.005 : 1.0)
+            // Multi-layer shadow for floating effect
+            .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: 8)
+            .shadow(color: Color.black.opacity(0.04), radius: 40, x: 0, y: 16)
+            .scaleEffect(isHovered ? 1.008 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
             .onHover { hovering in
                 isHovered = hovering

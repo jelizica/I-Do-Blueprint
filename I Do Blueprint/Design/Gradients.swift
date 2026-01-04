@@ -63,39 +63,41 @@ enum AppGradients {
     
     /// Returns mesh gradient colors for a specific color scheme
     /// - Parameter colorScheme: The theme name
-    /// - Returns: A tuple of (baseColor, blob1Color, blob2Color, blob3Color)
+    /// - Returns: A tuple of (baseColor, blob1Color, blob2Color, blob3Color, blob4Color)
+    /// Note: V7 enhanced with more vibrant, saturated colors for glassmorphism effect
     private static func meshGradientColorsForScheme(_ colorScheme: String) -> (base: Color, blob1: Color, blob2: Color, blob3: Color) {
         switch colorScheme {
         case "sage-serenity":
             return (
-                base: Color.fromHex("F3F4F6"),
-                blob1: Color.fromHex("E8F5E9").opacity(0.6),  // Light sage
-                blob2: Color.fromHex("5A9070").opacity(0.6),  // Eucalyptus green
-                blob3: Color.fromHex("C8E6C9").opacity(0.5)   // Soft sage
+                base: Color.fromHex("F0F4F0"),  // Slightly tinted base
+                blob1: Color.fromHex("A8E6CF").opacity(0.85),  // Vibrant mint green
+                blob2: Color.fromHex("4A9070").opacity(0.8),   // Rich eucalyptus
+                blob3: Color.fromHex("88D8B0").opacity(0.75)   // Fresh sage
             )
         case "lavender-dream":
             return (
-                base: Color.fromHex("F3F4F6"),
-                blob1: Color.fromHex("EDE7F6").opacity(0.6),  // Light lavender
-                blob2: Color.fromHex("7E57C2").opacity(0.6),  // Deep lavender
-                blob3: Color.fromHex("D1C4E9").opacity(0.5)   // Soft lavender
+                base: Color.fromHex("F5F3F8"),  // Lavender-tinted base
+                blob1: Color.fromHex("DDA0DD").opacity(0.85),  // Vibrant plum
+                blob2: Color.fromHex("9370DB").opacity(0.8),   // Medium purple
+                blob3: Color.fromHex("E6E6FA").opacity(0.75)   // Lavender
             )
         case "terracotta-warm":
             return (
-                base: Color.fromHex("F3F4F6"),
-                blob1: Color.fromHex("FBE9E7").opacity(0.6),  // Light terracotta
-                blob2: Color.fromHex("BF6952").opacity(0.6),  // Warm terracotta
-                blob3: Color.fromHex("FFCCBC").opacity(0.5)   // Soft terracotta
+                base: Color.fromHex("FDF5F0"),  // Warm cream base
+                blob1: Color.fromHex("E8A87C").opacity(0.85),  // Warm peach
+                blob2: Color.fromHex("C97B63").opacity(0.8),   // Rich terracotta
+                blob3: Color.fromHex("F5CBA7").opacity(0.75)   // Soft apricot
             )
         case "blush-romance":
             fallthrough
         default:
-            // Default blush romance theme (original colors)
+            // Default blush romance theme - ENHANCED for glassmorphism
+            // More vibrant, saturated colors matching guest_management.png style
             return (
-                base: Color.fromHex("F3F4F6"),
-                blob1: Color.fromHex("F4D0D0").opacity(0.6),  // Soft pink
-                blob2: Color.fromHex("D0E8D0").opacity(0.6),  // Soft sage
-                blob3: Color.fromHex("F5F5DC").opacity(0.4)   // Soft cream
+                base: Color.fromHex("F8F4F6"),  // Warm pink-tinted base
+                blob1: Color.fromHex("FFB6C1").opacity(0.85),  // Vibrant light pink
+                blob2: Color.fromHex("98D8AA").opacity(0.8),   // Fresh mint green
+                blob3: Color.fromHex("DDA0DD").opacity(0.75)   // Soft plum/purple
             )
         }
     }
