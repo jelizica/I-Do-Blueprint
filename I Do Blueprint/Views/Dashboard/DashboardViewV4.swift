@@ -82,21 +82,21 @@ struct DashboardViewV4: View {
                         // Fixed 3-across metrics row under the hero
                         LazyVGrid(columns: metricColumns, alignment: .center, spacing: Spacing.lg) {
                             if effectiveHasLoaded {
-                                DashboardMetricCard(
+                                DashboardMetricCardV6(
                                     icon: "person.2.fill",
                                     iconColor: AppColors.Guest.confirmed,
                                     title: "RSVPs",
                                     value: "\(viewModel.rsvpYesCount)/\(viewModel.totalGuests)",
                                     subtitle: "\(viewModel.rsvpPendingCount) pending"
                                 )
-                                DashboardMetricCard(
+                                DashboardMetricCardV6(
                                     icon: "briefcase.fill",
                                     iconColor: AppColors.Vendor.booked,
                                     title: "Vendors Booked",
                                     value: "\(viewModel.vendorsBookedCount)/\(viewModel.totalVendors)",
                                     subtitle: "\(viewModel.vendorsPendingCount) pending"
                                 )
-                                DashboardMetricCard(
+                                DashboardMetricCardV6(
                                     icon: "dollarsign.circle.fill",
                                     iconColor: viewModel.budgetColor,
                                     title: "Budget Used",
@@ -138,7 +138,7 @@ struct DashboardViewV4: View {
                     // Full-width Quick Actions row
                     Group {
                         if effectiveHasLoaded {
-                            QuickActionsCardV4()
+                            QuickActionsCardV6()
                                 .padding(.horizontal, Spacing.xxl)
                         } else {
                             DashboardQuickActionsSkeleton()
