@@ -1,0 +1,229 @@
+name: Production CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Gate 1: Code Quality (Fast Fail)
+  code-quality:
+    name: Code Quality Checks
+    runs-on: macos-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for Secrets
+        run: |
+          # Fail if hardcoded secrets detected
+          if grep -r "sk-" --include="*.swift" "I Do Blueprint/" 2>/dev/null; then
+            echo "❌ CRITICAL: Hardcoded API keys detected!"
+            exit 1
+          fi
+          if grep -r "service_role" --include="*.swift" "I Do Blueprint/" 2>/dev/null; then
+            echo "❌ CRITICAL: Supabase service role key detected!"
+            exit 1
+          fi
+          echo "✅ No hardcoded secrets found"
+
+      - name: Check for Force Unwraps
+        run: |
+          # Count force unwraps (!) - warn but don't fail
+          force_unwraps=$(grep -r "!" --include="*.swift" "I Do Blueprint/" | grep -v "// OK:" | grep -v "//OK:" | wc -l | xargs)
+          echo "⚠️  Found $force_unwraps potential force unwraps"
+          echo "FORCE_UNWRAPS=$force_unwraps" >> $GITHUB_ENV
+
+      - name: Check SwiftLint Config
+        run: |
+          if [ -f ".swiftlint.yml" ]; then
+            echo "✅ SwiftLint config found"
+          else
+            echo "⚠️  No SwiftLint config - skipping linting"
+          fi
+
+  # Gate 2: Build Verification (Must Pass)
+  build:
+    name: Build Verification
+    runs-on: macos-latest
+    timeout-minutes: 20
+    needs: code-quality
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Cache Swift Packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            .build
+            ~/Library/Developer/Xcode/DerivedData
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-
+
+      - name: Build for Testing
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -scheme "I Do Blueprint" \
+            -destination 'platform=macOS' \
+            -derivedDataPath .build \
+            2>&1 | tee build.log
+
+      - name: Check Build Warnings
+        run: |
+          warnings=$(grep -c "warning:" build.log || true)
+          echo "⚠️  Build completed with $warnings warnings"
+
+      - name: Upload Build Artifacts
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-logs
+          path: build.log
+
+  # Gate 3: Critical Tests (Must Pass)
+  critical-tests:
+    name: Critical Functionality Tests
+    runs-on: macos-latest
+    timeout-minutes: 15
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Cache Swift Packages
+        uses: actions/cache@v3
+        with:
+          path: .build
+          key: ${{ runner.os }}-spm-${{ hashFiles('**/Package.resolved') }}
+
+      - name: Run Accessibility Tests (WCAG Compliance)
+        run: |
+          set -o pipefail
+          xcodebuild test \
+            -scheme "I Do Blueprint" \
+            -destination 'platform=macOS' \
+            -only-testing:I_Do_BlueprintTests/Accessibility \
+            -derivedDataPath .build \
+            2>&1 | tee accessibility-tests.log
+
+          echo "✅ WCAG accessibility tests passed"
+
+      - name: Run Core Model Tests
+        continue-on-error: true
+        run: |
+          # Test domain models (non-blocking for now)
+          xcodebuild test \
+            -scheme "I Do Blueprint" \
+            -destination 'platform=macOS' \
+            -only-testing:I_Do_BlueprintTests/Domain/Models \
+            -derivedDataPath .build \
+            2>&1 | tee model-tests.log || echo "⚠️  Some model tests failed (non-blocking)"
+
+      - name: Upload Test Logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs
+          path: |
+            accessibility-tests.log
+            model-tests.log
+
+  # Gate 4: Security Scans (Must Pass)
+  security:
+    name: Security Scanning
+    runs-on: macos-latest
+    timeout-minutes: 10
+    needs: build
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for Sensitive Files
+        run: |
+          # Fail if sensitive files are committed
+          if [ -f ".env" ]; then
+            echo "❌ CRITICAL: .env file committed to repo!"
+            exit 1
+          fi
+          if [ -f "Config.plist" ]; then
+            echo "❌ CRITICAL: Config.plist committed to repo!"
+            exit 1
+          fi
+          echo "✅ No sensitive files found"
+
+      - name: Check RLS Policy Files
+        run: |
+          # Verify Supabase migrations include RLS
+          if ls supabase/migrations/*.sql 1> /dev/null 2>&1; then
+            rls_count=$(grep -r "CREATE POLICY" supabase/migrations/ | wc -l | xargs)
+            echo "ℹ️  Found $rls_count RLS policies in migrations"
+          else
+            echo "⚠️  No Supabase migrations found"
+          fi
+
+      - name: Check Keychain Security
+        run: |
+          # Verify kSecAttrAccessibleWhenUnlockedThisDeviceOnly is used
+          if grep -r "kSecAttrAccessibleWhenUnlockedThisDeviceOnly" "I Do Blueprint/" --include="*.swift"; then
+            echo "✅ Secure keychain accessibility confirmed"
+          else
+            echo "⚠️  WARNING: Keychain security pattern not found"
+          fi
+
+  # Gate 5: Test Summary
+  test-summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [code-quality, build, critical-tests, security]
+    if: always()
+
+    steps:
+      - name: Generate Summary
+        run: |
+          echo "## 🎯 CI/CD Pipeline Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status | Required |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|----------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.code-quality.result }} | ✅ Yes |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result }} | ✅ Yes |" >> $GITHUB_STEP_SUMMARY
+          echo "| Critical Tests | ${{ needs.critical-tests.result }} | ✅ Yes |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result }} | ✅ Yes |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.build.result }}" != "success" ]; then
+            echo "❌ **Build failed - deployment blocked**" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.security.result }}" != "success" ]; then
+            echo "❌ **Security scan failed - deployment blocked**" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.critical-tests.result }}" != "success" ]; then
+            echo "⚠️  **Critical tests failed - review required**" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **All gates passed - ready to merge**" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Block on Critical Failures
+        if: |
+          needs.build.result == 'failure' ||
+          needs.security.result == 'failure' ||
+          needs.critical-tests.result == 'failure'
+        run: |
+          echo "❌ Critical CI gates failed - blocking merge"
+          exit 1

@@ -1,0 +1,44 @@
+{
+  "session_id": "cb1b25ec-39df-4257-abf9-083ae737057f",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-04T05:19:25.505729+00:00",
+  "vectors": {
+    "engagement": 0.85,
+    "know": 0.35,
+    "do": 0.4,
+    "context": 0.5,
+    "clarity": 0.45,
+    "coherence": 0.5,
+    "signal": 0.4,
+    "density": 0.35,
+    "state": 0.6,
+    "change": 0.3,
+    "completion": 0.1,
+    "impact": 0.5,
+    "uncertainty": 0.65
+  },
+  "overall_confidence": 0.417,
+  "meta": {
+    "reasoning": "Starting research on programmatic design tools. I have moderate engagement and context awareness of the SwiftUI codebase, but low knowledge of specific design automation tools. High uncertainty about what tools exist and which would integrate well with this macOS app.",
+    "prompt": "Starting research on programmatic design tools. I have moderate engagement and context awareness of the SwiftUI codebase, but low knowledge of specific design automation tools. High uncertainty about what tools exist and which would integrate well with this macOS app.",
+    "git_commit_sha": "91bf288287697e3f1083ccc903798beb6fd12e27",
+    "git_notes_ref": "empirica/session/cb1b25ec-39df-4257-abf9-083ae737057f/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "69b7a2956acadfd1cefcebfbf38e160603d24f1e",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".github/workflows/tests.yml"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db | Bin 430080 -> 442368 bytes\n .github/workflows/tests.yml    | 210 +++--------------------------------------\n 2 files changed, 13 insertions(+), 197 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 202
+}
