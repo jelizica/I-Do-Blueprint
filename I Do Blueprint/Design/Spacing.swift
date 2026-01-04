@@ -50,5 +50,65 @@ public enum CornerRadius {
     public static let md: CGFloat = 8
     public static let lg: CGFloat = 12
     public static let xl: CGFloat = 16
+    public static let xxl: CGFloat = 20
     public static let pill: CGFloat = 999
+}
+
+// MARK: - Depth Hierarchy
+
+/// Depth levels for macOS-native visual hierarchy
+/// Inspired by Apple's layered interface design
+public enum DepthLevel {
+    /// Base level - window background
+    /// Use for: Main window content area
+    case base
+    
+    /// Card level - standard elevated content
+    /// Use for: Dashboard cards, list panels, content sections
+    case card
+    
+    /// Elevated level - hover/selected states
+    /// Use for: Hovered cards, selected items, active elements
+    case elevated
+    
+    /// Floating level - temporary overlays
+    /// Use for: Popovers, tooltips, dropdown menus
+    case floating
+    
+    /// Modal level - blocking overlays
+    /// Use for: Sheets, dialogs, alerts
+    case modal
+    
+    /// Appropriate corner radius for this depth level
+    public var cornerRadius: CGFloat {
+        switch self {
+        case .base: return 0
+        case .card: return CornerRadius.lg
+        case .elevated: return CornerRadius.lg
+        case .floating: return CornerRadius.xl
+        case .modal: return CornerRadius.xxl
+        }
+    }
+    
+    /// Appropriate shadow for this depth level
+    public var shadow: MacOSShadow {
+        switch self {
+        case .base: return .subtle
+        case .card: return .subtle
+        case .elevated: return .elevated
+        case .floating: return .floating
+        case .modal: return .modal
+        }
+    }
+    
+    /// Appropriate material for this depth level
+    public var material: Material {
+        switch self {
+        case .base: return .ultraThinMaterial
+        case .card: return .regularMaterial
+        case .elevated: return .regularMaterial
+        case .floating: return .thickMaterial
+        case .modal: return .thickMaterial
+        }
+    }
 }
