@@ -15,7 +15,47 @@ struct ThemeSettingsView: View {
     @State private var weddingColor2: Color = Color.fromHex("5A9070")
     @State private var hexInput1: String = ""
     @State private var hexInput2: String = ""
-    @State private var showHexInput: Bool = false
+    @State private var showHexInput: Bool = true  // Show by default, can be hidden
+
+    // Computed properties for dynamic preview
+    private var previewWeddingTitle: String {
+        let partner1 = viewModel.settings.global.partner1Nickname.isEmpty
+            ? viewModel.settings.global.partner1FullName
+            : viewModel.settings.global.partner1Nickname
+        let partner2 = viewModel.settings.global.partner2Nickname.isEmpty
+            ? viewModel.settings.global.partner2FullName
+            : viewModel.settings.global.partner2Nickname
+
+        if !partner1.isEmpty && !partner2.isEmpty {
+            return "\(partner1) & \(partner2)'s Wedding"
+        } else if !partner1.isEmpty {
+            return "\(partner1)'s Wedding"
+        } else if !partner2.isEmpty {
+            return "\(partner2)'s Wedding"
+        } else {
+            return "Your Wedding"
+        }
+    }
+
+    private var previewWeddingDate: String? {
+        let dateString = viewModel.settings.global.weddingDate
+        guard !dateString.isEmpty,
+              let date = DateFormatting.parseDateFromDatabase(dateString) else {
+            return nil
+        }
+        let timezone = DateFormatting.userTimeZone(from: viewModel.settings)
+        return DateFormatting.formatDateLong(date, timezone: timezone)
+    }
+
+    private var previewDaysUntil: Int {
+        let dateString = viewModel.settings.global.weddingDate
+        guard !dateString.isEmpty,
+              let weddingDate = DateFormatting.parseDateFromDatabase(dateString) else {
+            return 220  // Fallback
+        }
+        let timezone = DateFormatting.userTimeZone(from: viewModel.settings)
+        return DateFormatting.daysBetween(from: Date(), to: weddingDate, in: timezone)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -92,15 +132,52 @@ struct ThemeSettingsView: View {
                 .font(Typography.caption)
                 .foregroundColor(SemanticColors.textSecondary)
 
-            RoundedRectangle(cornerRadius: 12)
-                .fill(AppGradients.themeGradient(for: viewModel.localSettings.theme.colorScheme))
-                .frame(height: 60)
-                .overlay(
-                    Text("Your Wedding")
-                        .font(Typography.heading)
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                )
+            ZStack {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(AppGradients.themeGradient(for: viewModel.localSettings.theme.colorScheme))
+                    .frame(height: 100)
+
+                HStack(spacing: Spacing.lg) {
+                    // Left side - Wedding info
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
+                        Text(previewWeddingTitle)
+                            .font(Typography.title3)
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+
+                        if let dateText = previewWeddingDate {
+                            Text(dateText)
+                                .font(Typography.caption)
+                                .foregroundColor(.white.opacity(0.9))
+                                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Spacer()
+
+                    // Right side - Days count
+                    VStack(spacing: 2) {
+                        Text("\(previewDaysUntil)")
+                            .font(Typography.numberLarge)
+                            .foregroundColor(.white)
+                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+
+                        Text("DAYS UNTIL")
+                            .font(Typography.caption2)
+                            .foregroundColor(.white.opacity(0.9))
+                            .tracking(1.0)
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                    }
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(.white.opacity(0.2))
+                    )
+                }
+                .padding(.horizontal, Spacing.lg)
+            }
         }
         .padding(.leading, 120) // Align with other settings content
     }
@@ -195,21 +272,58 @@ struct ThemeSettingsView: View {
                     .font(Typography.caption)
                     .foregroundColor(SemanticColors.textSecondary)
 
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(
-                        LinearGradient(
-                            colors: [weddingColor1, weddingColor2],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            LinearGradient(
+                                colors: [weddingColor1, weddingColor2],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .frame(height: 60)
-                    .overlay(
-                        Text("Your Wedding")
-                            .font(Typography.heading)
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-                    )
+                        .frame(height: 100)
+
+                    HStack(spacing: Spacing.lg) {
+                        // Left side - Wedding info
+                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                            Text(previewWeddingTitle)
+                                .font(Typography.title3)
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+
+                            if let dateText = previewWeddingDate {
+                                Text(dateText)
+                                    .font(Typography.caption)
+                                    .foregroundColor(.white.opacity(0.9))
+                                    .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                            }
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                        Spacer()
+
+                        // Right side - Days count
+                        VStack(spacing: 2) {
+                            Text("\(previewDaysUntil)")
+                                .font(Typography.numberLarge)
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+
+                            Text("DAYS UNTIL")
+                                .font(Typography.caption2)
+                                .foregroundColor(.white.opacity(0.9))
+                                .tracking(1.0)
+                                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                        }
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(.white.opacity(0.2))
+                        )
+                    }
+                    .padding(.horizontal, Spacing.lg)
+                }
             }
 
             // Helpful tip
