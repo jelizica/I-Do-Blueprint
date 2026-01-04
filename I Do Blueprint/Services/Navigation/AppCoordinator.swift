@@ -92,7 +92,7 @@ class AppCoordinator: ObservableObject {
         var view: some View {
             switch self {
             case .dashboard:
-                DashboardViewV4()
+                DashboardViewV7()
             case .guests:
                 GuestManagementViewV4()
             case .vendors:
