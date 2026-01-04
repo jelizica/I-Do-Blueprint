@@ -37,16 +37,19 @@ struct WeddingCountdownCard: View {
     /// Uses theme-specific text shades for cohesive appearance
     private var adaptiveTextColor: Color {
         if themeSettings.useCustomWeddingColors {
-            // For custom colors, calculate luminance and use generic dark/light
+            // For custom colors, derive text color from the gradient itself
             let color1 = Color.fromHex(themeSettings.weddingColor1.replacingOccurrences(of: "#", with: ""))
             let color2 = Color.fromHex(themeSettings.weddingColor2.replacingOccurrences(of: "#", with: ""))
             let avgLuminance = (color1.luminance + color2.luminance) / 2
             
             // Use darker shade of the darker gradient color for light backgrounds
+            // Use lighter shade of the lighter gradient color for dark backgrounds
             if avgLuminance > 0.5 {
+                // Light background - use darkened version of darker color
                 return color1.luminance < color2.luminance ? color1.darkened(by: 0.4) : color2.darkened(by: 0.4)
             } else {
-                return .white
+                // Dark background - use lightened version of lighter color
+                return color1.luminance > color2.luminance ? color1.lightened(by: 0.4) : color2.lightened(by: 0.4)
             }
         } else {
             // Use theme-specific text shades from design system
