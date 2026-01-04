@@ -11,6 +11,7 @@ import SwiftUI
 struct BudgetDashboardHubView: View {
     @State private var currentPage: BudgetPage = .hub
     @EnvironmentObject var budgetStore: BudgetStoreV2
+    @EnvironmentObject var coordinator: AppCoordinator
 
     var body: some View {
         GeometryReader { geometry in
@@ -75,6 +76,13 @@ struct BudgetDashboardHubView: View {
         }
         .task {
             await budgetStore.loadBudgetData()
+        }
+        .onChange(of: coordinator.budgetPage) { newPage in
+            if let page = newPage {
+                currentPage = page
+                // Clear the navigation request after handling
+                coordinator.budgetPage = nil
+            }
         }
     }
 

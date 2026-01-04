@@ -116,6 +116,7 @@ struct DashboardViewV4: View {
                             if effectiveHasLoaded {
                                 // Main cards (V6 versions with native macOS materials)
                                 BudgetOverviewCardV6(store: budgetStore, vendorStore: vendorStore, userTimezone: viewModel.userTimezone)
+                                    .environmentObject(coordinator)
                                 TaskProgressCardV6(store: taskStore, userTimezone: viewModel.userTimezone)
                                 GuestResponsesCardV6(store: guestStore)
                                     .environmentObject(settingsStore)

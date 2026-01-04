@@ -18,10 +18,12 @@ struct BudgetOverviewCardV6: View {
     @ObservedObject var store: BudgetStoreV2
     @ObservedObject var vendorStore: VendorStoreV2
     let userTimezone: TimeZone
+    @EnvironmentObject private var coordinator: AppCoordinator
     
     // Animation state
     @State private var hasAppeared = false
     @State private var isHovered = false
+    @State private var selectedPayment: PaymentSchedule?
 
     // MARK: - Body
     
@@ -195,7 +197,10 @@ struct BudgetOverviewCardV6: View {
                             payment: payment,
                             vendorStore: vendorStore,
                             userTimezone: userTimezone
-                        )
+                        ) {
+                            // Show payment detail modal
+                            selectedPayment = payment
+                        }
                         .opacity(hasAppeared ? 1 : 0)
                         .offset(y: hasAppeared ? 0 : 10)
                         .animation(.easeOut(duration: 0.4).delay(0.7 + Double(index) * 0.05), value: hasAppeared)
@@ -288,6 +293,13 @@ struct BudgetOverviewCardV6: View {
                 hasAppeared = true
             }
         }
+        .sheet(item: $selectedPayment) { payment in
+            PaymentDetailViewModal(
+                payment: payment,
+                vendorStore: vendorStore,
+                budgetStore: store
+            )
+        }
     }
 
     // MARK: - Helpers
@@ -377,6 +389,7 @@ private struct NativePaymentRow: View {
     let payment: PaymentSchedule
     @ObservedObject var vendorStore: VendorStoreV2
     let userTimezone: TimeZone
+    let action: () -> Void
     @State private var isHovered = false
 
     private var vendorName: String {
@@ -392,7 +405,8 @@ private struct NativePaymentRow: View {
     }
 
     var body: some View {
-        HStack(spacing: Spacing.md) {
+        Button(action: action) {
+            HStack(spacing: Spacing.md) {
             // Date badge with native styling
             VStack(spacing: 2) {
                 Text(formatDay(payment.paymentDate))
@@ -443,8 +457,10 @@ private struct NativePaymentRow: View {
                 }
             }
         }
+        .buttonStyle(.plain)
         .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.sm)
+        }
         .background(
             RoundedRectangle(cornerRadius: CornerRadius.md)
                 .fill(isHovered ? Color(nsColor: .controlBackgroundColor).opacity(0.5) : Color.clear)
@@ -453,6 +469,11 @@ private struct NativePaymentRow: View {
         .onHover { hovering in
             isHovered = hovering
         }
+        .accessibleActionButton(
+            label: "View payment details for \(vendorName)",
+            hint: "Opens payment schedule page",
+            isDestructive: false
+        )
     }
 
     private func formatDay(_ date: Date) -> String {

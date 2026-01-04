@@ -21,6 +21,7 @@ class AppCoordinator: ObservableObject {
     @Published var selectedTab: AppTab = .dashboard
     @Published var activeSheet: Sheet?
     @Published var activeFullScreenCover: FullScreenCover?
+    @Published var budgetPage: BudgetPage?
     
     // MARK: - Window Size (for dynamic sheet sizing)
     
@@ -186,6 +187,11 @@ class AppCoordinator: ObservableObject {
 
     func navigate(to tab: AppTab) {
         selectedTab = tab
+    }
+    
+    func navigateToBudget(page: BudgetPage) {
+        selectedTab = .budget
+        budgetPage = page
     }
 
     func present(_ sheet: Sheet) {
