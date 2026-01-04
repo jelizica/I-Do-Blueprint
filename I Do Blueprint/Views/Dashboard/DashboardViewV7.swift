@@ -133,7 +133,7 @@ struct DashboardViewV7: View {
                                     .environmentObject(coordinator)
                                 
                                 // Payments Due Card
-                                PaymentsDueCardV7(store: vendorStore)
+                                PaymentsDueCardV7()
                                 
                                 // Recent Responses Card
                                 RecentResponsesCardV7(store: guestStore)
@@ -781,7 +781,7 @@ struct TaskManagerCardV7: View {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
                     ForEach(recentTasks) { task in
                         TaskRowV7(
-                            title: task.title,
+                            title: task.taskName,
                             isCompleted: task.status == .completed
                         )
                     }
@@ -1207,9 +1207,11 @@ struct VendorListCardV7: View {
         store.vendors
             .sorted { (v1, v2) in
                 // Booked vendors first
-                if v1.status == .booked && v2.status != .booked {
+                let booked1 = v1.isBooked ?? false
+                let booked2 = v2.isBooked ?? false
+                if booked1 && !booked2 {
                     return true
-                } else if v1.status != .booked && v2.status == .booked {
+                } else if !booked1 && booked2 {
                     return false
                 }
                 // Then by creation date (newest first)
@@ -1253,16 +1255,14 @@ struct VendorListCardV7: View {
         }
     }
     
-    private func mapVendorStatus(_ status: VendorStatus) -> VendorStatusV7 {
+    private func mapContractStatus(_ status: ContractStatus) -> VendorStatusV7 {
         switch status {
-        case .booked:
+        case .signed:
             return .booked
-        case .pending:
+        case .pending, .draft:
             return .pending
-        case .declined:
+        case .expired, .none:
             return .declined
-        default:
-            return .pending
         }
     }
     
@@ -1290,16 +1290,17 @@ struct VendorListCardV7: View {
                     .padding(.vertical, Spacing.lg)
             } else {
                 VStack(spacing: Spacing.md) {
-                    ForEach(recentVendors) { vendor in
-                        let icon = vendorIcon(for: vendor.category)
-                        let iconColor = vendorIconColor(for: vendor.category)
+                    ForEach(recentVendors, id: \.id) { vendor in
+                        let category = vendor.vendorType ?? "Other"
+                        let icon = vendorIcon(for: category)
+                        let iconColor = vendorIconColor(for: category)
                         VendorRowV7(
                             icon: icon,
                             iconColor: iconColor,
                             iconBackground: iconColor.opacity(0.1),
-                            name: vendor.name,
-                            category: vendor.category,
-                            status: mapVendorStatus(vendor.status)
+                            name: vendor.vendorName,
+                            category: category,
+                            status: mapContractStatus(vendor.contractStatus)
                         )
                     }
                 }
