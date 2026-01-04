@@ -3,7 +3,7 @@
 //  I Do Blueprint
 //
 //  SwiftUI wrapper for ColorSelector package by jaywcjlove
-//  Provides a macOS-optimized color picker for wedding colors with adaptive modal presentation
+//  Provides a macOS-optimized color picker for wedding colors with modal presentation
 //
 
 import SwiftUI
@@ -12,7 +12,7 @@ import ColorSelector
 // MARK: - Wedding Color Picker View
 
 /// A macOS-optimized color picker using ColorSelector package
-/// Opens in an adaptive modal sheet matching the guest management pattern
+/// Opens in a modal sheet matching the guest management pattern
 struct WeddingColorPickerView: View {
     @Binding var selectedColor: Color
     @State private var showingPicker = false
@@ -90,8 +90,8 @@ struct WeddingColorPickerView: View {
 
 // MARK: - Wedding Color Picker Modal
 
-/// Adaptive modal presentation of ColorSelector with wedding color presets
-/// Matches the guest management modal pattern with GeometryReader for responsive sizing
+/// Modal presentation of ColorSelector with wedding color presets
+/// Follows the AddGuestView pattern with simple VStack structure
 struct WeddingColorPickerModal: View {
     @Environment(\.dismiss) private var dismiss
     @Binding var selectedColor: Color
@@ -110,44 +110,37 @@ struct WeddingColorPickerModal: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            let modalSize = adaptiveModalSize(for: geometry.size)
+        VStack(spacing: 0) {
+            // Header
+            modalHeader
             
-            NavigationStack {
-                VStack(spacing: 0) {
-                    // Header
-                    modalHeader
+            Divider()
+            
+            // Content
+            ScrollView {
+                VStack(spacing: Spacing.xl) {
+                    // Color Selector
+                    colorSelectorSection
                     
                     Divider()
+                        .padding(.horizontal, Spacing.xl)
                     
-                    // Content
-                    ScrollView {
-                        VStack(spacing: Spacing.xl) {
-                            // Color Selector
-                            colorSelectorSection(width: modalSize.width)
-                            
-                            Divider()
-                                .padding(.horizontal, Spacing.xl)
-                            
-                            // Wedding Color Presets
-                            presetsSection(width: modalSize.width)
-                            
-                            Divider()
-                                .padding(.horizontal, Spacing.xl)
-                            
-                            // Current Color Preview
-                            previewSection
-                        }
-                        .padding(.vertical, Spacing.xl)
-                    }
+                    // Wedding Color Presets
+                    presetsSection
                     
                     Divider()
+                        .padding(.horizontal, Spacing.xl)
                     
-                    // Footer
-                    modalFooter
+                    // Current Color Preview
+                    previewSection
                 }
+                .padding(.vertical, Spacing.xl)
             }
-            .frame(width: modalSize.width, height: modalSize.height)
+            
+            Divider()
+            
+            // Footer
+            modalFooter
         }
     }
     
@@ -184,7 +177,7 @@ struct WeddingColorPickerModal: View {
     
     // MARK: - Color Selector Section
     
-    private func colorSelectorSection(width: CGFloat) -> some View {
+    private var colorSelectorSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Color Wheel")
                 .font(Typography.subheading)
@@ -196,14 +189,14 @@ struct WeddingColorPickerModal: View {
                 set: { if let newColor = $0 { currentColor = newColor } }
             ))
                 .environment(\.swatchColors, presetColors)
-                .frame(height: min(300, width * 0.5))
+                .frame(height: 300)
                 .padding(.horizontal, Spacing.xl)
         }
     }
     
     // MARK: - Presets Section
     
-    private func presetsSection(width: CGFloat) -> some View {
+    private var presetsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Wedding Color Presets")
                 .font(Typography.subheading)
@@ -334,35 +327,6 @@ struct WeddingColorPickerModal: View {
             isSaving = false
             dismiss()
         }
-    }
-    
-    // MARK: - Adaptive Sizing
-    
-    /// Calculate adaptive modal size based on available window space
-    /// Matches the guest management modal sizing pattern
-    private func adaptiveModalSize(for availableSize: CGSize) -> CGSize {
-        let width: CGFloat
-        let height: CGFloat
-        
-        // Width calculation
-        if availableSize.width >= 900 {
-            width = 700  // Large window
-        } else if availableSize.width >= 700 {
-            width = 600  // Medium window
-        } else {
-            width = min(500, availableSize.width * 0.9)  // Small window
-        }
-        
-        // Height calculation
-        if availableSize.height >= 800 {
-            height = 700  // Large window
-        } else if availableSize.height >= 600 {
-            height = 600  // Medium window
-        } else {
-            height = min(500, availableSize.height * 0.9)  // Small window
-        }
-        
-        return CGSize(width: width, height: height)
     }
 }
 

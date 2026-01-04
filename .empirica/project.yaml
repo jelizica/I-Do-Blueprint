@@ -1,0 +1,10 @@
+version: '1.0'
+name: I Do Blueprint
+description: MacOS Wedding Planning App for Couples
+beads:
+  default_enabled: true
+subjects: {}
+auto_detect:
+  enabled: true
+  method: path_match
+project_id: e9b8120c-74d3-43ec-8881-0ed5a5bf3356
