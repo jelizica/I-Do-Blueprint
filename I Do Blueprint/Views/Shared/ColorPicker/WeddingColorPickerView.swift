@@ -179,7 +179,7 @@ struct WeddingColorPickerModal: View {
                 set: { if let newColor = $0 { currentColor = newColor } }
             ))
                 .environment(\.swatchColors, presetColors)
-                .frame(width: 400, height: 400)
+                .frame(width: 500, height: 500)
             
             // Hex code below picker
             VStack(spacing: Spacing.xs) {
