@@ -101,21 +101,22 @@ struct PaymentDetailViewModal: View {
                 expense: relatedExpense,
                 getVendorName: { vendorId in
                     guard let id = vendorId else { return nil }
-                    // vendorId is Int64, need to find vendor by matching ID
-                    return vendorStore.vendors.first(where: { vendor in
-                        // Convert UUID to Int64 for comparison if needed
-                        // For now, return nil as we need to understand the ID mapping
-                        return false
-                    })?.vendorName
+                    // vendorId is Int64, but Vendor.id is UUID
+                    // The vendorId in PaymentSchedule refers to the vendor's database ID
+                    // For now, we use the vendorId from payment which is already a UUID
+                    // This closure is used by PaymentEditModal for display purposes
+                    return vendorStore.vendors.first(where: { $0.id == payment.vendorId })?.vendorName
                 },
                 onUpdate: { updatedPayment in
-                    // TODO: Implement payment update through budget store
-                    // Need to find the correct API for updating payments
+                    Task {
+                        await budgetStore.payments.updatePayment(updatedPayment)
+                    }
                 },
                 onDelete: {
-                    // TODO: Implement payment deletion through budget store
-                    // Need to find the correct API for deleting payments
-                    dismiss()
+                    Task {
+                        await budgetStore.payments.deletePayment(id: payment.id)
+                        dismiss()
+                    }
                 }
             )
             .environmentObject(settingsStore)
