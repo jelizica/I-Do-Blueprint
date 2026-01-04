@@ -37,6 +37,69 @@ enum AppGradients {
     
     /// Dark sage for text/icons
     static let sageDark = Color.fromHex("8FAE8F")
+    
+    // MARK: - Theme-Aware Mesh Gradient Colors
+    
+    /// Returns mesh gradient colors based on theme settings
+    /// - Parameter themeSettings: The user's theme settings
+    /// - Returns: A tuple of (baseColor, blob1Color, blob2Color, blob3Color)
+    static func meshGradientColors(for themeSettings: ThemeSettings) -> (base: Color, blob1: Color, blob2: Color, blob3: Color) {
+        if themeSettings.useCustomWeddingColors {
+            // Derive colors from custom wedding colors
+            let color1 = Color.fromHex(themeSettings.weddingColor1.replacingOccurrences(of: "#", with: ""))
+            let color2 = Color.fromHex(themeSettings.weddingColor2.replacingOccurrences(of: "#", with: ""))
+            
+            return (
+                base: Color.fromHex("F3F4F6"),  // Keep neutral base
+                blob1: color1.opacity(0.6),
+                blob2: color2.opacity(0.6),
+                blob3: color1.opacity(0.4)  // Lighter version of color1
+            )
+        } else {
+            // Use theme-based colors
+            return meshGradientColorsForScheme(themeSettings.colorScheme)
+        }
+    }
+    
+    /// Returns mesh gradient colors for a specific color scheme
+    /// - Parameter colorScheme: The theme name
+    /// - Returns: A tuple of (baseColor, blob1Color, blob2Color, blob3Color)
+    private static func meshGradientColorsForScheme(_ colorScheme: String) -> (base: Color, blob1: Color, blob2: Color, blob3: Color) {
+        switch colorScheme {
+        case "sage-serenity":
+            return (
+                base: Color.fromHex("F3F4F6"),
+                blob1: Color.fromHex("E8F5E9").opacity(0.6),  // Light sage
+                blob2: Color.fromHex("5A9070").opacity(0.6),  // Eucalyptus green
+                blob3: Color.fromHex("C8E6C9").opacity(0.5)   // Soft sage
+            )
+        case "lavender-dream":
+            return (
+                base: Color.fromHex("F3F4F6"),
+                blob1: Color.fromHex("EDE7F6").opacity(0.6),  // Light lavender
+                blob2: Color.fromHex("7E57C2").opacity(0.6),  // Deep lavender
+                blob3: Color.fromHex("D1C4E9").opacity(0.5)   // Soft lavender
+            )
+        case "terracotta-warm":
+            return (
+                base: Color.fromHex("F3F4F6"),
+                blob1: Color.fromHex("FBE9E7").opacity(0.6),  // Light terracotta
+                blob2: Color.fromHex("BF6952").opacity(0.6),  // Warm terracotta
+                blob3: Color.fromHex("FFCCBC").opacity(0.5)   // Soft terracotta
+            )
+        case "blush-romance":
+            fallthrough
+        default:
+            // Default blush romance theme (original colors)
+            return (
+                base: Color.fromHex("F3F4F6"),
+                blob1: Color.fromHex("F4D0D0").opacity(0.6),  // Soft pink
+                blob2: Color.fromHex("D0E8D0").opacity(0.6),  // Soft sage
+                blob3: Color.fromHex("F5F5DC").opacity(0.4)   // Soft cream
+            )
+        }
+    }
+    
     /// App-wide background gradient used on the dashboard background
     static let appBackground = LinearGradient(
         colors: [

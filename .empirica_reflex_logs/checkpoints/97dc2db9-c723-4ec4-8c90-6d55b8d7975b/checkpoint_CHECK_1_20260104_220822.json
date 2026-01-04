@@ -1,0 +1,117 @@
+{
+  "session_id": "97dc2db9-c723-4ec4-8c90-6d55b8d7975b",
+  "phase": "CHECK",
+  "round": 1,
+  "timestamp": "2026-01-04T22:08:21.526632+00:00",
+  "vectors": {
+    "engagement": 0.9,
+    "know": 0.85,
+    "do": 0.85,
+    "context": 0.85,
+    "clarity": 0.9,
+    "coherence": 0.9,
+    "signal": 0.85,
+    "density": 0.75,
+    "state": 0.85,
+    "change": 0.6,
+    "completion": 0.2,
+    "impact": 0.85,
+    "uncertainty": 0.2
+  },
+  "overall_confidence": 0.85,
+  "meta": {
+    "decision": "proceed",
+    "reasoning": "Clear requirements received. Will make MeshGradientBackgroundV7 theme-aware by deriving colors from ThemeSettings (custom wedding colors or colorScheme). Layout constants remain hardcoded. Using @EnvironmentObject for settings access.",
+    "confidence": 0.8,
+    "gaps": [
+      "completion: 0.20",
+      "uncertainty: 0.20"
+    ],
+    "cycle": null,
+    "round": 1,
+    "git_commit_sha": "b93fac43f35457333f0aed0ded646b4265cd21e6",
+    "git_notes_ref": "empirica/session/97dc2db9-c723-4ec4-8c90-6d55b8d7975b/CHECK/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "28137a07c2710a5cc9eb5fe63c82557a445d9f5a",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 667648 -> 671744 bytes\n .../storage.sqlite                                 | Bin 749568 -> 765952 bytes\n 2 files changed, 0 insertions(+), 0 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "engagement": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "know": {
+      "prev": 0.4,
+      "curr": 0.85,
+      "delta": 0.45
+    },
+    "do": {
+      "prev": 0.6,
+      "curr": 0.85,
+      "delta": 0.25
+    },
+    "context": {
+      "prev": 0.5,
+      "curr": 0.85,
+      "delta": 0.35
+    },
+    "clarity": {
+      "prev": 0.6,
+      "curr": 0.9,
+      "delta": 0.3
+    },
+    "coherence": {
+      "prev": 0.6,
+      "curr": 0.9,
+      "delta": 0.3
+    },
+    "signal": {
+      "prev": 0.7,
+      "curr": 0.85,
+      "delta": 0.15
+    },
+    "density": {
+      "prev": 0.5,
+      "curr": 0.75,
+      "delta": 0.25
+    },
+    "state": {
+      "prev": 0.5,
+      "curr": 0.85,
+      "delta": 0.35
+    },
+    "change": {
+      "prev": 0.3,
+      "curr": 0.6,
+      "delta": 0.3
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 0.2,
+      "delta": 0.2
+    },
+    "impact": {
+      "prev": 0.7,
+      "curr": 0.85,
+      "delta": 0.15
+    },
+    "uncertainty": {
+      "prev": 0.5,
+      "curr": 0.2,
+      "delta": -0.3
+    }
+  },
+  "token_count": 269
+}

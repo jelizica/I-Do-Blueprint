@@ -192,38 +192,42 @@ struct DashboardViewV7: View {
 // MARK: - Mesh Gradient Background
 
 struct MeshGradientBackgroundV7: View {
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
+    
     var body: some View {
-        ZStack {
+        let colors = AppGradients.meshGradientColors(for: settingsStore.settings.theme)
+        
+        return ZStack {
             // Base color
-            Color.fromHex("F3F4F6")
+            colors.base
             
             // Animated color blobs
             GeometryReader { geometry in
                 ZStack {
-                    // Pink blob - top left
+                    // Blob 1 - top left
                     Circle()
-                        .fill(AppGradients.softPink.opacity(0.6))
+                        .fill(colors.blob1)
                         .frame(width: 300, height: 300)
                         .blur(radius: 80)
                         .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.1)
                     
-                    // Sage blob - bottom right
+                    // Blob 2 - bottom right
                     Circle()
-                        .fill(AppGradients.sageGreen.opacity(0.6))
+                        .fill(colors.blob2)
                         .frame(width: 400, height: 400)
                         .blur(radius: 80)
                         .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.8)
                     
-                    // Cream blob - center
+                    // Blob 3 - center
                     Circle()
-                        .fill(Color.fromHex("F8E8D0").opacity(0.5))
+                        .fill(colors.blob3)
                         .frame(width: 250, height: 250)
                         .blur(radius: 80)
                         .position(x: geometry.size.width * 0.5, y: geometry.size.height * 0.4)
                     
-                    // Pink blob - bottom left
+                    // Blob 1 (lighter) - bottom left
                     Circle()
-                        .fill(AppGradients.softPink.opacity(0.4))
+                        .fill(colors.blob1.opacity(0.7))
                         .frame(width: 300, height: 300)
                         .blur(radius: 80)
                         .position(x: geometry.size.width * 0.1, y: geometry.size.height * 0.9)
