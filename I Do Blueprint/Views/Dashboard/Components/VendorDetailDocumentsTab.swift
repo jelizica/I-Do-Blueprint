@@ -89,7 +89,7 @@ struct DocumentRow: View {
                 .foregroundColor(SemanticColors.textSecondary)
         }
         .padding(Spacing.sm)
-        .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
+        .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.sm)
     }
 }

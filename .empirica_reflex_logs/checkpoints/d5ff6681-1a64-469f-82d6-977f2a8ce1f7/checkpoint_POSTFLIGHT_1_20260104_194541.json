@@ -1,0 +1,130 @@
+{
+  "session_id": "d5ff6681-1a64-469f-82d6-977f2a8ce1f7",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-04T19:45:40.889246+00:00",
+  "vectors": {
+    "engagement": 0.95,
+    "know": 0.95,
+    "do": 0.95,
+    "context": 0.95,
+    "clarity": 0.95,
+    "coherence": 0.95,
+    "signal": 0.95,
+    "density": 0.95,
+    "state": 0.95,
+    "change": 0.9,
+    "completion": 1.0,
+    "impact": 0.95,
+    "uncertainty": 0.05
+  },
+  "overall_confidence": 0.95,
+  "meta": {
+    "reasoning": "Successfully replaced Color(nsColor:) with SemanticColors.backgroundSecondary in Financial and Documents tabs. Now properly follows design system guidelines for consistent color management. All three row components (ExpenseRow, PaymentRow, DocumentRow) updated. Build verified successful.",
+    "task_summary": "Successfully replaced Color(nsColor:) with SemanticColors.backgroundSecondary in Financial and Documents tabs. Now properly follows design system guidelines for consistent color management. All three row components (ExpenseRow, PaymentRow, DocumentRow) updated. Build verified successful.",
+    "postflight_confidence": 0.95,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "engagement": 0.05,
+      "know": 0.1,
+      "do": 0.1,
+      "context": 0.05,
+      "clarity": 0.05,
+      "coherence": 0.05,
+      "signal": 0.1,
+      "density": 0.1,
+      "state": 0.05,
+      "change": 0.15,
+      "completion": 1.0,
+      "impact": 0.05,
+      "uncertainty": -0.15
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "ce306e17ba3f0076cd8c0cf5628877de7bbd4cdc",
+    "git_notes_ref": "empirica/session/d5ff6681-1a64-469f-82d6-977f2a8ce1f7/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "00db2b8e676707344b7baf28bd54fb25305f58d6",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Dashboard/Components/VendorDetailDocumentsTab.swift\"",
+        "\"I Do Blueprint/Views/Dashboard/Components/VendorDetailFinancialTab.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 524288 -> 524288 bytes\n .../storage.sqlite                                 | Bin 405504 -> 421888 bytes\n .../Components/VendorDetailDocumentsTab.swift      |   2 +-\n .../Components/VendorDetailFinancialTab.swift      |   4 ++--\n 4 files changed, 3 insertions(+), 3 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "engagement": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "know": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "do": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "context": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "clarity": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "coherence": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "signal": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "density": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "state": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "change": {
+      "prev": 0.75,
+      "curr": 0.9,
+      "delta": 0.15
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 1.0,
+      "delta": 1.0
+    },
+    "impact": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "uncertainty": {
+      "prev": 0.2,
+      "curr": 0.05,
+      "delta": -0.15
+    }
+  },
+  "token_count": 361
+}
