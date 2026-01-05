@@ -599,14 +599,16 @@ struct MasonryColumnsView: View {
             VStack(alignment: .leading, spacing: cardSpacing) {
                 TaskManagerCardV7(
                     store: taskStore,
-                    maxItems: maxItems(forHeight: tasksCardHeight, itemHeight: 44)
+                    maxItems: maxItems(forHeight: tasksCardHeight, itemHeight: 44),
+                    cardHeight: tasksCardHeight
                 )
                 .frame(height: tasksCardHeight)
                 
                 if shouldShowVendorList {
                     VendorListCardV7(
                         store: vendorStore,
-                        maxItems: maxItems(forHeight: vendorsCardHeight, itemHeight: 48)
+                        maxItems: maxItems(forHeight: vendorsCardHeight, itemHeight: 48),
+                        cardHeight: vendorsCardHeight
                     )
                     .frame(height: vendorsCardHeight)
                 }
@@ -618,7 +620,8 @@ struct MasonryColumnsView: View {
                 if shouldShowGuestResponses {
                     GuestResponsesCardV7(
                         store: guestStore,
-                        maxItems: maxItems(forHeight: guestsCardHeight, itemHeight: 52)
+                        maxItems: maxItems(forHeight: guestsCardHeight, itemHeight: 52),
+                        cardHeight: guestsCardHeight
                     )
                     .environmentObject(settingsStore)
                     .environmentObject(budgetStore)
@@ -629,7 +632,8 @@ struct MasonryColumnsView: View {
                 if shouldShowRecentResponses {
                     RecentResponsesCardV7(
                         store: guestStore,
-                        maxItems: maxItems(forHeight: recentCardHeight, itemHeight: 44)
+                        maxItems: maxItems(forHeight: recentCardHeight, itemHeight: 44),
+                        cardHeight: recentCardHeight
                     )
                     .frame(height: recentCardHeight)
                 }
@@ -1201,6 +1205,10 @@ struct BudgetOverviewCardV7: View {
 struct TaskManagerCardV7: View {
     @ObservedObject var store: TaskStoreV2
     let maxItems: Int
+    let cardHeight: CGFloat
+    
+    /// Item height for task rows
+    private let itemHeight: CGFloat = 44
     
     private var recentTasks: [WeddingTask] {
         // Get dynamically calculated number of tasks, prioritizing incomplete tasks
@@ -1229,6 +1237,28 @@ struct TaskManagerCardV7: View {
             .map { $0 }
     }
     
+    /// Calculate dynamic row spacing to distribute items evenly
+    private var dynamicRowSpacing: CGFloat {
+        let headerHeight: CGFloat = 50
+        let padding: CGFloat = Spacing.lg * 2
+        let availableForItems = cardHeight - headerHeight - padding
+        
+        let itemCount = recentTasks.count
+        guard itemCount > 1 else { return Spacing.sm }
+        
+        let totalItemHeight = CGFloat(itemCount) * itemHeight
+        
+        // If items don't fill space, distribute extra space as row spacing
+        if totalItemHeight < availableForItems {
+            let extraSpace = availableForItems - totalItemHeight
+            let gaps = CGFloat(itemCount - 1)
+            let extraPerGap = extraSpace / gaps
+            return Spacing.sm + extraPerGap
+        }
+        
+        return Spacing.sm
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -1252,12 +1282,13 @@ struct TaskManagerCardV7: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, Spacing.lg)
             } else {
-                VStack(alignment: .leading, spacing: Spacing.sm) {
+                VStack(alignment: .leading, spacing: dynamicRowSpacing) {
                     ForEach(recentTasks) { task in
                         TaskRowV7(
                             title: task.taskName,
                             isCompleted: task.status == .completed
                         )
+                        .frame(height: itemHeight)
                     }
                 }
             }
@@ -1305,7 +1336,11 @@ struct TaskRowV7: View {
 struct GuestResponsesCardV7: View {
     @ObservedObject var store: GuestStoreV2
     let maxItems: Int
+    let cardHeight: CGFloat
     @EnvironmentObject private var settingsStore: SettingsStoreV2
+    
+    /// Item height for guest rows (avatar + 2 lines)
+    private let itemHeight: CGFloat = 52
     
     private var recentGuests: [Guest] {
         // Get dynamically calculated number of guests sorted by RSVP date or creation date
@@ -1323,6 +1358,28 @@ struct GuestResponsesCardV7: View {
             }
             .prefix(maxItems)
             .map { $0 }
+    }
+    
+    /// Calculate dynamic row spacing to distribute items evenly
+    private var dynamicRowSpacing: CGFloat {
+        let headerHeight: CGFloat = 50
+        let padding: CGFloat = Spacing.lg * 2
+        let availableForItems = cardHeight - headerHeight - padding
+        
+        let itemCount = recentGuests.count
+        guard itemCount > 1 else { return Spacing.md }
+        
+        let totalItemHeight = CGFloat(itemCount) * itemHeight
+        
+        // If items don't fill space, distribute extra space as row spacing
+        if totalItemHeight < availableForItems {
+            let extraSpace = availableForItems - totalItemHeight
+            let gaps = CGFloat(itemCount - 1)
+            let extraPerGap = extraSpace / gaps
+            return Spacing.md + extraPerGap
+        }
+        
+        return Spacing.md
     }
     
     var body: some View {
@@ -1345,13 +1402,14 @@ struct GuestResponsesCardV7: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, Spacing.lg)
             } else {
-                VStack(spacing: Spacing.md) {
+                VStack(spacing: dynamicRowSpacing) {
                     ForEach(recentGuests) { guest in
                         GuestRowV7(
                             guest: guest,
                             invitedBy: guest.invitedBy?.displayName(with: settingsStore.settings) ?? "Unknown",
                             status: mapRSVPStatus(guest.rsvpStatus)
                         )
+                        .frame(height: itemHeight)
                     }
                 }
             }
@@ -1640,6 +1698,10 @@ struct PaymentRowV7: View {
 struct RecentResponsesCardV7: View {
     @ObservedObject var store: GuestStoreV2
     let maxItems: Int
+    let cardHeight: CGFloat
+    
+    /// Item height for activity rows
+    private let itemHeight: CGFloat = 44
     
     private var recentActivity: [(guest: Guest, action: String, color: Color)] {
         // Get guests with RSVP dates, sorted by most recent
@@ -1671,6 +1733,28 @@ struct RecentResponsesCardV7: View {
         }
     }
     
+    /// Calculate dynamic row spacing to distribute items evenly
+    private var dynamicRowSpacing: CGFloat {
+        let headerHeight: CGFloat = 50
+        let padding: CGFloat = Spacing.lg * 2
+        let availableForItems = cardHeight - headerHeight - padding
+        
+        let itemCount = recentActivity.count
+        guard itemCount > 1 else { return Spacing.md }
+        
+        let totalItemHeight = CGFloat(itemCount) * itemHeight
+        
+        // If items don't fill space, distribute extra space as row spacing
+        if totalItemHeight < availableForItems {
+            let extraSpace = availableForItems - totalItemHeight
+            let gaps = CGFloat(itemCount - 1)
+            let extraPerGap = extraSpace / gaps
+            return Spacing.md + extraPerGap
+        }
+        
+        return Spacing.md
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -1691,13 +1775,14 @@ struct RecentResponsesCardV7: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, Spacing.lg)
             } else {
-                VStack(alignment: .leading, spacing: Spacing.md) {
+                VStack(alignment: .leading, spacing: dynamicRowSpacing) {
                     ForEach(recentActivity, id: \.guest.id) { item in
                         ActivityRowV7(
                             color: item.color,
                             text: item.action,
                             time: timeAgo(from: item.guest.rsvpDate ?? item.guest.createdAt)
                         )
+                        .frame(height: itemHeight)
                     }
                 }
             }
@@ -1755,6 +1840,10 @@ struct ActivityRowV7: View {
 struct VendorListCardV7: View {
     @ObservedObject var store: VendorStoreV2
     let maxItems: Int
+    let cardHeight: CGFloat
+    
+    /// Item height for vendor rows (icon + 2 lines)
+    private let itemHeight: CGFloat = 48
     
     private var recentVendors: [Vendor] {
         // Get dynamically calculated number of vendors, prioritizing booked vendors
@@ -1773,6 +1862,28 @@ struct VendorListCardV7: View {
             }
             .prefix(maxItems)
             .map { $0 }
+    }
+    
+    /// Calculate dynamic row spacing to distribute items evenly
+    private var dynamicRowSpacing: CGFloat {
+        let headerHeight: CGFloat = 50
+        let padding: CGFloat = Spacing.lg * 2
+        let availableForItems = cardHeight - headerHeight - padding
+        
+        let itemCount = recentVendors.count
+        guard itemCount > 1 else { return Spacing.md }
+        
+        let totalItemHeight = CGFloat(itemCount) * itemHeight
+        
+        // If items don't fill space, distribute extra space as row spacing
+        if totalItemHeight < availableForItems {
+            let extraSpace = availableForItems - totalItemHeight
+            let gaps = CGFloat(itemCount - 1)
+            let extraPerGap = extraSpace / gaps
+            return Spacing.md + extraPerGap
+        }
+        
+        return Spacing.md
     }
     
     private func vendorIcon(for category: String) -> String {
@@ -1832,9 +1943,10 @@ struct VendorListCardV7: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, Spacing.lg)
             } else {
-                VStack(spacing: Spacing.md) {
+                VStack(spacing: dynamicRowSpacing) {
                     ForEach(recentVendors) { vendor in
                         vendorRow(for: vendor)
+                            .frame(height: itemHeight)
                     }
                 }
             }
