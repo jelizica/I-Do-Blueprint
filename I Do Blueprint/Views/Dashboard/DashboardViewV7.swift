@@ -77,10 +77,10 @@ struct DashboardViewV7: View {
         GridItem(.adaptive(minimum: 300), spacing: Spacing.lg, alignment: .top)
     ]
 
-    // Fixed 3-column grid for metric cards
+    // Fixed 4-column grid for metric cards (includes countdown)
     private let metricColumns: [GridItem] = Array(
         repeating: GridItem(.flexible(minimum: 0), spacing: Spacing.lg, alignment: .top),
-        count: 3
+        count: 4
     )
 
     init(previewForceLoading: Bool? = nil, appStores: AppStores = .shared) {
@@ -106,28 +106,12 @@ struct DashboardViewV7: View {
 
                 // Use VStack with fixed-height header elements, then masonry layout
                 VStack(spacing: Spacing.lg) {
-                    // MARK: - Header (fixed height)
+                    // MARK: - Header (compressed from 60pt to 50pt)
                     DashboardHeaderV7()
-                        .frame(height: 60)
+                        .frame(height: 50)
                         .padding(.horizontal, Spacing.xxl)
 
-                    // MARK: - Hero Banner with Countdown (fixed height)
-                    Group {
-                        if effectiveHasLoaded {
-                            HeroBannerV7(
-                                weddingDate: viewModel.weddingDate,
-                                partner1Name: viewModel.partner1DisplayName,
-                                partner2Name: viewModel.partner2DisplayName,
-                                currentTime: currentTime
-                            )
-                        } else {
-                            DashboardHeroSkeleton()
-                        }
-                    }
-                    .frame(height: 100)
-                    .padding(.horizontal, Spacing.xxl)
-
-                    // MARK: - Metric Cards Row (fixed height)
+                    // MARK: - Metric Cards Row (4 columns, compressed to 70pt)
                     LazyVGrid(columns: metricColumns, alignment: .center, spacing: Spacing.lg) {
                         if effectiveHasLoaded {
                             RSVPMetricCardV7(
@@ -144,13 +128,20 @@ struct DashboardViewV7: View {
                                 total: viewModel.totalBudget,
                                 percentage: viewModel.budgetPercentage
                             )
+                            CountdownMetricCardV7(
+                                weddingDate: viewModel.weddingDate,
+                                partner1Name: viewModel.partner1DisplayName,
+                                partner2Name: viewModel.partner2DisplayName,
+                                currentTime: currentTime
+                            )
                         } else {
+                            MetricCardSkeleton()
                             MetricCardSkeleton()
                             MetricCardSkeleton()
                             MetricCardSkeleton()
                         }
                     }
-                    .frame(height: 120)
+                    .frame(height: 70)
                     .padding(.horizontal, Spacing.xxl)
                     
                     // MARK: - Visual Separator
@@ -588,8 +579,9 @@ struct MasonryColumnsView: View {
 
         switch cardType {
         case .budget:
-            // Budget Overview: header + 3 progress bars + labels
-            return cardHeaderHeight + (3 * 80) + cardPadding
+            // Budget Overview: Completely static card (no variable content)
+            // Header (60pt) + divider (8pt) + 2 progress rows (88pt) + remaining budget box (56pt) + card padding (48pt)
+            return 260
 
         case .tasks:
             // Task Manager: header + variable rows based on task count
@@ -689,21 +681,21 @@ struct MasonryColumnsView: View {
             TaskManagerCardV7(
                 store: taskStore,
                 maxItems: 5,
-                cardHeight: 200
+                cardHeight: estimateCardHeight(for: .tasks)
             )
 
         case .vendors:
             VendorListCardV7(
                 store: vendorStore,
                 maxItems: 5,
-                cardHeight: 250
+                cardHeight: estimateCardHeight(for: .vendors)
             )
 
         case .guests:
             GuestResponsesCardV7(
                 store: guestStore,
                 maxItems: 5,
-                cardHeight: 300
+                cardHeight: estimateCardHeight(for: .guests)
             )
             .environmentObject(settingsStore)
             .environmentObject(budgetStore)
@@ -713,7 +705,7 @@ struct MasonryColumnsView: View {
             RecentResponsesCardV7(
                 store: guestStore,
                 maxItems: 5,
-                cardHeight: 200
+                cardHeight: estimateCardHeight(for: .recentResponses)
             )
         }
     }
@@ -1175,6 +1167,65 @@ struct BudgetMetricCardV7: View {
             Text("Total Budget: \(formattedTotal)")
                 .font(Typography.caption2)
                 .foregroundColor(SemanticColors.textSecondary)
+        }
+        .glassPanel()
+    }
+}
+
+// MARK: - Countdown Metric Card
+
+struct CountdownMetricCardV7: View {
+    let weddingDate: Date?
+    let partner1Name: String
+    let partner2Name: String
+    let currentTime: Date
+
+    private var daysUntil: Int {
+        guard let weddingDate = weddingDate else { return 0 }
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.day], from: calendar.startOfDay(for: currentTime), to: calendar.startOfDay(for: weddingDate))
+        return max(components.day ?? 0, 0)
+    }
+
+    private var formattedDate: String {
+        guard let weddingDate = weddingDate else { return "Date TBD" }
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: weddingDate)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Days Until Wedding")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
+                    Text("\(daysUntil) DAYS")
+                        .font(Typography.title3)
+                        .foregroundColor(SemanticColors.textPrimary)
+                }
+
+                Spacer()
+
+                NativeIconBadge(
+                    systemName: "heart.fill",
+                    color: AppGradients.weddingPink,
+                    size: 40
+                )
+            }
+
+            // Wedding date subtitle
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text("\(partner1Name) & \(partner2Name)")
+                    .font(Typography.caption2)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .lineLimit(1)
+
+                Text(formattedDate)
+                    .font(Typography.caption2)
+                    .foregroundColor(SemanticColors.textSecondary)
+            }
         }
         .glassPanel()
     }
