@@ -104,7 +104,7 @@ struct DashboardViewV7: View {
                 MeshGradientBackgroundV7()
                     .ignoresSafeArea()
 
-                // Use VStack with fixed-height header elements, then GeometryReader ONLY for masonry
+                // Use VStack with fixed-height header elements, then masonry layout
                 VStack(spacing: Spacing.lg) {
                     // MARK: - Header (fixed height)
                     DashboardHeaderV7()
@@ -162,13 +162,13 @@ struct DashboardViewV7: View {
                         .padding(.vertical, Spacing.md)
 
                     // MARK: - Main Content: Masonry Layout (fills remaining space)
-                    // GeometryReader ONLY for the masonry area - this prevents overlap
+                    // GeometryReader ONLY for width calculation, height is unconstrained
                     GeometryReader { masonryGeometry in
                         let columnLayout = calculateColumnLayout(
-                            availableHeight: masonryGeometry.size.height,
+                            availableHeight: .infinity, // Don't constrain height - let content determine it
                             availableWidth: masonryGeometry.size.width - (Spacing.xxl * 2)
                         )
-                        
+
                         if effectiveHasLoaded {
                             MasonryColumnsView(
                                 columnLayout: columnLayout,
@@ -422,15 +422,6 @@ struct DashboardViewV7: View {
         }
     }
 
-    /// PreferenceKey to capture measured card heights from child views
-    struct CardHeightPreferenceKey: PreferenceKey {
-        static var defaultValue: [CardType: CGFloat] = [:]
-
-        static func reduce(value: inout [CardType: CGFloat], nextValue: () -> [CardType: CGFloat]) {
-            value.merge(nextValue()) { $1 }
-        }
-    }
-
     /// Alignment offsets for bottom-aligned Row 2 cards
     struct AlignmentOffsets {
         let paymentsOffset: CGFloat
@@ -580,109 +571,91 @@ struct MasonryColumnsView: View {
 
     // MARK: - Intelligent Distribution
 
-    /// Measured card heights from child views (captured via PreferenceKey)
-    @State private var cardHeights: [DashboardViewV7.CardType: CGFloat] = [:]
-
-    /// Flag to track if layout has been calculated (prevents continuous recalculation)
-    @State private var hasCalculatedLayout = false
-
-    /// Column assignments calculated ONCE on initial load and locked
-    /// This prevents the shifting issue caused by continuous layout recalculation
+    /// Column assignments calculated with estimated heights
+    /// This prevents the need for hidden rendering - we use estimated heights based on content
     @State private var columnAssignment: DashboardViewV7.ColumnAssignment = DashboardViewV7.ColumnAssignment(
         column1: [],
         column2: [],
         column3: []
     )
 
+    /// Estimate card heights based on their type and content
+    /// This avoids the need to render cards hidden just to measure them
+    private func estimateCardHeight(for cardType: DashboardViewV7.CardType) -> CGFloat {
+        let cardHeaderHeight: CGFloat = 60  // Title + spacing
+        let cardPadding: CGFloat = 32  // Vertical padding inside card
+        let rowHeight: CGFloat = 44  // Height per item row
+
+        switch cardType {
+        case .budget:
+            // Budget Overview: header + 3 progress bars + labels
+            return cardHeaderHeight + (3 * 80) + cardPadding
+
+        case .tasks:
+            // Task Manager: header + variable rows based on task count
+            let taskCount = taskStore.tasks.filter { $0.status != .completed }.prefix(5).count
+            let contentHeight = CGFloat(max(taskCount, 3)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+
+        case .guests:
+            // Guest Responses: header + variable rows based on guest count
+            let guestCount = guestStore.guests.filter { $0.rsvpDate != nil }.prefix(5).count
+            let contentHeight = CGFloat(max(guestCount, 3)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+
+        case .payments:
+            // Payment Due: header + variable rows based on payment count
+            let contentHeight = CGFloat(max(currentMonthPayments.count, 2)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+
+        case .vendors:
+            // Vendor List: header + variable rows based on vendor count
+            let vendorCount = vendorStore.vendors.prefix(5).count
+            let contentHeight = CGFloat(max(vendorCount, 3)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+
+        case .recentResponses:
+            // Recent Responses: header + variable rows
+            let responseCount = guestStore.guests.filter { $0.rsvpDate != nil }.prefix(4).count
+            let contentHeight = CGFloat(max(responseCount, 2)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+        }
+    }
+
+    /// Calculate estimated heights for all visible cards
+    private var estimatedCardHeights: [DashboardViewV7.CardType: CGFloat] {
+        var heights: [DashboardViewV7.CardType: CGFloat] = [:]
+        for card in columnLayout.visibleCards {
+            heights[card] = estimateCardHeight(for: card)
+        }
+        return heights
+    }
+
     var body: some View {
-        ZStack {
-            // Real layout (always rendered for measurements, but hidden during initial load)
-            HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
-                // Column 1
-                columnView(for: columnAssignment.column1, columnIndex: 0)
+        HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
+            // Column 1
+            columnView(for: columnAssignment.column1, columnIndex: 0)
 
-                // Column 2
-                columnView(for: columnAssignment.column2, columnIndex: 1)
+            // Column 2
+            columnView(for: columnAssignment.column2, columnIndex: 1)
 
-                // Column 3
-                columnView(for: columnAssignment.column3, columnIndex: 2)
-            }
-            .opacity(hasCalculatedLayout ? 1 : 0)
-
-            // Loading skeleton (shown until layout calculated)
-            if !hasCalculatedLayout {
-                dashboardLoadingSkeleton
-            }
+            // Column 3
+            columnView(for: columnAssignment.column3, columnIndex: 2)
         }
         .onAppear {
-            // Calculate initial layout with placeholder heights for immediate assignment
-            // Cards will measure themselves and trigger onPreferenceChange with real heights
-            if !hasCalculatedLayout && columnAssignment.column1.isEmpty {
+            // Calculate layout ONCE using estimated heights based on actual data
+            // No hidden rendering needed - estimates are accurate enough for distribution
+            if columnAssignment.column1.isEmpty {
                 columnAssignment = DashboardViewV7.ColumnAssignment.distribute(
                     cards: columnLayout.visibleCards,
-                    heights: [:], // Empty heights initially - cards will render and measure
+                    heights: estimatedCardHeights,
                     rowSpacing: columnLayout.rowSpacing
                 )
+                print("✅ Dashboard layout calculated using estimated heights (no hidden rendering)")
+                print("   Estimated heights: \(estimatedCardHeights)")
             }
         }
-        .onPreferenceChange(DashboardViewV7.CardHeightPreferenceKey.self) { heights in
-            // Only calculate layout ONCE when real measurements arrive
-            guard !hasCalculatedLayout else { return }
-
-            // Only proceed if we have complete measurements for all visible cards
-            guard heights.count == columnLayout.visibleCards.count else { return }
-
-            // Calculate column assignment ONCE with real heights and lock it
-            cardHeights = heights
-            columnAssignment = DashboardViewV7.ColumnAssignment.distribute(
-                cards: columnLayout.visibleCards,
-                heights: cardHeights,
-                rowSpacing: columnLayout.rowSpacing
-            )
-            hasCalculatedLayout = true
-
-            print("✅ Dashboard layout calculated and LOCKED (no more shifting)")
-        }
     }
-
-    /// Loading skeleton shown while card heights are being measured
-    private var dashboardLoadingSkeleton: some View {
-        HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
-            // Column 1 skeleton
-            VStack(spacing: columnLayout.rowSpacing) {
-                skeletonCard(height: 200)
-                skeletonCard(height: 180)
-            }
-            .frame(width: columnLayout.columnWidth)
-
-            // Column 2 skeleton
-            VStack(spacing: columnLayout.rowSpacing) {
-                skeletonCard(height: 250)
-                skeletonCard(height: 150)
-            }
-            .frame(width: columnLayout.columnWidth)
-
-            // Column 3 skeleton
-            VStack(spacing: columnLayout.rowSpacing) {
-                skeletonCard(height: 200)
-                skeletonCard(height: 220)
-            }
-            .frame(width: columnLayout.columnWidth)
-        }
-    }
-
-    /// Individual skeleton card with shimmer effect
-    private func skeletonCard(height: CGFloat) -> some View {
-        RoundedRectangle(cornerRadius: 16)
-            .fill(Color.gray.opacity(0.1))
-            .frame(height: height)
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
-            )
-            .shimmer()
-    }
-
     // MARK: - Helper Views
 
     /// Build a column with dynamically assigned cards
@@ -692,14 +665,6 @@ struct MasonryColumnsView: View {
             ForEach(cards, id: \.self) { cardType in
                 cardView(for: cardType)
                     .frame(width: columnLayout.columnWidth)
-                    .background(
-                        GeometryReader { geo in
-                            Color.clear.preference(
-                                key: DashboardViewV7.CardHeightPreferenceKey.self,
-                                value: [cardType: geo.size.height]
-                            )
-                        }
-                    )
             }
 
             Spacer(minLength: 0)
