@@ -43,10 +43,10 @@ struct GuestDashboardViewV2: View {
     
     var body: some View {
         ZStack {
-            // Background gradient matching DashboardViewV7
-            AppGradients.appBackground
+            // Mesh gradient background matching DashboardViewV7
+            MeshGradientBackgroundV7()
                 .ignoresSafeArea()
-            
+
             ScrollView {
                 VStack(spacing: Spacing.xl) {
                     // Header Section

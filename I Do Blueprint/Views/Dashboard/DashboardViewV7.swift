@@ -523,6 +523,13 @@ struct DashboardViewV7: View {
         // Determine which cards are visible based on user settings
         var visibleCards: [CardType] = [.budget, .tasks]  // Budget and Tasks always visible
 
+        // DEBUG: Log card visibility conditions
+        print("🔍 Dashboard Card Visibility:")
+        print("  - Guests count: \(guestStore.guests.count), shouldShow: \(shouldShowGuestResponses)")
+        print("  - Vendors count: \(vendorStore.vendors.count), shouldShow: \(shouldShowVendorList)")
+        print("  - Payments count: \(currentMonthPayments.count), shouldShow: \(shouldShowPaymentsDue)")
+        print("  - Recent responses: \(shouldShowRecentResponses)")
+
         if shouldShowPaymentsDue {
             visibleCards.append(.payments)
         }
@@ -535,6 +542,9 @@ struct DashboardViewV7: View {
         if shouldShowRecentResponses {
             visibleCards.append(.recentResponses)
         }
+
+        print("  - Visible cards: \(visibleCards)")
+        print("  - Available height: \(availableHeight), width: \(availableWidth)")
 
         return ColumnLayout(
             availableHeight: availableHeight,
@@ -571,15 +581,21 @@ struct MasonryColumnsView: View {
     // MARK: - Intelligent Distribution
 
     /// Measured card heights from child views (captured via PreferenceKey)
-    @State private var cardHeights: [DashboardViewV7.CardType: CGFloat] = [:]
+    /// Initialized with placeholder heights to prevent empty grid on first render
+    @State private var cardHeights: [DashboardViewV7.CardType: CGFloat] = [
+        .budget: 200,
+        .tasks: 250,
+        .guests: 200,
+        .payments: 180,
+        .vendors: 250,
+        .recentResponses: 150
+    ]
+
+    /// Task for debouncing preference updates to prevent infinite layout loops
+    @State private var heightUpdateTask: Task<Void, Never>?
 
     /// Dynamically calculated column assignments based on measured heights
     private var columnAssignment: DashboardViewV7.ColumnAssignment {
-        // If no heights measured yet, use empty assignment
-        guard !cardHeights.isEmpty else {
-            return DashboardViewV7.ColumnAssignment(column1: [], column2: [], column3: [])
-        }
-
         return DashboardViewV7.ColumnAssignment.distribute(
             cards: columnLayout.visibleCards,
             heights: cardHeights,
@@ -599,7 +615,18 @@ struct MasonryColumnsView: View {
             columnView(for: columnAssignment.column3, columnIndex: 2)
         }
         .onPreferenceChange(DashboardViewV7.CardHeightPreferenceKey.self) { heights in
-            cardHeights = heights
+            // Cancel previous update task to debounce rapid changes
+            heightUpdateTask?.cancel()
+
+            // Only update if heights have actually changed (prevents infinite loop)
+            guard heights != cardHeights else { return }
+
+            // Debounce updates with 100ms delay to prevent layout thrashing
+            heightUpdateTask = Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(100))
+                guard !Task.isCancelled else { return }
+                cardHeights = heights
+            }
         }
     }
 
