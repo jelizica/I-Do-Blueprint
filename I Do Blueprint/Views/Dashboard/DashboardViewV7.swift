@@ -168,6 +168,7 @@ struct DashboardViewV7: View {
                                 shouldShowRecentResponses: shouldShowRecentResponses,
                                 currentMonthPayments: currentMonthPayments
                             )
+                            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                             .padding(.horizontal, Spacing.xxl)
                         } else {
                             // Loading skeletons
@@ -614,6 +615,21 @@ struct DashboardViewV7: View {
     }
 }
 
+// MARK: - Custom Column Top Alignment
+
+/// Custom vertical alignment that ensures all columns start at exactly the same Y position
+/// This fixes the issue where HStack's default .top alignment computes differently for VStacks with different content
+private extension VerticalAlignment {
+    struct ColumnTopAlignment: AlignmentID {
+        static func defaultValue(in context: ViewDimensions) -> CGFloat {
+            // Return the top edge of the view's bounds
+            context[.top]
+        }
+    }
+
+    static let columnTop = VerticalAlignment(ColumnTopAlignment.self)
+}
+
 // MARK: - Masonry Columns View
 
 /// Dynamic masonry layout with content-driven heights and horizontal alignment
@@ -793,7 +809,9 @@ struct MasonryColumnsView: View {
     @State private var finalCardHeights: [DashboardViewV7.CardType: CGFloat] = [:]
 
     var body: some View {
-        HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
+        // Use custom columnTop alignment to ensure all columns start at exactly the same Y position
+        // This fixes the issue where standard .top alignment computes differently for VStacks with varying content
+        HStack(alignment: .columnTop, spacing: columnLayout.cardSpacing) {
             // Column 1
             columnView(for: columnAssignment.column1, columnIndex: 0)
 
@@ -803,7 +821,7 @@ struct MasonryColumnsView: View {
             // Column 3
             columnView(for: columnAssignment.column3, columnIndex: 2)
         }
-        .frame(maxHeight: .infinity, alignment: .top)  // Ensure all columns start at top
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .onAppear {
             // Step 1: Distribute cards using static heights for bin-packing
             // Dynamic cards (Vendors, Guest Responses) are separated into different columns when possible
@@ -844,6 +862,7 @@ struct MasonryColumnsView: View {
 
     /// Build a column with dynamically assigned cards
     /// Cards fill available height with no bottom space (dynamic cards expand to fill)
+    /// Uses custom columnTop alignment guide to ensure all columns start at the same Y position
     @ViewBuilder
     private func columnView(for cards: [DashboardViewV7.CardType], columnIndex: Int) -> some View {
         VStack(alignment: .leading, spacing: columnLayout.rowSpacing) {
@@ -851,11 +870,12 @@ struct MasonryColumnsView: View {
                 cardView(for: cardType)
                     .frame(width: columnLayout.columnWidth)
             }
-
-            Spacer(minLength: 0)  // Push cards to top, fill remaining space
         }
-        .frame(width: columnLayout.columnWidth)
-        .frame(maxHeight: .infinity, alignment: .top)
+        .frame(width: columnLayout.columnWidth, alignment: .top)
+        // Use custom columnTop alignment to force all columns to start at the same Y position
+        .alignmentGuide(.columnTop) { dimension in
+            dimension[.top]
+        }
     }
 
     /// Build individual card view based on type
