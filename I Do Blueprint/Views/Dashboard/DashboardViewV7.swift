@@ -106,13 +106,10 @@ struct DashboardViewV7: View {
 
                 GeometryReader { geometry in
                     let availableHeight = calculateAvailableHeight(geometry: geometry)
-                    let rowHeights = calculateRowHeights(availableHeight: availableHeight)
-                    
-                    // Calculate maxItems for each card type based on row heights
-                    let row1MaxItems = calculateMaxItems(cardHeight: rowHeights.row1)
-                    let guestMaxItems = calculateGuestMaxItems(cardHeight: rowHeights.row1)
-                    let row2MaxItems = calculateMaxItems(cardHeight: rowHeights.row2)
-                    let vendorMaxItems = calculateVendorMaxItems(cardHeight: rowHeights.row2)
+                    let columnLayout = calculateColumnLayout(
+                        availableHeight: availableHeight,
+                        availableWidth: geometry.size.width - (Spacing.xxl * 2)
+                    )
                     
                     // NO ScrollView - content fills viewport exactly
                     VStack(spacing: Spacing.xl) {
@@ -160,72 +157,45 @@ struct DashboardViewV7: View {
                         }
                         .padding(.horizontal, Spacing.xxl)
 
-                        // MARK: - Main Content Grid with Space-Filling Layout
-                        // Cards fill remaining space with NO scrolling
-                        VStack(spacing: 0) {
-                            if effectiveHasLoaded {
-                                // Row 1: Budget Overview, Task Manager, Guest Responses
-                                HStack(alignment: .top, spacing: Spacing.lg) {
-                                    // Always show: Budget Overview (fixed size - doesn't need many items)
-                                    BudgetOverviewCardV7(
-                                        totalBudget: viewModel.totalBudget,
-                                        totalSpent: viewModel.totalPaid
-                                    )
-                                    
-                                    // Always show: Task Manager (uses row1MaxItems)
-                                    TaskManagerCardV7(store: taskStore, maxItems: row1MaxItems)
-                                    
-                                    // Conditional: Guest Responses (uses guestMaxItems - can show more)
-                                    if shouldShowGuestResponses {
-                                        GuestResponsesCardV7(store: guestStore, maxItems: guestMaxItems)
-                                            .environmentObject(settingsStore)
-                                            .environmentObject(budgetStore)
-                                            .environmentObject(coordinator)
-                                    }
-                                }
-                                .frame(height: rowHeights.row1)
-                                
-                                // Row 2: Payments Due, Vendor List, Recent Responses
-                                if row2CardCount > 0 {
-                                    HStack(alignment: .top, spacing: Spacing.lg) {
-                                        // Conditional: Payments Due (shows ALL current month payments)
-                                        if shouldShowPaymentsDue {
-                                            PaymentsDueCardV7(maxItems: row2MaxItems)
-                                        }
-                                        
-                                        // Conditional: Vendor List (uses vendorMaxItems - can show more)
-                                        if shouldShowVendorList {
-                                            VendorListCardV7(store: vendorStore, maxItems: vendorMaxItems)
-                                        }
-                                        
-                                        // Conditional: Recent Responses
-                                        if shouldShowRecentResponses {
-                                            RecentResponsesCardV7(store: guestStore, maxItems: row2MaxItems)
-                                        }
-                                    }
-                                    .frame(height: rowHeights.row2)
-                                    .padding(.top, Spacing.lg)
-                                }
-                            } else {
-                                // Loading skeletons
-                                HStack(alignment: .top, spacing: Spacing.lg) {
+                        // MARK: - Main Content: Column-Based Masonry Layout
+                        // Each column fills viewport height independently
+                        // Cards meet at edges with NO gaps
+                        if effectiveHasLoaded {
+                            MasonryColumnsView(
+                                columnLayout: columnLayout,
+                                budgetStore: budgetStore,
+                                taskStore: taskStore,
+                                guestStore: guestStore,
+                                vendorStore: vendorStore,
+                                settingsStore: settingsStore,
+                                coordinator: coordinator,
+                                viewModel: viewModel,
+                                shouldShowGuestResponses: shouldShowGuestResponses,
+                                shouldShowPaymentsDue: shouldShowPaymentsDue,
+                                shouldShowVendorList: shouldShowVendorList,
+                                shouldShowRecentResponses: shouldShowRecentResponses,
+                                currentMonthPayments: currentMonthPayments
+                            )
+                        } else {
+                            // Loading skeletons in masonry layout
+                            HStack(alignment: .top, spacing: Spacing.lg) {
+                                VStack(spacing: Spacing.lg) {
                                     DashboardBudgetCardSkeleton()
-                                    DashboardTasksCardSkeleton()
-                                    DashboardGuestsCardSkeleton()
-                                }
-                                .frame(height: rowHeights.row1)
-                                
-                                HStack(alignment: .top, spacing: Spacing.lg) {
                                     DashboardVendorsCardSkeleton()
                                 }
-                                .frame(height: rowHeights.row2)
-                                .padding(.top, Spacing.lg)
+                                VStack(spacing: Spacing.lg) {
+                                    DashboardTasksCardSkeleton()
+                                }
+                                VStack(spacing: Spacing.lg) {
+                                    DashboardGuestsCardSkeleton()
+                                }
                             }
+                            .frame(height: availableHeight)
                         }
-                        .padding(.horizontal, Spacing.xxl)
                     }
                     .padding(.top, Spacing.lg)
                     .padding(.bottom, Spacing.lg)
+                    .padding(.horizontal, Spacing.xxl)
                 }
             }
             .navigationTitle("")
@@ -421,6 +391,215 @@ struct DashboardViewV7: View {
         let maxItems = Int(availableForItems / itemHeight)
         
         return max(maxItems, 3)
+    }
+    
+    // MARK: - Column-Based Masonry Layout
+    
+    /// Layout configuration for masonry columns
+    struct ColumnLayout {
+        let availableHeight: CGFloat
+        let availableWidth: CGFloat
+        let columnCount: Int
+        let columnWidth: CGFloat
+        let cardSpacing: CGFloat
+        
+        /// Calculate height for a card based on its data count
+        func cardHeight(forItemCount count: Int, itemHeight: CGFloat, headerHeight: CGFloat = 50, minHeight: CGFloat = 120) -> CGFloat {
+            let contentHeight = CGFloat(count) * itemHeight + headerHeight + (Spacing.lg * 2)
+            return max(contentHeight, minHeight)
+        }
+    }
+    
+    /// Calculate column layout based on available space and data density
+    private func calculateColumnLayout(availableHeight: CGFloat, availableWidth: CGFloat) -> ColumnLayout {
+        let cardSpacing = Spacing.lg  // Standardized gap between cards
+        let columnCount = 3  // 3-column layout
+        let totalSpacing = cardSpacing * CGFloat(columnCount - 1)
+        let columnWidth = (availableWidth - totalSpacing) / CGFloat(columnCount)
+        
+        return ColumnLayout(
+            availableHeight: availableHeight,
+            availableWidth: availableWidth,
+            columnCount: columnCount,
+            columnWidth: columnWidth,
+            cardSpacing: cardSpacing
+        )
+    }
+}
+
+// MARK: - Masonry Columns View
+
+/// Column-based masonry layout where each column fills viewport height independently
+/// Cards meet at edges with standardized gaps (Spacing.lg)
+/// Data-dense cards can span multiple columns
+struct MasonryColumnsView: View {
+    let columnLayout: DashboardViewV7.ColumnLayout
+    let budgetStore: BudgetStoreV2
+    let taskStore: TaskStoreV2
+    let guestStore: GuestStoreV2
+    let vendorStore: VendorStoreV2
+    let settingsStore: SettingsStoreV2
+    let coordinator: AppCoordinator
+    let viewModel: DashboardViewModel
+    let shouldShowGuestResponses: Bool
+    let shouldShowPaymentsDue: Bool
+    let shouldShowVendorList: Bool
+    let shouldShowRecentResponses: Bool
+    let currentMonthPayments: [PaymentSchedule]
+    
+    /// Calculate how many columns a card should span based on data count
+    private func columnSpan(forDataCount count: Int, threshold: Int = 15) -> Int {
+        if count >= threshold * 2 {
+            return 3  // Very data-dense: span all 3 columns
+        } else if count >= threshold {
+            return 2  // Data-dense: span 2 columns
+        }
+        return 1  // Normal: single column
+    }
+    
+    /// Calculate card heights for each column
+    private var cardHeights: (budget: CGFloat, payments: CGFloat, tasks: CGFloat, vendors: CGFloat, guests: CGFloat, recent: CGFloat) {
+        let availableHeight = columnLayout.availableHeight
+        let spacing = columnLayout.cardSpacing
+        
+        // Fixed heights for specific cards
+        let paymentsHeight = calculatePaymentsHeight()
+        
+        // Column 1: Budget + Payments
+        let budgetHeight = availableHeight - paymentsHeight - spacing
+        
+        // Column 2: Tasks + Vendors (split based on data density)
+        let taskWeight = min(CGFloat(taskStore.tasks.count) / 10.0, 2.0)
+        let vendorWeight = shouldShowVendorList ? min(CGFloat(vendorStore.vendors.count) / 10.0, 2.0) : 0
+        let col2TotalWeight = taskWeight + vendorWeight
+        
+        let tasksHeight: CGFloat
+        let vendorsHeight: CGFloat
+        if col2TotalWeight > 0 {
+            tasksHeight = (availableHeight - spacing) * (taskWeight / col2TotalWeight)
+            vendorsHeight = shouldShowVendorList ? (availableHeight - spacing) * (vendorWeight / col2TotalWeight) : 0
+        } else {
+            tasksHeight = availableHeight
+            vendorsHeight = 0
+        }
+        
+        // Column 3: Guests + Recent (split based on data density)
+        let guestWeight = shouldShowGuestResponses ? min(CGFloat(guestStore.guests.count) / 20.0, 3.0) : 0
+        let recentWeight = shouldShowRecentResponses ? 1.0 : 0
+        let col3TotalWeight = guestWeight + recentWeight
+        
+        let guestsHeight: CGFloat
+        let recentHeight: CGFloat
+        if col3TotalWeight > 0 {
+            guestsHeight = shouldShowGuestResponses ? (availableHeight - spacing) * (guestWeight / col3TotalWeight) : 0
+            recentHeight = shouldShowRecentResponses ? (availableHeight - spacing) * (recentWeight / col3TotalWeight) : 0
+        } else {
+            guestsHeight = availableHeight
+            recentHeight = 0
+        }
+        
+        return (budgetHeight, paymentsHeight, tasksHeight, vendorsHeight, guestsHeight, recentHeight)
+    }
+    
+    /// Calculate fixed height for Payments Due card
+    private func calculatePaymentsHeight() -> CGFloat {
+        let cardHeaderHeight: CGFloat = 50
+        let paymentRowHeight: CGFloat = 36
+        let cardPadding: CGFloat = Spacing.lg * 2
+        let emptyStateHeight: CGFloat = 60
+        
+        let paymentCount = currentMonthPayments.count
+        
+        if paymentCount == 0 {
+            return cardHeaderHeight + emptyStateHeight + cardPadding
+        }
+        
+        return cardHeaderHeight + (CGFloat(paymentCount) * paymentRowHeight) + cardPadding
+    }
+    
+    /// Calculate max items for a card based on its height
+    private func maxItems(forHeight height: CGFloat, itemHeight: CGFloat) -> Int {
+        let headerHeight: CGFloat = 50
+        let padding: CGFloat = Spacing.lg * 2
+        let available = height - headerHeight - padding
+        return max(Int(available / itemHeight), 2)
+    }
+    
+    var body: some View {
+        let heights = cardHeights
+        let spacing = columnLayout.cardSpacing
+        
+        // Check if guests should span multiple columns
+        let guestSpan = columnSpan(forDataCount: guestStore.guests.count, threshold: 30)
+        let vendorSpan = columnSpan(forDataCount: vendorStore.vendors.count, threshold: 15)
+        
+        HStack(alignment: .top, spacing: spacing) {
+            // MARK: - Column 1: Budget + Payments
+            VStack(spacing: spacing) {
+                BudgetOverviewCardV7(
+                    totalBudget: viewModel.totalBudget,
+                    totalSpent: viewModel.totalPaid
+                )
+                .frame(height: heights.budget)
+                
+                if shouldShowPaymentsDue {
+                    PaymentsDueCardV7(maxItems: 999)  // Show all
+                        .frame(height: heights.payments)
+                }
+            }
+            .frame(width: columnLayout.columnWidth)
+            
+            // MARK: - Column 2: Tasks + Vendors
+            VStack(spacing: spacing) {
+                TaskManagerCardV7(
+                    store: taskStore,
+                    maxItems: maxItems(forHeight: heights.tasks, itemHeight: 44)
+                )
+                .frame(height: heights.tasks)
+                
+                if shouldShowVendorList && vendorSpan == 1 {
+                    VendorListCardV7(
+                        store: vendorStore,
+                        maxItems: maxItems(forHeight: heights.vendors, itemHeight: 48)
+                    )
+                    .frame(height: heights.vendors)
+                }
+            }
+            .frame(width: columnLayout.columnWidth)
+            
+            // MARK: - Column 3: Guests + Recent
+            VStack(spacing: spacing) {
+                if shouldShowGuestResponses && guestSpan == 1 {
+                    GuestResponsesCardV7(
+                        store: guestStore,
+                        maxItems: maxItems(forHeight: heights.guests, itemHeight: 52)
+                    )
+                    .environmentObject(settingsStore)
+                    .environmentObject(budgetStore)
+                    .environmentObject(coordinator)
+                    .frame(height: heights.guests)
+                }
+                
+                if shouldShowRecentResponses {
+                    RecentResponsesCardV7(
+                        store: guestStore,
+                        maxItems: maxItems(forHeight: heights.recent, itemHeight: 44)
+                    )
+                    .frame(height: heights.recent)
+                }
+                
+                // If no cards in column 3, show vendors here if they span
+                if !shouldShowGuestResponses && !shouldShowRecentResponses && shouldShowVendorList {
+                    VendorListCardV7(
+                        store: vendorStore,
+                        maxItems: maxItems(forHeight: columnLayout.availableHeight, itemHeight: 48)
+                    )
+                    .frame(height: columnLayout.availableHeight)
+                }
+            }
+            .frame(width: columnLayout.columnWidth)
+        }
+        .frame(height: columnLayout.availableHeight)
     }
 }
 
