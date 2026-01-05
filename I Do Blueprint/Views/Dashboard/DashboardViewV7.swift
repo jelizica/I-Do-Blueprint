@@ -402,116 +402,138 @@ struct DashboardViewV7: View {
         return max(maxItems, 3)
     }
     
-    // MARK: - Column-Based Masonry Layout
+    // MARK: - Row-Based Horizontal Alignment Layout
 
-    /// Card type for weight-based height distribution
-    enum CardType {
+    /// Card type for dynamic content-driven masonry layout
+    enum CardType: Hashable {
         case budget           // Budget Overview
-        case payments         // Payments Due (FIXED HEIGHT)
+        case payments         // Payments Due
         case tasks            // Task Manager
         case vendors          // Vendor List
         case guests           // Guest Responses
         case recentResponses  // Recent Responses
 
-        /// Flex weight for proportional height distribution
-        /// Higher weight = more space allocated
-        var flexWeight: CGFloat {
+        /// Row assignment - which row does this card belong to?
+        var row: Int {
             switch self {
-            case .budget: return 1.5      // Moderate space for budget overview
-            case .payments: return 0      // Fixed height, not flexible
-            case .tasks: return 1.0       // Standard space for tasks
-            case .vendors: return 1.2     // Slightly more for vendor list
-            case .guests: return 2.0      // Most space for guest responses (high data density)
-            case .recentResponses: return 0.8  // Less space for activity feed
+            case .budget, .tasks, .guests: return 1  // Row 1: Budget, Tasks, Guests (tops align)
+            case .payments, .vendors, .recentResponses: return 2  // Row 2: Payments, Vendors, Recent (bottoms align)
             }
         }
     }
 
-    /// Layout configuration for masonry columns with weighted distribution
+    /// PreferenceKey to capture measured card heights from child views
+    struct CardHeightPreferenceKey: PreferenceKey {
+        static var defaultValue: [CardType: CGFloat] = [:]
+
+        static func reduce(value: inout [CardType: CGFloat], nextValue: () -> [CardType: CGFloat]) {
+            value.merge(nextValue()) { $1 }
+        }
+    }
+
+    /// Alignment offsets for bottom-aligned Row 2 cards
+    struct AlignmentOffsets {
+        let paymentsOffset: CGFloat
+        let vendorsOffset: CGFloat
+        let recentOffset: CGFloat
+
+        static let zero = AlignmentOffsets(paymentsOffset: 0, vendorsOffset: 0, recentOffset: 0)
+
+        /// Calculate offsets to align Row 2 card bottoms
+        /// Tallest card has offset 0, shorter cards get pushed down
+        static func calculate(
+            paymentsHeight: CGFloat,
+            vendorsHeight: CGFloat,
+            recentHeight: CGFloat
+        ) -> AlignmentOffsets {
+            let maxHeight = max(paymentsHeight, vendorsHeight, recentHeight)
+
+            return AlignmentOffsets(
+                paymentsOffset: maxHeight - paymentsHeight,
+                vendorsOffset: maxHeight - vendorsHeight,
+                recentOffset: maxHeight - recentHeight
+            )
+        }
+    }
+
+    /// Column assignment for intelligent card distribution
+    struct ColumnAssignment {
+        let column1: [CardType]
+        let column2: [CardType]
+        let column3: [CardType]
+
+        /// Calculate optimal column distribution based on measured heights
+        /// Uses greedy bin-packing: assign each card to the column with minimum current height
+        static func distribute(
+            cards: [CardType],
+            heights: [CardType: CGFloat],
+            rowSpacing: CGFloat
+        ) -> ColumnAssignment {
+            // Track current height per column (including spacing between cards)
+            var columnHeights: [Int: CGFloat] = [0: 0, 1: 0, 2: 0]
+            var columnCards: [Int: [CardType]] = [0: [], 1: [], 2: []]
+
+            // Sort cards by height descending (place tallest first for better distribution)
+            let sortedCards = cards.sorted { (heights[$0] ?? 0) > (heights[$1] ?? 0) }
+
+            // Greedy assignment: place each card in the shortest column
+            for card in sortedCards {
+                let cardHeight = heights[card] ?? 150
+
+                // Find column with minimum height
+                let shortestColumn = columnHeights.min(by: { $0.value < $1.value })?.key ?? 0
+
+                // Add card to that column
+                columnCards[shortestColumn]?.append(card)
+
+                // Update column height (add card height + spacing if not first card)
+                let spacingToAdd = columnCards[shortestColumn]!.count > 1 ? rowSpacing : 0
+                columnHeights[shortestColumn]! += cardHeight + spacingToAdd
+            }
+
+            return ColumnAssignment(
+                column1: columnCards[0] ?? [],
+                column2: columnCards[1] ?? [],
+                column3: columnCards[2] ?? []
+            )
+        }
+    }
+
+    /// Layout configuration for dynamic masonry with intelligent card distribution
     struct ColumnLayout {
         let availableHeight: CGFloat
         let availableWidth: CGFloat
         let columnCount: Int
         let columnWidth: CGFloat
         let cardSpacing: CGFloat
+        let rowSpacing: CGFloat  // Spacing between rows
 
-        // Column configurations with explicit cards
-        let column1Cards: [CardType]
-        let column2Cards: [CardType]
-        let column3Cards: [CardType]
-
-        /// Calculate explicit height for each card using PER-COLUMN weighted distribution
-        /// This ensures all columns have identical height with aligned tops/bottoms
-        /// Each column's flexible cards expand proportionally to fill 100% of that column's remaining space
-        func calculateCardHeights(paymentsFixedHeight: CGFloat) -> [CardType: CGFloat] {
-            var heights: [CardType: CGFloat] = [:]
-
-            // Process each column independently to ensure uniform heights
-            let columns = [column1Cards, column2Cards, column3Cards]
-
-            for columnCards in columns {
-                // Step 1: Calculate spacing for THIS column only
-                let columnSpacing = CGFloat(columnCards.count - 1) * Spacing.lg
-
-                // Step 2: Calculate fixed heights for THIS column
-                let columnFixedHeight = columnCards
-                    .filter { $0 == .payments }
-                    .reduce(0) { sum, _ in sum + paymentsFixedHeight }
-
-                // Step 3: Calculate remaining height for flexible cards in THIS column
-                let columnRemainingHeight = availableHeight - columnFixedHeight - columnSpacing
-
-                // Step 4: Calculate total flex weight for THIS column only
-                let columnFlexWeight = columnCards
-                    .filter { $0.flexWeight > 0 }
-                    .reduce(0) { $0 + $1.flexWeight }
-
-                // Step 5: Distribute remaining height proportionally among THIS column's flexible cards
-                // Each column normalizes to 100% of its own remaining space
-                for cardType in columnCards {
-                    if cardType == .payments {
-                        // Fixed height card
-                        heights[cardType] = paymentsFixedHeight
-                    } else if columnFlexWeight > 0 {
-                        // Flexible card: gets its proportion of THIS column's remaining space
-                        // Example: Column 3 with only Guest card (weight 2.0) gets 2.0/2.0 = 100% of space
-                        heights[cardType] = columnRemainingHeight * (cardType.flexWeight / columnFlexWeight)
-                    } else {
-                        // Fallback: equal distribution if all weights are 0
-                        let flexCardCount = columnCards.filter { $0.flexWeight > 0 }.count
-                        heights[cardType] = flexCardCount > 0 ? (columnRemainingHeight / CGFloat(flexCardCount)) : 0
-                    }
-                }
-            }
-
-            return heights
-        }
+        // Visible cards (determined by user settings)
+        let visibleCards: [CardType]
     }
 
     /// Calculate column layout based on available space and visible cards
     private func calculateColumnLayout(availableHeight: CGFloat, availableWidth: CGFloat) -> ColumnLayout {
         let cardSpacing = Spacing.sm  // Horizontal spacing between columns (8pt)
+        let rowSpacing = Spacing.lg   // Vertical spacing between rows
         let columnCount = 3  // 3-column layout
         let totalSpacing = cardSpacing * CGFloat(columnCount - 1)
         let columnWidth = (availableWidth - totalSpacing) / CGFloat(columnCount)
 
-        // Define which cards appear in each column based on visibility
-        var column1Cards: [CardType] = [.budget]
+        // Determine which cards are visible based on user settings
+        var visibleCards: [CardType] = [.budget, .tasks]  // Budget and Tasks always visible
+
         if shouldShowPaymentsDue {
-            column1Cards.append(.payments)
+            visibleCards.append(.payments)
         }
-
-        var column2Cards: [CardType] = [.tasks]
         if shouldShowVendorList {
-            column2Cards.append(.vendors)
+            visibleCards.append(.vendors)
         }
-
-        var column3Cards: [CardType] = []
         if shouldShowGuestResponses {
-            column3Cards.append(.guests)
+            visibleCards.append(.guests)
         }
         if shouldShowRecentResponses {
-            column3Cards.append(.recentResponses)
+            visibleCards.append(.recentResponses)
         }
 
         return ColumnLayout(
@@ -520,18 +542,17 @@ struct DashboardViewV7: View {
             columnCount: columnCount,
             columnWidth: columnWidth,
             cardSpacing: cardSpacing,
-            column1Cards: column1Cards,
-            column2Cards: column2Cards,
-            column3Cards: column3Cards
+            rowSpacing: rowSpacing,
+            visibleCards: visibleCards
         )
     }
 }
 
 // MARK: - Masonry Columns View
 
-/// Masonry layout with UNIFORM column heights using weighted distribution
-/// All columns have identical height with aligned tops/bottoms for visual cohesion
-/// Cards receive explicit heights based on flex weights and data density
+/// Dynamic masonry layout with content-driven heights and horizontal alignment
+/// Row 1 cards (Budget, Tasks, Guests) align their tops
+/// Row 2 cards (Payments, Vendors, Recent) align their bottoms via calculated offsets
 struct MasonryColumnsView: View {
     let columnLayout: DashboardViewV7.ColumnLayout
     let budgetStore: BudgetStoreV2
@@ -547,111 +568,109 @@ struct MasonryColumnsView: View {
     let shouldShowRecentResponses: Bool
     let currentMonthPayments: [PaymentSchedule]
 
-    // MARK: - Unified Height Distribution System
+    // MARK: - Intelligent Distribution
 
-    /// Calculate FIXED height for Payments Due card based on actual payment count
-    private var paymentsFixedHeight: CGFloat {
-        let cardHeaderHeight: CGFloat = 50
-        let paymentRowHeight: CGFloat = 36
-        let cardPadding: CGFloat = Spacing.lg * 2
-        let emptyStateHeight: CGFloat = 60
+    /// Measured card heights from child views (captured via PreferenceKey)
+    @State private var cardHeights: [DashboardViewV7.CardType: CGFloat] = [:]
 
-        let paymentCount = currentMonthPayments.count
-
-        if paymentCount == 0 {
-            return cardHeaderHeight + emptyStateHeight + cardPadding
+    /// Dynamically calculated column assignments based on measured heights
+    private var columnAssignment: DashboardViewV7.ColumnAssignment {
+        // If no heights measured yet, use empty assignment
+        guard !cardHeights.isEmpty else {
+            return DashboardViewV7.ColumnAssignment(column1: [], column2: [], column3: [])
         }
 
-        return cardHeaderHeight + (CGFloat(paymentCount) * paymentRowHeight) + cardPadding
-    }
-
-    /// Calculate explicit heights for all cards using weighted distribution
-    /// This is the SINGLE SOURCE OF TRUTH for all card heights
-    private var cardHeights: [DashboardViewV7.CardType: CGFloat] {
-        columnLayout.calculateCardHeights(paymentsFixedHeight: paymentsFixedHeight)
-    }
-
-    /// Calculate max items that fit in a card based on its allocated height
-    private func maxItems(forCardType cardType: DashboardViewV7.CardType, itemHeight: CGFloat) -> Int {
-        let cardHeight = cardHeights[cardType] ?? 150
-        let headerHeight: CGFloat = 50
-        let padding: CGFloat = Spacing.lg * 2
-        let available = cardHeight - headerHeight - padding
-        return max(Int(available / itemHeight), 2)
+        return DashboardViewV7.ColumnAssignment.distribute(
+            cards: columnLayout.visibleCards,
+            heights: cardHeights,
+            rowSpacing: columnLayout.rowSpacing
+        )
     }
 
     var body: some View {
         HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
-            // MARK: - Column 1: Budget + Payments
-            VStack(alignment: .leading, spacing: Spacing.lg) {
-                BudgetOverviewCardV7(
-                    totalBudget: viewModel.totalBudget,
-                    totalSpent: viewModel.totalPaid
-                )
-                .frame(width: columnLayout.columnWidth, height: cardHeights[.budget] ?? 150)
+            // Column 1
+            columnView(for: columnAssignment.column1, columnIndex: 0)
 
-                if shouldShowPaymentsDue {
-                    PaymentsDueCardV7(maxItems: 999)  // Show ALL payments
-                        .frame(width: columnLayout.columnWidth, height: cardHeights[.payments] ?? paymentsFixedHeight)
-                }
+            // Column 2
+            columnView(for: columnAssignment.column2, columnIndex: 1)
 
-                // Spacer absorbs rounding errors and ensures column fills full height
-                Spacer(minLength: 0)
-            }
-            .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
-
-            // MARK: - Column 2: Tasks + Vendors
-            VStack(alignment: .leading, spacing: Spacing.lg) {
-                TaskManagerCardV7(
-                    store: taskStore,
-                    maxItems: maxItems(forCardType: .tasks, itemHeight: 44),
-                    cardHeight: cardHeights[.tasks] ?? 150
-                )
-                .frame(width: columnLayout.columnWidth, height: cardHeights[.tasks] ?? 150)
-
-                if shouldShowVendorList {
-                    VendorListCardV7(
-                        store: vendorStore,
-                        maxItems: maxItems(forCardType: .vendors, itemHeight: 48),
-                        cardHeight: cardHeights[.vendors] ?? 150
-                    )
-                    .frame(width: columnLayout.columnWidth, height: cardHeights[.vendors] ?? 150)
-                }
-
-                // Spacer absorbs rounding errors and ensures column fills full height
-                Spacer(minLength: 0)
-            }
-            .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
-
-            // MARK: - Column 3: Guests + Recent
-            VStack(alignment: .leading, spacing: Spacing.lg) {
-                if shouldShowGuestResponses {
-                    GuestResponsesCardV7(
-                        store: guestStore,
-                        maxItems: maxItems(forCardType: .guests, itemHeight: 52),
-                        cardHeight: cardHeights[.guests] ?? 150
-                    )
-                    .environmentObject(settingsStore)
-                    .environmentObject(budgetStore)
-                    .environmentObject(coordinator)
-                    .frame(width: columnLayout.columnWidth, height: cardHeights[.guests] ?? 150)
-                }
-
-                if shouldShowRecentResponses {
-                    RecentResponsesCardV7(
-                        store: guestStore,
-                        maxItems: maxItems(forCardType: .recentResponses, itemHeight: 44),
-                        cardHeight: cardHeights[.recentResponses] ?? 150
-                    )
-                    .frame(width: columnLayout.columnWidth, height: cardHeights[.recentResponses] ?? 150)
-                }
-
-                // Spacer absorbs rounding errors and ensures column fills full height
-                Spacer(minLength: 0)
-            }
-            .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
+            // Column 3
+            columnView(for: columnAssignment.column3, columnIndex: 2)
         }
-        .frame(height: columnLayout.availableHeight)
+        .onPreferenceChange(DashboardViewV7.CardHeightPreferenceKey.self) { heights in
+            cardHeights = heights
+        }
+    }
+
+    // MARK: - Helper Views
+
+    /// Build a column with dynamically assigned cards
+    @ViewBuilder
+    private func columnView(for cards: [DashboardViewV7.CardType], columnIndex: Int) -> some View {
+        VStack(alignment: .leading, spacing: columnLayout.rowSpacing) {
+            ForEach(cards, id: \.self) { cardType in
+                cardView(for: cardType)
+                    .frame(width: columnLayout.columnWidth)
+                    .background(
+                        GeometryReader { geo in
+                            Color.clear.preference(
+                                key: DashboardViewV7.CardHeightPreferenceKey.self,
+                                value: [cardType: geo.size.height]
+                            )
+                        }
+                    )
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(width: columnLayout.columnWidth)
+    }
+
+    /// Build individual card view based on type
+    @ViewBuilder
+    private func cardView(for cardType: DashboardViewV7.CardType) -> some View {
+        switch cardType {
+        case .budget:
+            BudgetOverviewCardV7(
+                totalBudget: viewModel.totalBudget,
+                totalSpent: viewModel.totalPaid
+            )
+
+        case .payments:
+            PaymentsDueCardV7(maxItems: 5)
+
+        case .tasks:
+            TaskManagerCardV7(
+                store: taskStore,
+                maxItems: 5,
+                cardHeight: 200
+            )
+
+        case .vendors:
+            VendorListCardV7(
+                store: vendorStore,
+                maxItems: 5,
+                cardHeight: 250
+            )
+
+        case .guests:
+            GuestResponsesCardV7(
+                store: guestStore,
+                maxItems: 5,
+                cardHeight: 300
+            )
+            .environmentObject(settingsStore)
+            .environmentObject(budgetStore)
+            .environmentObject(coordinator)
+
+        case .recentResponses:
+            RecentResponsesCardV7(
+                store: guestStore,
+                maxItems: 5,
+                cardHeight: 200
+            )
+        }
     }
 }
 
