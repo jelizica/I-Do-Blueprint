@@ -104,8 +104,12 @@ struct DashboardViewV7: View {
                 MeshGradientBackgroundV7()
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: Spacing.xl) {
+                GeometryReader { geometry in
+                    let availableHeight = calculateAvailableHeight(geometry: geometry)
+                    let maxItems = calculateMaxItems(availableHeight: availableHeight, visibleCards: visibleCards)
+                    
+                    ScrollView {
+                        VStack(spacing: Spacing.xl) {
                         // MARK: - Header
                         DashboardHeaderV7()
                             .padding(.horizontal, Spacing.xxl)
@@ -196,6 +200,7 @@ struct DashboardViewV7: View {
                     .padding(.top, Spacing.lg)
                     .padding(.bottom, Spacing.xxl)
                 }
+                }
             }
             .navigationTitle("")
         }
@@ -207,6 +212,49 @@ struct DashboardViewV7: View {
         .onReceive(timer) { time in
             currentTime = time
         }
+    }
+    
+    // MARK: - Dynamic Layout Helpers
+    
+    /// Calculate number of visible cards based on conditional rendering
+    private var visibleCards: Int {
+        var count = 2  // Always show: Budget Overview + Task Manager
+        if shouldShowGuestResponses { count += 1 }
+        if shouldShowPaymentsDue { count += 1 }
+        if shouldShowRecentResponses { count += 1 }
+        if shouldShowVendorList { count += 1 }
+        return count
+    }
+    
+    /// Calculate available height for cards after fixed elements
+    private func calculateAvailableHeight(geometry: GeometryProxy) -> CGFloat {
+        // Fixed elements
+        let headerHeight: CGFloat = 60
+        let heroBannerHeight: CGFloat = 150
+        let metricCardsHeight: CGFloat = 120
+        let spacing: CGFloat = Spacing.xl * 4  // Between sections
+        let padding: CGFloat = Spacing.xxl * 2  // Top + bottom
+        
+        let fixedHeight = headerHeight + heroBannerHeight + metricCardsHeight + spacing + padding
+        return max(geometry.size.height - fixedHeight, 400) // Minimum 400pt for cards
+    }
+    
+    /// Calculate maximum items per card based on available height
+    private func calculateMaxItems(availableHeight: CGFloat, visibleCards: Int) -> Int {
+        // Estimate card heights
+        let cardHeaderHeight: CGFloat = 60  // Title + button
+        let itemHeight: CGFloat = 40  // Per item row
+        let cardPadding: CGFloat = 40  // Internal padding
+        let cardSpacing: CGFloat = Spacing.lg  // Between cards
+        
+        // Calculate height per card
+        let heightPerCard = (availableHeight - (CGFloat(visibleCards - 1) * cardSpacing)) / CGFloat(visibleCards)
+        
+        // Calculate how many items fit
+        let availableForItems = heightPerCard - cardHeaderHeight - cardPadding
+        let maxItems = Int(availableForItems / itemHeight)
+        
+        return max(min(maxItems, 10), 3)  // Between 3-10 items
     }
 }
 
