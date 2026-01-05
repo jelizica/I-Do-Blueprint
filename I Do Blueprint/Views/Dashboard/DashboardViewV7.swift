@@ -413,7 +413,7 @@ struct DashboardViewV7: View {
     
     /// Calculate column layout based on available space and data density
     private func calculateColumnLayout(availableHeight: CGFloat, availableWidth: CGFloat) -> ColumnLayout {
-        let cardSpacing = Spacing.lg  // Standardized gap between cards
+        let cardSpacing = Spacing.sm  // Horizontal spacing between columns (8pt)
         let columnCount = 3  // 3-column layout
         let totalSpacing = cardSpacing * CGFloat(columnCount - 1)
         let columnWidth = (availableWidth - totalSpacing) / CGFloat(columnCount)
@@ -578,10 +578,11 @@ struct MasonryColumnsView: View {
     }
     
     var body: some View {
-        // Use standardized cardSpacing (Spacing.lg = 16pt) for all gaps
-        HStack(alignment: .top, spacing: cardSpacing) {
+        // Horizontal spacing between columns: Spacing.sm (8pt)
+        // Vertical spacing within columns: Spacing.lg (16pt)
+        HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
             // MARK: - Column 1: Budget + Payments
-            VStack(alignment: .leading, spacing: cardSpacing) {
+            VStack(alignment: .leading, spacing: Spacing.lg) {
                 BudgetOverviewCardV7(
                     totalBudget: viewModel.totalBudget,
                     totalSpent: viewModel.totalPaid
@@ -596,7 +597,7 @@ struct MasonryColumnsView: View {
             .frame(width: columnLayout.columnWidth, alignment: .top)
             
             // MARK: - Column 2: Tasks + Vendors
-            VStack(alignment: .leading, spacing: cardSpacing) {
+            VStack(alignment: .leading, spacing: Spacing.lg) {
                 TaskManagerCardV7(
                     store: taskStore,
                     maxItems: maxItems(forHeight: tasksCardHeight, itemHeight: 44),
@@ -616,7 +617,7 @@ struct MasonryColumnsView: View {
             .frame(width: columnLayout.columnWidth, alignment: .top)
             
             // MARK: - Column 3: Guests + Recent
-            VStack(alignment: .leading, spacing: cardSpacing) {
+            VStack(alignment: .leading, spacing: Spacing.lg) {
                 if shouldShowGuestResponses {
                     GuestResponsesCardV7(
                         store: guestStore,
