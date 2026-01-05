@@ -864,8 +864,7 @@ struct GuestResponsesCardV7: View {
                 VStack(spacing: Spacing.md) {
                     ForEach(recentGuests) { guest in
                         GuestRowV7(
-                            initials: "\(guest.firstName.prefix(1))\(guest.lastName.prefix(1))",
-                            name: guest.fullName,
+                            guest: guest,
                             invitedBy: guest.invitedBy?.displayName(with: settingsStore.settings) ?? "Unknown",
                             status: mapRSVPStatus(guest.rsvpStatus)
                         )
@@ -917,30 +916,27 @@ enum GuestStatusV7 {
 }
 
 struct GuestRowV7: View {
-    let initials: String
-    let name: String
+    let guest: Guest
     let invitedBy: String
     let status: GuestStatusV7
     
+    @State private var avatarImage: NSImage?
+    
+    private var initials: String {
+        "\(guest.firstName.prefix(1))\(guest.lastName.prefix(1))".uppercased()
+    }
+    
     var body: some View {
         HStack {
-            // Avatar
-            Circle()
-                .fill(Color.gray.opacity(0.2))
-                .frame(width: 40, height: 40)
-                .overlay(
-                    Text(initials)
-                        .font(Typography.caption)
-                        .fontWeight(.bold)
-                        .foregroundColor(SemanticColors.textSecondary)
-                )
-                .overlay(
-                    Circle()
-                        .stroke(Color.white, lineWidth: 2)
-                )
+            // Avatar with MultiAvatarJSService
+            avatarView
+                .task {
+                    await loadAvatar()
+                }
+                .accessibilityLabel("Avatar for \(guest.fullName)")
             
             VStack(alignment: .leading, spacing: Spacing.xxs) {
-                Text(name)
+                Text(guest.fullName)
                     .font(Typography.bodySmall)
                     .fontWeight(.semibold)
                     .foregroundColor(SemanticColors.textPrimary)
@@ -962,6 +958,55 @@ struct GuestRowV7: View {
                     Capsule()
                         .fill(status.backgroundColor)
                 )
+        }
+    }
+    
+    // MARK: - Avatar View
+    
+    @ViewBuilder
+    private var avatarView: some View {
+        if let image = avatarImage {
+            Image(nsImage: image)
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 40, height: 40)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                )
+                .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
+        } else {
+            // Fallback to initials with status color
+            Circle()
+                .fill(status.color.opacity(0.2))
+                .frame(width: 40, height: 40)
+                .overlay(
+                    Text(initials)
+                        .font(Typography.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(status.color)
+                )
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                )
+        }
+    }
+    
+    // MARK: - Avatar Loading
+    
+    private func loadAvatar() async {
+        do {
+            let image = try await guest.fetchAvatar(
+                size: CGSize(width: 80, height: 80) // 2x for retina
+            )
+            await MainActor.run {
+                avatarImage = image
+            }
+        } catch {
+            // Silently fail, keep showing initials
+            // Error already logged by MultiAvatarJSService
         }
     }
 }
