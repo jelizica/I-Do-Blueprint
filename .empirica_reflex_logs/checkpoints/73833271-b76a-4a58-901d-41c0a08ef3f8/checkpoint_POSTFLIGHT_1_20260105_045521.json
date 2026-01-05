@@ -1,0 +1,130 @@
+{
+  "session_id": "73833271-b76a-4a58-901d-41c0a08ef3f8",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-05T04:55:20.936336+00:00",
+  "vectors": {
+    "know": 0.95,
+    "do": 0.9,
+    "context": 0.85,
+    "clarity": 0.9,
+    "coherence": 0.9,
+    "signal": 0.88,
+    "density": 0.75,
+    "state": 0.92,
+    "change": 0.85,
+    "completion": 1.0,
+    "impact": 0.8,
+    "engagement": 0.85,
+    "uncertainty": 0.1
+  },
+  "overall_confidence": 0.9,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.9,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "know": 0.65,
+      "do": 0.65,
+      "context": 0.45,
+      "clarity": 0.55,
+      "coherence": 0.6,
+      "signal": 0.48,
+      "density": 0.45,
+      "state": 0.72,
+      "change": 0.75,
+      "completion": 1.0,
+      "impact": 0.8,
+      "engagement": 0.15,
+      "uncertainty": -0.6
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "c943632d8ff64bcd4bdf3e20526185fbbc7edc0c",
+    "git_notes_ref": "empirica/session/73833271-b76a-4a58-901d-41c0a08ef3f8/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "188063f0397330fe2df2246d4de109d5770cbc37",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "HANDOFF.md",
+        "\"I Do Blueprint/Views/Dashboard/DashboardViewV7.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1015808 -> 1110016 bytes\n .../storage.sqlite                                 | Bin 1839104 -> 2117632 bytes\n HANDOFF.md                                         |   2 +-\n .../Views/Dashboard/DashboardViewV7.swift          |   5 +++--\n 4 files changed, 4 insertions(+), 3 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.75,
+      "curr": 0.95,
+      "delta": 0.2
+    },
+    "do": {
+      "prev": 0.7,
+      "curr": 0.9,
+      "delta": 0.2
+    },
+    "context": {
+      "prev": 0.8,
+      "curr": 0.85,
+      "delta": 0.05
+    },
+    "clarity": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "coherence": {
+      "prev": 0.75,
+      "curr": 0.9,
+      "delta": 0.15
+    },
+    "signal": {
+      "prev": 0.8,
+      "curr": 0.88,
+      "delta": 0.08
+    },
+    "density": {
+      "prev": 0.7,
+      "curr": 0.75,
+      "delta": 0.05
+    },
+    "state": {
+      "prev": 0.75,
+      "curr": 0.92,
+      "delta": 0.17
+    },
+    "change": {
+      "prev": 0.3,
+      "curr": 0.85,
+      "delta": 0.55
+    },
+    "completion": {
+      "prev": 0.15,
+      "curr": 1.0,
+      "delta": 0.85
+    },
+    "impact": {
+      "prev": 0.7,
+      "curr": 0.8,
+      "delta": 0.1
+    },
+    "engagement": {
+      "prev": 0.85,
+      "curr": 0.85,
+      "delta": 0.0
+    },
+    "uncertainty": {
+      "prev": 0.25,
+      "curr": 0.1,
+      "delta": -0.15
+    }
+  },
+  "token_count": 282
+}

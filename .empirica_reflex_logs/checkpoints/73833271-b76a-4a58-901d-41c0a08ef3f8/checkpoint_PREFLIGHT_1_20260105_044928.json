@@ -1,0 +1,45 @@
+{
+  "session_id": "73833271-b76a-4a58-901d-41c0a08ef3f8",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-05T04:49:27.710906+00:00",
+  "vectors": {
+    "know": 0.3,
+    "do": 0.25,
+    "context": 0.4,
+    "clarity": 0.35,
+    "coherence": 0.3,
+    "signal": 0.4,
+    "density": 0.3,
+    "state": 0.2,
+    "change": 0.1,
+    "completion": 0.0,
+    "impact": 0.0,
+    "engagement": 0.7,
+    "uncertainty": 0.7
+  },
+  "overall_confidence": 0.317,
+  "meta": {
+    "reasoning": "",
+    "prompt": "Preflight assessment",
+    "git_commit_sha": "a8a77368f274adb33f7489bf44c0b2d71347f694",
+    "git_notes_ref": "empirica/session/73833271-b76a-4a58-901d-41c0a08ef3f8/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "188063f0397330fe2df2246d4de109d5770cbc37",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "HANDOFF.md"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1015808 -> 1101824 bytes\n .../storage.sqlite                                 | Bin 1839104 -> 2052096 bytes\n HANDOFF.md                                         |   2 +-\n 3 files changed, 1 insertion(+), 1 deletion(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 113
+}

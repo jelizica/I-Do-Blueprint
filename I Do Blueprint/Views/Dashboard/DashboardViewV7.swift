@@ -584,31 +584,31 @@ struct MasonryColumnsView: View {
             return 260
 
         case .tasks:
-            // Task Manager: header + variable rows based on task count
-            let taskCount = taskStore.tasks.filter { $0.status != .completed }.prefix(5).count
-            let contentHeight = CGFloat(max(taskCount, 3)) * rowHeight
+            // Task Manager: Compact - show only actual tasks (max 3-4 for tight fit)
+            let taskCount = min(taskStore.tasks.filter { $0.status != .completed }.count, 3)
+            let contentHeight = CGFloat(max(taskCount, 1)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .guests:
-            // Guest Responses: header + variable rows based on guest count
-            let guestCount = guestStore.guests.filter { $0.rsvpDate != nil }.prefix(5).count
-            let contentHeight = CGFloat(max(guestCount, 3)) * rowHeight
+            // Guest Responses: Reduced - show only 3-4 responses to prevent clipping
+            let guestCount = min(guestStore.guests.filter { $0.rsvpDate != nil }.count, 3)
+            let contentHeight = CGFloat(max(guestCount, 2)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .payments:
-            // Payment Due: header + variable rows based on payment count
+            // Payment Due: Show all current month payments
             let contentHeight = CGFloat(max(currentMonthPayments.count, 2)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .vendors:
-            // Vendor List: header + variable rows based on vendor count
-            let vendorCount = vendorStore.vendors.prefix(5).count
-            let contentHeight = CGFloat(max(vendorCount, 3)) * rowHeight
+            // Vendor List: Expanded - show more vendors to fill available space
+            let vendorCount = min(vendorStore.vendors.count, 8)  // Up to 8 vendors
+            let contentHeight = CGFloat(max(vendorCount, 5)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .recentResponses:
-            // Recent Responses: header + variable rows
-            let responseCount = guestStore.guests.filter { $0.rsvpDate != nil }.prefix(4).count
+            // Recent Responses: Show fewer items
+            let responseCount = min(guestStore.guests.filter { $0.rsvpDate != nil }.count, 3)
             let contentHeight = CGFloat(max(responseCount, 2)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
         }
@@ -673,30 +673,35 @@ struct MasonryColumnsView: View {
                 totalBudget: viewModel.totalBudget,
                 totalSpent: viewModel.totalPaid
             )
+            .frame(height: 260)  // Static height constraint
 
         case .payments:
             PaymentsDueCardV7(maxItems: 5)
+            .frame(height: estimateCardHeight(for: .payments))
 
         case .tasks:
             TaskManagerCardV7(
                 store: taskStore,
-                maxItems: 5,
+                maxItems: 3,  // Compact - only 3 tasks max
                 cardHeight: estimateCardHeight(for: .tasks)
             )
+            .frame(height: estimateCardHeight(for: .tasks))
 
         case .vendors:
             VendorListCardV7(
                 store: vendorStore,
-                maxItems: 5,
+                maxItems: 8,  // Expanded - up to 8 vendors
                 cardHeight: estimateCardHeight(for: .vendors)
             )
+            .frame(height: estimateCardHeight(for: .vendors))
 
         case .guests:
             GuestResponsesCardV7(
                 store: guestStore,
-                maxItems: 5,
+                maxItems: 3,  // Reduced - only 3 responses
                 cardHeight: estimateCardHeight(for: .guests)
             )
+            .frame(height: estimateCardHeight(for: .guests))
             .environmentObject(settingsStore)
             .environmentObject(budgetStore)
             .environmentObject(coordinator)

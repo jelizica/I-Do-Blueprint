@@ -148,7 +148,9 @@ class AppCoordinator: ObservableObject {
             case .editVendor(let vendor):
                 EditVendorSheetV2(vendor: vendor, vendorStore: coordinator.vendorStore, onSave: { _ in })
             case .addGuest:
-                AddGuestView { _ in }
+                AddGuestViewV2 { guest in
+                    await coordinator.guestStore.addGuest(guest)
+                }
             case .editGuest(let guest):
                 GuestDetailViewV4(guestId: guest.id, guestStore: coordinator.guestStore)
             case .addTask:

@@ -1,0 +1,118 @@
+{
+  "session_id": "0d5965fc-3957-4b9a-bb6f-6309206c8a66",
+  "phase": "CHECK",
+  "round": 2,
+  "timestamp": "2026-01-05T07:23:27.895811+00:00",
+  "vectors": {
+    "know": 0.75,
+    "do": 0.7,
+    "context": 0.8,
+    "clarity": 0.8,
+    "coherence": 0.75,
+    "signal": 0.7,
+    "density": 0.75,
+    "state": 0.65,
+    "change": 0.6,
+    "completion": 0.5,
+    "impact": 0.7,
+    "engagement": 0.8,
+    "uncertainty": 0.35
+  },
+  "overall_confidence": 0.75,
+  "meta": {
+    "decision": "investigate_more",
+    "reasoning": "",
+    "confidence": 0.65,
+    "gaps": [
+      "uncertainty: 0.35"
+    ],
+    "cycle": null,
+    "round": 2,
+    "git_commit_sha": "9dba43f0f40f5af03432b9b5b51bcaa81cfb7036",
+    "git_notes_ref": "empirica/session/0d5965fc-3957-4b9a-bb6f-6309206c8a66/CHECK/2"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "4b16d61aad0d0a9eed5d6f23d6aaa72110c87b83",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Dashboard/DashboardViewV7.swift\"",
+        "\"I Do Blueprint/Views/Guests/GuestDashboardViewV2.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1015808 -> 1163264 bytes\n .../storage.sqlite                                 | Bin 1839104 -> 2248704 bytes\n .../Views/Dashboard/DashboardViewV7.swift          |  10 ++++++++++\n .../Views/Guests/GuestDashboardViewV2.swift        |   6 +++---\n 4 files changed, 13 insertions(+), 3 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.75,
+      "curr": 0.75,
+      "delta": 0.0
+    },
+    "do": {
+      "prev": 0.7,
+      "curr": 0.7,
+      "delta": 0.0
+    },
+    "context": {
+      "prev": 0.8,
+      "curr": 0.8,
+      "delta": 0.0
+    },
+    "clarity": {
+      "prev": 0.8,
+      "curr": 0.8,
+      "delta": 0.0
+    },
+    "coherence": {
+      "prev": 0.75,
+      "curr": 0.75,
+      "delta": 0.0
+    },
+    "signal": {
+      "prev": 0.7,
+      "curr": 0.7,
+      "delta": 0.0
+    },
+    "density": {
+      "prev": 0.75,
+      "curr": 0.75,
+      "delta": 0.0
+    },
+    "state": {
+      "prev": 0.65,
+      "curr": 0.65,
+      "delta": 0.0
+    },
+    "change": {
+      "prev": 0.6,
+      "curr": 0.6,
+      "delta": 0.0
+    },
+    "completion": {
+      "prev": 0.5,
+      "curr": 0.5,
+      "delta": 0.0
+    },
+    "impact": {
+      "prev": 0.7,
+      "curr": 0.7,
+      "delta": 0.0
+    },
+    "engagement": {
+      "prev": 0.8,
+      "curr": 0.8,
+      "delta": 0.0
+    },
+    "uncertainty": {
+      "prev": 0.35,
+      "curr": 0.35,
+      "delta": 0.0
+    }
+  },
+  "token_count": 252
+}
