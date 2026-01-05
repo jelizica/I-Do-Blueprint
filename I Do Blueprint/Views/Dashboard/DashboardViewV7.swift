@@ -570,8 +570,61 @@ struct MasonryColumnsView: View {
         column3: []
     )
 
+    // MARK: - Static vs Dynamic Card Classification
+
+    /// Cards are classified as:
+    /// - STATIC: Budget (fixed size), Payments (based on payment count), Tasks (based on task count, max 3)
+    /// - DYNAMIC: Vendors and Guest Responses (fill remaining space)
+    private var staticCards: [DashboardViewV7.CardType] {
+        [.budget, .payments, .tasks, .guests]  // guests behaves like static (small fixed list)
+    }
+
+    private var dynamicCards: [DashboardViewV7.CardType] {
+        [.vendors, .recentResponses]
+    }
+
+    /// Check if a card is dynamic (fills remaining space)
+    private func isDynamicCard(_ cardType: DashboardViewV7.CardType) -> Bool {
+        cardType == .vendors || cardType == .recentResponses
+    }
+
+    /// Calculate static card height (content-based, exact sizing)
+    private func staticCardHeight(for cardType: DashboardViewV7.CardType) -> CGFloat {
+        let cardHeaderHeight: CGFloat = 60  // Title + spacing
+        let cardPadding: CGFloat = 32  // Vertical padding inside card
+        let rowHeight: CGFloat = 44  // Height per item row
+
+        switch cardType {
+        case .budget:
+            // Budget Overview: Completely static (fixed content)
+            return 260
+
+        case .payments:
+            // Payments Due: Exact size for actual payment count
+            let paymentCount = currentMonthPayments.count
+            let contentHeight = CGFloat(max(paymentCount, 1)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+
+        case .tasks:
+            // Task Manager: Based on task count (max 3)
+            let taskCount = min(taskStore.tasks.filter { $0.status != .completed }.count, 3)
+            let contentHeight = CGFloat(max(taskCount, 1)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+
+        case .guests:
+            // Guest Responses: Reduced - only 3 responses max
+            let guestCount = min(guestStore.guests.filter { $0.rsvpDate != nil }.count, 3)
+            let contentHeight = CGFloat(max(guestCount, 2)) * rowHeight
+            return cardHeaderHeight + contentHeight + cardPadding
+
+        default:
+            return 200  // Fallback (shouldn't reach here for static cards)
+        }
+    }
+
     /// Estimate card heights based on their type and content
-    /// This avoids the need to render cards hidden just to measure them
+    /// Static cards get exact content-based heights
+    /// Dynamic cards fill remaining space after static cards are placed
     private func estimateCardHeight(for cardType: DashboardViewV7.CardType) -> CGFloat {
         let cardHeaderHeight: CGFloat = 60  // Title + spacing
         let cardPadding: CGFloat = 32  // Vertical padding inside card
@@ -580,17 +633,16 @@ struct MasonryColumnsView: View {
         switch cardType {
         case .budget:
             // Budget Overview: Completely static card (no variable content)
-            // Header (60pt) + divider (8pt) + 2 progress rows (88pt) + remaining budget box (56pt) + card padding (48pt)
             return 260
 
         case .tasks:
-            // Task Manager: Compact - show only actual tasks (max 3-4 for tight fit)
+            // Task Manager: Content-based (max 3 tasks)
             let taskCount = min(taskStore.tasks.filter { $0.status != .completed }.count, 3)
             let contentHeight = CGFloat(max(taskCount, 1)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .guests:
-            // Guest Responses: Reduced - show only 3-4 responses to prevent clipping
+            // Guest Responses: Content-based (max 3 responses)
             let guestCount = min(guestStore.guests.filter { $0.rsvpDate != nil }.count, 3)
             let contentHeight = CGFloat(max(guestCount, 2)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
@@ -603,26 +655,18 @@ struct MasonryColumnsView: View {
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .vendors:
-            // Vendor List: Uses available height proportionally
-            // Height is constrained by available space; card calculates how many vendors fit
-            let availableHeight = columnLayout.availableHeight
-            if availableHeight.isFinite && availableHeight > 0 {
-                // Use ~40% of available height for vendor card (shared with other row 2 cards)
-                let targetHeight = min(availableHeight * 0.4, 350)  // Cap at 350pt
-                return max(targetHeight, 180)  // Minimum 180pt (header + 2 vendors)
-            }
-            // Fallback when height not yet calculated
-            return 260
+            // Dynamic card - height calculated after distribution (placeholder for bin-packing)
+            // Actual height is set in calculateDynamicCardHeights() after column assignment
+            return 200  // Initial estimate for bin-packing (will be replaced)
 
         case .recentResponses:
-            // Recent Responses: Show fewer items
-            let responseCount = min(guestStore.guests.filter { $0.rsvpDate != nil }.count, 3)
-            let contentHeight = CGFloat(max(responseCount, 2)) * rowHeight
-            return cardHeaderHeight + contentHeight + cardPadding
+            // Dynamic card - height calculated after distribution (placeholder for bin-packing)
+            // Actual height is set in calculateDynamicCardHeights() after column assignment
+            return 200  // Initial estimate for bin-packing (will be replaced)
         }
     }
 
-    /// Calculate estimated heights for all visible cards
+    /// Calculate estimated heights for all visible cards (initial pass for bin-packing)
     private var estimatedCardHeights: [DashboardViewV7.CardType: CGFloat] {
         var heights: [DashboardViewV7.CardType: CGFloat] = [:]
         for card in columnLayout.visibleCards {
@@ -630,6 +674,56 @@ struct MasonryColumnsView: View {
         }
         return heights
     }
+
+    /// Calculate dynamic card heights AFTER column assignment is known
+    /// Dynamic cards fill remaining space in their column; 50/50 split if both share a column
+    private func calculateDynamicCardHeights(for column: [DashboardViewV7.CardType]) -> [DashboardViewV7.CardType: CGFloat] {
+        var heights: [DashboardViewV7.CardType: CGFloat] = [:]
+        let availableHeight = columnLayout.availableHeight
+
+        // Calculate total height used by static cards in this column
+        var staticHeight: CGFloat = 0
+        var dynamicCardsInColumn: [DashboardViewV7.CardType] = []
+
+        for card in column {
+            if isDynamicCard(card) {
+                dynamicCardsInColumn.append(card)
+            } else {
+                // Static card - use exact content-based height
+                let cardHeight = staticCardHeight(for: card)
+                heights[card] = cardHeight
+                staticHeight += cardHeight
+            }
+        }
+
+        // Add spacing between cards (N-1 gaps for N cards)
+        if column.count > 1 {
+            staticHeight += CGFloat(column.count - 1) * columnLayout.rowSpacing
+        }
+
+        // Calculate remaining space for dynamic cards
+        let remainingHeight = max(availableHeight - staticHeight, 0)
+
+        // Distribute remaining space to dynamic cards
+        if dynamicCardsInColumn.count == 1 {
+            // Single dynamic card gets all remaining space
+            let dynamicCard = dynamicCardsInColumn[0]
+            let dynamicHeight = max(remainingHeight, 150)  // Minimum 150pt
+            heights[dynamicCard] = dynamicHeight
+        } else if dynamicCardsInColumn.count == 2 {
+            // Two dynamic cards split 50/50
+            let heightPerCard = max((remainingHeight - columnLayout.rowSpacing) / 2, 120)  // Minimum 120pt each
+            for card in dynamicCardsInColumn {
+                heights[card] = heightPerCard
+            }
+        }
+        // If no dynamic cards, heights dict only has static cards (already set)
+
+        return heights
+    }
+
+    /// Final calculated heights per column (after layout is known)
+    @State private var finalCardHeights: [DashboardViewV7.CardType: CGFloat] = [:]
 
     var body: some View {
         HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
@@ -643,22 +737,43 @@ struct MasonryColumnsView: View {
             columnView(for: columnAssignment.column3, columnIndex: 2)
         }
         .onAppear {
-            // Calculate layout ONCE using estimated heights based on actual data
-            // No hidden rendering needed - estimates are accurate enough for distribution
+            // Step 1: Distribute cards using static heights for bin-packing
             if columnAssignment.column1.isEmpty {
                 columnAssignment = DashboardViewV7.ColumnAssignment.distribute(
                     cards: columnLayout.visibleCards,
                     heights: estimatedCardHeights,
                     rowSpacing: columnLayout.rowSpacing
                 )
-                print("✅ Dashboard layout calculated using estimated heights (no hidden rendering)")
-                print("   Estimated heights: \(estimatedCardHeights)")
+
+                // Step 2: Calculate final heights with dynamic cards filling remaining space
+                var allHeights: [DashboardViewV7.CardType: CGFloat] = [:]
+                for heights in [
+                    calculateDynamicCardHeights(for: columnAssignment.column1),
+                    calculateDynamicCardHeights(for: columnAssignment.column2),
+                    calculateDynamicCardHeights(for: columnAssignment.column3)
+                ] {
+                    allHeights.merge(heights) { _, new in new }
+                }
+                finalCardHeights = allHeights
+
+                print("✅ Dashboard layout: static-first, dynamic fills remaining space")
+                print("   Final heights: \(finalCardHeights)")
             }
         }
+    }
+
+    /// Get the final calculated height for a card (uses finalCardHeights after layout)
+    private func finalHeight(for cardType: DashboardViewV7.CardType) -> CGFloat {
+        if let height = finalCardHeights[cardType] {
+            return height
+        }
+        // Fallback to estimate if not yet calculated
+        return estimateCardHeight(for: cardType)
     }
     // MARK: - Helper Views
 
     /// Build a column with dynamically assigned cards
+    /// Cards fill available height with no bottom space (dynamic cards expand to fill)
     @ViewBuilder
     private func columnView(for cards: [DashboardViewV7.CardType], columnIndex: Int) -> some View {
         VStack(alignment: .leading, spacing: columnLayout.rowSpacing) {
@@ -666,50 +781,52 @@ struct MasonryColumnsView: View {
                 cardView(for: cardType)
                     .frame(width: columnLayout.columnWidth)
             }
-
-            Spacer(minLength: 0)
+            // No Spacer - dynamic cards fill remaining space, eliminating bottom gap
         }
-        .frame(width: columnLayout.columnWidth)
+        .frame(width: columnLayout.columnWidth, alignment: .top)
     }
 
     /// Build individual card view based on type
+    /// Uses finalHeight for accurate sizing (static cards = content-based, dynamic cards = fill remaining)
     @ViewBuilder
     private func cardView(for cardType: DashboardViewV7.CardType) -> some View {
+        let height = finalHeight(for: cardType)
+
         switch cardType {
         case .budget:
             BudgetOverviewCardV7(
                 totalBudget: viewModel.totalBudget,
                 totalSpent: viewModel.totalPaid
             )
-            .frame(height: 260)  // Static height constraint
+            .frame(height: height)  // Static height (260pt)
 
         case .payments:
             PaymentsDueCardV7(maxItems: 5)
-            .frame(height: estimateCardHeight(for: .payments))
+            .frame(height: height)  // Content-based height
 
         case .tasks:
             TaskManagerCardV7(
                 store: taskStore,
-                maxItems: 3,  // Compact - only 3 tasks max
-                cardHeight: estimateCardHeight(for: .tasks)
+                maxItems: 3,  // Max 3 tasks
+                cardHeight: height
             )
-            .frame(height: estimateCardHeight(for: .tasks))
+            .frame(height: height)  // Content-based height
 
         case .vendors:
             VendorListCardV7(
                 store: vendorStore,
-                maxItems: 5,  // Constrained to 5 vendors to fit available space
-                cardHeight: estimateCardHeight(for: .vendors)
+                maxItems: 10,  // Dynamic - card calculates based on available height
+                cardHeight: height
             )
-            .frame(height: estimateCardHeight(for: .vendors))
+            .frame(height: height)  // Dynamic - fills remaining space
 
         case .guests:
             GuestResponsesCardV7(
                 store: guestStore,
-                maxItems: 3,  // Reduced - only 3 responses
-                cardHeight: estimateCardHeight(for: .guests)
+                maxItems: 3,  // Static - max 3 responses
+                cardHeight: height
             )
-            .frame(height: estimateCardHeight(for: .guests))
+            .frame(height: height)  // Content-based height
             .environmentObject(settingsStore)
             .environmentObject(budgetStore)
             .environmentObject(coordinator)
@@ -717,9 +834,10 @@ struct MasonryColumnsView: View {
         case .recentResponses:
             RecentResponsesCardV7(
                 store: guestStore,
-                maxItems: 5,
-                cardHeight: estimateCardHeight(for: .recentResponses)
+                maxItems: 10,  // Dynamic - card calculates based on available height
+                cardHeight: height
             )
+            .frame(height: height)  // Dynamic - fills remaining space
         }
     }
 }
@@ -1428,11 +1546,8 @@ struct TaskManagerCardV7: View {
                     }
                 }
             }
-            
-            // Spacer to fill available vertical space
-            Spacer(minLength: 0)
         }
-        .frame(maxHeight: .infinity, alignment: .top)
+        // Content-sized - no expansion (task card sizes to actual task count)
         .glassPanel()
     }
 }
@@ -1471,15 +1586,24 @@ struct TaskRowV7: View {
 
 struct GuestResponsesCardV7: View {
     @ObservedObject var store: GuestStoreV2
-    let maxItems: Int
+    let maxItems: Int  // Ignored - calculated dynamically from cardHeight
     let cardHeight: CGFloat
     @EnvironmentObject private var settingsStore: SettingsStoreV2
-    
+
     /// Item height for guest rows (avatar + 2 lines)
     private let itemHeight: CGFloat = 52
-    
+
+    /// Calculate how many guests fit within the card height
+    private var calculatedMaxItems: Int {
+        let headerHeight: CGFloat = 50  // Title + menu
+        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding
+        let availableForItems = cardHeight - headerHeight - cardPadding
+        let maxItems = Int(availableForItems / itemHeight)
+        return max(maxItems, 2)  // At least 2 items
+    }
+
     private var recentGuests: [Guest] {
-        // Get dynamically calculated number of guests sorted by RSVP date or creation date
+        // Get dynamically calculated number of guests based on available height
         store.guests
             .sorted { (g1, g2) in
                 if let date1 = g1.rsvpDate, let date2 = g2.rsvpDate {
@@ -1492,7 +1616,7 @@ struct GuestResponsesCardV7: View {
                     return g1.createdAt > g2.createdAt
                 }
             }
-            .prefix(maxItems)
+            .prefix(calculatedMaxItems)  // Use calculated max based on height
             .map { $0 }
     }
     
@@ -1549,11 +1673,8 @@ struct GuestResponsesCardV7: View {
                     }
                 }
             }
-            
-            // Spacer to fill available vertical space
-            Spacer(minLength: 0)
         }
-        .frame(maxHeight: .infinity, alignment: .top)
+        // Content-sized - no expansion (guest card sizes to actual guest count)
         .glassPanel()
     }
     
