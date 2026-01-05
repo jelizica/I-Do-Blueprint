@@ -444,33 +444,96 @@ struct DashboardViewV7: View {
         let column2: [CardType]
         let column3: [CardType]
 
-        /// Calculate optimal column distribution based on measured heights
-        /// Uses greedy bin-packing: assign each card to the column with minimum current height
+        /// Dynamic cards that should be separated into different columns when possible
+        private static let dynamicCardTypes: Set<CardType> = [.vendors, .recentResponses]
+
+        /// Minimum height needed for a dynamic card to display at least 2 items
+        /// Header (~60pt) + 2 rows (~88pt) + padding (~32pt) = ~180pt minimum
+        private static let minimumDynamicCardHeight: CGFloat = 180
+
+        /// Calculate optimal column distribution with dynamic card separation
+        /// Priority: Keep Vendors and Guest Responses in DIFFERENT columns so each can expand fully
+        /// Last resort: Put them together only if there's not room for 2 items minimum
         static func distribute(
             cards: [CardType],
             heights: [CardType: CGFloat],
-            rowSpacing: CGFloat
+            rowSpacing: CGFloat,
+            availableHeight: CGFloat = 800  // Default if not provided
         ) -> ColumnAssignment {
+            // Separate static and dynamic cards
+            let staticCards = cards.filter { !dynamicCardTypes.contains($0) }
+            let dynamicCards = cards.filter { dynamicCardTypes.contains($0) }
+
             // Track current height per column (including spacing between cards)
             var columnHeights: [Int: CGFloat] = [0: 0, 1: 0, 2: 0]
             var columnCards: [Int: [CardType]] = [0: [], 1: [], 2: []]
 
-            // Sort cards by height descending (place tallest first for better distribution)
-            let sortedCards = cards.sorted { (heights[$0] ?? 0) > (heights[$1] ?? 0) }
+            // STEP 1: Place static cards first using greedy bin-packing
+            let sortedStaticCards = staticCards.sorted { (heights[$0] ?? 0) > (heights[$1] ?? 0) }
 
-            // Greedy assignment: place each card in the shortest column
-            for card in sortedCards {
+            for card in sortedStaticCards {
                 let cardHeight = heights[card] ?? 150
-
-                // Find column with minimum height
                 let shortestColumn = columnHeights.min(by: { $0.value < $1.value })?.key ?? 0
 
-                // Add card to that column
                 columnCards[shortestColumn]?.append(card)
-
-                // Update column height (add card height + spacing if not first card)
                 let spacingToAdd = columnCards[shortestColumn]!.count > 1 ? rowSpacing : 0
                 columnHeights[shortestColumn]! += cardHeight + spacingToAdd
+            }
+
+            // STEP 2: Place dynamic cards in DIFFERENT columns when possible
+            if dynamicCards.count == 2 {
+                // Find the two columns with most remaining space
+                let sortedColumns = columnHeights.sorted { $0.value < $1.value }
+                let bestColumn = sortedColumns[0].key
+                let secondBestColumn = sortedColumns[1].key
+
+                let remainingInBest = availableHeight - columnHeights[bestColumn]!
+                let remainingInSecond = availableHeight - columnHeights[secondBestColumn]!
+
+                // Check if both columns can fit a dynamic card with minimum 2 items
+                let canFitInBest = remainingInBest >= minimumDynamicCardHeight
+                let canFitInSecond = remainingInSecond >= minimumDynamicCardHeight
+
+                if canFitInBest && canFitInSecond {
+                    // IDEAL: Put each dynamic card in a different column
+                    let firstDynamic = dynamicCards[0]
+                    let secondDynamic = dynamicCards[1]
+
+                    columnCards[bestColumn]?.append(firstDynamic)
+                    let spacing1 = columnCards[bestColumn]!.count > 1 ? rowSpacing : 0
+                    columnHeights[bestColumn]! += (heights[firstDynamic] ?? 200) + spacing1
+
+                    columnCards[secondBestColumn]?.append(secondDynamic)
+                    let spacing2 = columnCards[secondBestColumn]!.count > 1 ? rowSpacing : 0
+                    columnHeights[secondBestColumn]! += (heights[secondDynamic] ?? 200) + spacing2
+
+                    print("📊 Dynamic cards separated: \(firstDynamic) → column \(bestColumn), \(secondDynamic) → column \(secondBestColumn)")
+                } else if canFitInBest {
+                    // LAST RESORT: Put both in the same column (50/50 split)
+                    for card in dynamicCards {
+                        columnCards[bestColumn]?.append(card)
+                        let spacingToAdd = columnCards[bestColumn]!.count > 1 ? rowSpacing : 0
+                        columnHeights[bestColumn]! += (heights[card] ?? 200) + spacingToAdd
+                    }
+                    print("📊 Dynamic cards together (last resort): both in column \(bestColumn)")
+                } else {
+                    // Fallback: distribute as usual if no space
+                    for card in dynamicCards {
+                        let shortestColumn = columnHeights.min(by: { $0.value < $1.value })?.key ?? 0
+                        columnCards[shortestColumn]?.append(card)
+                        let spacingToAdd = columnCards[shortestColumn]!.count > 1 ? rowSpacing : 0
+                        columnHeights[shortestColumn]! += (heights[card] ?? 200) + spacingToAdd
+                    }
+                    print("📊 Dynamic cards fallback distribution")
+                }
+            } else if dynamicCards.count == 1 {
+                // Single dynamic card: place in column with most remaining space
+                let bestColumn = columnHeights.min(by: { $0.value < $1.value })?.key ?? 0
+                let card = dynamicCards[0]
+                columnCards[bestColumn]?.append(card)
+                let spacingToAdd = columnCards[bestColumn]!.count > 1 ? rowSpacing : 0
+                columnHeights[bestColumn]! += (heights[card] ?? 200) + spacingToAdd
+                print("📊 Single dynamic card: \(card) → column \(bestColumn)")
             }
 
             return ColumnAssignment(
@@ -738,11 +801,13 @@ struct MasonryColumnsView: View {
         }
         .onAppear {
             // Step 1: Distribute cards using static heights for bin-packing
+            // Dynamic cards (Vendors, Guest Responses) are separated into different columns when possible
             if columnAssignment.column1.isEmpty {
                 columnAssignment = DashboardViewV7.ColumnAssignment.distribute(
                     cards: columnLayout.visibleCards,
                     heights: estimatedCardHeights,
-                    rowSpacing: columnLayout.rowSpacing
+                    rowSpacing: columnLayout.rowSpacing,
+                    availableHeight: columnLayout.availableHeight
                 )
 
                 // Step 2: Calculate final heights with dynamic cards filling remaining space

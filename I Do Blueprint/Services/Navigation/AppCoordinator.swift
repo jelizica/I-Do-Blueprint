@@ -151,6 +151,7 @@ class AppCoordinator: ObservableObject {
                 AddGuestViewV2 { guest in
                     await coordinator.guestStore.addGuest(guest)
                 }
+                .environmentObject(coordinator)
             case .editGuest(let guest):
                 GuestDetailViewV4(guestId: guest.id, guestStore: coordinator.guestStore)
             case .addTask:

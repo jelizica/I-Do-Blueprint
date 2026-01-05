@@ -12,8 +12,18 @@ import PhoneNumberKit
 struct AddGuestViewV2: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var settingsStore: SettingsStoreV2
+    @EnvironmentObject var coordinator: AppCoordinator
     @State private var showingError = false
     @State private var errorMessage = ""
+    
+    // Proportional Modal Sizing Pattern
+    private let minWidth: CGFloat = 500
+    private let maxWidth: CGFloat = 800
+    private let minHeight: CGFloat = 480
+    private let maxHeight: CGFloat = 720
+    private let windowChromeBuffer: CGFloat = 40
+    private let widthProportion: CGFloat = 0.6   // 60% of parent width
+    private let heightProportion: CGFloat = 0.75 // 75% of parent height
     @State private var firstName = ""
     @State private var lastName = ""
     @State private var email = ""
@@ -75,6 +85,20 @@ struct AddGuestViewV2: View {
         .ignoresSafeArea()
     }
 
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        
+        // Calculate proportional size
+        let targetWidth = parentSize.width * widthProportion
+        let targetHeight = parentSize.height * heightProportion - windowChromeBuffer
+        
+        // Clamp to min/max bounds
+        let finalWidth = min(maxWidth, max(minWidth, targetWidth))
+        let finalHeight = min(maxHeight, max(minHeight, targetHeight))
+        
+        return CGSize(width: finalWidth, height: finalHeight)
+    }
+    
     private var modalContent: some View {
         VStack(spacing: 0) {
             headerSection
@@ -83,11 +107,11 @@ struct AddGuestViewV2: View {
             Divider().background(Color.white.opacity(0.6))
             footerSection
         }
-        .frame(maxWidth: 850)
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(Color.white.opacity(0.65).background(.ultraThinMaterial))
-        .cornerRadius(32)
+        .cornerRadius(24)
         .shadow(color: Color.black.opacity(0.15), radius: 25, x: 0, y: 25)
-        .overlay(RoundedRectangle(cornerRadius: 32).stroke(Color.white.opacity(0.6), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.6), lineWidth: 1))
     }
 
     private var headerSection: some View {
@@ -306,9 +330,10 @@ struct BasicInfoTab: View {
     @Binding var focusedField: AddGuestViewV2.FocusedField?
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.xl) {
-            // Left Column
-            VStack(spacing: Spacing.lg) {
+        VStack(spacing: Spacing.lg) {
+            // Row 1: Two columns side-by-side
+            HStack(alignment: .top, spacing: Spacing.lg) {
+                // Left Column: Personal Information
                 GlassPanel(title: "Personal Information", icon: "person") {
                     VStack(spacing: Spacing.md) {
                         GlassTextField(
@@ -341,31 +366,9 @@ struct BasicInfoTab: View {
                         }
                     }
                 }
+                .frame(maxWidth: .infinity)
 
-                GlassPanel(title: "Wedding Details", icon: "heart") {
-                    VStack(spacing: Spacing.md) {
-                        GlassDropdown(
-                            label: "Invited By",
-                            selection: $invitedBy,
-                            options: InvitedBy.allCases,
-                            displayName: { $0.displayName(with: settingsStore.settings) }
-                        )
-
-                        GlassDropdown(
-                            label: "RSVP Status",
-                            selection: $rsvpStatus,
-                            options: RSVPStatus.allCases,
-                            displayName: { $0.displayName }
-                        )
-                    }
-                }
-
-                Spacer()
-            }
-            .frame(maxWidth: .infinity)
-
-            // Right Column
-            VStack(spacing: Spacing.lg) {
+                // Right Column: Attendance
                 GlassPanel(title: "Attendance", icon: "calendar") {
                     VStack(spacing: Spacing.md) {
                         GlassToggle(label: "Attending Ceremony", isOn: $attendingCeremony)
@@ -381,10 +384,29 @@ struct BasicInfoTab: View {
                         }
                     }
                 }
-
-                Spacer()
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
+            
+            // Row 2: Wedding Details spanning full width
+            GlassPanel(title: "Wedding Details", icon: "heart") {
+                HStack(spacing: Spacing.lg) {
+                    GlassDropdown(
+                        label: "Invited By",
+                        selection: $invitedBy,
+                        options: InvitedBy.allCases,
+                        displayName: { $0.displayName(with: settingsStore.settings) }
+                    )
+                    .frame(maxWidth: .infinity)
+
+                    GlassDropdown(
+                        label: "RSVP Status",
+                        selection: $rsvpStatus,
+                        options: RSVPStatus.allCases,
+                        displayName: { $0.displayName }
+                    )
+                    .frame(maxWidth: .infinity)
+                }
+            }
         }
     }
 }
