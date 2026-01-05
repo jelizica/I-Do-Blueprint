@@ -152,6 +152,14 @@ struct DashboardViewV7: View {
                     }
                     .frame(height: 120)
                     .padding(.horizontal, Spacing.xxl)
+                    
+                    // MARK: - Visual Separator
+                    // Subtle divider to indicate independent sections with different column layouts
+                    Rectangle()
+                        .fill(SemanticColors.borderLight.opacity(0.3))
+                        .frame(height: 1)
+                        .padding(.horizontal, Spacing.xxl)
+                        .padding(.vertical, Spacing.md)
 
                     // MARK: - Main Content: Masonry Layout (fills remaining space)
                     // GeometryReader ONLY for the masonry area - this prevents overlap
