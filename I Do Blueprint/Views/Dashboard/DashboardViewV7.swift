@@ -1254,18 +1254,7 @@ struct VendorListCardV7: View {
             return SoftLavender.shade500
         }
     }
-    
-    private func mapContractStatus(_ status: ContractStatus) -> VendorStatusV7 {
-        switch status {
-        case .signed:
-            return .booked
-        case .pending, .draft:
-            return .pending
-        case .expired, .none:
-            return .declined
-        }
-    }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -1290,23 +1279,32 @@ struct VendorListCardV7: View {
                     .padding(.vertical, Spacing.lg)
             } else {
                 VStack(spacing: Spacing.md) {
-                    ForEach(recentVendors, id: \.id) { vendor in
-                        let category = vendor.vendorType ?? "Other"
-                        let icon = vendorIcon(for: category)
-                        let iconColor = vendorIconColor(for: category)
-                        VendorRowV7(
-                            icon: icon,
-                            iconColor: iconColor,
-                            iconBackground: iconColor.opacity(0.1),
-                            name: vendor.vendorName,
-                            category: category,
-                            status: mapContractStatus(vendor.contractStatus)
-                        )
+                    ForEach(recentVendors) { vendor in
+                        vendorRow(for: vendor)
                     }
                 }
             }
         }
         .glassPanel()
+    }
+
+    // MARK: - Helper Methods
+
+    @ViewBuilder
+    private func vendorRow(for vendor: Vendor) -> some View {
+        let category = vendor.vendorType ?? "Other"
+        let icon = vendorIcon(for: category)
+        let iconColor = vendorIconColor(for: category)
+        let status: VendorStatusV7 = (vendor.isBooked ?? false) ? .booked : .pending
+
+        VendorRowV7(
+            icon: icon,
+            iconColor: iconColor,
+            iconBackground: iconColor.opacity(0.1),
+            name: vendor.vendorName,
+            category: category,
+            status: status
+        )
     }
 }
 
