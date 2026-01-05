@@ -595,22 +595,34 @@ struct MasonryColumnsView: View {
     )
 
     var body: some View {
-        Group {
-            if hasCalculatedLayout {
-                // Real layout with measured heights (locked after first calculation)
-                HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
-                    // Column 1
-                    columnView(for: columnAssignment.column1, columnIndex: 0)
+        ZStack {
+            // Real layout (always rendered for measurements, but hidden during initial load)
+            HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
+                // Column 1
+                columnView(for: columnAssignment.column1, columnIndex: 0)
 
-                    // Column 2
-                    columnView(for: columnAssignment.column2, columnIndex: 1)
+                // Column 2
+                columnView(for: columnAssignment.column2, columnIndex: 1)
 
-                    // Column 3
-                    columnView(for: columnAssignment.column3, columnIndex: 2)
-                }
-            } else {
-                // Loading skeleton while waiting for measurements
+                // Column 3
+                columnView(for: columnAssignment.column3, columnIndex: 2)
+            }
+            .opacity(hasCalculatedLayout ? 1 : 0)
+
+            // Loading skeleton (shown until layout calculated)
+            if !hasCalculatedLayout {
                 dashboardLoadingSkeleton
+            }
+        }
+        .onAppear {
+            // Calculate initial layout with placeholder heights for immediate assignment
+            // Cards will measure themselves and trigger onPreferenceChange with real heights
+            if !hasCalculatedLayout && columnAssignment.column1.isEmpty {
+                columnAssignment = DashboardViewV7.ColumnAssignment.distribute(
+                    cards: columnLayout.visibleCards,
+                    heights: [:], // Empty heights initially - cards will render and measure
+                    rowSpacing: columnLayout.rowSpacing
+                )
             }
         }
         .onPreferenceChange(DashboardViewV7.CardHeightPreferenceKey.self) { heights in
@@ -620,7 +632,7 @@ struct MasonryColumnsView: View {
             // Only proceed if we have complete measurements for all visible cards
             guard heights.count == columnLayout.visibleCards.count else { return }
 
-            // Calculate column assignment ONCE and lock it
+            // Calculate column assignment ONCE with real heights and lock it
             cardHeights = heights
             columnAssignment = DashboardViewV7.ColumnAssignment.distribute(
                 cards: columnLayout.visibleCards,
