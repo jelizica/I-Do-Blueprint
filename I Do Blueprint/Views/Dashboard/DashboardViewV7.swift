@@ -595,7 +595,6 @@ struct MasonryColumnsView: View {
                     totalBudget: viewModel.totalBudget,
                     totalSpent: viewModel.totalPaid
                 )
-                .frame(height: budgetCardHeight)
                 
                 if shouldShowPaymentsDue {
                     PaymentsDueCardV7(maxItems: 999)  // Show ALL payments
