@@ -143,14 +143,6 @@ struct DashboardViewV7: View {
                     }
                     .frame(height: 70)
                     .padding(.horizontal, Spacing.xxl)
-                    
-                    // MARK: - Visual Separator
-                    // Subtle divider to indicate independent sections with different column layouts
-                    Rectangle()
-                        .fill(SemanticColors.borderLight.opacity(0.3))
-                        .frame(height: 1)
-                        .padding(.horizontal, Spacing.xxl)
-                        .padding(.vertical, Spacing.md)
 
                     // MARK: - Main Content: Masonry Layout (fills remaining space)
                     // GeometryReader provides both width AND height for proper card sizing
@@ -453,15 +445,20 @@ struct DashboardViewV7: View {
         /// Header (~60pt) + 2 rows (~88pt) + padding (~32pt) = ~180pt minimum
         private static let minimumDynamicCardHeight: CGFloat = 180
 
-        /// Calculate optimal column distribution with dynamic card separation
+        /// Bottom buffer for clean visual endpoint across all columns
+        private static let bottomBuffer: CGFloat = 24
+
+        /// Calculate optimal column distribution with conditional overflow
         ///
-        /// LAYOUT STRATEGY:
-        /// - Column 1: Static cards (Budget, Payments) + Tasks if they fit
-        /// - Column 2: Guest Responses (dynamic, expands to fill available space)
-        /// - Column 3: Vendor List (dynamic, constrained to available height)
-        ///
-        /// OVERFLOW PRIORITY: Tasks overflows to column 2 FIRST (Budget + Payments stay in column 1)
-        /// Guest Responses fills remaining space in column 2 after any overflow cards
+        /// LAYOUT ALGORITHM:
+        /// 1. Measure available height for masonry grid
+        /// 2. Calculate static card heights: Budget (~260), Payments (~268), Tasks (~136)
+        /// 3. Check if all static cards fit in Column 1:
+        ///    - If YES: Budget + Payments + Tasks all in Column 1
+        ///    - If NO: Budget + Payments in Column 1, Tasks overflows to Column 2
+        /// 4. Column 2: Guest Responses fills remaining space (minus Tasks if overflowed)
+        /// 5. Column 3: Vendor List fills full column height (with bottom buffer)
+        /// 6. Apply bottom buffer (~24pt) to all columns for clean endpoint
         static func distribute(
             cards: [CardType],
             heights: [CardType: CGFloat],
@@ -474,88 +471,76 @@ struct DashboardViewV7: View {
 
             var columnCards: [Int: [CardType]] = [0: [], 1: [], 2: []]
 
-            // PRIORITY ORDER for static cards in column 1: Budget → Payments → Tasks
-            // Tasks overflows FIRST if space is limited
-            let staticPriorityOrder: [CardType] = [.budget, .payments, .tasks]
-            let orderedStaticCards = staticPriorityOrder.filter { staticCards.contains($0) }
+            // Static card heights (from heights dict or defaults)
+            let budgetHeight = heights[.budget] ?? 260
+            let paymentsHeight = heights[.payments] ?? 268
+            let tasksHeight = heights[.tasks] ?? 136
 
-            // Calculate total static height
-            let totalStaticHeight = orderedStaticCards.reduce(CGFloat(0)) { sum, card in
-                sum + (heights[card] ?? 150)
-            }
-            let staticSpacing = orderedStaticCards.count > 1 ? CGFloat(orderedStaticCards.count - 1) * rowSpacing : 0
-            let consolidatedStaticHeight = totalStaticHeight + staticSpacing
+            // Calculate total height if ALL static cards were in Column 1
+            // Budget + Payments + Tasks + spacing between them
+            let staticCardCount = [CardType.budget, .payments, .tasks].filter { staticCards.contains($0) }.count
+            let spacingNeeded = CGFloat(max(staticCardCount - 1, 0)) * rowSpacing
+            let allStaticInColumn1 = budgetHeight + paymentsHeight + tasksHeight + spacingNeeded + bottomBuffer
 
-            // Check if all static cards fit in column 1
-            let allStaticFitInColumn1 = consolidatedStaticHeight <= availableHeight
-
-            // Find specific dynamic cards
+            // Find specific cards
+            let hasBudget = staticCards.contains(.budget)
+            let hasPayments = staticCards.contains(.payments)
+            let hasTasks = staticCards.contains(.tasks)
             let hasGuestResponses = dynamicCards.contains(.guests)
             let hasVendorList = dynamicCards.contains(.vendors)
             let hasRecentResponses = dynamicCards.contains(.recentResponses)
 
-            if allStaticFitInColumn1 {
-                // IDEAL: All static cards in column 1, dynamic cards get dedicated columns
-                // Column 1: All static cards (in priority order)
-                for card in orderedStaticCards {
-                    columnCards[0]?.append(card)
-                }
+            // CONDITIONAL FIT CHECK: Do all static cards fit in Column 1?
+            let allStaticFit = allStaticInColumn1 <= availableHeight
 
-                // Column 2: Guest Responses (dynamic - fills available space)
+            print("📊 LAYOUT CHECK: availableHeight=\(availableHeight), allStaticInColumn1=\(allStaticInColumn1), fit=\(allStaticFit)")
+
+            if allStaticFit {
+                // ALL static cards fit in Column 1
+                // Column 1: Budget + Payments + Tasks
+                if hasBudget { columnCards[0]?.append(.budget) }
+                if hasPayments { columnCards[0]?.append(.payments) }
+                if hasTasks { columnCards[0]?.append(.tasks) }
+
+                // Column 2: Guest Responses (full height)
                 if hasGuestResponses {
                     columnCards[1]?.append(.guests)
                 } else if hasRecentResponses {
                     columnCards[1]?.append(.recentResponses)
                 }
 
-                // Column 3: Vendor List (dynamic - constrained to available height)
+                // Column 3: Vendor List (full height)
                 if hasVendorList {
                     columnCards[2]?.append(.vendors)
                 }
 
-                // Handle remaining dynamic cards
-                if hasRecentResponses && hasGuestResponses {
-                    // Recent responses goes with guests if both exist
-                    columnCards[1]?.append(.recentResponses)
-                }
-
-                print("📊 IDEAL LAYOUT: All static → col 1, Guests → col 2, Vendors → col 3")
+                print("📊 LAYOUT: ALL static fit → Budget+Payments+Tasks in col 1")
             } else {
-                // OVERFLOW: Static cards don't fit in column 1
-                // Add cards in PRIORITY ORDER: Budget → Payments → Tasks
-                // Tasks overflows to column 2 FIRST
-                var column1Height: CGFloat = 0
+                // Tasks overflows to Column 2 (Budget + Payments stay in Column 1)
+                // Column 1: Budget + Payments only
+                if hasBudget { columnCards[0]?.append(.budget) }
+                if hasPayments { columnCards[0]?.append(.payments) }
 
-                for card in orderedStaticCards {
-                    let cardHeight = heights[card] ?? 150
-                    let spacingNeeded = columnCards[0]!.isEmpty ? 0 : rowSpacing
-
-                    if column1Height + cardHeight + spacingNeeded <= availableHeight {
-                        // Fits in column 1
-                        columnCards[0]?.append(card)
-                        column1Height += cardHeight + spacingNeeded
-                    } else {
-                        // Overflow to column 2 (Tasks will overflow first due to priority order)
-                        columnCards[1]?.append(card)
-                    }
-                }
-
-                // Guest Responses goes in column 2 (fills remaining space after overflow static cards)
+                // Column 2: Tasks (overflowed) + Guest Responses (fills remaining)
+                if hasTasks { columnCards[1]?.append(.tasks) }
                 if hasGuestResponses {
                     columnCards[1]?.append(.guests)
+                } else if hasRecentResponses {
+                    columnCards[1]?.append(.recentResponses)
                 }
 
-                // Vendor List gets column 3 (constrained to available height)
+                // Column 3: Vendor List (full height)
                 if hasVendorList {
                     columnCards[2]?.append(.vendors)
                 }
 
-                // Recent responses - add to column with guests if exists
-                if hasRecentResponses {
-                    columnCards[1]?.append(.recentResponses)
-                }
+                print("📊 LAYOUT: OVERFLOW → Tasks to col 2, Guests fills remaining")
+            }
 
-                print("📊 OVERFLOW LAYOUT: Tasks → col 2 (first to overflow), Guests fills remaining, Vendors → col 3")
+            // Handle edge case: Recent Responses as additional card
+            if hasRecentResponses && hasGuestResponses {
+                // If we have both, Recent Responses goes below Guests
+                columnCards[1]?.append(.recentResponses)
             }
 
             print("📊 Column 0: \(columnCards[0] ?? [])")
@@ -774,21 +759,30 @@ struct MasonryColumnsView: View {
             staticHeight += CGFloat(column.count - 1) * columnLayout.rowSpacing
         }
 
-        // Calculate remaining space for dynamic cards
-        let remainingHeight = max(availableHeight - staticHeight, 0)
+        // Bottom buffer for clean visual endpoint
+        let bottomBuffer: CGFloat = 24
+
+        // Calculate remaining space for dynamic cards (with bottom buffer)
+        let remainingHeight = max(availableHeight - staticHeight - bottomBuffer, 0)
 
         // Distribute remaining space to dynamic cards
+        // Both Guest Responses and Vendor List fill available space (with bottom buffer)
+        // Note: Tasks is STATIC (already counted in staticHeight), so dynamicCardsInColumn
+        // will only contain truly dynamic cards like .guests, .vendors, .recentResponses
         if dynamicCardsInColumn.count == 1 {
-            // Single dynamic card gets all remaining space
             let dynamicCard = dynamicCardsInColumn[0]
-            let dynamicHeight = max(remainingHeight, 150)  // Minimum 150pt
+            // Dynamic card fills remaining space (shows as many items as fit)
+            let dynamicHeight = max(remainingHeight, 150)
             heights[dynamicCard] = dynamicHeight
-        } else if dynamicCardsInColumn.count == 2 {
-            // Two dynamic cards split 50/50
-            let heightPerCard = max((remainingHeight - columnLayout.rowSpacing) / 2, 120)  // Minimum 120pt each
+            print("📊 \(dynamicCard) fills column: \(dynamicHeight)pt (with \(bottomBuffer)pt buffer)")
+        } else if dynamicCardsInColumn.count >= 2 {
+            // Multiple dynamic cards split space evenly
+            let gaps = CGFloat(dynamicCardsInColumn.count - 1) * columnLayout.rowSpacing
+            let heightPerCard = max((remainingHeight - gaps) / CGFloat(dynamicCardsInColumn.count), 120)
             for card in dynamicCardsInColumn {
                 heights[card] = heightPerCard
             }
+            print("📊 Multiple dynamic cards: \(heightPerCard)pt each")
         }
         // If no dynamic cards, heights dict only has static cards (already set)
 
@@ -809,6 +803,7 @@ struct MasonryColumnsView: View {
             // Column 3
             columnView(for: columnAssignment.column3, columnIndex: 2)
         }
+        .frame(maxHeight: .infinity, alignment: .top)  // Ensure all columns start at top
         .onAppear {
             // Step 1: Distribute cards using static heights for bin-packing
             // Dynamic cards (Vendors, Guest Responses) are separated into different columns when possible
@@ -856,9 +851,11 @@ struct MasonryColumnsView: View {
                 cardView(for: cardType)
                     .frame(width: columnLayout.columnWidth)
             }
-            // No Spacer - dynamic cards fill remaining space, eliminating bottom gap
+
+            Spacer(minLength: 0)  // Push cards to top, fill remaining space
         }
-        .frame(width: columnLayout.columnWidth, alignment: .top)
+        .frame(width: columnLayout.columnWidth)
+        .frame(maxHeight: .infinity, alignment: .top)
     }
 
     /// Build individual card view based on type
