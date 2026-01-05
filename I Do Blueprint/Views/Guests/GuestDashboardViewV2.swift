@@ -539,10 +539,12 @@ struct GuestCardV2: View {
                     .font(Typography.caption)
                     .foregroundColor(SemanticColors.textSecondary)
                     .lineLimit(1)
-                
-                Text("Invited by \(guest.invitedBy.displayName(with: settings))")
-                    .font(Typography.caption)
-                    .foregroundColor(SemanticColors.textTertiary)
+
+                if let invitedBy = guest.invitedBy {
+                    Text("Invited by \(invitedBy.displayName(with: settings))")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textTertiary)
+                }
             }
             
             // Footer: Table + Meal Choice
@@ -555,20 +557,20 @@ struct GuestCardV2: View {
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(SemanticColors.textSecondary)
                     
-                    Text(guest.tableNumber.map { "\($0)" } ?? "-")
+                    Text(guest.tableAssignment.map { "\($0)" } ?? "-")
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(SemanticColors.textPrimary)
                 }
-                
+
                 Spacer()
-                
+
                 VStack(alignment: .trailing, spacing: 2) {
                     Text("MEAL CHOICE")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(SemanticColors.textSecondary)
-                    
-                    Text(guest.mealChoice ?? "-")
+
+                    Text(guest.mealOption ?? "-")
                         .font(Typography.bodyRegular)
                         .fontWeight(.semibold)
                         .foregroundColor(SemanticColors.textPrimary)
