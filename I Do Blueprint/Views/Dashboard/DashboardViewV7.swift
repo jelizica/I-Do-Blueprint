@@ -36,6 +36,42 @@ struct DashboardViewV7: View {
     private var guestStore: GuestStoreV2 { appStores.guest }
     private var taskStore: TaskStoreV2 { appStores.task }
 
+    // MARK: - Conditional Card Visibility
+    
+    /// Check if Guest Responses card should be shown
+    private var shouldShowGuestResponses: Bool {
+        !guestStore.guests.isEmpty
+    }
+    
+    /// Check if Payments Due card should be shown
+    private var shouldShowPaymentsDue: Bool {
+        !currentMonthPayments.isEmpty
+    }
+    
+    /// Check if Recent Responses card should be shown
+    private var shouldShowRecentResponses: Bool {
+        hasRecentResponses
+    }
+    
+    /// Check if Vendor List card should be shown
+    private var shouldShowVendorList: Bool {
+        !vendorStore.vendors.isEmpty
+    }
+    
+    /// Get current month payments
+    private var currentMonthPayments: [PaymentSchedule] {
+        let now = Date()
+        let calendar = Calendar.current
+        return budgetStore.payments.paymentSchedules.filter { schedule in
+            calendar.isDate(schedule.paymentDate, equalTo: now, toGranularity: .month)
+        }
+    }
+    
+    /// Check if there are any guests with RSVP dates
+    private var hasRecentResponses: Bool {
+        guestStore.guests.contains { $0.rsvpDate != nil }
+    }
+
     // Adaptive grid for main content cards
     private let columns: [GridItem] = [
         GridItem(.adaptive(minimum: 300), spacing: Spacing.lg, alignment: .top)
@@ -114,32 +150,40 @@ struct DashboardViewV7: View {
                         }
                         .padding(.horizontal, Spacing.xxl)
 
-                        // MARK: - Main Content Grid
+                        // MARK: - Main Content Grid with Conditional Rendering
                         LazyVGrid(columns: columns, alignment: .center, spacing: Spacing.lg) {
                             if effectiveHasLoaded {
-                                // Budget Overview Card
+                                // Always show: Budget Overview
                                 BudgetOverviewCardV7(
                                     totalBudget: viewModel.totalBudget,
                                     totalSpent: viewModel.totalPaid
                                 )
                                 
-                                // Task Manager Card
+                                // Always show: Task Manager
                                 TaskManagerCardV7(store: taskStore)
                                 
-                                // Guest Responses Card
-                                GuestResponsesCardV7(store: guestStore)
-                                    .environmentObject(settingsStore)
-                                    .environmentObject(budgetStore)
-                                    .environmentObject(coordinator)
+                                // Conditional: Guest Responses (only if guests exist)
+                                if shouldShowGuestResponses {
+                                    GuestResponsesCardV7(store: guestStore)
+                                        .environmentObject(settingsStore)
+                                        .environmentObject(budgetStore)
+                                        .environmentObject(coordinator)
+                                }
                                 
-                                // Payments Due Card
-                                PaymentsDueCardV7()
+                                // Conditional: Payments Due (only if current month has payments)
+                                if shouldShowPaymentsDue {
+                                    PaymentsDueCardV7()
+                                }
                                 
-                                // Recent Responses Card
-                                RecentResponsesCardV7(store: guestStore)
+                                // Conditional: Recent Responses (only if guests have RSVP dates)
+                                if shouldShowRecentResponses {
+                                    RecentResponsesCardV7(store: guestStore)
+                                }
                                 
-                                // Vendor List Card
-                                VendorListCardV7(store: vendorStore)
+                                // Conditional: Vendor List (only if vendors exist)
+                                if shouldShowVendorList {
+                                    VendorListCardV7(store: vendorStore)
+                                }
                             } else {
                                 DashboardBudgetCardSkeleton()
                                 DashboardTasksCardSkeleton()
