@@ -154,45 +154,67 @@ struct DashboardViewV7: View {
                         }
                         .padding(.horizontal, Spacing.xxl)
 
-                        // MARK: - Main Content Grid with Conditional Rendering
-                        LazyVGrid(columns: columns, alignment: .center, spacing: Spacing.lg) {
+                        // MARK: - Main Content Grid with Space-Filling Layout
+                        // Use VStack with HStacks to create rows that fill available space
+                        VStack(spacing: Spacing.lg) {
                             if effectiveHasLoaded {
-                                // Always show: Budget Overview
-                                BudgetOverviewCardV7(
-                                    totalBudget: viewModel.totalBudget,
-                                    totalSpent: viewModel.totalPaid
-                                )
-                                
-                                // Always show: Task Manager
-                                TaskManagerCardV7(store: taskStore)
-                                
-                                // Conditional: Guest Responses (only if guests exist)
-                                if shouldShowGuestResponses {
-                                    GuestResponsesCardV7(store: guestStore)
-                                        .environmentObject(settingsStore)
-                                        .environmentObject(budgetStore)
-                                        .environmentObject(coordinator)
+                                // Row 1: Budget Overview, Task Manager, Guest Responses
+                                HStack(alignment: .top, spacing: Spacing.lg) {
+                                    // Always show: Budget Overview
+                                    BudgetOverviewCardV7(
+                                        totalBudget: viewModel.totalBudget,
+                                        totalSpent: viewModel.totalPaid
+                                    )
+                                    .frame(maxHeight: .infinity, alignment: .top)
+                                    
+                                    // Always show: Task Manager
+                                    TaskManagerCardV7(store: taskStore, maxItems: maxItems)
+                                        .frame(maxHeight: .infinity, alignment: .top)
+                                    
+                                    // Conditional: Guest Responses (only if guests exist)
+                                    if shouldShowGuestResponses {
+                                        GuestResponsesCardV7(store: guestStore, maxItems: maxItems)
+                                            .environmentObject(settingsStore)
+                                            .environmentObject(budgetStore)
+                                            .environmentObject(coordinator)
+                                            .frame(maxHeight: .infinity, alignment: .top)
+                                    }
                                 }
+                                .frame(maxHeight: .infinity)
                                 
-                                // Conditional: Payments Due (only if current month has payments)
-                                if shouldShowPaymentsDue {
-                                    PaymentsDueCardV7()
+                                // Row 2: Payments Due, Vendor List (+ Recent Responses if shown)
+                                HStack(alignment: .top, spacing: Spacing.lg) {
+                                    // Conditional: Payments Due (only if current month has payments)
+                                    if shouldShowPaymentsDue {
+                                        PaymentsDueCardV7(maxItems: maxItems)
+                                            .frame(maxHeight: .infinity, alignment: .top)
+                                    }
+                                    
+                                    // Conditional: Vendor List (only if vendors exist)
+                                    if shouldShowVendorList {
+                                        VendorListCardV7(store: vendorStore, maxItems: maxItems)
+                                            .frame(maxHeight: .infinity, alignment: .top)
+                                    }
+                                    
+                                    // Conditional: Recent Responses (only if guests have RSVP dates)
+                                    if shouldShowRecentResponses {
+                                        RecentResponsesCardV7(store: guestStore, maxItems: maxItems)
+                                            .frame(maxHeight: .infinity, alignment: .top)
+                                    }
                                 }
-                                
-                                // Conditional: Recent Responses (only if guests have RSVP dates)
-                                if shouldShowRecentResponses {
-                                    RecentResponsesCardV7(store: guestStore)
-                                }
-                                
-                                // Conditional: Vendor List (only if vendors exist)
-                                if shouldShowVendorList {
-                                    VendorListCardV7(store: vendorStore)
-                                }
+                                .frame(maxHeight: .infinity)
                             } else {
-                                DashboardBudgetCardSkeleton()
-                                DashboardTasksCardSkeleton()
-                                DashboardGuestsCardSkeleton()
-                                DashboardVendorsCardSkeleton()
+                                HStack(alignment: .top, spacing: Spacing.lg) {
+                                    DashboardBudgetCardSkeleton()
+                                    DashboardTasksCardSkeleton()
+                                    DashboardGuestsCardSkeleton()
+                                }
+                                .frame(maxHeight: .infinity)
+                                
+                                HStack(alignment: .top, spacing: Spacing.lg) {
+                                    DashboardVendorsCardSkeleton()
+                                }
+                                .frame(maxHeight: .infinity)
                             }
                         }
                         .padding(.horizontal, Spacing.xxl)
@@ -794,6 +816,9 @@ struct BudgetOverviewCardV7: View {
                 .frame(height: 8)
             }
             
+            // Spacer to fill available vertical space
+            Spacer(minLength: 0)
+            
             HStack {
                 Text(formattedSpent)
                     .font(Typography.caption2)
@@ -806,6 +831,7 @@ struct BudgetOverviewCardV7: View {
                     .foregroundColor(SemanticColors.textSecondary)
             }
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .glassPanel()
     }
 }
@@ -814,9 +840,10 @@ struct BudgetOverviewCardV7: View {
 
 struct TaskManagerCardV7: View {
     @ObservedObject var store: TaskStoreV2
+    let maxItems: Int
     
     private var recentTasks: [WeddingTask] {
-        // Get up to 5 most recent tasks, prioritizing incomplete tasks
+        // Get dynamically calculated number of tasks, prioritizing incomplete tasks
         store.tasks
             .sorted { (t1, t2) in
                 // Incomplete tasks first
@@ -838,7 +865,7 @@ struct TaskManagerCardV7: View {
                 // Finally by creation date (newest first)
                 return t1.createdAt > t2.createdAt
             }
-            .prefix(5)
+            .prefix(maxItems)
             .map { $0 }
     }
     
@@ -874,7 +901,11 @@ struct TaskManagerCardV7: View {
                     }
                 }
             }
+            
+            // Spacer to fill available vertical space
+            Spacer(minLength: 0)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .glassPanel()
     }
 }
@@ -913,10 +944,11 @@ struct TaskRowV7: View {
 
 struct GuestResponsesCardV7: View {
     @ObservedObject var store: GuestStoreV2
+    let maxItems: Int
     @EnvironmentObject private var settingsStore: SettingsStoreV2
     
     private var recentGuests: [Guest] {
-        // Get up to 3 most recent guests sorted by RSVP date or creation date
+        // Get dynamically calculated number of guests sorted by RSVP date or creation date
         store.guests
             .sorted { (g1, g2) in
                 if let date1 = g1.rsvpDate, let date2 = g2.rsvpDate {
@@ -929,7 +961,7 @@ struct GuestResponsesCardV7: View {
                     return g1.createdAt > g2.createdAt
                 }
             }
-            .prefix(3)
+            .prefix(maxItems)
             .map { $0 }
     }
     
@@ -963,7 +995,11 @@ struct GuestResponsesCardV7: View {
                     }
                 }
             }
+            
+            // Spacer to fill available vertical space
+            Spacer(minLength: 0)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .glassPanel()
     }
     
@@ -1106,6 +1142,7 @@ struct GuestRowV7: View {
 // MARK: - Payments Due Card
 
 struct PaymentsDueCardV7: View {
+    let maxItems: Int
     @Environment(\.appStores) private var appStores
     
     private var budgetStore: BudgetStoreV2 { appStores.budget }
@@ -1120,7 +1157,7 @@ struct PaymentsDueCardV7: View {
                 calendar.isDate(schedule.paymentDate, equalTo: now, toGranularity: .month)
             }
             .sorted { $0.paymentDate < $1.paymentDate }
-            .prefix(5)  // Show up to 5 payments
+            .prefix(maxItems)  // Show dynamically calculated number of payments
             .map { (schedule: $0, isPaid: $0.paid) }
     }
     
@@ -1195,7 +1232,11 @@ struct PaymentsDueCardV7: View {
                     }
                 }
             }
+            
+            // Spacer to fill available vertical space
+            Spacer(minLength: 0)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .glassPanel()
     }
 }
@@ -1234,13 +1275,14 @@ struct PaymentRowV7: View {
 
 struct RecentResponsesCardV7: View {
     @ObservedObject var store: GuestStoreV2
+    let maxItems: Int
     
     private var recentActivity: [(guest: Guest, action: String, color: Color)] {
         // Get guests with RSVP dates, sorted by most recent
         let guestsWithRSVP = store.guests
             .filter { $0.rsvpDate != nil }
             .sorted { ($0.rsvpDate ?? Date.distantPast) > ($1.rsvpDate ?? Date.distantPast) }
-            .prefix(3)
+            .prefix(maxItems)
         
         return guestsWithRSVP.map { guest in
             let action: String
@@ -1295,7 +1337,11 @@ struct RecentResponsesCardV7: View {
                     }
                 }
             }
+            
+            // Spacer to fill available vertical space
+            Spacer(minLength: 0)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .glassPanel()
     }
     
@@ -1344,9 +1390,10 @@ struct ActivityRowV7: View {
 
 struct VendorListCardV7: View {
     @ObservedObject var store: VendorStoreV2
+    let maxItems: Int
     
     private var recentVendors: [Vendor] {
-        // Get up to 3 most recent vendors, prioritizing booked vendors
+        // Get dynamically calculated number of vendors, prioritizing booked vendors
         store.vendors
             .sorted { (v1, v2) in
                 // Booked vendors first
@@ -1360,7 +1407,7 @@ struct VendorListCardV7: View {
                 // Then by creation date (newest first)
                 return v1.createdAt > v2.createdAt
             }
-            .prefix(3)
+            .prefix(maxItems)
             .map { $0 }
     }
     
@@ -1427,7 +1474,11 @@ struct VendorListCardV7: View {
                     }
                 }
             }
+            
+            // Spacer to fill available vertical space
+            Spacer(minLength: 0)
         }
+        .frame(maxHeight: .infinity, alignment: .top)
         .glassPanel()
     }
 

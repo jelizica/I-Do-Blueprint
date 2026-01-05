@@ -1,0 +1,129 @@
+{
+  "session_id": "c24204d3-3407-4b8f-a0f4-6b8b3269b3c7",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-05T01:33:32.103546+00:00",
+  "vectors": {
+    "engagement": 0.9,
+    "know": 0.85,
+    "do": 0.7,
+    "context": 0.95,
+    "clarity": 0.9,
+    "coherence": 0.9,
+    "signal": 0.8,
+    "density": 0.75,
+    "state": 0.85,
+    "change": 0.3,
+    "completion": 0.1,
+    "impact": 0.2,
+    "uncertainty": 0.25
+  },
+  "overall_confidence": 0.833,
+  "meta": {
+    "reasoning": "Session focused on planning and handoff creation for Step 6 complex implementation. Read comprehensive implementation plan (46KB markdown), understood GeometryReader requirements, created detailed Empirica handoff, and updated HANDOFF.md with full context. Know increased to 0.85 from understanding the architecture. Do is 0.70 as I understand what needs to be done but haven't implemented yet. Completion is 0.10 (only planning done, no code written). Impact 0.20 for creating comprehensive handoff documentation. Uncertainty reduced to 0.25 from understanding requirements, but still exists around exact height values and edge cases. User explicitly requested complex version - this is documented in handoff for next session.",
+    "task_summary": "Session focused on planning and handoff creation for Step 6 complex implementation. Read comprehensive implementation plan (46KB markdown), understood GeometryReader requirements, created detailed Empirica handoff, and updated HANDOFF.md with full context. Know increased to 0.85 from understanding the architecture. Do is 0.70 as I understand what needs to be done but haven't implemented yet. Completion is 0.10 (only planning done, no code written). Impact 0.20 for creating comprehensive handoff documentation. Uncertainty reduced to 0.25 from understanding requirements, but still exists around exact height values and edge cases. User explicitly requested complex version - this is documented in handoff for next session.",
+    "postflight_confidence": 0.75,
+    "calibration_accuracy": "poor",
+    "deltas": {
+      "engagement": 0.05,
+      "know": 0.15,
+      "do": 0.05,
+      "context": 0.1,
+      "clarity": 0.2,
+      "coherence": 0.1,
+      "signal": 0.15,
+      "density": 0.15,
+      "state": 0.1,
+      "change": -0.2,
+      "completion": 0.1,
+      "impact": 0.2,
+      "uncertainty": -0.2
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "964aa929f937da4b1d16689eb578f5ad5cbace70",
+    "git_notes_ref": "empirica/session/c24204d3-3407-4b8f-a0f4-6b8b3269b3c7/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "15bbac647e96dc6b12c4c6beb21a886f246441d7",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "HANDOFF.md"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 704512 -> 888832 bytes\n .../storage.sqlite                                 | Bin 831488 -> 1257472 bytes\n HANDOFF.md                                         | 553 ++++++++++++++-------\n 3 files changed, 383 insertions(+), 170 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "engagement": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "know": {
+      "prev": 0.7,
+      "curr": 0.85,
+      "delta": 0.15
+    },
+    "do": {
+      "prev": 0.65,
+      "curr": 0.7,
+      "delta": 0.05
+    },
+    "context": {
+      "prev": 0.85,
+      "curr": 0.95,
+      "delta": 0.1
+    },
+    "clarity": {
+      "prev": 0.7,
+      "curr": 0.9,
+      "delta": 0.2
+    },
+    "coherence": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "signal": {
+      "prev": 0.65,
+      "curr": 0.8,
+      "delta": 0.15
+    },
+    "density": {
+      "prev": 0.6,
+      "curr": 0.75,
+      "delta": 0.15
+    },
+    "state": {
+      "prev": 0.75,
+      "curr": 0.85,
+      "delta": 0.1
+    },
+    "change": {
+      "prev": 0.5,
+      "curr": 0.3,
+      "delta": -0.2
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 0.1,
+      "delta": 0.1
+    },
+    "impact": {
+      "prev": 0.0,
+      "curr": 0.2,
+      "delta": 0.2
+    },
+    "uncertainty": {
+      "prev": 0.45,
+      "curr": 0.25,
+      "delta": -0.2
+    }
+  },
+  "token_count": 531
+}

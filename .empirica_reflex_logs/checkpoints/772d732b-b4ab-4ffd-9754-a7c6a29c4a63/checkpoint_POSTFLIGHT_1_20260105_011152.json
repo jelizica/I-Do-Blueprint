@@ -1,0 +1,138 @@
+{
+  "session_id": "772d732b-b4ab-4ffd-9754-a7c6a29c4a63",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-05T01:11:51.065015+00:00",
+  "vectors": {
+    "engagement": 0.95,
+    "know": 0.9,
+    "do": 0.85,
+    "context": 0.95,
+    "clarity": 0.9,
+    "coherence": 0.9,
+    "signal": 0.95,
+    "density": 0.9,
+    "state": 0.9,
+    "change": 0.85,
+    "completion": 0.6,
+    "impact": 0.75,
+    "uncertainty": 0.15
+  },
+  "overall_confidence": 0.9,
+  "meta": {
+    "reasoning": "Successfully completed 3 of 6 implementation steps for Dashboard V7 Space-Filling Adaptive Layout. Learned: (1) SwiftUI toolbar removal, (2) Dynamic budget data formatting with progress calculations, (3) Calendar-based date filtering for current month payments, (4) Paid/unpaid UI patterns with strikethrough and opacity. Build succeeded twice. Remaining steps (guest avatars, conditional rendering, GeometryReader layout) tracked in new Beads issues. Code committed and pushed to remote.",
+    "task_summary": "Successfully completed 3 of 6 implementation steps for Dashboard V7 Space-Filling Adaptive Layout. Learned: (1) SwiftUI toolbar removal, (2) Dynamic budget data formatting with progress calculations, (3) Calendar-based date filtering for current month payments, (4) Paid/unpaid UI patterns with strikethrough and opacity. Build succeeded twice. Remaining steps (guest avatars, conditional rendering, GeometryReader layout) tracked in new Beads issues. Code committed and pushed to remote.",
+    "postflight_confidence": 0.85,
+    "calibration_accuracy": "moderate",
+    "deltas": {
+      "engagement": 0.1,
+      "know": 0.5,
+      "do": 0.5,
+      "context": 0.45,
+      "clarity": 0.45,
+      "coherence": 0.5,
+      "signal": 0.45,
+      "density": 0.45,
+      "state": 0.3,
+      "change": 0.55,
+      "completion": 0.6,
+      "impact": 0.75,
+      "uncertainty": -0.5
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "ff3a2302371e10a77854ac70aff28de4f59379bf",
+    "git_notes_ref": "empirica/session/772d732b-b4ab-4ffd-9754-a7c6a29c4a63/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "1a979d614aa527f9dd42930fcf3e8ad4b4c3833b",
+    "commits_since_last_checkpoint": [
+      {
+        "sha": "1a979d614aa527f9dd42930fcf3e8ad4b4c3833b",
+        "message": "feat: Implement Dashboard V7 improvements (Steps 1-3)",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-04T17:11:25-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Dashboard/DashboardViewV7.swift"
+        ]
+      }
+    ],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 704512 -> 806912 bytes\n .../storage.sqlite                                 | Bin 831488 -> 1191936 bytes\n 2 files changed, 0 insertions(+), 0 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "engagement": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "know": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "do": {
+      "prev": 0.8,
+      "curr": 0.85,
+      "delta": 0.05
+    },
+    "context": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "clarity": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "coherence": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "signal": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "density": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "state": {
+      "prev": 0.85,
+      "curr": 0.9,
+      "delta": 0.05
+    },
+    "change": {
+      "prev": 0.75,
+      "curr": 0.85,
+      "delta": 0.1
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 0.6,
+      "delta": 0.6
+    },
+    "impact": {
+      "prev": 0.0,
+      "curr": 0.75,
+      "delta": 0.75
+    },
+    "uncertainty": {
+      "prev": 0.2,
+      "curr": 0.15,
+      "delta": -0.05
+    }
+  },
+  "token_count": 452
+}
