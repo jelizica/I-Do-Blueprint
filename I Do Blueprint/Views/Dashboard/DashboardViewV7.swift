@@ -450,14 +450,16 @@ struct MasonryColumnsView: View {
     
     // MARK: - Card Height Calculations
     
+    /// Standardized spacing between cards (Spacing.lg = 16pt)
+    private var cardSpacing: CGFloat { Spacing.lg }
+    
     /// Calculate height for Budget Overview card (fills remaining space in column 1)
     private var budgetCardHeight: CGFloat {
         let availableHeight = columnLayout.availableHeight
-        let spacing = columnLayout.cardSpacing
         let paymentsHeight = paymentsCardHeight
         
-        // Budget takes remaining space after Payments
-        return max(availableHeight - paymentsHeight - spacing, 150)
+        // Budget takes remaining space after Payments + spacing
+        return max(availableHeight - paymentsHeight - cardSpacing, 150)
     }
     
     /// Calculate FIXED height for Payments Due card (shows ALL payments)
@@ -477,16 +479,27 @@ struct MasonryColumnsView: View {
     }
     
     /// Calculate height for Task Manager card
+    /// Uses minimum height to ensure Tasks card doesn't get too small
     private var tasksCardHeight: CGFloat {
         let availableHeight = columnLayout.availableHeight
-        let spacing = columnLayout.cardSpacing
         
         // If vendors are shown, split column 2 based on data density
+        // But ensure Tasks gets at least 120pt (header + 1-2 items)
         if shouldShowVendorList {
-            let taskWeight = max(CGFloat(taskStore.tasks.count), 1.0)
-            let vendorWeight = max(CGFloat(vendorStore.vendors.count), 1.0)
-            let totalWeight = taskWeight + vendorWeight
-            return (availableHeight - spacing) * (taskWeight / totalWeight)
+            let taskCount = max(CGFloat(taskStore.tasks.count), 1.0)
+            let vendorCount = max(CGFloat(vendorStore.vendors.count), 1.0)
+            
+            // Calculate proportional heights
+            let totalWeight = taskCount + vendorCount
+            let taskRatio = taskCount / totalWeight
+            
+            // Available for both cards minus spacing
+            let availableForCards = availableHeight - cardSpacing
+            let proportionalHeight = availableForCards * taskRatio
+            
+            // Ensure minimum height for Tasks (header + 2 items)
+            let minTaskHeight: CGFloat = 120
+            return max(proportionalHeight, minTaskHeight)
         }
         
         // Tasks take full column height if no vendors
@@ -494,28 +507,28 @@ struct MasonryColumnsView: View {
     }
     
     /// Calculate height for Vendor List card
+    /// Takes remaining space after Tasks card
     private var vendorsCardHeight: CGFloat {
         let availableHeight = columnLayout.availableHeight
-        let spacing = columnLayout.cardSpacing
         
-        // Split column 2 based on data density
-        let taskWeight = max(CGFloat(taskStore.tasks.count), 1.0)
-        let vendorWeight = max(CGFloat(vendorStore.vendors.count), 1.0)
-        let totalWeight = taskWeight + vendorWeight
-        return (availableHeight - spacing) * (vendorWeight / totalWeight)
+        // Vendors get remaining space after Tasks + spacing
+        let tasksHeight = tasksCardHeight
+        return availableHeight - tasksHeight - cardSpacing
     }
     
     /// Calculate height for Guest Responses card
     private var guestsCardHeight: CGFloat {
         let availableHeight = columnLayout.availableHeight
-        let spacing = columnLayout.cardSpacing
         
-        // If recent responses are shown, split column 3 based on data density
+        // If recent responses are shown, split column 3
+        // Guests get majority of space (they have more data)
         if shouldShowRecentResponses {
-            let guestWeight = max(CGFloat(guestStore.guests.count) / 10.0, 2.0)  // Guests get more weight
-            let recentWeight: CGFloat = 1.0
-            let totalWeight = guestWeight + recentWeight
-            return (availableHeight - spacing) * (guestWeight / totalWeight)
+            let guestCount = CGFloat(guestStore.guests.count)
+            // Guests get proportionally more space based on data count
+            // Minimum 70% of available space for guests
+            let guestRatio = max(0.7, min(guestCount / (guestCount + 10), 0.85))
+            let availableForCards = availableHeight - cardSpacing
+            return availableForCards * guestRatio
         }
         
         // Guests take full column height if no recent responses
@@ -525,29 +538,50 @@ struct MasonryColumnsView: View {
     /// Calculate height for Recent Responses card
     private var recentCardHeight: CGFloat {
         let availableHeight = columnLayout.availableHeight
-        let spacing = columnLayout.cardSpacing
         
-        // Split column 3 based on data density
-        let guestWeight = max(CGFloat(guestStore.guests.count) / 10.0, 2.0)
-        let recentWeight: CGFloat = 1.0
-        let totalWeight = guestWeight + recentWeight
-        return (availableHeight - spacing) * (recentWeight / totalWeight)
+        // Recent gets remaining space after Guests + spacing
+        let guestsHeight = guestsCardHeight
+        return availableHeight - guestsHeight - cardSpacing
     }
     
     /// Calculate max items for a card based on its height
+    /// Returns enough items to fill the available space
     private func maxItems(forHeight height: CGFloat, itemHeight: CGFloat) -> Int {
         let headerHeight: CGFloat = 50
         let padding: CGFloat = Spacing.lg * 2
         let available = height - headerHeight - padding
+        // Calculate how many items fit, minimum 2
         return max(Int(available / itemHeight), 2)
     }
     
-    var body: some View {
-        let spacing = columnLayout.cardSpacing
+    /// Calculate row spacing for cards that don't have enough items to fill space
+    /// This distributes items evenly instead of leaving empty space at bottom
+    private func rowSpacing(forHeight height: CGFloat, itemCount: Int, itemHeight: CGFloat) -> CGFloat {
+        let headerHeight: CGFloat = 50
+        let padding: CGFloat = Spacing.lg * 2
+        let availableForItems = height - headerHeight - padding
         
-        HStack(alignment: .top, spacing: spacing) {
+        guard itemCount > 1 else { return Spacing.md }
+        
+        // Calculate total content height
+        let totalItemHeight = CGFloat(itemCount) * itemHeight
+        
+        // If items don't fill space, distribute extra space as row spacing
+        if totalItemHeight < availableForItems {
+            let extraSpace = availableForItems - totalItemHeight
+            let gaps = CGFloat(itemCount - 1)
+            let extraPerGap = extraSpace / gaps
+            return Spacing.md + extraPerGap
+        }
+        
+        return Spacing.md
+    }
+    
+    var body: some View {
+        // Use standardized cardSpacing (Spacing.lg = 16pt) for all gaps
+        HStack(alignment: .top, spacing: cardSpacing) {
             // MARK: - Column 1: Budget + Payments
-            VStack(alignment: .leading, spacing: spacing) {
+            VStack(alignment: .leading, spacing: cardSpacing) {
                 BudgetOverviewCardV7(
                     totalBudget: viewModel.totalBudget,
                     totalSpent: viewModel.totalPaid
@@ -562,7 +596,7 @@ struct MasonryColumnsView: View {
             .frame(width: columnLayout.columnWidth, alignment: .top)
             
             // MARK: - Column 2: Tasks + Vendors
-            VStack(alignment: .leading, spacing: spacing) {
+            VStack(alignment: .leading, spacing: cardSpacing) {
                 TaskManagerCardV7(
                     store: taskStore,
                     maxItems: maxItems(forHeight: tasksCardHeight, itemHeight: 44)
@@ -580,7 +614,7 @@ struct MasonryColumnsView: View {
             .frame(width: columnLayout.columnWidth, alignment: .top)
             
             // MARK: - Column 3: Guests + Recent
-            VStack(alignment: .leading, spacing: spacing) {
+            VStack(alignment: .leading, spacing: cardSpacing) {
                 if shouldShowGuestResponses {
                     GuestResponsesCardV7(
                         store: guestStore,
