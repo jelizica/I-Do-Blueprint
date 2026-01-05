@@ -153,10 +153,10 @@ struct DashboardViewV7: View {
                         .padding(.vertical, Spacing.md)
 
                     // MARK: - Main Content: Masonry Layout (fills remaining space)
-                    // GeometryReader ONLY for width calculation, height is unconstrained
+                    // GeometryReader provides both width AND height for proper card sizing
                     GeometryReader { masonryGeometry in
                         let columnLayout = calculateColumnLayout(
-                            availableHeight: .infinity, // Don't constrain height - let content determine it
+                            availableHeight: masonryGeometry.size.height,  // Use actual available height
                             availableWidth: masonryGeometry.size.width - (Spacing.xxl * 2)
                         )
 
@@ -596,15 +596,23 @@ struct MasonryColumnsView: View {
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .payments:
-            // Payment Due: Show all current month payments
-            let contentHeight = CGFloat(max(currentMonthPayments.count, 2)) * rowHeight
+            // Payment Due: Exact size for actual payment count (no extra space)
+            // Use actual count, minimum 1 row for empty state
+            let paymentCount = currentMonthPayments.count
+            let contentHeight = CGFloat(max(paymentCount, 1)) * rowHeight
             return cardHeaderHeight + contentHeight + cardPadding
 
         case .vendors:
-            // Vendor List: Expanded - show more vendors to fill available space
-            let vendorCount = min(vendorStore.vendors.count, 8)  // Up to 8 vendors
-            let contentHeight = CGFloat(max(vendorCount, 5)) * rowHeight
-            return cardHeaderHeight + contentHeight + cardPadding
+            // Vendor List: Uses available height proportionally
+            // Height is constrained by available space; card calculates how many vendors fit
+            let availableHeight = columnLayout.availableHeight
+            if availableHeight.isFinite && availableHeight > 0 {
+                // Use ~40% of available height for vendor card (shared with other row 2 cards)
+                let targetHeight = min(availableHeight * 0.4, 350)  // Cap at 350pt
+                return max(targetHeight, 180)  // Minimum 180pt (header + 2 vendors)
+            }
+            // Fallback when height not yet calculated
+            return 260
 
         case .recentResponses:
             // Recent Responses: Show fewer items
@@ -690,7 +698,7 @@ struct MasonryColumnsView: View {
         case .vendors:
             VendorListCardV7(
                 store: vendorStore,
-                maxItems: 8,  // Expanded - up to 8 vendors
+                maxItems: 5,  // Constrained to 5 vendors to fit available space
                 cardHeight: estimateCardHeight(for: .vendors)
             )
             .frame(height: estimateCardHeight(for: .vendors))
@@ -1311,22 +1319,19 @@ struct BudgetOverviewCardV7: View {
                 .frame(height: 8)
             }
             
-            // Spacer to fill available vertical space
-            Spacer(minLength: 0)
-            
             HStack {
                 Text(formattedSpent)
                     .font(Typography.caption2)
                     .foregroundColor(SemanticColors.textSecondary)
-                
+
                 Spacer()
-                
+
                 Text(formattedTotal)
                     .font(Typography.caption2)
                     .foregroundColor(SemanticColors.textSecondary)
             }
         }
-        .frame(maxHeight: .infinity, alignment: .top)
+        // Static size - no expansion (budget card has fixed content)
         .glassPanel()
     }
 }
@@ -1785,11 +1790,8 @@ struct PaymentsDueCardV7: View {
                     }
                 }
             }
-            
-            // Spacer to fill available vertical space
-            Spacer(minLength: 0)
         }
-        .frame(maxHeight: .infinity, alignment: .top)
+        // Content-sized - no expansion (payment card sizes to actual payment count)
         .glassPanel()
     }
 }
@@ -1970,14 +1972,23 @@ struct ActivityRowV7: View {
 
 struct VendorListCardV7: View {
     @ObservedObject var store: VendorStoreV2
-    let maxItems: Int
+    let maxItems: Int  // Ignored - calculated dynamically from cardHeight
     let cardHeight: CGFloat
-    
+
     /// Item height for vendor rows (icon + 2 lines)
     private let itemHeight: CGFloat = 48
-    
+
+    /// Calculate how many vendors fit within the card height
+    private var calculatedMaxItems: Int {
+        let headerHeight: CGFloat = 50  // Title + button
+        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding
+        let availableForItems = cardHeight - headerHeight - cardPadding
+        let maxItems = Int(availableForItems / itemHeight)
+        return max(maxItems, 2)  // At least 2 items
+    }
+
     private var recentVendors: [Vendor] {
-        // Get dynamically calculated number of vendors, prioritizing booked vendors
+        // Get dynamically calculated number of vendors based on available height
         store.vendors
             .sorted { (v1, v2) in
                 // Booked vendors first
@@ -1991,7 +2002,7 @@ struct VendorListCardV7: View {
                 // Then by creation date (newest first)
                 return v1.createdAt > v2.createdAt
             }
-            .prefix(maxItems)
+            .prefix(calculatedMaxItems)  // Use calculated max based on height
             .map { $0 }
     }
     
@@ -2081,11 +2092,8 @@ struct VendorListCardV7: View {
                     }
                 }
             }
-            
-            // Spacer to fill available vertical space
-            Spacer(minLength: 0)
         }
-        .frame(maxHeight: .infinity, alignment: .top)
+        // Card height is constrained by parent frame - content fills available space
         .glassPanel()
     }
 
