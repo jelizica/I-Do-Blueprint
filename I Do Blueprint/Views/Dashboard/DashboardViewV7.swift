@@ -151,6 +151,17 @@ struct DashboardViewV7: View {
                             availableHeight: masonryGeometry.size.height,  // Use actual available height
                             availableWidth: masonryGeometry.size.width - (Spacing.xxl * 2)
                         )
+                        
+                        // DEBUG: Log layout dimensions for troubleshooting
+                        let _ = logLayoutDimensions(
+                            totalHeight: masonryGeometry.size.height,
+                            totalWidth: masonryGeometry.size.width,
+                            headerHeight: 50,
+                            metricCardsHeight: 70,
+                            topPadding: Spacing.lg,
+                            bottomPadding: Spacing.lg,
+                            horizontalPadding: Spacing.xxl
+                        )
 
                         if effectiveHasLoaded {
                             MasonryColumnsView(
@@ -569,6 +580,50 @@ struct DashboardViewV7: View {
         let visibleCards: [CardType]
     }
 
+    /// Log layout dimensions for debugging alignment issues
+    /// Called from GeometryReader to output total page height, fixed components, and dynamic grid
+    private func logLayoutDimensions(
+        totalHeight: CGFloat,
+        totalWidth: CGFloat,
+        headerHeight: CGFloat,
+        metricCardsHeight: CGFloat,
+        topPadding: CGFloat,
+        bottomPadding: CGFloat,
+        horizontalPadding: CGFloat
+    ) {
+        let fixedComponentsHeight = headerHeight + metricCardsHeight + topPadding + bottomPadding + Spacing.lg * 2  // VStack spacing
+        let dynamicGridHeight = totalHeight  // This is the GeometryReader's available height
+        
+        // Calculate column widths
+        let cardSpacing = Spacing.sm  // 8pt between columns
+        let columnCount: CGFloat = 3
+        let totalSpacing = cardSpacing * (columnCount - 1)  // 16pt total
+        let contentWidth = totalWidth - horizontalPadding * 2  // Width available for columns
+        let columnWidth = (contentWidth - totalSpacing) / columnCount
+        
+        print("📐 DASHBOARD LAYOUT DIMENSIONS:")
+        print("   📏 Total page height (GeometryReader): \(totalHeight)pt")
+        print("   📏 Total page width: \(totalWidth)pt")
+        print("   📦 Fixed components:")
+        print("      - Header: \(headerHeight)pt")
+        print("      - Metric cards: \(metricCardsHeight)pt")
+        print("      - Top padding: \(topPadding)pt")
+        print("      - Bottom padding: \(bottomPadding)pt")
+        print("      - VStack spacing (2x): \(Spacing.lg * 2)pt")
+        print("      - Total fixed: \(fixedComponentsHeight)pt")
+        print("   📊 Dynamic grid height: \(dynamicGridHeight)pt")
+        print("   📐 Horizontal layout:")
+        print("      - Window width: \(totalWidth)pt")
+        print("      - Horizontal padding: \(horizontalPadding)pt (each side, total: \(horizontalPadding * 2)pt)")
+        print("      - Content width (for columns): \(contentWidth)pt")
+        print("      - Column spacing: \(cardSpacing)pt (total: \(totalSpacing)pt)")
+        print("      - Column width: \(columnWidth)pt (x3 = \(columnWidth * 3)pt)")
+        print("      - Verification: columns + spacing = \(columnWidth * 3 + totalSpacing)pt (should equal \(contentWidth)pt)")
+        print("   📐 Edge distances:")
+        print("      - Left edge to first card: \(horizontalPadding)pt")
+        print("      - Last card to right edge: \(horizontalPadding)pt")
+    }
+    
     /// Calculate column layout based on available space and visible cards
     private func calculateColumnLayout(availableHeight: CGFloat, availableWidth: CGFloat) -> ColumnLayout {
         let cardSpacing = Spacing.sm  // Horizontal spacing between columns (8pt)
@@ -873,8 +928,11 @@ struct MasonryColumnsView: View {
         }
         .frame(width: columnLayout.columnWidth, alignment: .top)
         // Use custom columnTop alignment to force all columns to start at the same Y position
+        // Return 0 to ensure all columns align at the top of the HStack
         .alignmentGuide(.columnTop) { dimension in
-            dimension[.top]
+            let topValue = dimension[.top]
+            print("📐 Column \(columnIndex) alignment: top=\(topValue), height=\(dimension.height), width=\(dimension.width)")
+            return topValue
         }
     }
 
