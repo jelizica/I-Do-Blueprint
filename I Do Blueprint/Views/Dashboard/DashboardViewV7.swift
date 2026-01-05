@@ -154,29 +154,6 @@ struct DashboardViewV7: View {
                 }
             }
             .navigationTitle("")
-            .toolbar {
-                ToolbarItem(placement: .automatic) {
-                    HStack(spacing: Spacing.md) {
-                        if effectiveIsLoading {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        }
-
-                        Button {
-                            Task { await viewModel.loadDashboardData() }
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(SemanticColors.textPrimary)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibleActionButton(
-                            label: "Refresh dashboard",
-                            hint: "Reload all dashboard data"
-                        )
-                    }
-                }
-            }
         }
         .task {
             if !viewModel.hasLoaded {
@@ -663,6 +640,24 @@ struct BudgetOverviewCardV7: View {
         return formatter.string(from: NSNumber(value: totalBudget)) ?? "$0"
     }
     
+    private var formattedSpent: String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: totalSpent)) ?? "$0"
+    }
+    
+    private var spentProgress: Double {
+        guard totalBudget > 0 else { return 0 }
+        return min(totalSpent / totalBudget, 1.0)
+    }
+    
+    private var remainingProgress: Double {
+        guard totalBudget > 0 else { return 0 }
+        let remaining = max(totalBudget - totalSpent, 0)
+        return min(remaining / totalBudget, 1.0)
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             HStack {
@@ -678,7 +673,7 @@ struct BudgetOverviewCardV7: View {
             }
             
             VStack(spacing: Spacing.lg) {
-                // Progress bar 1
+                // Progress bar 1 - Spent
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
@@ -687,12 +682,12 @@ struct BudgetOverviewCardV7: View {
                         
                         RoundedRectangle(cornerRadius: 4)
                             .fill(AppGradients.sageDark)
-                            .frame(width: geometry.size.width * 0.65, height: 8)
+                            .frame(width: geometry.size.width * spentProgress, height: 8)
                     }
                 }
                 .frame(height: 8)
                 
-                // Progress bar 2
+                // Progress bar 2 - Remaining
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
                         RoundedRectangle(cornerRadius: 4)
@@ -701,20 +696,20 @@ struct BudgetOverviewCardV7: View {
                         
                         RoundedRectangle(cornerRadius: 4)
                             .fill(Color.gray.opacity(0.5))
-                            .frame(width: geometry.size.width * 0.35, height: 8)
+                            .frame(width: geometry.size.width * remainingProgress, height: 8)
                     }
                 }
                 .frame(height: 8)
             }
             
             HStack {
-                Text("$7,150")
+                Text(formattedSpent)
                     .font(Typography.caption2)
                     .foregroundColor(SemanticColors.textSecondary)
                 
                 Spacer()
                 
-                Text("$3.7M")
+                Text(formattedTotal)
                     .font(Typography.caption2)
                     .foregroundColor(SemanticColors.textSecondary)
             }
@@ -978,16 +973,18 @@ struct PaymentsDueCardV7: View {
     
     private var budgetStore: BudgetStoreV2 { appStores.budget }
     
-    private var upcomingPayments: [(vendor: String, amount: Double, dueDate: Date)] {
+    private var currentMonthPayments: [(schedule: PaymentSchedule, isPaid: Bool)] {
         let now = Date()
-        let thirtyDaysFromNow = Calendar.current.date(byAdding: .day, value: 30, to: now) ?? now
+        let calendar = Calendar.current
         
-        // Get unpaid payment schedules due within next 30 days
+        // Get ALL payment schedules for current month (both paid and unpaid)
         return budgetStore.payments.paymentSchedules
-            .filter { !$0.paid && $0.paymentDate >= now && $0.paymentDate <= thirtyDaysFromNow }
+            .filter { schedule in
+                calendar.isDate(schedule.paymentDate, equalTo: now, toGranularity: .month)
+            }
             .sorted { $0.paymentDate < $1.paymentDate }
-            .prefix(3)
-            .map { (vendor: $0.vendor, amount: $0.paymentAmount, dueDate: $0.paymentDate) }
+            .prefix(5)  // Show up to 5 payments
+            .map { (schedule: $0, isPaid: $0.paid) }
     }
     
     private var currentMonthName: String {
@@ -1003,8 +1000,8 @@ struct PaymentsDueCardV7: View {
         return formatter.string(from: NSNumber(value: amount)) ?? "$0"
     }
     
-    private func isOverdue(_ date: Date) -> Bool {
-        return date < Date()
+    private func isOverdue(_ date: Date, isPaid: Bool) -> Bool {
+        return !isPaid && date < Date()
     }
     
     var body: some View {
@@ -1040,21 +1037,22 @@ struct PaymentsDueCardV7: View {
                 .buttonStyle(.plain)
             }
             
-            if upcomingPayments.isEmpty {
-                Text("No upcoming payments")
+            if currentMonthPayments.isEmpty {
+                Text("No payments this month")
                     .font(Typography.bodySmall)
                     .foregroundColor(SemanticColors.textSecondary)
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, Spacing.lg)
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(upcomingPayments.enumerated()), id: \.offset) { index, payment in
+                    ForEach(Array(currentMonthPayments.enumerated()), id: \.offset) { index, payment in
                         PaymentRowV7(
-                            title: payment.vendor,
-                            amount: formatAmount(payment.amount),
-                            isHighlighted: isOverdue(payment.dueDate)
+                            title: payment.schedule.vendor,
+                            amount: formatAmount(payment.schedule.paymentAmount),
+                            isPaid: payment.isPaid,
+                            isOverdue: isOverdue(payment.schedule.paymentDate, isPaid: payment.isPaid)
                         )
-                        if index < upcomingPayments.count - 1 {
+                        if index < currentMonthPayments.count - 1 {
                             Divider().opacity(0.5)
                         }
                     }
@@ -1068,22 +1066,30 @@ struct PaymentsDueCardV7: View {
 struct PaymentRowV7: View {
     let title: String
     let amount: String
-    let isHighlighted: Bool
+    let isPaid: Bool
+    let isOverdue: Bool
     
     var body: some View {
         HStack {
+            // Paid/Unpaid indicator
+            Image(systemName: isPaid ? "checkmark.circle.fill" : "circle")
+                .foregroundColor(isPaid ? AppGradients.sageDark : SemanticColors.textTertiary)
+                .font(.system(size: 16))
+            
             Text(title)
                 .font(Typography.bodySmall)
                 .foregroundColor(SemanticColors.textPrimary)
+                .strikethrough(isPaid, color: SemanticColors.textTertiary)
             
             Spacer()
             
             Text(amount)
                 .font(Typography.bodySmall)
                 .fontWeight(.bold)
-                .foregroundColor(isHighlighted ? AppGradients.weddingPink : SemanticColors.textPrimary)
+                .foregroundColor(isOverdue ? AppGradients.weddingPink : SemanticColors.textPrimary)
         }
         .padding(.vertical, Spacing.sm)
+        .opacity(isPaid ? 0.6 : 1.0)  // Dim paid items
     }
 }
 
