@@ -104,62 +104,63 @@ struct DashboardViewV7: View {
                 MeshGradientBackgroundV7()
                     .ignoresSafeArea()
 
-                GeometryReader { geometry in
-                    let availableHeight = calculateAvailableHeight(geometry: geometry)
-                    let columnLayout = calculateColumnLayout(
-                        availableHeight: availableHeight,
-                        availableWidth: geometry.size.width - (Spacing.xxl * 2)
-                    )
-                    
-                    // NO ScrollView - content fills viewport exactly
-                    VStack(spacing: Spacing.xl) {
-                        // MARK: - Header
-                        DashboardHeaderV7()
-                            .padding(.horizontal, Spacing.xxl)
-
-                        // MARK: - Hero Banner with Countdown
-                        Group {
-                            if effectiveHasLoaded {
-                                HeroBannerV7(
-                                    weddingDate: viewModel.weddingDate,
-                                    partner1Name: viewModel.partner1DisplayName,
-                                    partner2Name: viewModel.partner2DisplayName,
-                                    currentTime: currentTime
-                                )
-                            } else {
-                                DashboardHeroSkeleton()
-                            }
-                        }
+                // Use VStack with fixed-height header elements, then GeometryReader ONLY for masonry
+                VStack(spacing: Spacing.lg) {
+                    // MARK: - Header (fixed height)
+                    DashboardHeaderV7()
+                        .frame(height: 60)
                         .padding(.horizontal, Spacing.xxl)
 
-                        // MARK: - Metric Cards Row (RSVPs, Vendors, Budget)
-                        LazyVGrid(columns: metricColumns, alignment: .center, spacing: Spacing.lg) {
-                            if effectiveHasLoaded {
-                                RSVPMetricCardV7(
-                                    confirmed: viewModel.rsvpYesCount,
-                                    pending: viewModel.rsvpPendingCount,
-                                    total: viewModel.totalGuests
-                                )
-                                VendorMetricCardV7(
-                                    booked: viewModel.vendorsBookedCount,
-                                    total: viewModel.totalVendors
-                                )
-                                BudgetMetricCardV7(
-                                    spent: viewModel.totalPaid,
-                                    total: viewModel.totalBudget,
-                                    percentage: viewModel.budgetPercentage
-                                )
-                            } else {
-                                MetricCardSkeleton()
-                                MetricCardSkeleton()
-                                MetricCardSkeleton()
-                            }
+                    // MARK: - Hero Banner with Countdown (fixed height)
+                    Group {
+                        if effectiveHasLoaded {
+                            HeroBannerV7(
+                                weddingDate: viewModel.weddingDate,
+                                partner1Name: viewModel.partner1DisplayName,
+                                partner2Name: viewModel.partner2DisplayName,
+                                currentTime: currentTime
+                            )
+                        } else {
+                            DashboardHeroSkeleton()
                         }
-                        .padding(.horizontal, Spacing.xxl)
+                    }
+                    .frame(height: 100)
+                    .padding(.horizontal, Spacing.xxl)
 
-                        // MARK: - Main Content: Column-Based Masonry Layout
-                        // Each column fills viewport height independently
-                        // Cards meet at edges with NO gaps
+                    // MARK: - Metric Cards Row (fixed height)
+                    LazyVGrid(columns: metricColumns, alignment: .center, spacing: Spacing.lg) {
+                        if effectiveHasLoaded {
+                            RSVPMetricCardV7(
+                                confirmed: viewModel.rsvpYesCount,
+                                pending: viewModel.rsvpPendingCount,
+                                total: viewModel.totalGuests
+                            )
+                            VendorMetricCardV7(
+                                booked: viewModel.vendorsBookedCount,
+                                total: viewModel.totalVendors
+                            )
+                            BudgetMetricCardV7(
+                                spent: viewModel.totalPaid,
+                                total: viewModel.totalBudget,
+                                percentage: viewModel.budgetPercentage
+                            )
+                        } else {
+                            MetricCardSkeleton()
+                            MetricCardSkeleton()
+                            MetricCardSkeleton()
+                        }
+                    }
+                    .frame(height: 120)
+                    .padding(.horizontal, Spacing.xxl)
+
+                    // MARK: - Main Content: Masonry Layout (fills remaining space)
+                    // GeometryReader ONLY for the masonry area - this prevents overlap
+                    GeometryReader { masonryGeometry in
+                        let columnLayout = calculateColumnLayout(
+                            availableHeight: masonryGeometry.size.height,
+                            availableWidth: masonryGeometry.size.width - (Spacing.xxl * 2)
+                        )
+                        
                         if effectiveHasLoaded {
                             MasonryColumnsView(
                                 columnLayout: columnLayout,
@@ -176,8 +177,9 @@ struct DashboardViewV7: View {
                                 shouldShowRecentResponses: shouldShowRecentResponses,
                                 currentMonthPayments: currentMonthPayments
                             )
+                            .padding(.horizontal, Spacing.xxl)
                         } else {
-                            // Loading skeletons in masonry layout
+                            // Loading skeletons
                             HStack(alignment: .top, spacing: Spacing.lg) {
                                 VStack(spacing: Spacing.lg) {
                                     DashboardBudgetCardSkeleton()
@@ -190,13 +192,12 @@ struct DashboardViewV7: View {
                                     DashboardGuestsCardSkeleton()
                                 }
                             }
-                            .frame(height: availableHeight)
+                            .padding(.horizontal, Spacing.xxl)
                         }
                     }
-                    .padding(.top, Spacing.lg)
-                    .padding(.bottom, Spacing.lg)
-                    .padding(.horizontal, Spacing.xxl)
                 }
+                .padding(.top, Spacing.lg)
+                .padding(.bottom, Spacing.lg)
             }
             .navigationTitle("")
         }
