@@ -581,53 +581,94 @@ struct MasonryColumnsView: View {
     // MARK: - Intelligent Distribution
 
     /// Measured card heights from child views (captured via PreferenceKey)
-    /// Initialized with placeholder heights to prevent empty grid on first render
-    @State private var cardHeights: [DashboardViewV7.CardType: CGFloat] = [
-        .budget: 200,
-        .tasks: 250,
-        .guests: 200,
-        .payments: 180,
-        .vendors: 250,
-        .recentResponses: 150
-    ]
+    @State private var cardHeights: [DashboardViewV7.CardType: CGFloat] = [:]
 
-    /// Task for debouncing preference updates to prevent infinite layout loops
-    @State private var heightUpdateTask: Task<Void, Never>?
+    /// Flag to track if layout has been calculated (prevents continuous recalculation)
+    @State private var hasCalculatedLayout = false
 
-    /// Dynamically calculated column assignments based on measured heights
-    private var columnAssignment: DashboardViewV7.ColumnAssignment {
-        return DashboardViewV7.ColumnAssignment.distribute(
-            cards: columnLayout.visibleCards,
-            heights: cardHeights,
-            rowSpacing: columnLayout.rowSpacing
-        )
-    }
+    /// Column assignments calculated ONCE on initial load and locked
+    /// This prevents the shifting issue caused by continuous layout recalculation
+    @State private var columnAssignment: DashboardViewV7.ColumnAssignment = DashboardViewV7.ColumnAssignment(
+        column1: [],
+        column2: [],
+        column3: []
+    )
 
     var body: some View {
-        HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
-            // Column 1
-            columnView(for: columnAssignment.column1, columnIndex: 0)
+        Group {
+            if hasCalculatedLayout {
+                // Real layout with measured heights (locked after first calculation)
+                HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
+                    // Column 1
+                    columnView(for: columnAssignment.column1, columnIndex: 0)
 
-            // Column 2
-            columnView(for: columnAssignment.column2, columnIndex: 1)
+                    // Column 2
+                    columnView(for: columnAssignment.column2, columnIndex: 1)
 
-            // Column 3
-            columnView(for: columnAssignment.column3, columnIndex: 2)
-        }
-        .onPreferenceChange(DashboardViewV7.CardHeightPreferenceKey.self) { heights in
-            // Cancel previous update task to debounce rapid changes
-            heightUpdateTask?.cancel()
-
-            // Only update if heights have actually changed (prevents infinite loop)
-            guard heights != cardHeights else { return }
-
-            // Debounce updates with 100ms delay to prevent layout thrashing
-            heightUpdateTask = Task { @MainActor in
-                try? await Task.sleep(for: .milliseconds(100))
-                guard !Task.isCancelled else { return }
-                cardHeights = heights
+                    // Column 3
+                    columnView(for: columnAssignment.column3, columnIndex: 2)
+                }
+            } else {
+                // Loading skeleton while waiting for measurements
+                dashboardLoadingSkeleton
             }
         }
+        .onPreferenceChange(DashboardViewV7.CardHeightPreferenceKey.self) { heights in
+            // Only calculate layout ONCE when real measurements arrive
+            guard !hasCalculatedLayout else { return }
+
+            // Only proceed if we have complete measurements for all visible cards
+            guard heights.count == columnLayout.visibleCards.count else { return }
+
+            // Calculate column assignment ONCE and lock it
+            cardHeights = heights
+            columnAssignment = DashboardViewV7.ColumnAssignment.distribute(
+                cards: columnLayout.visibleCards,
+                heights: cardHeights,
+                rowSpacing: columnLayout.rowSpacing
+            )
+            hasCalculatedLayout = true
+
+            print("✅ Dashboard layout calculated and LOCKED (no more shifting)")
+        }
+    }
+
+    /// Loading skeleton shown while card heights are being measured
+    private var dashboardLoadingSkeleton: some View {
+        HStack(alignment: .top, spacing: columnLayout.cardSpacing) {
+            // Column 1 skeleton
+            VStack(spacing: columnLayout.rowSpacing) {
+                skeletonCard(height: 200)
+                skeletonCard(height: 180)
+            }
+            .frame(width: columnLayout.columnWidth)
+
+            // Column 2 skeleton
+            VStack(spacing: columnLayout.rowSpacing) {
+                skeletonCard(height: 250)
+                skeletonCard(height: 150)
+            }
+            .frame(width: columnLayout.columnWidth)
+
+            // Column 3 skeleton
+            VStack(spacing: columnLayout.rowSpacing) {
+                skeletonCard(height: 200)
+                skeletonCard(height: 220)
+            }
+            .frame(width: columnLayout.columnWidth)
+        }
+    }
+
+    /// Individual skeleton card with shimmer effect
+    private func skeletonCard(height: CGFloat) -> some View {
+        RoundedRectangle(cornerRadius: 16)
+            .fill(Color.gray.opacity(0.1))
+            .frame(height: height)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+            )
+            .shimmer()
     }
 
     // MARK: - Helper Views
