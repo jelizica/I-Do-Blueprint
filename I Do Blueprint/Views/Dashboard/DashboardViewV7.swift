@@ -601,8 +601,10 @@ struct MasonryColumnsView: View {
                     PaymentsDueCardV7(maxItems: 999)  // Show ALL payments
                         .frame(height: paymentsCardHeight)
                 }
+                
+                Spacer(minLength: 0)
             }
-            .frame(width: columnLayout.columnWidth, alignment: .top)
+            .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
             
             // MARK: - Column 2: Tasks + Vendors
             VStack(alignment: .leading, spacing: Spacing.lg) {
@@ -621,8 +623,10 @@ struct MasonryColumnsView: View {
                     )
                     .frame(height: vendorsCardHeight)
                 }
+                
+                Spacer(minLength: 0)
             }
-            .frame(width: columnLayout.columnWidth, alignment: .top)
+            .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
             
             // MARK: - Column 3: Guests + Recent
             VStack(alignment: .leading, spacing: Spacing.lg) {
@@ -646,8 +650,10 @@ struct MasonryColumnsView: View {
                     )
                     .frame(height: recentCardHeight)
                 }
+                
+                Spacer(minLength: 0)
             }
-            .frame(width: columnLayout.columnWidth, alignment: .top)
+            .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
         }
         .frame(height: columnLayout.availableHeight)
     }
