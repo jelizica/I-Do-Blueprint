@@ -977,7 +977,6 @@ struct MasonryColumnsView: View {
                 cardHeight: height
             )
             .frame(height: height)  // Dynamic - fills remaining space
-            .clipped()  // Prevent overflow beyond allocated height
 
         case .guests:
             GuestResponsesCardV7(
@@ -986,7 +985,6 @@ struct MasonryColumnsView: View {
                 cardHeight: height
             )
             .frame(height: height)  // Dynamic - fills available space with more guests
-            .clipped()  // Prevent overflow beyond allocated height
             .environmentObject(settingsStore)
             .environmentObject(budgetStore)
             .environmentObject(coordinator)
@@ -998,7 +996,6 @@ struct MasonryColumnsView: View {
                 cardHeight: height
             )
             .frame(height: height)  // Dynamic - fills remaining space
-            .clipped()  // Prevent overflow beyond allocated height
         }
     }
 }
@@ -1759,12 +1756,16 @@ struct GuestResponsesCardV7: View {
     private let itemHeight: CGFloat = 52
 
     /// Calculate how many guests fit within the card height
+    /// Formula: availableHeight = N * itemHeight + (N-1) * minSpacing
+    /// Solving for N: N = (availableHeight + minSpacing) / (itemHeight + minSpacing)
     private var calculatedMaxItems: Int {
         let headerHeight: CGFloat = 50  // Title + menu
         let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
         let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
         let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
-        let maxItems = Int(availableForItems / itemHeight)
+        let minSpacing: CGFloat = Spacing.sm  // Minimum spacing between items (8pt)
+        // Account for spacing between items: N items need N-1 gaps
+        let maxItems = Int((availableForItems + minSpacing) / (itemHeight + minSpacing))
         return max(maxItems, 2)  // At least 2 items
     }
 
@@ -1786,7 +1787,9 @@ struct GuestResponsesCardV7: View {
             .map { $0 }
     }
     
-    /// Calculate dynamic row spacing to distribute items evenly
+    /// Calculate dynamic row spacing to distribute items evenly within available height
+    /// Total height = N * itemHeight + (N-1) * spacing
+    /// Solving for spacing: spacing = (availableHeight - N * itemHeight) / (N - 1)
     private var dynamicRowSpacing: CGFloat {
         let headerHeight: CGFloat = 50
         let padding: CGFloat = Spacing.lg * 2
@@ -1794,19 +1797,16 @@ struct GuestResponsesCardV7: View {
         let availableForItems = cardHeight - headerHeight - padding - outerVStackSpacing
 
         let itemCount = recentGuests.count
-        guard itemCount > 1 else { return Spacing.md }
+        guard itemCount > 1 else { return Spacing.sm }
 
         let totalItemHeight = CGFloat(itemCount) * itemHeight
+        let gaps = CGFloat(itemCount - 1)
 
-        // If items don't fill space, distribute extra space as row spacing
-        if totalItemHeight < availableForItems {
-            let extraSpace = availableForItems - totalItemHeight
-            let gaps = CGFloat(itemCount - 1)
-            let extraPerGap = extraSpace / gaps
-            return Spacing.md + extraPerGap
-        }
+        // Calculate spacing that makes items + gaps exactly fill available space
+        let calculatedSpacing = (availableForItems - totalItemHeight) / gaps
 
-        return Spacing.md
+        // Clamp to reasonable bounds: minimum Spacing.sm (8pt), maximum Spacing.lg (16pt)
+        return min(max(calculatedSpacing, Spacing.sm), Spacing.lg)
     }
 
     var body: some View {
@@ -2162,7 +2162,9 @@ struct RecentResponsesCardV7: View {
         }
     }
     
-    /// Calculate dynamic row spacing to distribute items evenly
+    /// Calculate dynamic row spacing to distribute items evenly within available height
+    /// Total height = N * itemHeight + (N-1) * spacing
+    /// Solving for spacing: spacing = (availableHeight - N * itemHeight) / (N - 1)
     private var dynamicRowSpacing: CGFloat {
         let headerHeight: CGFloat = 50
         let padding: CGFloat = Spacing.lg * 2
@@ -2170,19 +2172,16 @@ struct RecentResponsesCardV7: View {
         let availableForItems = cardHeight - headerHeight - padding - outerVStackSpacing
 
         let itemCount = recentActivity.count
-        guard itemCount > 1 else { return Spacing.md }
+        guard itemCount > 1 else { return Spacing.sm }
 
         let totalItemHeight = CGFloat(itemCount) * itemHeight
+        let gaps = CGFloat(itemCount - 1)
 
-        // If items don't fill space, distribute extra space as row spacing
-        if totalItemHeight < availableForItems {
-            let extraSpace = availableForItems - totalItemHeight
-            let gaps = CGFloat(itemCount - 1)
-            let extraPerGap = extraSpace / gaps
-            return Spacing.md + extraPerGap
-        }
+        // Calculate spacing that makes items + gaps exactly fill available space
+        let calculatedSpacing = (availableForItems - totalItemHeight) / gaps
 
-        return Spacing.md
+        // Clamp to reasonable bounds: minimum Spacing.sm (8pt), maximum Spacing.lg (16pt)
+        return min(max(calculatedSpacing, Spacing.sm), Spacing.lg)
     }
 
     var body: some View {
@@ -2276,12 +2275,16 @@ struct VendorListCardV7: View {
     private let itemHeight: CGFloat = 48
 
     /// Calculate how many vendors fit within the card height
+    /// Formula: availableHeight = N * itemHeight + (N-1) * minSpacing
+    /// Solving for N: N = (availableHeight + minSpacing) / (itemHeight + minSpacing)
     private var calculatedMaxItems: Int {
         let headerHeight: CGFloat = 50  // Title + button
         let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
         let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
         let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
-        let maxItems = Int(availableForItems / itemHeight)
+        let minSpacing: CGFloat = Spacing.sm  // Minimum spacing between items (8pt)
+        // Account for spacing between items: N items need N-1 gaps
+        let maxItems = Int((availableForItems + minSpacing) / (itemHeight + minSpacing))
         return max(maxItems, 2)  // At least 2 items
     }
 
@@ -2304,7 +2307,9 @@ struct VendorListCardV7: View {
             .map { $0 }
     }
     
-    /// Calculate dynamic row spacing to distribute items evenly
+    /// Calculate dynamic row spacing to distribute items evenly within available height
+    /// Total height = N * itemHeight + (N-1) * spacing
+    /// Solving for spacing: spacing = (availableHeight - N * itemHeight) / (N - 1)
     private var dynamicRowSpacing: CGFloat {
         let headerHeight: CGFloat = 50
         let padding: CGFloat = Spacing.lg * 2
@@ -2312,19 +2317,16 @@ struct VendorListCardV7: View {
         let availableForItems = cardHeight - headerHeight - padding - outerVStackSpacing
 
         let itemCount = recentVendors.count
-        guard itemCount > 1 else { return Spacing.md }
+        guard itemCount > 1 else { return Spacing.sm }
 
         let totalItemHeight = CGFloat(itemCount) * itemHeight
+        let gaps = CGFloat(itemCount - 1)
 
-        // If items don't fill space, distribute extra space as row spacing
-        if totalItemHeight < availableForItems {
-            let extraSpace = availableForItems - totalItemHeight
-            let gaps = CGFloat(itemCount - 1)
-            let extraPerGap = extraSpace / gaps
-            return Spacing.md + extraPerGap
-        }
+        // Calculate spacing that makes items + gaps exactly fill available space
+        let calculatedSpacing = (availableForItems - totalItemHeight) / gaps
 
-        return Spacing.md
+        // Clamp to reasonable bounds: minimum Spacing.sm (8pt), maximum Spacing.lg (16pt)
+        return min(max(calculatedSpacing, Spacing.sm), Spacing.lg)
     }
     
     private func vendorIcon(for category: String) -> String {
