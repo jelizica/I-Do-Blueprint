@@ -1610,12 +1610,37 @@ struct BudgetOverviewCardV7: View {
                 Text("Budget Overview")
                     .font(Typography.heading)
                     .foregroundColor(SemanticColors.textPrimary)
-                
+
                 Spacer()
-                
+
                 Text(formattedTotal)
                     .font(Typography.title3)
                     .foregroundColor(SemanticColors.textPrimary)
+
+                Menu {
+                    Button {
+                        // View details action
+                    } label: {
+                        Label("View Details", systemImage: "chart.bar")
+                    }
+                    Button {
+                        // Edit budget action
+                    } label: {
+                        Label("Edit Budget", systemImage: "pencil")
+                    }
+                    Divider()
+                    Button {
+                        // Export action
+                    } label: {
+                        Label("Export Report", systemImage: "square.and.arrow.up")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .frame(width: 24, height: 24)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
             }
             
             VStack(spacing: Spacing.lg) {
@@ -1730,14 +1755,33 @@ struct TaskManagerCardV7: View {
                 Text("Task Manager")
                     .font(Typography.heading)
                     .foregroundColor(SemanticColors.textPrimary)
-                
+
                 Spacer()
-                
-                Button("View All") {
-                    // View all action
+
+                Menu {
+                    Button {
+                        // Add task action
+                    } label: {
+                        Label("Add Task", systemImage: "plus")
+                    }
+                    Button {
+                        // View all tasks action
+                    } label: {
+                        Label("View All Tasks", systemImage: "list.bullet")
+                    }
+                    Divider()
+                    Button {
+                        // Filter tasks action
+                    } label: {
+                        Label("Filter Tasks", systemImage: "line.3.horizontal.decrease.circle")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .frame(width: 24, height: 24)
                 }
-                .font(Typography.caption)
-                .foregroundColor(AppGradients.weddingPink)
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
             }
             
             if recentTasks.isEmpty {
@@ -1803,20 +1847,19 @@ struct GuestResponsesCardV7: View {
     let cardHeight: CGFloat
     @EnvironmentObject private var settingsStore: SettingsStoreV2
 
-    /// Item height for guest rows (avatar + 2 lines)
-    private let itemHeight: CGFloat = 52
+    /// Item height for guest rows (compact: smaller avatar + 2 lines)
+    private let itemHeight: CGFloat = 40
 
     /// Calculate how many guests fit within the card height
-    /// Formula: availableHeight = N * itemHeight + (N-1) * minSpacing
-    /// Solving for N: N = (availableHeight + minSpacing) / (itemHeight + minSpacing)
+    /// With spacing: 0 and dividers (~1pt), spacing is minimal
     private var calculatedMaxItems: Int {
         let headerHeight: CGFloat = 50  // Title + menu
         let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
         let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
         let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
-        let minSpacing: CGFloat = Spacing.sm  // Minimum spacing between items (8pt)
-        // Account for spacing between items: N items need N-1 gaps
-        let maxItems = Int((availableForItems + minSpacing) / (itemHeight + minSpacing))
+        let dividerHeight: CGFloat = 1  // Divider height between items
+        // Account for dividers between items: N items need N-1 dividers
+        let maxItems = Int((availableForItems + dividerHeight) / (itemHeight + dividerHeight))
         return max(maxItems, 2)  // At least 2 items
     }
 
@@ -1869,8 +1912,35 @@ struct GuestResponsesCardV7: View {
 
                 Spacer()
 
-                Image(systemName: "ellipsis")
-                    .foregroundColor(SemanticColors.textTertiary)
+                Menu {
+                    Button {
+                        // Add guest action
+                    } label: {
+                        Label("Add Guest", systemImage: "plus")
+                    }
+                    Button {
+                        // View all guests action
+                    } label: {
+                        Label("View All Guests", systemImage: "list.bullet")
+                    }
+                    Divider()
+                    Button {
+                        // Send reminders action
+                    } label: {
+                        Label("Send RSVP Reminders", systemImage: "envelope")
+                    }
+                    Button {
+                        // Export guest list action
+                    } label: {
+                        Label("Export Guest List", systemImage: "square.and.arrow.up")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .frame(width: 24, height: 24)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
             }
 
             if recentGuests.isEmpty {
@@ -1879,14 +1949,17 @@ struct GuestResponsesCardV7: View {
                     .foregroundColor(SemanticColors.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
-                VStack(spacing: dynamicRowSpacing) {
-                    ForEach(recentGuests) { guest in
+                VStack(spacing: 0) {
+                    ForEach(Array(recentGuests.enumerated()), id: \.element.id) { index, guest in
                         GuestRowV7(
                             guest: guest,
                             invitedBy: guest.invitedBy?.displayName(with: settingsStore.settings) ?? "Unknown",
                             status: mapRSVPStatus(guest.rsvpStatus)
                         )
                         .frame(height: itemHeight)
+                        if index < recentGuests.count - 1 {
+                            Divider().opacity(0.3)
+                        }
                     }
                 }
             }
@@ -1996,27 +2069,26 @@ struct GuestRowV7: View {
             Image(nsImage: image)
                 .resizable()
                 .aspectRatio(contentMode: .fill)
-                .frame(width: 40, height: 40)
+                .frame(width: 32, height: 32)
                 .clipShape(Circle())
                 .overlay(
                     Circle()
-                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
                 )
                 .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
         } else {
             // Fallback to initials with status color
             Circle()
                 .fill(status.color.opacity(0.2))
-                .frame(width: 40, height: 40)
+                .frame(width: 32, height: 32)
                 .overlay(
                     Text(initials)
-                        .font(Typography.caption)
-                        .fontWeight(.bold)
+                        .font(.system(size: 11, weight: .bold))
                         .foregroundColor(status.color)
                 )
                 .overlay(
                     Circle()
-                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
                 )
         }
     }
@@ -2087,31 +2159,33 @@ struct PaymentsDueCardV7: View {
                 Text("Payments Due (\(currentMonthName))")
                     .font(Typography.heading)
                     .foregroundColor(SemanticColors.textPrimary)
-                
+
                 Spacer()
-                
-                Button {
-                    // Add payment
-                } label: {
-                    HStack(spacing: Spacing.xxs) {
-                        Image(systemName: "plus")
-                            .font(.system(size: 10))
-                        Text("Add")
-                            .font(Typography.caption2)
+
+                Menu {
+                    Button {
+                        // Add payment action
+                    } label: {
+                        Label("Add Payment", systemImage: "plus")
                     }
-                    .foregroundColor(SemanticColors.textPrimary)
-                    .padding(.horizontal, Spacing.sm)
-                    .padding(.vertical, Spacing.xs)
-                    .background(
-                        RoundedRectangle(cornerRadius: CornerRadius.sm)
-                            .fill(Color.white.opacity(0.5))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: CornerRadius.sm)
-                                    .stroke(Color.white.opacity(0.6), lineWidth: 1)
-                            )
-                    )
+                    Button {
+                        // View all payments action
+                    } label: {
+                        Label("View All Payments", systemImage: "list.bullet")
+                    }
+                    Divider()
+                    Button {
+                        // Mark all paid action
+                    } label: {
+                        Label("Mark All Paid", systemImage: "checkmark.circle")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .frame(width: 24, height: 24)
                 }
-                .buttonStyle(.plain)
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
             }
             
             if currentMonthPayments.isEmpty {
@@ -2322,20 +2396,19 @@ struct VendorListCardV7: View {
     let maxItems: Int  // Ignored - calculated dynamically from cardHeight
     let cardHeight: CGFloat
 
-    /// Item height for vendor rows (icon + 2 lines)
-    private let itemHeight: CGFloat = 48
+    /// Item height for vendor rows (compact: smaller icon + 2 lines)
+    private let itemHeight: CGFloat = 40
 
     /// Calculate how many vendors fit within the card height
-    /// Formula: availableHeight = N * itemHeight + (N-1) * minSpacing
-    /// Solving for N: N = (availableHeight + minSpacing) / (itemHeight + minSpacing)
+    /// With spacing: 0 and dividers (~1pt), spacing is minimal
     private var calculatedMaxItems: Int {
-        let headerHeight: CGFloat = 50  // Title + button
+        let headerHeight: CGFloat = 50  // Title + menu
         let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
         let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
         let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
-        let minSpacing: CGFloat = Spacing.sm  // Minimum spacing between items (8pt)
-        // Account for spacing between items: N items need N-1 gaps
-        let maxItems = Int((availableForItems + minSpacing) / (itemHeight + minSpacing))
+        let dividerHeight: CGFloat = 1  // Divider height between items
+        // Account for dividers between items: N items need N-1 dividers
+        let maxItems = Int((availableForItems + dividerHeight) / (itemHeight + dividerHeight))
         return max(maxItems, 2)  // At least 2 items
     }
 
@@ -2423,11 +2496,35 @@ struct VendorListCardV7: View {
 
                 Spacer()
 
-                Button("Manage") {
-                    // Manage action
+                Menu {
+                    Button {
+                        // Add vendor action
+                    } label: {
+                        Label("Add Vendor", systemImage: "plus")
+                    }
+                    Button {
+                        // View all vendors action
+                    } label: {
+                        Label("View All Vendors", systemImage: "list.bullet")
+                    }
+                    Divider()
+                    Button {
+                        // Compare vendors action
+                    } label: {
+                        Label("Compare Vendors", systemImage: "square.grid.2x2")
+                    }
+                    Button {
+                        // Export action
+                    } label: {
+                        Label("Export Vendor List", systemImage: "square.and.arrow.up")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .frame(width: 24, height: 24)
                 }
-                .font(Typography.caption)
-                .foregroundColor(AppGradients.weddingPink)
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
             }
 
             if recentVendors.isEmpty {
@@ -2436,10 +2533,13 @@ struct VendorListCardV7: View {
                     .foregroundColor(SemanticColors.textSecondary)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
             } else {
-                VStack(spacing: dynamicRowSpacing) {
-                    ForEach(recentVendors) { vendor in
+                VStack(spacing: 0) {
+                    ForEach(Array(recentVendors.enumerated()), id: \.element.id) { index, vendor in
                         vendorRow(for: vendor)
                             .frame(height: itemHeight)
+                        if index < recentVendors.count - 1 {
+                            Divider().opacity(0.3)
+                        }
                     }
                 }
             }
