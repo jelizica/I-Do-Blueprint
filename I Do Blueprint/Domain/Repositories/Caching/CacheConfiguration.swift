@@ -57,6 +57,7 @@ struct CacheConfiguration {
         case timeline = "timeline"
         case timelineItems = "timeline_items"
         case milestones = "milestones"
+        case weddingDayEvents = "wedding_day_events"
         
         case document = "documents"
         case documentDetail = "document_detail"

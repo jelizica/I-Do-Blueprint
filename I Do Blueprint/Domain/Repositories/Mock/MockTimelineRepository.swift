@@ -11,6 +11,7 @@ import Foundation
 class MockTimelineRepository: TimelineRepositoryProtocol {
     var timelineItems: [TimelineItem] = []
     var milestones: [Milestone] = []
+    var weddingDayEvents: [WeddingDayEvent] = []
 
     var shouldThrowError = false
     var errorToThrow: Error = NSError(domain: "test", code: -1)
@@ -109,5 +110,58 @@ class MockTimelineRepository: TimelineRepositoryProtocol {
     func deleteMilestone(id: UUID) async throws {
         if shouldThrowError { throw errorToThrow }
         milestones.removeAll { $0.id == id }
+    }
+
+    // MARK: - Wedding Day Events
+
+    func fetchWeddingDayEvents() async throws -> [WeddingDayEvent] {
+        if shouldThrowError { throw errorToThrow }
+        return weddingDayEvents
+    }
+
+    func fetchWeddingDayEvents(forDate date: Date) async throws -> [WeddingDayEvent] {
+        if shouldThrowError { throw errorToThrow }
+        let calendar = Calendar.current
+        return weddingDayEvents.filter { calendar.isDate($0.eventDate, inSameDayAs: date) }
+    }
+
+    func fetchWeddingDayEvent(id: UUID) async throws -> WeddingDayEvent? {
+        if shouldThrowError { throw errorToThrow }
+        return weddingDayEvents.first(where: { $0.id == id })
+    }
+
+    func createWeddingDayEvent(_ insertData: WeddingDayEventInsertData) async throws -> WeddingDayEvent {
+        if shouldThrowError { throw errorToThrow }
+
+        let event = WeddingDayEvent.makeTest(
+            coupleId: insertData.coupleId,
+            eventName: insertData.eventName,
+            eventDate: insertData.eventDate,
+            startTime: insertData.startTime,
+            endTime: insertData.endTime,
+            status: WeddingDayEventStatus(rawValue: insertData.status) ?? .pending,
+            category: WeddingDayEventCategory(rawValue: insertData.category) ?? .other,
+            isMainEvent: insertData.isMainEvent
+        )
+        weddingDayEvents.append(event)
+        return event
+    }
+
+    func updateWeddingDayEvent(_ event: WeddingDayEvent) async throws -> WeddingDayEvent {
+        if shouldThrowError { throw errorToThrow }
+
+        guard let index = weddingDayEvents.firstIndex(where: { $0.id == event.id }) else {
+            throw NSError(domain: "test", code: 404)
+        }
+
+        var updated = event
+        updated.updatedAt = Date()
+        weddingDayEvents[index] = updated
+        return updated
+    }
+
+    func deleteWeddingDayEvent(id: UUID) async throws {
+        if shouldThrowError { throw errorToThrow }
+        weddingDayEvents.removeAll { $0.id == id }
     }
 }

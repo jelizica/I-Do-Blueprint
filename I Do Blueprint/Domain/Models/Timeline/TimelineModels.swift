@@ -182,6 +182,25 @@ enum TimelineViewMode: String, CaseIterable {
     case linear = "Linear"
 }
 
+/// View modes for the Wedding Day Timeline feature
+enum WeddingDayViewMode: String, CaseIterable, Sendable {
+    case list = "List"
+    case wall = "Wall"
+    case gantt = "Gantt"
+
+    var icon: String {
+        switch self {
+        case .list: return "list.bullet"
+        case .wall: return "square.grid.2x2"
+        case .gantt: return "chart.bar.xaxis"
+        }
+    }
+
+    var displayName: String {
+        rawValue
+    }
+}
+
 struct TimelineGroup: Identifiable {
     let id: String
     let title: String

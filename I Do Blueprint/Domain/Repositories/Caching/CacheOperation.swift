@@ -42,6 +42,11 @@ enum CacheOperation {
     case milestoneUpdated(tenantId: UUID)
     case milestoneDeleted(tenantId: UUID)
 
+    // Wedding Day Event operations
+    case weddingDayEventCreated(tenantId: UUID)
+    case weddingDayEventUpdated(tenantId: UUID)
+    case weddingDayEventDeleted(tenantId: UUID)
+
     // Document operations
     case documentCreated(tenantId: UUID)
     case documentUpdated(tenantId: UUID)

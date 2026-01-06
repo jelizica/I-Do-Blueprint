@@ -309,4 +309,190 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
             throw TimelineError.deleteFailed(underlying: error)
         }
     }
+
+    // MARK: - Wedding Day Events
+
+    func fetchWeddingDayEvents() async throws -> [WeddingDayEvent] {
+        let client = try getClient()
+        let startTime = Date()
+        let tenantId = try await TenantContextProvider.shared.requireTenantId()
+
+        // Check cache first
+        let cacheKey = CacheConfiguration.KeyPrefix.weddingDayEvents.key(tenantId: tenantId)
+        if let cached: [WeddingDayEvent] = await RepositoryCache.shared.get(cacheKey, maxAge: CacheConfiguration.frequentAccessTTL) {
+            logger.debug("Cache hit: wedding day events (\(cached.count) items)")
+            return cached
+        }
+
+        do {
+            let events: [WeddingDayEvent] = try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .select()
+                    .eq("couple_id", value: tenantId)
+                    .order("event_date", ascending: true)
+                    .order("start_time", ascending: true)
+                    .execute()
+                    .value
+            }
+
+            // Cache results
+            await RepositoryCache.shared.set(cacheKey, value: events, ttl: CacheConfiguration.frequentAccessTTL)
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Fetched \(events.count) wedding day events in \(duration)s")
+            AnalyticsService.trackNetwork(operation: "fetchWeddingDayEvents", outcome: .success, duration: duration)
+
+            return events
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to fetch wedding day events after \(duration)s", error: error)
+            AnalyticsService.trackNetwork(operation: "fetchWeddingDayEvents", outcome: .failure(code: nil), duration: duration)
+            throw TimelineError.fetchFailed(underlying: error)
+        }
+    }
+
+    func fetchWeddingDayEvents(forDate date: Date) async throws -> [WeddingDayEvent] {
+        let client = try getClient()
+        let startTime = Date()
+        let tenantId = try await TenantContextProvider.shared.requireTenantId()
+
+        // Format date for PostgreSQL DATE comparison
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd"
+        dateFormatter.timeZone = TimeZone(identifier: "UTC")
+        let dateString = dateFormatter.string(from: date)
+
+        do {
+            let events: [WeddingDayEvent] = try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .select()
+                    .eq("couple_id", value: tenantId)
+                    .eq("event_date", value: dateString)
+                    .order("start_time", ascending: true)
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Fetched \(events.count) wedding day events for \(dateString) in \(duration)s")
+            AnalyticsService.trackNetwork(operation: "fetchWeddingDayEventsForDate", outcome: .success, duration: duration)
+
+            return events
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to fetch wedding day events for date after \(duration)s", error: error)
+            AnalyticsService.trackNetwork(operation: "fetchWeddingDayEventsForDate", outcome: .failure(code: nil), duration: duration)
+            throw TimelineError.fetchFailed(underlying: error)
+        }
+    }
+
+    func fetchWeddingDayEvent(id: UUID) async throws -> WeddingDayEvent? {
+        let client = try getClient()
+        let startTime = Date()
+
+        do {
+            let events: [WeddingDayEvent] = try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .select()
+                    .eq("id", value: id)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            AnalyticsService.trackNetwork(operation: "fetchWeddingDayEvent", outcome: .success, duration: duration)
+
+            return events.first
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to fetch wedding day event after \(duration)s", error: error)
+            AnalyticsService.trackNetwork(operation: "fetchWeddingDayEvent", outcome: .failure(code: nil), duration: duration)
+            throw TimelineError.fetchFailed(underlying: error)
+        }
+    }
+
+    func createWeddingDayEvent(_ insertData: WeddingDayEventInsertData) async throws -> WeddingDayEvent {
+        do {
+            let client = try getClient()
+            let startTime = Date()
+
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
+            let event: WeddingDayEvent = try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .insert(insertData)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Created wedding day event: \(insertData.eventName)")
+            AnalyticsService.trackNetwork(operation: "createWeddingDayEvent", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .weddingDayEventCreated(tenantId: tenantId))
+
+            return event
+        } catch {
+            logger.error("Failed to create wedding day event", error: error)
+            throw TimelineError.createFailed(underlying: error)
+        }
+    }
+
+    func updateWeddingDayEvent(_ event: WeddingDayEvent) async throws -> WeddingDayEvent {
+        do {
+            let client = try getClient()
+            let startTime = Date()
+
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
+            let updated: WeddingDayEvent = try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .update(event)
+                    .eq("id", value: event.id)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Updated wedding day event: \(event.eventName)")
+            AnalyticsService.trackNetwork(operation: "updateWeddingDayEvent", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .weddingDayEventUpdated(tenantId: tenantId))
+
+            return updated
+        } catch {
+            logger.error("Failed to update wedding day event", error: error)
+            throw TimelineError.updateFailed(underlying: error)
+        }
+    }
+
+    func deleteWeddingDayEvent(id: UUID) async throws {
+        do {
+            let client = try getClient()
+            let startTime = Date()
+
+            try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .delete()
+                    .eq("id", value: id)
+                    .execute()
+            }
+
+            let tenantId = try await TenantContextProvider.shared.requireTenantId()
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Deleted wedding day event: \(id)")
+            AnalyticsService.trackNetwork(operation: "deleteWeddingDayEvent", outcome: .success, duration: duration)
+            await cacheStrategy.invalidate(for: .weddingDayEventDeleted(tenantId: tenantId))
+        } catch {
+            logger.error("Failed to delete wedding day event", error: error)
+            throw TimelineError.deleteFailed(underlying: error)
+        }
+    }
 }

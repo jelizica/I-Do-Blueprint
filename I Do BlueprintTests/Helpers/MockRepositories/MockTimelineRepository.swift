@@ -11,6 +11,7 @@ import Foundation
 class MockTimelineRepository: TimelineRepositoryProtocol {
     var timelineItems: [TimelineItem] = []
     var milestones: [Milestone] = []
+    var weddingDayEvents: [WeddingDayEvent] = []
     var shouldThrowError = false
     var errorToThrow: TimelineError = .fetchFailed(underlying: NSError(domain: "Test", code: -1))
 
@@ -72,5 +73,43 @@ class MockTimelineRepository: TimelineRepositoryProtocol {
     func deleteMilestone(id: UUID) async throws {
         if shouldThrowError { throw errorToThrow }
         milestones.removeAll(where: { $0.id == id })
+    }
+
+    // MARK: - Wedding Day Events
+
+    func fetchWeddingDayEvents() async throws -> [WeddingDayEvent] {
+        if shouldThrowError { throw errorToThrow }
+        return weddingDayEvents
+    }
+
+    func fetchWeddingDayEvents(forDate date: Date) async throws -> [WeddingDayEvent] {
+        if shouldThrowError { throw errorToThrow }
+        let calendar = Calendar.current
+        return weddingDayEvents.filter { calendar.isDate($0.eventDate, inSameDayAs: date) }
+    }
+
+    func fetchWeddingDayEvent(id: UUID) async throws -> WeddingDayEvent? {
+        if shouldThrowError { throw errorToThrow }
+        return weddingDayEvents.first(where: { $0.id == id })
+    }
+
+    func createWeddingDayEvent(_ insertData: WeddingDayEventInsertData) async throws -> WeddingDayEvent {
+        if shouldThrowError { throw errorToThrow }
+        let event = WeddingDayEvent.makeTest(eventName: insertData.eventName)
+        weddingDayEvents.append(event)
+        return event
+    }
+
+    func updateWeddingDayEvent(_ event: WeddingDayEvent) async throws -> WeddingDayEvent {
+        if shouldThrowError { throw errorToThrow }
+        if let index = weddingDayEvents.firstIndex(where: { $0.id == event.id }) {
+            weddingDayEvents[index] = event
+        }
+        return event
+    }
+
+    func deleteWeddingDayEvent(id: UUID) async throws {
+        if shouldThrowError { throw errorToThrow }
+        weddingDayEvents.removeAll(where: { $0.id == id })
     }
 }

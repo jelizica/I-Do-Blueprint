@@ -18,6 +18,8 @@ actor TimelineCacheStrategy: CacheInvalidationStrategy {
             await invalidateTimelineCaches(tenantId: tenantId, operation: operation)
         case .milestoneCreated(let tenantId), .milestoneUpdated(let tenantId), .milestoneDeleted(let tenantId):
             await invalidateMilestoneCaches(tenantId: tenantId, operation: operation)
+        case .weddingDayEventCreated(let tenantId), .weddingDayEventUpdated(let tenantId), .weddingDayEventDeleted(let tenantId):
+            await invalidateWeddingDayEventCaches(tenantId: tenantId, operation: operation)
         default: break
         }
     }
@@ -47,17 +49,39 @@ actor TimelineCacheStrategy: CacheInvalidationStrategy {
 
     private func invalidateMilestoneCaches(tenantId: UUID, operation: CacheOperation) async {
         var keysInvalidated = 0
-        
+
         // Use CacheConfiguration for standardized keys
         let key = CacheConfiguration.KeyPrefix.milestones.key(tenantId: tenantId)
         await cache.remove(key)
         keysInvalidated += 1
-        
+
         // Also invalidate legacy key for backward compatibility
         let id = tenantId.uuidString
         await cache.remove("milestones_\(id)")
         keysInvalidated += 1
-        
+
+        await monitor.trackInvalidation(operation, keysInvalidated: keysInvalidated)
+    }
+
+    private func invalidateWeddingDayEventCaches(tenantId: UUID, operation: CacheOperation) async {
+        var keysInvalidated = 0
+
+        // Use CacheConfiguration for standardized keys
+        let key = CacheConfiguration.KeyPrefix.weddingDayEvents.key(tenantId: tenantId)
+        await cache.remove(key)
+        keysInvalidated += 1
+
+        // Also invalidate timeline caches since they're related
+        let timelineKey = CacheConfiguration.KeyPrefix.timeline.key(tenantId: tenantId)
+        await cache.remove(timelineKey)
+        keysInvalidated += 1
+
+        // Invalidate legacy keys for backward compatibility
+        let id = tenantId.uuidString
+        await cache.remove("wedding_events_\(id)")
+        await cache.remove("wedding_day_events_\(id)")
+        keysInvalidated += 2
+
         await monitor.trackInvalidation(operation, keysInvalidated: keysInvalidated)
     }
 }

@@ -821,3 +821,124 @@ enum ThemeAwareVendorTint {
 // - WCAG accessibility verification
 // - Competitor analysis
 // - Implementation roadmap
+
+// MARK: - Wedding Day Timeline Colors
+
+/// Colors for the Wedding Day Timeline views (List, Wall, Gantt)
+/// Based on HTML mockup designs with glassmorphism aesthetic
+enum TimelineColors {
+    // MARK: - Primary Timeline Colors (from HTML mockup)
+    /// Primary rose color - main accent for timeline
+    static let primary = Color.fromHex("EE2B5B")
+    /// Sage green - secondary accent
+    static let sage = Color.fromHex("94A395")
+    /// Blush pink - soft backgrounds
+    static let blush = Color.fromHex("FFE4E9")
+
+    // MARK: - Event Status Colors
+    /// On Track status - green indicator
+    static let statusOnTrack = SageGreen.shade600
+    /// Pending status - amber/yellow indicator
+    static let statusPending = Color.fromHex("F59E0B")
+    /// Ready status - blue indicator
+    static let statusReady = Color.fromHex("3B82F6")
+    /// Key Event status - purple highlight
+    static let statusKeyEvent = SoftLavender.shade600
+    /// Main Event status - rose highlight (ceremony, etc.)
+    static let statusMainEvent = BlushPink.shade600
+    /// Confirmed status - teal indicator
+    static let statusConfirmed = Color.fromHex("14B8A6")
+    /// Scheduled status - gray indicator
+    static let statusScheduled = WarmGray.shade500
+
+    // MARK: - Event Category Colors
+    /// Bridal prep events
+    static let categoryBridalPrep = BlushPink.shade500
+    /// Groom prep events
+    static let categoryGroomPrep = Color.fromHex("6B7280")
+    /// Ceremony events
+    static let categoryCeremony = BlushPink.shade700
+    /// Reception events
+    static let categoryReception = SageGreen.shade600
+    /// Photo sessions
+    static let categoryPhotos = SoftLavender.shade500
+    /// Cocktail hour
+    static let categoryCocktail = Terracotta.shade500
+    /// Dinner/catering
+    static let categoryDinner = SageGreen.shade700
+    /// Dancing/entertainment
+    static let categoryDancing = SoftLavender.shade600
+    /// Other events
+    static let categoryOther = WarmGray.shade500
+
+    // MARK: - Glass Panel Effects
+    /// Glass panel background with blur
+    static let glassBackground = Color.white.opacity(0.85)
+    /// Glass panel border
+    static let glassBorder = Color.white.opacity(0.5)
+    /// Glass panel shadow color
+    static let glassShadow = Color.black.opacity(0.1)
+
+    // MARK: - Aurora Background Colors
+    /// Aurora gradient start - soft pink
+    static let auroraStart = Color.fromHex("FFE4E9").opacity(0.6)
+    /// Aurora gradient middle - sage
+    static let auroraMid = Color.fromHex("94A395").opacity(0.4)
+    /// Aurora gradient end - lavender
+    static let auroraEnd = Color.fromHex("E9D5FF").opacity(0.5)
+
+    // MARK: - Gantt Chart Colors
+    /// Gantt bar default fill
+    static let ganttBarFill = BlushPink.shade400.opacity(0.8)
+    /// Gantt bar border
+    static let ganttBarBorder = BlushPink.shade600
+    /// Gantt dependency line color
+    static let ganttDependencyLine = WarmGray.shade400
+    /// Gantt current time indicator
+    static let ganttCurrentTime = Color.fromHex("EE2B5B")
+    /// Gantt hour marker line
+    static let ganttHourMarker = WarmGray.shade200
+    /// Gantt hour label text
+    static let ganttHourLabel = WarmGray.shade600
+
+    // MARK: - Timeline Wall Card Colors
+    /// Card gradient start for highlighted events
+    static let cardGradientStart = BlushPink.shade200.opacity(0.3)
+    /// Card gradient end for highlighted events
+    static let cardGradientEnd = SoftLavender.shade200.opacity(0.3)
+    /// Ceremony card special border gradient start
+    static let ceremonyBorderStart = BlushPink.shade500
+    /// Ceremony card special border gradient end
+    static let ceremonyBorderEnd = SoftLavender.shade500
+
+    // MARK: - Helper Functions
+
+    /// Returns the appropriate color for a given event status
+    static func colorForStatus(_ status: String) -> Color {
+        switch status.lowercased() {
+        case "on_track", "ontrack": return statusOnTrack
+        case "pending": return statusPending
+        case "ready": return statusReady
+        case "key_event", "keyevent": return statusKeyEvent
+        case "main_event", "mainevent": return statusMainEvent
+        case "confirmed": return statusConfirmed
+        case "scheduled": return statusScheduled
+        default: return statusScheduled
+        }
+    }
+
+    /// Returns the appropriate color for a given event category
+    static func colorForCategory(_ category: String) -> Color {
+        switch category.lowercased() {
+        case "bridal_prep", "bridalprep", "bridal": return categoryBridalPrep
+        case "groom_prep", "groomprep", "groom": return categoryGroomPrep
+        case "ceremony": return categoryCeremony
+        case "reception": return categoryReception
+        case "photos", "photography": return categoryPhotos
+        case "cocktail", "cocktail_hour": return categoryCocktail
+        case "dinner", "catering": return categoryDinner
+        case "dancing", "entertainment": return categoryDancing
+        default: return categoryOther
+        }
+    }
+}

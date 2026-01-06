@@ -14,11 +14,13 @@ import SwiftUI
 class TimelineStoreV2: ObservableObject, CacheableStore {
     @Published var loadingState: LoadingState<[TimelineItem]> = .idle
     @Published private(set) var milestones: [Milestone] = []
+    @Published var weddingDayEventsLoadingState: LoadingState<[WeddingDayEvent]> = .idle
 
     // View state
     @Published var viewMode: TimelineViewMode = .grouped
     @Published var filterType: TimelineItemType?
     @Published var showCompleted = true
+    @Published var weddingDayViewMode: WeddingDayViewMode = .list
 
     @Dependency(\.timelineRepository) var repository
 
@@ -28,6 +30,7 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
 
     // Task tracking for cancellation handling
     private var loadTask: Task<Void, Never>?
+    private var weddingDayEventsLoadTask: Task<Void, Never>?
 
     // MARK: - Computed Properties for Backward Compatibility
 
@@ -264,6 +267,217 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
         await updateMilestone(updated)
     }
 
+    // MARK: - Wedding Day Events
+
+    /// All wedding day events from the loading state
+    var weddingDayEvents: [WeddingDayEvent] {
+        weddingDayEventsLoadingState.data ?? []
+    }
+
+    /// Whether wedding day events are currently loading
+    var isLoadingWeddingDayEvents: Bool {
+        weddingDayEventsLoadingState.isLoading
+    }
+
+    /// Load all wedding day events
+    func loadWeddingDayEvents(force: Bool = false) async {
+        // Cancel any previous load task
+        weddingDayEventsLoadTask?.cancel()
+
+        weddingDayEventsLoadTask = Task { @MainActor in
+            // Skip if already loaded and not forcing
+            if !force && weddingDayEventsLoadingState.data != nil {
+                AppLogger.ui.debug("Using cached wedding day events data")
+                return
+            }
+
+            guard weddingDayEventsLoadingState.isIdle || weddingDayEventsLoadingState.hasError || force else { return }
+
+            weddingDayEventsLoadingState = .loading
+
+            do {
+                try Task.checkCancellation()
+
+                let events = try await repository.fetchWeddingDayEvents()
+
+                try Task.checkCancellation()
+
+                weddingDayEventsLoadingState = .loaded(events)
+            } catch is CancellationError {
+                AppLogger.ui.debug("TimelineStoreV2.loadWeddingDayEvents: Load cancelled")
+                weddingDayEventsLoadingState = .idle
+            } catch let error as URLError where error.code == .cancelled {
+                AppLogger.ui.debug("TimelineStoreV2.loadWeddingDayEvents: Load cancelled (URLError)")
+                weddingDayEventsLoadingState = .idle
+            } catch {
+                weddingDayEventsLoadingState = .error(TimelineError.fetchFailed(underlying: error))
+            }
+        }
+
+        await weddingDayEventsLoadTask?.value
+    }
+
+    /// Load wedding day events for a specific date
+    func loadWeddingDayEvents(forDate date: Date) async -> [WeddingDayEvent] {
+        do {
+            return try await repository.fetchWeddingDayEvents(forDate: date)
+        } catch {
+            await handleError(error, operation: "loadWeddingDayEventsForDate")
+            return []
+        }
+    }
+
+    /// Refresh wedding day events
+    func refreshWeddingDayEvents() async {
+        await loadWeddingDayEvents(force: true)
+    }
+
+    /// Create a new wedding day event
+    func createWeddingDayEvent(_ insertData: WeddingDayEventInsertData) async {
+        do {
+            let event = try await repository.createWeddingDayEvent(insertData)
+
+            if case .loaded(var currentEvents) = weddingDayEventsLoadingState {
+                currentEvents.append(event)
+                currentEvents.sort { ($0.startTime ?? $0.eventDate) < ($1.startTime ?? $1.eventDate) }
+                weddingDayEventsLoadingState = .loaded(currentEvents)
+            }
+
+            invalidateCache()
+            showSuccess("Event added successfully")
+        } catch {
+            weddingDayEventsLoadingState = .error(TimelineError.createFailed(underlying: error))
+            await handleError(error, operation: "createWeddingDayEvent") { [weak self] in
+                await self?.createWeddingDayEvent(insertData)
+            }
+        }
+    }
+
+    /// Update an existing wedding day event
+    func updateWeddingDayEvent(_ event: WeddingDayEvent) async {
+        // Optimistic update
+        guard case .loaded(var currentEvents) = weddingDayEventsLoadingState,
+              let index = currentEvents.firstIndex(where: { $0.id == event.id }) else {
+            return
+        }
+
+        let original = currentEvents[index]
+        currentEvents[index] = event
+        weddingDayEventsLoadingState = .loaded(currentEvents)
+
+        do {
+            let updated = try await repository.updateWeddingDayEvent(event)
+
+            if case .loaded(var events) = weddingDayEventsLoadingState,
+               let idx = events.firstIndex(where: { $0.id == event.id }) {
+                events[idx] = updated
+                events.sort { ($0.startTime ?? $0.eventDate) < ($1.startTime ?? $1.eventDate) }
+                weddingDayEventsLoadingState = .loaded(events)
+            }
+
+            invalidateCache()
+            showSuccess("Event updated successfully")
+        } catch {
+            // Rollback on error
+            if case .loaded(var events) = weddingDayEventsLoadingState,
+               let idx = events.firstIndex(where: { $0.id == event.id }) {
+                events[idx] = original
+                weddingDayEventsLoadingState = .loaded(events)
+            }
+            weddingDayEventsLoadingState = .error(TimelineError.updateFailed(underlying: error))
+            await handleError(error, operation: "updateWeddingDayEvent", context: [
+                "eventId": event.id.uuidString
+            ]) { [weak self] in
+                await self?.updateWeddingDayEvent(event)
+            }
+        }
+    }
+
+    /// Delete a wedding day event
+    func deleteWeddingDayEvent(_ event: WeddingDayEvent) async {
+        // Optimistic delete
+        guard case .loaded(var currentEvents) = weddingDayEventsLoadingState,
+              let index = currentEvents.firstIndex(where: { $0.id == event.id }) else {
+            return
+        }
+
+        let removed = currentEvents.remove(at: index)
+        weddingDayEventsLoadingState = .loaded(currentEvents)
+
+        do {
+            try await repository.deleteWeddingDayEvent(id: event.id)
+            invalidateCache()
+            showSuccess("Event deleted successfully")
+        } catch {
+            // Rollback on error
+            if case .loaded(var events) = weddingDayEventsLoadingState {
+                events.insert(removed, at: index)
+                weddingDayEventsLoadingState = .loaded(events)
+            }
+            weddingDayEventsLoadingState = .error(TimelineError.deleteFailed(underlying: error))
+            await handleError(error, operation: "deleteWeddingDayEvent", context: [
+                "eventId": event.id.uuidString
+            ]) { [weak self] in
+                await self?.deleteWeddingDayEvent(event)
+            }
+        }
+    }
+
+    /// Update the status of a wedding day event
+    func updateWeddingDayEventStatus(_ event: WeddingDayEvent, status: WeddingDayEventStatus) async {
+        var updated = event
+        updated.status = status
+        updated.updatedAt = Date()
+        await updateWeddingDayEvent(updated)
+    }
+
+    // MARK: - Wedding Day Event Computed Properties
+
+    /// Events grouped by category
+    var weddingDayEventsByCategory: [WeddingDayEventCategory: [WeddingDayEvent]] {
+        Dictionary(grouping: weddingDayEvents, by: \.category)
+    }
+
+    /// Events sorted by start time for Gantt chart display
+    var weddingDayEventsForGantt: [WeddingDayEvent] {
+        weddingDayEvents.sorted { event1, event2 in
+            let time1 = event1.startTime ?? event1.eventDate
+            let time2 = event2.startTime ?? event2.eventDate
+            return time1 < time2
+        }
+    }
+
+    /// Events with dependencies (for dependency line rendering)
+    var weddingDayEventsWithDependencies: [WeddingDayEvent] {
+        weddingDayEvents.filter { $0.hasDependency }
+    }
+
+    /// Key events (main event or key event status)
+    var keyWeddingDayEvents: [WeddingDayEvent] {
+        weddingDayEvents.filter { $0.isHighlighted }
+    }
+
+    /// Events pending confirmation
+    var pendingWeddingDayEvents: [WeddingDayEvent] {
+        weddingDayEvents.filter { $0.status == .pending }
+    }
+
+    /// Total duration of all events in minutes
+    var totalWeddingDayDuration: Int {
+        weddingDayEvents.reduce(0) { $0 + $1.calculatedDurationMinutes }
+    }
+
+    /// Find the dependency event for a given event
+    func dependencyEvent(for event: WeddingDayEvent) -> WeddingDayEvent? {
+        guard let dependsOnId = event.dependsOnEventId else { return nil }
+        return weddingDayEvents.first { $0.id == dependsOnId }
+    }
+
+    /// Find events that depend on a given event
+    func dependentEvents(on event: WeddingDayEvent) -> [WeddingDayEvent] {
+        weddingDayEvents.filter { $0.dependsOnEventId == event.id }
+    }
+
     // MARK: - Computed Properties
 
     var filteredItems: [TimelineItem] {
@@ -379,9 +593,11 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
     func resetLoadedState() {
         // Cancel in-flight tasks to avoid race conditions during tenant switch
         loadTask?.cancel()
+        weddingDayEventsLoadTask?.cancel()
 
         // Reset state and invalidate cache
         loadingState = .idle
+        weddingDayEventsLoadingState = .idle
         milestones = []
         lastLoadTime = nil
     }

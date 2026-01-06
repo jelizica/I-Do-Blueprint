@@ -24,4 +24,13 @@ protocol TimelineRepositoryProtocol: Sendable {
     func createMilestone(_ insertData: MilestoneInsertData) async throws -> Milestone
     func updateMilestone(_ milestone: Milestone) async throws -> Milestone
     func deleteMilestone(id: UUID) async throws
+
+    // MARK: - Wedding Day Events
+
+    func fetchWeddingDayEvents() async throws -> [WeddingDayEvent]
+    func fetchWeddingDayEvents(forDate date: Date) async throws -> [WeddingDayEvent]
+    func fetchWeddingDayEvent(id: UUID) async throws -> WeddingDayEvent?
+    func createWeddingDayEvent(_ insertData: WeddingDayEventInsertData) async throws -> WeddingDayEvent
+    func updateWeddingDayEvent(_ event: WeddingDayEvent) async throws -> WeddingDayEvent
+    func deleteWeddingDayEvent(id: UUID) async throws
 }

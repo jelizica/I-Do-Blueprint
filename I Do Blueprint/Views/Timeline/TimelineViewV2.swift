@@ -15,6 +15,7 @@ struct TimelineViewV2: View {
     @State private var selectedItem: TimelineItem?
     @State private var selectedMilestone: Milestone?
     @State private var showingFilters = false
+    @State private var showingWeddingDayTimeline = false
 
     private let logger = AppLogger.ui
 
@@ -77,6 +78,10 @@ struct TimelineViewV2: View {
                     await store.refreshTimeline()
                 }
             }
+            .navigationDestination(isPresented: $showingWeddingDayTimeline) {
+                WeddingDayTimelineViewV1()
+                    .environmentObject(store)
+            }
         }
     }
 
@@ -90,7 +95,8 @@ struct TimelineViewV2: View {
                     TimelineHeaderSection(
                         totalEvents: store.filteredItems.count,
                         milestonesCount: store.milestones.count,
-                        completedCount: store.completedItemsCount()
+                        completedCount: store.completedItemsCount(),
+                        onWeddingDayTapped: { showingWeddingDayTimeline = true }
                     )
 
                     // Horizontal Timeline Graph
