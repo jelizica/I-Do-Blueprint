@@ -2,8 +2,8 @@
 //  ViewGuestModal.swift
 //  I Do Blueprint
 //
-//  Glassmorphic View Guest modal with 3-column card layout
-//  Matches AddGuestViewV2 theme with pink/peach and green tinted cards
+//  Vibrant glassmorphic View Guest modal with 3-column card layout
+//  Theme-aware styling using SemanticColors and color palettes
 //  All cards always shown with placeholders for empty data
 //
 
@@ -95,14 +95,19 @@ struct ViewGuestModal: View {
         .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.45))
+                .fill(SemanticColors.backgroundPrimary.opacity(0.92))
                 .background(
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
                 )
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .stroke(Color.white.opacity(0.5), lineWidth: 1)
+        )
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.black.opacity(0.2), radius: 40, x: 0, y: 20)
+        .shadow(color: SemanticColors.primaryAction.opacity(0.15), radius: 40, x: 0, y: 20)
+        .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
     }
 
     // MARK: - Header Section
@@ -122,14 +127,14 @@ struct ViewGuestModal: View {
                                 .stroke(Color.white.opacity(0.3), lineWidth: 2)
                         )
                 } else {
-                    // Fallback: Gradient circle with initials
+                    // Fallback: Theme-aware gradient circle with initials
                     ZStack {
                         Circle()
                             .fill(
                                 LinearGradient(
                                     colors: [
-                                        Color(red: 0.95, green: 0.55, blue: 0.65),
-                                        Color(red: 0.75, green: 0.55, blue: 0.55)
+                                        SemanticColors.primaryAction,
+                                        SemanticColors.primaryAction.opacity(0.7)
                                     ],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
@@ -152,7 +157,7 @@ struct ViewGuestModal: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(guest.fullName)
                     .font(.system(size: 28, weight: .bold))
-                    .foregroundColor(Color(red: 0.2, green: 0.2, blue: 0.25))
+                    .foregroundColor(SemanticColors.textPrimary)
 
                 HStack(spacing: Spacing.md) {
                     // Status badge
@@ -162,7 +167,7 @@ struct ViewGuestModal: View {
                     if let invitedBy = guest.invitedBy {
                         Text("Invited by \(invitedBy.displayName(with: settingsStore.settings))")
                             .font(.system(size: 13))
-                            .foregroundColor(Color.gray)
+                            .foregroundColor(SemanticColors.textSecondary)
                     }
                 }
             }
@@ -173,11 +178,11 @@ struct ViewGuestModal: View {
             Button(action: { dismiss() }) {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(Color.gray)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .frame(width: 28, height: 28)
                     .background(
                         Circle()
-                            .fill(Color.white.opacity(0.6))
+                            .fill(SemanticColors.backgroundSecondary.opacity(0.6))
                     )
             }
             .buttonStyle(.plain)
@@ -234,7 +239,7 @@ struct ViewGuestModal: View {
     private var personalInfoCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
-            cardHeader(icon: "person.fill", title: "Personal Info", iconColor: Color(red: 0.85, green: 0.5, blue: 0.55))
+            cardHeader(icon: "person.fill", title: "Personal Info", iconColor: SemanticColors.primaryAction)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 ViewGuestInfoRow(label: "Name", value: guest.fullName)
@@ -242,13 +247,13 @@ struct ViewGuestModal: View {
                     label: "Relation",
                     value: guest.relationshipToCouple,
                     placeholder: "Not specified",
-                    valueColor: guest.relationshipToCouple != nil ? Color(red: 0.85, green: 0.4, blue: 0.5) : nil
+                    valueColor: guest.relationshipToCouple != nil ? SemanticColors.primaryAction : nil
                 )
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .pink))
+        .background(cardBackground(style: .primary))
     }
 
     // MARK: - Contact Card
@@ -256,7 +261,7 @@ struct ViewGuestModal: View {
     private var contactCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
-            cardHeader(icon: "rectangle.stack.person.crop.fill", title: "Contact", iconColor: Color(red: 0.4, green: 0.55, blue: 0.75))
+            cardHeader(icon: "rectangle.stack.person.crop.fill", title: "Contact", iconColor: SemanticColors.secondaryAction)
 
             VStack(alignment: .leading, spacing: Spacing.sm) {
                 // Email
@@ -314,7 +319,7 @@ struct ViewGuestModal: View {
     private var attendanceCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
-            cardHeader(icon: "calendar.badge.checkmark", title: "Attendance", iconColor: Color(red: 0.45, green: 0.7, blue: 0.5))
+            cardHeader(icon: "calendar.badge.checkmark", title: "Attendance", iconColor: SemanticColors.statusSuccess)
 
             // Event pills
             HStack(spacing: Spacing.sm) {
@@ -332,21 +337,21 @@ struct ViewGuestModal: View {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "person.2.fill")
                     .font(.system(size: 12))
-                    .foregroundColor(Color.gray)
+                    .foregroundColor(SemanticColors.textSecondary)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Plus One")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Color.gray)
+                        .foregroundColor(SemanticColors.textSecondary)
 
                     if guest.plusOneAllowed {
                         Text(guest.plusOneName ?? "Not specified")
                             .font(.system(size: 14))
-                            .foregroundColor(Color(red: 0.25, green: 0.25, blue: 0.3))
+                            .foregroundColor(SemanticColors.textPrimary)
                     } else {
                         Text("Not allowed")
                             .font(.system(size: 14))
-                            .foregroundColor(Color.gray.opacity(0.7))
+                            .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                             .italic()
                     }
                 }
@@ -356,19 +361,19 @@ struct ViewGuestModal: View {
                 if guest.plusOneAllowed && guest.plusOneAttending {
                     Text("Attending")
                         .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(Color(red: 0.3, green: 0.6, blue: 0.4))
+                        .foregroundColor(SemanticColors.statusSuccess)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
                         .background(
                             Capsule()
-                                .fill(Color(red: 0.9, green: 0.97, blue: 0.92))
+                                .fill(SemanticColors.statusSuccess.opacity(0.15))
                         )
                 }
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .green))
+        .background(cardBackground(style: .success))
     }
 
     // MARK: - Wedding Party Card
@@ -376,17 +381,17 @@ struct ViewGuestModal: View {
     private var weddingPartyCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
-            cardHeader(icon: "crown.fill", title: "Wedding Party", iconColor: Color(red: 0.85, green: 0.65, blue: 0.4))
+            cardHeader(icon: "crown.fill", title: "Wedding Party", iconColor: SemanticColors.statusWarning)
 
             if guest.isWeddingParty {
                 // Role
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Role")
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundColor(Color.gray)
+                        .foregroundColor(SemanticColors.textSecondary)
                     Text(guest.weddingPartyRole ?? "Not specified")
                         .font(.system(size: 14))
-                        .foregroundColor(guest.weddingPartyRole != nil ? Color(red: 0.85, green: 0.4, blue: 0.5) : Color.gray.opacity(0.7))
+                        .foregroundColor(guest.weddingPartyRole != nil ? SemanticColors.primaryAction : SemanticColors.textSecondary.opacity(0.7))
                         .italic(guest.weddingPartyRole == nil)
                 }
 
@@ -401,10 +406,10 @@ struct ViewGuestModal: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text("Prep Notes")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(Color.gray)
+                            .foregroundColor(SemanticColors.textSecondary)
                         Text(prepNotes)
                             .font(.system(size: 13))
-                            .foregroundColor(Color(red: 0.25, green: 0.25, blue: 0.3))
+                            .foregroundColor(SemanticColors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -413,17 +418,17 @@ struct ViewGuestModal: View {
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "info.circle")
                         .font(.system(size: 12))
-                        .foregroundColor(Color.gray.opacity(0.6))
+                        .foregroundColor(SemanticColors.textSecondary.opacity(0.6))
                     Text("Not in wedding party")
                         .font(.system(size: 13))
-                        .foregroundColor(Color.gray.opacity(0.7))
+                        .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                         .italic()
                 }
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .gold))
+        .background(cardBackground(style: .warning))
     }
 
     // MARK: - Accessibility Card
@@ -431,29 +436,29 @@ struct ViewGuestModal: View {
     private var accessibilityCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
-            cardHeader(icon: "figure.roll", title: "Accessibility", iconColor: Color(red: 0.4, green: 0.55, blue: 0.75))
+            cardHeader(icon: "figure.roll", title: "Accessibility", iconColor: SemanticColors.secondaryAction)
 
             if let needs = guest.accessibilityNeeds, !needs.isEmpty {
                 Text(needs)
                     .font(.system(size: 13))
-                    .foregroundColor(Color(red: 0.25, green: 0.25, blue: 0.3))
+                    .foregroundColor(SemanticColors.textPrimary)
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 // No requirements placeholder
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "info.circle")
                         .font(.system(size: 12))
-                        .foregroundColor(Color.gray.opacity(0.6))
+                        .foregroundColor(SemanticColors.textSecondary.opacity(0.6))
                     Text("No requirements")
                         .font(.system(size: 13))
-                        .foregroundColor(Color.gray.opacity(0.7))
+                        .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                         .italic()
                 }
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .blue))
+        .background(cardBackground(style: .secondary))
     }
 
     // MARK: - Dining Card
@@ -461,56 +466,56 @@ struct ViewGuestModal: View {
     private var diningCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
-            cardHeader(icon: "fork.knife", title: "Dining", iconColor: Color.gray)
+            cardHeader(icon: "fork.knife", title: "Dining", iconColor: SemanticColors.textSecondary)
 
             // Meal Selection section header
             Text("Meal Selection")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color.gray)
+                .foregroundColor(SemanticColors.textSecondary)
 
             // Meal option pill
             if let mealOption = guest.mealOption, !mealOption.isEmpty {
                 HStack(spacing: 6) {
                     Image(systemName: "circle.fill")
                         .font(.system(size: 8))
-                        .foregroundColor(Color(red: 0.85, green: 0.65, blue: 0.4))
+                        .foregroundColor(SemanticColors.statusWarning)
                     Text(mealOption)
                         .font(.system(size: 14))
-                        .foregroundColor(Color(red: 0.25, green: 0.25, blue: 0.3))
+                        .foregroundColor(SemanticColors.textPrimary)
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(red: 0.98, green: 0.96, blue: 0.92))
+                        .fill(SemanticColors.statusWarning.opacity(0.1))
                 )
             } else {
                 Text("Not selected")
                     .font(.system(size: 14))
-                    .foregroundColor(Color.gray.opacity(0.7))
+                    .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                     .italic()
             }
 
             // Dietary Notes section header
             Text("Dietary Notes")
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color.gray)
+                .foregroundColor(SemanticColors.textSecondary)
                 .padding(.top, Spacing.xs)
 
-            // Dietary restrictions with alert styling
+            // Dietary restrictions with alert styling (domain-specific - keeps warning colors)
             if let dietary = guest.dietaryRestrictions, !dietary.isEmpty {
                 HStack(alignment: .top, spacing: Spacing.sm) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.system(size: 12))
-                        .foregroundColor(Color(red: 0.85, green: 0.55, blue: 0.3))
+                        .foregroundColor(SemanticColors.statusWarning)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Alert")
                             .font(.system(size: 12, weight: .medium))
-                            .foregroundColor(Color(red: 0.85, green: 0.35, blue: 0.3))
+                            .foregroundColor(SemanticColors.statusError)
                         Text(dietary)
                             .font(.system(size: 13))
-                            .foregroundColor(Color(red: 0.4, green: 0.35, blue: 0.25))
+                            .foregroundColor(SemanticColors.textPrimary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -518,16 +523,16 @@ struct ViewGuestModal: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(red: 1.0, green: 0.97, blue: 0.92))
+                        .fill(SemanticColors.statusWarning.opacity(0.1))
                         .overlay(
                             RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color(red: 0.9, green: 0.8, blue: 0.65), lineWidth: 1)
+                                .stroke(SemanticColors.statusWarning.opacity(0.3), lineWidth: 1)
                         )
                 )
             } else {
                 Text("None specified")
                     .font(.system(size: 13))
-                    .foregroundColor(Color.gray.opacity(0.7))
+                    .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                     .italic()
             }
         }
@@ -541,30 +546,30 @@ struct ViewGuestModal: View {
     private var notesCard: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Header
-            cardHeader(icon: "note.text", title: "Notes", iconColor: Color(red: 0.75, green: 0.65, blue: 0.35))
+            cardHeader(icon: "note.text", title: "Notes", iconColor: SemanticColors.statusWarning)
 
             if let notes = guest.notes, !notes.isEmpty {
                 Text("\"\(notes)\"")
                     .font(.system(size: 13))
                     .italic()
-                    .foregroundColor(Color(red: 0.35, green: 0.35, blue: 0.3))
+                    .foregroundColor(SemanticColors.textPrimary.opacity(0.85))
                     .fixedSize(horizontal: false, vertical: true)
             } else {
                 // No notes placeholder
                 HStack(spacing: Spacing.sm) {
                     Image(systemName: "text.badge.minus")
                         .font(.system(size: 12))
-                        .foregroundColor(Color.gray.opacity(0.6))
+                        .foregroundColor(SemanticColors.textSecondary.opacity(0.6))
                     Text("No notes added")
                         .font(.system(size: 13))
-                        .foregroundColor(Color.gray.opacity(0.7))
+                        .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                         .italic()
                 }
             }
         }
         .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .yellow))
+        .background(cardBackground(style: .accent))
     }
 
     // MARK: - Footer Section
@@ -576,18 +581,18 @@ struct ViewGuestModal: View {
             // Close button
             Button("Close") { dismiss() }
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Color.gray)
+                .foregroundColor(SemanticColors.textSecondary)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 10)
                 .background(
                     Capsule()
-                        .fill(Color.white.opacity(0.6))
+                        .fill(SemanticColors.backgroundSecondary.opacity(0.6))
                         .shadow(color: Color.black.opacity(0.05), radius: 2, y: 1)
                 )
                 .buttonStyle(.plain)
                 .keyboardShortcut(.cancelAction)
 
-            // Edit Guest button
+            // Edit Guest button - theme-aware gradient
             Button {
                 dismiss()
                 onEdit()
@@ -607,14 +612,14 @@ struct ViewGuestModal: View {
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color(red: 0.95, green: 0.55, blue: 0.65),
-                                Color(red: 0.75, green: 0.55, blue: 0.55)
+                                SemanticColors.primaryAction,
+                                SemanticColors.primaryAction.opacity(0.75)
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                    .shadow(color: Color(red: 0.95, green: 0.55, blue: 0.65).opacity(0.4), radius: 8, y: 4)
+                    .shadow(color: SemanticColors.primaryAction.opacity(0.4), radius: 8, y: 4)
             )
             .buttonStyle(.plain)
             .keyboardShortcut(.defaultAction)
@@ -647,26 +652,32 @@ struct ViewGuestModal: View {
                 .foregroundColor(iconColor)
             Text(title.uppercased())
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color(red: 0.4, green: 0.4, blue: 0.45))
+                .foregroundColor(SemanticColors.textSecondary)
                 .tracking(0.5)
         }
     }
 
-    // Card background styles
+    // Card background styles - theme-aware using design system palettes
     private enum CardBackgroundStyle {
-        case pink, green, blue, gold, yellow, neutral
+        case primary    // Uses theme's primary color (pink for blush, sage for sage-serenity, etc.)
+        case secondary  // Uses theme's secondary color
+        case success    // Uses success/green tones
+        case warning    // Uses warning/gold tones
+        case accent     // Uses a complementary accent
+        case neutral    // Neutral white/gray
     }
 
     @ViewBuilder
     private func cardBackground(style: CardBackgroundStyle) -> some View {
         switch style {
-        case .pink:
+        case .primary:
+            // Theme-aware primary color background
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.95, blue: 0.95).opacity(0.7),
-                            Color(red: 0.98, green: 0.92, blue: 0.90).opacity(0.5)
+                            SemanticColors.primaryAction.opacity(0.12),
+                            SemanticColors.primaryAction.opacity(0.06)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -674,15 +685,16 @@ struct ViewGuestModal: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                        .stroke(SemanticColors.primaryAction.opacity(0.2), lineWidth: 1)
                 )
-        case .green:
+        case .secondary:
+            // Theme-aware secondary color background
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.92, green: 0.98, blue: 0.95).opacity(0.7),
-                            Color(red: 0.88, green: 0.95, blue: 0.92).opacity(0.5)
+                            SemanticColors.secondaryAction.opacity(0.12),
+                            SemanticColors.secondaryAction.opacity(0.06)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -690,15 +702,16 @@ struct ViewGuestModal: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                        .stroke(SemanticColors.secondaryAction.opacity(0.2), lineWidth: 1)
                 )
-        case .blue:
+        case .success:
+            // Theme-aware success/green background
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 0.92, green: 0.95, blue: 0.98).opacity(0.7),
-                            Color(red: 0.88, green: 0.92, blue: 0.96).opacity(0.5)
+                            SemanticColors.statusSuccess.opacity(0.12),
+                            SemanticColors.statusSuccess.opacity(0.06)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -706,15 +719,16 @@ struct ViewGuestModal: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(red: 0.7, green: 0.8, blue: 0.9).opacity(0.5), lineWidth: 1)
+                        .stroke(SemanticColors.statusSuccess.opacity(0.2), lineWidth: 1)
                 )
-        case .gold:
+        case .warning:
+            // Theme-aware warning/gold background
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.97, blue: 0.92).opacity(0.7),
-                            Color(red: 0.98, green: 0.94, blue: 0.88).opacity(0.5)
+                            SemanticColors.statusWarning.opacity(0.12),
+                            SemanticColors.statusWarning.opacity(0.06)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -722,15 +736,16 @@ struct ViewGuestModal: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(red: 0.9, green: 0.8, blue: 0.65).opacity(0.5), lineWidth: 1)
+                        .stroke(SemanticColors.statusWarning.opacity(0.2), lineWidth: 1)
                 )
-        case .yellow:
+        case .accent:
+            // Complementary accent using primary with different opacity
             RoundedRectangle(cornerRadius: 16)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(red: 1.0, green: 0.98, blue: 0.90).opacity(0.8),
-                            Color(red: 0.98, green: 0.96, blue: 0.85).opacity(0.6)
+                            SemanticColors.primaryAction.opacity(0.08),
+                            SemanticColors.secondaryAction.opacity(0.05)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -738,14 +753,15 @@ struct ViewGuestModal: View {
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color(red: 0.9, green: 0.85, blue: 0.7).opacity(0.5), lineWidth: 1)
+                        .stroke(SemanticColors.primaryAction.opacity(0.15), lineWidth: 1)
                 )
         case .neutral:
+            // Neutral background using theme's background colors
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color.white.opacity(0.6))
+                .fill(SemanticColors.backgroundSecondary.opacity(0.6))
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(Color.gray.opacity(0.15), lineWidth: 1)
+                        .stroke(SemanticColors.textSecondary.opacity(0.1), lineWidth: 1)
                 )
         }
     }
@@ -777,17 +793,17 @@ struct ViewGuestInfoRow: View {
         HStack(alignment: .top, spacing: Spacing.md) {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
-                .foregroundColor(Color.gray)
+                .foregroundColor(SemanticColors.textSecondary)
                 .frame(width: 60, alignment: .leading)
 
             if let value = value, !value.isEmpty {
                 Text(value)
                     .font(.system(size: 14))
-                    .foregroundColor(valueColor ?? Color(red: 0.25, green: 0.25, blue: 0.3))
+                    .foregroundColor(valueColor ?? SemanticColors.textPrimary)
             } else {
                 Text(placeholder)
                     .font(.system(size: 14))
-                    .foregroundColor(Color.gray.opacity(0.7))
+                    .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                     .italic()
             }
         }
@@ -804,24 +820,24 @@ struct ViewGuestContactRow: View {
         HStack(alignment: .top, spacing: Spacing.sm) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundColor(value != nil ? Color(red: 0.4, green: 0.55, blue: 0.75) : Color.gray.opacity(0.5))
+                .foregroundColor(value != nil ? SemanticColors.secondaryAction : SemanticColors.textSecondary.opacity(0.5))
                 .frame(width: 16)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(label.uppercased())
                     .font(.system(size: 10, weight: .medium))
-                    .foregroundColor(Color.gray)
+                    .foregroundColor(SemanticColors.textSecondary)
                     .tracking(0.3)
 
                 if let value = value, !value.isEmpty {
                     Text(value)
                         .font(.system(size: 13))
-                        .foregroundColor(Color(red: 0.25, green: 0.25, blue: 0.3))
+                        .foregroundColor(SemanticColors.textPrimary)
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text(placeholder)
                         .font(.system(size: 13))
-                        .foregroundColor(Color.gray.opacity(0.7))
+                        .foregroundColor(SemanticColors.textSecondary.opacity(0.7))
                         .italic()
                 }
             }
@@ -840,15 +856,15 @@ struct AttendancePill: View {
             Text(label)
                 .font(.system(size: 12, weight: .medium))
         }
-        .foregroundColor(isAttending ? Color(red: 0.3, green: 0.6, blue: 0.4) : Color(red: 0.5, green: 0.45, blue: 0.45))
+        .foregroundColor(isAttending ? SemanticColors.statusSuccess : SemanticColors.textSecondary)
         .padding(.horizontal, 12)
         .padding(.vertical, 6)
         .background(
             RoundedRectangle(cornerRadius: 8)
-                .fill(isAttending ? Color(red: 0.9, green: 0.97, blue: 0.92) : Color.gray.opacity(0.08))
+                .fill(isAttending ? SemanticColors.statusSuccess.opacity(0.12) : SemanticColors.textSecondary.opacity(0.08))
                 .overlay(
                     RoundedRectangle(cornerRadius: 8)
-                        .stroke(isAttending ? Color(red: 0.7, green: 0.85, blue: 0.75) : Color.gray.opacity(0.15), lineWidth: 1)
+                        .stroke(isAttending ? SemanticColors.statusSuccess.opacity(0.3) : SemanticColors.textSecondary.opacity(0.15), lineWidth: 1)
                 )
         )
     }
@@ -868,12 +884,12 @@ struct HairMakeupPill: View {
             Image(systemName: isDone ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 11))
         }
-        .foregroundColor(isDone ? Color(red: 0.3, green: 0.6, blue: 0.4) : Color(red: 0.7, green: 0.4, blue: 0.45))
+        .foregroundColor(isDone ? SemanticColors.statusSuccess : SemanticColors.primaryAction.opacity(0.7))
         .padding(.horizontal, 10)
         .padding(.vertical, 5)
         .background(
             Capsule()
-                .fill(isDone ? Color(red: 0.9, green: 0.97, blue: 0.92) : Color(red: 0.98, green: 0.92, blue: 0.92))
+                .fill(isDone ? SemanticColors.statusSuccess.opacity(0.12) : SemanticColors.primaryAction.opacity(0.1))
         )
     }
 }
