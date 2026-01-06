@@ -48,9 +48,12 @@ struct MonthlyPaymentDetailsViewV1: View {
         let parentSize = coordinator.parentWindowSize
         let targetWidth = parentSize.width * widthProportion
         let targetHeight = parentSize.height * heightProportion
-        let finalWidth = min(maxWidth, max(minWidth, targetWidth))
-        let finalHeight = min(maxHeight, max(minHeight, targetHeight))
-        return CGSize(width: finalWidth, height: finalHeight)
+        // Clamp to min/max bounds, then ensure we never exceed parent window
+        let boundedWidth = min(maxWidth, max(minWidth, targetWidth))
+        let boundedHeight = min(maxHeight, max(minHeight, targetHeight))
+        let finalWidth = min(boundedWidth, parentSize.width - 40) // 20px padding each side
+        let finalHeight = min(boundedHeight, parentSize.height - 40)
+        return CGSize(width: max(300, finalWidth), height: max(300, finalHeight))
     }
     
     // MARK: - Computed Properties
