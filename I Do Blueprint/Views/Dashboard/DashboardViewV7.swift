@@ -105,13 +105,17 @@ struct DashboardViewV7: View {
                     .ignoresSafeArea()
 
                 // Use VStack with fixed-height header elements, then masonry layout
-                VStack(spacing: Spacing.lg) {
+                VStack(spacing: 0) {
                     // MARK: - Header (compressed from 60pt to 50pt)
                     DashboardHeaderV7()
                         .frame(height: 50)
                         .padding(.horizontal, Spacing.xxl)
 
-                    // MARK: - Metric Cards Row (4 columns, compressed to 70pt)
+                    Spacer()
+                        .frame(height: Spacing.lg)
+
+                    // MARK: - Metric Cards Row (4 columns)
+                    // Note: Cards have glassPanel() which adds 16pt padding, so natural height is ~110-120pt
                     LazyVGrid(columns: metricColumns, alignment: .center, spacing: Spacing.lg) {
                         if effectiveHasLoaded {
                             RSVPMetricCardV7(
@@ -141,8 +145,11 @@ struct DashboardViewV7: View {
                             MetricCardSkeleton()
                         }
                     }
-                    .frame(height: 70)
                     .padding(.horizontal, Spacing.xxl)
+
+                    // MARK: - Spacing between metrics and masonry grid
+                    Spacer()
+                        .frame(height: Spacing.lg)
 
                     // MARK: - Main Content: Masonry Layout (fills remaining space)
                     // GeometryReader provides both width AND height for proper card sizing
@@ -741,8 +748,11 @@ struct MasonryColumnsView: View {
 
         switch cardType {
         case .budget:
-            // Budget Overview: Completely static (fixed content)
-            return 260
+            // Budget Overview: Content-based static card (tightly fitted)
+            // Content: header (~26pt) + spacing (16pt) + progress bars (32pt) + spacing (16pt) + labels (~14pt) = ~104pt
+            // Plus glassPanel padding (16pt * 2) = 32pt
+            // Total: ~136pt
+            return 136
 
         case .payments:
             // Payments Due: Exact size for actual payment count
@@ -772,8 +782,11 @@ struct MasonryColumnsView: View {
 
         switch cardType {
         case .budget:
-            // Budget Overview: Completely static card (no variable content)
-            return 260
+            // Budget Overview: Content-based static card (tightly fitted)
+            // Content: header (~26pt) + spacing (16pt) + progress bars (32pt) + spacing (16pt) + labels (~14pt) = ~104pt
+            // Plus glassPanel padding (16pt * 2) = 32pt
+            // Total: ~136pt
+            return 136
 
         case .tasks:
             // Task Manager: Content-based (max 3 tasks)
@@ -806,9 +819,9 @@ struct MasonryColumnsView: View {
 
     /// Calculate dynamic card heights AFTER column assignment is known
     /// Dynamic cards fill remaining space in their column; 50/50 split if both share a column
-    private func calculateDynamicCardHeights(for column: [DashboardViewV7.CardType]) -> [DashboardViewV7.CardType: CGFloat] {
+    /// All columns extend to the same bottom (defined by column 1's content + buffer)
+    private func calculateDynamicCardHeights(for column: [DashboardViewV7.CardType], targetContentHeight: CGFloat) -> [DashboardViewV7.CardType: CGFloat] {
         var heights: [DashboardViewV7.CardType: CGFloat] = [:]
-        let availableHeight = columnLayout.availableHeight
 
         // Calculate total height used by static cards in this column
         var staticHeight: CGFloat = 0
@@ -830,22 +843,17 @@ struct MasonryColumnsView: View {
             staticHeight += CGFloat(column.count - 1) * columnLayout.rowSpacing
         }
 
-        // Bottom buffer for clean visual endpoint
-        let bottomBuffer: CGFloat = 24
-
-        // Calculate remaining space for dynamic cards (with bottom buffer)
-        let remainingHeight = max(availableHeight - staticHeight - bottomBuffer, 0)
+        // Calculate remaining space to reach target height
+        // This ensures all columns extend to the same bottom point
+        let remainingHeight = max(targetContentHeight - staticHeight, 0)
 
         // Distribute remaining space to dynamic cards
-        // Both Guest Responses and Vendor List fill available space (with bottom buffer)
-        // Note: Tasks is STATIC (already counted in staticHeight), so dynamicCardsInColumn
-        // will only contain truly dynamic cards like .guests, .vendors, .recentResponses
+        // Dynamic cards fill to reach the target content height (matching column 1's bottom)
         if dynamicCardsInColumn.count == 1 {
             let dynamicCard = dynamicCardsInColumn[0]
-            // Dynamic card fills remaining space (shows as many items as fit)
             let dynamicHeight = max(remainingHeight, 150)
             heights[dynamicCard] = dynamicHeight
-            print("📊 \(dynamicCard) fills column: \(dynamicHeight)pt (with \(bottomBuffer)pt buffer)")
+            print("📊 \(dynamicCard) fills to target: \(dynamicHeight)pt")
         } else if dynamicCardsInColumn.count >= 2 {
             // Multiple dynamic cards split space evenly
             let gaps = CGFloat(dynamicCardsInColumn.count - 1) * columnLayout.rowSpacing
@@ -855,9 +863,28 @@ struct MasonryColumnsView: View {
             }
             print("📊 Multiple dynamic cards: \(heightPerCard)pt each")
         }
-        // If no dynamic cards, heights dict only has static cards (already set)
 
         return heights
+    }
+
+    /// Calculate column 1's total content height (used as reference for all columns)
+    private func calculateColumn1ContentHeight(column1: [DashboardViewV7.CardType]) -> CGFloat {
+        let bottomBuffer: CGFloat = 24
+        var totalHeight: CGFloat = 0
+
+        for card in column1 {
+            totalHeight += staticCardHeight(for: card)
+        }
+
+        // Add spacing between cards
+        if column1.count > 1 {
+            totalHeight += CGFloat(column1.count - 1) * columnLayout.rowSpacing
+        }
+
+        // Add bottom buffer for visual padding from window edge
+        totalHeight += bottomBuffer
+
+        return totalHeight
     }
 
     /// Final calculated heights per column (after layout is known)
@@ -888,18 +915,23 @@ struct MasonryColumnsView: View {
                     availableHeight: columnLayout.availableHeight
                 )
 
-                // Step 2: Calculate final heights with dynamic cards filling remaining space
+                // Step 2: Calculate target height based on column 1's content
+                // This ensures all columns extend to the same bottom point (Payments Due bottom)
+                let targetHeight = calculateColumn1ContentHeight(column1: columnAssignment.column1)
+                print("📏 Target content height (column 1): \(targetHeight)pt")
+
+                // Step 3: Calculate final heights with dynamic cards filling to target
                 var allHeights: [DashboardViewV7.CardType: CGFloat] = [:]
                 for heights in [
-                    calculateDynamicCardHeights(for: columnAssignment.column1),
-                    calculateDynamicCardHeights(for: columnAssignment.column2),
-                    calculateDynamicCardHeights(for: columnAssignment.column3)
+                    calculateDynamicCardHeights(for: columnAssignment.column1, targetContentHeight: targetHeight),
+                    calculateDynamicCardHeights(for: columnAssignment.column2, targetContentHeight: targetHeight),
+                    calculateDynamicCardHeights(for: columnAssignment.column3, targetContentHeight: targetHeight)
                 ] {
                     allHeights.merge(heights) { _, new in new }
                 }
                 finalCardHeights = allHeights
 
-                print("✅ Dashboard layout: static-first, dynamic fills remaining space")
+                print("✅ Dashboard layout: all columns extend to same bottom")
                 print("   Final heights: \(finalCardHeights)")
             }
         }
@@ -956,7 +988,7 @@ struct MasonryColumnsView: View {
                 totalBudget: viewModel.totalBudget,
                 totalSpent: viewModel.totalPaid
             )
-            .frame(height: height)  // Static height (260pt)
+            .frame(height: height)  // Static height (~136pt, tightly fitted to content)
 
         case .payments:
             PaymentsDueCardV7(maxItems: 5)
@@ -1607,9 +1639,7 @@ struct BudgetOverviewCardV7: View {
                     .foregroundColor(SemanticColors.textSecondary)
             }
         }
-        // Pin content to top so cards align across columns
-        .frame(maxHeight: .infinity, alignment: .top)
-        // Static size - no expansion (budget card has fixed content)
+        // Budget card has fixed content - no expansion needed
         .glassPanel()
     }
 }
