@@ -285,12 +285,15 @@ struct PaymentScheduleView: View {
             } else {
                 let query = searchQuery.lowercased()
                 
-                // Search payment.vendor field
+                // Search payment.vendor field (primary source - stored in payment_plans table)
                 let vendorFieldMatches = payment.vendor.lowercased().contains(query)
                 
-                // Search resolved vendor name (from vendor_information table)
-                let resolvedVendorName = getVendorNameById(payment.vendorId) ?? ""
-                let resolvedVendorMatches = resolvedVendorName.lowercased().contains(query)
+                // Search vendor name from vendor_information table (via vendorId lookup)
+                var vendorInfoMatches = false
+                if let vendorId = payment.vendorId {
+                    let vendorInfoName = AppStores.shared.vendor.vendors.first(where: { $0.id == vendorId })?.vendorName ?? ""
+                    vendorInfoMatches = vendorInfoName.lowercased().contains(query)
+                }
                 
                 // Search expense name (linked expense)
                 let expenseName = budgetStore.expenseStore.expenses.first(where: { $0.id == payment.expenseId })?.expenseName ?? ""
@@ -303,7 +306,7 @@ struct PaymentScheduleView: View {
                 let amountString = NumberFormatter.currencyShort.string(from: NSNumber(value: payment.paymentAmount)) ?? ""
                 let amountMatches = amountString.lowercased().contains(query)
                 
-                matchesSearch = vendorFieldMatches || resolvedVendorMatches || expenseMatches || notesMatches || amountMatches
+                matchesSearch = vendorFieldMatches || vendorInfoMatches || expenseMatches || notesMatches || amountMatches
             }
             
             return matchesFilter && matchesSearch
