@@ -34,19 +34,19 @@ struct GuestListView: View {
     
     var body: some View {
         // Table Container with glassmorphism
+        // NOTE: No ScrollView here - parent view (GuestDashboardViewV2) handles scrolling
+        // Having nested ScrollViews causes layout instability and "jumping" behavior
         VStack(spacing: 0) {
             // Table Header
             tableHeader
-            
-            // Table Rows
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(sortedGuests) { guest in
-                        tableRow(for: guest)
-                            .onTapGesture {
-                                onGuestTap(guest)
-                            }
-                    }
+
+            // Table Rows - using LazyVStack for efficient rendering within parent's ScrollView
+            LazyVStack(spacing: 0) {
+                ForEach(sortedGuests) { guest in
+                    tableRow(for: guest)
+                        .onTapGesture {
+                            onGuestTap(guest)
+                        }
                 }
             }
         }
