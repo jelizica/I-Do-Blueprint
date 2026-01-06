@@ -278,7 +278,7 @@ struct PaymentScheduleView: View {
                 matchesFilter = payment.paid
             }
             
-            // Apply search query
+            // Apply search query - ONLY search vendor name
             let matchesSearch: Bool
             if searchQuery.isEmpty {
                 matchesSearch = true
@@ -286,27 +286,20 @@ struct PaymentScheduleView: View {
                 let query = searchQuery.lowercased()
                 
                 // Search payment.vendor field (primary source - stored in payment_plans table)
+                // This is the vendor name displayed in the UI
                 let vendorFieldMatches = payment.vendor.lowercased().contains(query)
                 
-                // Search vendor name from vendor_information table (via vendorId lookup)
+                // Also search vendor name from vendor_information table (via vendorId lookup)
+                // In case the payment.vendor field is empty but vendorId is set
                 var vendorInfoMatches = false
                 if let vendorId = payment.vendorId {
                     let vendorInfoName = AppStores.shared.vendor.vendors.first(where: { $0.id == vendorId })?.vendorName ?? ""
                     vendorInfoMatches = vendorInfoName.lowercased().contains(query)
                 }
                 
-                // Search expense name (linked expense)
-                let expenseName = budgetStore.expenseStore.expenses.first(where: { $0.id == payment.expenseId })?.expenseName ?? ""
-                let expenseMatches = expenseName.lowercased().contains(query)
-                
-                // Search notes
-                let notesMatches = payment.notes?.lowercased().contains(query) ?? false
-                
-                // Search amount
-                let amountString = NumberFormatter.currencyShort.string(from: NSNumber(value: payment.paymentAmount)) ?? ""
-                let amountMatches = amountString.lowercased().contains(query)
-                
-                matchesSearch = vendorFieldMatches || vendorInfoMatches || expenseMatches || notesMatches || amountMatches
+                // Only match on vendor name - NOT expense name, notes, or amount
+                // This prevents false positives like "Payment" matching "men"
+                matchesSearch = vendorFieldMatches || vendorInfoMatches
             }
             
             return matchesFilter && matchesSearch
