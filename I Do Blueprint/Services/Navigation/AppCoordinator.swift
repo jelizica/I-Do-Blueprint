@@ -164,10 +164,11 @@ class AppCoordinator: ObservableObject {
                 EditGuestModal(
                     guest: guest,
                     guestStore: coordinator.guestStore,
-                    onSave: { updatedGuest in
-                        Task {
-                            await coordinator.guestStore.updateGuest(updatedGuest)
-                        }
+                    onSave: { _ in
+                        // Note: EditGuestModal already calls guestStore.updateGuest()
+                        // before invoking this callback, so we only need to dismiss here.
+                        // Do NOT call updateGuest again - it causes a race condition
+                        // where the second call cancels the first (see GuestStoreV2 line 209).
                         coordinator.dismiss()
                     },
                     onDelete: {
