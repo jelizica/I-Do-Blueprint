@@ -174,9 +174,9 @@ private struct MainAppView: View {
         // Use GeometryReader to capture window size for dynamic sheet sizing
         GeometryReader { geometry in
             NavigationSplitView {
-                // Sidebar
-                AppSidebarView()
-                    .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 300)
+                // Sidebar - V1 Glassmorphism navigation
+                GlobalSidebarViewV1()
+                    .navigationSplitViewColumnWidth(min: 260, ideal: 280, max: 340)
             } detail: {
                 // Main content - shows the selected tab's view
                 coordinator.selectedTab.view
