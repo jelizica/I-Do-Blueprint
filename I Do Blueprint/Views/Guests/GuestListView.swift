@@ -40,8 +40,10 @@ struct GuestListView: View {
             // Table Header
             tableHeader
 
-            // Table Rows - using LazyVStack for efficient rendering within parent's ScrollView
-            LazyVStack(spacing: 0) {
+            // Table Rows - using VStack (not LazyVStack) to prevent scroll-triggered layout issues
+            // LazyVStack caused view recreation during scroll which triggered async avatar re-loading
+            // and layout recalculation. For typical guest lists (<500), VStack performance is acceptable.
+            VStack(spacing: 0) {
                 ForEach(sortedGuests) { guest in
                     tableRow(for: guest)
                         .onTapGesture {
@@ -334,14 +336,16 @@ struct GuestListAvatarView: View {
     let guest: Guest
     let size: CGFloat
     @State private var avatarImage: NSImage?
-    
+    @State private var hasLoadedAvatar = false
+
     var body: some View {
-        Group {
+        // Fixed-size container prevents layout shifts during async avatar load
+        // The container MUST have explicit frame before any conditional content
+        ZStack {
             if let image = avatarImage {
                 Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fill)
-                    .frame(width: size, height: size)
                     .clipShape(Circle())
                     .overlay(Circle().stroke(Color.white, lineWidth: 2))
                     .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
@@ -349,7 +353,11 @@ struct GuestListAvatarView: View {
                 initialsAvatar
             }
         }
-        .task {
+        .frame(width: size, height: size) // Fixed frame on container, not children
+        .task(id: guest.id) {
+            // Only load once per guest - prevents re-triggering on scroll
+            guard !hasLoadedAvatar else { return }
+            hasLoadedAvatar = true
             await loadAvatar()
         }
     }
@@ -360,7 +368,7 @@ struct GuestListAvatarView: View {
             .compactMap { $0.first }
             .map { String($0) }
             .joined()
-        
+
         let colors: [Color] = [
             AppColors.Dashboard.noteAction,
             AppColors.primary,
@@ -368,10 +376,10 @@ struct GuestListAvatarView: View {
             AppColors.Dashboard.taskAction
         ]
         let colorIndex = abs(guest.fullName.hashValue) % colors.count
-        
+
+        // No explicit frame here - parent ZStack has fixed frame
         return Circle()
             .fill(colors[colorIndex].opacity(0.15))
-            .frame(width: size, height: size)
             .overlay(
                 Text(initials)
                     .font(.system(size: size * 0.375, weight: .bold))
