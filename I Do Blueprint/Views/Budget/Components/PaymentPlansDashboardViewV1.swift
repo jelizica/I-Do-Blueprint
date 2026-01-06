@@ -619,7 +619,10 @@ private struct PaymentRowItem: View {
     let isDarkMode: Bool
     let onTogglePaid: () -> Void
 
-    @State private var isHovered = false
+    // REMOVED: @State private var isHovered - causes scroll rebounding/interruption
+    // When scrolling, onHover fires as mouse passes over items, triggering @State updates
+    // which cause view rebuilds and interrupt scroll momentum.
+    // Instead, use static styling - hover feedback is handled by the parent PaymentGroupCard.
 
     private var status: PaymentDisplayStatus {
         if payment.paid {
@@ -674,10 +677,9 @@ private struct PaymentRowItem: View {
         }
         .padding(.horizontal, Spacing.lg)
         .padding(.vertical, Spacing.md)
-        .background(isHovered ? Color.white.opacity(isDarkMode ? 0.05 : 0.2) : Color.clear)
-        .onHover { hovering in
-            isHovered = hovering
-        }
+        // Static background - no hover state to avoid scroll interruption
+        // The parent PaymentGroupCard already provides hover feedback at the group level
+        .background(Color.clear)
     }
 
     private var statusBadge: some View {
