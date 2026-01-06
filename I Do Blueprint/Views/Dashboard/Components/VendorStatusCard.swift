@@ -70,7 +70,7 @@ struct VendorStatusCard: View {
                 .shadow(color: SemanticColors.shadowLight, radius: 8, y: 4)
         )
         .sheet(item: $selectedVendor) { vendor in
-            VendorDetailModal(vendor: vendor, vendorStore: store)
+            VendorDetailModalV2(vendor: vendor, vendorStore: store)
                 .frame(width: 900, height: 700)
         }
     }
