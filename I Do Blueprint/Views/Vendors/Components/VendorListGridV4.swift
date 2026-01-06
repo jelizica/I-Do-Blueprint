@@ -22,7 +22,9 @@ struct VendorListGridV4: View {
         Group {
             switch loadingState {
             case .idle:
-                EmptyView()
+                // Show loading indicator while waiting for data to load
+                // This prevents blank screen during initial load
+                loadingView
 
             case .loading:
                 loadingView
@@ -32,7 +34,7 @@ struct VendorListGridV4: View {
                     if searchText.isEmpty && selectedFilter == .all {
                         emptyStateView
                     } else {
-                        noResultsView
+                        noResultsForFilterView
                     }
                 } else {
                     vendorGrid
@@ -101,7 +103,7 @@ struct VendorListGridV4: View {
         }
     }
 
-    // MARK: - Empty State
+    // MARK: - Empty State (No vendors at all)
 
     private var emptyStateView: some View {
         VStack(spacing: Spacing.xl) {
@@ -150,51 +152,141 @@ struct VendorListGridV4: View {
         .glassPanel(cornerRadius: CornerRadius.xl, padding: Spacing.xxl)
     }
 
-    // MARK: - No Results
+    // MARK: - No Results for Filter (Filter-specific empty state)
 
-    private var noResultsView: some View {
+    private var noResultsForFilterView: some View {
         VStack(spacing: Spacing.xl) {
-            // Icon
+            // Icon based on filter type
             Circle()
-                .fill(SemanticColors.textSecondary.opacity(Opacity.light))
+                .fill(filterIconColor.opacity(Opacity.light))
                 .frame(width: 80, height: 80)
                 .overlay(
-                    Image(systemName: "magnifyingglass")
+                    Image(systemName: filterIconName)
                         .font(.system(size: 32))
-                        .foregroundColor(SemanticColors.textSecondary)
+                        .foregroundColor(filterIconColor)
                 )
 
             VStack(spacing: Spacing.sm) {
-                Text("No Vendors Found")
+                Text(filterEmptyTitle)
                     .font(Typography.heading)
                     .foregroundColor(SemanticColors.textPrimary)
 
-                Text("Try adjusting your search or filters")
+                Text(filterEmptyMessage)
                     .font(Typography.bodyRegular)
                     .foregroundColor(SemanticColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 320)
             }
 
-            Button {
-                onClearFilters()
-            } label: {
-                Text("Clear Filters")
-                    .font(Typography.bodyRegular)
-                    .foregroundColor(SemanticColors.primaryAction)
-                    .padding(.horizontal, Spacing.xxl)
-                    .padding(.vertical, Spacing.md)
-                    .background(
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .fill(Color.white.opacity(0.5))
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .stroke(SemanticColors.primaryAction, lineWidth: 1)
-                    )
+            // Show different actions based on context
+            if !searchText.isEmpty {
+                Button {
+                    onClearFilters()
+                } label: {
+                    Text("Clear Search")
+                        .font(Typography.bodyRegular)
+                        .foregroundColor(SemanticColors.primaryAction)
+                        .padding(.horizontal, Spacing.xxl)
+                        .padding(.vertical, Spacing.md)
+                        .background(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .fill(Color.white.opacity(0.5))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .stroke(SemanticColors.primaryAction, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
+            } else {
+                Button {
+                    onClearFilters()
+                } label: {
+                    Text("View All Vendors")
+                        .font(Typography.bodyRegular)
+                        .foregroundColor(SemanticColors.primaryAction)
+                        .padding(.horizontal, Spacing.xxl)
+                        .padding(.vertical, Spacing.md)
+                        .background(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .fill(Color.white.opacity(0.5))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.md)
+                                .stroke(SemanticColors.primaryAction, lineWidth: 1)
+                        )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, minHeight: 300)
         .glassPanel(cornerRadius: CornerRadius.xl, padding: Spacing.xxl)
+    }
+
+    // MARK: - Filter-specific UI helpers
+
+    private var filterIconName: String {
+        if !searchText.isEmpty {
+            return "magnifyingglass"
+        }
+        switch selectedFilter {
+        case .all:
+            return "building.2"
+        case .available:
+            return "clock"
+        case .booked:
+            return "checkmark.circle"
+        case .archived:
+            return "archivebox"
+        }
+    }
+
+    private var filterIconColor: Color {
+        if !searchText.isEmpty {
+            return SemanticColors.textSecondary
+        }
+        switch selectedFilter {
+        case .all:
+            return SemanticColors.primaryAction
+        case .available:
+            return SemanticColors.statusPending
+        case .booked:
+            return SemanticColors.statusSuccess
+        case .archived:
+            return SemanticColors.textSecondary
+        }
+    }
+
+    private var filterEmptyTitle: String {
+        if !searchText.isEmpty {
+            return "No Matching Vendors"
+        }
+        switch selectedFilter {
+        case .all:
+            return "No Vendors Found"
+        case .available:
+            return "No Available Vendors"
+        case .booked:
+            return "No Booked Vendors"
+        case .archived:
+            return "No Archived Vendors"
+        }
+    }
+
+    private var filterEmptyMessage: String {
+        if !searchText.isEmpty {
+            return "No vendors match your search for \"\(searchText)\". Try a different search term or clear the search."
+        }
+        switch selectedFilter {
+        case .all:
+            return "Add vendors to start tracking your wedding services."
+        case .available:
+            return "All your vendors are either booked or archived. Add new vendors to see them here."
+        case .booked:
+            return "You haven't booked any vendors yet. Mark vendors as booked when you've confirmed them."
+        case .archived:
+            return "You don't have any archived vendors. Archive vendors you're no longer considering."
+        }
     }
 
     // MARK: - Error View

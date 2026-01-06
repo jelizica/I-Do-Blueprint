@@ -77,10 +77,10 @@ struct VendorManagementViewV4: View {
                         )
                         .padding(.top, windowSize == .compact ? Spacing.lg : Spacing.xl)
 
-                        // Stats Cards Section
+                        // Stats Cards Section - Always show ALL vendors (not filtered)
                         VendorStatsSectionV4(
                             windowSize: windowSize,
-                            vendors: vendorStore.vendors,
+                            vendors: vendorStore.vendors, // Pass ALL vendors for static stats
                             totalBudget: appStores.budget.primaryScenarioTotal
                         )
 
