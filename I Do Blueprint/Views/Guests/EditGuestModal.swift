@@ -19,6 +19,7 @@ struct EditGuestModal: View {
     let guest: Guest
     let onSave: (Guest) -> Void
     let onDelete: (() -> Void)?
+    let onCancel: (() -> Void)?
 
     // Proportional Modal Sizing Pattern
     private let minWidth: CGFloat = 820
@@ -80,11 +81,12 @@ struct EditGuestModal: View {
     @State private var isSaving = false
     @State private var showDeleteConfirmation = false
 
-    init(guest: Guest, guestStore: GuestStoreV2, onSave: @escaping (Guest) -> Void, onDelete: (() -> Void)? = nil) {
+    init(guest: Guest, guestStore: GuestStoreV2, onSave: @escaping (Guest) -> Void, onDelete: (() -> Void)? = nil, onCancel: (() -> Void)? = nil) {
         self.guest = guest
         self.guestStore = guestStore
         self.onSave = onSave
         self.onDelete = onDelete
+        self.onCancel = onCancel
 
         // Initialize form state from guest
         _firstName = State(initialValue: guest.firstName)
@@ -1056,8 +1058,14 @@ struct EditGuestModal: View {
 
             Spacer()
 
-            // Cancel button
-            Button("Cancel") { dismiss() }
+            // Cancel button - returns to ViewGuestModal if onCancel provided
+            Button("Cancel") {
+                if let onCancel = onCancel {
+                    onCancel()
+                } else {
+                    dismiss()
+                }
+            }
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(Color.gray)
                 .padding(.horizontal, 24)

@@ -156,11 +156,8 @@ class AppCoordinator: ObservableObject {
                 .environmentObject(coordinator)
             case .viewGuest(let guest):
                 ViewGuestModal(guest: guest) {
-                    // Dismiss view modal and open edit modal
-                    coordinator.dismiss()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                        coordinator.present(.editGuest(guest))
-                    }
+                    // Immediately switch to edit modal (no delay)
+                    coordinator.activeSheet = .editGuest(guest)
                 }
                 .environmentObject(coordinator)
             case .editGuest(let guest):
@@ -178,6 +175,10 @@ class AppCoordinator: ObservableObject {
                             await coordinator.guestStore.deleteGuest(id: guest.id)
                         }
                         coordinator.dismiss()
+                    },
+                    onCancel: {
+                        // Return to ViewGuestModal instead of dismissing
+                        coordinator.activeSheet = .viewGuest(guest)
                     }
                 )
                 .environmentObject(coordinator)
