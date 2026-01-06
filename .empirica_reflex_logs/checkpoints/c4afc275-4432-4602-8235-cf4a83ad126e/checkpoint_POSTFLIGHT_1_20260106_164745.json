@@ -1,0 +1,131 @@
+{
+  "session_id": "c4afc275-4432-4602-8235-cf4a83ad126e",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T16:47:44.932212+00:00",
+  "vectors": {
+    "know": 0.95,
+    "do": 0.92,
+    "context": 0.95,
+    "clarity": 0.95,
+    "coherence": 0.9,
+    "signal": 0.92,
+    "density": 0.88,
+    "state": 0.95,
+    "change": 0.9,
+    "completion": 0.9,
+    "impact": 0.95,
+    "engagement": 0.9,
+    "uncertainty": 0.1
+  },
+  "overall_confidence": 0.94,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.9,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "know": 0.45,
+      "do": 0.62,
+      "context": 0.35,
+      "clarity": 0.4,
+      "coherence": 0.3,
+      "signal": 0.42,
+      "density": 0.38,
+      "state": 0.35,
+      "change": 0.7,
+      "completion": 0.9,
+      "impact": 0.35,
+      "engagement": 0.15,
+      "uncertainty": -0.4
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "bd50a694dcaaccd73db494f2d28205a8380f198c",
+    "git_notes_ref": "empirica/session/c4afc275-4432-4602-8235-cf4a83ad126e/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "332df57ca211d210cd0bfb7d8f6a4d1766fe89ed",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Services/Navigation/AppCoordinator.swift\"",
+        "\"I Do Blueprint/Views/Budget/Components/PaymentFilterBarV2.swift\"",
+        "\"I Do Blueprint/Views/Budget/Components/PaymentScheduleStaticHeader.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1355776 -> 1490944 bytes\n .../storage.sqlite                                 | Bin 3198976 -> 3661824 bytes\n .../Services/Navigation/AppCoordinator.swift       |   9 +--\n .../Budget/Components/PaymentFilterBarV2.swift     |  76 ++++++++++++++-------\n .../Components/PaymentScheduleStaticHeader.swift   |   2 +-\n 5 files changed, 59 insertions(+), 28 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.5,
+      "curr": 0.95,
+      "delta": 0.45
+    },
+    "do": {
+      "prev": 0.3,
+      "curr": 0.92,
+      "delta": 0.62
+    },
+    "context": {
+      "prev": 0.6,
+      "curr": 0.95,
+      "delta": 0.35
+    },
+    "clarity": {
+      "prev": 0.55,
+      "curr": 0.95,
+      "delta": 0.4
+    },
+    "coherence": {
+      "prev": 0.6,
+      "curr": 0.9,
+      "delta": 0.3
+    },
+    "signal": {
+      "prev": 0.5,
+      "curr": 0.92,
+      "delta": 0.42
+    },
+    "density": {
+      "prev": 0.5,
+      "curr": 0.88,
+      "delta": 0.38
+    },
+    "state": {
+      "prev": 0.6,
+      "curr": 0.95,
+      "delta": 0.35
+    },
+    "change": {
+      "prev": 0.2,
+      "curr": 0.9,
+      "delta": 0.7
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 0.9,
+      "delta": 0.9
+    },
+    "impact": {
+      "prev": 0.6,
+      "curr": 0.95,
+      "delta": 0.35
+    },
+    "engagement": {
+      "prev": 0.75,
+      "curr": 0.9,
+      "delta": 0.15
+    },
+    "uncertainty": {
+      "prev": 0.5,
+      "curr": 0.1,
+      "delta": -0.4
+    }
+  },
+  "token_count": 293
+}

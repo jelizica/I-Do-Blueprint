@@ -8,9 +8,34 @@
 
 import SwiftUI
 
+// MARK: - Payment View Mode
+
+/// View mode options for Payment Schedule
+enum PaymentViewMode: String, CaseIterable {
+    case individual
+    case plans
+    case timeline
+    
+    var displayName: String {
+        switch self {
+        case .individual: return "Individual"
+        case .plans: return "Plans"
+        case .timeline: return "Timeline"
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .individual: return "list.bullet"
+        case .plans: return "folder"
+        case .timeline: return "chart.line.uptrend.xyaxis"
+        }
+    }
+}
+
 struct PaymentFilterBarV2: View {
     let windowSize: WindowSize
-    @Binding var showPlanView: Bool
+    @Binding var viewMode: PaymentViewMode
     @Binding var selectedFilterOption: PaymentFilterOption
     @Binding var groupingStrategy: PaymentPlanGroupingStrategy
     @State private var showGroupingInfo = false
@@ -37,13 +62,14 @@ struct PaymentFilterBarV2: View {
             // View mode toggle (left)
             viewModeToggle
             
-            // Filter/Grouping (right)
-            if showPlanView {
+            // Filter/Grouping (right) - only show for non-timeline views
+            if viewMode == .plans {
                 groupingMenu
                 groupingInfoButton
-            } else {
+            } else if viewMode == .individual {
                 filterMenu
             }
+            // Timeline view doesn't need additional controls in compact
         }
     }
     
@@ -56,26 +82,29 @@ struct PaymentFilterBarV2: View {
                 .foregroundColor(SemanticColors.textSecondary)
             
             viewModeToggle
-                .frame(width: 200)
+                .frame(width: 280)
             
             Spacer()
             
-            HStack(spacing: Spacing.xs) {
-                Text(showPlanView ? "Group By" : "Filter")
-                    .font(.system(size: 13))
-                    .foregroundColor(SemanticColors.textSecondary)
-                
-                if showPlanView {
-                    groupingInfoButton
+            // Only show filter/grouping controls for non-timeline views
+            if viewMode != .timeline {
+                HStack(spacing: Spacing.xs) {
+                    Text(viewMode == .plans ? "Group By" : "Filter")
+                        .font(.system(size: 13))
+                        .foregroundColor(SemanticColors.textSecondary)
+                    
+                    if viewMode == .plans {
+                        groupingInfoButton
+                    }
                 }
-            }
-            
-            if showPlanView {
-                groupingPicker
-                    .frame(width: 250)
-            } else {
-                filterPicker
-                    .frame(width: 200)
+                
+                if viewMode == .plans {
+                    groupingPicker
+                        .frame(width: 250)
+                } else {
+                    filterPicker
+                        .frame(width: 200)
+                }
             }
         }
     }
@@ -83,13 +112,14 @@ struct PaymentFilterBarV2: View {
     // MARK: - View Mode Toggle
     
     private var viewModeToggle: some View {
-        Picker("View Mode", selection: $showPlanView) {
-            Text("Individual").tag(false)
-            Text("Plans").tag(true)
+        Picker("View Mode", selection: $viewMode) {
+            ForEach(PaymentViewMode.allCases, id: \.self) { mode in
+                Label(mode.displayName, systemImage: mode.icon).tag(mode)
+            }
         }
         .pickerStyle(.segmented)
         .labelsHidden()
-        .onChange(of: showPlanView) { oldValue, newValue in
+        .onChange(of: viewMode) { oldValue, newValue in
             onViewModeChange()
         }
     }

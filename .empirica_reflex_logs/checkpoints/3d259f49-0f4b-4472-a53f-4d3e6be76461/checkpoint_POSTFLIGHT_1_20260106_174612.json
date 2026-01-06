@@ -1,0 +1,50 @@
+{
+  "session_id": "3d259f49-0f4b-4472-a53f-4d3e6be76461",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T17:46:09.980467+00:00",
+  "vectors": {
+    "know": 0.95,
+    "do": 0.95,
+    "context": 0.92,
+    "clarity": 0.95,
+    "coherence": 0.92,
+    "signal": 0.9,
+    "density": 0.88,
+    "state": 0.95,
+    "change": 0.95,
+    "completion": 1.0,
+    "impact": 0.9,
+    "engagement": 0.92,
+    "uncertainty": 0.08
+  },
+  "overall_confidence": 0.94,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.92,
+    "calibration_accuracy": "good",
+    "deltas": {},
+    "calibration_issues": [],
+    "git_commit_sha": "c5a440b3ee40503900b16c2061e071f2c117e7e0",
+    "git_notes_ref": "empirica/session/3d259f49-0f4b-4472-a53f-4d3e6be76461/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "dc8d675d2dcc23157bfa22eeb316c836968c868f",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Budget/Components/PaymentFilterBarV2.swift\"",
+        "\"I Do Blueprint/Views/Budget/Components/PaymentScheduleStaticHeader.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1355776 -> 1540096 bytes\n .../storage.sqlite                                 | Bin 3198976 -> 3989504 bytes\n .../Budget/Components/PaymentFilterBarV2.swift     |  76 ++++++++++++++-------\n .../Components/PaymentScheduleStaticHeader.swift   |   2 +-\n 4 files changed, 54 insertions(+), 24 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 135
+}

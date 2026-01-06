@@ -1,0 +1,46 @@
+{
+  "session_id": "68444a58-f796-414a-8f9a-8f2cfdb60152",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T08:29:38.648874+00:00",
+  "vectors": {
+    "know": 0.35,
+    "do": 0.2,
+    "context": 0.5,
+    "clarity": 0.4,
+    "coherence": 0.45,
+    "signal": 0.3,
+    "density": 0.35,
+    "state": 0.6,
+    "change": 0.2,
+    "completion": 0.1,
+    "impact": 0.7,
+    "engagement": 0.85,
+    "uncertainty": 0.65
+  },
+  "overall_confidence": 0.35,
+  "meta": {
+    "reasoning": "",
+    "prompt": "Preflight assessment",
+    "git_commit_sha": "177b4142a2f17ef82b029c9fc1a9dcdec4e6ff9b",
+    "git_notes_ref": "empirica/session/68444a58-f796-414a-8f9a-8f2cfdb60152/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "9b666a3d5ab3dbf3fb1d78bf2c001f9b6aa2dd94",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Budget/Components/PaymentFilterBarV2.swift\"",
+        "\"I Do Blueprint/Views/Budget/Components/PaymentScheduleStaticHeader.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1355776 -> 1462272 bytes\n .../storage.sqlite                                 | Bin 3198976 -> 3547136 bytes\n .../Budget/Components/PaymentFilterBarV2.swift     |  76 ++++++++++++++-------\n .../Components/PaymentScheduleStaticHeader.swift   |   2 +-\n 4 files changed, 54 insertions(+), 24 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 124
+}
