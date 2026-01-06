@@ -164,7 +164,23 @@ class AppCoordinator: ObservableObject {
                 }
                 .environmentObject(coordinator)
             case .editGuest(let guest):
-                GuestDetailViewV4(guestId: guest.id, guestStore: coordinator.guestStore)
+                EditGuestModal(
+                    guest: guest,
+                    guestStore: coordinator.guestStore,
+                    onSave: { updatedGuest in
+                        Task {
+                            await coordinator.guestStore.updateGuest(updatedGuest)
+                        }
+                        coordinator.dismiss()
+                    },
+                    onDelete: {
+                        Task {
+                            await coordinator.guestStore.deleteGuest(id: guest.id)
+                        }
+                        coordinator.dismiss()
+                    }
+                )
+                .environmentObject(coordinator)
             case .addTask:
                 TaskModal(task: nil, onSave: { _ in }, onCancel: {})
             case .editTask(let task):
