@@ -868,8 +868,8 @@ struct MasonryColumnsView: View {
     }
 
     /// Calculate column 1's total content height (used as reference for all columns)
+    /// This is the height that dynamic cards should fill to, aligning with Payments Due bottom
     private func calculateColumn1ContentHeight(column1: [DashboardViewV7.CardType]) -> CGFloat {
-        let bottomBuffer: CGFloat = 24
         var totalHeight: CGFloat = 0
 
         for card in column1 {
@@ -881,8 +881,8 @@ struct MasonryColumnsView: View {
             totalHeight += CGFloat(column1.count - 1) * columnLayout.rowSpacing
         }
 
-        // Add bottom buffer for visual padding from window edge
-        totalHeight += bottomBuffer
+        // No buffer added - dynamic cards should align with static card bottoms
+        // Window padding is handled by the parent container, not card heights
 
         return totalHeight
     }
@@ -918,7 +918,15 @@ struct MasonryColumnsView: View {
                 // Step 2: Calculate target height based on column 1's content
                 // This ensures all columns extend to the same bottom point (Payments Due bottom)
                 let targetHeight = calculateColumn1ContentHeight(column1: columnAssignment.column1)
-                print("📏 Target content height (column 1): \(targetHeight)pt")
+
+                // DEBUG: Show column 1 breakdown
+                print("📏 COLUMN 0 HEIGHT BREAKDOWN (target for all columns):")
+                for card in columnAssignment.column1 {
+                    print("   - \(card): \(staticCardHeight(for: card))pt")
+                }
+                let spacing = columnAssignment.column1.count > 1 ? CGFloat(columnAssignment.column1.count - 1) * columnLayout.rowSpacing : 0
+                print("   - Spacing (\(columnAssignment.column1.count - 1) gaps × \(columnLayout.rowSpacing)pt): \(spacing)pt")
+                print("   = Target content height: \(targetHeight)pt (all cards align to this bottom)")
 
                 // Step 3: Calculate final heights with dynamic cards filling to target
                 var allHeights: [DashboardViewV7.CardType: CGFloat] = [:]
@@ -933,6 +941,7 @@ struct MasonryColumnsView: View {
 
                 print("✅ Dashboard layout: all columns extend to same bottom")
                 print("   Final heights: \(finalCardHeights)")
+                print("   Available height (full grid): \(columnLayout.availableHeight)pt")
             }
         }
     }
