@@ -216,6 +216,113 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
         case hairDone = "hair_done"
         case makeupDone = "makeup_done"
     }
+
+    // MARK: - Custom Encoding (Required for Clearing Optional Fields)
+
+    /// Custom encoder that explicitly encodes nil as JSON null.
+    /// Swift's default JSONEncoder OMITS nil fields entirely, which means
+    /// Supabase never receives the field and doesn't update it.
+    /// By using encodeNil(), we send explicit null values that clear the field.
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        // Required fields
+        try container.encode(id, forKey: .id)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+        try container.encode(firstName, forKey: .firstName)
+        try container.encode(lastName, forKey: .lastName)
+        try container.encode(rsvpStatus, forKey: .rsvpStatus)
+        try container.encode(plusOneAllowed, forKey: .plusOneAllowed)
+        try container.encode(plusOneAttending, forKey: .plusOneAttending)
+        try container.encode(attendingCeremony, forKey: .attendingCeremony)
+        try container.encode(attendingReception, forKey: .attendingReception)
+        try container.encode(attendingRehearsal, forKey: .attendingRehearsal)
+        try container.encode(isWeddingParty, forKey: .isWeddingParty)
+        try container.encode(coupleId, forKey: .coupleId)
+        try container.encode(giftReceived, forKey: .giftReceived)
+        try container.encode(hairDone, forKey: .hairDone)
+        try container.encode(makeupDone, forKey: .makeupDone)
+
+        // Optional String fields - must use encodeNil to clear in database
+        try encodeOptionalString(email, forKey: .email, in: &container)
+        try encodeOptionalString(phone, forKey: .phone, in: &container)
+        try encodeOptionalString(relationshipToCouple, forKey: .relationshipToCouple, in: &container)
+        try encodeOptionalString(plusOneName, forKey: .plusOneName, in: &container)
+        try encodeOptionalString(dietaryRestrictions, forKey: .dietaryRestrictions, in: &container)
+        try encodeOptionalString(accessibilityNeeds, forKey: .accessibilityNeeds, in: &container)
+        try encodeOptionalString(addressLine1, forKey: .addressLine1, in: &container)
+        try encodeOptionalString(addressLine2, forKey: .addressLine2, in: &container)
+        try encodeOptionalString(city, forKey: .city, in: &container)
+        try encodeOptionalString(state, forKey: .state, in: &container)
+        try encodeOptionalString(zipCode, forKey: .zipCode, in: &container)
+        try encodeOptionalString(country, forKey: .country, in: &container)
+        try encodeOptionalString(invitationNumber, forKey: .invitationNumber, in: &container)
+        try encodeOptionalString(weddingPartyRole, forKey: .weddingPartyRole, in: &container)
+        try encodeOptionalString(preparationNotes, forKey: .preparationNotes, in: &container)
+        try encodeOptionalString(mealOption, forKey: .mealOption, in: &container)
+        try encodeOptionalString(notes, forKey: .notes, in: &container)
+
+        // Optional UUID field
+        if let guestGroupId = guestGroupId {
+            try container.encode(guestGroupId, forKey: .guestGroupId)
+        } else {
+            try container.encodeNil(forKey: .guestGroupId)
+        }
+
+        // Optional enum fields
+        if let invitedBy = invitedBy {
+            try container.encode(invitedBy, forKey: .invitedBy)
+        } else {
+            try container.encodeNil(forKey: .invitedBy)
+        }
+
+        if let preferredContactMethod = preferredContactMethod {
+            try container.encode(preferredContactMethod, forKey: .preferredContactMethod)
+        } else {
+            try container.encodeNil(forKey: .preferredContactMethod)
+        }
+
+        // Optional Date field
+        if let rsvpDate = rsvpDate {
+            try container.encode(rsvpDate, forKey: .rsvpDate)
+        } else {
+            try container.encodeNil(forKey: .rsvpDate)
+        }
+
+        // Optional Int fields
+        if let tableAssignment = tableAssignment {
+            try container.encode(tableAssignment, forKey: .tableAssignment)
+        } else {
+            try container.encodeNil(forKey: .tableAssignment)
+        }
+
+        if let seatNumber = seatNumber {
+            try container.encode(seatNumber, forKey: .seatNumber)
+        } else {
+            try container.encodeNil(forKey: .seatNumber)
+        }
+
+        // Optional array field
+        if let attendingOtherEvents = attendingOtherEvents {
+            try container.encode(attendingOtherEvents, forKey: .attendingOtherEvents)
+        } else {
+            try container.encodeNil(forKey: .attendingOtherEvents)
+        }
+    }
+
+    /// Helper to encode optional strings with explicit nil
+    private func encodeOptionalString(
+        _ value: String?,
+        forKey key: CodingKeys,
+        in container: inout KeyedEncodingContainer<CodingKeys>
+    ) throws {
+        if let value = value {
+            try container.encode(value, forKey: key)
+        } else {
+            try container.encodeNil(forKey: key)
+        }
+    }
 }
 
 // MARK: - Sort Options
