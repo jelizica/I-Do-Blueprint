@@ -143,7 +143,7 @@ struct MeshGradientBackgroundView: View {
     @Environment(\.appStores) private var appStores
 
     private var themeSettings: ThemeSettings {
-        appStores.settings.settings.themeSettings
+        appStores.settings.settings.theme
     }
 
     var body: some View {

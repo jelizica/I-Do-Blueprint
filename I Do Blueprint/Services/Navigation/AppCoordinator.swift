@@ -96,7 +96,7 @@ class AppCoordinator: ObservableObject {
             case .guests:
                 GuestDashboardViewV2()
             case .vendors:
-                VendorManagementViewV3()
+                VendorManagementViewV4()
             case .budget:
                 BudgetDashboardHubView()
             case .visualPlanning:
