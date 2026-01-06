@@ -1,0 +1,160 @@
+{
+  "session_id": "6e5bada3-3be8-4dd1-81fe-5afce877966c",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T17:54:16.121183+00:00",
+  "vectors": {
+    "know": 0.9,
+    "do": 0.95,
+    "context": 0.92,
+    "clarity": 0.9,
+    "coherence": 0.88,
+    "signal": 0.85,
+    "density": 0.82,
+    "state": 0.95,
+    "change": 0.9,
+    "completion": 1.0,
+    "impact": 0.85,
+    "engagement": 0.88,
+    "uncertainty": 0.1
+  },
+  "overall_confidence": 0.923,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.9,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "know": 0.35,
+      "do": 0.55,
+      "context": 0.22,
+      "clarity": 0.3,
+      "coherence": 0.33,
+      "signal": 0.35,
+      "density": 0.32,
+      "state": 0.3,
+      "change": 0.6,
+      "completion": 1.0,
+      "impact": 0.25,
+      "engagement": 0.03,
+      "uncertainty": -0.4
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "6adef6f46b34571db99193087ca444e9ff27a743",
+    "git_notes_ref": "empirica/session/6e5bada3-3be8-4dd1-81fe-5afce877966c/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "cf9bba620e3313879dbd1b1d0d2620314fe27123",
+    "commits_since_last_checkpoint": [
+      {
+        "sha": "cf9bba620e3313879dbd1b1d0d2620314fe27123",
+        "message": "fix: Restore single ScrollView layout for guest dashboard",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-06T09:53:23-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db",
+          ".empirica_reflex_logs/checkpoints/0bdf1c83-776d-4603-9460-a73e1fc2a6e0/checkpoint_CHECK_1_20260106_071755.json",
+          ".empirica_reflex_logs/checkpoints/0bdf1c83-776d-4603-9460-a73e1fc2a6e0/checkpoint_POSTFLIGHT_1_20260106_072741.json",
+          ".empirica_reflex_logs/checkpoints/0bdf1c83-776d-4603-9460-a73e1fc2a6e0/checkpoint_PREFLIGHT_1_20260106_071616.json",
+          ".empirica_reflex_logs/checkpoints/1b77dbdc-019d-4192-982a-6a678022bfb0/checkpoint_PREFLIGHT_1_20260106_090840.json",
+          ".empirica_reflex_logs/checkpoints/3d259f49-0f4b-4472-a53f-4d3e6be76461/checkpoint_POSTFLIGHT_1_20260106_174612.json",
+          ".empirica_reflex_logs/checkpoints/5c3a139c-596b-462d-9fdb-4847adbe9a50/checkpoint_PREFLIGHT_1_20260106_084715.json",
+          ".empirica_reflex_logs/checkpoints/67692340-09d2-4c6d-89e3-7b6dacc53b41/checkpoint_CHECK_1_20260106_170323.json",
+          ".empirica_reflex_logs/checkpoints/67692340-09d2-4c6d-89e3-7b6dacc53b41/checkpoint_POSTFLIGHT_1_20260106_170843.json",
+          ".empirica_reflex_logs/checkpoints/67692340-09d2-4c6d-89e3-7b6dacc53b41/checkpoint_POSTFLIGHT_2_20260106_174127.json",
+          ".empirica_reflex_logs/checkpoints/67692340-09d2-4c6d-89e3-7b6dacc53b41/checkpoint_PREFLIGHT_1_20260106_170035.json",
+          ".empirica_reflex_logs/checkpoints/68444a58-f792-414a-8f9a-8f2cfdb60152/checkpoint_CHECK_1_20260106_083202.json",
+          ".empirica_reflex_logs/checkpoints/68444a58-f792-414a-8f9a-8f2cfdb60152/checkpoint_POSTFLIGHT_1_20260106_083354.json",
+          ".empirica_reflex_logs/checkpoints/68444a58-f796-414a-8f9a-8f2cfdb60152/checkpoint_PREFLIGHT_1_20260106_082941.json",
+          ".empirica_reflex_logs/checkpoints/6e5bada3-3be8-4dd1-81fe-5afce877966c/checkpoint_PREFLIGHT_1_20260106_175100.json",
+          ".empirica_reflex_logs/checkpoints/7ffdbf0e-dee3-4c34-a810-9bac494d34d5/checkpoint_PREFLIGHT_1_20260106_063440.json",
+          ".empirica_reflex_logs/checkpoints/c2a968a8-4b15-4a78-b1ed-56a4d4d8c9dd/checkpoint_POSTFLIGHT_1_20260106_062117.json",
+          ".empirica_reflex_logs/checkpoints/c2a968a8-4b15-4a78-b1ed-56a4d4d8c9dd/checkpoint_PREFLIGHT_1_20260106_060856.json",
+          ".empirica_reflex_logs/checkpoints/c4afc275-4432-4602-8235-cf4a83ad126e/checkpoint_POSTFLIGHT_1_20260106_164745.json",
+          ".empirica_reflex_logs/checkpoints/c4afc275-4432-4602-8235-cf4a83ad126e/checkpoint_PREFLIGHT_1_20260106_164308.json",
+          ".empirica_reflex_logs/checkpoints/f64d92ef-8a12-4792-a693-e6a699e00a20/checkpoint_CHECK_1_20260106_072900.json",
+          ".empirica_reflex_logs/checkpoints/f64d92ef-8a12-4792-a693-e6a699e00a20/checkpoint_PREFLIGHT_1_20260106_072707.json",
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+          "I Do Blueprint/Views/Budget/Components/PaymentFilterBarV2.swift",
+          "I Do Blueprint/Views/Budget/Components/PaymentScheduleStaticHeader.swift",
+          "I Do Blueprint/Views/Guests/GuestDashboardViewV2.swift"
+        ]
+      }
+    ],
+    "uncommitted_changes": {
+      "files_modified": [],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ""
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.55,
+      "curr": 0.9,
+      "delta": 0.35
+    },
+    "do": {
+      "prev": 0.4,
+      "curr": 0.95,
+      "delta": 0.55
+    },
+    "context": {
+      "prev": 0.7,
+      "curr": 0.92,
+      "delta": 0.22
+    },
+    "clarity": {
+      "prev": 0.6,
+      "curr": 0.9,
+      "delta": 0.3
+    },
+    "coherence": {
+      "prev": 0.55,
+      "curr": 0.88,
+      "delta": 0.33
+    },
+    "signal": {
+      "prev": 0.5,
+      "curr": 0.85,
+      "delta": 0.35
+    },
+    "density": {
+      "prev": 0.5,
+      "curr": 0.82,
+      "delta": 0.32
+    },
+    "state": {
+      "prev": 0.65,
+      "curr": 0.95,
+      "delta": 0.3
+    },
+    "change": {
+      "prev": 0.3,
+      "curr": 0.9,
+      "delta": 0.6
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 1.0,
+      "delta": 1.0
+    },
+    "impact": {
+      "prev": 0.6,
+      "curr": 0.85,
+      "delta": 0.25
+    },
+    "engagement": {
+      "prev": 0.85,
+      "curr": 0.88,
+      "delta": 0.03
+    },
+    "uncertainty": {
+      "prev": 0.5,
+      "curr": 0.1,
+      "delta": -0.4
+    }
+  },
+  "token_count": 301
+}

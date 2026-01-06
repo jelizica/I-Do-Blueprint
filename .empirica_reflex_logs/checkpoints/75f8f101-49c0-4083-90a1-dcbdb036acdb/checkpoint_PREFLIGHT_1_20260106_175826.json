@@ -1,0 +1,43 @@
+{
+  "session_id": "75f8f101-49c0-4083-90a1-dcbdb036acdb",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T17:58:25.891255+00:00",
+  "vectors": {
+    "know": 0.45,
+    "do": 0.35,
+    "context": 0.6,
+    "clarity": 0.5,
+    "coherence": 0.5,
+    "signal": 0.45,
+    "density": 0.45,
+    "state": 0.6,
+    "change": 0.2,
+    "completion": 0.0,
+    "impact": 0.65,
+    "engagement": 0.9,
+    "uncertainty": 0.55
+  },
+  "overall_confidence": 0.467,
+  "meta": {
+    "reasoning": "User says scroll still broken. Cards view (grid) works correctly but list view does not. Need to investigate the difference between LazyVGrid (cards) and GuestListView (list) to find why scroll position differs.",
+    "prompt": "User says scroll still broken. Cards view (grid) works correctly but list view does not. Need to investigate the difference between LazyVGrid (cards) and GuestListView (list) to find why scroll position differs.",
+    "git_commit_sha": "761e89fbdb667c1b13e6c3c679d4c6b0dfee8605",
+    "git_notes_ref": "empirica/session/75f8f101-49c0-4083-90a1-dcbdb036acdb/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "cf9bba620e3313879dbd1b1d0d2620314fe27123",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db | Bin 1548288 -> 1552384 bytes\n 1 file changed, 0 insertions(+), 0 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 175
+}

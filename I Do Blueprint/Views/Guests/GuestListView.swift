@@ -34,22 +34,19 @@ struct GuestListView: View {
     
     var body: some View {
         // Table Container with glassmorphism
-        // NOTE: No ScrollView here - parent view (GuestDashboardViewV2) handles scrolling
-        // Having nested ScrollViews causes layout instability and "jumping" behavior
-        VStack(spacing: 0) {
-            // Table Header
-            tableHeader
-
-            // Table Rows - using VStack (not LazyVStack) to prevent scroll-triggered layout issues
-            // LazyVStack caused view recreation during scroll which triggered async avatar re-loading
-            // and layout recalculation. For typical guest lists (<500), VStack performance is acceptable.
-            VStack(spacing: 0) {
+        // Uses LazyVStack with pinnedViews to keep table header visible while scrolling
+        // This matches the pattern used in BudgetItemsTableView
+        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+            Section {
+                // Table Rows
                 ForEach(sortedGuests) { guest in
                     tableRow(for: guest)
                         .onTapGesture {
                             onGuestTap(guest)
                         }
                 }
+            } header: {
+                tableHeader
             }
         }
         .modifier(GlassPanelStyle(cornerRadius: 16, padding: 0))
