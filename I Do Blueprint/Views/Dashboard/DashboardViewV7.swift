@@ -977,6 +977,7 @@ struct MasonryColumnsView: View {
                 cardHeight: height
             )
             .frame(height: height)  // Dynamic - fills remaining space
+            .clipped()  // Prevent overflow beyond allocated height
 
         case .guests:
             GuestResponsesCardV7(
@@ -985,6 +986,7 @@ struct MasonryColumnsView: View {
                 cardHeight: height
             )
             .frame(height: height)  // Dynamic - fills available space with more guests
+            .clipped()  // Prevent overflow beyond allocated height
             .environmentObject(settingsStore)
             .environmentObject(budgetStore)
             .environmentObject(coordinator)
@@ -996,6 +998,7 @@ struct MasonryColumnsView: View {
                 cardHeight: height
             )
             .frame(height: height)  // Dynamic - fills remaining space
+            .clipped()  // Prevent overflow beyond allocated height
         }
     }
 }
@@ -1758,8 +1761,9 @@ struct GuestResponsesCardV7: View {
     /// Calculate how many guests fit within the card height
     private var calculatedMaxItems: Int {
         let headerHeight: CGFloat = 50  // Title + menu
-        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding
-        let availableForItems = cardHeight - headerHeight - cardPadding
+        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
+        let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
+        let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
         let maxItems = Int(availableForItems / itemHeight)
         return max(maxItems, 2)  // At least 2 items
     }
@@ -1786,13 +1790,14 @@ struct GuestResponsesCardV7: View {
     private var dynamicRowSpacing: CGFloat {
         let headerHeight: CGFloat = 50
         let padding: CGFloat = Spacing.lg * 2
-        let availableForItems = cardHeight - headerHeight - padding
-        
+        let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content
+        let availableForItems = cardHeight - headerHeight - padding - outerVStackSpacing
+
         let itemCount = recentGuests.count
         guard itemCount > 1 else { return Spacing.md }
-        
+
         let totalItemHeight = CGFloat(itemCount) * itemHeight
-        
+
         // If items don't fill space, distribute extra space as row spacing
         if totalItemHeight < availableForItems {
             let extraSpace = availableForItems - totalItemHeight
@@ -1800,10 +1805,10 @@ struct GuestResponsesCardV7: View {
             let extraPerGap = extraSpace / gaps
             return Spacing.md + extraPerGap
         }
-        
+
         return Spacing.md
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -2161,13 +2166,14 @@ struct RecentResponsesCardV7: View {
     private var dynamicRowSpacing: CGFloat {
         let headerHeight: CGFloat = 50
         let padding: CGFloat = Spacing.lg * 2
-        let availableForItems = cardHeight - headerHeight - padding
-        
+        let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content
+        let availableForItems = cardHeight - headerHeight - padding - outerVStackSpacing
+
         let itemCount = recentActivity.count
         guard itemCount > 1 else { return Spacing.md }
-        
+
         let totalItemHeight = CGFloat(itemCount) * itemHeight
-        
+
         // If items don't fill space, distribute extra space as row spacing
         if totalItemHeight < availableForItems {
             let extraSpace = availableForItems - totalItemHeight
@@ -2175,10 +2181,10 @@ struct RecentResponsesCardV7: View {
             let extraPerGap = extraSpace / gaps
             return Spacing.md + extraPerGap
         }
-        
+
         return Spacing.md
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             HStack {
@@ -2272,8 +2278,9 @@ struct VendorListCardV7: View {
     /// Calculate how many vendors fit within the card height
     private var calculatedMaxItems: Int {
         let headerHeight: CGFloat = 50  // Title + button
-        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding
-        let availableForItems = cardHeight - headerHeight - cardPadding
+        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
+        let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
+        let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
         let maxItems = Int(availableForItems / itemHeight)
         return max(maxItems, 2)  // At least 2 items
     }
@@ -2301,13 +2308,14 @@ struct VendorListCardV7: View {
     private var dynamicRowSpacing: CGFloat {
         let headerHeight: CGFloat = 50
         let padding: CGFloat = Spacing.lg * 2
-        let availableForItems = cardHeight - headerHeight - padding
-        
+        let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content
+        let availableForItems = cardHeight - headerHeight - padding - outerVStackSpacing
+
         let itemCount = recentVendors.count
         guard itemCount > 1 else { return Spacing.md }
-        
+
         let totalItemHeight = CGFloat(itemCount) * itemHeight
-        
+
         // If items don't fill space, distribute extra space as row spacing
         if totalItemHeight < availableForItems {
             let extraSpace = availableForItems - totalItemHeight
@@ -2315,7 +2323,7 @@ struct VendorListCardV7: View {
             let extraPerGap = extraSpace / gaps
             return Spacing.md + extraPerGap
         }
-        
+
         return Spacing.md
     }
     
