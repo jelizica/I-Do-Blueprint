@@ -346,7 +346,7 @@ struct GuestDashboardViewV2: View {
                         ForEach(filteredAndSortedGuests) { guest in
                             GuestCardV2(guest: guest, settings: settings)
                                 .onTapGesture {
-                                    coordinator.present(.editGuest(guest))
+                                    coordinator.present(.viewGuest(guest))
                                 }
                         }
                     }
@@ -355,7 +355,7 @@ struct GuestDashboardViewV2: View {
                         guests: filteredAndSortedGuests,
                         settings: settings,
                         onGuestTap: { guest in
-                            coordinator.present(.editGuest(guest))
+                            coordinator.present(.viewGuest(guest))
                         }
                     )
                 }

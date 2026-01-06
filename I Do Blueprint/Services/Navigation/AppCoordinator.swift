@@ -121,6 +121,7 @@ class AppCoordinator: ObservableObject {
         case addVendor
         case editVendor(Vendor)
         case addGuest
+        case viewGuest(Guest)
         case editGuest(Guest)
         case addTask
         case editTask(WeddingTask)
@@ -132,6 +133,7 @@ class AppCoordinator: ObservableObject {
             case .addVendor: return "addVendor"
             case .editVendor(let vendor): return "editVendor-\(vendor.id)"
             case .addGuest: return "addGuest"
+            case .viewGuest(let guest): return "viewGuest-\(guest.id)"
             case .editGuest(let guest): return "editGuest-\(guest.id)"
             case .addTask: return "addTask"
             case .editTask(let task): return "editTask-\(task.id)"
@@ -150,6 +152,15 @@ class AppCoordinator: ObservableObject {
             case .addGuest:
                 AddGuestViewV2 { guest in
                     await coordinator.guestStore.addGuest(guest)
+                }
+                .environmentObject(coordinator)
+            case .viewGuest(let guest):
+                ViewGuestModal(guest: guest) {
+                    // Dismiss view modal and open edit modal
+                    coordinator.dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        coordinator.present(.editGuest(guest))
+                    }
                 }
                 .environmentObject(coordinator)
             case .editGuest(let guest):

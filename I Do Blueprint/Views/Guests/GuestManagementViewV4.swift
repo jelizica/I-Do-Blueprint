@@ -130,7 +130,7 @@ struct GuestManagementViewV4: View {
                 settings: settings,
                 renderId: guestListRenderId,
                 onGuestTap: { guest in
-                    coordinator.present(.editGuest(guest))
+                    coordinator.present(.viewGuest(guest))
                 },
                 onAddGuest: {
                     coordinator.present(.addGuest)
