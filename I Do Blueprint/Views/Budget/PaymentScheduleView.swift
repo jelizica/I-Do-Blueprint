@@ -33,7 +33,8 @@ struct PaymentScheduleView: View {
 
     // Dialog states
     @State private var showingAddPayment = false
-    
+    @State private var selectedPaymentForDetail: PaymentSchedule?
+
     // Error state
     @State private var loadError: String?
     @State private var showErrorAlert = false
@@ -65,6 +66,14 @@ struct PaymentScheduleView: View {
                 contentView(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
                     .sheet(isPresented: $showingAddPayment) {
                         addPaymentSheet
+                    }
+                    .sheet(item: $selectedPaymentForDetail) { payment in
+                        IndividualPaymentDetailViewV1(
+                            payment: payment,
+                            vendorStore: AppStores.shared.vendor,
+                            budgetStore: budgetStore
+                        )
+                        .environmentObject(AppStores.shared.settings)
                     }
                     .alert("Error Loading Payment Plans", isPresented: $showErrorAlert) {
                         Button("OK") {
@@ -178,7 +187,10 @@ struct PaymentScheduleView: View {
                             }
                         },
                         getVendorName: getVendorNameById,
-                        userTimezone: userTimezone
+                        userTimezone: userTimezone,
+                        onPaymentTap: { payment in
+                            selectedPaymentForDetail = payment
+                        }
                     )
                 }
                 .frame(width: availableWidth)
@@ -227,7 +239,10 @@ struct PaymentScheduleView: View {
                         }
                     }
                 },
-                getVendorName: getVendorNameById
+                getVendorName: getVendorNameById,
+                onPaymentTap: { payment in
+                    selectedPaymentForDetail = payment
+                }
             )
             .frame(width: availableWidth)
             .padding(.horizontal, horizontalPadding)

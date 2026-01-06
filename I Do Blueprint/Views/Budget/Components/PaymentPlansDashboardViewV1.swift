@@ -27,6 +27,7 @@ struct PaymentPlansDashboardViewV1: View {
     let onUpdate: (PaymentSchedule) -> Void
     let onDelete: (PaymentSchedule) -> Void
     let getVendorName: (Int64?) -> String?
+    let onPaymentTap: (PaymentSchedule) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var expandedGroupIds: Set<String> = []
@@ -265,7 +266,8 @@ struct PaymentPlansDashboardViewV1: View {
                     },
                     onTogglePaidStatus: onTogglePaidStatus,
                     onUpdate: onUpdate,
-                    onDelete: onDelete
+                    onDelete: onDelete,
+                    onPaymentTap: onPaymentTap
                 )
             }
         }
@@ -392,6 +394,7 @@ private struct PaymentGroupCard: View {
     let onTogglePaidStatus: (PaymentSchedule) -> Void
     let onUpdate: (PaymentSchedule) -> Void
     let onDelete: (PaymentSchedule) -> Void
+    let onPaymentTap: (PaymentSchedule) -> Void
 
     var body: some View {
         VStack(spacing: 0) {
@@ -591,7 +594,8 @@ private struct PaymentGroupCard: View {
                         var updated = payment
                         updated.paid.toggle()
                         onTogglePaidStatus(updated)
-                    }
+                    },
+                    onTap: { onPaymentTap(payment) }
                 )
 
                 if payment.id != group.payments.last?.id {
@@ -618,6 +622,7 @@ private struct PaymentRowItem: View {
     let payment: PaymentSchedule
     let isDarkMode: Bool
     let onTogglePaid: () -> Void
+    let onTap: () -> Void
 
     // REMOVED: @State private var isHovered - causes scroll rebounding/interruption
     // When scrolling, onHover fires as mouse passes over items, triggering @State updates
@@ -639,44 +644,53 @@ private struct PaymentRowItem: View {
     }
 
     var body: some View {
-        HStack(spacing: Spacing.md) {
-            // Status indicator
-            Circle()
-                .fill(status.color)
-                .frame(width: 10, height: 10)
+        Button(action: onTap) {
+            HStack(spacing: Spacing.md) {
+                // Status indicator
+                Circle()
+                    .fill(status.color)
+                    .frame(width: 10, height: 10)
 
-            // Date
-            Text(formatDate(payment.paymentDate))
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(isDarkMode ? .white.opacity(0.8) : SemanticColors.textPrimary)
-                .frame(width: 100, alignment: .leading)
+                // Date
+                Text(formatDate(payment.paymentDate))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : SemanticColors.textPrimary)
+                    .frame(width: 100, alignment: .leading)
 
-            // Notes/Description
-            Text(payment.notes ?? "Payment")
-                .font(.system(size: 14))
-                .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                // Notes/Description
+                Text(payment.notes ?? "Payment")
+                    .font(.system(size: 14))
+                    .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Amount
-            Text(formatCurrency(payment.paymentAmount))
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
-                .frame(width: 80, alignment: .trailing)
+                // Amount
+                Text(formatCurrency(payment.paymentAmount))
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
+                    .frame(width: 80, alignment: .trailing)
 
-            // Status badge
-            statusBadge
+                // Status badge
+                statusBadge
 
-            // Toggle button
-            Button(action: onTogglePaid) {
-                Image(systemName: payment.paid ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 20))
-                    .foregroundColor(payment.paid ? Color.fromHex("10B981") : Color.gray.opacity(0.4))
+                // Toggle button
+                Button(action: onTogglePaid) {
+                    Image(systemName: payment.paid ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundColor(payment.paid ? Color.fromHex("10B981") : Color.gray.opacity(0.4))
+                }
+                .buttonStyle(.plain)
+
+                // Detail indicator
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundColor(isDarkMode ? .white.opacity(0.3) : SemanticColors.textTertiary)
             }
-            .buttonStyle(.plain)
+            .padding(.horizontal, Spacing.lg)
+            .padding(.vertical, Spacing.md)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, Spacing.lg)
-        .padding(.vertical, Spacing.md)
+        .buttonStyle(.plain)
         // Static background - no hover state to avoid scroll interruption
         // The parent PaymentGroupCard already provides hover feedback at the group level
         .background(Color.clear)
@@ -769,7 +783,8 @@ private enum PaymentDisplayStatus {
         onTogglePaidStatus: { _ in },
         onUpdate: { _ in },
         onDelete: { _ in },
-        getVendorName: { _ in "Sample Vendor" }
+        getVendorName: { _ in "Sample Vendor" },
+        onPaymentTap: { _ in }
     )
     .frame(width: 1200, height: 800)
     .preferredColorScheme(.light)
@@ -788,7 +803,8 @@ private enum PaymentDisplayStatus {
         onTogglePaidStatus: { _ in },
         onUpdate: { _ in },
         onDelete: { _ in },
-        getVendorName: { _ in "Sample Vendor" }
+        getVendorName: { _ in "Sample Vendor" },
+        onPaymentTap: { _ in }
     )
     .frame(width: 1200, height: 800)
     .preferredColorScheme(.dark)

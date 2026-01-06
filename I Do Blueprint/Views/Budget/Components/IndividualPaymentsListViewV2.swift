@@ -17,6 +17,7 @@ struct IndividualPaymentsListViewV2: View {
     let onDelete: (PaymentSchedule) -> Void
     let getVendorName: (Int64?) -> String?
     let userTimezone: TimeZone
+    let onPaymentTap: (PaymentSchedule) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -74,7 +75,8 @@ struct IndividualPaymentsListViewV2: View {
                         onUpdate: onUpdate,
                         onDelete: onDelete,
                         getVendorName: getVendorName,
-                        userTimezone: userTimezone
+                        userTimezone: userTimezone,
+                        onTap: { onPaymentTap(payment) }
                     )
                 }
             }
@@ -117,16 +119,16 @@ private struct PaymentCardV2: View {
     let onDelete: (PaymentSchedule) -> Void
     let getVendorName: (Int64?) -> String?
     let userTimezone: TimeZone
+    let onTap: () -> Void
 
     @State private var isHovered = false
-    @State private var showingEditModal = false
 
     private var isDarkMode: Bool {
         colorScheme == .dark
     }
 
     var body: some View {
-        Button(action: { showingEditModal = true }) {
+        Button(action: onTap) {
             HStack(spacing: Spacing.md) {
                 // Due soon indicator (yellow bar on left)
                 if isDueSoon && !payment.paid {
@@ -207,15 +209,6 @@ private struct PaymentCardV2: View {
         .buttonStyle(.plain)
         .onHover { hovering in
             isHovered = hovering
-        }
-        .sheet(isPresented: $showingEditModal) {
-            PaymentEditModal(
-                payment: payment,
-                expense: expense,
-                getVendorName: getVendorName,
-                onUpdate: onUpdate,
-                onDelete: { onDelete(payment) }
-            )
         }
     }
 
@@ -523,7 +516,8 @@ private struct PaymentCardV2: View {
         onUpdate: { _ in },
         onDelete: { _ in },
         getVendorName: { _ in nil },
-        userTimezone: .current
+        userTimezone: .current,
+        onPaymentTap: { _ in }
     )
     .preferredColorScheme(.light)
 }
@@ -536,7 +530,8 @@ private struct PaymentCardV2: View {
         onUpdate: { _ in },
         onDelete: { _ in },
         getVendorName: { _ in nil },
-        userTimezone: .current
+        userTimezone: .current,
+        onPaymentTap: { _ in }
     )
     .preferredColorScheme(.dark)
 }
