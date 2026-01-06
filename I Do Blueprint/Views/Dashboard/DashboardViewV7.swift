@@ -72,11 +72,6 @@ struct DashboardViewV7: View {
         guestStore.guests.contains { $0.rsvpDate != nil }
     }
 
-    // Adaptive grid for main content cards
-    private let columns: [GridItem] = [
-        GridItem(.adaptive(minimum: 300), spacing: Spacing.lg, alignment: .top)
-    ]
-
     // Fixed 4-column grid for metric cards (includes countdown)
     private let metricColumns: [GridItem] = Array(
         repeating: GridItem(.flexible(minimum: 0), spacing: Spacing.lg, alignment: .top),
@@ -221,190 +216,7 @@ struct DashboardViewV7: View {
         }
     }
     
-    // MARK: - Dynamic Layout Helpers
-    
-    /// Data density for each card type (higher = more data to show)
-    private struct CardDataDensity {
-        let guestCount: Int
-        let vendorCount: Int
-        let taskCount: Int
-        
-        /// Weight for guest responses card (scales with data)
-        var guestWeight: CGFloat {
-            min(CGFloat(guestCount) / 20.0, 3.0) // Cap at 3x weight
-        }
-        
-        /// Weight for vendor list card (scales with data)
-        var vendorWeight: CGFloat {
-            min(CGFloat(vendorCount) / 10.0, 2.0) // Cap at 2x weight
-        }
-        
-        /// Weight for task manager card (scales with data)
-        var taskWeight: CGFloat {
-            min(CGFloat(taskCount) / 10.0, 2.0) // Cap at 2x weight
-        }
-    }
-    
-    /// Get current data density
-    private var dataDensity: CardDataDensity {
-        CardDataDensity(
-            guestCount: guestStore.guests.count,
-            vendorCount: vendorStore.vendors.count,
-            taskCount: taskStore.tasks.count
-        )
-    }
-    
-    /// Calculate number of visible cards in Row 1
-    private var row1CardCount: Int {
-        var count = 2  // Always show: Budget Overview + Task Manager
-        if shouldShowGuestResponses { count += 1 }
-        return count
-    }
-    
-    /// Calculate number of visible cards in Row 2 (excluding Payments Due which is fixed)
-    private var row2FlexibleCardCount: Int {
-        var count = 0
-        if shouldShowVendorList { count += 1 }
-        if shouldShowRecentResponses { count += 1 }
-        return count
-    }
-    
-    /// Calculate number of visible cards in Row 2 (including Payments Due)
-    private var row2CardCount: Int {
-        var count = 0
-        if shouldShowPaymentsDue { count += 1 }
-        if shouldShowVendorList { count += 1 }
-        if shouldShowRecentResponses { count += 1 }
-        return count
-    }
-    
-    /// Calculate available height for cards after fixed elements
-    private func calculateAvailableHeight(geometry: GeometryProxy) -> CGFloat {
-        // Fixed elements
-        let headerHeight: CGFloat = 60
-        let heroBannerHeight: CGFloat = 150
-        let metricCardsHeight: CGFloat = 120
-        let spacing: CGFloat = Spacing.xl * 4  // Between sections
-        let padding: CGFloat = Spacing.lg + Spacing.xxl  // Top + bottom
-        
-        let fixedHeight = headerHeight + heroBannerHeight + metricCardsHeight + spacing + padding
-        return max(geometry.size.height - fixedHeight, 300) // Minimum 300pt for cards
-    }
-    
-    /// Calculate FIXED height for Payments Due card based on actual payment count
-    /// This card shows ALL payments - no truncation
-    private func calculatePaymentsCardHeight() -> CGFloat {
-        let cardHeaderHeight: CGFloat = 50  // Title + Add button
-        let paymentRowHeight: CGFloat = 36  // Per payment row (compact)
-        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding
-        let emptyStateHeight: CGFloat = 60  // "No payments this month" message
-        
-        let paymentCount = currentMonthPayments.count
-        
-        if paymentCount == 0 {
-            return cardHeaderHeight + emptyStateHeight + cardPadding
-        }
-        
-        // Calculate exact height needed for all payments
-        let contentHeight = CGFloat(paymentCount) * paymentRowHeight
-        return cardHeaderHeight + contentHeight + cardPadding
-    }
-    
-    /// Calculate row heights based on data density
-    /// IMPORTANT: Payments Due card has FIXED height - everything else is flexible
-    private func calculateRowHeights(availableHeight: CGFloat) -> (row1: CGFloat, row2: CGFloat) {
-        let rowSpacing: CGFloat = Spacing.lg
-        let totalAvailable = availableHeight - rowSpacing
-        
-        // If only row 1 has cards, give it all the space
-        guard row2CardCount > 0 else {
-            return (totalAvailable, 0)
-        }
-        
-        // Calculate weights for each row based on data density
-        // Row 1: Budget (1.0) + Tasks (variable) + Guests (high density)
-        let row1Weight: CGFloat = 1.0 + dataDensity.taskWeight + (shouldShowGuestResponses ? dataDensity.guestWeight : 0)
-        
-        // Row 2: Vendors (medium) + Recent (low) - Payments is FIXED, not weighted
-        var row2Weight: CGFloat = 0
-        if shouldShowVendorList { row2Weight += dataDensity.vendorWeight }
-        if shouldShowRecentResponses { row2Weight += 1.0 }
-        // Payments Due is NOT included in weight calculation - it's fixed
-        
-        // If row 2 only has Payments Due (no flexible cards), use minimum height
-        if row2FlexibleCardCount == 0 && shouldShowPaymentsDue {
-            let paymentsHeight = calculatePaymentsCardHeight()
-            return (totalAvailable - paymentsHeight, paymentsHeight)
-        }
-        
-        // Normalize weights and distribute height
-        let totalWeight = row1Weight + row2Weight
-        let row1Ratio = row1Weight / totalWeight
-        let row2Ratio = row2Weight / totalWeight
-        
-        // Apply minimum heights (at least 150pt per row)
-        let minRowHeight: CGFloat = 150
-        var row1Height = totalAvailable * row1Ratio
-        var row2Height = totalAvailable * row2Ratio
-        
-        // Ensure row 2 is at least as tall as the Payments Due card needs
-        if shouldShowPaymentsDue {
-            let paymentsMinHeight = calculatePaymentsCardHeight()
-            if row2Height < paymentsMinHeight {
-                row2Height = paymentsMinHeight
-                row1Height = totalAvailable - row2Height
-            }
-        }
-        
-        // Ensure minimums
-        if row1Height < minRowHeight {
-            row1Height = minRowHeight
-            row2Height = totalAvailable - row1Height
-        } else if row2Height < minRowHeight {
-            row2Height = minRowHeight
-            row1Height = totalAvailable - row2Height
-        }
-        
-        return (row1Height, row2Height)
-    }
-    
-    /// Calculate maximum items for a card based on its allocated height
-    private func calculateMaxItems(cardHeight: CGFloat) -> Int {
-        let cardHeaderHeight: CGFloat = 50  // Title + button
-        let itemHeight: CGFloat = 44  // Per item row (slightly larger for touch targets)
-        let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding
-        
-        let availableForItems = cardHeight - cardHeaderHeight - cardPadding
-        let maxItems = Int(availableForItems / itemHeight)
-        
-        return max(maxItems, 2)  // At least 2 items
-    }
-    
-    /// Calculate items for guest responses card (can show more due to data density)
-    private func calculateGuestMaxItems(cardHeight: CGFloat) -> Int {
-        let cardHeaderHeight: CGFloat = 50
-        let itemHeight: CGFloat = 52  // Guest rows are slightly taller (avatar + 2 lines)
-        let cardPadding: CGFloat = Spacing.lg * 2
-        
-        let availableForItems = cardHeight - cardHeaderHeight - cardPadding
-        let maxItems = Int(availableForItems / itemHeight)
-        
-        return max(maxItems, 3)
-    }
-    
-    /// Calculate items for vendor list card
-    private func calculateVendorMaxItems(cardHeight: CGFloat) -> Int {
-        let cardHeaderHeight: CGFloat = 50
-        let itemHeight: CGFloat = 48  // Vendor rows with icon
-        let cardPadding: CGFloat = Spacing.lg * 2
-        
-        let availableForItems = cardHeight - cardHeaderHeight - cardPadding
-        let maxItems = Int(availableForItems / itemHeight)
-        
-        return max(maxItems, 3)
-    }
-    
-    // MARK: - Row-Based Horizontal Alignment Layout
+    // MARK: - Card Type and Layout
 
     /// Card type for dynamic content-driven masonry layout
     enum CardType: Hashable {
@@ -421,31 +233,6 @@ struct DashboardViewV7: View {
             case .budget, .tasks, .guests: return 1  // Row 1: Budget, Tasks, Guests (tops align)
             case .payments, .vendors, .recentResponses: return 2  // Row 2: Payments, Vendors, Recent (bottoms align)
             }
-        }
-    }
-
-    /// Alignment offsets for bottom-aligned Row 2 cards
-    struct AlignmentOffsets {
-        let paymentsOffset: CGFloat
-        let vendorsOffset: CGFloat
-        let recentOffset: CGFloat
-
-        static let zero = AlignmentOffsets(paymentsOffset: 0, vendorsOffset: 0, recentOffset: 0)
-
-        /// Calculate offsets to align Row 2 card bottoms
-        /// Tallest card has offset 0, shorter cards get pushed down
-        static func calculate(
-            paymentsHeight: CGFloat,
-            vendorsHeight: CGFloat,
-            recentHeight: CGFloat
-        ) -> AlignmentOffsets {
-            let maxHeight = max(paymentsHeight, vendorsHeight, recentHeight)
-
-            return AlignmentOffsets(
-                paymentsOffset: maxHeight - paymentsHeight,
-                vendorsOffset: maxHeight - vendorsHeight,
-                recentOffset: maxHeight - recentHeight
-            )
         }
     }
 
@@ -1188,130 +975,6 @@ struct DashboardHeaderV7: View {
     }
 }
 
-// MARK: - Hero Banner with Live Countdown
-
-struct HeroBannerV7: View {
-    let weddingDate: Date?
-    let partner1Name: String
-    let partner2Name: String
-    let currentTime: Date
-    
-    private var weddingTitle: String {
-        if !partner1Name.isEmpty && !partner2Name.isEmpty {
-            return "\(partner1Name) & \(partner2Name)'s Wedding"
-        } else if !partner1Name.isEmpty {
-            return "\(partner1Name)'s Wedding"
-        } else if !partner2Name.isEmpty {
-            return "\(partner2Name)'s Wedding"
-        } else {
-            return "Our Wedding"
-        }
-    }
-    
-    private var countdown: (days: Int, hours: Int, minutes: Int, seconds: Int) {
-        guard let weddingDate = weddingDate else {
-            return (0, 0, 0, 0)
-        }
-        let interval = weddingDate.timeIntervalSince(currentTime)
-        guard interval > 0 else { return (0, 0, 0, 0) }
-        
-        let days = Int(interval) / 86400
-        let hours = (Int(interval) % 86400) / 3600
-        let minutes = (Int(interval) % 3600) / 60
-        let seconds = Int(interval) % 60
-        
-        return (days, hours, minutes, seconds)
-    }
-    
-    private var formattedDate: String {
-        guard let date = weddingDate else { return "" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMMM d, yyyy"
-        return formatter.string(from: date)
-    }
-    
-    var body: some View {
-        HStack {
-            // Left side - Wedding info
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                Text(weddingTitle)
-                    .font(Typography.title2)
-                    .foregroundColor(SemanticColors.textPrimary)
-                
-                if weddingDate != nil {
-                    Text(formattedDate)
-                        .font(Typography.bodyRegular)
-                        .foregroundColor(SemanticColors.textSecondary)
-                }
-            }
-            
-            Spacer()
-            
-            // Right side - Countdown
-            HStack(spacing: Spacing.xl) {
-                // Days
-                VStack(spacing: Spacing.xxs) {
-                    Text("\(countdown.days)")
-                        .font(Typography.displayMedium)
-                        .foregroundColor(SemanticColors.textPrimary)
-                    Text("DAYS")
-                        .font(Typography.caption2)
-                        .foregroundColor(SemanticColors.textSecondary)
-                        .tracking(1.2)
-                }
-                
-                // Divider
-                Rectangle()
-                    .fill(SemanticColors.borderLight)
-                    .frame(width: 1, height: 40)
-                
-                // Time components
-                HStack(spacing: Spacing.lg) {
-                    CountdownUnitV7(value: countdown.hours, label: "Hours")
-                    Text(":")
-                        .font(Typography.title3)
-                        .foregroundColor(SemanticColors.textSecondary)
-                    CountdownUnitV7(value: countdown.minutes, label: "Minutes")
-                    Text(":")
-                        .font(Typography.title3)
-                        .foregroundColor(SemanticColors.textSecondary)
-                    CountdownUnitV7(value: countdown.seconds, label: "Seconds")
-                }
-            }
-        }
-        .padding(Spacing.xxl)
-        .glassPanel(cornerRadius: CornerRadius.xxl, padding: 0)
-        .overlay(
-            // Decorative pink circle
-            Circle()
-                .fill(BlushPink.shade100.opacity(0.5))
-                .frame(width: 200, height: 200)
-                .blur(radius: 60)
-                .offset(x: 100, y: -50),
-            alignment: .topTrailing
-        )
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xxl))
-    }
-}
-
-struct CountdownUnitV7: View {
-    let value: Int
-    let label: String
-    
-    var body: some View {
-        VStack(spacing: Spacing.xxs) {
-            Text(String(format: "%02d", value))
-                .font(Typography.numberMedium)
-                .foregroundColor(SemanticColors.textPrimary)
-                .monospacedDigit()
-            Text(label)
-                .font(.system(size: 8))
-                .foregroundColor(SemanticColors.textSecondary)
-                .textCase(.uppercase)
-        }
-    }
-}
-
 // MARK: - Metric Cards
 
 struct RSVPMetricCardV7: View {
@@ -1855,8 +1518,7 @@ struct GuestResponsesCardV7: View {
     private var calculatedMaxItems: Int {
         let headerHeight: CGFloat = 50  // Title + menu
         let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
-        let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
-        let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
+        let availableForItems = cardHeight - headerHeight - cardPadding
         let dividerHeight: CGFloat = 1  // Divider height between items
         // Account for dividers between items: N items need N-1 dividers
         let maxItems = Int((availableForItems + dividerHeight) / (itemHeight + dividerHeight))
@@ -2404,8 +2066,7 @@ struct VendorListCardV7: View {
     private var calculatedMaxItems: Int {
         let headerHeight: CGFloat = 50  // Title + menu
         let cardPadding: CGFloat = Spacing.lg * 2  // Internal padding from .glassPanel()
-        let outerVStackSpacing: CGFloat = Spacing.md  // Spacing between header and content in outer VStack
-        let availableForItems = cardHeight - headerHeight - cardPadding - outerVStackSpacing
+        let availableForItems = cardHeight - headerHeight - cardPadding
         let dividerHeight: CGFloat = 1  // Divider height between items
         // Account for dividers between items: N items need N-1 dividers
         let maxItems = Int((availableForItems + dividerHeight) / (itemHeight + dividerHeight))
