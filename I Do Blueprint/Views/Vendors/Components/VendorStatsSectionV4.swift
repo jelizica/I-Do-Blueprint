@@ -86,14 +86,15 @@ struct VendorStatsSectionV4: View {
     // MARK: - Regular Layout (matching mockup: 2 large left, 2 small stacked right)
 
     private var regularLayout: some View {
-        HStack(spacing: Spacing.lg) {
-            // Left side: Two large cards
+        HStack(alignment: .top, spacing: Spacing.lg) {
+            // Total Vendors - narrower card
             TotalVendorsCardV4(
                 count: activeVendors.count,
                 addedThisWeek: vendorsAddedThisWeek
             )
-            .frame(maxWidth: .infinity)
+            .frame(width: 160)
 
+            // Budget Quoted - main wide card (sets the height)
             BudgetQuotedCardV4(
                 quotedAmount: totalQuoted,
                 totalBudget: totalBudget,
@@ -101,7 +102,7 @@ struct VendorStatsSectionV4: View {
             )
             .frame(maxWidth: .infinity)
 
-            // Right side: Two small cards stacked
+            // Stacked cards - align top/bottom with Budget card
             VStack(spacing: Spacing.md) {
                 SmallStatCardV4(
                     title: "BOOKED",
@@ -117,8 +118,9 @@ struct VendorStatsSectionV4: View {
                     iconColor: SemanticColors.statusPending
                 )
             }
-            .frame(width: 180)
+            .frame(width: 160)
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -129,16 +131,15 @@ struct TotalVendorsCardV4: View {
     let addedThisWeek: Int
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
             // Header with icon
             HStack(spacing: Spacing.sm) {
                 Image(systemName: "building.2.fill")
-                    .font(.system(size: 14))
+                    .font(.system(size: 12))
                     .foregroundColor(SemanticColors.textSecondary)
 
                 Text("TOTAL VENDORS")
-                    .font(Typography.caption)
-                    .fontWeight(.medium)
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(SemanticColors.textSecondary)
                     .tracking(0.5)
 
@@ -146,31 +147,28 @@ struct TotalVendorsCardV4: View {
 
                 // Mini trend line (decorative)
                 TrendLineView()
-                    .frame(width: 60, height: 24)
+                    .frame(width: 50, height: 20)
             }
 
             // Large count
             Text("\(count)")
-                .font(.system(size: 48, weight: .bold, design: .rounded))
+                .font(.system(size: 40, weight: .bold, design: .rounded))
                 .foregroundColor(SemanticColors.textPrimary)
-
-            Spacer()
 
             // Trend indicator
             if addedThisWeek > 0 {
                 HStack(spacing: Spacing.xs) {
                     Image(systemName: "arrow.up.right")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(AppGradients.weddingPink)
 
                     Text("+\(addedThisWeek) this week")
-                        .font(Typography.caption)
+                        .font(.system(size: 11))
                         .foregroundColor(AppGradients.weddingPink)
                 }
             }
         }
-        .padding(Spacing.lg)
-        .frame(height: 160)
+        .padding(Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassPanel(cornerRadius: CornerRadius.xl, padding: 0)
     }
@@ -186,39 +184,36 @@ struct BudgetQuotedCardV4: View {
     @State private var animatedPercentage: Double = 0
 
     var body: some View {
-        HStack(spacing: Spacing.lg) {
+        HStack(spacing: Spacing.md) {
             // Left side: Labels and value
-            VStack(alignment: .leading, spacing: Spacing.sm) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Header with icon
-                HStack(spacing: Spacing.sm) {
+                HStack(spacing: Spacing.xs) {
                     Text("$")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(SemanticColors.statusSuccess)
-                        .frame(width: 20, height: 20)
+                        .frame(width: 18, height: 18)
                         .background(
                             Circle()
                                 .fill(SemanticColors.statusSuccess.opacity(0.15))
                         )
 
                     Text("BUDGET QUOTED")
-                        .font(Typography.caption)
-                        .fontWeight(.medium)
+                        .font(.system(size: 10, weight: .medium))
                         .foregroundColor(SemanticColors.textSecondary)
                         .tracking(0.5)
                 }
 
                 // Large amount - single line, no wrap
                 Text(formatCurrency(quotedAmount))
-                    .font(.system(size: 42, weight: .bold, design: .rounded))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
 
-                Spacer()
-
                 // Subtitle
                 Text("\(formatCurrency(totalBudget)) Total Budget")
-                    .font(Typography.caption)
+                    .font(.system(size: 11))
                     .foregroundColor(SemanticColors.textSecondary)
             }
 
@@ -230,7 +225,7 @@ struct BudgetQuotedCardV4: View {
                 Circle()
                     .stroke(
                         AppGradients.weddingPink.opacity(0.2),
-                        lineWidth: 8
+                        lineWidth: 6
                     )
 
                 // Progress arc
@@ -239,7 +234,7 @@ struct BudgetQuotedCardV4: View {
                     .stroke(
                         AppGradients.weddingPink,
                         style: StrokeStyle(
-                            lineWidth: 8,
+                            lineWidth: 6,
                             lineCap: .round
                         )
                     )
@@ -248,14 +243,14 @@ struct BudgetQuotedCardV4: View {
 
                 // Percentage text
                 Text("\(Int(percentage))%")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(SemanticColors.textPrimary)
             }
-            .frame(width: 72, height: 72)
+            .frame(width: 60, height: 60)
         }
-        .padding(Spacing.lg)
-        .frame(height: 160)
+        .padding(Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 120)
         .glassPanel(cornerRadius: CornerRadius.xl, padding: 0)
         .onAppear {
             withAnimation(.spring(response: 0.8, dampingFraction: 0.7).delay(0.2)) {
@@ -287,38 +282,41 @@ struct SmallStatCardV4: View {
     let iconColor: Color
 
     var body: some View {
-        HStack(spacing: Spacing.md) {
+        HStack(spacing: Spacing.sm) {
             // Icon
             Circle()
                 .fill(iconColor.opacity(0.15))
-                .frame(width: 36, height: 36)
+                .frame(width: 32, height: 32)
                 .overlay(
                     Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(iconColor)
                 )
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundColor(SemanticColors.textSecondary)
                     .tracking(0.5)
+                    .lineLimit(1)
 
                 Text("\(value)")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
                     .foregroundColor(SemanticColors.textPrimary)
+                    .lineLimit(1)
             }
 
-            Spacer()
+            Spacer(minLength: Spacing.xs)
 
             // Chevron
             Image(systemName: "chevron.right")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(SemanticColors.textSecondary.opacity(0.5))
         }
-        .padding(.horizontal, Spacing.md)
+        .padding(.horizontal, Spacing.sm)
         .padding(.vertical, Spacing.sm)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 52)
         .glassPanel(cornerRadius: CornerRadius.lg, padding: 0)
     }
 }
