@@ -1,0 +1,45 @@
+{
+  "session_id": "bb62514e-0f10-4e6a-bfd2-50add7d4f71b",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T19:38:05.145291+00:00",
+  "vectors": {
+    "know": 0.4,
+    "do": 0.7,
+    "context": 0.6,
+    "clarity": 0.4,
+    "coherence": 0.5,
+    "signal": 0.4,
+    "density": 0.4,
+    "state": 0.3,
+    "change": 0.2,
+    "completion": 0.0,
+    "impact": 0.0,
+    "engagement": 0.9,
+    "uncertainty": 0.7
+  },
+  "overall_confidence": 0.567,
+  "meta": {
+    "reasoning": "",
+    "prompt": "Preflight assessment",
+    "git_commit_sha": "5a49f8307e37f374cb5b5846af83f6a535901f34",
+    "git_notes_ref": "empirica/session/bb62514e-0f10-4e6a-bfd2-50add7d4f71b/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "5378fa0e28647d2a5f0586946a180620f99ade18",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Services/Navigation/AppCoordinator.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1556480 -> 1630208 bytes\n .../storage.sqlite                                 | Bin 4104192 -> 4382720 bytes\n .../Services/Navigation/AppCoordinator.swift       |   2 +-\n 3 files changed, 1 insertion(+), 1 deletion(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 115
+}

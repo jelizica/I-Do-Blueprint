@@ -69,6 +69,20 @@ struct V3VendorContactCard: View {
                         }
                     }
                 }
+
+                if let instagramDisplay = vendor.instagramDisplayString {
+                    V3ContactRow(
+                        icon: "camera.fill",
+                        label: "INSTAGRAM",
+                        value: instagramDisplay,
+                        color: BlushPink.shade600,
+                        isLink: true
+                    ) {
+                        if let url = vendor.instagramURL {
+                            NSWorkspace.shared.open(url)
+                        }
+                    }
+                }
             }
         }
     }

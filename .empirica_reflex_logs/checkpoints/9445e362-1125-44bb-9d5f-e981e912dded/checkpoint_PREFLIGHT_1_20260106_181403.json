@@ -1,0 +1,43 @@
+{
+  "session_id": "9445e362-1125-44bb-9d5f-e981e912dded",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T18:14:03.013976+00:00",
+  "vectors": {
+    "engagement": 0.85,
+    "know": 0.55,
+    "do": 0.7,
+    "context": 0.6,
+    "clarity": 0.5,
+    "coherence": 0.65,
+    "signal": 0.6,
+    "density": 0.55,
+    "state": 0.5,
+    "change": 0.45,
+    "completion": 0.0,
+    "impact": 0.7,
+    "uncertainty": 0.55
+  },
+  "overall_confidence": 0.617,
+  "meta": {
+    "reasoning": "Prior sessions identified LazyVStack with pinnedViews as the solution pattern from BudgetItemsTableView. However, the fix was not fully implemented or there are additional issues. Need to investigate current state of GuestListView and compare with working implementations.",
+    "prompt": "Prior sessions identified LazyVStack with pinnedViews as the solution pattern from BudgetItemsTableView. However, the fix was not fully implemented or there are additional issues. Need to investigate current state of GuestListView and compare with working implementations.",
+    "git_commit_sha": "8e72f3397e7cd627d344ba402232561fe8dd2e4c",
+    "git_notes_ref": "empirica/session/9445e362-1125-44bb-9d5f-e981e912dded/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "761abb7915a399a1c9f9e67b12011d8189bd2447",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db | Bin 1556480 -> 1560576 bytes\n 1 file changed, 0 insertions(+), 0 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 185
+}

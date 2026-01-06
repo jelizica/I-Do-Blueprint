@@ -1,0 +1,142 @@
+{
+  "session_id": "75f8f101-49c0-4083-90a1-dcbdb036acdb",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T18:01:23.507721+00:00",
+  "vectors": {
+    "know": 0.92,
+    "do": 0.95,
+    "context": 0.9,
+    "clarity": 0.92,
+    "coherence": 0.9,
+    "signal": 0.88,
+    "density": 0.85,
+    "state": 0.95,
+    "change": 0.92,
+    "completion": 1.0,
+    "impact": 0.88,
+    "engagement": 0.9,
+    "uncertainty": 0.08
+  },
+  "overall_confidence": 0.923,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.92,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "know": 0.47,
+      "do": 0.6,
+      "context": 0.3,
+      "clarity": 0.42,
+      "coherence": 0.4,
+      "signal": 0.43,
+      "density": 0.4,
+      "state": 0.35,
+      "change": 0.72,
+      "completion": 1.0,
+      "impact": 0.23,
+      "engagement": 0.0,
+      "uncertainty": -0.47
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "bc1e02b9ad3e5b828c85574e9a36779f86fe072c",
+    "git_notes_ref": "empirica/session/75f8f101-49c0-4083-90a1-dcbdb036acdb/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "aef45c81c91f7ee49327f0d588fa9dceba3aa0df",
+    "commits_since_last_checkpoint": [
+      {
+        "sha": "aef45c81c91f7ee49327f0d588fa9dceba3aa0df",
+        "message": "fix: Use pinnedViews pattern for sticky table header in GuestListView",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-06T10:00:52-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db",
+          ".empirica_reflex_logs/checkpoints/6e5bada3-3be8-4dd1-81fe-5afce877966c/checkpoint_POSTFLIGHT_1_20260106_175417.json",
+          ".empirica_reflex_logs/checkpoints/75f8f101-49c0-4083-90a1-dcbdb036acdb/checkpoint_PREFLIGHT_1_20260106_175826.json",
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+          "I Do Blueprint/Views/Guests/GuestListView.swift",
+          "I Do Blueprint/Views/Vendors/Components/VendorHeaderV4.swift",
+          "I Do Blueprint/Views/Vendors/Components/VendorStatsSectionV4.swift",
+          "I Do Blueprint/Views/Vendors/VendorManagementViewV4.swift"
+        ]
+      }
+    ],
+    "uncommitted_changes": {
+      "files_modified": [],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ""
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.45,
+      "curr": 0.92,
+      "delta": 0.47
+    },
+    "do": {
+      "prev": 0.35,
+      "curr": 0.95,
+      "delta": 0.6
+    },
+    "context": {
+      "prev": 0.6,
+      "curr": 0.9,
+      "delta": 0.3
+    },
+    "clarity": {
+      "prev": 0.5,
+      "curr": 0.92,
+      "delta": 0.42
+    },
+    "coherence": {
+      "prev": 0.5,
+      "curr": 0.9,
+      "delta": 0.4
+    },
+    "signal": {
+      "prev": 0.45,
+      "curr": 0.88,
+      "delta": 0.43
+    },
+    "density": {
+      "prev": 0.45,
+      "curr": 0.85,
+      "delta": 0.4
+    },
+    "state": {
+      "prev": 0.6,
+      "curr": 0.95,
+      "delta": 0.35
+    },
+    "change": {
+      "prev": 0.2,
+      "curr": 0.92,
+      "delta": 0.72
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 1.0,
+      "delta": 1.0
+    },
+    "impact": {
+      "prev": 0.65,
+      "curr": 0.88,
+      "delta": 0.23
+    },
+    "engagement": {
+      "prev": 0.9,
+      "curr": 0.9,
+      "delta": 0.0
+    },
+    "uncertainty": {
+      "prev": 0.55,
+      "curr": 0.08,
+      "delta": -0.47
+    }
+  },
+  "token_count": 283
+}

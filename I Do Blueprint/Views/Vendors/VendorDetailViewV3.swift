@@ -158,9 +158,13 @@ struct VendorDetailViewV3: View {
         .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(SemanticColors.backgroundPrimary)
         .sheet(isPresented: $showingEditSheet) {
-            EditVendorSheetV2(vendor: currentVendor, vendorStore: vendorStore) { updatedVendor in
-                currentVendor = updatedVendor
-            }
+            EditVendorSheetV4(
+                vendor: currentVendor,
+                vendorStore: vendorStore,
+                onSave: { updatedVendor in
+                    currentVendor = updatedVendor
+                }
+            )
         }
         .alert("Delete Vendor", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) { }

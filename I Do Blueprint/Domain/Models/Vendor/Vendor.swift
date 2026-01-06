@@ -34,6 +34,9 @@ struct Vendor: Identifiable, Codable, Hashable {
     var latitude: Double?
     var longitude: Double?
 
+    // Social media
+    var instagramHandle: String?
+
     // Computed properties for compatibility with existing views
     var budgetCategoryName: String? {
         // This would need to be fetched from budget categories table
@@ -110,6 +113,7 @@ struct Vendor: Identifiable, Codable, Hashable {
         case country = "country"
         case latitude = "latitude"
         case longitude = "longitude"
+        case instagramHandle = "instagram_handle"
     }
 }
 

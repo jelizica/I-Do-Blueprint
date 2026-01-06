@@ -9,7 +9,7 @@
 import SwiftUI
 
 struct BudgetDashboardHubView: View {
-    @State private var currentPage: BudgetPage = .hub
+    @State private var currentPage: BudgetPage = .budgetOverview
     @EnvironmentObject var budgetStore: BudgetStoreV2
     @EnvironmentObject var coordinator: AppCoordinator
 

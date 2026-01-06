@@ -39,7 +39,8 @@ extension Vendor {
         (contactName != nil && !contactName!.isEmpty) ||
         (email != nil && !email!.isEmpty) ||
         (phoneNumber != nil && !phoneNumber!.isEmpty) ||
-        (website != nil && !website!.isEmpty)
+        (website != nil && !website!.isEmpty) ||
+        (instagramHandle != nil && !instagramHandle!.isEmpty)
     }
 
     /// Check if vendor has any financial information
@@ -85,6 +86,20 @@ extension Vendor {
             .replacingOccurrences(of: "https://", with: "")
             .replacingOccurrences(of: "http://", with: "")
             .replacingOccurrences(of: "www.", with: "")
+    }
+
+    /// Instagram profile URL
+    var instagramURL: URL? {
+        guard let handle = instagramHandle, !handle.isEmpty else { return nil }
+        // Remove @ if present
+        let cleanHandle = handle.hasPrefix("@") ? String(handle.dropFirst()) : handle
+        return URL(string: "https://instagram.com/\(cleanHandle)")
+    }
+
+    /// Display-friendly Instagram handle (with @ prefix)
+    var instagramDisplayString: String? {
+        guard let handle = instagramHandle, !handle.isEmpty else { return nil }
+        return handle.hasPrefix("@") ? handle : "@\(handle)"
     }
 }
 

@@ -126,11 +126,13 @@ struct VendorManagementViewV4: View {
                 .environmentObject(vendorStore)
         }
         .sheet(item: $selectedVendor) { vendor in
-            VendorDetailViewV3(
+            EditVendorSheetV4(
                 vendor: vendor,
-                vendorStore: vendorStore
+                vendorStore: vendorStore,
+                onSave: { updatedVendor in
+                    // Vendor is automatically updated via the store
+                }
             )
-            .environmentObject(AppCoordinator.shared)
         }
         .sheet(isPresented: $showingAddVendor) {
             AddVendorSheet(vendorStore: vendorStore)
