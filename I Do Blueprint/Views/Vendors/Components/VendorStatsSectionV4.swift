@@ -133,7 +133,7 @@ struct TotalVendorsCardV4: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             // Header with icon
-            HStack(spacing: Spacing.sm) {
+            HStack(spacing: Spacing.xs) {
                 Image(systemName: "building.2.fill")
                     .font(.system(size: 12))
                     .foregroundColor(SemanticColors.textSecondary)
@@ -142,18 +142,15 @@ struct TotalVendorsCardV4: View {
                     .font(.system(size: 10, weight: .medium))
                     .foregroundColor(SemanticColors.textSecondary)
                     .tracking(0.5)
-
-                Spacer()
-
-                // Mini trend line (decorative)
-                TrendLineView()
-                    .frame(width: 50, height: 20)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
 
             // Large count
             Text("\(count)")
                 .font(.system(size: 40, weight: .bold, design: .rounded))
                 .foregroundColor(SemanticColors.textPrimary)
+                .lineLimit(1)
 
             // Trend indicator
             if addedThisWeek > 0 {
@@ -165,11 +162,14 @@ struct TotalVendorsCardV4: View {
                     Text("+\(addedThisWeek) this week")
                         .font(.system(size: 11))
                         .foregroundColor(AppGradients.weddingPink)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
         }
         .padding(Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(height: 120)
         .glassPanel(cornerRadius: CornerRadius.xl, padding: 0)
     }
 }
@@ -202,6 +202,8 @@ struct BudgetQuotedCardV4: View {
                         .font(.system(size: 10, weight: .medium))
                         .foregroundColor(SemanticColors.textSecondary)
                         .tracking(0.5)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
 
                 // Large amount - single line, no wrap
@@ -209,12 +211,14 @@ struct BudgetQuotedCardV4: View {
                     .font(.system(size: 32, weight: .bold, design: .rounded))
                     .foregroundColor(SemanticColors.textPrimary)
                     .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .fixedSize(horizontal: true, vertical: false)
 
                 // Subtitle
                 Text("\(formatCurrency(totalBudget)) Total Budget")
                     .font(.system(size: 11))
                     .foregroundColor(SemanticColors.textSecondary)
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
             }
 
             Spacer()
@@ -299,6 +303,7 @@ struct SmallStatCardV4: View {
                     .foregroundColor(SemanticColors.textSecondary)
                     .tracking(0.5)
                     .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
 
                 Text("\(value)")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
@@ -306,7 +311,7 @@ struct SmallStatCardV4: View {
                     .lineLimit(1)
             }
 
-            Spacer(minLength: Spacing.xs)
+            Spacer(minLength: 0)
 
             // Chevron
             Image(systemName: "chevron.right")
