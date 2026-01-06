@@ -98,7 +98,7 @@ class AppCoordinator: ObservableObject {
             case .vendors:
                 VendorManagementViewV5()
             case .budget:
-                BudgetOverviewDashboardViewV2(currentPage: .constant(.budgetOverview))
+                BudgetNavigationWrapper()
             case .visualPlanning:
                 VisualPlanningMainViewV2()
             case .timeline:
