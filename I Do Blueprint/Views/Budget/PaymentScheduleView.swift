@@ -25,7 +25,7 @@ struct PaymentScheduleView: View {
 
     // Filter states
     @State private var selectedFilterOption: PaymentFilterOption = .all
-    @State private var showPlanView: Bool = false
+    @State private var viewMode: PaymentViewMode = .individual
     @AppStorage("paymentPlanGroupingStrategy") private var groupingStrategy: PaymentPlanGroupingStrategy = .byExpense
     
     // Search state
@@ -105,12 +105,12 @@ struct PaymentScheduleView: View {
             PaymentScheduleStaticHeader(
                 windowSize: windowSize,
                 searchQuery: $searchQuery,
-                showPlanView: $showPlanView,
+                viewMode: $viewMode,
                 nextPayment: nextUpcomingPayment,
                 overdueCount: overduePaymentsCount,
                 onOverdueClick: {
                     // Switch to Individual tab and apply overdue filter
-                    showPlanView = false
+                    viewMode = .individual
                     selectedFilterOption = .overdue
                 },
                 onNextPaymentClick: {
@@ -130,11 +130,11 @@ struct PaymentScheduleView: View {
 
             PaymentFilterBarV2(
                 windowSize: windowSize,
-                showPlanView: $showPlanView,
+                viewMode: $viewMode,
                 selectedFilterOption: $selectedFilterOption,
                 groupingStrategy: $groupingStrategy,
                 onViewModeChange: {
-                    if showPlanView {
+                    if viewMode == .plans {
                         Task {
                             await loadPaymentPlanSummaries()
                         }
@@ -151,54 +151,10 @@ struct PaymentScheduleView: View {
 
     @ViewBuilder
     private func paymentListView(windowSize: WindowSize, availableWidth: CGFloat, horizontalPadding: CGFloat) -> some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                if showPlanView {
-                    PaymentPlansListView(
-                        windowSize: windowSize,
-                        isLoadingPlans: isLoadingPlans,
-                        loadError: loadError,
-                        groupingStrategy: groupingStrategy,
-                        paymentPlanSummaries: filteredPaymentPlanSummaries,
-                        paymentPlanGroups: filteredPaymentPlanGroups,
-                        paymentSchedules: budgetStore.paymentSchedules,
-                        expandedPlanIds: expandedPlanIds,
-                        onRetry: {
-                            Task {
-                                await loadPaymentPlanSummaries()
-                            }
-                        },
-                        onToggleExpansion: toggleExpansion,
-                        onTogglePaidStatus: { schedule in
-                            Task {
-                                do {
-                                    try await budgetStore.payments.updatePayment(schedule)
-                                } catch {
-                                    AppLogger.ui.error("Failed to update payment status", error: error)
-                                }
-                            }
-                        },
-                        onUpdate: { schedule in
-                            Task {
-                                do {
-                                    try await budgetStore.payments.updatePayment(schedule)
-                                } catch {
-                                    AppLogger.ui.error("Failed to update payment", error: error)
-                                }
-                            }
-                        },
-                        onDelete: { schedule in
-                            Task {
-                                do {
-                                    try await budgetStore.payments.deletePayment(id: schedule.id)
-                                } catch {
-                                    AppLogger.ui.error("Failed to delete payment", error: error)
-                                }
-                            }
-                        },
-                        getVendorName: getVendorNameById
-                    )
-                } else {
+        switch viewMode {
+        case .individual:
+            ScrollView {
+                VStack(spacing: 0) {
                     IndividualPaymentsListViewV2(
                         windowSize: windowSize,
                         filteredPayments: filteredPayments,
@@ -225,9 +181,83 @@ struct PaymentScheduleView: View {
                         userTimezone: userTimezone
                     )
                 }
+                .frame(width: availableWidth)
+                .padding(.horizontal, horizontalPadding)
             }
+            
+        case .plans:
+            // Payment Plans Dashboard V1 - Glassmorphic vendor-grouped view
+            PaymentPlansDashboardViewV1(
+                windowSize: windowSize,
+                isLoadingPlans: isLoadingPlans,
+                loadError: loadError,
+                paymentSchedules: budgetStore.paymentSchedules,
+                expenses: budgetStore.expenseStore.expenses,
+                searchQuery: searchQuery,
+                onRetry: {
+                    Task {
+                        await loadPaymentPlanSummaries()
+                    }
+                },
+                onTogglePaidStatus: { schedule in
+                    Task {
+                        do {
+                            try await budgetStore.payments.updatePayment(schedule)
+                        } catch {
+                            AppLogger.ui.error("Failed to update payment status", error: error)
+                        }
+                    }
+                },
+                onUpdate: { schedule in
+                    Task {
+                        do {
+                            try await budgetStore.payments.updatePayment(schedule)
+                        } catch {
+                            AppLogger.ui.error("Failed to update payment", error: error)
+                        }
+                    }
+                },
+                onDelete: { schedule in
+                    Task {
+                        do {
+                            try await budgetStore.payments.deletePayment(id: schedule.id)
+                        } catch {
+                            AppLogger.ui.error("Failed to delete payment", error: error)
+                        }
+                    }
+                },
+                getVendorName: getVendorNameById
+            )
             .frame(width: availableWidth)
             .padding(.horizontal, horizontalPadding)
+            
+        case .timeline:
+            // Timeline View V1 - Glassmorphic horizontal timeline
+            PaymentTimelineViewV1(
+                windowSize: windowSize,
+                filteredPayments: filteredPayments,
+                expenses: budgetStore.expenseStore.expenses,
+                getVendorName: getVendorNameById,
+                userTimezone: userTimezone,
+                onUpdate: { updatedPayment in
+                    Task {
+                        do {
+                            try await budgetStore.payments.updatePayment(updatedPayment)
+                        } catch {
+                            AppLogger.ui.error("Failed to update payment", error: error)
+                        }
+                    }
+                },
+                onDelete: { paymentToDelete in
+                    Task {
+                        do {
+                            try await budgetStore.payments.deletePayment(id: paymentToDelete.id)
+                        } catch {
+                            AppLogger.ui.error("Failed to delete payment", error: error)
+                        }
+                    }
+                }
+            )
         }
     }
 
