@@ -199,7 +199,7 @@ struct PaymentScheduleView: View {
                         getVendorName: getVendorNameById
                     )
                 } else {
-                    IndividualPaymentsListView(
+                    IndividualPaymentsListViewV2(
                         windowSize: windowSize,
                         filteredPayments: filteredPayments,
                         expenses: budgetStore.expenseStore.expenses,
