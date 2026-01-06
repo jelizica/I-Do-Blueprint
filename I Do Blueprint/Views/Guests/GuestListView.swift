@@ -33,27 +33,39 @@ struct GuestListView: View {
     }
     
     var body: some View {
-        // Table Container with glassmorphism
-        // Uses LazyVStack with pinnedViews to keep table header visible while scrolling
-        // This matches the pattern used in BudgetItemsTableView
-        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-            Section {
-                // Table Rows
+        // Table Container with glassmorphism styling
+        // Header scrolls with content (no pinnedViews) for natural scroll behavior
+        VStack(spacing: 0) {
+            // Table Header - scrolls with content
+            tableHeader
+            
+            // Table Rows
+            LazyVStack(spacing: 0) {
                 ForEach(sortedGuests) { guest in
                     tableRow(for: guest)
                         .onTapGesture {
                             onGuestTap(guest)
                         }
                 }
-            } header: {
-                tableHeader
             }
         }
-        .modifier(GlassPanelStyle(cornerRadius: 16, padding: 0))
+        .background(
+            ZStack {
+                // Base blur layer - glassmorphism effect
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(.ultraThinMaterial)
+                
+                // Semi-transparent white overlay
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color.white.opacity(0.25))
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
                 .stroke(Color.white.opacity(0.3), lineWidth: 1)
         )
+        .shadow(color: Color.black.opacity(0.08), radius: 20, x: 0, y: 8)
     }
     
     // MARK: - Table Header
