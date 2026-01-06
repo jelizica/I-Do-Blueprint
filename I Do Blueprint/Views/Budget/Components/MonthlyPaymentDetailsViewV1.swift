@@ -41,14 +41,13 @@ struct MonthlyPaymentDetailsViewV1: View {
     private let maxWidth: CGFloat = 1200
     private let minHeight: CGFloat = 700
     private let maxHeight: CGFloat = 900
-    private let windowChromeBuffer: CGFloat = 40
     private let widthProportion: CGFloat = 0.75
     private let heightProportion: CGFloat = 0.85
 
     private var dynamicSize: CGSize {
         let parentSize = coordinator.parentWindowSize
         let targetWidth = parentSize.width * widthProportion
-        let targetHeight = parentSize.height * heightProportion - windowChromeBuffer
+        let targetHeight = parentSize.height * heightProportion
         let finalWidth = min(maxWidth, max(minWidth, targetWidth))
         let finalHeight = min(maxHeight, max(minHeight, targetHeight))
         return CGSize(width: finalWidth, height: finalHeight)
