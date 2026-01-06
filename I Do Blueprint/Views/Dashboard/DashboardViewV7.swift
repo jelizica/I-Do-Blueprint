@@ -741,30 +741,36 @@ struct MasonryColumnsView: View {
     }
 
     /// Calculate static card height (content-based, exact sizing)
+    /// Heights match actual rendered content with no extra padding
     private func staticCardHeight(for cardType: DashboardViewV7.CardType) -> CGFloat {
-        let cardHeaderHeight: CGFloat = 60  // Title + spacing
-        let cardPadding: CGFloat = 32  // Vertical padding inside card
-        let rowHeight: CGFloat = 44  // Height per item row
+        // Actual measurements from rendered cards:
+        // - glassPanel padding: 16pt top + 16pt bottom = 32pt
+        // - Header (title text): ~26pt
+        // - Spacing after header (md): 12pt
+        // - Row height: ~32pt (content + 8pt vertical padding each side)
+
+        let glassPanelPadding: CGFloat = 32  // 16pt top + 16pt bottom
+        let headerHeight: CGFloat = 26      // Title text
+        let headerSpacing: CGFloat = 12     // Spacing.md after header
+        let rowHeight: CGFloat = 32         // Actual row height with padding
 
         switch cardType {
         case .budget:
-            // Budget Overview: Content-based static card (tightly fitted)
-            // Content: header (~26pt) + spacing (16pt) + progress bars (32pt) + spacing (16pt) + labels (~14pt) = ~104pt
-            // Plus glassPanel padding (16pt * 2) = 32pt
-            // Total: ~136pt
+            // Budget Overview: Tightly fitted to content
+            // header (26) + spacing (12) + progress section (~60) + spacing (8) + labels (~14)
             return 136
 
         case .payments:
             // Payments Due: Exact size for actual payment count
             let paymentCount = currentMonthPayments.count
             let contentHeight = CGFloat(max(paymentCount, 1)) * rowHeight
-            return cardHeaderHeight + contentHeight + cardPadding
+            return glassPanelPadding + headerHeight + headerSpacing + contentHeight
 
         case .tasks:
             // Task Manager: Based on task count (max 3)
             let taskCount = min(taskStore.tasks.filter { $0.status != .completed }.count, 3)
             let contentHeight = CGFloat(max(taskCount, 1)) * rowHeight
-            return cardHeaderHeight + contentHeight + cardPadding
+            return glassPanelPadding + headerHeight + headerSpacing + contentHeight
 
         default:
             // Dynamic cards (guests, vendors) don't use this function
@@ -776,30 +782,28 @@ struct MasonryColumnsView: View {
     /// Static cards get exact content-based heights
     /// Dynamic cards fill remaining space after static cards are placed
     private func estimateCardHeight(for cardType: DashboardViewV7.CardType) -> CGFloat {
-        let cardHeaderHeight: CGFloat = 60  // Title + spacing
-        let cardPadding: CGFloat = 32  // Vertical padding inside card
-        let rowHeight: CGFloat = 44  // Height per item row
+        // Use same measurements as staticCardHeight for consistency
+        let glassPanelPadding: CGFloat = 32  // 16pt top + 16pt bottom
+        let headerHeight: CGFloat = 26       // Title text
+        let headerSpacing: CGFloat = 12      // Spacing.md after header
+        let rowHeight: CGFloat = 32          // Actual row height with padding
 
         switch cardType {
         case .budget:
-            // Budget Overview: Content-based static card (tightly fitted)
-            // Content: header (~26pt) + spacing (16pt) + progress bars (32pt) + spacing (16pt) + labels (~14pt) = ~104pt
-            // Plus glassPanel padding (16pt * 2) = 32pt
-            // Total: ~136pt
+            // Budget Overview: Tightly fitted to content
             return 136
 
         case .tasks:
             // Task Manager: Content-based (max 3 tasks)
             let taskCount = min(taskStore.tasks.filter { $0.status != .completed }.count, 3)
             let contentHeight = CGFloat(max(taskCount, 1)) * rowHeight
-            return cardHeaderHeight + contentHeight + cardPadding
+            return glassPanelPadding + headerHeight + headerSpacing + contentHeight
 
         case .payments:
-            // Payment Due: Exact size for actual payment count (no extra space)
-            // Use actual count, minimum 1 row for empty state
+            // Payment Due: Exact size for actual payment count
             let paymentCount = currentMonthPayments.count
             let contentHeight = CGFloat(max(paymentCount, 1)) * rowHeight
-            return cardHeaderHeight + contentHeight + cardPadding
+            return glassPanelPadding + headerHeight + headerSpacing + contentHeight
 
         case .guests, .vendors, .recentResponses:
             // Dynamic cards - height calculated after distribution (placeholder for bin-packing)
@@ -915,33 +919,41 @@ struct MasonryColumnsView: View {
                     availableHeight: columnLayout.availableHeight
                 )
 
-                // Step 2: Calculate target height based on column 1's content
-                // This ensures all columns extend to the same bottom point (Payments Due bottom)
-                let targetHeight = calculateColumn1ContentHeight(column1: columnAssignment.column1)
+                // Step 2: Calculate heights for each column
+                // Column 1 (static): Content-fitted to its cards
+                // Columns 2 & 3 (dynamic): Extend to window edge (availableHeight)
+                let column1Height = calculateColumn1ContentHeight(column1: columnAssignment.column1)
+                let dynamicColumnHeight = columnLayout.availableHeight  // Full available space
 
-                // DEBUG: Show column 1 breakdown
-                print("📏 COLUMN 0 HEIGHT BREAKDOWN (target for all columns):")
+                // DEBUG: Show layout breakdown
+                print("📏 COLUMN HEIGHTS:")
+                print("   Column 0 (static): \(column1Height)pt")
                 for card in columnAssignment.column1 {
-                    print("   - \(card): \(staticCardHeight(for: card))pt")
+                    print("      - \(card): \(staticCardHeight(for: card))pt")
                 }
-                let spacing = columnAssignment.column1.count > 1 ? CGFloat(columnAssignment.column1.count - 1) * columnLayout.rowSpacing : 0
-                print("   - Spacing (\(columnAssignment.column1.count - 1) gaps × \(columnLayout.rowSpacing)pt): \(spacing)pt")
-                print("   = Target content height: \(targetHeight)pt (all cards align to this bottom)")
+                print("   Columns 1-2 (dynamic): \(dynamicColumnHeight)pt (window edge)")
 
-                // Step 3: Calculate final heights with dynamic cards filling to target
+                // Step 3: Calculate final heights
+                // Column 1: uses its own content height
+                // Columns 2 & 3: use full available height for dynamic cards
                 var allHeights: [DashboardViewV7.CardType: CGFloat] = [:]
-                for heights in [
-                    calculateDynamicCardHeights(for: columnAssignment.column1, targetContentHeight: targetHeight),
-                    calculateDynamicCardHeights(for: columnAssignment.column2, targetContentHeight: targetHeight),
-                    calculateDynamicCardHeights(for: columnAssignment.column3, targetContentHeight: targetHeight)
-                ] {
-                    allHeights.merge(heights) { _, new in new }
+
+                // Column 1 - static cards get exact heights
+                for card in columnAssignment.column1 {
+                    allHeights[card] = staticCardHeight(for: card)
                 }
+
+                // Columns 2 & 3 - dynamic cards fill to window edge
+                let col2Heights = calculateDynamicCardHeights(for: columnAssignment.column2, targetContentHeight: dynamicColumnHeight)
+                let col3Heights = calculateDynamicCardHeights(for: columnAssignment.column3, targetContentHeight: dynamicColumnHeight)
+                allHeights.merge(col2Heights) { _, new in new }
+                allHeights.merge(col3Heights) { _, new in new }
+
                 finalCardHeights = allHeights
 
-                print("✅ Dashboard layout: all columns extend to same bottom")
+                print("✅ Dashboard layout complete")
                 print("   Final heights: \(finalCardHeights)")
-                print("   Available height (full grid): \(columnLayout.availableHeight)pt")
+                print("   Available height: \(columnLayout.availableHeight)pt")
             }
         }
     }
