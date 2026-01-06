@@ -102,7 +102,7 @@ class AppCoordinator: ObservableObject {
             case .visualPlanning:
                 VisualPlanningMainViewV2()
             case .timeline:
-                TimelineViewV2()
+                WeddingDayTimelineViewV1()
             case .collaboration:
                 CollaborationMainView()
             case .notes:
