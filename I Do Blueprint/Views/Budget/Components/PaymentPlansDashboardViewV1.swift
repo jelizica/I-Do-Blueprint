@@ -445,12 +445,10 @@ private struct PaymentGroupCard: View {
                     lineWidth: 1.5
                 )
         )
-        // Hover shadow effect - slightly elevated appearance without layout shift
-        .shadow(color: Color.black.opacity(isHovered ? 0.10 : 0.06), radius: isHovered ? 20 : 16, x: 0, y: isHovered ? 8 : 6)
-        .shadow(color: Color.black.opacity(isHovered ? 0.05 : 0.03), radius: 32, x: 0, y: 12)
-        // NOTE: Removed scaleEffect to prevent layout shifts that cause flickering
-        // The border gradient opacity change (lines 432-433) provides sufficient hover feedback
-        .animation(.easeInOut(duration: 0.15), value: isHovered)
+        // Static shadows - no geometric changes on hover to prevent layout flickering
+        .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 6)
+        .shadow(color: Color.black.opacity(0.03), radius: 32, x: 0, y: 12)
+        // Hover feedback via border opacity only (lines 439-440) - no layout impact
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isExpanded)
         .onHover(perform: onHover)
     }
