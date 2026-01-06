@@ -186,7 +186,7 @@ struct PaymentScheduleView: View {
             }
             
         case .plans:
-            // Payment Plans Dashboard V1 - Glassmorphic vendor-grouped view
+            // Payment Plans Dashboard V1 - Glassmorphic grouped view
             PaymentPlansDashboardViewV1(
                 windowSize: windowSize,
                 isLoadingPlans: isLoadingPlans,
@@ -194,6 +194,7 @@ struct PaymentScheduleView: View {
                 paymentSchedules: budgetStore.paymentSchedules,
                 expenses: budgetStore.expenseStore.expenses,
                 searchQuery: searchQuery,
+                groupingStrategy: groupingStrategy,
                 onRetry: {
                     Task {
                         await loadPaymentPlanSummaries()

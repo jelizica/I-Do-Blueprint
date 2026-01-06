@@ -20,6 +20,7 @@ struct PaymentPlansDashboardViewV1: View {
     let paymentSchedules: [PaymentSchedule]
     let expenses: [Expense]
     let searchQuery: String
+    let groupingStrategy: PaymentPlanGroupingStrategy
 
     let onRetry: () -> Void
     let onTogglePaidStatus: (PaymentSchedule) -> Void
@@ -28,44 +29,130 @@ struct PaymentPlansDashboardViewV1: View {
     let getVendorName: (Int64?) -> String?
 
     @Environment(\.colorScheme) private var colorScheme
-    @State private var expandedVendorIds: Set<Int64> = []
-    @State private var hoveredCardId: Int64?
+    @State private var expandedGroupIds: Set<String> = []
+    @State private var hoveredCardId: String?
 
     private var isDarkMode: Bool { colorScheme == .dark }
 
     // MARK: - Computed Properties
 
+    /// Grouped payments based on selected strategy
+    private var paymentGroups: [PaymentGroup] {
+        switch groupingStrategy {
+        case .byVendor:
+            return groupByVendor()
+        case .byExpense:
+            return groupByExpense()
+        case .byPlanId:
+            // For byPlanId, treat each payment as its own group
+            return groupByPlanId()
+        }
+    }
+
     /// Group payments by vendor
-    private var vendorPayments: [VendorPaymentGroup] {
+    private func groupByVendor() -> [PaymentGroup] {
         let grouped = Dictionary(grouping: paymentSchedules) { payment -> Int64 in
             payment.vendorId ?? -1
         }
 
-        return grouped.compactMap { vendorId, payments -> VendorPaymentGroup? in
+        return grouped.compactMap { vendorId, payments -> PaymentGroup? in
             guard vendorId != -1 else { return nil }
 
             let vendorName = getVendorName(vendorId) ?? payments.first?.vendor ?? "Unknown Vendor"
-            let totalAmount = payments.reduce(0) { $0 + $1.paymentAmount }
-            let paidAmount = payments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
-            let upcomingPayments = payments.filter { !$0.paid && $0.paymentDate > Date() }
-            let overduePayments = payments.filter { !$0.paid && $0.paymentDate < Date() }
-
-            return VendorPaymentGroup(
-                vendorId: vendorId,
-                vendorName: vendorName,
-                payments: payments.sorted { $0.paymentDate < $1.paymentDate },
-                totalAmount: totalAmount,
-                paidAmount: paidAmount,
-                upcomingCount: upcomingPayments.count,
-                overdueCount: overduePayments.count
+            return createPaymentGroup(
+                id: "vendor_\(vendorId)",
+                name: vendorName,
+                icon: vendorName.first.map { String($0).uppercased() } ?? "V",
+                payments: payments
             )
         }
         .filter { group in
-            // Apply search filter
             if searchQuery.isEmpty { return true }
-            return group.vendorName.lowercased().contains(searchQuery.lowercased())
+            return group.name.lowercased().contains(searchQuery.lowercased())
         }
-        .sorted { $0.vendorName < $1.vendorName }
+        .sorted { $0.name < $1.name }
+    }
+
+    /// Group payments by expense
+    private func groupByExpense() -> [PaymentGroup] {
+        // Group by expenseId (UUID), filtering out payments without an expense
+        let grouped = Dictionary(grouping: paymentSchedules.filter { $0.expenseId != nil }) { payment -> UUID in
+            payment.expenseId!
+        }
+
+        return grouped.compactMap { expenseId, payments -> PaymentGroup? in
+            let expense = expenses.first { $0.id == expenseId }
+            let expenseName = expense?.expenseName ?? "Unknown Expense"
+            let vendorName = payments.first.flatMap { getVendorName($0.vendorId) } ?? payments.first?.vendor ?? ""
+
+            return createPaymentGroup(
+                id: "expense_\(expenseId.uuidString)",
+                name: expenseName,
+                subtitle: vendorName.isEmpty ? nil : vendorName,
+                icon: expenseName.first.map { String($0).uppercased() } ?? "E",
+                payments: payments
+            )
+        }
+        .filter { group in
+            if searchQuery.isEmpty { return true }
+            let nameMatch = group.name.lowercased().contains(searchQuery.lowercased())
+            let subtitleMatch = group.subtitle?.lowercased().contains(searchQuery.lowercased()) ?? false
+            return nameMatch || subtitleMatch
+        }
+        .sorted { $0.name < $1.name }
+    }
+
+    /// Group payments by plan ID (each payment is its own "group")
+    private func groupByPlanId() -> [PaymentGroup] {
+        return paymentSchedules
+            .filter { payment in
+                if searchQuery.isEmpty { return true }
+                let vendorName = getVendorName(payment.vendorId) ?? payment.vendor
+                return vendorName.lowercased().contains(searchQuery.lowercased())
+            }
+            .sorted { $0.paymentDate < $1.paymentDate }
+            .map { payment in
+                let vendorName = getVendorName(payment.vendorId) ?? payment.vendor
+                return createPaymentGroup(
+                    id: "plan_\(payment.id)",
+                    name: vendorName.isEmpty ? "Payment #\(payment.id)" : vendorName,
+                    subtitle: formatDate(payment.paymentDate),
+                    icon: vendorName.first.map { String($0).uppercased() } ?? "P",
+                    payments: [payment]
+                )
+            }
+    }
+
+    /// Helper to create a PaymentGroup with computed stats
+    private func createPaymentGroup(
+        id: String,
+        name: String,
+        subtitle: String? = nil,
+        icon: String,
+        payments: [PaymentSchedule]
+    ) -> PaymentGroup {
+        let totalAmount = payments.reduce(0) { $0 + $1.paymentAmount }
+        let paidAmount = payments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
+        let upcomingPayments = payments.filter { !$0.paid && $0.paymentDate > Date() }
+        let overduePayments = payments.filter { !$0.paid && $0.paymentDate < Date() }
+
+        return PaymentGroup(
+            id: id,
+            name: name,
+            subtitle: subtitle,
+            icon: icon,
+            payments: payments.sorted { $0.paymentDate < $1.paymentDate },
+            totalAmount: totalAmount,
+            paidAmount: paidAmount,
+            upcomingCount: upcomingPayments.count,
+            overdueCount: overduePayments.count
+        )
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        return formatter.string(from: date)
     }
 
     /// Total upcoming payments amount
@@ -111,7 +198,7 @@ struct PaymentPlansDashboardViewV1: View {
             loadingView
         } else if let loadError {
             errorView(message: loadError)
-        } else if vendorPayments.isEmpty {
+        } else if paymentGroups.isEmpty {
             emptyStateView
         } else {
             dashboardContent
@@ -123,81 +210,35 @@ struct PaymentPlansDashboardViewV1: View {
     private var dashboardContent: some View {
         ScrollView {
             VStack(spacing: Spacing.lg) {
-                // KPI Summary Cards
-                kpiSummarySection
-
-                // Vendor Payment Cards
-                vendorCardsSection
+                // Payment Cards (grouped based on parent's groupingStrategy)
+                groupedCardsSection
             }
             .padding(.vertical, Spacing.lg)
         }
     }
 
-    // MARK: - KPI Summary Section
+    // MARK: - Grouped Cards Section
 
-    private var kpiSummarySection: some View {
-        HStack(spacing: Spacing.md) {
-            // Upcoming Payments
-            KPISummaryCard(
-                icon: "calendar.badge.clock",
-                iconBackgroundColor: Color.fromHex("DBEAFE"),
-                iconColor: Color.fromHex("3B82F6"),
-                title: "Upcoming Payments",
-                value: formatCurrency(totalUpcoming),
-                valueColor: Color.fromHex("1D4ED8"),
-                subtitle: "\(paymentSchedules.filter { !$0.paid && $0.paymentDate > Date() }.count) payments scheduled",
-                isDarkMode: isDarkMode
-            )
-
-            // Overdue Payments
-            KPISummaryCard(
-                icon: "exclamationmark.triangle.fill",
-                iconBackgroundColor: overdueCount > 0 ? Color.fromHex("FEE2E2") : Color.fromHex("D1FAE5"),
-                iconColor: overdueCount > 0 ? Color.fromHex("DC2626") : Color.fromHex("10B981"),
-                title: "Overdue Payments",
-                value: formatCurrency(totalOverdue),
-                valueColor: overdueCount > 0 ? Color.fromHex("DC2626") : Color.fromHex("047857"),
-                subtitle: overdueCount > 0 ? "\(overdueCount) payments overdue" : "No overdue payments",
-                isDarkMode: isDarkMode
-            )
-
-            // Total Schedules
-            KPISummaryCard(
-                icon: "doc.text.fill",
-                iconBackgroundColor: Color.fromHex("E0E7FF"),
-                iconColor: Color.fromHex("6366F1"),
-                title: "Total Schedules",
-                value: "\(totalSchedules)",
-                valueColor: isDarkMode ? .white : SemanticColors.textPrimary,
-                subtitle: "\(Int(overallProgress))% completed",
-                isDarkMode: isDarkMode
-            )
-        }
-        .padding(.horizontal)
-    }
-
-    // MARK: - Vendor Cards Section
-
-    private var vendorCardsSection: some View {
+    private var groupedCardsSection: some View {
         LazyVStack(spacing: Spacing.md) {
-            ForEach(vendorPayments, id: \.vendorId) { group in
-                VendorPaymentCard(
+            ForEach(paymentGroups, id: \.id) { group in
+                PaymentGroupCard(
                     group: group,
-                    isExpanded: expandedVendorIds.contains(group.vendorId),
-                    isHovered: hoveredCardId == group.vendorId,
+                    isExpanded: expandedGroupIds.contains(group.id),
+                    isHovered: hoveredCardId == group.id,
                     isDarkMode: isDarkMode,
                     windowSize: windowSize,
                     onToggleExpand: {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            if expandedVendorIds.contains(group.vendorId) {
-                                expandedVendorIds.remove(group.vendorId)
+                            if expandedGroupIds.contains(group.id) {
+                                expandedGroupIds.remove(group.id)
                             } else {
-                                expandedVendorIds.insert(group.vendorId)
+                                expandedGroupIds.insert(group.id)
                             }
                         }
                     },
                     onHover: { hovering in
-                        hoveredCardId = hovering ? group.vendorId : nil
+                        hoveredCardId = hovering ? group.id : nil
                     },
                     onTogglePaidStatus: onTogglePaidStatus,
                     onUpdate: onUpdate,
@@ -293,18 +334,18 @@ struct PaymentPlansDashboardViewV1: View {
     }
 }
 
-// MARK: - Vendor Payment Group Model
+// MARK: - Payment Group Model
 
-private struct VendorPaymentGroup: Identifiable {
-    let vendorId: Int64
-    let vendorName: String
+private struct PaymentGroup: Identifiable {
+    let id: String
+    let name: String
+    let subtitle: String?
+    let icon: String
     let payments: [PaymentSchedule]
     let totalAmount: Double
     let paidAmount: Double
     let upcomingCount: Int
     let overdueCount: Int
-
-    var id: Int64 { vendorId }
 
     var remainingAmount: Double { totalAmount - paidAmount }
     var progressPercentage: Double {
@@ -315,104 +356,10 @@ private struct VendorPaymentGroup: Identifiable {
     var paidCount: Int { payments.filter { $0.paid }.count }
 }
 
-// MARK: - KPI Summary Card
+// MARK: - Payment Group Card
 
-private struct KPISummaryCard: View {
-    let icon: String
-    let iconBackgroundColor: Color
-    let iconColor: Color
-    let title: String
-    let value: String
-    let valueColor: Color
-    let subtitle: String
-    let isDarkMode: Bool
-
-    @State private var isHovered = false
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            // Icon and title row
-            HStack(spacing: Spacing.sm) {
-                Circle()
-                    .fill(iconBackgroundColor)
-                    .frame(width: 44, height: 44)
-                    .overlay(
-                        Image(systemName: icon)
-                            .font(.system(size: 20))
-                            .foregroundColor(iconColor)
-                    )
-
-                Text(title)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
-                    .textCase(.uppercase)
-                    .tracking(0.3)
-            }
-
-            // Value
-            Text(value)
-                .font(.system(size: 28, weight: .bold))
-                .foregroundColor(valueColor)
-
-            // Subtitle
-            Text(subtitle)
-                .font(.system(size: 12))
-                .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.lg)
-        .background(
-            ZStack {
-                // Base blur layer
-                RoundedRectangle(cornerRadius: CornerRadius.xl)
-                    .fill(.ultraThinMaterial)
-
-                // Semi-transparent overlay
-                RoundedRectangle(cornerRadius: CornerRadius.xl)
-                    .fill(Color.white.opacity(isDarkMode ? 0.1 : 0.25))
-
-                // Inner glow
-                RoundedRectangle(cornerRadius: CornerRadius.xl)
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.white.opacity(isDarkMode ? 0.05 : 0.15),
-                                Color.clear
-                            ],
-                            center: .topLeading,
-                            startRadius: 0,
-                            endRadius: 200
-                        )
-                    )
-            }
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.xl)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.white.opacity(isHovered ? 0.8 : 0.6),
-                            Color.white.opacity(isHovered ? 0.3 : 0.15)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    ),
-                    lineWidth: 1
-                )
-        )
-        .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 6)
-        .scaleEffect(isHovered ? 1.02 : 1.0)
-        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-    }
-}
-
-// MARK: - Vendor Payment Card
-
-private struct VendorPaymentCard: View {
-    let group: VendorPaymentGroup
+private struct PaymentGroupCard: View {
+    let group: PaymentGroup
     let isExpanded: Bool
     let isHovered: Bool
     let isDarkMode: Bool
@@ -488,17 +435,28 @@ private struct VendorPaymentCard: View {
     private var cardHeader: some View {
         Button(action: onToggleExpand) {
             HStack(spacing: Spacing.md) {
-                // Vendor icon
-                vendorIcon
+                // Group icon
+                groupIcon
 
-                // Vendor info
+                // Group info
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
-                    Text(group.vendorName)
+                    Text(group.name)
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
 
                     HStack(spacing: Spacing.sm) {
-                        Text("\(group.paymentCount) payments")
+                        // Show subtitle if available (e.g., vendor name for expense grouping)
+                        if let subtitle = group.subtitle {
+                            Text(subtitle)
+                                .font(.system(size: 13))
+                                .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
+
+                            Text("•")
+                                .font(.system(size: 13))
+                                .foregroundColor(isDarkMode ? .white.opacity(0.4) : SemanticColors.textTertiary)
+                        }
+
+                        Text("\(group.paymentCount) payment\(group.paymentCount == 1 ? "" : "s")")
                             .font(.system(size: 13))
                             .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
 
@@ -540,7 +498,7 @@ private struct VendorPaymentCard: View {
         .buttonStyle(.plain)
     }
 
-    private var vendorIcon: some View {
+    private var groupIcon: some View {
         Circle()
             .fill(
                 LinearGradient(
@@ -554,7 +512,7 @@ private struct VendorPaymentCard: View {
             )
             .frame(width: 48, height: 48)
             .overlay(
-                Text(String(group.vendorName.prefix(1)).uppercased())
+                Text(group.icon)
                     .font(.system(size: 20, weight: .bold))
                     .foregroundColor(Color.fromHex("6366F1"))
             )
@@ -781,6 +739,7 @@ private enum PaymentDisplayStatus {
         paymentSchedules: [],
         expenses: [],
         searchQuery: "",
+        groupingStrategy: .byVendor,
         onRetry: {},
         onTogglePaidStatus: { _ in },
         onUpdate: { _ in },
@@ -799,6 +758,7 @@ private enum PaymentDisplayStatus {
         paymentSchedules: [],
         expenses: [],
         searchQuery: "",
+        groupingStrategy: .byExpense,
         onRetry: {},
         onTogglePaidStatus: { _ in },
         onUpdate: { _ in },
