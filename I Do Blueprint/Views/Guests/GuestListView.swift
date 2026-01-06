@@ -155,12 +155,16 @@ struct GuestListView: View {
     
     // MARK: - Table Row
     
+    // Fixed row height to prevent LazyVStack layout jumping
+    // Avatar (48px) + vertical padding (24px) + buffer for badges = 72px minimum
+    private let rowHeight: CGFloat = 72
+
     private func tableRow(for guest: Guest) -> some View {
         HStack(spacing: 0) {
             // Avatar Column
             avatarCell(for: guest)
                 .frame(width: 80)
-            
+
             // Guest Name Column
             Text(guest.fullName)
                 .font(Typography.bodyRegular)
@@ -168,35 +172,35 @@ struct GuestListView: View {
                 .foregroundColor(SemanticColors.textPrimary)
                 .frame(width: 200, alignment: .leading)
                 .lineLimit(1)
-            
+
             // Email Column
             Text(guest.email ?? "No email")
                 .font(Typography.bodyRegular)
                 .foregroundColor(SemanticColors.textSecondary)
                 .frame(width: 220, alignment: .leading)
                 .lineLimit(1)
-            
+
             // Invited By Column
             invitedByBadge(for: guest)
-                .frame(width: 140, alignment: .leading)
-            
+                .frame(width: 140, height: rowHeight, alignment: .leading)
+
             // Status Column
             statusBadge(for: guest)
-                .frame(width: 140, alignment: .center)
-            
+                .frame(width: 140, height: rowHeight, alignment: .center)
+
             // Table Column
             Text(guest.tableAssignment.map { "\($0)" } ?? "-")
                 .font(Typography.bodyRegular)
                 .fontWeight(.medium)
                 .foregroundColor(guest.tableAssignment != nil ? SemanticColors.textPrimary : SemanticColors.textTertiary)
                 .frame(width: 100, alignment: .center)
-            
+
             // Meal Choice Column
             Text(guest.mealOption ?? "-")
                 .font(Typography.bodyRegular)
                 .foregroundColor(guest.mealOption != nil ? SemanticColors.textPrimary : SemanticColors.textTertiary)
                 .frame(maxWidth: .infinity, alignment: .trailing)
-            
+
             // Actions Column
             Button(action: {
                 onGuestTap(guest)
@@ -211,8 +215,8 @@ struct GuestListView: View {
             .opacity(hoveredGuestId == guest.id ? 1.0 : 0.0)
             .frame(width: 60)
         }
+        .frame(height: rowHeight)
         .padding(.horizontal, Spacing.lg)
-        .padding(.vertical, Spacing.md)
         .background(
             Rectangle()
                 .fill(hoveredGuestId == guest.id ? Color.white.opacity(0.35) : Color.white.opacity(0.15))
