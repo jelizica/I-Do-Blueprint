@@ -165,6 +165,15 @@ struct GlobalSidebarViewV1: View {
     private var additionalNavigationSection: some View {
         VStack(spacing: Spacing.xxs) {
             SidebarNavItemV1(
+                tab: .timeline,
+                icon: "calendar.badge.clock",
+                title: "Timeline",
+                isSelected: coordinator.selectedTab == .timeline
+            ) {
+                coordinator.navigate(to: .timeline)
+            }
+
+            SidebarNavItemV1(
                 tab: .notes,
                 icon: "note.text",
                 title: "Notes",
