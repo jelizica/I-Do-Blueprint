@@ -10,6 +10,8 @@ import SwiftUI
 struct VendorStatsSectionV4: View {
     let windowSize: WindowSize
     let vendors: [Vendor]
+    /// Total budget from primary budget development scenario
+    let totalBudget: Double
 
     private var activeVendors: [Vendor] {
         vendors.filter { !$0.isArchived }
@@ -31,11 +33,6 @@ struct VendorStatsSectionV4: View {
     private var vendorsAddedThisWeek: Int {
         let oneWeekAgo = Calendar.current.date(byAdding: .day, value: -7, to: Date()) ?? Date()
         return activeVendors.filter { $0.createdAt >= oneWeekAgo }.count
-    }
-
-    /// Total budget from settings (default to 135,000 as shown in mockup)
-    private var totalBudget: Double {
-        135_000
     }
 
     private var budgetPercentage: Double {

@@ -80,7 +80,8 @@ struct VendorManagementViewV4: View {
                         // Stats Cards Section
                         VendorStatsSectionV4(
                             windowSize: windowSize,
-                            vendors: vendorStore.vendors
+                            vendors: vendorStore.vendors,
+                            totalBudget: appStores.budget.primaryScenarioTotal
                         )
 
                         // Search and Filter Section
