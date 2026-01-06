@@ -76,7 +76,9 @@ struct PaymentPlansDashboardViewV1: View {
     /// Group payments by expense
     private func groupByExpense() -> [PaymentGroup] {
         // Group by expenseId (UUID), filtering out payments without an expense
-        let grouped = Dictionary(grouping: paymentSchedules.filter { $0.expenseId != nil }) { payment -> UUID in
+        let paymentsWithExpense = paymentSchedules.filter { $0.expenseId != nil }
+
+        let grouped = Dictionary(grouping: paymentsWithExpense) { payment -> UUID in
             payment.expenseId!
         }
 
@@ -102,25 +104,46 @@ struct PaymentPlansDashboardViewV1: View {
         .sorted { $0.name < $1.name }
     }
 
-    /// Group payments by plan ID (each payment is its own "group")
+    /// Group payments by payment_plan_id (payments sharing the same plan ID are grouped together)
     private func groupByPlanId() -> [PaymentGroup] {
-        return paymentSchedules
-            .filter { payment in
-                if searchQuery.isEmpty { return true }
-                let vendorName = getVendorName(payment.vendorId) ?? payment.vendor
-                return vendorName.lowercased().contains(searchQuery.lowercased())
+        // Group by paymentPlanId (UUID), filtering out payments without a plan ID
+        let paymentsWithPlanId = paymentSchedules.filter { $0.paymentPlanId != nil }
+
+        let grouped = Dictionary(grouping: paymentsWithPlanId) { payment -> UUID in
+            payment.paymentPlanId!
+        }
+
+        return grouped.compactMap { planId, payments -> PaymentGroup? in
+            // Use the vendor name from the first payment as the group name
+            let firstPayment = payments.first
+            let vendorName = firstPayment.flatMap { getVendorName($0.vendorId) } ?? firstPayment?.vendor ?? "Unknown Plan"
+
+            // Calculate date range for subtitle
+            let sortedPayments = payments.sorted { $0.paymentDate < $1.paymentDate }
+            let dateRangeSubtitle: String
+            if let firstDate = sortedPayments.first?.paymentDate,
+               let lastDate = sortedPayments.last?.paymentDate,
+               sortedPayments.count > 1 {
+                dateRangeSubtitle = "\(formatDate(firstDate)) - \(formatDate(lastDate))"
+            } else if let singleDate = sortedPayments.first?.paymentDate {
+                dateRangeSubtitle = formatDate(singleDate)
+            } else {
+                dateRangeSubtitle = ""
             }
-            .sorted { $0.paymentDate < $1.paymentDate }
-            .map { payment in
-                let vendorName = getVendorName(payment.vendorId) ?? payment.vendor
-                return createPaymentGroup(
-                    id: "plan_\(payment.id)",
-                    name: vendorName.isEmpty ? "Payment #\(payment.id)" : vendorName,
-                    subtitle: formatDate(payment.paymentDate),
-                    icon: vendorName.first.map { String($0).uppercased() } ?? "P",
-                    payments: [payment]
-                )
-            }
+
+            return createPaymentGroup(
+                id: "plan_\(planId.uuidString)",
+                name: vendorName,
+                subtitle: dateRangeSubtitle.isEmpty ? nil : dateRangeSubtitle,
+                icon: vendorName.first.map { String($0).uppercased() } ?? "P",
+                payments: payments
+            )
+        }
+        .filter { group in
+            if searchQuery.isEmpty { return true }
+            return group.name.lowercased().contains(searchQuery.lowercased())
+        }
+        .sorted { $0.name < $1.name }
     }
 
     /// Helper to create a PaymentGroup with computed stats
@@ -422,10 +445,12 @@ private struct PaymentGroupCard: View {
                     lineWidth: 1.5
                 )
         )
-        .shadow(color: Color.black.opacity(0.06), radius: 16, x: 0, y: 6)
-        .shadow(color: Color.black.opacity(0.03), radius: 32, x: 0, y: 12)
-        .scaleEffect(isHovered && !isExpanded ? 1.005 : 1.0)
-        .animation(.spring(response: 0.25, dampingFraction: 0.8), value: isHovered)
+        // Hover shadow effect - slightly elevated appearance without layout shift
+        .shadow(color: Color.black.opacity(isHovered ? 0.10 : 0.06), radius: isHovered ? 20 : 16, x: 0, y: isHovered ? 8 : 6)
+        .shadow(color: Color.black.opacity(isHovered ? 0.05 : 0.03), radius: 32, x: 0, y: 12)
+        // NOTE: Removed scaleEffect to prevent layout shifts that cause flickering
+        // The border gradient opacity change (lines 432-433) provides sufficient hover feedback
+        .animation(.easeInOut(duration: 0.15), value: isHovered)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isExpanded)
         .onHover(perform: onHover)
     }

@@ -231,9 +231,12 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
                 // Load data into composed stores (async work not counted toward main-thread)
                 await payments.loadPaymentSchedules()
                 await gifts.loadGiftsData()
-                
+
                 // Update category store with loaded categories
                 categoryStore.updateCategories(categoriesResult)
+
+                // Update expense store with loaded expenses (needed for payment plan grouping by expense)
+                expenseStore.updateExpenses(expensesResult)
 
                 // Load primary budget scenario (may touch main-thread briefly)
                 let t2 = Date()

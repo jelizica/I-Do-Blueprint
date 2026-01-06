@@ -50,7 +50,14 @@ class ExpenseStoreV2: ObservableObject {
     }
     
     // MARK: - Public Methods
-    
+
+    /// Update expenses from external data (e.g., from BudgetStoreV2.loadBudgetData)
+    /// This avoids duplicate API calls when expenses are already fetched
+    func updateExpenses(_ newExpenses: [Expense]) {
+        expenses = newExpenses
+        logger.info("Updated expenses from external source: \(newExpenses.count) expenses")
+    }
+
     /// Load all expenses
     func loadExpenses() async {
         isLoading = true
