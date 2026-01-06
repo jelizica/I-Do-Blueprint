@@ -921,24 +921,27 @@ struct MasonryColumnsView: View {
     /// All columns are constrained to the same height (columnLayout.availableHeight) for visual consistency
     @ViewBuilder
     private func columnView(for cards: [DashboardViewV7.CardType], columnIndex: Int) -> some View {
-        VStack(alignment: .leading, spacing: columnLayout.rowSpacing) {
-            ForEach(cards, id: \.self) { cardType in
-                cardView(for: cardType)
-                    .frame(width: columnLayout.columnWidth)
+        // Use Color.clear as a fixed-size container to ensure consistent column dimensions
+        // This prevents alignment issues caused by VStack content affecting column sizing
+        Color.clear
+            .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight)
+            .overlay(alignment: .top) {
+                VStack(alignment: .leading, spacing: columnLayout.rowSpacing) {
+                    ForEach(cards, id: \.self) { cardType in
+                        cardView(for: cardType)
+                            .frame(width: columnLayout.columnWidth)
+                    }
+                    // Add spacer to push content to top when column has less content
+                    Spacer(minLength: 0)
+                }
+                .frame(maxHeight: columnLayout.availableHeight, alignment: .top)
             }
-            // Add spacer to push content to top when column has less content
-            Spacer(minLength: 0)
-        }
-        // Constrain all columns to the same width AND height for visual consistency
-        // This ensures all columns start and end at the same Y positions
-        .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
-        // Use custom columnTop alignment to force all columns to start at the same Y position
-        // Return 0 to ensure all columns align at the top of the HStack
-        .alignmentGuide(.columnTop) { dimension in
-            let topValue = dimension[.top]
-            print("📐 Column \(columnIndex) alignment: top=\(topValue), height=\(dimension.height), width=\(dimension.width)")
-            return topValue
-        }
+            // Use custom columnTop alignment to force all columns to start at the same Y position
+            // Return 0 (constant) to ensure all columns align at absolute top of the HStack
+            .alignmentGuide(.columnTop) { dimension in
+                print("📐 Column \(columnIndex) alignment: top=0 (forced), height=\(dimension.height), width=\(dimension.width)")
+                return 0  // Force all columns to align at Y=0 in HStack coordinate space
+            }
     }
 
     /// Build individual card view based on type
@@ -1604,6 +1607,8 @@ struct BudgetOverviewCardV7: View {
                     .foregroundColor(SemanticColors.textSecondary)
             }
         }
+        // Pin content to top so cards align across columns
+        .frame(maxHeight: .infinity, alignment: .top)
         // Static size - no expansion (budget card has fixed content)
         .glassPanel()
     }
@@ -1702,6 +1707,8 @@ struct TaskManagerCardV7: View {
                 }
             }
         }
+        // Pin content to top so cards align across columns
+        .frame(maxHeight: .infinity, alignment: .top)
         // Content-sized - no expansion (task card sizes to actual task count)
         .glassPanel()
     }
@@ -2073,6 +2080,8 @@ struct PaymentsDueCardV7: View {
                 }
             }
         }
+        // Pin content to top so cards align across columns
+        .frame(maxHeight: .infinity, alignment: .top)
         // Content-sized - no expansion (payment card sizes to actual payment count)
         .glassPanel()
     }
