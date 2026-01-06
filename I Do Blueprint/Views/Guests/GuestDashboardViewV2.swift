@@ -47,23 +47,28 @@ struct GuestDashboardViewV2: View {
             MeshGradientBackgroundV7()
                 .ignoresSafeArea()
 
-            ScrollView {
+            // Static layout: Header, Stats, Filters are fixed; only guest list scrolls
+            VStack(spacing: Spacing.xl) {
+                // STATIC SECTION - These stay fixed at top
                 VStack(spacing: Spacing.xl) {
                     // Header Section
                     headerSection
-                    
+
                     // Stats Cards Section
                     statsCardsSection
-                    
+
                     // Search and Filters Section
                     searchAndFiltersSection
-                    
-                    // Guest Grid Section
-                    guestGridSection
                 }
                 .padding(.horizontal, Spacing.xxl)
                 .padding(.top, Spacing.lg)
-                .padding(.bottom, Spacing.huge)
+
+                // SCROLLABLE SECTION - Only guest list/grid scrolls
+                ScrollView {
+                    guestGridSection
+                        .padding(.horizontal, Spacing.xxl)
+                        .padding(.bottom, Spacing.huge)
+                }
             }
         }
         .navigationTitle("")
