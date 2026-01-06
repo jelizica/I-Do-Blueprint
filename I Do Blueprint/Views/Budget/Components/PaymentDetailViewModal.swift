@@ -13,10 +13,30 @@ struct PaymentDetailViewModal: View {
     @ObservedObject var vendorStore: VendorStoreV2
     @ObservedObject var budgetStore: BudgetStoreV2
     @EnvironmentObject private var settingsStore: SettingsStoreV2
-    
+    @EnvironmentObject private var coordinator: AppCoordinator
+
     @Environment(\.dismiss) private var dismiss
     @State private var showingEditMode = false
     @State private var hasAppeared = false
+
+    // MARK: - Proportional Modal Sizing Pattern
+
+    private let minWidth: CGFloat = 600
+    private let maxWidth: CGFloat = 800
+    private let minHeight: CGFloat = 500
+    private let maxHeight: CGFloat = 700
+    private let windowChromeBuffer: CGFloat = 40
+    private let widthProportion: CGFloat = 0.55
+    private let heightProportion: CGFloat = 0.75
+
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        let targetWidth = parentSize.width * widthProportion
+        let targetHeight = parentSize.height * heightProportion - windowChromeBuffer
+        let finalWidth = min(maxWidth, max(minWidth, targetWidth))
+        let finalHeight = min(maxHeight, max(minHeight, targetHeight))
+        return CGSize(width: finalWidth, height: finalHeight)
+    }
     
     private var userTimezone: TimeZone {
         DateFormatting.userTimeZone(from: settingsStore.settings)
@@ -89,7 +109,7 @@ struct PaymentDetailViewModal: View {
                 }
             }
         }
-        .frame(minWidth: 600, maxWidth: 800, minHeight: 500, maxHeight: 700)
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
         .onAppear {
             withAnimation(.easeOut(duration: 0.5)) {
                 hasAppeared = true

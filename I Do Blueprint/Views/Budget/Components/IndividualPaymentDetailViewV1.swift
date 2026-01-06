@@ -13,10 +13,30 @@ struct IndividualPaymentDetailViewV1: View {
     @ObservedObject var vendorStore: VendorStoreV2
     @ObservedObject var budgetStore: BudgetStoreV2
     @EnvironmentObject private var settingsStore: SettingsStoreV2
+    @EnvironmentObject private var coordinator: AppCoordinator
 
     @Environment(\.dismiss) private var dismiss
     @State private var showingEditSheet = false
     @State private var hasAppeared = false
+
+    // MARK: - Proportional Modal Sizing Pattern
+
+    private let minWidth: CGFloat = 800
+    private let maxWidth: CGFloat = 1000
+    private let minHeight: CGFloat = 600
+    private let maxHeight: CGFloat = 800
+    private let windowChromeBuffer: CGFloat = 40
+    private let widthProportion: CGFloat = 0.65
+    private let heightProportion: CGFloat = 0.80
+
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        let targetWidth = parentSize.width * widthProportion
+        let targetHeight = parentSize.height * heightProportion - windowChromeBuffer
+        let finalWidth = min(maxWidth, max(minWidth, targetWidth))
+        let finalHeight = min(maxHeight, max(minHeight, targetHeight))
+        return CGSize(width: finalWidth, height: finalHeight)
+    }
 
     // MARK: - Computed Properties
 
@@ -84,7 +104,7 @@ struct IndividualPaymentDetailViewV1: View {
                 }
             }
         }
-        .frame(minWidth: 800, maxWidth: 1000, minHeight: 600, maxHeight: 800)
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
         .onAppear {
             withAnimation(.easeOut(duration: 0.4)) {
                 hasAppeared = true

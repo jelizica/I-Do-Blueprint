@@ -19,10 +19,30 @@ struct PaymentPlanDetailModal: View {
     let onUpdate: (PaymentSchedule) -> Void
     let onDelete: (PaymentSchedule) -> Void
     let getVendorName: (Int64?) -> String?
-    
+
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var coordinator: AppCoordinator
     @State private var showingEditMode = false
     @State private var selectedSchedule: PaymentSchedule?
+
+    // MARK: - Proportional Modal Sizing Pattern
+
+    private let minWidth: CGFloat = 700
+    private let maxWidth: CGFloat = 900
+    private let minHeight: CGFloat = 600
+    private let maxHeight: CGFloat = 800
+    private let windowChromeBuffer: CGFloat = 40
+    private let widthProportion: CGFloat = 0.60
+    private let heightProportion: CGFloat = 0.80
+
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        let targetWidth = parentSize.width * widthProportion
+        let targetHeight = parentSize.height * heightProportion - windowChromeBuffer
+        let finalWidth = min(maxWidth, max(minWidth, targetWidth))
+        let finalHeight = min(maxHeight, max(minHeight, targetHeight))
+        return CGSize(width: finalWidth, height: finalHeight)
+    }
     
     private var planPayments: [PaymentSchedule] {
         paymentSchedules
@@ -82,7 +102,7 @@ struct PaymentPlanDetailModal: View {
             }
         }
         #if os(macOS)
-        .frame(minWidth: 700, maxWidth: 900, minHeight: 600, maxHeight: 800)
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
         #endif
     }
     
