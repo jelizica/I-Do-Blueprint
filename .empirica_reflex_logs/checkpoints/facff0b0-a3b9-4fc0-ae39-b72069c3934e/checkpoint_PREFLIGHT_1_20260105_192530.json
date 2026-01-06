@@ -1,0 +1,45 @@
+{
+  "session_id": "facff0b0-a3b9-4fc0-ae39-b72069c3934e",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-05T19:25:29.104167+00:00",
+  "vectors": {
+    "know": 0.7,
+    "do": 0.3,
+    "context": 0.75,
+    "clarity": 0.6,
+    "coherence": 0.65,
+    "signal": 0.7,
+    "density": 0.6,
+    "state": 0.5,
+    "change": 0.2,
+    "completion": 0.0,
+    "impact": 0.6,
+    "engagement": 0.85,
+    "uncertainty": 0.45
+  },
+  "overall_confidence": 0.583,
+  "meta": {
+    "reasoning": "",
+    "prompt": "Preflight assessment",
+    "git_commit_sha": "0b0b9f4f31c5e23e91fb4a055324d76f4bec8e5f",
+    "git_notes_ref": "empirica/session/facff0b0-a3b9-4fc0-ae39-b72069c3934e/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "75a0023094421fa33ef90217b83d55a536bfd0b8",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        "\"I Do Blueprint/Views/Dashboard/DashboardViewV7.swift\"",
+        "\"I Do Blueprint/Views/Guests/AddGuestViewV2.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     |  Bin 1220608 -> 1220608 bytes\n .../Views/Dashboard/DashboardViewV7.swift          |  188 +--\n I Do Blueprint/Views/Guests/AddGuestViewV2.swift   | 1207 +++++++++++---------\n 3 files changed, 737 insertions(+), 658 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 117
+}

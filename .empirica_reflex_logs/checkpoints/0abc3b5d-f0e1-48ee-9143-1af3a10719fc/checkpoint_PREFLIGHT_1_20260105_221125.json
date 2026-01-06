@@ -1,0 +1,46 @@
+{
+  "session_id": "0abc3b5d-f0e1-48ee-9143-1af3a10719fc",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-05T22:11:23.699471+00:00",
+  "vectors": {
+    "engagement": 0.85,
+    "know": 0.55,
+    "do": 0.7,
+    "context": 0.6,
+    "clarity": 0.5,
+    "coherence": 0.55,
+    "signal": 0.65,
+    "density": 0.6,
+    "state": 0.5,
+    "change": 0.4,
+    "completion": 0.0,
+    "impact": 0.7,
+    "uncertainty": 0.5
+  },
+  "overall_confidence": 0.617,
+  "meta": {
+    "reasoning": "Starting dashboard layout alignment task. Have context from previous sessions about column distribution and card heights. Need to understand current layout code, identify why first items in columns are misaligned, add console logging for page/component heights, ensure cards extend to 24px from window edge.",
+    "prompt": "Starting dashboard layout alignment task. Have context from previous sessions about column distribution and card heights. Need to understand current layout code, identify why first items in columns are misaligned, add console logging for page/component heights, ensure cards extend to 24px from window edge.",
+    "git_commit_sha": "0c3f8398732572790bca4d9e3461009863261887",
+    "git_notes_ref": "empirica/session/0abc3b5d-f0e1-48ee-9143-1af3a10719fc/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "464e55d72ee216bde166843f6194f2508fadae18",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Guests/AddGuestViewV2.swift\"",
+        "\"I Do Blueprint/Views/Guests/GuestDashboardViewV2.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1220608 -> 1257472 bytes\n .../storage.sqlite                                 | Bin 2625536 -> 2756608 bytes\n I Do Blueprint/Views/Guests/AddGuestViewV2.swift   |  54 +++++++++++----------\n .../Views/Guests/GuestDashboardViewV2.swift        |  22 ++++++---\n 4 files changed, 45 insertions(+), 31 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 237
+}

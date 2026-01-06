@@ -203,14 +203,14 @@ struct AddGuestViewV2: View {
         .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.85))
+                .fill(Color.white.opacity(0.45))
                 .background(
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.ultraThinMaterial)
                 )
         )
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.black.opacity(0.15), radius: 30, x: 0, y: 15)
+        .shadow(color: Color.black.opacity(0.2), radius: 40, x: 0, y: 20)
     }
     
     // MARK: - Basic Tab Content
@@ -640,7 +640,7 @@ struct AddGuestViewV2: View {
                                 )
                         }
                         
-                        // Getting Ready section
+                        // Getting Ready section (aligned with Role text field)
                         VStack(alignment: .leading, spacing: 4) {
                             HStack {
                                 Text("Getting Ready")
@@ -663,31 +663,35 @@ struct AddGuestViewV2: View {
                             )
                         }
                         .frame(width: 180)
+                        .padding(.top, 18)
                         
-                        // Hair/Makeup toggles
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Image(systemName: "scissors")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(Color.gray)
-                                Text("Hair")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Color.gray)
-                                Spacer()
-                                SmallGrayToggle(isOn: $hairDone)
+                        // Hair/Makeup toggles (only shown when Getting Ready is true)
+                        if gettingReady {
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    Image(systemName: "scissors")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color.gray)
+                                    Text("Hair")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(Color.gray)
+                                    Spacer()
+                                    SmallGrayToggle(isOn: $hairDone)
+                                }
+                                HStack {
+                                    Image(systemName: "paintbrush.pointed")
+                                        .font(.system(size: 11))
+                                        .foregroundColor(Color.gray)
+                                    Text("Makeup")
+                                        .font(.system(size: 12))
+                                        .foregroundColor(Color.gray)
+                                    Spacer()
+                                    SmallGrayToggle(isOn: $makeupDone)
+                                }
                             }
-                            HStack {
-                                Image(systemName: "paintbrush.pointed")
-                                    .font(.system(size: 11))
-                                    .foregroundColor(Color.gray)
-                                Text("Makeup")
-                                    .font(.system(size: 12))
-                                    .foregroundColor(Color.gray)
-                                Spacer()
-                                SmallGrayToggle(isOn: $makeupDone)
-                            }
+                            .frame(width: 100)
+                            .padding(.top, 18)
                         }
-                        .frame(width: 100)
                     }
                 }
             }

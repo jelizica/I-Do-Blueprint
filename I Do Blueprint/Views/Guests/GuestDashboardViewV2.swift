@@ -341,13 +341,23 @@ struct GuestDashboardViewV2: View {
             } else if filteredAndSortedGuests.isEmpty {
                 emptyStateView
             } else {
-                LazyVGrid(columns: guestColumns, spacing: Spacing.lg) {
-                    ForEach(filteredAndSortedGuests) { guest in
-                        GuestCardV2(guest: guest, settings: settings)
-                            .onTapGesture {
-                                coordinator.present(.editGuest(guest))
-                            }
+                if viewMode == .grid {
+                    LazyVGrid(columns: guestColumns, spacing: Spacing.lg) {
+                        ForEach(filteredAndSortedGuests) { guest in
+                            GuestCardV2(guest: guest, settings: settings)
+                                .onTapGesture {
+                                    coordinator.present(.editGuest(guest))
+                                }
+                        }
                     }
+                } else {
+                    GuestListView(
+                        guests: filteredAndSortedGuests,
+                        settings: settings,
+                        onGuestTap: { guest in
+                            coordinator.present(.editGuest(guest))
+                        }
+                    )
                 }
             }
         }

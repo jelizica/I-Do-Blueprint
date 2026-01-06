@@ -918,6 +918,7 @@ struct MasonryColumnsView: View {
     /// Build a column with dynamically assigned cards
     /// Cards fill available height with no bottom space (dynamic cards expand to fill)
     /// Uses custom columnTop alignment guide to ensure all columns start at the same Y position
+    /// All columns are constrained to the same height (columnLayout.availableHeight) for visual consistency
     @ViewBuilder
     private func columnView(for cards: [DashboardViewV7.CardType], columnIndex: Int) -> some View {
         VStack(alignment: .leading, spacing: columnLayout.rowSpacing) {
@@ -925,8 +926,12 @@ struct MasonryColumnsView: View {
                 cardView(for: cardType)
                     .frame(width: columnLayout.columnWidth)
             }
+            // Add spacer to push content to top when column has less content
+            Spacer(minLength: 0)
         }
-        .frame(width: columnLayout.columnWidth, alignment: .top)
+        // Constrain all columns to the same width AND height for visual consistency
+        // This ensures all columns start and end at the same Y positions
+        .frame(width: columnLayout.columnWidth, height: columnLayout.availableHeight, alignment: .top)
         // Use custom columnTop alignment to force all columns to start at the same Y position
         // Return 0 to ensure all columns align at the top of the HStack
         .alignmentGuide(.columnTop) { dimension in
