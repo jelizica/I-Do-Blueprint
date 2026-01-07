@@ -1,0 +1,45 @@
+{
+  "session_id": "08c9bc51-c4f5-4848-baef-ccf1962156d0",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-06T23:18:55.190322+00:00",
+  "vectors": {
+    "know": 0.45,
+    "do": 0.3,
+    "context": 0.55,
+    "clarity": 0.5,
+    "coherence": 0.45,
+    "signal": 0.5,
+    "density": 0.4,
+    "state": 0.6,
+    "change": 0.25,
+    "completion": 0.1,
+    "impact": 0.5,
+    "engagement": 0.7,
+    "uncertainty": 0.55
+  },
+  "overall_confidence": 0.433,
+  "meta": {
+    "reasoning": "Cold Start Protocol completed. Read all skills files, dotfiles, and architecture. Have session context and beads status. Need to understand Supabase data schema and brainstorm dashboard metrics with LLM Council.",
+    "prompt": "Cold Start Protocol completed. Read all skills files, dotfiles, and architecture. Have session context and beads status. Need to understand Supabase data schema and brainstorm dashboard metrics with LLM Council.",
+    "git_commit_sha": "e4ee5cdb7168f447639a313344c2c3f6948fada5",
+    "git_notes_ref": "empirica/session/08c9bc51-c4f5-4848-baef-ccf1962156d0/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "95f73ad2309ee089998baeccdace40d444f67b4c",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        "\"I Do Blueprint/Views/Guests/Components/GuestSearchAndFilters.swift\"",
+        "\"I Do Blueprint/Views/Guests/GuestDashboardViewV2.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1695744 -> 1695744 bytes\n .../Guests/Components/GuestSearchAndFilters.swift  | 361 +++++++--------------\n .../Views/Guests/GuestDashboardViewV2.swift        | 320 ++++++++++++------\n 3 files changed, 344 insertions(+), 337 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 188
+}

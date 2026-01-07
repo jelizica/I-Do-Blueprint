@@ -1,0 +1,48 @@
+{
+  "session_id": "ff43cf5a-908d-4596-9d16-7751e095d5e7",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-07T02:37:30.127715+00:00",
+  "vectors": {
+    "know": 0.6,
+    "do": 0.3,
+    "context": 0.75,
+    "clarity": 0.7,
+    "coherence": 0.65,
+    "signal": 0.7,
+    "density": 0.6,
+    "state": 0.5,
+    "change": 0.2,
+    "completion": 0.05,
+    "impact": 0.75,
+    "engagement": 0.85,
+    "uncertainty": 0.4
+  },
+  "overall_confidence": 0.55,
+  "meta": {
+    "reasoning": "",
+    "prompt": "Preflight assessment",
+    "git_commit_sha": "dff4c79787b107a64fc0860bd62d7a787076ae7a",
+    "git_notes_ref": "empirica/session/ff43cf5a-908d-4596-9d16-7751e095d5e7/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "894caffb523a743d5d1372d26cf72ffe5428d2f0",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Guests/Components/GuestSearchAndFilters.swift\"",
+        "\"I Do Blueprint/Views/Guests/GuestDashboardViewV2.swift\"",
+        "\"I Do Blueprint/Views/Vendors/Components/VendorSearchAndFiltersV4.swift\"",
+        "\"I Do Blueprint/Views/Vendors/VendorManagementViewV5.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1695744 -> 1703936 bytes\n .../storage.sqlite                                 | Bin 4775936 -> 4808704 bytes\n .../Guests/Components/GuestSearchAndFilters.swift  | 361 +++++++--------------\n .../Views/Guests/GuestDashboardViewV2.swift        | 315 ++++++++++++------\n .../Components/VendorSearchAndFiltersV4.swift      | 204 ++++--------\n .../Views/Vendors/VendorManagementViewV5.swift     |  87 +++--\n 6 files changed, 454 insertions(+), 513 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 143
+}

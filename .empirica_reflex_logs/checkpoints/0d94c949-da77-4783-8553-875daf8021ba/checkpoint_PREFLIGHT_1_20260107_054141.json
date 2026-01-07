@@ -1,0 +1,51 @@
+{
+  "session_id": "0d94c949-da77-4783-8553-875daf8021ba",
+  "phase": "PREFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-07T05:41:39.915490+00:00",
+  "vectors": {
+    "know": 0.65,
+    "do": 0.7,
+    "context": 0.6,
+    "clarity": 0.65,
+    "coherence": 0.7,
+    "signal": 0.65,
+    "density": 0.6,
+    "state": 0.7,
+    "change": 0.5,
+    "completion": 0.3,
+    "impact": 0.5,
+    "engagement": 0.8,
+    "uncertainty": 0.4
+  },
+  "overall_confidence": 0.65,
+  "meta": {
+    "reasoning": "",
+    "prompt": "Preflight assessment",
+    "git_commit_sha": "71881a993f6db9b450d46aa0b6a5959be8610e50",
+    "git_notes_ref": "empirica/session/0d94c949-da77-4783-8553-875daf8021ba/PREFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "a2dd65db75311b9dac3286eb23b19461dcf1ea37",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Dashboard/Components/VendorDetailV2/VendorDetailModalV2.swift\"",
+        "\"I Do Blueprint/Views/Dashboard/Components/VendorDetailV2/VendorDetailOverviewTabV2.swift\"",
+        "\"I Do Blueprint/Views/Guests/Components/GuestSearchAndFilters.swift\"",
+        "\"I Do Blueprint/Views/Guests/GuestDashboardViewV2.swift\"",
+        "\"I Do Blueprint/Views/Vendors/Components/VendorSearchAndFiltersV4.swift\"",
+        "\"I Do Blueprint/Views/Vendors/EditVendorSheetV4/EditVendorOverviewTabV4.swift\"",
+        "\"I Do Blueprint/Views/Vendors/EditVendorSheetV4/EditVendorSheetV4.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1695744 -> 1728512 bytes\n .../storage.sqlite                                 | Bin 4775936 -> 4874240 bytes\n .../VendorDetailV2/VendorDetailModalV2.swift       |   1 +\n .../VendorDetailV2/VendorDetailOverviewTabV2.swift |  50 ++-\n .../Guests/Components/GuestSearchAndFilters.swift  | 361 +++++++--------------\n .../Views/Guests/GuestDashboardViewV2.swift        | 315 ++++++++++++------\n .../Components/VendorSearchAndFiltersV4.swift      | 204 ++++--------\n .../EditVendorOverviewTabV4.swift                  | 177 ++++++----\n .../EditVendorSheetV4/EditVendorSheetV4.swift      |  22 +-\n 9 files changed, 597 insertions(+), 533 deletions(-)"
+    }
+  },
+  "learning_delta": {},
+  "token_count": 170
+}

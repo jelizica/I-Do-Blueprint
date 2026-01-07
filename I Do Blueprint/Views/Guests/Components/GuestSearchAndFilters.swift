@@ -3,6 +3,7 @@
 //  I Do Blueprint
 //
 //  Search and filter controls for guest management
+//  Matches vendor management design with horizontal layout
 //
 
 import SwiftUI
@@ -20,154 +21,44 @@ struct GuestSearchAndFilters: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            if windowSize == .compact {
-                // Compact: Collapsible menus
-                compactLayout
-            } else {
-                // Regular/Large: Single row layout
-                regularLayout
-            }
-        }
-        .padding(Spacing.lg)
-        .frame(maxWidth: .infinity)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
-    }
-    
-    // MARK: - Compact Layout
-    
-    private var compactLayout: some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
-            // Search bar (full width, aligned)
+        HStack(spacing: Spacing.md) {
+            // Search Field (left)
             searchField
             
-            // Filter menus row (aligned with search bar edges)
-            HStack(spacing: Spacing.sm) {
-                statusFilterMenu
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                invitedByFilterMenu
-                    .frame(maxWidth: .infinity, alignment: .center)
-                sortMenu
-                    .frame(maxWidth: .infinity, alignment: .trailing)
-            }
+            // Status Filter Tabs (center-left)
+            statusFilterTabs
             
-            // Clear all button (centered, only when filters active)
-            if hasActiveFilters {
-                HStack {
-                    Spacer()
-                    clearAllFiltersButton
-                    Spacer()
-                }
-            }
-        }
-    }
-    
-    // MARK: - Regular Layout
-    
-    private var regularLayout: some View {
-        HStack(spacing: Spacing.sm) {
-            // Search Field
-            searchField
-            
-            // RSVP Status Toggle Buttons (Blue - Primary)
-            statusFilters
-            
-            // Invited By Toggle Buttons (Teal - Different color to differentiate)
-            invitedByFilters
+            // Invited By Filter Tabs (center-right)
+            invitedByFilterTabs
             
             Spacer()
             
-            // Sort Menu
+            // Sort Menu (right)
             sortMenu
-            
-            // Clear Filters
-            if hasActiveFilters {
-                clearFiltersButton
-            }
         }
+        .padding(Spacing.md)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(SemanticColors.backgroundSecondary.opacity(0.6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.lg)
+                        .stroke(Color.white.opacity(0.2), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
     }
     
-    // MARK: - Status Filter Menu (Compact Mode)
-    
-    private var statusFilterMenu: some View {
-        Menu {
-            ForEach([nil, RSVPStatus.attending, RSVPStatus.pending, RSVPStatus.declined], id: \.self) { status in
-                Button {
-                    selectedStatus = status
-                } label: {
-                    HStack {
-                        Text(status?.displayName ?? "All Status")
-                        if selectedStatus == status {
-                            Spacer()
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: Spacing.xs) {
-                // Filter icon on LEFT (always visible)
-                Image(systemName: "line.3.horizontal.decrease.circle")
-                    .font(.caption)
-                
-                Text(selectedStatus?.displayName ?? "Status")
-                    .font(Typography.bodySmall)
-            }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
-        }
-        .buttonStyle(.bordered)
-        .tint(SemanticColors.primaryAction)
-        .help("Filter by RSVP status")
-    }
-    
-    // MARK: - Invited By Filter Menu (Compact Mode)
-    
-    private var invitedByFilterMenu: some View {
-        Menu {
-            ForEach([nil] + InvitedBy.allCases, id: \.self) { invitedBy in
-                Button {
-                    selectedInvitedBy = invitedBy
-                } label: {
-                    HStack {
-                        Text(invitedBy?.displayName(with: settings) ?? "All Guests")
-                        if selectedInvitedBy == invitedBy {
-                            Spacer()
-                            Image(systemName: "checkmark")
-                        }
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: Spacing.xs) {
-                // Filter icon on LEFT (always visible)
-                Image(systemName: "line.3.horizontal.decrease.circle")
-                    .font(.caption)
-                
-                Text(selectedInvitedBy?.displayName(with: settings) ?? "Invited By")
-                    .font(Typography.bodySmall)
-                    .lineLimit(1)
-            }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
-        }
-        .buttonStyle(.bordered)
-        .tint(Color.teal)
-        .help("Filter by who invited the guest")
-    }
-    
+        
     // MARK: - Search Field
     
-    @ViewBuilder
     private var searchField: some View {
-        let content = HStack(spacing: Spacing.sm) {
+        HStack(spacing: Spacing.sm) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(SemanticColors.textSecondary)
                 .font(.body)
 
-            TextField("Search guests...", text: $searchText)
+            TextField("Search guests by name or email...", text: $searchText)
                 .textFieldStyle(.plain)
 
             if !searchText.isEmpty {
@@ -180,56 +71,54 @@ struct GuestSearchAndFilters: View {
                 .buttonStyle(.plain)
             }
         }
-        .padding(Spacing.sm)
-        
-        if windowSize == .compact {
-            content
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(SemanticColors.backgroundSecondary)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
-                        )
-                )
-        } else {
-            content
-                .frame(minWidth: 150, idealWidth: 200, maxWidth: 250)
-                .background(
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .fill(SemanticColors.backgroundSecondary)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: CornerRadius.md)
-                                .stroke(SemanticColors.borderPrimary, lineWidth: 1)
-                        )
-                )
-        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .frame(width: 320)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.white.opacity(0.6))
+                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        )
     }
     
-    // MARK: - Status Filters (Regular Mode)
+    // MARK: - Status Filter Tabs
     
-    private var statusFilters: some View {
-        ForEach([nil, RSVPStatus.attending, RSVPStatus.pending, RSVPStatus.declined], id: \.self) { status in
-            StatusFilterButton(
-                status: status,
-                isSelected: selectedStatus == status,
-                onTap: { selectedStatus = status }
-            )
+    private var statusFilterTabs: some View {
+        HStack(spacing: 2) {
+            ForEach([nil, RSVPStatus.confirmed, RSVPStatus.pending, RSVPStatus.declined], id: \.self) { status in
+                StatusTabButton(
+                    status: status,
+                    isSelected: selectedStatus == status,
+                    onTap: { selectedStatus = status },
+                    settings: settings
+                )
+            }
         }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.gray.opacity(0.15))
+        )
     }
     
-    // MARK: - Invited By Filters (Regular Mode)
+    // MARK: - Invited By Filter Tabs
     
-    private var invitedByFilters: some View {
-        ForEach([nil] + InvitedBy.allCases, id: \.self) { invitedBy in
-            InvitedByFilterButton(
-                invitedBy: invitedBy,
-                settings: settings,
-                isSelected: selectedInvitedBy == invitedBy,
-                onTap: { selectedInvitedBy = invitedBy }
-            )
+    private var invitedByFilterTabs: some View {
+        HStack(spacing: 2) {
+            ForEach([nil] + InvitedBy.allCases, id: \.self) { invitedBy in
+                InvitedByTabButton(
+                    invitedBy: invitedBy,
+                    settings: settings,
+                    isSelected: selectedInvitedBy == invitedBy,
+                    onTap: { selectedInvitedBy = invitedBy }
+                )
+            }
         }
+        .padding(4)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.gray.opacity(0.15))
+        )
     }
     
     // MARK: - Sort Menu
@@ -255,101 +144,97 @@ struct GuestSearchAndFilters: View {
                 }
             }
         } label: {
-            HStack {
-                Image(systemName: "arrow.up.arrow.down")
-                Text(selectedSortOption.groupLabel)
+            HStack(spacing: Spacing.xs) {
+                Text("Sort:")
+                    .font(.system(size: 11))
+                    .foregroundColor(SemanticColors.textSecondary)
+                
+                Text("Name (A-Z)")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(SemanticColors.textPrimary)
+                
                 Image(systemName: "chevron.down")
-                    .font(.caption)
+                    .font(.system(size: 10))
+                    .foregroundColor(SemanticColors.textSecondary)
             }
-            .font(Typography.bodySmall)
             .padding(.horizontal, Spacing.md)
             .padding(.vertical, Spacing.sm)
         }
-        .buttonStyle(.bordered)
+        .buttonStyle(.plain)
         .help("Sort guests")
-    }
-    
-    // MARK: - Clear All Filters Button (Compact Mode)
-    
-    private var clearAllFiltersButton: some View {
-        Button {
-            searchText = ""
-            selectedStatus = nil
-            selectedInvitedBy = nil
-        } label: {
-            Text("Clear All Filters")
-                .font(Typography.bodySmall)
-        }
-        .buttonStyle(.borderless)
-        .foregroundColor(SemanticColors.primaryAction)
-    }
-    
-    // MARK: - Clear Filters Button (Regular Mode)
-    
-    private var clearFiltersButton: some View {
-        Button {
-            searchText = ""
-            selectedStatus = nil
-            selectedInvitedBy = nil
-        } label: {
-            Text("Clear")
-                .font(Typography.bodySmall)
-        }
-        .buttonStyle(.borderless)
-        .foregroundColor(SemanticColors.primaryAction)
     }
 }
 
-// MARK: - Supporting Views (Regular Mode)
+// MARK: - Supporting Views
 
-private struct StatusFilterButton: View {
+private struct StatusTabButton: View {
     let status: RSVPStatus?
     let isSelected: Bool
     let onTap: () -> Void
+    let settings: CoupleSettings
+    
+    private var guestCount: Int {
+        // This would ideally come from the store, but for now we'll show placeholder
+        0
+    }
     
     var body: some View {
         Button(action: onTap) {
-            Text(status?.displayName ?? "All Status")
-                .font(Typography.bodySmall)
-                .padding(.horizontal, Spacing.md)
-                .padding(.vertical, Spacing.sm)
+            HStack(spacing: Spacing.xs) {
+                Text(status?.displayName ?? "All Guests")
+                    .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
+                
+                if guestCount > 0 {
+                    Text("\(guestCount)")
+                        .font(.system(size: 10, weight: .medium))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.gray.opacity(0.3))
+                        )
+                }
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isSelected ? Color.white : Color.clear)
+                    .shadow(color: isSelected ? .black.opacity(0.1) : .clear, radius: 2, x: 0, y: 1)
+            )
+            .foregroundColor(isSelected ? SemanticColors.textPrimary : SemanticColors.textSecondary)
         }
         .buttonStyle(.plain)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .fill(isSelected ? SemanticColors.primaryAction : SemanticColors.backgroundSecondary)
-        )
-        .foregroundColor(isSelected ? .white : SemanticColors.textPrimary)
-        .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .stroke(isSelected ? SemanticColors.primaryAction : SemanticColors.borderPrimary, lineWidth: 1)
-        )
     }
 }
 
-private struct InvitedByFilterButton: View {
+private struct InvitedByTabButton: View {
     let invitedBy: InvitedBy?
     let settings: CoupleSettings
     let isSelected: Bool
     let onTap: () -> Void
     
+    private var displayText: String {
+        if let invitedBy = invitedBy {
+            return "Invited By: \(invitedBy.displayName(with: settings))"
+        } else {
+            return "All Guests"
+        }
+    }
+    
     var body: some View {
         Button(action: onTap) {
-            Text(invitedBy?.displayName(with: settings) ?? "All Guests")
-                .font(Typography.bodySmall)
+            Text(displayText)
+                .font(.system(size: 12, weight: isSelected ? .semibold : .medium))
                 .padding(.horizontal, Spacing.md)
-                .padding(.vertical, Spacing.sm)
-                .lineLimit(1)
+                .padding(.vertical, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(isSelected ? Color.white : Color.clear)
+                        .shadow(color: isSelected ? .black.opacity(0.1) : .clear, radius: 2, x: 0, y: 1)
+                )
+                .foregroundColor(isSelected ? SemanticColors.textPrimary : SemanticColors.textSecondary)
         }
         .buttonStyle(.plain)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .fill(isSelected ? Color.teal : SemanticColors.backgroundSecondary)
-        )
-        .foregroundColor(isSelected ? .white : SemanticColors.textPrimary)
-        .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.pill)
-                .stroke(isSelected ? Color.teal : SemanticColors.borderPrimary, lineWidth: 1)
-        )
     }
 }

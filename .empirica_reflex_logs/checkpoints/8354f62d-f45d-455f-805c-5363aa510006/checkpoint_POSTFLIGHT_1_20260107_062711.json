@@ -1,0 +1,132 @@
+{
+  "session_id": "8354f62d-f45d-455f-805c-5363aa510006",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-07T06:27:09.055672+00:00",
+  "vectors": {
+    "know": 0.9,
+    "do": 0.95,
+    "context": 0.88,
+    "clarity": 0.9,
+    "coherence": 0.92,
+    "signal": 0.88,
+    "density": 0.85,
+    "state": 0.95,
+    "change": 0.9,
+    "completion": 1.0,
+    "impact": 0.85,
+    "engagement": 0.9,
+    "uncertainty": 0.1
+  },
+  "overall_confidence": 0.91,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.9,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "know": 0.2,
+      "do": 0.3,
+      "context": 0.13,
+      "clarity": 0.2,
+      "coherence": 0.22,
+      "signal": 0.23,
+      "density": 0.25,
+      "state": 0.25,
+      "change": 0.4,
+      "completion": 0.8,
+      "impact": 0.25,
+      "engagement": 0.1,
+      "uncertainty": -0.3
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "b3500f1e6cce7b37b0a5864b4ab6e933ee330c35",
+    "git_notes_ref": "empirica/session/8354f62d-f45d-455f-805c-5363aa510006/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "c31b7a77ef319d86c4b41440c4eb6864c4c66d77",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Views/Guests/Components/GuestSearchAndFilters.swift\"",
+        "\"I Do Blueprint/Views/Guests/GuestDashboardViewV2.swift\"",
+        "\"I Do Blueprint/Views/Vendors/Components/VendorSearchAndFiltersV4.swift\"",
+        "\"I Do Blueprint/Views/Vendors/EditVendorSheetV4/EditVendorSheetV4.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1695744 -> 1748992 bytes\n .../storage.sqlite                                 | Bin 4775936 -> 4972544 bytes\n .../Guests/Components/GuestSearchAndFilters.swift  | 361 +++++++--------------\n .../Views/Guests/GuestDashboardViewV2.swift        | 315 ++++++++++++------\n .../Components/VendorSearchAndFiltersV4.swift      | 204 ++++--------\n .../EditVendorSheetV4/EditVendorSheetV4.swift      |  40 ++-\n 6 files changed, 454 insertions(+), 466 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.7,
+      "curr": 0.9,
+      "delta": 0.2
+    },
+    "do": {
+      "prev": 0.65,
+      "curr": 0.95,
+      "delta": 0.3
+    },
+    "context": {
+      "prev": 0.75,
+      "curr": 0.88,
+      "delta": 0.13
+    },
+    "clarity": {
+      "prev": 0.7,
+      "curr": 0.9,
+      "delta": 0.2
+    },
+    "coherence": {
+      "prev": 0.7,
+      "curr": 0.92,
+      "delta": 0.22
+    },
+    "signal": {
+      "prev": 0.65,
+      "curr": 0.88,
+      "delta": 0.23
+    },
+    "density": {
+      "prev": 0.6,
+      "curr": 0.85,
+      "delta": 0.25
+    },
+    "state": {
+      "prev": 0.7,
+      "curr": 0.95,
+      "delta": 0.25
+    },
+    "change": {
+      "prev": 0.5,
+      "curr": 0.9,
+      "delta": 0.4
+    },
+    "completion": {
+      "prev": 0.2,
+      "curr": 1.0,
+      "delta": 0.8
+    },
+    "impact": {
+      "prev": 0.6,
+      "curr": 0.85,
+      "delta": 0.25
+    },
+    "engagement": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "uncertainty": {
+      "prev": 0.4,
+      "curr": 0.1,
+      "delta": -0.3
+    }
+  },
+  "token_count": 302
+}

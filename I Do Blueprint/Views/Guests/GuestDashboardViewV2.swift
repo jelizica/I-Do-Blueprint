@@ -214,117 +214,241 @@ struct GuestDashboardViewV2: View {
     // MARK: - Search and Filters Section
     
     private var searchAndFiltersSection: some View {
-        HStack(spacing: Spacing.lg) {
-            // Search Bar
-            HStack(spacing: Spacing.sm) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(SemanticColors.textSecondary)
-                    .font(.system(size: 14))
-                
-                TextField("Search guests by name or email...", text: $searchText)
-                    .textFieldStyle(.plain)
-                    .font(Typography.bodyRegular)
-            }
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.sm)
-            .modifier(GlassPanelStyle(cornerRadius: 24, padding: 0))
-            .frame(maxWidth: .infinity)
-            
-            // Filter Controls
+        VStack(spacing: 0) {
             HStack(spacing: Spacing.md) {
-                // Status Filter
-                Menu {
-                    Button("All Guests") {
-                        selectedStatus = nil
-                    }
-                    Divider()
-                    ForEach(RSVPStatus.allCases, id: \.self) { status in
-                        Button(status.displayName) {
-                            selectedStatus = status
-                        }
-                    }
-                } label: {
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "line.3.horizontal.decrease.circle")
-                            .font(.system(size: 14))
-                        Text(selectedStatus?.displayName ?? "All Guests")
-                            .font(Typography.bodyRegular)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10))
-                    }
-                    .padding(.horizontal, Spacing.md)
-                    .padding(.vertical, Spacing.sm)
-                }
-                .buttonStyle(GlassButtonStyle())
+                // Search Bar (left)
+                searchBar
                 
-                // Invited By Filter
-                Menu {
-                    Button("All") {
-                        selectedInvitedBy = nil
-                    }
-                    Divider()
-                    ForEach(InvitedBy.allCases, id: \.self) { invitedBy in
-                        Button(invitedBy.displayName(with: settings)) {
-                            selectedInvitedBy = invitedBy
-                        }
-                    }
-                } label: {
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "person.2.fill")
-                            .font(.system(size: 14))
-                        Text("Invited By: \(selectedInvitedBy?.displayName(with: settings) ?? "All")")
-                            .font(Typography.bodyRegular)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10))
-                    }
-                    .padding(.horizontal, Spacing.md)
-                    .padding(.vertical, Spacing.sm)
-                }
-                .buttonStyle(GlassButtonStyle())
+                // Status Filter Tabs (center-left)
+                statusFilterTabs
                 
-                // Sort Menu
-                Menu {
-                    ForEach(GuestSortOption.allCases, id: \.self) { option in
-                        Button(option.displayName) {
-                            selectedSortOption = option
-                        }
-                    }
-                } label: {
-                    HStack(spacing: Spacing.xs) {
-                        Image(systemName: "arrow.up.arrow.down")
-                            .font(.system(size: 14))
-                        Text("Sort: \(selectedSortOption.displayName)")
-                            .font(Typography.bodyRegular)
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10))
-                    }
-                    .padding(.horizontal, Spacing.md)
-                    .padding(.vertical, Spacing.sm)
-                }
-                .buttonStyle(GlassButtonStyle())
+                // Invited By Filter Tabs (center-right)
+                invitedByFilterTabs
+                
+                Spacer()
+                
+                // Sort Menu (right)
+                sortMenu
                 
                 // View Toggle
-                HStack(spacing: 0) {
-                    Button(action: { viewMode = .grid }) {
-                        Image(systemName: "square.grid.2x2")
-                            .font(.system(size: 14))
-                            .frame(width: 32, height: 32)
-                    }
-                    .background(viewMode == .grid ? Color.white.opacity(0.3) : Color.clear)
-                    .cornerRadius(6)
-                    
-                    Button(action: { viewMode = .list }) {
-                        Image(systemName: "list.bullet")
-                            .font(.system(size: 14))
-                            .frame(width: 32, height: 32)
-                    }
-                    .background(viewMode == .list ? Color.white.opacity(0.3) : Color.clear)
-                    .cornerRadius(6)
+                viewToggle
+            }
+            .padding(Spacing.md)
+        }
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(Color.white.opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.lg)
+                        .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
+    }
+    
+    private var searchBar: some View {
+        HStack(spacing: Spacing.sm) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(SemanticColors.textSecondary)
+                .font(.system(size: 14))
+            
+            TextField("Search guests by name or email...", text: $searchText)
+                .textFieldStyle(.plain)
+                .font(Typography.bodyRegular)
+            
+            if !searchText.isEmpty {
+                Button {
+                    searchText = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(SemanticColors.textSecondary)
                 }
-                .padding(4)
-                .modifier(GlassPanelStyle(cornerRadius: 8, padding: 0))
+                .buttonStyle(.plain)
             }
         }
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .frame(width: 320, height: 40)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.white.opacity(0.6))
+                .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+        )
+    }
+    
+    private var statusFilterTabs: some View {
+        Menu {
+            Button {
+                selectedStatus = nil
+            } label: {
+                HStack {
+                    Text("All Guests")
+                    if selectedStatus == nil {
+                        Spacer()
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+            
+            Divider()
+            
+            ForEach([RSVPStatus.confirmed, RSVPStatus.pending, RSVPStatus.declined], id: \.self) { status in
+                Button {
+                    selectedStatus = status
+                } label: {
+                    HStack {
+                        Text(status.displayName)
+                        Spacer()
+                        Text("\(countForStatus(status))")
+                            .foregroundColor(SemanticColors.textSecondary)
+                        if selectedStatus == status {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: "line.3.horizontal.decrease.circle")
+                    .font(.system(size: 14))
+                Text(selectedStatus?.displayName ?? "All Guests")
+                    .font(.system(size: 13))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10))
+            }
+            .foregroundColor(SemanticColors.textPrimary)
+            .padding(.horizontal, Spacing.md)
+            .frame(height: 40)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(Color.white.opacity(0.6))
+                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var invitedByFilterTabs: some View {
+        Menu {
+            Button {
+                selectedInvitedBy = nil
+            } label: {
+                HStack {
+                    Text("All Guests")
+                    if selectedInvitedBy == nil {
+                        Spacer()
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+            
+            Divider()
+            
+            ForEach(InvitedBy.allCases, id: \.self) { invitedBy in
+                Button {
+                    selectedInvitedBy = invitedBy
+                } label: {
+                    HStack {
+                        Text("Invited By: \(invitedBy.displayName(with: settings))")
+                        if selectedInvitedBy == invitedBy {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: Spacing.xs) {
+                Image(systemName: "person.2.fill")
+                    .font(.system(size: 14))
+                Text(selectedInvitedBy != nil ? "Invited By: \(selectedInvitedBy!.displayName(with: settings))" : "All Guests")
+                    .font(.system(size: 13))
+                    .lineLimit(1)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10))
+            }
+            .foregroundColor(SemanticColors.textPrimary)
+            .padding(.horizontal, Spacing.md)
+            .frame(height: 40)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(Color.white.opacity(0.6))
+                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
+    private var sortMenu: some View {
+        Menu {
+            ForEach(GuestSortOption.allCases, id: \.self) { option in
+                Button {
+                    selectedSortOption = option
+                } label: {
+                    HStack {
+                        Text(option.displayName)
+                        if selectedSortOption == option {
+                            Spacer()
+                            Image(systemName: "checkmark")
+                                .foregroundColor(SemanticColors.primaryAction)
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: Spacing.xs) {
+                Text("Sort:")
+                    .font(.system(size: 11))
+                    .foregroundColor(SemanticColors.textSecondary)
+                
+                Text("Name (A-Z)")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(SemanticColors.textPrimary)
+                
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10))
+                    .foregroundColor(SemanticColors.textSecondary)
+            }
+            .padding(.horizontal, Spacing.md)
+            .frame(height: 40)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(Color.white.opacity(0.6))
+                    .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .help("Sort guests")
+    }
+    
+    private var viewToggle: some View {
+        HStack(spacing: 4) {
+            Button(action: { viewMode = .grid }) {
+                Image(systemName: "square.grid.2x2")
+                    .font(.system(size: 14))
+                    .foregroundColor(viewMode == .grid ? SemanticColors.textPrimary : SemanticColors.textSecondary)
+                    .frame(width: 36, height: 36)
+                    .background(viewMode == .grid ? Color.white.opacity(0.8) : Color.clear)
+                    .cornerRadius(6)
+            }
+            .buttonStyle(.plain)
+            
+            Button(action: { viewMode = .list }) {
+                Image(systemName: "list.bullet")
+                    .font(.system(size: 14))
+                    .foregroundColor(viewMode == .list ? SemanticColors.textPrimary : SemanticColors.textSecondary)
+                    .frame(width: 36, height: 36)
+                    .background(viewMode == .list ? Color.white.opacity(0.8) : Color.clear)
+                    .cornerRadius(6)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(2)
+        .frame(height: 40)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.white.opacity(0.3))
+        )
     }
     
     // MARK: - Guest Grid Section
@@ -430,6 +554,15 @@ struct GuestDashboardViewV2: View {
     
     private func handleExportSuccess(fileURL: URL, format: GuestExportFormat) {
         NSWorkspace.shared.open(fileURL)
+    }
+    
+    // MARK: - Helper Methods
+    
+    private func countForStatus(_ status: RSVPStatus?) -> Int {
+        if status == nil {
+            return guestStore.guests.count
+        }
+        return guestStore.guests.filter { $0.rsvpStatus == status }.count
     }
 }
 
