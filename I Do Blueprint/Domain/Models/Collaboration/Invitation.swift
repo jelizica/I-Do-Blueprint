@@ -74,7 +74,7 @@ struct Invitation: Codable, Identifiable, Equatable, Hashable {
 
 /// Details returned when fetching invitation by token
 /// Includes all information needed for invitation acceptance flow
-struct InvitationDetails: Codable, Sendable {
+struct InvitationDetails: Codable, Sendable, Equatable {
     let invitation: Invitation
     let role: CollaborationRole
     let coupleId: UUID

@@ -202,6 +202,15 @@ struct VendorManagementViewV5: View {
         .task(id: sessionManager.getTenantId()) {
             await vendorStore.loadVendors(force: true)
         }
+        .onChange(of: coordinator.activeSheet) { oldValue, newValue in
+            // Reload vendors when returning from detail/edit sheets
+            // This ensures the list is refreshed after edits
+            if oldValue != nil && newValue == nil {
+                Task {
+                    await vendorStore.loadVendors(force: true)
+                }
+            }
+        }
         .sheet(isPresented: $showingImportSheet) {
             VendorCSVImportView()
                 .environmentObject(vendorStore)

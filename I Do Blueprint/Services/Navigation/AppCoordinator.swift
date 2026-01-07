@@ -123,7 +123,7 @@ class AppCoordinator: ObservableObject {
 
     // MARK: - Sheet Definition
 
-    enum Sheet: Identifiable {
+    enum Sheet: Identifiable, Equatable {
         case addVendor
         case viewVendor(Vendor)
         case editVendor(Vendor)

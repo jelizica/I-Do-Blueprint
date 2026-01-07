@@ -1,0 +1,131 @@
+{
+  "session_id": "d1a92fb6-5845-43f3-b285-4bdfbb91fd57",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-07T06:56:44.274467+00:00",
+  "vectors": {
+    "engagement": 0.9,
+    "know": 0.85,
+    "do": 0.9,
+    "context": 0.85,
+    "clarity": 0.9,
+    "coherence": 0.85,
+    "signal": 0.9,
+    "density": 0.8,
+    "state": 0.9,
+    "change": 0.95,
+    "completion": 1.0,
+    "impact": 0.95,
+    "uncertainty": 0.1
+  },
+  "overall_confidence": 0.867,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.9,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "engagement": 0.15,
+      "know": 0.45,
+      "do": 0.4,
+      "context": 0.25,
+      "clarity": 0.4,
+      "coherence": 0.3,
+      "signal": 0.45,
+      "density": 0.3,
+      "state": 0.3,
+      "change": 0.65,
+      "completion": 1.0,
+      "impact": 0.95,
+      "uncertainty": -0.6
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "6410c9c61b64f435fa827c0a241ef266d88dd638",
+    "git_notes_ref": "empirica/session/d1a92fb6-5845-43f3-b285-4bdfbb91fd57/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "a7c349a035d73d6a1252c7348ac30a7e3bd0ba09",
+    "commits_since_last_checkpoint": [],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+        "\"I Do Blueprint/Domain/Models/Collaboration/Invitation.swift\"",
+        "\"I Do Blueprint/Services/Navigation/AppCoordinator.swift\"",
+        "\"I Do Blueprint/Views/Vendors/VendorManagementViewV5.swift\""
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 1773568 -> 1822720 bytes\n .../storage.sqlite                                 | Bin 5038080 -> 5156864 bytes\n .../Domain/Models/Collaboration/Invitation.swift   |   2 +-\n .../Services/Navigation/AppCoordinator.swift       |   2 +-\n .../Views/Vendors/VendorManagementViewV5.swift     |   9 +++++++++\n 5 files changed, 11 insertions(+), 2 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "engagement": {
+      "prev": 0.75,
+      "curr": 0.9,
+      "delta": 0.15
+    },
+    "know": {
+      "prev": 0.4,
+      "curr": 0.85,
+      "delta": 0.45
+    },
+    "do": {
+      "prev": 0.5,
+      "curr": 0.9,
+      "delta": 0.4
+    },
+    "context": {
+      "prev": 0.6,
+      "curr": 0.85,
+      "delta": 0.25
+    },
+    "clarity": {
+      "prev": 0.5,
+      "curr": 0.9,
+      "delta": 0.4
+    },
+    "coherence": {
+      "prev": 0.55,
+      "curr": 0.85,
+      "delta": 0.3
+    },
+    "signal": {
+      "prev": 0.45,
+      "curr": 0.9,
+      "delta": 0.45
+    },
+    "density": {
+      "prev": 0.5,
+      "curr": 0.8,
+      "delta": 0.3
+    },
+    "state": {
+      "prev": 0.6,
+      "curr": 0.9,
+      "delta": 0.3
+    },
+    "change": {
+      "prev": 0.3,
+      "curr": 0.95,
+      "delta": 0.65
+    },
+    "completion": {
+      "prev": 0.0,
+      "curr": 1.0,
+      "delta": 1.0
+    },
+    "impact": {
+      "prev": 0.0,
+      "curr": 0.95,
+      "delta": 0.95
+    },
+    "uncertainty": {
+      "prev": 0.7,
+      "curr": 0.1,
+      "delta": -0.6
+    }
+  },
+  "token_count": 293
+}
