@@ -34,6 +34,11 @@ actor BudgetCacheStrategy: CacheInvalidationStrategy {
         await cache.remove("budget_summary")
         keysInvalidated += 1
         
+        // Invalidate category metrics cache (uses tenant-specific keys)
+        // Use prefix invalidation to clear all tenant-specific category metrics
+        await cache.invalidatePrefix("category_metrics_")
+        keysInvalidated += 1
+        
         await monitor.trackInvalidation(operation, keysInvalidated: keysInvalidated)
     }
 

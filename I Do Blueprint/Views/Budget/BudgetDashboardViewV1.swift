@@ -95,9 +95,10 @@ struct BudgetDashboardViewV1: View {
         }
         .background(Color(NSColor.windowBackgroundColor))
         .onAppear {
-            // Reload data every time the dashboard appears (navigation)
+            // Force reload data every time the dashboard appears (navigation)
+            // This bypasses the store-level cache to ensure fresh data
             Task {
-                await loadDashboardData()
+                await loadDashboardData(force: true)
             }
         }
     }
@@ -117,9 +118,9 @@ struct BudgetDashboardViewV1: View {
 
     // MARK: - Data Loading
 
-    private func loadDashboardData() async {
+    private func loadDashboardData(force: Bool = false) async {
         isLoading = true
-        await budgetStore.loadBudgetData()
+        await budgetStore.loadBudgetData(force: force)
         isLoading = false
     }
 }
