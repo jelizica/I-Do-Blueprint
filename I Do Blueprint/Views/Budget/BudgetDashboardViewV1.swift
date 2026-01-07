@@ -391,12 +391,12 @@ struct ChartsSection: View {
             }
 
             // Spending Distribution Donut
-            // Still uses BudgetCategory for now (could be updated to use metrics)
+            // Uses CategoryBudgetMetrics for accurate spend data from RPC
             BudgetChartCard(
                 title: "Spend Distribution",
                 icon: "chart.pie.fill"
             ) {
-                SpendDistributionDonut(categories: categories)
+                SpendDistributionDonut(metrics: categoryBudgetMetrics)
             }
         }
     }
@@ -884,63 +884,348 @@ struct CategoryBarChart: View {
 
 // MARK: - Spend Distribution Donut
 
+/// Enhanced spend distribution donut chart with dropdown category selector
+/// and detailed insights panel. Shows budget spend percentages with
+/// interactive highlighting when a category is selected.
+/// Uses CategoryBudgetMetrics for accurate spend data from RPC function.
 struct SpendDistributionDonut: View {
-    let categories: [BudgetCategory]
+    /// Metrics from the database RPC function with accurate spend data
+    let metrics: [CategoryBudgetMetrics]
 
-    @State private var selectedCategory: String?
+    /// Selected category ID - nil means "All Categories"
+    @State private var selectedCategoryId: UUID?
 
-    private var validCategories: [BudgetCategory] {
-        categories.filter { $0.spentAmount > 0 }
+    // MARK: - Computed Properties
+
+    /// Top-level parent categories with spending data, sorted by spent amount descending
+    /// Only shows categories that are parents (have children) and have actual spending
+    private var validCategories: [CategoryBudgetMetrics] {
+        // Get IDs of categories that have children (are parents)
+        let parentCategoryIds = Set(metrics.compactMap { $0.parentCategoryId })
+
+        // Filter to top-level categories that:
+        // 1. Are parent categories (parentCategoryId is nil)
+        // 2. Have children pointing to them (are actual parent categories with subcategories)
+        // 3. Have spending > 0
+        return metrics
+            .filter { metric in
+                metric.isParentCategory &&
+                parentCategoryIds.contains(metric.categoryId) &&
+                metric.spent > 0
+            }
+            .sorted { $0.spent > $1.spent }
     }
 
-    private var selectedCategoryData: BudgetCategory? {
-        guard let name = selectedCategory else { return nil }
-        return validCategories.first { $0.categoryName == name }
+    /// Total spent across all valid categories
+    private var totalSpent: Double {
+        validCategories.reduce(0) { $0 + $1.spent }
     }
+
+    /// Currently selected category data
+    private var selectedCategoryData: CategoryBudgetMetrics? {
+        guard let id = selectedCategoryId else { return nil }
+        return validCategories.first { $0.categoryId == id }
+    }
+
+    /// Calculate percentage for a category
+    private func percentage(for metric: CategoryBudgetMetrics) -> Double {
+        guard totalSpent > 0 else { return 0 }
+        return (metric.spent / totalSpent) * 100
+    }
+
+    /// Format percentage for display
+    private func formatPercentage(_ value: Double) -> String {
+        "\(Int(value.rounded()))%"
+    }
+
+    // MARK: - Body
 
     var body: some View {
         if validCategories.isEmpty {
             emptyState
         } else {
-            Chart(validCategories) { category in
-                SectorMark(
-                    angle: .value("Spent", category.spentAmount),
-                    innerRadius: .ratio(0.6),
-                    angularInset: 1.5
-                )
-                .foregroundStyle(Color(hex: category.color) ?? AppColors.Budget.allocated)
-                .opacity(selectedCategory == nil || selectedCategory == category.categoryName ? 1.0 : 0.4)
-            }
-            .chartAngleSelection(value: $selectedCategory)
-            .chartBackground { _ in
-                GeometryReader { geometry in
-                    if let data = selectedCategoryData {
-                        VStack(spacing: 2) {
-                            Text(data.categoryName)
-                                .font(.caption)
-                                .foregroundStyle(SemanticColors.textSecondary)
-                            Text(formatCurrency(data.spentAmount))
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundStyle(Color(hex: data.color) ?? AppColors.Budget.allocated)
-                        }
-                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
-                    } else {
-                        VStack(spacing: 2) {
-                            Text("Total Spent")
-                                .font(.caption)
-                                .foregroundStyle(SemanticColors.textSecondary)
-                            Text(formatCurrency(totalSpent))
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundStyle(SemanticColors.textPrimary)
-                        }
-                        .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
-                    }
+            VStack(spacing: Spacing.lg) {
+                // Donut Chart with center content
+                donutChart
+                    .frame(height: 180)
+
+                // Category Dropdown Picker
+                categoryPicker
+
+                // Helper text
+                Text("Select a category to highlight details.")
+                    .font(Typography.caption)
+                    .foregroundStyle(SemanticColors.textTertiary)
+
+                // Category Insights Panel (when category selected)
+                if let metric = selectedCategoryData {
+                    categoryInsightsPanel(for: metric)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
+            }
+            .animation(.easeInOut(duration: 0.25), value: selectedCategoryId)
+        }
+    }
+
+    // MARK: - Donut Chart
+
+    private var donutChart: some View {
+        Chart(validCategories, id: \.categoryId) { metric in
+            SectorMark(
+                angle: .value("Spent", metric.spent),
+                innerRadius: .ratio(0.65),
+                outerRadius: selectedCategoryId == metric.categoryId
+                    ? .ratio(1.0)  // Expand selected segment
+                    : .ratio(0.95),
+                angularInset: 1.5
+            )
+            .cornerRadius(3)
+            .foregroundStyle(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+            .opacity(segmentOpacity(for: metric))
+        }
+        .chartLegend(.hidden)
+        .chartBackground { _ in
+            GeometryReader { geometry in
+                centerContent
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
             }
         }
     }
+
+    /// Determine opacity for a segment based on selection state
+    private func segmentOpacity(for metric: CategoryBudgetMetrics) -> Double {
+        if selectedCategoryId == nil {
+            return 1.0  // All segments fully visible when nothing selected
+        }
+        return selectedCategoryId == metric.categoryId ? 1.0 : 0.3
+    }
+
+    /// Center content showing percentage and category name
+    @ViewBuilder
+    private var centerContent: some View {
+        if let metric = selectedCategoryData {
+            // Selected category view
+            VStack(spacing: Spacing.xxs) {
+                Text(formatPercentage(percentage(for: metric)))
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+
+                Text(metric.categoryName.uppercased())
+                    .font(Typography.caption.weight(.semibold))
+                    .foregroundStyle(SemanticColors.textSecondary)
+                    .tracking(1.2)
+            }
+        } else {
+            // Default "All Categories" view
+            VStack(spacing: Spacing.xxs) {
+                Text("100%")
+                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .foregroundStyle(SemanticColors.textPrimary)
+
+                Text("ALL CATEGORIES")
+                    .font(Typography.caption.weight(.semibold))
+                    .foregroundStyle(SemanticColors.textSecondary)
+                    .tracking(1.2)
+            }
+        }
+    }
+
+    // MARK: - Category Picker
+
+    private var categoryPicker: some View {
+        Picker(selection: $selectedCategoryId) {
+            // "All Categories" option
+            HStack(spacing: Spacing.sm) {
+                Circle()
+                    .fill(SemanticColors.textTertiary)
+                    .frame(width: 10, height: 10)
+                Text("All Categories")
+            }
+            .tag(nil as UUID?)
+
+            Divider()
+
+            // Individual categories with percentages
+            ForEach(validCategories, id: \.categoryId) { metric in
+                HStack(spacing: Spacing.sm) {
+                    Circle()
+                        .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                        .frame(width: 10, height: 10)
+                    Text("\(metric.categoryName) (\(formatPercentage(percentage(for: metric))))")
+                }
+                .tag(metric.categoryId as UUID?)
+            }
+        } label: {
+            EmptyView()
+        }
+        .pickerStyle(.menu)
+        .labelsHidden()
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(SemanticColors.borderLight, lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Category Insights Panel
+
+    private func categoryInsightsPanel(for metric: CategoryBudgetMetrics) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            // Header with category color indicator
+            HStack(spacing: Spacing.sm) {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                    .frame(width: 4, height: 20)
+
+                Text(metric.categoryName)
+                    .font(Typography.subheading.weight(.semibold))
+                    .foregroundStyle(SemanticColors.textPrimary)
+
+                Spacer()
+
+                // Percentage badge
+                Text(formatPercentage(percentage(for: metric)))
+                    .font(Typography.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xxs)
+                    .background(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                    .cornerRadius(CornerRadius.sm)
+            }
+
+            Divider()
+
+            // Metrics Grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: Spacing.md) {
+                // Spent Amount
+                insightMetric(
+                    label: "Spent",
+                    value: formatCurrency(metric.spent),
+                    icon: "creditcard.fill",
+                    color: Color(hex: metric.color) ?? AppColors.Budget.allocated
+                )
+
+                // Allocated Budget
+                insightMetric(
+                    label: "Allocated",
+                    value: formatCurrency(metric.allocated),
+                    icon: "chart.pie.fill",
+                    color: AppColors.Budget.allocated
+                )
+
+                // Remaining (using computed property from model)
+                insightMetric(
+                    label: "Remaining",
+                    value: formatCurrency(abs(metric.remaining)),
+                    icon: metric.remaining >= 0 ? "checkmark.circle.fill" : "exclamationmark.triangle.fill",
+                    color: metric.remaining >= 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget,
+                    isNegative: metric.remaining < 0
+                )
+
+                // Budget Usage (using computed property from model)
+                insightMetric(
+                    label: "Budget Used",
+                    value: "\(Int(metric.percentageSpent.rounded()))%",
+                    icon: "gauge.with.needle.fill",
+                    color: metric.percentageSpent > 100 ? AppColors.Budget.overBudget
+                        : metric.percentageSpent > 80 ? AppColors.warning
+                        : AppColors.Budget.underBudget
+                )
+            }
+
+            // Progress bar showing budget usage
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                let usagePercent = metric.allocated > 0
+                    ? min((metric.spent / metric.allocated), 1.5)
+                    : 0
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        // Background track
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(SemanticColors.borderLight)
+                            .frame(height: 8)
+
+                        // Progress fill
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(
+                                usagePercent > 1.0 ? AppColors.Budget.overBudget
+                                    : usagePercent > 0.8 ? AppColors.warning
+                                    : Color(hex: metric.color) ?? AppColors.Budget.allocated
+                            )
+                            .frame(width: geometry.size.width * min(usagePercent, 1.0), height: 8)
+
+                        // Over-budget indicator
+                        if usagePercent > 1.0 {
+                            Rectangle()
+                                .fill(AppColors.Budget.overBudget.opacity(0.3))
+                                .frame(width: geometry.size.width * min(usagePercent - 1.0, 0.5), height: 8)
+                                .offset(x: geometry.size.width)
+                                .clipShape(RoundedRectangle(cornerRadius: 4))
+                        }
+                    }
+                }
+                .frame(height: 8)
+            }
+        }
+        .padding(Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color(NSColor.controlBackgroundColor).opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(
+                            Color(hex: metric.color)?.opacity(0.3) ?? SemanticColors.borderLight,
+                            lineWidth: 1
+                        )
+                )
+        )
+    }
+
+    /// Individual metric display for insights panel
+    private func insightMetric(
+        label: String,
+        value: String,
+        icon: String,
+        color: Color,
+        isNegative: Bool = false
+    ) -> some View {
+        HStack(spacing: Spacing.sm) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(color)
+                .frame(width: 20)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(Typography.caption)
+                    .foregroundStyle(SemanticColors.textTertiary)
+
+                HStack(spacing: 2) {
+                    if isNegative {
+                        Text("-")
+                            .font(Typography.subheading.weight(.semibold))
+                            .foregroundStyle(color)
+                    }
+                    Text(value)
+                        .font(Typography.subheading.weight(.semibold))
+                        .foregroundStyle(SemanticColors.textPrimary)
+                }
+            }
+
+            Spacer()
+        }
+    }
+
+    // MARK: - Empty State
 
     private var emptyState: some View {
         VStack(spacing: Spacing.md) {
@@ -950,13 +1235,15 @@ struct SpendDistributionDonut: View {
             Text("No spending recorded")
                 .font(Typography.bodyRegular)
                 .foregroundStyle(SemanticColors.textSecondary)
+            Text("Start tracking expenses to see your spend distribution")
+                .font(Typography.caption)
+                .foregroundStyle(SemanticColors.textTertiary)
+                .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private var totalSpent: Double {
-        validCategories.reduce(0) { $0 + $1.spentAmount }
-    }
+    // MARK: - Formatting Helpers
 
     private func formatCurrency(_ amount: Double) -> String {
         NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0"
