@@ -1617,9 +1617,21 @@ struct FinancialPlanningSection: View {
         return fullName.isEmpty ? "Partner 2" : fullName.components(separatedBy: " ").first ?? fullName
     }
 
-    /// Total budget from budget store for required calculation
+    /// Total budget from primary scenario for required calculation
+    /// Uses primaryScenarioTotal which represents the planned budget from budget development
     private var totalBudget: Double {
-        appStores.budget.actualTotalBudget
+        appStores.budget.primaryScenarioTotal
+    }
+
+    /// Wedding date from settings (global.weddingDate)
+    private var weddingDate: Date? {
+        let dateString = appStores.settings.settings.global.weddingDate
+        guard !dateString.isEmpty else { return nil }
+
+        // Parse ISO8601 date string (YYYY-MM-DD format)
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withFullDate, .withDashSeparatorInDate]
+        return formatter.date(from: dateString)
     }
 
     var body: some View {
@@ -1639,6 +1651,7 @@ struct FinancialPlanningSection: View {
                     partner1Name: partner1Name,
                     partner2Name: partner2Name,
                     totalBudget: totalBudget,
+                    weddingDate: weddingDate,
                     onTap: onNavigateToCalculator
                 )
 
@@ -1661,18 +1674,19 @@ struct MonthlyAffordabilityCard: View {
     let partner1Name: String
     let partner2Name: String
     let totalBudget: Double
+    let weddingDate: Date?
     let onTap: () -> Void
 
     @State private var isHovered = false
 
     // MARK: - Computed Properties
 
-    /// Monthly contribution from partner 1
+    /// Monthly contribution from partner 1 (from affordability scenario in database)
     private var partner1Monthly: Double {
         affordability.editedPartner1Monthly
     }
 
-    /// Monthly contribution from partner 2
+    /// Monthly contribution from partner 2 (from affordability scenario in database)
     private var partner2Monthly: Double {
         affordability.editedPartner2Monthly
     }
@@ -1682,26 +1696,27 @@ struct MonthlyAffordabilityCard: View {
         partner1Monthly + partner2Monthly
     }
 
-    /// Months remaining until wedding
+    /// Months remaining until wedding (calculated from settings wedding date)
     private var monthsRemaining: Int {
-        affordability.monthsLeft
+        guard let wedding = weddingDate else { return 0 }
+        return max(0, Calendar.current.dateComponents([.month], from: Date(), to: wedding).month ?? 0)
     }
 
     /// Total months from start to wedding (for segmented progress)
     private var totalMonths: Int {
         guard let startDate = affordability.editedCalculationStartDate ?? affordability.selectedScenario?.calculationStartDate,
-              let weddingDate = affordability.editedWeddingDate else {
+              let wedding = weddingDate else {
             return 12
         }
-        return max(1, Calendar.current.dateComponents([.month], from: startDate, to: weddingDate).month ?? 12)
+        return max(1, Calendar.current.dateComponents([.month], from: startDate, to: wedding).month ?? 12)
     }
 
     /// Months elapsed (for segmented progress)
     private var monthsElapsed: Int {
-        totalMonths - monthsRemaining
+        max(0, totalMonths - monthsRemaining)
     }
 
-    /// Required monthly amount to reach budget
+    /// Required monthly amount to reach budget (based on primaryScenarioTotal)
     private var requiredMonthly: Double {
         guard monthsRemaining > 0 else { return 0 }
         let alreadySaved = affordability.totalSaved + affordability.totalContributions + affordability.alreadyPaid
