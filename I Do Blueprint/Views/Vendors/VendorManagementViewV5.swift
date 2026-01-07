@@ -82,6 +82,9 @@ struct VendorManagementViewV5: View {
         GeometryReader { geometry in
             let windowSize = geometry.size.width.windowSize
             let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.huge
+            // Calculate available width for content (geometry width minus padding on both sides)
+            // This matches GuestManagementViewV4's padding approach for consistency
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
 
             ZStack {
                 // Mesh gradient background
@@ -191,6 +194,9 @@ struct VendorManagementViewV5: View {
                             )
                         }
                     }
+                    // Constrain the VStack to the available width to prevent overflow
+                    // and ensure consistent padding from navigation edge (matches GuestManagementViewV4)
+                    .frame(width: availableWidth)
                     .padding(.horizontal, horizontalPadding)
                     .padding(.bottom, windowSize == .compact ? Spacing.lg : Spacing.huge)
                 }
