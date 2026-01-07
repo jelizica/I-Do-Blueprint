@@ -115,6 +115,19 @@ struct GlobalSidebarViewV1: View {
             // Expanded content
             if isDashboardsExpanded {
                 VStack(spacing: Spacing.xxs) {
+                    // General Dashboard
+                    DashboardSubItemViewV1(
+                        item: DashboardSubItem(
+                            icon: DashboardPage.general.icon,
+                            title: "General Dashboard",
+                            page: .general
+                        ),
+                        isSelected: coordinator.selectedTab == .dashboards && coordinator.dashboardPage == .general,
+                        onSelect: {
+                            coordinator.navigateToDashboard(page: .general)
+                        }
+                    )
+
                     // Financial Dashboard
                     DashboardSubItemViewV1(
                         item: DashboardSubItem(
