@@ -94,8 +94,11 @@ struct BudgetDashboardViewV1: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background(Color(NSColor.windowBackgroundColor))
-        .task {
-            await loadDashboardData()
+        .onAppear {
+            // Reload data every time the dashboard appears (navigation)
+            Task {
+                await loadDashboardData()
+            }
         }
     }
 

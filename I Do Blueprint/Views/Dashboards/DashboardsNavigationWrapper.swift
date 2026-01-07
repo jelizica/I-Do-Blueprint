@@ -22,15 +22,15 @@ struct DashboardsNavigationWrapper: View {
 
     var body: some View {
         dashboardContent
-            .task {
-                // Load budget data for Financial Dashboard
-                await budgetStore.loadBudgetData()
-            }
             .onAppear {
                 // Handle initial navigation from coordinator (e.g., from sidebar)
                 if let page = coordinator.dashboardPage {
                     currentPage = page
                     coordinator.dashboardPage = nil
+                }
+                // Reload budget data every time the dashboard appears
+                Task {
+                    await budgetStore.loadBudgetData()
                 }
             }
             .onChange(of: coordinator.dashboardPage) { newPage in
