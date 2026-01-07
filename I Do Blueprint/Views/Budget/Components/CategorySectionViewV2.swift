@@ -16,6 +16,7 @@ struct CategorySectionViewV2: View {
     let spentByCategory: [UUID: Double] // Pre-computed spent amounts for O(1) lookup
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
+    let onMove: (BudgetCategory) -> Void
     @Binding var isExpanded: Bool
 
     // Parent categories should only show sum of subcategories (not their own allocated amount)
@@ -57,7 +58,8 @@ struct CategorySectionViewV2: View {
                     spentAmount: spentByCategory[parentCategory.id] ?? 0,
                     budgetStore: budgetStore,
                     onEdit: onEdit,
-                    onDelete: onDelete
+                    onDelete: onDelete,
+                    onMove: onMove
                 )
                 .padding(.horizontal, sectionPadding)
                 .padding(.vertical, Spacing.sm)
@@ -76,7 +78,8 @@ struct CategorySectionViewV2: View {
                     isExpanded: $isExpanded,
                     budgetStore: budgetStore,
                     onEdit: onEdit,
-                    onDelete: onDelete
+                    onDelete: onDelete,
+                    onMove: onMove
                 )
                 .padding(.horizontal, sectionPadding)
                 .padding(.vertical, Spacing.sm)
@@ -95,7 +98,8 @@ struct CategorySectionViewV2: View {
                                 spentAmount: spentByCategory[subcategory.id] ?? 0,
                                 budgetStore: budgetStore,
                                 onEdit: onEdit,
-                                onDelete: onDelete
+                                onDelete: onDelete,
+                                onMove: onMove
                             )
                             .padding(.horizontal, sectionPadding)
                             .padding(.vertical, Spacing.xs)

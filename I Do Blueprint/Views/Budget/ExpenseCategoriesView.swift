@@ -29,6 +29,7 @@ struct ExpenseCategoriesView: View {
     @State private var categoryToDelete: BudgetCategory?
     @State private var expandedSections: Set<UUID> = []
     @State private var showOnlyOverBudget = false
+    @State private var categoryToMove: BudgetCategory?
     
     // MARK: - Cached Values (to avoid expensive recalculations on scroll)
     // These are populated once on load and updated only when user actions occur
@@ -235,6 +236,9 @@ struct ExpenseCategoriesView: View {
                                             categoryToDelete = category
                                             showingDeleteAlert = true
                                         },
+                                        onMove: { category in
+                                            categoryToMove = category
+                                        },
                                         isExpanded: Binding(
                                             get: { expandedSections.contains(parentCategory.id) },
                                             set: { isExpanded in
@@ -301,6 +305,28 @@ struct ExpenseCategoriesView: View {
                 if let category = categoryToDelete {
                     Text("Are you sure you want to delete '\(category.categoryName)'? This action cannot be undone.")
                 }
+            }
+            .sheet(item: $categoryToMove, onDismiss: {
+                // Refresh data after moving a category
+                recalculateCachedValues()
+            }) { category in
+                MoveCategorySheet(
+                    category: category,
+                    allCategories: budgetStore.categoryStore.categories,
+                    onMove: { newParentId in
+                        Task {
+                            do {
+                                _ = try await budgetStore.categoryStore.moveCategory(
+                                    id: category.id,
+                                    toParent: newParentId
+                                )
+                                recalculateCachedValues()
+                            } catch {
+                                AppLogger.ui.error("Failed to move category", error: error)
+                            }
+                        }
+                    }
+                )
             }
         }
     }

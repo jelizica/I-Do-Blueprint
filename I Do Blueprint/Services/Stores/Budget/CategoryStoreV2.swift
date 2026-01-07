@@ -170,7 +170,130 @@ final class CategoryStoreV2: ObservableObject {
             throw BudgetError.deleteFailed(underlying: error)
         }
     }
-    
+
+    // MARK: - Category Move Operations
+
+    /// Move a category to a new parent folder
+    /// - Parameters:
+    ///   - categoryId: ID of the category to move
+    ///   - newParentId: ID of the new parent folder (nil for root level)
+    /// - Returns: Updated category from server
+    func moveCategory(id categoryId: UUID, toParent newParentId: UUID?) async throws -> BudgetCategory {
+        // Find the category to move
+        guard let index = categories.firstIndex(where: { $0.id == categoryId }) else {
+            throw BudgetError.updateFailed(underlying: NSError(
+                domain: "CategoryStore",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Category not found in local state"]
+            ))
+        }
+
+        let original = categories[index]
+
+        // Validate move won't create circular reference
+        if let targetId = newParentId {
+            guard !wouldCreateCircularReference(moving: categoryId, toParent: targetId) else {
+                throw BudgetError.updateFailed(underlying: NSError(
+                    domain: "CategoryStore",
+                    code: -2,
+                    userInfo: [NSLocalizedDescriptionKey: "Cannot move a category into its own descendant"]
+                ))
+            }
+        }
+
+        // Create updated category with new parent
+        var updatedCategory = original
+        updatedCategory.parentCategoryId = newParentId
+
+        // Optimistic update
+        categories[index] = updatedCategory
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            let serverUpdated = try await repository.updateCategory(updatedCategory)
+
+            // Update with server response
+            if let idx = categories.firstIndex(where: { $0.id == categoryId }) {
+                categories[idx] = serverUpdated
+            }
+
+            let targetName = newParentId.flatMap { id in
+                categories.first(where: { $0.id == id })?.categoryName
+            } ?? "Root"
+
+            logger.info("Moved category '\(original.categoryName)' to '\(targetName)'")
+            return serverUpdated
+        } catch {
+            // Rollback on error
+            if let idx = categories.firstIndex(where: { $0.id == categoryId }) {
+                categories[idx] = original
+            }
+
+            await handleError(error, operation: "moveCategory", context: [
+                "categoryId": categoryId.uuidString,
+                "categoryName": original.categoryName,
+                "newParentId": newParentId?.uuidString ?? "nil"
+            ]) { [weak self] in
+                do {
+                    _ = try await self?.moveCategory(id: categoryId, toParent: newParentId)
+                } catch {
+                    // Error already handled by recursive call
+                }
+            }
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    /// Check if moving a category to a target parent would create a circular reference
+    /// - Parameters:
+    ///   - categoryId: ID of the category being moved
+    ///   - targetParentId: ID of the proposed new parent
+    /// - Returns: True if the move would create a circular reference
+    func wouldCreateCircularReference(moving categoryId: UUID, toParent targetParentId: UUID) -> Bool {
+        // Cannot move a category to itself
+        if categoryId == targetParentId {
+            return true
+        }
+
+        // Check if targetParentId is a descendant of categoryId
+        var descendantIds: Set<UUID> = []
+        var queue = categories.filter { $0.parentCategoryId == categoryId }
+
+        while !queue.isEmpty {
+            let current = queue.removeFirst()
+            descendantIds.insert(current.id)
+            queue.append(contentsOf: categories.filter { $0.parentCategoryId == current.id })
+        }
+
+        return descendantIds.contains(targetParentId)
+    }
+
+    /// Get all descendant category IDs for a given category
+    /// - Parameter categoryId: The parent category ID
+    /// - Returns: Set of all descendant category IDs
+    func getDescendantIds(of categoryId: UUID) -> Set<UUID> {
+        var descendants: Set<UUID> = []
+        var queue = categories.filter { $0.parentCategoryId == categoryId }
+
+        while !queue.isEmpty {
+            let current = queue.removeFirst()
+            descendants.insert(current.id)
+            queue.append(contentsOf: categories.filter { $0.parentCategoryId == current.id })
+        }
+
+        return descendants
+    }
+
+    /// Get children of a specific category
+    /// - Parameter parentId: The parent category ID
+    /// - Returns: Array of child categories
+    func getChildren(of parentId: UUID) -> [BudgetCategory] {
+        categories.filter { $0.parentCategoryId == parentId }
+            .sorted { $0.categoryName < $1.categoryName }
+    }
+
     // MARK: - Category Dependency Management
     
     /// Load dependency information for all categories

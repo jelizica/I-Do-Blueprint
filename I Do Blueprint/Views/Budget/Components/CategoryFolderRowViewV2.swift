@@ -18,6 +18,7 @@ struct CategoryFolderRowViewV2: View {
     let budgetStore: BudgetStoreV2
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
+    let onMove: (BudgetCategory) -> Void
 
     private var utilizationPercentage: Double {
         totalBudgeted > 0 ? (totalSpent / totalBudgeted) * 100 : 0
@@ -86,10 +87,11 @@ struct CategoryFolderRowViewV2: View {
                     category: category,
                     budgetStore: budgetStore,
                     onEdit: onEdit,
-                    onDelete: onDelete
+                    onDelete: onDelete,
+                    onMove: onMove
                 )
             }
-            
+
             // Bottom row: Budget info and progress
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Budget amounts
@@ -199,7 +201,8 @@ struct CategoryFolderRowViewV2: View {
                 category: category,
                 budgetStore: budgetStore,
                 onEdit: onEdit,
-                onDelete: onDelete
+                onDelete: onDelete,
+                onMove: onMove
             )
         }
         .contentShape(Rectangle())
@@ -216,6 +219,7 @@ private struct CategoryActionsMenu: View {
     let budgetStore: BudgetStoreV2
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
+    let onMove: (BudgetCategory) -> Void
 
     var body: some View {
         Menu {
@@ -225,6 +229,12 @@ private struct CategoryActionsMenu: View {
 
             Button("Duplicate") {
                 duplicateCategory()
+            }
+
+            Button {
+                onMove(category)
+            } label: {
+                Label("Move to Folder", systemImage: "folder.badge.plus")
             }
 
             Divider()

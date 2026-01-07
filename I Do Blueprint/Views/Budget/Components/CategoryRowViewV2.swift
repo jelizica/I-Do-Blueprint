@@ -15,6 +15,7 @@ struct CategoryRowViewV2: View {
     let budgetStore: BudgetStoreV2
     let onEdit: (BudgetCategory) -> Void
     let onDelete: (BudgetCategory) -> Void
+    let onMove: (BudgetCategory) -> Void
 
     private var utilizationPercentage: Double {
         category.allocatedAmount > 0 ? (spentAmount / category.allocatedAmount) * 100 : 0
@@ -77,6 +78,12 @@ struct CategoryRowViewV2: View {
                         duplicateCategory()
                     }
 
+                    Button {
+                        onMove(category)
+                    } label: {
+                        Label("Move to Folder", systemImage: "folder.badge.plus")
+                    }
+
                     Divider()
 
                     Button("Delete", role: .destructive) {
@@ -89,7 +96,7 @@ struct CategoryRowViewV2: View {
                 }
                 .menuStyle(BorderlessButtonMenuStyle())
             }
-            
+
             // Bottom row: Budget info and progress
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 // Budget amounts
@@ -128,12 +135,18 @@ struct CategoryRowViewV2: View {
                 onEdit(category)
             }
 
+            Button {
+                onMove(category)
+            } label: {
+                Label("Move to Folder", systemImage: "folder.badge.plus")
+            }
+
             Button("Delete", role: .destructive) {
                 onDelete(category)
             }
         }
     }
-    
+
     // MARK: - Regular Layout
     
     private var regularLayout: some View {
@@ -194,6 +207,12 @@ struct CategoryRowViewV2: View {
                     duplicateCategory()
                 }
 
+                Button {
+                    onMove(category)
+                } label: {
+                    Label("Move to Folder", systemImage: "folder.badge.plus")
+                }
+
                 Divider()
 
                 Button("Delete", role: .destructive) {
@@ -208,6 +227,12 @@ struct CategoryRowViewV2: View {
         .contextMenu {
             Button("Edit") {
                 onEdit(category)
+            }
+
+            Button {
+                onMove(category)
+            } label: {
+                Label("Move to Folder", systemImage: "folder.badge.plus")
             }
 
             Button("Delete", role: .destructive) {
