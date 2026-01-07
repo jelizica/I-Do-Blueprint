@@ -379,12 +379,12 @@ struct ChartsSection: View {
             : [GridItem(.flexible()), GridItem(.flexible())]
 
         LazyVGrid(columns: columns, spacing: Spacing.lg) {
-            // Category Distribution Chart
+            // Interactive Category Distribution Chart (Grouped Bar)
             BudgetChartCard(
                 title: "Budget by Category",
                 icon: "chart.bar.fill"
             ) {
-                CategoryBarChart(categories: categories)
+                InteractiveBudgetCategoryChart(categories: categories)
             }
 
             // Spending Distribution Donut
@@ -425,7 +425,375 @@ struct BudgetChartCard<Content: View>: View {
     }
 }
 
-// MARK: - Category Bar Chart
+// MARK: - Category Type for Chart Filtering
+
+enum BudgetCategoryType: String, CaseIterable {
+    case parent = "Parent"
+    case leaf = "Leaf"
+
+    var description: String {
+        switch self {
+        case .parent: return "Categories with sub-categories"
+        case .leaf: return "Standalone categories"
+        }
+    }
+}
+
+// MARK: - Chart Data Point for Grouped Bar Chart
+
+struct CategoryChartDataPoint: Identifiable {
+    let id = UUID()
+    let categoryName: String
+    let categoryColor: Color
+    let seriesType: BudgetSeriesType
+    let amount: Double
+}
+
+enum BudgetSeriesType: String, CaseIterable {
+    case allocated = "Allocated"
+    case forecasted = "Forecasted"
+    case spent = "Spent"
+
+    var color: Color {
+        switch self {
+        case .allocated: return Color.fromHex("3B82F6") // Blue
+        case .forecasted: return Color.fromHex("EC4899") // Magenta/Pink
+        case .spent: return Color.fromHex("22C55E") // Green
+        }
+    }
+}
+
+// MARK: - Interactive Grouped Bar Chart
+
+struct InteractiveBudgetCategoryChart: View {
+    let categories: [BudgetCategory]
+
+    @State private var selectedCategoryType: BudgetCategoryType = .parent
+    @State private var hoveredCategory: String?
+    @State private var hoveredDataPoint: CategoryChartDataPoint?
+    @State private var tooltipPosition: CGPoint = .zero
+
+    // Identify parent categories (have children)
+    private var parentCategoryIds: Set<UUID> {
+        Set(categories.compactMap { $0.parentCategoryId })
+    }
+
+    // Parent categories: top-level with children
+    private var parentCategories: [BudgetCategory] {
+        categories.filter { category in
+            category.parentCategoryId == nil && parentCategoryIds.contains(category.id)
+        }
+        .sorted { $0.allocatedAmount > $1.allocatedAmount }
+    }
+
+    // Leaf categories: top-level with NO children (standalone)
+    private var leafCategories: [BudgetCategory] {
+        categories.filter { category in
+            category.parentCategoryId == nil && !parentCategoryIds.contains(category.id)
+        }
+        .sorted { $0.allocatedAmount > $1.allocatedAmount }
+    }
+
+    private var displayCategories: [BudgetCategory] {
+        let cats = selectedCategoryType == .parent ? parentCategories : leafCategories
+        return Array(cats.prefix(6)) // Top 6 for readability
+    }
+
+    private var chartDataPoints: [CategoryChartDataPoint] {
+        displayCategories.flatMap { category in
+            BudgetSeriesType.allCases.map { series in
+                CategoryChartDataPoint(
+                    categoryName: category.categoryName,
+                    categoryColor: Color(hex: category.color) ?? AppColors.Budget.allocated,
+                    seriesType: series,
+                    amount: amountForSeries(category: category, series: series)
+                )
+            }
+        }
+    }
+
+    private func amountForSeries(category: BudgetCategory, series: BudgetSeriesType) -> Double {
+        switch series {
+        case .allocated: return category.allocatedAmount
+        case .forecasted: return category.forecastedAmount
+        case .spent: return category.spentAmount
+        }
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            // Category Type Toggle
+            categoryTypeToggle
+
+            if displayCategories.isEmpty {
+                emptyState
+            } else {
+                ZStack(alignment: .topLeading) {
+                    // Main Chart
+                    chartView
+
+                    // Tooltip overlay
+                    if let dataPoint = hoveredDataPoint {
+                        tooltipView(for: dataPoint)
+                            .position(tooltipPosition)
+                    }
+                }
+            }
+
+            // Legend
+            legendView
+        }
+    }
+
+    // MARK: - Category Type Toggle
+
+    private var categoryTypeToggle: some View {
+        HStack(spacing: Spacing.sm) {
+            ForEach(BudgetCategoryType.allCases, id: \.self) { type in
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        selectedCategoryType = type
+                        hoveredDataPoint = nil
+                    }
+                } label: {
+                    Text(type.rawValue)
+                        .font(Typography.caption.weight(.medium))
+                        .padding(.horizontal, Spacing.md)
+                        .padding(.vertical, Spacing.xs)
+                        .background(
+                            selectedCategoryType == type
+                                ? AppColors.Budget.allocated
+                                : Color.clear
+                        )
+                        .foregroundStyle(
+                            selectedCategoryType == type
+                                ? .white
+                                : SemanticColors.textSecondary
+                        )
+                        .cornerRadius(CornerRadius.sm)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: CornerRadius.sm)
+                                .stroke(
+                                    selectedCategoryType == type
+                                        ? Color.clear
+                                        : SemanticColors.borderLight,
+                                    lineWidth: 1
+                                )
+                        )
+                }
+                .buttonStyle(.plain)
+                .help(type.description)
+            }
+            Spacer()
+        }
+    }
+
+    // MARK: - Chart View
+
+    private var chartView: some View {
+        GeometryReader { geometry in
+            Chart(chartDataPoints) { dataPoint in
+                BarMark(
+                    x: .value("Category", dataPoint.categoryName),
+                    y: .value("Amount", dataPoint.amount)
+                )
+                .foregroundStyle(by: .value("Series", dataPoint.seriesType.rawValue))
+                .position(by: .value("Series", dataPoint.seriesType.rawValue))
+                .cornerRadius(3)
+                .opacity(
+                    hoveredCategory == nil || hoveredCategory == dataPoint.categoryName
+                        ? 1.0
+                        : 0.4
+                )
+            }
+            .chartForegroundStyleScale([
+                BudgetSeriesType.allocated.rawValue: BudgetSeriesType.allocated.color,
+                BudgetSeriesType.forecasted.rawValue: BudgetSeriesType.forecasted.color,
+                BudgetSeriesType.spent.rawValue: BudgetSeriesType.spent.color
+            ])
+            .chartLegend(.hidden) // We use custom legend
+            .chartXAxis {
+                AxisMarks { _ in
+                    AxisValueLabel()
+                        .font(.caption2)
+                }
+            }
+            .chartYAxis {
+                AxisMarks { value in
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4, 4]))
+                        .foregroundStyle(SemanticColors.borderLight)
+                    AxisValueLabel {
+                        if let amount = value.as(Double.self) {
+                            Text(formatShortCurrency(amount))
+                                .font(.caption2)
+                                .foregroundStyle(SemanticColors.textSecondary)
+                        }
+                    }
+                }
+            }
+            .chartOverlay { proxy in
+                GeometryReader { overlayGeometry in
+                    Rectangle()
+                        .fill(Color.clear)
+                        .contentShape(Rectangle())
+                        .gesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    handleHover(at: value.location, in: proxy, geometry: overlayGeometry)
+                                }
+                                .onEnded { _ in
+                                    hoveredCategory = nil
+                                    hoveredDataPoint = nil
+                                }
+                        )
+                        .onContinuousHover { phase in
+                            switch phase {
+                            case .active(let location):
+                                handleHover(at: location, in: proxy, geometry: overlayGeometry)
+                            case .ended:
+                                hoveredCategory = nil
+                                hoveredDataPoint = nil
+                            }
+                        }
+                }
+            }
+        }
+    }
+
+    private func handleHover(at location: CGPoint, in proxy: ChartProxy, geometry: GeometryProxy) {
+        guard let categoryName: String = proxy.value(atX: location.x) else {
+            hoveredCategory = nil
+            hoveredDataPoint = nil
+            return
+        }
+
+        hoveredCategory = categoryName
+
+        // Find the data point closest to the hover position
+        guard displayCategories.contains(where: { $0.categoryName == categoryName }) else { return }
+
+        // Determine which series is being hovered based on x position within the category group
+        let matchingPoints = chartDataPoints.filter { $0.categoryName == categoryName }
+
+        // For simplicity, show the allocated amount by default
+        if let point = matchingPoints.first(where: { $0.seriesType == .allocated }) {
+            hoveredDataPoint = point
+
+            // Calculate tooltip position with bounds checking
+            let tooltipX = min(max(location.x + 80, 100), geometry.size.width - 100)
+            let tooltipY = max(location.y - 60, 60)
+            tooltipPosition = CGPoint(x: tooltipX, y: tooltipY)
+        }
+    }
+
+    // MARK: - Tooltip View
+
+    private func tooltipView(for dataPoint: CategoryChartDataPoint) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            // Category name header
+            Text(dataPoint.categoryName)
+                .font(Typography.caption.weight(.bold))
+                .foregroundStyle(SemanticColors.textPrimary)
+
+            Divider()
+                .frame(width: 120)
+
+            // All three values for this category
+            if let category = displayCategories.first(where: { $0.categoryName == dataPoint.categoryName }) {
+                ForEach(BudgetSeriesType.allCases, id: \.self) { series in
+                    HStack(spacing: Spacing.sm) {
+                        Circle()
+                            .fill(series.color)
+                            .frame(width: 8, height: 8)
+                        Text(series.rawValue)
+                            .font(Typography.caption)
+                            .foregroundStyle(SemanticColors.textSecondary)
+                        Spacer()
+                        Text(formatCurrency(amountForSeries(category: category, series: series)))
+                            .font(Typography.caption.weight(.medium))
+                            .foregroundStyle(SemanticColors.textPrimary)
+                    }
+                }
+
+                // Show variance
+                let variance = category.allocatedAmount - category.spentAmount
+                let varianceColor = variance >= 0 ? AppColors.success : AppColors.error
+                HStack {
+                    Text("Remaining")
+                        .font(Typography.caption)
+                        .foregroundStyle(SemanticColors.textSecondary)
+                    Spacer()
+                    Text(formatCurrency(variance))
+                        .font(Typography.caption.weight(.bold))
+                        .foregroundStyle(varianceColor)
+                }
+                .padding(.top, Spacing.xs)
+            }
+        }
+        .padding(Spacing.md)
+        .frame(width: 180)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .shadow(color: AppColors.shadowMedium, radius: 8, x: 0, y: 4)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .stroke(SemanticColors.borderLight, lineWidth: 1)
+        )
+    }
+
+    // MARK: - Legend View
+
+    private var legendView: some View {
+        HStack(spacing: Spacing.lg) {
+            ForEach(BudgetSeriesType.allCases, id: \.self) { series in
+                HStack(spacing: Spacing.xs) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(series.color)
+                        .frame(width: 12, height: 12)
+                    Text(series.rawValue.uppercased())
+                        .font(Typography.caption)
+                        .foregroundStyle(SemanticColors.textSecondary)
+                }
+            }
+        }
+    }
+
+    // MARK: - Empty State
+
+    private var emptyState: some View {
+        VStack(spacing: Spacing.md) {
+            Image(systemName: "chart.bar")
+                .font(.system(size: 32))
+                .foregroundStyle(SemanticColors.textTertiary)
+            Text(selectedCategoryType == .parent
+                ? "No parent categories yet"
+                : "No standalone categories yet")
+                .font(Typography.bodyRegular)
+                .foregroundStyle(SemanticColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Formatting Helpers
+
+    private func formatShortCurrency(_ amount: Double) -> String {
+        if amount >= 1000 {
+            return "$\(Int(amount / 1000))K"
+        }
+        return "$\(Int(amount))"
+    }
+
+    private func formatCurrency(_ amount: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .currency
+        formatter.maximumFractionDigits = 0
+        return formatter.string(from: NSNumber(value: amount)) ?? "$0"
+    }
+}
+
+// MARK: - Legacy Category Bar Chart (kept for reference)
 
 struct CategoryBarChart: View {
     let categories: [BudgetCategory]
