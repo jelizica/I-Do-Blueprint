@@ -23,6 +23,7 @@ struct GlobalSidebarViewV1: View {
     @EnvironmentObject var appStores: AppStores
 
     // Track expanded state for collapsible sections
+    @State private var isDashboardsExpanded = true
     @State private var isBudgetExpanded = true
 
     var body: some View {
@@ -38,6 +39,9 @@ struct GlobalSidebarViewV1: View {
                 VStack(spacing: Spacing.xxs) {
                     // Main navigation items
                     mainNavigationSection
+
+                    // Expandable Dashboards folder
+                    dashboardsFolderSection
 
                     // Expandable Budget folder
                     budgetFolderSection
@@ -94,6 +98,39 @@ struct GlobalSidebarViewV1: View {
                 isSelected: coordinator.selectedTab == .vendors
             ) {
                 coordinator.navigate(to: .vendors)
+            }
+        }
+    }
+
+    // MARK: - Dashboards Folder Section
+
+    private var dashboardsFolderSection: some View {
+        VStack(spacing: 0) {
+            // Dashboards folder header (expandable)
+            DashboardsFolderHeaderV1(
+                isExpanded: $isDashboardsExpanded
+            )
+            .padding(.top, Spacing.sm)
+
+            // Expanded content
+            if isDashboardsExpanded {
+                VStack(spacing: Spacing.xxs) {
+                    // Financial Dashboard
+                    DashboardSubItemViewV1(
+                        item: DashboardSubItem(
+                            icon: DashboardPage.financial.icon,
+                            title: "Financial Dashboard",
+                            page: .financial
+                        ),
+                        isSelected: coordinator.selectedTab == .dashboards && coordinator.dashboardPage == .financial,
+                        onSelect: {
+                            coordinator.navigateToDashboard(page: .financial)
+                        }
+                    )
+                }
+                .padding(.leading, Spacing.md)
+                .padding(.top, Spacing.xs)
+                .padding(.bottom, Spacing.sm)
             }
         }
     }
@@ -403,6 +440,124 @@ private struct BudgetSubItem {
 
 private struct BudgetSubItemViewV1: View {
     let item: BudgetSubItem
+    let isSelected: Bool
+    let onSelect: () -> Void
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Button(action: onSelect) {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: item.icon)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 20, alignment: .center)
+
+                Text(item.title)
+                    .font(Typography.bodySmall)
+                    .fontWeight(isSelected ? .semibold : .regular)
+                    .foregroundStyle(textColor)
+
+                Spacer()
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.xs + 2)
+            .background(backgroundStyle)
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+    }
+
+    private var iconColor: Color {
+        if isSelected {
+            return SemanticColors.textPrimary
+        }
+        return isHovered ? SemanticColors.textSecondary : SemanticColors.textTertiary
+    }
+
+    private var textColor: Color {
+        if isSelected {
+            return SemanticColors.textPrimary
+        }
+        return SemanticColors.textSecondary
+    }
+
+    @ViewBuilder
+    private var backgroundStyle: some View {
+        if isSelected {
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(SemanticColors.backgroundTertiary)
+        } else if isHovered {
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.black.opacity(0.05))
+        } else {
+            Color.clear
+        }
+    }
+}
+
+// MARK: - Dashboards Folder Header V1
+
+private struct DashboardsFolderHeaderV1: View {
+    @Binding var isExpanded: Bool
+    @State private var isHovered = false
+
+    var body: some View {
+        Button {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                isExpanded.toggle()
+            }
+        } label: {
+            HStack(spacing: Spacing.md) {
+                Image(systemName: isExpanded ? "folder" : "folder.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(SemanticColors.textSecondary)
+                    .frame(width: 20, alignment: .center)
+
+                Text("Dashboards")
+                    .font(Typography.bodySmall)
+                    .fontWeight(.medium)
+                    .foregroundStyle(SemanticColors.textPrimary)
+
+                Spacer()
+
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(SemanticColors.textTertiary)
+                    .rotationEffect(.degrees(isExpanded ? 0 : -90))
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(isHovered ? Color.black.opacity(0.05) : Color.clear)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
+// MARK: - Dashboard Sub Item
+
+private struct DashboardSubItem {
+    let icon: String
+    let title: String
+    let page: DashboardPage
+}
+
+private struct DashboardSubItemViewV1: View {
+    let item: DashboardSubItem
     let isSelected: Bool
     let onSelect: () -> Void
 

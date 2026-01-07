@@ -22,6 +22,7 @@ class AppCoordinator: ObservableObject {
     @Published var activeSheet: Sheet?
     @Published var activeFullScreenCover: FullScreenCover?
     @Published var budgetPage: BudgetPage?
+    @Published var dashboardPage: DashboardPage?
     
     // MARK: - Window Size (for dynamic sheet sizing)
     
@@ -50,6 +51,7 @@ class AppCoordinator: ObservableObject {
         case dashboard = "dashboard"
         case guests = "guests"
         case vendors = "vendors"
+        case dashboards = "dashboards"  // Dashboards folder (contains Financial Dashboard, etc.)
         case budget = "budget"
         case visualPlanning = "visualPlanning"
         case timeline = "timeline"
@@ -63,6 +65,7 @@ class AppCoordinator: ObservableObject {
             case .dashboard: return "Dashboard"
             case .guests: return "Guests"
             case .vendors: return "Vendors"
+            case .dashboards: return "Dashboards"
             case .budget: return "Budget"
             case .visualPlanning: return "Visual Planning"
             case .timeline: return "Timeline"
@@ -78,6 +81,7 @@ class AppCoordinator: ObservableObject {
             case .dashboard: return "house.fill"
             case .guests: return "person.3.fill"
             case .vendors: return "building.2.fill"
+            case .dashboards: return "square.grid.2x2.fill"
             case .budget: return "dollarsign.circle.fill"
             case .visualPlanning: return "paintpalette.fill"
             case .timeline: return "calendar"
@@ -97,6 +101,8 @@ class AppCoordinator: ObservableObject {
                 GuestDashboardViewV2()
             case .vendors:
                 VendorManagementViewV5()
+            case .dashboards:
+                DashboardsNavigationWrapper()
             case .budget:
                 BudgetNavigationWrapper()
             case .visualPlanning:
@@ -224,6 +230,11 @@ class AppCoordinator: ObservableObject {
     func navigateToBudget(page: BudgetPage) {
         selectedTab = .budget
         budgetPage = page
+    }
+
+    func navigateToDashboard(page: DashboardPage) {
+        selectedTab = .dashboards
+        dashboardPage = page
     }
 
     func present(_ sheet: Sheet) {

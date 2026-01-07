@@ -13,7 +13,10 @@ import SwiftUI
 enum BudgetPage: String, CaseIterable, Identifiable {
     // Hub (special case - not in a group)
     case hub = "Dashboard"
-    
+
+    // Dashboard V1 (enhanced dashboard with charts and insights)
+    case dashboardV1 = "Financial Dashboard"
+
     // Planning & Analysis Group (5 pages)
     case budgetOverview = "Budget Overview"
     case budgetBuilder = "Budget Builder"
@@ -36,8 +39,8 @@ enum BudgetPage: String, CaseIterable, Identifiable {
 
     var group: BudgetGroup? {
         switch self {
-        case .hub:
-            return nil  // Hub is not in a group
+        case .hub, .dashboardV1:
+            return nil  // Hub and Dashboard are not in a group
         case .budgetOverview, .budgetBuilder, .analytics, .cashFlow, .calculator:
             return .planningAnalysis
         case .expenseTracker, .expenseReports, .expenseCategories, .paymentSchedule:
@@ -49,9 +52,10 @@ enum BudgetPage: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
-        // Hub
+        // Hub & Dashboard
         case .hub: return "square.grid.2x2.fill"
-        
+        case .dashboardV1: return "chart.bar.xaxis"
+
         // Planning & Analysis
         case .budgetOverview: return "chart.bar.fill"
         case .budgetBuilder: return "hammer.fill"
@@ -78,7 +82,11 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         // Hub
         case .hub:
             EmptyView()  // Hub is handled separately in BudgetDashboardHubView
-        
+
+        // Dashboard V1
+        case .dashboardV1:
+            BudgetDashboardViewV1(currentPage: currentPage)
+
         // Planning & Analysis group
         case .budgetOverview:
             BudgetOverviewDashboardViewV2(currentPage: currentPage)
