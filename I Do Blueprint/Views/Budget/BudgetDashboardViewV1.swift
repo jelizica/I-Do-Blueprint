@@ -882,12 +882,42 @@ struct CategoryBarChart: View {
     }
 }
 
+// MARK: - Spend Distribution View Mode
+
+/// Toggle between viewing allocated (expenses) vs paid (payment plans) distribution
+enum SpendDistributionMode: String, CaseIterable {
+    case allocated = "Allocated"
+    case paid = "Paid"
+
+    var icon: String {
+        switch self {
+        case .allocated: return "chart.pie.fill"
+        case .paid: return "creditcard.fill"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .allocated: return "Budget allocation from expenses"
+        case .paid: return "Actual payments made"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .allocated: return AppColors.Budget.allocated
+        case .paid: return AppColors.Budget.underBudget
+        }
+    }
+}
+
 // MARK: - Spend Distribution Donut
 
 /// Enhanced spend distribution donut chart with dropdown category selector
 /// and detailed insights panel. Shows budget spend percentages with
 /// interactive highlighting when a category is selected.
 /// Uses CategoryBudgetMetrics for accurate spend data from RPC function.
+/// Supports toggling between Allocated (expenses) and Paid (payment plans) views.
 struct SpendDistributionDonut: View {
     /// Metrics from the database RPC function with accurate spend data
     let metrics: [CategoryBudgetMetrics]
@@ -895,10 +925,21 @@ struct SpendDistributionDonut: View {
     /// Selected category ID - nil means "All Categories"
     @State private var selectedCategoryId: UUID?
 
+    /// View mode toggle: Allocated vs Paid
+    @State private var viewMode: SpendDistributionMode = .paid
+
     // MARK: - Computed Properties
 
-    /// Top-level parent categories with spending data, sorted by spent amount descending
-    /// Only shows categories that are parents (have children) and have actual spending
+    /// Get the value to display based on current view mode
+    private func valueForMode(_ metric: CategoryBudgetMetrics) -> Double {
+        switch viewMode {
+        case .allocated: return metric.allocated
+        case .paid: return metric.spent
+        }
+    }
+
+    /// Top-level parent categories with data, sorted by selected metric descending
+    /// Only shows categories that are parents (have children) and have actual values
     private var validCategories: [CategoryBudgetMetrics] {
         // Get IDs of categories that have children (are parents)
         let parentCategoryIds = Set(metrics.compactMap { $0.parentCategoryId })
@@ -906,19 +947,19 @@ struct SpendDistributionDonut: View {
         // Filter to top-level categories that:
         // 1. Are parent categories (parentCategoryId is nil)
         // 2. Have children pointing to them (are actual parent categories with subcategories)
-        // 3. Have spending > 0
+        // 3. Have value > 0 for the selected mode
         return metrics
             .filter { metric in
                 metric.isParentCategory &&
                 parentCategoryIds.contains(metric.categoryId) &&
-                metric.spent > 0
+                valueForMode(metric) > 0
             }
-            .sorted { $0.spent > $1.spent }
+            .sorted { valueForMode($0) > valueForMode($1) }
     }
 
-    /// Total spent across all valid categories
-    private var totalSpent: Double {
-        validCategories.reduce(0) { $0 + $1.spent }
+    /// Total value across all valid categories for current mode
+    private var totalValue: Double {
+        validCategories.reduce(0) { $0 + valueForMode($1) }
     }
 
     /// Currently selected category data
@@ -927,10 +968,10 @@ struct SpendDistributionDonut: View {
         return validCategories.first { $0.categoryId == id }
     }
 
-    /// Calculate percentage for a category
+    /// Calculate percentage for a category based on current mode
     private func percentage(for metric: CategoryBudgetMetrics) -> Double {
-        guard totalSpent > 0 else { return 0 }
-        return (metric.spent / totalSpent) * 100
+        guard totalValue > 0 else { return 0 }
+        return (valueForMode(metric) / totalValue) * 100
     }
 
     /// Format percentage for display
@@ -944,26 +985,250 @@ struct SpendDistributionDonut: View {
         if validCategories.isEmpty {
             emptyState
         } else {
-            VStack(spacing: Spacing.lg) {
-                // Donut Chart with center content
-                donutChart
-                    .frame(height: 180)
+            VStack(spacing: Spacing.sm) {
+                // View Mode Toggle
+                viewModeToggle
 
-                // Category Dropdown Picker
-                categoryPicker
+                // Main content: Donut on left, Stats on right
+                HStack(alignment: .top, spacing: Spacing.lg) {
+                    // Left side: Donut Chart with picker
+                    VStack(spacing: Spacing.sm) {
+                        donutChart
+                            .frame(width: 140, height: 140)
 
-                // Helper text
-                Text("Select a category to highlight details.")
-                    .font(Typography.caption)
-                    .foregroundStyle(SemanticColors.textTertiary)
+                        // Category Dropdown Picker
+                        categoryPicker
+                    }
+                    .frame(width: 160)
 
-                // Category Insights Panel (when category selected)
-                if let metric = selectedCategoryData {
-                    categoryInsightsPanel(for: metric)
-                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    // Right side: Stats Panel (always visible)
+                    statsPanel
+                        .frame(maxWidth: .infinity)
                 }
             }
             .animation(.easeInOut(duration: 0.25), value: selectedCategoryId)
+            .animation(.easeInOut(duration: 0.25), value: viewMode)
+        }
+    }
+
+    // MARK: - Stats Panel (Always Visible)
+
+    private var statsPanel: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            // Header showing current selection
+            HStack(spacing: Spacing.xs) {
+                if let metric = selectedCategoryData {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                        .frame(width: 3, height: 16)
+                    Text(metric.categoryName)
+                        .font(Typography.caption.weight(.semibold))
+                        .foregroundStyle(SemanticColors.textPrimary)
+                        .lineLimit(1)
+                    Spacer()
+                    Text(formatPercentage(percentage(for: metric)))
+                        .font(Typography.caption.weight(.bold))
+                        .foregroundStyle(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                } else {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(viewMode.color)
+                        .frame(width: 3, height: 16)
+                    Text("All Categories")
+                        .font(Typography.caption.weight(.semibold))
+                        .foregroundStyle(SemanticColors.textPrimary)
+                    Spacer()
+                    Text(formatCurrency(totalValue))
+                        .font(Typography.caption.weight(.bold))
+                        .foregroundStyle(viewMode.color)
+                }
+            }
+
+            Divider()
+
+            // Compact metrics grid
+            if let metric = selectedCategoryData {
+                compactMetricsGrid(for: metric)
+            } else {
+                // Show summary for all categories
+                allCategoriesSummary
+            }
+        }
+        .padding(Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color(NSColor.controlBackgroundColor).opacity(0.5))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(SemanticColors.borderLight, lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Compact Metrics Grid
+
+    private func compactMetricsGrid(for metric: CategoryBudgetMetrics) -> some View {
+        VStack(spacing: Spacing.xs) {
+            // Row 1: Allocated & Spent
+            HStack(spacing: Spacing.md) {
+                compactMetric(
+                    label: "Allocated",
+                    value: formatCurrency(metric.allocated),
+                    color: AppColors.Budget.allocated
+                )
+                compactMetric(
+                    label: "Spent",
+                    value: formatCurrency(metric.spent),
+                    color: Color(hex: metric.color) ?? AppColors.Budget.underBudget
+                )
+            }
+
+            // Row 2: Remaining & Usage
+            HStack(spacing: Spacing.md) {
+                compactMetric(
+                    label: "Remaining",
+                    value: formatCurrency(abs(metric.remaining)),
+                    color: metric.remaining >= 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget,
+                    isNegative: metric.remaining < 0
+                )
+                compactMetric(
+                    label: "Used",
+                    value: "\(Int(metric.percentageSpent.rounded()))%",
+                    color: metric.percentageSpent > 100 ? AppColors.Budget.overBudget
+                        : metric.percentageSpent > 80 ? AppColors.warning
+                        : AppColors.Budget.underBudget
+                )
+            }
+
+            // Progress bar
+            GeometryReader { geometry in
+                let usagePercent = metric.allocated > 0
+                    ? min((metric.spent / metric.allocated), 1.0)
+                    : 0
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(SemanticColors.borderLight)
+                        .frame(height: 6)
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(
+                            usagePercent > 1.0 ? AppColors.Budget.overBudget
+                                : usagePercent > 0.8 ? AppColors.warning
+                                : Color(hex: metric.color) ?? AppColors.Budget.allocated
+                        )
+                        .frame(width: geometry.size.width * usagePercent, height: 6)
+                }
+            }
+            .frame(height: 6)
+        }
+    }
+
+    // MARK: - All Categories Summary
+
+    private var allCategoriesSummary: some View {
+        VStack(spacing: Spacing.xs) {
+            // Total value for current mode
+            HStack(spacing: Spacing.md) {
+                compactMetric(
+                    label: viewMode == .allocated ? "Total Allocated" : "Total Paid",
+                    value: formatCurrency(totalValue),
+                    color: viewMode.color
+                )
+                compactMetric(
+                    label: "Categories",
+                    value: "\(validCategories.count)",
+                    color: SemanticColors.textSecondary
+                )
+            }
+
+            // Top 3 categories mini-list
+            VStack(spacing: Spacing.xxs) {
+                ForEach(Array(validCategories.prefix(3)), id: \.categoryId) { metric in
+                    HStack(spacing: Spacing.xs) {
+                        Circle()
+                            .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                            .frame(width: 6, height: 6)
+                        Text(metric.categoryName)
+                            .font(.caption2)
+                            .foregroundStyle(SemanticColors.textSecondary)
+                            .lineLimit(1)
+                        Spacer()
+                        Text(formatPercentage(percentage(for: metric)))
+                            .font(.caption2.weight(.medium))
+                            .foregroundStyle(SemanticColors.textPrimary)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Compact Metric
+
+    private func compactMetric(
+        label: String,
+        value: String,
+        color: Color,
+        isNegative: Bool = false
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(SemanticColors.textTertiary)
+            HStack(spacing: 1) {
+                if isNegative {
+                    Text("-")
+                        .font(Typography.caption.weight(.semibold))
+                        .foregroundStyle(color)
+                }
+                Text(value)
+                    .font(Typography.caption.weight(.semibold))
+                    .foregroundStyle(color)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - View Mode Toggle
+
+    private var viewModeToggle: some View {
+        HStack(spacing: Spacing.xs) {
+            ForEach(SpendDistributionMode.allCases, id: \.self) { mode in
+                Button {
+                    viewMode = mode
+                    // Reset category selection when switching modes
+                    selectedCategoryId = nil
+                } label: {
+                    HStack(spacing: Spacing.xs) {
+                        Image(systemName: mode.icon)
+                            .font(.system(size: 12))
+                        Text(mode.rawValue)
+                            .font(Typography.caption.weight(.medium))
+                    }
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.xs)
+                    .background(
+                        viewMode == mode
+                            ? mode.color
+                            : Color.clear
+                    )
+                    .foregroundStyle(
+                        viewMode == mode
+                            ? .white
+                            : SemanticColors.textSecondary
+                    )
+                    .cornerRadius(CornerRadius.sm)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.sm)
+                            .stroke(
+                                viewMode == mode
+                                    ? Color.clear
+                                    : SemanticColors.borderLight,
+                                lineWidth: 1
+                            )
+                    )
+                }
+                .buttonStyle(.plain)
+                .help(mode.description)
+            }
+            Spacer()
         }
     }
 
@@ -972,7 +1237,7 @@ struct SpendDistributionDonut: View {
     private var donutChart: some View {
         Chart(validCategories, id: \.categoryId) { metric in
             SectorMark(
-                angle: .value("Spent", metric.spent),
+                angle: .value("Value", valueForMode(metric)),
                 innerRadius: .ratio(0.65),
                 outerRadius: selectedCategoryId == metric.categoryId
                     ? .ratio(1.0)  // Expand selected segment
@@ -1007,25 +1272,27 @@ struct SpendDistributionDonut: View {
             // Selected category view
             VStack(spacing: Spacing.xxs) {
                 Text(formatPercentage(percentage(for: metric)))
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(Color(hex: metric.color) ?? AppColors.Budget.allocated)
 
                 Text(metric.categoryName.uppercased())
                     .font(Typography.caption.weight(.semibold))
                     .foregroundStyle(SemanticColors.textSecondary)
-                    .tracking(1.2)
+                    .tracking(1.0)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
         } else {
             // Default "All Categories" view
             VStack(spacing: Spacing.xxs) {
                 Text("100%")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .foregroundStyle(SemanticColors.textPrimary)
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
+                    .foregroundStyle(viewMode.color)
 
-                Text("ALL CATEGORIES")
+                Text(viewMode.rawValue.uppercased())
                     .font(Typography.caption.weight(.semibold))
                     .foregroundStyle(SemanticColors.textSecondary)
-                    .tracking(1.2)
+                    .tracking(1.0)
             }
         }
     }
@@ -1286,8 +1553,10 @@ struct FinancialPlanningSection: View {
     }
 }
 
-// MARK: - Monthly Affordability Card
+// MARK: - Monthly Affordability Card V2
 
+/// A clean, modern affordability card matching the Financial Planning design.
+/// Shows monthly contribution, savings progress, and months remaining.
 struct MonthlyAffordabilityCard: View {
     let affordability: AffordabilityStore
     let onTap: () -> Void
@@ -1312,30 +1581,41 @@ struct MonthlyAffordabilityCard: View {
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                HStack {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.system(size: 24))
-                        .foregroundStyle(AppColors.Budget.allocated)
+                // Header with icon and title
+                HStack(spacing: Spacing.md) {
+                    // Calendar icon with blue background
+                    ZStack {
+                        RoundedRectangle(cornerRadius: CornerRadius.md)
+                            .fill(AppColors.Budget.allocated.opacity(0.15))
+                            .frame(width: 40, height: 40)
+
+                        Image(systemName: "calendar")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(AppColors.Budget.allocated)
+                    }
+
                     Text("Monthly Affordability")
                         .font(Typography.heading)
                         .foregroundStyle(SemanticColors.textPrimary)
+
                     Spacer()
+
                     Image(systemName: "chevron.right")
-                        .font(.caption)
+                        .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(SemanticColors.textTertiary)
                 }
 
                 Divider()
+                    .background(SemanticColors.borderLight)
 
-                // Partner Contributions
-                VStack(alignment: .leading, spacing: Spacing.sm) {
+                // Monthly Contribution
+                VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text("Monthly Contribution")
-                        .font(Typography.caption)
+                        .font(Typography.bodySmall)
                         .foregroundStyle(SemanticColors.textSecondary)
 
                     Text(formatCurrency(monthlyContribution))
-                        .font(Typography.title2)
-                        .fontWeight(.bold)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
                         .foregroundStyle(AppColors.Budget.income)
                 }
 
@@ -1343,17 +1623,33 @@ struct MonthlyAffordabilityCard: View {
                 VStack(alignment: .leading, spacing: Spacing.sm) {
                     HStack {
                         Text("Savings Progress")
-                            .font(Typography.caption)
+                            .font(Typography.bodySmall)
                             .foregroundStyle(SemanticColors.textSecondary)
+
                         Spacer()
+
                         Text("\(Int(progress * 100))%")
-                            .font(Typography.caption)
+                            .font(Typography.bodySmall)
                             .foregroundStyle(SemanticColors.textSecondary)
                     }
 
-                    ProgressView(value: progress)
-                        .tint(AppColors.Budget.underBudget)
+                    // Custom progress bar
+                    GeometryReader { geometry in
+                        ZStack(alignment: .leading) {
+                            // Background track
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(SemanticColors.borderLight)
+                                .frame(height: 8)
 
+                            // Progress fill
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(AppColors.Budget.allocated)
+                                .frame(width: max(geometry.size.width * progress, 8), height: 8)
+                        }
+                    }
+                    .frame(height: 8)
+
+                    // Months remaining
                     Text("\(monthsRemaining) months remaining")
                         .font(Typography.caption)
                         .foregroundStyle(SemanticColors.textTertiary)
@@ -1368,10 +1664,18 @@ struct MonthlyAffordabilityCard: View {
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .stroke(isHovered ? AppColors.Budget.allocated.opacity(0.5) : Color.clear, lineWidth: 1)
             )
+            .shadow(
+                color: isHovered ? AppColors.Budget.allocated.opacity(0.1) : Color.clear,
+                radius: 8,
+                x: 0,
+                y: 4
+            )
         }
         .buttonStyle(.plain)
         .onHover { hovering in
-            isHovered = hovering
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
         }
     }
 
