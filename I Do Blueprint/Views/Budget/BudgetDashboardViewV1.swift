@@ -472,6 +472,8 @@ struct InteractiveBudgetCategoryChart: View {
     @State private var hoveredCategory: String?
     @State private var hoveredDataPoint: CategoryChartDataPoint?
     @State private var tooltipPosition: CGPoint = .zero
+    @State private var isTooltipVisible: Bool = false
+    @State private var hoverDebounceTask: Task<Void, Never>?
 
     // Identify parent categories (have children)
     private var parentCategoryIds: Set<UUID> {
@@ -532,10 +534,12 @@ struct InteractiveBudgetCategoryChart: View {
                     // Main Chart
                     chartView
 
-                    // Tooltip overlay
-                    if let dataPoint = hoveredDataPoint {
+                    // Tooltip overlay - allowsHitTesting(false) prevents tooltip from intercepting hover events
+                    if isTooltipVisible, let dataPoint = hoveredDataPoint {
                         tooltipView(for: dataPoint)
                             .position(tooltipPosition)
+                            .allowsHitTesting(false)
+                            .transition(.opacity.animation(.easeInOut(duration: 0.15)))
                     }
                 }
             }
@@ -639,20 +643,41 @@ struct InteractiveBudgetCategoryChart: View {
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
+                                    hoverDebounceTask?.cancel()
                                     handleHover(at: value.location, in: proxy, geometry: overlayGeometry)
+                                    isTooltipVisible = true
                                 }
                                 .onEnded { _ in
-                                    hoveredCategory = nil
-                                    hoveredDataPoint = nil
+                                    // Use same debounce pattern for touch/drag
+                                    hoverDebounceTask?.cancel()
+                                    hoverDebounceTask = Task {
+                                        try? await Task.sleep(for: .milliseconds(100))
+                                        if !Task.isCancelled {
+                                            hoveredCategory = nil
+                                            hoveredDataPoint = nil
+                                            isTooltipVisible = false
+                                        }
+                                    }
                                 }
                         )
                         .onContinuousHover { phase in
                             switch phase {
                             case .active(let location):
+                                // Cancel any pending hide operation
+                                hoverDebounceTask?.cancel()
                                 handleHover(at: location, in: proxy, geometry: overlayGeometry)
+                                isTooltipVisible = true
                             case .ended:
-                                hoveredCategory = nil
-                                hoveredDataPoint = nil
+                                // Debounce the hide to prevent flickering
+                                hoverDebounceTask?.cancel()
+                                hoverDebounceTask = Task {
+                                    try? await Task.sleep(for: .milliseconds(100))
+                                    if !Task.isCancelled {
+                                        hoveredCategory = nil
+                                        hoveredDataPoint = nil
+                                        isTooltipVisible = false
+                                    }
+                                }
                             }
                         }
                 }
