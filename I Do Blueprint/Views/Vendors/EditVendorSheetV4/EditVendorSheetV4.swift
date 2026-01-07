@@ -92,6 +92,10 @@ struct EditVendorSheetV4: View {
     
     @EnvironmentObject private var budgetStore: BudgetStoreV2
     
+    // MARK: - App Coordinator for Window Size
+    
+    @EnvironmentObject private var coordinator: AppCoordinator
+    
     // MARK: - State - Image
     
     @State private var selectedImage: NSImage?
@@ -123,6 +127,40 @@ struct EditVendorSheetV4: View {
     // MARK: - Logger
     
     private let logger = AppLogger.ui
+    
+    // MARK: - Size Constants (Proportional Modal Sizing Pattern)
+    
+    /// Minimum modal width
+    private let minWidth: CGFloat = 400
+    /// Maximum modal width
+    private let maxWidth: CGFloat = 700
+    /// Minimum modal height
+    private let minHeight: CGFloat = 350
+    /// Maximum modal height
+    private let maxHeight: CGFloat = 850
+    /// Buffer for window chrome (title bar, toolbar)
+    private let windowChromeBuffer: CGFloat = 40
+    /// Width proportion of parent window
+    private let widthProportion: CGFloat = 0.60
+    /// Height proportion of parent window
+    private let heightProportion: CGFloat = 0.75
+    
+    // MARK: - Computed Properties
+    
+    /// Calculate dynamic size based on parent window size
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        
+        // Calculate proportional size
+        let targetWidth = parentSize.width * widthProportion
+        let targetHeight = parentSize.height * heightProportion - windowChromeBuffer
+        
+        // Clamp to min/max bounds
+        let finalWidth = min(maxWidth, max(minWidth, targetWidth))
+        let finalHeight = min(maxHeight, max(minHeight, targetHeight))
+        
+        return CGSize(width: finalWidth, height: finalHeight)
+    }
     
     // MARK: - Initialization
     
@@ -172,7 +210,7 @@ struct EditVendorSheetV4: View {
                 footerSection
             }
         }
-        .frame(width: 900, height: 750)
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(glassBackground)
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xxl))
         .macOSShadow(.modal)
