@@ -507,7 +507,7 @@ struct InteractiveBudgetCategoryChart: View {
 
     private var displayCategories: [CategoryBudgetMetrics] {
         let cats = selectedCategoryType == .parent ? parentCategories : leafCategories
-        return Array(cats.prefix(6)) // Top 6 for readability
+        return cats // Show all categories (horizontal scroll handles overflow)
     }
 
     private var chartDataPoints: [CategoryChartDataPoint] {
@@ -531,6 +531,9 @@ struct InteractiveBudgetCategoryChart: View {
         }
     }
 
+    /// Minimum width per category group in the chart (3 bars + spacing)
+    private let categoryWidth: CGFloat = 80
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             // Category Type Toggle
@@ -539,17 +542,22 @@ struct InteractiveBudgetCategoryChart: View {
             if displayCategories.isEmpty {
                 emptyState
             } else {
-                ZStack(alignment: .topLeading) {
-                    // Main Chart
-                    chartView
+                // Horizontal scroll for unlimited categories
+                ScrollView(.horizontal, showsIndicators: true) {
+                    ZStack(alignment: .topLeading) {
+                        // Main Chart with dynamic width based on category count
+                        chartView
+                            .frame(width: max(300, CGFloat(displayCategories.count) * categoryWidth))
 
-                    // Tooltip overlay - allowsHitTesting(false) prevents tooltip from intercepting hover events
-                    if isTooltipVisible, let dataPoint = hoveredDataPoint {
-                        tooltipView(for: dataPoint)
-                            .position(tooltipPosition)
-                            .allowsHitTesting(false)
-                            .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+                        // Tooltip overlay - allowsHitTesting(false) prevents tooltip from intercepting hover events
+                        if isTooltipVisible, let dataPoint = hoveredDataPoint {
+                            tooltipView(for: dataPoint)
+                                .position(tooltipPosition)
+                                .allowsHitTesting(false)
+                                .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+                        }
                     }
+                    .frame(height: 180)
                 }
             }
 
@@ -1253,22 +1261,34 @@ struct SpendDistributionDonut: View {
                 )
             }
 
-            // Top 3 categories mini-list
-            VStack(spacing: Spacing.xxs) {
-                ForEach(Array(validCategories.prefix(3)), id: \.categoryId) { metric in
-                    HStack(spacing: Spacing.xs) {
-                        Circle()
-                            .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
-                            .frame(width: 6, height: 6)
-                        Text(metric.categoryName)
-                            .font(.caption2)
-                            .foregroundStyle(SemanticColors.textSecondary)
-                            .lineLimit(1)
-                        Spacer()
-                        Text(formatPercentage(percentage(for: metric)))
-                            .font(.caption2.weight(.medium))
-                            .foregroundStyle(SemanticColors.textPrimary)
-                    }
+            // All categories list (scrollable when > 4 categories)
+            if validCategories.count > 4 {
+                ScrollView(.vertical, showsIndicators: true) {
+                    categoriesList
+                }
+                .frame(maxHeight: 80)
+            } else {
+                categoriesList
+            }
+        }
+    }
+
+    /// Reusable categories list for the summary panel
+    private var categoriesList: some View {
+        VStack(spacing: Spacing.xxs) {
+            ForEach(validCategories, id: \.categoryId) { metric in
+                HStack(spacing: Spacing.xs) {
+                    Circle()
+                        .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                        .frame(width: 6, height: 6)
+                    Text(metric.categoryName)
+                        .font(.caption2)
+                        .foregroundStyle(SemanticColors.textSecondary)
+                        .lineLimit(1)
+                    Spacer()
+                    Text(formatPercentage(percentage(for: metric)))
+                        .font(.caption2.weight(.medium))
+                        .foregroundStyle(SemanticColors.textPrimary)
                 }
             }
         }
