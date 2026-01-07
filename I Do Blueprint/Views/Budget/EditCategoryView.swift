@@ -136,6 +136,8 @@ struct EditCategoryView: View {
         Task {
             do {
                 _ = try await budgetStore.categoryStore.updateCategory(updatedCategory)
+                // Reload category budget metrics to update charts with new category name
+                await budgetStore.loadCategoryBudgetMetrics()
                 dismiss()
             } catch {
                 AppLogger.ui.error("Failed to update category", error: error)

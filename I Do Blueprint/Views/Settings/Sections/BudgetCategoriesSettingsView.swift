@@ -736,6 +736,8 @@ struct SettingsEditCategoryView: View {
         
         Task {
             try? await budgetStore.categoryStore.updateCategory(updatedCategory)
+            // Reload category budget metrics to update charts with new category name
+            await budgetStore.loadCategoryBudgetMetrics()
             dismiss()
         }
     }
