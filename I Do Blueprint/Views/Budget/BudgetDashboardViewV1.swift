@@ -918,12 +918,13 @@ enum SpendDistributionMode: String, CaseIterable {
 /// interactive highlighting when a category is selected.
 /// Uses CategoryBudgetMetrics for accurate spend data from RPC function.
 /// Supports toggling between Allocated (expenses) and Paid (payment plans) views.
+/// Uses chartAngleSelection for direct segment tap interaction instead of a picker.
 struct SpendDistributionDonut: View {
     /// Metrics from the database RPC function with accurate spend data
     let metrics: [CategoryBudgetMetrics]
 
-    /// Selected category ID - nil means "All Categories"
-    @State private var selectedCategoryId: UUID?
+    /// Selected angle from chart tap - maps to category via categoryRanges
+    @State private var selectedAngle: Double?
 
     /// View mode toggle: Allocated vs Paid
     @State private var viewMode: SpendDistributionMode = .paid
@@ -962,10 +963,31 @@ struct SpendDistributionDonut: View {
         validCategories.reduce(0) { $0 + valueForMode($1) }
     }
 
-    /// Currently selected category data
+    /// Pre-calculated ranges for mapping selected angle to category
+    /// Each category has a range from its cumulative start to end value
+    private var categoryRanges: [(categoryId: UUID, range: Range<Double>)] {
+        var total: Double = 0
+        return validCategories.map { metric in
+            let newTotal = total + valueForMode(metric)
+            let result = (categoryId: metric.categoryId, range: total..<newTotal)
+            total = newTotal
+            return result
+        }
+    }
+
+    /// Currently selected category data based on tapped angle
     private var selectedCategoryData: CategoryBudgetMetrics? {
-        guard let id = selectedCategoryId else { return nil }
-        return validCategories.first { $0.categoryId == id }
+        guard let selectedAngle else { return nil }
+        // Find which category range contains the selected angle
+        if let selectedRange = categoryRanges.first(where: { $0.range.contains(selectedAngle) }) {
+            return validCategories.first { $0.categoryId == selectedRange.categoryId }
+        }
+        return nil
+    }
+
+    /// Selected category ID derived from selectedAngle
+    private var selectedCategoryId: UUID? {
+        selectedCategoryData?.categoryId
     }
 
     /// Calculate percentage for a category based on current mode
@@ -989,26 +1011,114 @@ struct SpendDistributionDonut: View {
                 // View Mode Toggle
                 viewModeToggle
 
-                // Main content: Donut on left, Stats on right
+                // Main content: Donut with picker below, Stats on right
                 HStack(alignment: .top, spacing: Spacing.lg) {
-                    // Left side: Donut Chart with picker
+                    // Left side: Donut Chart + Dropdown Picker
                     VStack(spacing: Spacing.sm) {
                         donutChart
                             .frame(width: 140, height: 140)
 
-                        // Category Dropdown Picker
-                        categoryPicker
+                        // Category dropdown picker (syncs with chart tap)
+                        categoryPickerDropdown
+                            .frame(maxWidth: 160)
+
+                        // Hint text
+                        selectionHintText
                     }
-                    .frame(width: 160)
+                    .frame(width: 170)
 
                     // Right side: Stats Panel (always visible)
                     statsPanel
                         .frame(maxWidth: .infinity)
                 }
             }
-            .animation(.easeInOut(duration: 0.25), value: selectedCategoryId)
+            .animation(.easeInOut(duration: 0.25), value: selectedAngle)
             .animation(.easeInOut(duration: 0.25), value: viewMode)
         }
+    }
+
+    // MARK: - Category Picker Dropdown
+
+    /// Dropdown picker for selecting a category - syncs with chart tap selection
+    private var categoryPickerDropdown: some View {
+        Menu {
+            // "All Categories" option
+            Button {
+                selectedAngle = nil
+            } label: {
+                HStack {
+                    Text("All Categories")
+                    if selectedCategoryData == nil {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+
+            Divider()
+
+            // Individual categories with percentages
+            ForEach(validCategories, id: \.categoryId) { metric in
+                Button {
+                    // Set selectedAngle to the middle of this category's range
+                    if let range = categoryRanges.first(where: { $0.categoryId == metric.categoryId })?.range {
+                        selectedAngle = (range.lowerBound + range.upperBound) / 2
+                    }
+                } label: {
+                    HStack {
+                        Circle()
+                            .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                            .frame(width: 8, height: 8)
+                        Text("\(metric.categoryName) (\(formatPercentage(percentage(for: metric))))")
+                        if selectedCategoryId == metric.categoryId {
+                            Image(systemName: "checkmark")
+                        }
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: Spacing.sm) {
+                if let metric = selectedCategoryData {
+                    Circle()
+                        .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
+                        .frame(width: 8, height: 8)
+                    Text("\(metric.categoryName) (\(formatPercentage(percentage(for: metric))))")
+                        .font(Typography.caption.weight(.medium))
+                        .foregroundStyle(SemanticColors.textPrimary)
+                } else {
+                    Circle()
+                        .fill(SemanticColors.textTertiary)
+                        .frame(width: 8, height: 8)
+                    Text("All Categories")
+                        .font(Typography.caption.weight(.medium))
+                        .foregroundStyle(SemanticColors.textPrimary)
+                }
+                Spacer()
+                Image(systemName: "chevron.up.chevron.down")
+                    .font(.system(size: 10))
+                    .foregroundStyle(SemanticColors.textTertiary)
+            }
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .fill(Color(NSColor.controlBackgroundColor))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.md)
+                            .stroke(SemanticColors.borderLight, lineWidth: 1)
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Selection Hint Text
+
+    /// Hint text below the picker
+    private var selectionHintText: some View {
+        Text("Select a category to highlight details.")
+            .font(.caption2)
+            .foregroundStyle(SemanticColors.textTertiary)
+            .italic()
     }
 
     // MARK: - Stats Panel (Always Visible)
@@ -1194,7 +1304,7 @@ struct SpendDistributionDonut: View {
                 Button {
                     viewMode = mode
                     // Reset category selection when switching modes
-                    selectedCategoryId = nil
+                    selectedAngle = nil
                 } label: {
                     HStack(spacing: Spacing.xs) {
                         Image(systemName: mode.icon)
@@ -1249,6 +1359,7 @@ struct SpendDistributionDonut: View {
             .opacity(segmentOpacity(for: metric))
         }
         .chartLegend(.hidden)
+        .chartAngleSelection(value: $selectedAngle)  // Enable tap-to-select segments
         .chartBackground { _ in
             GeometryReader { geometry in
                 centerContent
@@ -1297,49 +1408,7 @@ struct SpendDistributionDonut: View {
         }
     }
 
-    // MARK: - Category Picker
-
-    private var categoryPicker: some View {
-        Picker(selection: $selectedCategoryId) {
-            // "All Categories" option
-            HStack(spacing: Spacing.sm) {
-                Circle()
-                    .fill(SemanticColors.textTertiary)
-                    .frame(width: 10, height: 10)
-                Text("All Categories")
-            }
-            .tag(nil as UUID?)
-
-            Divider()
-
-            // Individual categories with percentages
-            ForEach(validCategories, id: \.categoryId) { metric in
-                HStack(spacing: Spacing.sm) {
-                    Circle()
-                        .fill(Color(hex: metric.color) ?? AppColors.Budget.allocated)
-                        .frame(width: 10, height: 10)
-                    Text("\(metric.categoryName) (\(formatPercentage(percentage(for: metric))))")
-                }
-                .tag(metric.categoryId as UUID?)
-            }
-        } label: {
-            EmptyView()
-        }
-        .pickerStyle(.menu)
-        .labelsHidden()
-        .padding(.horizontal, Spacing.md)
-        .padding(.vertical, Spacing.sm)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(Color(NSColor.controlBackgroundColor))
-                .overlay(
-                    RoundedRectangle(cornerRadius: CornerRadius.md)
-                        .stroke(SemanticColors.borderLight, lineWidth: 1)
-                )
-        )
-    }
-
-    // MARK: - Category Insights Panel
+    // MARK: - Category Insights Panel (Legacy - kept for reference)
 
     private func categoryInsightsPanel(for metric: CategoryBudgetMetrics) -> some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
