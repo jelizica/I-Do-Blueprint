@@ -5,6 +5,7 @@
 //  New architecture version of timeline management using repository pattern
 //
 
+import AppKit
 import Combine
 import Dependencies
 import Foundation
@@ -476,6 +477,115 @@ class TimelineStoreV2: ObservableObject, CacheableStore {
     /// Find events that depend on a given event
     func dependentEvents(on event: WeddingDayEvent) -> [WeddingDayEvent] {
         weddingDayEvents.filter { $0.dependsOnEventId == event.id }
+    }
+
+    /// Parent events only (excludes sub-events) - for settings display
+    var parentWeddingDayEvents: [WeddingDayEvent] {
+        weddingDayEvents.filter { $0.isParentEvent }
+    }
+
+    /// Get sub-events for a specific parent event
+    func subEvents(for parentEvent: WeddingDayEvent) -> [WeddingDayEvent] {
+        weddingDayEvents.filter { $0.parentEventId == parentEvent.id }
+    }
+
+    // MARK: - Photo Management
+
+    /// Upload a photo for an event and update the event's photo_urls array
+    /// - Parameters:
+    ///   - image: The NSImage to upload
+    ///   - event: The event to add the photo to
+    func uploadPhoto(_ image: NSImage, for event: WeddingDayEvent) async {
+        guard let tiffData = image.tiffRepresentation,
+              let bitmapImage = NSBitmapImageRep(data: tiffData),
+              let imageData = bitmapImage.representation(using: .png, properties: [:]) else {
+            AppLogger.ui.error("Failed to convert image to PNG data")
+            return
+        }
+
+        do {
+            let coupleId = try await TenantContextProvider.shared.requireTenantId()
+            let photoUrl = try await repository.uploadEventPhoto(
+                imageData: imageData,
+                eventId: event.id,
+                coupleId: coupleId
+            )
+
+            // Update the event with the new photo URL
+            var updatedEvent = event
+            updatedEvent.photoUrls.append(photoUrl)
+            updatedEvent.updatedAt = Date()
+
+            await updateWeddingDayEvent(updatedEvent)
+            showSuccess("Photo uploaded successfully")
+        } catch {
+            await handleError(error, operation: "uploadPhoto", context: [
+                "eventId": event.id.uuidString
+            ]) { [weak self] in
+                await self?.uploadPhoto(image, for: event)
+            }
+        }
+    }
+
+    /// Delete a photo from an event
+    /// - Parameters:
+    ///   - photoUrl: The URL of the photo to delete
+    ///   - event: The event to remove the photo from
+    func deletePhoto(_ photoUrl: String, from event: WeddingDayEvent) async {
+        do {
+            try await repository.deleteEventPhoto(photoUrl: photoUrl)
+
+            // Update the event to remove the photo URL
+            var updatedEvent = event
+            updatedEvent.photoUrls.removeAll { $0 == photoUrl }
+            updatedEvent.updatedAt = Date()
+
+            await updateWeddingDayEvent(updatedEvent)
+            showSuccess("Photo deleted successfully")
+        } catch {
+            await handleError(error, operation: "deletePhoto", context: [
+                "eventId": event.id.uuidString,
+                "photoUrl": photoUrl
+            ]) { [weak self] in
+                await self?.deletePhoto(photoUrl, from: event)
+            }
+        }
+    }
+
+    // MARK: - Guest and Vendor Assignment
+
+    /// Assign guests to an event
+    /// - Parameters:
+    ///   - guestIds: Array of guest UUIDs to assign
+    ///   - event: The event to assign guests to
+    func assignGuests(_ guestIds: [UUID], to event: WeddingDayEvent) async {
+        var updatedEvent = event
+        updatedEvent.assignedGuestIds = guestIds
+        updatedEvent.updatedAt = Date()
+        await updateWeddingDayEvent(updatedEvent)
+    }
+
+    /// Assign vendors to an event
+    /// - Parameters:
+    ///   - vendorIds: Array of vendor IDs (Int64) to assign
+    ///   - event: The event to assign vendors to
+    func assignVendors(_ vendorIds: [Int64], to event: WeddingDayEvent) async {
+        var updatedEvent = event
+        updatedEvent.assignedVendorIds = vendorIds
+        updatedEvent.updatedAt = Date()
+        await updateWeddingDayEvent(updatedEvent)
+    }
+
+    // MARK: - Sub-Event Management
+
+    /// Create a sub-event under a parent event
+    /// - Parameters:
+    ///   - insertData: The sub-event data
+    ///   - parentEvent: The parent event
+    func createSubEvent(_ insertData: WeddingDayEventInsertData, under parentEvent: WeddingDayEvent) async {
+        var subEventData = insertData
+        subEventData.parentEventId = parentEvent.id
+        await createWeddingDayEvent(subEventData)
     }
 
     // MARK: - Computed Properties

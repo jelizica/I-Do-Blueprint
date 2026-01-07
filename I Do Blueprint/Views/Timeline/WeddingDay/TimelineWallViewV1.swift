@@ -266,84 +266,169 @@ struct TimelineWallViewV1: View {
             selectedEvent = event
             showingEventDetail = true
         } label: {
-            VStack(alignment: .leading, spacing: Spacing.sm) {
-                // Header with category
-                HStack {
-                    // Category badge
-                    HStack(spacing: 4) {
-                        Image(systemName: event.category.icon)
-                            .font(.system(size: 12))
-                        Text(event.category.displayName)
-                            .font(Typography.caption)
+            VStack(alignment: .leading, spacing: 0) {
+                // Photo section (if event has photos)
+                if event.hasPhotos, let photoUrl = event.primaryPhotoUrl {
+                    eventPhotoView(url: photoUrl)
+                }
+
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    // Header with category
+                    HStack {
+                        // Category badge
+                        HStack(spacing: 4) {
+                            Image(systemName: event.category.icon)
+                                .font(.system(size: 12))
+                            Text(event.category.displayName)
+                                .font(Typography.caption)
+                        }
+                        .foregroundColor(event.category.color)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(event.category.color.opacity(0.1))
+                        .clipShape(Capsule())
+
+                        Spacer()
+
+                        // Photo count badge
+                        if event.photoUrls.count > 1 {
+                            HStack(spacing: 2) {
+                                Image(systemName: "photo.stack")
+                                    .font(.system(size: 10))
+                                Text("\(event.photoUrls.count)")
+                                    .font(.system(size: 10, weight: .medium))
+                            }
+                            .foregroundColor(AppColors.textSecondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(AppColors.cardBackground.opacity(0.8))
+                            .clipShape(Capsule())
+                        }
+
+                        // Status indicator
+                        Circle()
+                            .fill(event.status.color)
+                            .frame(width: 8, height: 8)
                     }
-                    .foregroundColor(event.category.color)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(event.category.color.opacity(0.1))
-                    .clipShape(Capsule())
 
-                    Spacer()
+                    // Event name
+                    Text(event.eventName)
+                        .font(Typography.heading)
+                        .foregroundColor(AppColors.textPrimary)
+                        .lineLimit(2)
 
-                    // Status indicator
-                    Circle()
-                        .fill(event.status.color)
-                        .frame(width: 8, height: 8)
-                }
-
-                // Event name
-                Text(event.eventName)
-                    .font(Typography.heading)
-                    .foregroundColor(AppColors.textPrimary)
-                    .lineLimit(2)
-
-                // Time
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                        .font(.system(size: 11))
-                    Text(event.timeRangeDisplay)
-                        .font(Typography.caption)
-                }
-                .foregroundColor(AppColors.textSecondary)
-
-                // Duration
-                HStack(spacing: 4) {
-                    Image(systemName: "timer")
-                        .font(.system(size: 11))
-                    Text("\(event.calculatedDurationMinutes) min")
-                        .font(Typography.caption)
-                }
-                .foregroundColor(AppColors.textSecondary)
-
-                // Venue (if available)
-                if let venueName = event.venueName {
+                    // Time
                     HStack(spacing: 4) {
-                        Image(systemName: "mappin")
+                        Image(systemName: "clock")
                             .font(.system(size: 11))
-                        Text(venueName)
+                        Text(event.timeRangeDisplay)
                             .font(Typography.caption)
-                            .lineLimit(1)
                     }
                     .foregroundColor(AppColors.textSecondary)
-                }
 
-                // Dependency indicator
-                if event.hasDependency {
+                    // Duration
                     HStack(spacing: 4) {
-                        Image(systemName: "link")
+                        Image(systemName: "timer")
                             .font(.system(size: 11))
-                        Text("Has dependency")
+                        Text("\(event.calculatedDurationMinutes) min")
                             .font(Typography.caption)
                     }
-                    .foregroundColor(TimelineColors.ganttDependencyLine)
+                    .foregroundColor(AppColors.textSecondary)
+
+                    // Venue (if available)
+                    if let venueName = event.venueName {
+                        HStack(spacing: 4) {
+                            Image(systemName: "mappin")
+                                .font(.system(size: 11))
+                            Text(venueName)
+                                .font(Typography.caption)
+                                .lineLimit(1)
+                        }
+                        .foregroundColor(AppColors.textSecondary)
+                    }
+
+                    // Assignment indicators row
+                    if !event.assignedVendorIds.isEmpty || event.hasAssignedGuests {
+                        HStack(spacing: Spacing.sm) {
+                            // Vendor assignment indicator
+                            if !event.assignedVendorIds.isEmpty {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "building.2")
+                                        .font(.system(size: 11))
+                                    Text("\(event.assignedVendorIds.count) vendor\(event.assignedVendorIds.count == 1 ? "" : "s")")
+                                        .font(Typography.caption)
+                                }
+                                .foregroundColor(TimelineColors.sage)
+                            }
+
+                            // Guest assignment indicator
+                            if event.hasAssignedGuests {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "person.2")
+                                        .font(.system(size: 11))
+                                    Text("\(event.assignedGuestIds.count) guest\(event.assignedGuestIds.count == 1 ? "" : "s")")
+                                        .font(Typography.caption)
+                                }
+                                .foregroundColor(TimelineColors.blush)
+                            }
+                        }
+                    }
+
+                    // Dependency indicator
+                    if event.hasDependency {
+                        HStack(spacing: 4) {
+                            Image(systemName: "link")
+                                .font(.system(size: 11))
+                            Text("Has dependency")
+                                .font(Typography.caption)
+                        }
+                        .foregroundColor(TimelineColors.ganttDependencyLine)
+                    }
                 }
+                .padding()
             }
-            .padding()
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(cardBackground(for: event))
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .shadow(color: TimelineColors.glassShadow, radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
+    }
+
+    /// Displays the primary photo for an event card
+    private func eventPhotoView(url: String) -> some View {
+        AsyncImage(url: URL(string: url)) { phase in
+            switch phase {
+            case .empty:
+                Rectangle()
+                    .fill(AppColors.cardBackground)
+                    .frame(height: 120)
+                    .overlay {
+                        ProgressView()
+                            .controlSize(.small)
+                    }
+
+            case .success(let image):
+                image
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(height: 120)
+                    .clipped()
+
+            case .failure:
+                Rectangle()
+                    .fill(AppColors.cardBackground)
+                    .frame(height: 120)
+                    .overlay {
+                        Image(systemName: "photo")
+                            .font(.system(size: 24))
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+
+            @unknown default:
+                EmptyView()
+            }
+        }
     }
 
     private func cardBackground(for event: WeddingDayEvent) -> some View {

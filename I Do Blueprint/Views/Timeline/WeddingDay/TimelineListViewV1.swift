@@ -325,6 +325,29 @@ struct WeddingDayEventDetailSheet: View {
     let onDismiss: () -> Void
 
     @EnvironmentObject private var store: TimelineStoreV2
+    @Environment(\.appStores) private var appStores
+
+    // MARK: - State
+    @State private var showingVendorPicker = false
+    @State private var showingGuestPicker = false
+    @State private var showingPhotoPicker = false
+    @State private var selectedImage: NSImage?
+
+    // MARK: - Computed Properties
+
+    /// Get assigned vendors from the vendor store
+    private var assignedVendors: [Vendor] {
+        appStores.vendor.vendors.filter { vendor in
+            event.assignedVendorIds.contains(vendor.id)
+        }
+    }
+
+    /// Get assigned guests from the guest store
+    private var assignedGuests: [Guest] {
+        appStores.guest.guests.filter { guest in
+            event.assignedGuestIds.contains(guest.id)
+        }
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -357,6 +380,11 @@ struct WeddingDayEventDetailSheet: View {
             // Content
             ScrollView {
                 VStack(alignment: .leading, spacing: Spacing.lg) {
+                    // Photos section (if any)
+                    if event.hasPhotos {
+                        photoGallerySection
+                    }
+
                     // Time and duration
                     detailRow(icon: "clock", title: "Time", value: event.timeRangeDisplay)
                     detailRow(icon: "timer", title: "Duration", value: "\(event.calculatedDurationMinutes) minutes")
@@ -385,6 +413,12 @@ struct WeddingDayEventDetailSheet: View {
                     if let location = event.venueLocation {
                         detailRow(icon: "location", title: "Location", value: location)
                     }
+
+                    // Assigned Vendors section
+                    assignedVendorsSection
+
+                    // Assigned Guests section
+                    assignedGuestsSection
 
                     // Description
                     if let description = event.description, !description.isEmpty {
@@ -460,12 +494,259 @@ struct WeddingDayEventDetailSheet: View {
                             }
                         }
                     }
+
+                    // Sub-events section
+                    if event.isParentEvent {
+                        subEventsSection
+                    }
                 }
                 .padding()
             }
         }
-        .frame(width: 450, height: 500)
+        .frame(width: 500, height: 600)
         .background(Color(NSColor.windowBackgroundColor))
+        .sheet(isPresented: $showingVendorPicker) {
+            EventVendorPickerSheet(
+                event: event,
+                selectedVendorIds: event.assignedVendorIds,
+                onSave: { vendorIds in
+                    Task {
+                        await store.assignVendors(vendorIds, to: event)
+                    }
+                }
+            )
+        }
+        .sheet(isPresented: $showingGuestPicker) {
+            EventGuestPickerSheet(
+                event: event,
+                selectedGuestIds: event.assignedGuestIds,
+                onSave: { guestIds in
+                    Task {
+                        await store.assignGuests(guestIds, to: event)
+                    }
+                }
+            )
+        }
+    }
+
+    // MARK: - Photo Gallery Section
+
+    private var photoGallerySection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Image(systemName: "photo.stack")
+                    .foregroundColor(AppColors.textSecondary)
+                Text("Photos")
+                    .font(Typography.subheading)
+                    .foregroundColor(AppColors.textSecondary)
+                Spacer()
+                Text("\(event.photoUrls.count)")
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.textSecondary)
+            }
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: Spacing.sm) {
+                    ForEach(event.photoUrls, id: \.self) { photoUrl in
+                        AsyncImage(url: URL(string: photoUrl)) { phase in
+                            switch phase {
+                            case .empty:
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(AppColors.cardBackground)
+                                    .frame(width: 80, height: 80)
+                                    .overlay {
+                                        ProgressView()
+                                            .controlSize(.small)
+                                    }
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                                    .frame(width: 80, height: 80)
+                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                            case .failure:
+                                RoundedRectangle(cornerRadius: 8)
+                                    .fill(AppColors.cardBackground)
+                                    .frame(width: 80, height: 80)
+                                    .overlay {
+                                        Image(systemName: "photo")
+                                            .foregroundColor(AppColors.textSecondary)
+                                    }
+                            @unknown default:
+                                EmptyView()
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Assigned Vendors Section
+
+    private var assignedVendorsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Image(systemName: "building.2")
+                    .foregroundColor(TimelineColors.sage)
+                Text("Assigned Vendors")
+                    .font(Typography.subheading)
+                    .foregroundColor(AppColors.textSecondary)
+                Spacer()
+                Button {
+                    showingVendorPicker = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle")
+                        Text("Edit")
+                    }
+                    .font(Typography.caption)
+                    .foregroundColor(TimelineColors.primary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if assignedVendors.isEmpty {
+                Text("No vendors assigned")
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textSecondary)
+                    .italic()
+            } else {
+                ForEach(assignedVendors, id: \.id) { vendor in
+                    HStack(spacing: Spacing.sm) {
+                        // Vendor avatar or icon
+                        ZStack {
+                            Circle()
+                                .fill(TimelineColors.sage.opacity(0.2))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "building.2.fill")
+                                .font(.system(size: 14))
+                                .foregroundColor(TimelineColors.sage)
+                        }
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(vendor.vendorName)
+                                .font(Typography.bodyRegular)
+                                .foregroundColor(AppColors.textPrimary)
+                            if let vendorType = vendor.vendorType {
+                                Text(vendorType)
+                                    .font(Typography.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+    }
+
+    // MARK: - Assigned Guests Section
+
+    private var assignedGuestsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Image(systemName: "person.2")
+                    .foregroundColor(TimelineColors.blush)
+                Text("Assigned Guests")
+                    .font(Typography.subheading)
+                    .foregroundColor(AppColors.textSecondary)
+                Spacer()
+                Button {
+                    showingGuestPicker = true
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "plus.circle")
+                        Text("Edit")
+                    }
+                    .font(Typography.caption)
+                    .foregroundColor(TimelineColors.primary)
+                }
+                .buttonStyle(.plain)
+            }
+
+            if assignedGuests.isEmpty {
+                Text("No guests assigned")
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(AppColors.textSecondary)
+                    .italic()
+            } else {
+                // Show first 5 guests, then count
+                let displayGuests = Array(assignedGuests.prefix(5))
+                ForEach(displayGuests, id: \.id) { guest in
+                    HStack(spacing: Spacing.sm) {
+                        // Guest avatar
+                        ZStack {
+                            Circle()
+                                .fill(TimelineColors.blush.opacity(0.2))
+                                .frame(width: 32, height: 32)
+                            Text(guest.initials)
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(TimelineColors.blush)
+                        }
+
+                        Text(guest.fullName)
+                            .font(Typography.bodyRegular)
+                            .foregroundColor(AppColors.textPrimary)
+                    }
+                    .padding(.vertical, 2)
+                }
+
+                if assignedGuests.count > 5 {
+                    Text("+ \(assignedGuests.count - 5) more guests")
+                        .font(Typography.caption)
+                        .foregroundColor(AppColors.textSecondary)
+                }
+            }
+        }
+    }
+
+    // MARK: - Sub-Events Section
+
+    private var subEventsSection: some View {
+        let subEvents = store.weddingDayEvents.filter { $0.parentEventId == event.id }
+
+        return Group {
+            if !subEvents.isEmpty {
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    HStack {
+                        Image(systemName: "list.bullet.indent")
+                            .foregroundColor(AppColors.textSecondary)
+                        Text("Sub-Events")
+                            .font(Typography.subheading)
+                            .foregroundColor(AppColors.textSecondary)
+                        Spacer()
+                        Text("\(subEvents.count)")
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+
+                    ForEach(subEvents) { subEvent in
+                        HStack(spacing: Spacing.sm) {
+                            Image(systemName: subEvent.category.icon)
+                                .foregroundColor(subEvent.category.color)
+                                .frame(width: 20)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(subEvent.eventName)
+                                    .font(Typography.bodyRegular)
+                                    .foregroundColor(AppColors.textPrimary)
+                                Text(subEvent.timeRangeDisplay)
+                                    .font(Typography.caption)
+                                    .foregroundColor(AppColors.textSecondary)
+                            }
+
+                            Spacer()
+
+                            Circle()
+                                .fill(subEvent.status.color)
+                                .frame(width: 8, height: 8)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+        }
     }
 
     private func detailRow(icon: String, title: String, value: String) -> some View {
@@ -480,6 +761,279 @@ struct WeddingDayEventDetailSheet: View {
                 .font(Typography.bodyRegular)
                 .foregroundColor(AppColors.textPrimary)
         }
+    }
+}
+
+// MARK: - Vendor Picker Sheet
+
+struct EventVendorPickerSheet: View {
+    let event: WeddingDayEvent
+    let selectedVendorIds: [Int64]
+    let onSave: ([Int64]) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.appStores) private var appStores
+    @State private var selectedIds: Set<Int64>
+    @State private var searchText = ""
+
+    init(event: WeddingDayEvent, selectedVendorIds: [Int64], onSave: @escaping ([Int64]) -> Void) {
+        self.event = event
+        self.selectedVendorIds = selectedVendorIds
+        self.onSave = onSave
+        self._selectedIds = State(initialValue: Set(selectedVendorIds))
+    }
+
+    private var filteredVendors: [Vendor] {
+        let vendors = appStores.vendor.vendors.filter { !$0.isArchived }
+        if searchText.isEmpty {
+            return vendors
+        }
+        return vendors.filter { vendor in
+            vendor.vendorName.localizedCaseInsensitiveContains(searchText) ||
+            (vendor.vendorType?.localizedCaseInsensitiveContains(searchText) ?? false)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Assign Vendors")
+                    .font(Typography.title3)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button("Done") {
+                    onSave(Array(selectedIds))
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+
+            Divider()
+
+            // Search
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(AppColors.textSecondary)
+                TextField("Search vendors...", text: $searchText)
+                    .textFieldStyle(.plain)
+            }
+            .padding(Spacing.sm)
+            .background(AppColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal)
+            .padding(.vertical, Spacing.sm)
+
+            // Vendor list
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredVendors, id: \.id) { vendor in
+                        VendorPickerRow(
+                            vendor: vendor,
+                            isSelected: selectedIds.contains(vendor.id),
+                            onToggle: {
+                                if selectedIds.contains(vendor.id) {
+                                    selectedIds.remove(vendor.id)
+                                } else {
+                                    selectedIds.insert(vendor.id)
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .frame(width: 400, height: 500)
+        .background(Color(NSColor.windowBackgroundColor))
+    }
+}
+
+struct VendorPickerRow: View {
+    let vendor: Vendor
+    let isSelected: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: Spacing.md) {
+                // Selection indicator
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(isSelected ? TimelineColors.primary : AppColors.textSecondary)
+
+                // Vendor info
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(vendor.vendorName)
+                        .font(Typography.bodyRegular)
+                        .foregroundColor(AppColors.textPrimary)
+                    if let vendorType = vendor.vendorType {
+                        Text(vendorType)
+                            .font(Typography.caption)
+                            .foregroundColor(AppColors.textSecondary)
+                    }
+                }
+
+                Spacer()
+
+                // Booked indicator
+                if vendor.isBooked == true {
+                    Text("Booked")
+                        .font(Typography.caption)
+                        .foregroundColor(TimelineColors.statusReady)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(TimelineColors.statusReady.opacity(0.1))
+                        .clipShape(Capsule())
+                }
+            }
+            .padding(.vertical, Spacing.sm)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Guest Picker Sheet
+
+struct EventGuestPickerSheet: View {
+    let event: WeddingDayEvent
+    let selectedGuestIds: [UUID]
+    let onSave: ([UUID]) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.appStores) private var appStores
+    @State private var selectedIds: Set<UUID>
+    @State private var searchText = ""
+
+    init(event: WeddingDayEvent, selectedGuestIds: [UUID], onSave: @escaping ([UUID]) -> Void) {
+        self.event = event
+        self.selectedGuestIds = selectedGuestIds
+        self.onSave = onSave
+        self._selectedIds = State(initialValue: Set(selectedGuestIds))
+    }
+
+    private var filteredGuests: [Guest] {
+        let guests = appStores.guest.guests
+        if searchText.isEmpty {
+            return guests
+        }
+        return guests.filter { guest in
+            guest.fullName.localizedCaseInsensitiveContains(searchText)
+        }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Text("Assign Guests")
+                    .font(Typography.title3)
+                    .fontWeight(.semibold)
+                Spacer()
+                Button("Done") {
+                    onSave(Array(selectedIds))
+                    dismiss()
+                }
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+
+            Divider()
+
+            // Search
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(AppColors.textSecondary)
+                TextField("Search guests...", text: $searchText)
+                    .textFieldStyle(.plain)
+            }
+            .padding(Spacing.sm)
+            .background(AppColors.cardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal)
+            .padding(.vertical, Spacing.sm)
+
+            // Selection summary
+            HStack {
+                Text("\(selectedIds.count) guests selected")
+                    .font(Typography.caption)
+                    .foregroundColor(AppColors.textSecondary)
+                Spacer()
+                if !selectedIds.isEmpty {
+                    Button("Clear All") {
+                        selectedIds.removeAll()
+                    }
+                    .font(Typography.caption)
+                    .foregroundColor(TimelineColors.primary)
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, Spacing.sm)
+
+            // Guest list
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(filteredGuests, id: \.id) { guest in
+                        GuestPickerRow(
+                            guest: guest,
+                            isSelected: selectedIds.contains(guest.id),
+                            onToggle: {
+                                if selectedIds.contains(guest.id) {
+                                    selectedIds.remove(guest.id)
+                                } else {
+                                    selectedIds.insert(guest.id)
+                                }
+                            }
+                        )
+                    }
+                }
+                .padding(.horizontal)
+            }
+        }
+        .frame(width: 400, height: 500)
+        .background(Color(NSColor.windowBackgroundColor))
+    }
+}
+
+struct GuestPickerRow: View {
+    let guest: Guest
+    let isSelected: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: Spacing.md) {
+                // Selection indicator
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundColor(isSelected ? TimelineColors.primary : AppColors.textSecondary)
+
+                // Guest avatar
+                ZStack {
+                    Circle()
+                        .fill(TimelineColors.blush.opacity(0.2))
+                        .frame(width: 32, height: 32)
+                    Text(guest.initials)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(TimelineColors.blush)
+                }
+
+                // Guest info
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(guest.fullName)
+                        .font(Typography.bodyRegular)
+                        .foregroundColor(AppColors.textPrimary)
+                    Text(guest.rsvpStatus.displayName)
+                        .font(Typography.caption)
+                        .foregroundColor(guest.rsvpStatus.color)
+                }
+
+                Spacer()
+            }
+            .padding(.vertical, Spacing.sm)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 }
 

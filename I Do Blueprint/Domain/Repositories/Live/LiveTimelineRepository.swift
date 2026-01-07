@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Storage
 import Supabase
 
 actor LiveTimelineRepository: TimelineRepositoryProtocol {
@@ -493,6 +494,154 @@ actor LiveTimelineRepository: TimelineRepositoryProtocol {
         } catch {
             logger.error("Failed to delete wedding day event", error: error)
             throw TimelineError.deleteFailed(underlying: error)
+        }
+    }
+
+    // MARK: - Event Photos
+
+    func uploadEventPhoto(imageData: Data, eventId: UUID, coupleId: UUID) async throws -> String {
+        let client = try getClient()
+        let startTime = Date()
+
+        // Create a unique filename with couple_id/event_id path for RLS
+        let fileName = "\(coupleId.uuidString)/\(eventId.uuidString)/\(UUID().uuidString).png"
+
+        do {
+            try await RepositoryNetwork.withRetry {
+                try await client.storage
+                    .from("event-photos")
+                    .upload(
+                        path: fileName,
+                        file: imageData,
+                        options: FileOptions(
+                            cacheControl: "3600",
+                            contentType: "image/png",
+                            upsert: false
+                        )
+                    )
+            }
+
+            // Since the bucket is private, create a signed URL (valid for 1 year)
+            let signedUrl = try await client.storage
+                .from("event-photos")
+                .createSignedURL(path: fileName, expiresIn: 31_536_000) // 1 year in seconds
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Uploaded event photo: \(fileName) in \(duration)s")
+            AnalyticsService.trackNetwork(operation: "uploadEventPhoto", outcome: .success, duration: duration)
+
+            return signedUrl.absoluteString
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to upload event photo after \(duration)s", error: error)
+            AnalyticsService.trackNetwork(operation: "uploadEventPhoto", outcome: .failure(code: nil), duration: duration)
+            throw TimelineError.photoUploadFailed(underlying: error)
+        }
+    }
+
+    func deleteEventPhoto(photoUrl: String) async throws {
+        let client = try getClient()
+        let startTime = Date()
+
+        // Extract the file path from the URL
+        // URL format: https://xxx.supabase.co/storage/v1/object/sign/event-photos/couple_id/event_id/filename.png?token=...
+        guard let urlComponents = URLComponents(string: photoUrl),
+              let path = urlComponents.path.components(separatedBy: "event-photos/").last else {
+            logger.error("Failed to extract file path from photo URL: \(photoUrl)")
+            throw TimelineError.invalidPhotoUrl
+        }
+
+        // Remove query params from path
+        let cleanPath = path.components(separatedBy: "?").first ?? path
+
+        do {
+            try await RepositoryNetwork.withRetry {
+                try await client.storage
+                    .from("event-photos")
+                    .remove(paths: [cleanPath])
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Deleted event photo: \(cleanPath) in \(duration)s")
+            AnalyticsService.trackNetwork(operation: "deleteEventPhoto", outcome: .success, duration: duration)
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to delete event photo after \(duration)s", error: error)
+            AnalyticsService.trackNetwork(operation: "deleteEventPhoto", outcome: .failure(code: nil), duration: duration)
+            throw TimelineError.photoDeleteFailed(underlying: error)
+        }
+    }
+
+    // MARK: - Sub-Event Filtering
+
+    func fetchParentWeddingDayEvents() async throws -> [WeddingDayEvent] {
+        let client = try getClient()
+        let startTime = Date()
+        let tenantId = try await TenantContextProvider.shared.requireTenantId()
+
+        // Check cache first
+        let cacheKey = CacheConfiguration.KeyPrefix.weddingDayEvents.key(tenantId: tenantId) + "_parents"
+        if let cached: [WeddingDayEvent] = await RepositoryCache.shared.get(cacheKey, maxAge: CacheConfiguration.frequentAccessTTL) {
+            logger.debug("Cache hit: parent wedding day events (\(cached.count) items)")
+            return cached
+        }
+
+        do {
+            let events: [WeddingDayEvent] = try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .select()
+                    .eq("couple_id", value: tenantId)
+                    .filter("parent_event_id", operator: "is", value: "null")
+                    .order("event_date", ascending: true)
+                    .order("start_time", ascending: true)
+                    .execute()
+                    .value
+            }
+
+            // Cache results
+            await RepositoryCache.shared.set(cacheKey, value: events, ttl: CacheConfiguration.frequentAccessTTL)
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Fetched \(events.count) parent wedding day events in \(duration)s")
+            AnalyticsService.trackNetwork(operation: "fetchParentWeddingDayEvents", outcome: .success, duration: duration)
+
+            return events
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to fetch parent wedding day events after \(duration)s", error: error)
+            AnalyticsService.trackNetwork(operation: "fetchParentWeddingDayEvents", outcome: .failure(code: nil), duration: duration)
+            throw TimelineError.fetchFailed(underlying: error)
+        }
+    }
+
+    func fetchSubEvents(parentEventId: UUID) async throws -> [WeddingDayEvent] {
+        let client = try getClient()
+        let startTime = Date()
+        let tenantId = try await TenantContextProvider.shared.requireTenantId()
+
+        do {
+            let events: [WeddingDayEvent] = try await RepositoryNetwork.withRetry {
+                try await client.database
+                    .from("wedding_events")
+                    .select()
+                    .eq("couple_id", value: tenantId)
+                    .eq("parent_event_id", value: parentEventId)
+                    .order("start_time", ascending: true)
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Fetched \(events.count) sub-events for parent \(parentEventId) in \(duration)s")
+            AnalyticsService.trackNetwork(operation: "fetchSubEvents", outcome: .success, duration: duration)
+
+            return events
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to fetch sub-events after \(duration)s", error: error)
+            AnalyticsService.trackNetwork(operation: "fetchSubEvents", outcome: .failure(code: nil), duration: duration)
+            throw TimelineError.fetchFailed(underlying: error)
         }
     }
 }

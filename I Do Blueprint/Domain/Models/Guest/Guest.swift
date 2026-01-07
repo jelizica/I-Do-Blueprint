@@ -163,6 +163,13 @@ struct Guest: Identifiable, Codable, Hashable, Sendable {
         "\(firstName) \(lastName)"
     }
 
+    /// Initials from first and last name (e.g., "JD" for "John Doe")
+    var initials: String {
+        let first = firstName.first.map { String($0).uppercased() } ?? ""
+        let last = lastName.first.map { String($0).uppercased() } ?? ""
+        return first + last
+    }
+
     var formattedPhone: String? {
         guard let phone, !phone.isEmpty else { return nil }
         return phone

@@ -20,6 +20,9 @@ enum TimelineError: LocalizedError {
     case conflictingEvent(date: Date)
     case eventInPast
     case invalidDuration(reason: String)
+    case photoUploadFailed(underlying: Error)
+    case photoDeleteFailed(underlying: Error)
+    case invalidPhotoUrl
 
     var errorDescription: String? {
         switch self {
@@ -50,6 +53,12 @@ enum TimelineError: LocalizedError {
             return "Cannot create events in the past."
         case .invalidDuration(let reason):
             return "Invalid event duration: \(reason)"
+        case .photoUploadFailed:
+            return "Couldn't upload the photo. Please try again."
+        case .photoDeleteFailed:
+            return "Couldn't delete the photo. Please try again."
+        case .invalidPhotoUrl:
+            return "The photo URL is invalid."
         }
     }
 
@@ -77,11 +86,13 @@ enum TimelineError: LocalizedError {
     /// Indicates whether this error is transient and can be retried
     var isRetryable: Bool {
         switch self {
-        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed:
+        case .fetchFailed, .createFailed, .updateFailed, .deleteFailed,
+             .photoUploadFailed, .photoDeleteFailed:
             return true
         case .networkUnavailable:
             return true
-        case .notFound, .validationFailed, .unauthorized, .invalidDate, .conflictingEvent, .eventInPast, .invalidDuration:
+        case .notFound, .validationFailed, .unauthorized, .invalidDate,
+             .conflictingEvent, .eventInPast, .invalidDuration, .invalidPhotoUrl:
             return false
         }
     }

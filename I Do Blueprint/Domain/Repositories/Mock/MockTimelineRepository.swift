@@ -164,4 +164,32 @@ class MockTimelineRepository: TimelineRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
         weddingDayEvents.removeAll { $0.id == id }
     }
+
+    // MARK: - Event Photos
+
+    var uploadedPhotoUrls: [String] = []
+
+    func uploadEventPhoto(imageData: Data, eventId: UUID, coupleId: UUID) async throws -> String {
+        if shouldThrowError { throw errorToThrow }
+        let mockUrl = "https://mock.supabase.co/storage/v1/object/sign/event-photos/\(coupleId.uuidString)/\(eventId.uuidString)/\(UUID().uuidString).png?token=mock"
+        uploadedPhotoUrls.append(mockUrl)
+        return mockUrl
+    }
+
+    func deleteEventPhoto(photoUrl: String) async throws {
+        if shouldThrowError { throw errorToThrow }
+        uploadedPhotoUrls.removeAll { $0 == photoUrl }
+    }
+
+    // MARK: - Sub-Event Filtering
+
+    func fetchParentWeddingDayEvents() async throws -> [WeddingDayEvent] {
+        if shouldThrowError { throw errorToThrow }
+        return weddingDayEvents.filter { $0.parentEventId == nil }
+    }
+
+    func fetchSubEvents(parentEventId: UUID) async throws -> [WeddingDayEvent] {
+        if shouldThrowError { throw errorToThrow }
+        return weddingDayEvents.filter { $0.parentEventId == parentEventId }
+    }
 }

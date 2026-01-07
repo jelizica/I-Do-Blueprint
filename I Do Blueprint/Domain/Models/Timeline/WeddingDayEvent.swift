@@ -139,6 +139,14 @@ struct WeddingDayEvent: Codable, Identifiable, Equatable, Hashable {
     var icon: String?
     var assignedVendorIds: [Int64]
 
+    // MARK: - Photo & Assignment Fields
+    /// Array of Supabase Storage URLs for event photos
+    var photoUrls: [String]
+    /// Array of guest UUIDs assigned to this event
+    var assignedGuestIds: [UUID]
+    /// Parent event ID for sub-event hierarchy (nil = parent event)
+    var parentEventId: UUID?
+
     // MARK: - Computed Properties
 
     /// Returns the event's display color
@@ -194,6 +202,31 @@ struct WeddingDayEvent: Codable, Identifiable, Equatable, Hashable {
         status == .keyEvent || status == .mainEvent || isMainEvent
     }
 
+    /// Returns true if this event has photos
+    var hasPhotos: Bool {
+        !photoUrls.isEmpty
+    }
+
+    /// Returns the first photo URL for preview display
+    var primaryPhotoUrl: String? {
+        photoUrls.first
+    }
+
+    /// Returns true if this event has assigned guests
+    var hasAssignedGuests: Bool {
+        !assignedGuestIds.isEmpty
+    }
+
+    /// Returns true if this is a sub-event (has a parent)
+    var isSubEvent: Bool {
+        parentEventId != nil
+    }
+
+    /// Returns true if this is a parent event (no parent, can have children)
+    var isParentEvent: Bool {
+        parentEventId == nil
+    }
+
     // MARK: - CodingKeys
 
     enum CodingKeys: String, CodingKey {
@@ -227,6 +260,9 @@ struct WeddingDayEvent: Codable, Identifiable, Equatable, Hashable {
         case category
         case icon
         case assignedVendorIds = "assigned_vendor_ids"
+        case photoUrls = "photo_urls"
+        case assignedGuestIds = "assigned_guest_ids"
+        case parentEventId = "parent_event_id"
     }
 
     // MARK: - Custom Decoding
@@ -306,6 +342,11 @@ struct WeddingDayEvent: Codable, Identifiable, Equatable, Hashable {
 
         icon = try container.decodeIfPresent(String.self, forKey: .icon)
         assignedVendorIds = try container.decodeIfPresent([Int64].self, forKey: .assignedVendorIds) ?? []
+
+        // Decode photo and assignment fields
+        photoUrls = try container.decodeIfPresent([String].self, forKey: .photoUrls) ?? []
+        assignedGuestIds = try container.decodeIfPresent([UUID].self, forKey: .assignedGuestIds) ?? []
+        parentEventId = try container.decodeIfPresent(UUID.self, forKey: .parentEventId)
     }
 
     // MARK: - Custom Encoding
@@ -356,6 +397,11 @@ struct WeddingDayEvent: Codable, Identifiable, Equatable, Hashable {
         try container.encode(category.rawValue, forKey: .category)
         try container.encodeIfPresent(icon, forKey: .icon)
         try container.encode(assignedVendorIds, forKey: .assignedVendorIds)
+
+        // Encode photo and assignment fields
+        try container.encode(photoUrls, forKey: .photoUrls)
+        try container.encode(assignedGuestIds, forKey: .assignedGuestIds)
+        try container.encodeIfPresent(parentEventId, forKey: .parentEventId)
     }
 
     // MARK: - Date/Time Helpers
@@ -428,7 +474,10 @@ struct WeddingDayEvent: Codable, Identifiable, Equatable, Hashable {
         durationMinutes: Int? = nil,
         category: WeddingDayEventCategory = .other,
         icon: String? = nil,
-        assignedVendorIds: [Int64] = []
+        assignedVendorIds: [Int64] = [],
+        photoUrls: [String] = [],
+        assignedGuestIds: [UUID] = [],
+        parentEventId: UUID? = nil
     ) {
         self.id = id
         self.coupleId = coupleId
@@ -460,6 +509,9 @@ struct WeddingDayEvent: Codable, Identifiable, Equatable, Hashable {
         self.category = category
         self.icon = icon
         self.assignedVendorIds = assignedVendorIds
+        self.photoUrls = photoUrls
+        self.assignedGuestIds = assignedGuestIds
+        self.parentEventId = parentEventId
     }
 }
 
@@ -516,6 +568,9 @@ struct WeddingDayEventInsertData: Codable {
     var category: String
     var icon: String?
     var assignedVendorIds: [Int64]
+    var photoUrls: [String]
+    var assignedGuestIds: [UUID]
+    var parentEventId: UUID?
 
     enum CodingKeys: String, CodingKey {
         case coupleId = "couple_id"
@@ -538,6 +593,9 @@ struct WeddingDayEventInsertData: Codable {
         case category
         case icon
         case assignedVendorIds = "assigned_vendor_ids"
+        case photoUrls = "photo_urls"
+        case assignedGuestIds = "assigned_guest_ids"
+        case parentEventId = "parent_event_id"
     }
 
     init(
@@ -560,7 +618,10 @@ struct WeddingDayEventInsertData: Codable {
         durationMinutes: Int? = nil,
         category: WeddingDayEventCategory = .other,
         icon: String? = nil,
-        assignedVendorIds: [Int64] = []
+        assignedVendorIds: [Int64] = [],
+        photoUrls: [String] = [],
+        assignedGuestIds: [UUID] = [],
+        parentEventId: UUID? = nil
     ) {
         self.coupleId = coupleId
         self.eventName = eventName
@@ -582,5 +643,8 @@ struct WeddingDayEventInsertData: Codable {
         self.category = category.rawValue
         self.icon = icon
         self.assignedVendorIds = assignedVendorIds
+        self.photoUrls = photoUrls
+        self.assignedGuestIds = assignedGuestIds
+        self.parentEventId = parentEventId
     }
 }
