@@ -20,7 +20,7 @@ struct VendorListViewV1: View {
     let filteredVendors: [Vendor]
     let searchText: String
     let selectedFilter: VendorFilterOption
-    @Binding var selectedVendor: Vendor?
+    let onSelectVendor: (Vendor) -> Void
     @Binding var showingAddVendor: Bool
     let onRetry: () async -> Void
     let onClearFilters: () -> Void
@@ -73,7 +73,7 @@ struct VendorListViewV1: View {
                             }
                         },
                         onMoreTap: {
-                            selectedVendor = vendor
+                            onSelectVendor(vendor)
                         }
                     )
                 }
@@ -839,7 +839,7 @@ struct TimelineItemV1: View {
         filteredVendors: [],
         searchText: "",
         selectedFilter: .all,
-        selectedVendor: .constant(nil),
+        onSelectVendor: { _ in },
         showingAddVendor: .constant(false),
         onRetry: {},
         onClearFilters: {}

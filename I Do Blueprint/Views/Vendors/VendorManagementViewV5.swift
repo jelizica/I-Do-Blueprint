@@ -38,13 +38,13 @@ enum VendorViewMode: String, CaseIterable {
 
 struct VendorManagementViewV5: View {
     @Environment(\.appStores) private var appStores
+    @EnvironmentObject private var coordinator: AppCoordinator
     @StateObject private var exportHandler = VendorExportHandler()
     @StateObject private var sessionManager = SessionManager.shared
 
     @State private var showingImportSheet = false
     @State private var showingExportOptions = false
     @State private var showingAddVendor = false
-    @State private var selectedVendor: Vendor?
     @State private var searchText = ""
     @State private var selectedFilter: VendorFilterOption = .all
     @State private var selectedSort: VendorSortOption = .nameAsc
@@ -109,13 +109,44 @@ struct VendorManagementViewV5: View {
                             totalBudget: appStores.budget.primaryScenarioTotal
                         )
 
-                        // Search and Filter Section
-                        VendorSearchAndFiltersV4(
-                            windowSize: windowSize,
-                            searchText: $searchText,
-                            selectedFilter: $selectedFilter,
-                            selectedSort: $selectedSort
-                        )
+                        // Search and Filter Section with View Toggle
+                        HStack(spacing: Spacing.md) {
+                            VendorSearchAndFiltersV4(
+                                windowSize: windowSize,
+                                searchText: $searchText,
+                                selectedFilter: $selectedFilter,
+                                selectedSort: $selectedSort
+                            )
+                            
+                            // View Toggle (moved here to align with search bar)
+                            HStack(spacing: 4) {
+                                Button(action: { viewMode = .grid }) {
+                                    Image(systemName: "square.grid.2x2")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(viewMode == .grid ? SemanticColors.textPrimary : SemanticColors.textSecondary)
+                                        .frame(width: 36, height: 36)
+                                        .background(viewMode == .grid ? Color.white.opacity(0.8) : Color.clear)
+                                        .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button(action: { viewMode = .list }) {
+                                    Image(systemName: "list.bullet")
+                                        .font(.system(size: 14))
+                                        .foregroundColor(viewMode == .list ? SemanticColors.textPrimary : SemanticColors.textSecondary)
+                                        .frame(width: 36, height: 36)
+                                        .background(viewMode == .list ? Color.white.opacity(0.8) : Color.clear)
+                                        .cornerRadius(6)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(2)
+                            .frame(height: 40)
+                            .background(
+                                RoundedRectangle(cornerRadius: CornerRadius.md)
+                                    .fill(Color.white.opacity(0.3))
+                            )
+                        }
 
                         // Vendor Display - Grid or List based on viewMode
                         // Note: Using simple conditional instead of animation to ensure
@@ -127,7 +158,9 @@ struct VendorManagementViewV5: View {
                                 filteredVendors: filteredAndSortedVendors,
                                 searchText: searchText,
                                 selectedFilter: selectedFilter,
-                                selectedVendor: $selectedVendor,
+                                onSelectVendor: { vendor in
+                                    coordinator.present(.viewVendor(vendor))
+                                },
                                 showingAddVendor: $showingAddVendor,
                                 onRetry: {
                                     await vendorStore.retryLoad()
@@ -144,7 +177,9 @@ struct VendorManagementViewV5: View {
                                 filteredVendors: filteredAndSortedVendors,
                                 searchText: searchText,
                                 selectedFilter: selectedFilter,
-                                selectedVendor: $selectedVendor,
+                                onSelectVendor: { vendor in
+                                    coordinator.present(.viewVendor(vendor))
+                                },
                                 showingAddVendor: $showingAddVendor,
                                 onRetry: {
                                     await vendorStore.retryLoad()
@@ -170,15 +205,6 @@ struct VendorManagementViewV5: View {
         .sheet(isPresented: $showingImportSheet) {
             VendorCSVImportView()
                 .environmentObject(vendorStore)
-        }
-        .sheet(item: $selectedVendor) { vendor in
-            EditVendorSheetV4(
-                vendor: vendor,
-                vendorStore: vendorStore,
-                onSave: { updatedVendor in
-                    // Vendor is automatically updated via the store
-                }
-            )
         }
         .sheet(isPresented: $showingAddVendor) {
             AddVendorSheet(vendorStore: vendorStore)
@@ -206,9 +232,6 @@ struct VendorHeaderV5: View {
 
             Spacer()
 
-            // View Toggle
-            viewToggle
-
             // Action Buttons
             if windowSize != .compact {
                 actionButtons
@@ -216,44 +239,7 @@ struct VendorHeaderV5: View {
         }
     }
 
-    // MARK: - View Toggle
-
-    private var viewToggle: some View {
-        HStack(spacing: 0) {
-            ForEach(VendorViewMode.allCases, id: \.self) { mode in
-                Button {
-                    viewMode = mode
-                } label: {
-                    Image(systemName: mode.icon)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(
-                            viewMode == mode
-                                ? SemanticColors.textOnPrimary
-                                : SemanticColors.textSecondary
-                        )
-                        .frame(width: 36, height: 32)
-                        .background(
-                            viewMode == mode
-                                ? SemanticColors.primaryAction
-                                : Color.clear
-                        )
-                        .cornerRadius(CornerRadius.sm)
-                }
-                .buttonStyle(.plain)
-                .help(mode.label)
-            }
-        }
-        .padding(Spacing.xxs)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(Color.white.opacity(0.4))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(SemanticColors.borderLight, lineWidth: 1)
-        )
-    }
-
+        
     // MARK: - Action Buttons
 
     private var actionButtons: some View {
@@ -319,4 +305,5 @@ struct VendorHeaderV5: View {
 #Preview {
     VendorManagementViewV5()
         .environment(\.appStores, AppStores.shared)
+        .environmentObject(AppCoordinator.shared)
 }

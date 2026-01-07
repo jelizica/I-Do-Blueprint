@@ -99,7 +99,9 @@ struct VendorManagementViewV4: View {
                             filteredVendors: filteredAndSortedVendors,
                             searchText: searchText,
                             selectedFilter: selectedFilter,
-                            selectedVendor: $selectedVendor,
+                            onSelectVendor: { vendor in
+                                selectedVendor = vendor
+                            },
                             showingAddVendor: $showingAddVendor,
                             onRetry: {
                                 await vendorStore.retryLoad()

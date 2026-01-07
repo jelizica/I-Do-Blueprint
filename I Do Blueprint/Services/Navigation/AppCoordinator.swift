@@ -125,6 +125,7 @@ class AppCoordinator: ObservableObject {
 
     enum Sheet: Identifiable {
         case addVendor
+        case viewVendor(Vendor)
         case editVendor(Vendor)
         case addGuest
         case viewGuest(Guest)
@@ -137,6 +138,7 @@ class AppCoordinator: ObservableObject {
         var id: String {
             switch self {
             case .addVendor: return "addVendor"
+            case .viewVendor(let vendor): return "viewVendor-\(vendor.id)"
             case .editVendor(let vendor): return "editVendor-\(vendor.id)"
             case .addGuest: return "addGuest"
             case .viewGuest(let guest): return "viewGuest-\(guest.id)"
@@ -153,6 +155,8 @@ class AppCoordinator: ObservableObject {
             switch self {
             case .addVendor:
                 AddVendorView { _ in }
+            case .viewVendor(let vendor):
+                VendorDetailModalV2(vendor: vendor, vendorStore: coordinator.vendorStore)
             case .editVendor(let vendor):
                 EditVendorSheetV2(vendor: vendor, vendorStore: coordinator.vendorStore, onSave: { _ in })
             case .addGuest:

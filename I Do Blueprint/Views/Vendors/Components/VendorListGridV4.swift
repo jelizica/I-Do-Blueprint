@@ -13,7 +13,7 @@ struct VendorListGridV4: View {
     let filteredVendors: [Vendor]
     let searchText: String
     let selectedFilter: VendorFilterOption
-    @Binding var selectedVendor: Vendor?
+    let onSelectVendor: (Vendor) -> Void
     @Binding var showingAddVendor: Bool
     let onRetry: () async -> Void
     let onClearFilters: () -> Void
@@ -71,7 +71,7 @@ struct VendorListGridV4: View {
             ForEach(filteredVendors) { vendor in
                 VendorCardV4(vendor: vendor)
                     .onTapGesture {
-                        selectedVendor = vendor
+                        onSelectVendor(vendor)
                     }
             }
         }
