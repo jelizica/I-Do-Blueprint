@@ -13,10 +13,11 @@ import SwiftUI
 struct DashboardsNavigationWrapper: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @EnvironmentObject var budgetStore: BudgetStoreV2
-    @State private var currentPage: DashboardPage = .financial
+    @EnvironmentObject var settingsStore: SettingsStoreV2
+    @State private var currentPage: DashboardPage = .general
 
     /// Allow direct initialization with a specific page
-    init(selectedPage: DashboardPage = .financial) {
+    init(selectedPage: DashboardPage = .general) {
         _currentPage = State(initialValue: selectedPage)
     }
 
@@ -45,6 +46,9 @@ struct DashboardsNavigationWrapper: View {
     @ViewBuilder
     private var dashboardContent: some View {
         switch currentPage {
+        case .general:
+            GeneralDashboardViewV1()
+                .environmentObject(settingsStore)
         case .financial:
             // Create a binding for navigation back to budget pages if needed
             let budgetBinding = Binding<BudgetPage>(
@@ -61,6 +65,7 @@ struct DashboardsNavigationWrapper: View {
 #Preview {
     DashboardsNavigationWrapper()
         .environmentObject(AppCoordinator.shared)
-        .environmentObject(BudgetStoreV2())
+        .environmentObject(AppStores.shared.budget)
+        .environmentObject(AppStores.shared.settings)
         .frame(width: 1200, height: 900)
 }
