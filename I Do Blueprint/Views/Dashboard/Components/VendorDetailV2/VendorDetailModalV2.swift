@@ -3,7 +3,7 @@
 //  I Do Blueprint
 //
 //  Enhanced modal for displaying vendor details with improved design
-//  Features: Action buttons, export settings, improved tab content
+//  Features: Proportional sizing, action buttons, export settings, improved tab content
 //
 
 import SwiftUI
@@ -12,6 +12,8 @@ import Dependencies
 struct VendorDetailModalV2: View {
     let vendor: Vendor
     @ObservedObject var vendorStore: VendorStoreV2
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
+    @EnvironmentObject private var coordinator: AppCoordinator
     @Environment(\.dismiss) private var dismiss
 
     @State private var selectedTab = 0
@@ -33,6 +35,40 @@ struct VendorDetailModalV2: View {
     @Dependency(\.documentRepository) var documentRepository
 
     private let logger = AppLogger.ui
+
+    // MARK: - Size Constants (Proportional Modal Sizing Pattern)
+    
+    /// Minimum modal width
+    private let minWidth: CGFloat = 500
+    /// Maximum modal width
+    private let maxWidth: CGFloat = 900
+    /// Minimum modal height
+    private let minHeight: CGFloat = 450
+    /// Maximum modal height
+    private let maxHeight: CGFloat = 950
+    /// Buffer for window chrome (title bar, toolbar)
+    private let windowChromeBuffer: CGFloat = 40
+    /// Width proportion of parent window
+    private let widthProportion: CGFloat = 0.65
+    /// Height proportion of parent window
+    private let heightProportion: CGFloat = 0.80
+
+    // MARK: - Computed Properties
+    
+    /// Calculate dynamic size based on parent window size
+    private var dynamicSize: CGSize {
+        let parentSize = coordinator.parentWindowSize
+        
+        // Calculate proportional size
+        let targetWidth = parentSize.width * widthProportion
+        let targetHeight = parentSize.height * heightProportion - windowChromeBuffer
+        
+        // Clamp to min/max bounds
+        let finalWidth = min(maxWidth, max(minWidth, targetWidth))
+        let finalHeight = min(maxHeight, max(minHeight, targetHeight))
+        
+        return CGSize(width: finalWidth, height: finalHeight)
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -61,7 +97,8 @@ struct VendorDetailModalV2: View {
                     case 0:
                         VendorDetailOverviewTabV2(
                             vendor: vendor,
-                            vendorStore: vendorStore
+                            vendorStore: vendorStore,
+                            budgetCategories: budgetStore.categoryStore.categories
                         )
                     case 1:
                         VendorDetailFinancialTabV2(
@@ -89,11 +126,17 @@ struct VendorDetailModalV2: View {
             }
             .background(SemanticColors.backgroundPrimary)
         }
+        .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(SemanticColors.backgroundPrimary)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xl))
         .sheet(isPresented: $showingEditSheet) {
-            EditVendorSheetV2(vendor: vendor, vendorStore: vendorStore) { _ in
-                // Reload will happen automatically through the store
-            }
+            EditVendorSheetV4(
+                vendor: vendor,
+                vendorStore: vendorStore,
+                onSave: { _ in
+                    // Reload will happen automatically through the store
+                }
+            )
         }
         .task {
             await loadVendorImage()
@@ -223,4 +266,6 @@ struct VendorDetailModalV2: View {
         ),
         vendorStore: VendorStoreV2()
     )
+    .environmentObject(AppCoordinator.shared)
+    .environmentObject(BudgetStoreV2())
 }

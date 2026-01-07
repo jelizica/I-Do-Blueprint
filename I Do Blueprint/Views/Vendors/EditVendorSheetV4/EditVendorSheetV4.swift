@@ -83,6 +83,15 @@ struct EditVendorSheetV4: View {
     @State private var isArchived: Bool
     @State private var quickNote: String
     
+    // MARK: - State - Category Selection
+    
+    @State private var budgetCategoryId: UUID?
+    @State private var subcategoryId: UUID?
+    
+    // MARK: - Budget Store for Categories
+    
+    @EnvironmentObject private var budgetStore: BudgetStoreV2
+    
     // MARK: - State - Image
     
     @State private var selectedImage: NSImage?
@@ -140,7 +149,10 @@ struct EditVendorSheetV4: View {
         _isArchived = State(initialValue: vendor.isArchived ?? false)
         _quickNote = State(initialValue: vendor.notes ?? "")
         
-            }
+        // Initialize category from vendor
+        _budgetCategoryId = State(initialValue: vendor.budgetCategoryId)
+        _subcategoryId = State(initialValue: nil) // Subcategory is derived from budgetCategoryId
+    }
     
     // MARK: - Body
     
@@ -427,7 +439,10 @@ struct EditVendorSheetV4: View {
                         dateBooked: $dateBooked,
                         includeInExport: $includeInExport,
                         isArchived: $isArchived,
-                        quickNote: $quickNote
+                        quickNote: $quickNote,
+                        budgetCategoryId: $budgetCategoryId,
+                        subcategoryId: $subcategoryId,
+                        budgetCategories: budgetStore.categoryStore.categories
                     )
                     
                 case .financial:
@@ -648,6 +663,9 @@ struct EditVendorSheetV4: View {
         updatedVendor.archivedAt = isArchived ? Date() : nil
         updatedVendor.notes = quickNote.isEmpty ? nil : quickNote
         updatedVendor.updatedAt = Date()
+        
+        // Update budget category - use subcategory if selected, otherwise use parent category
+        updatedVendor.budgetCategoryId = subcategoryId ?? budgetCategoryId
         
         await vendorStore.updateVendor(updatedVendor)
         onSave(updatedVendor)

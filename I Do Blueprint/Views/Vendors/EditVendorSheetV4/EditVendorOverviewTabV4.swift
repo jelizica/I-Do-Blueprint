@@ -29,24 +29,13 @@ struct EditVendorOverviewTabV4: View {
     @Binding var isArchived: Bool
     @Binding var quickNote: String
     
-    // MARK: - Constants
+    // MARK: - Category Bindings
     
-    private let vendorCategories = [
-        "Hair & Makeup",
-        "Photography",
-        "Videography",
-        "Venue",
-        "Catering",
-        "Florist",
-        "DJ/Music",
-        "Wedding Planner",
-        "Officiant",
-        "Transportation",
-        "Rentals",
-        "Stationery",
-        "Cake/Desserts",
-        "Other"
-    ]
+    @Binding var budgetCategoryId: UUID?
+    @Binding var subcategoryId: UUID?
+    let budgetCategories: [BudgetCategory]
+    
+    // MARK: - Constants
     
     private let countries = ["USA", "Canada", "UK", "Australia", "Other"]
     
@@ -94,30 +83,12 @@ struct EditVendorOverviewTabV4: View {
                         .overlay(fieldBorder)
                 }
                 
-                // Category
-                formField(label: "Category") {
-                    Menu {
-                        ForEach(vendorCategories, id: \.self) { category in
-                            Button(category) {
-                                vendorType = category
-                            }
-                        }
-                    } label: {
-                        HStack {
-                            Text(vendorType.isEmpty ? "Select category" : vendorType)
-                                .foregroundColor(vendorType.isEmpty ? SemanticColors.textTertiary : SemanticColors.textPrimary)
-                            Spacer()
-                            Image(systemName: "chevron.down")
-                                .font(.system(size: 12))
-                                .foregroundColor(SemanticColors.textSecondary)
-                        }
-                        .padding(Spacing.md)
-                        .background(glassFieldBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
-                        .overlay(fieldBorder)
-                    }
-                    .buttonStyle(.plain)
-                }
+                // Budget Category (Required) and Subcategory (Optional)
+                VendorCategoryPicker(
+                    categories: budgetCategories,
+                    selectedCategoryId: $budgetCategoryId,
+                    selectedSubcategoryId: $subcategoryId
+                )
                 
                 // Priority Level
                 formField(label: "Priority Level") {
@@ -470,27 +441,107 @@ struct EditVendorOverviewTabV4: View {
 // MARK: - Preview
 
 #Preview("Overview Tab") {
-    ScrollView {
-        EditVendorOverviewTabV4(
-            vendorName: .constant("Beauty by Furi"),
-            vendorType: .constant("Hair & Makeup"),
-            priorityLevel: .constant(.medium),
-            contactEmail: .constant("hello@beautybyfuri.com"),
-            phoneNumber: .constant("+1 (555) 123-4567"),
-            website: .constant("https://beautybyfuri.com"),
-            streetAddress: .constant("123 Wedding Lane, Suite 400"),
-            city: .constant("San Francisco"),
-            state: .constant("CA"),
-            zipCode: .constant("94103"),
-            country: .constant("USA"),
-            instagramHandle: .constant("beautybyfuri"),
-            isBooked: .constant(true),
-            dateBooked: .constant(Date()),
-            includeInExport: .constant(true),
-            isArchived: .constant(false),
-            quickNote: .constant("Remember to ask for the liability insurance certificate before the final payment is released.")
-        )
-        .padding()
+    struct PreviewWrapper: View {
+        @State private var budgetCategoryId: UUID?
+        @State private var subcategoryId: UUID?
+        
+        let sampleCategories: [BudgetCategory] = {
+            let venueId = UUID()
+            let cateringId = UUID()
+            
+            return [
+                BudgetCategory(
+                    id: venueId,
+                    coupleId: UUID(),
+                    categoryName: "Venue",
+                    parentCategoryId: nil,
+                    allocatedAmount: 10000,
+                    spentAmount: 5000,
+                    priorityLevel: 1,
+                    isEssential: true,
+                    forecastedAmount: 10000,
+                    confidenceLevel: 0.9,
+                    lockedAllocation: false,
+                    color: "#3B82F6",
+                    createdAt: Date()
+                ),
+                BudgetCategory(
+                    id: cateringId,
+                    coupleId: UUID(),
+                    categoryName: "Catering",
+                    parentCategoryId: nil,
+                    allocatedAmount: 15000,
+                    spentAmount: 3000,
+                    priorityLevel: 1,
+                    isEssential: true,
+                    forecastedAmount: 15000,
+                    confidenceLevel: 0.85,
+                    lockedAllocation: false,
+                    color: "#10B981",
+                    createdAt: Date()
+                ),
+                BudgetCategory(
+                    id: UUID(),
+                    coupleId: UUID(),
+                    categoryName: "Ceremony Space",
+                    parentCategoryId: venueId,
+                    allocatedAmount: 3000,
+                    spentAmount: 3000,
+                    priorityLevel: 1,
+                    isEssential: true,
+                    forecastedAmount: 3000,
+                    confidenceLevel: 1.0,
+                    lockedAllocation: true,
+                    color: "#3B82F6",
+                    createdAt: Date()
+                ),
+                BudgetCategory(
+                    id: UUID(),
+                    coupleId: UUID(),
+                    categoryName: "Reception Space",
+                    parentCategoryId: venueId,
+                    allocatedAmount: 7000,
+                    spentAmount: 2000,
+                    priorityLevel: 1,
+                    isEssential: true,
+                    forecastedAmount: 7000,
+                    confidenceLevel: 0.9,
+                    lockedAllocation: false,
+                    color: "#3B82F6",
+                    createdAt: Date()
+                )
+            ]
+        }()
+        
+        var body: some View {
+            ScrollView {
+                EditVendorOverviewTabV4(
+                    vendorName: .constant("Beauty by Furi"),
+                    vendorType: .constant("Hair & Makeup"),
+                    priorityLevel: .constant(.medium),
+                    contactEmail: .constant("hello@beautybyfuri.com"),
+                    phoneNumber: .constant("+1 (555) 123-4567"),
+                    website: .constant("https://beautybyfuri.com"),
+                    streetAddress: .constant("123 Wedding Lane, Suite 400"),
+                    city: .constant("San Francisco"),
+                    state: .constant("CA"),
+                    zipCode: .constant("94103"),
+                    country: .constant("USA"),
+                    instagramHandle: .constant("beautybyfuri"),
+                    isBooked: .constant(true),
+                    dateBooked: .constant(Date()),
+                    includeInExport: .constant(true),
+                    isArchived: .constant(false),
+                    quickNote: .constant("Remember to ask for the liability insurance certificate before the final payment is released."),
+                    budgetCategoryId: $budgetCategoryId,
+                    subcategoryId: $subcategoryId,
+                    budgetCategories: sampleCategories
+                )
+                .padding()
+            }
+            .frame(width: 850, height: 600)
+        }
     }
-    .frame(width: 850, height: 600)
+    
+    return PreviewWrapper()
 }
