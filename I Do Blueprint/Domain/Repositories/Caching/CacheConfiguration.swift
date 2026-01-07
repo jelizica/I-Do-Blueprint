@@ -43,6 +43,7 @@ struct CacheConfiguration {
         case budgetCategories = "budget_categories"
         case budgetExpenses = "budget_expenses"
         case budgetOverview = "budget_overview"
+        case categoryMetrics = "category_metrics"
         
         case vendor = "vendors"
         case vendorDetail = "vendor_detail"
@@ -74,6 +75,13 @@ struct CacheConfiguration {
         /// Generate a cache key with tenant ID and additional identifier
         func key(tenantId: UUID, id: String) -> String {
             "\(rawValue)_\(tenantId.uuidString)_\(id)"
+        }
+
+        // MARK: - Convenience Static Methods
+
+        /// Category budget metrics cache key
+        static func categoryMetrics(_ tenantId: UUID) -> String {
+            KeyPrefix.categoryMetrics.key(tenantId: tenantId)
         }
     }
     

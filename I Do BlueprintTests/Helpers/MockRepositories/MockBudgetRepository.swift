@@ -35,6 +35,15 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         return budgetSummary
     }
 
+    // MARK: - Category Budget Metrics
+
+    var categoryMetrics: [CategoryBudgetMetrics] = []
+
+    func fetchCategoryBudgetMetrics() async throws -> [CategoryBudgetMetrics] {
+        if shouldThrowError { throw errorToThrow }
+        return categoryMetrics
+    }
+
     // MARK: - Categories
 
     func fetchCategories() async throws -> [BudgetCategory] {

@@ -58,6 +58,7 @@ struct BudgetDashboardViewV1: View {
                             ChartsSection(
                                 windowSize: windowSize,
                                 categories: budgetStore.categoryStore.categories,
+                                categoryBudgetMetrics: budgetStore.categoryBudgetMetrics,
                                 expenses: budgetStore.expenseStore.expenses
                             )
 
@@ -371,6 +372,7 @@ struct BudgetDashboardSummaryCard: View {
 struct ChartsSection: View {
     let windowSize: WindowSize
     let categories: [BudgetCategory]
+    let categoryBudgetMetrics: [CategoryBudgetMetrics]
     let expenses: [Expense]
 
     var body: some View {
@@ -380,14 +382,16 @@ struct ChartsSection: View {
 
         LazyVGrid(columns: columns, spacing: Spacing.lg) {
             // Interactive Category Distribution Chart (Grouped Bar)
+            // Uses calculated metrics from RPC function for accurate values
             BudgetChartCard(
                 title: "Budget by Category",
                 icon: "chart.bar.fill"
             ) {
-                InteractiveBudgetCategoryChart(categories: categories)
+                InteractiveBudgetCategoryChart(metrics: categoryBudgetMetrics)
             }
 
             // Spending Distribution Donut
+            // Still uses BudgetCategory for now (could be updated to use metrics)
             BudgetChartCard(
                 title: "Spend Distribution",
                 icon: "chart.pie.fill"
@@ -466,7 +470,8 @@ enum BudgetSeriesType: String, CaseIterable {
 // MARK: - Interactive Grouped Bar Chart
 
 struct InteractiveBudgetCategoryChart: View {
-    let categories: [BudgetCategory]
+    /// Calculated metrics from the database RPC function (preferred - uses live data)
+    let metrics: [CategoryBudgetMetrics]
 
     @State private var selectedCategoryType: BudgetCategoryType = .parent
     @State private var hoveredCategory: String?
@@ -475,50 +480,50 @@ struct InteractiveBudgetCategoryChart: View {
     @State private var isTooltipVisible: Bool = false
     @State private var hoverDebounceTask: Task<Void, Never>?
 
-    // Identify parent categories (have children)
+    // Identify parent categories (have children based on parentCategoryId being nil)
     private var parentCategoryIds: Set<UUID> {
-        Set(categories.compactMap { $0.parentCategoryId })
+        Set(metrics.compactMap { $0.parentCategoryId })
     }
 
-    // Parent categories: top-level with children
-    private var parentCategories: [BudgetCategory] {
-        categories.filter { category in
-            category.parentCategoryId == nil && parentCategoryIds.contains(category.id)
+    // Parent categories: top-level with children (categories that have children pointing to them)
+    private var parentCategories: [CategoryBudgetMetrics] {
+        metrics.filter { metric in
+            metric.isParentCategory && parentCategoryIds.contains(metric.categoryId)
         }
-        .sorted { $0.allocatedAmount > $1.allocatedAmount }
+        .sorted { $0.allocated > $1.allocated }
     }
 
     // Leaf categories: top-level with NO children (standalone)
-    private var leafCategories: [BudgetCategory] {
-        categories.filter { category in
-            category.parentCategoryId == nil && !parentCategoryIds.contains(category.id)
+    private var leafCategories: [CategoryBudgetMetrics] {
+        metrics.filter { metric in
+            metric.isParentCategory && !parentCategoryIds.contains(metric.categoryId)
         }
-        .sorted { $0.allocatedAmount > $1.allocatedAmount }
+        .sorted { $0.allocated > $1.allocated }
     }
 
-    private var displayCategories: [BudgetCategory] {
+    private var displayCategories: [CategoryBudgetMetrics] {
         let cats = selectedCategoryType == .parent ? parentCategories : leafCategories
         return Array(cats.prefix(6)) // Top 6 for readability
     }
 
     private var chartDataPoints: [CategoryChartDataPoint] {
-        displayCategories.flatMap { category in
+        displayCategories.flatMap { metric in
             BudgetSeriesType.allCases.map { series in
                 CategoryChartDataPoint(
-                    categoryName: category.categoryName,
-                    categoryColor: Color(hex: category.color) ?? AppColors.Budget.allocated,
+                    categoryName: metric.categoryName,
+                    categoryColor: Color(hex: metric.color) ?? AppColors.Budget.allocated,
                     seriesType: series,
-                    amount: amountForSeries(category: category, series: series)
+                    amount: amountForSeries(metric: metric, series: series)
                 )
             }
         }
     }
 
-    private func amountForSeries(category: BudgetCategory, series: BudgetSeriesType) -> Double {
+    private func amountForSeries(metric: CategoryBudgetMetrics, series: BudgetSeriesType) -> Double {
         switch series {
-        case .allocated: return category.allocatedAmount
-        case .forecasted: return category.forecastedAmount
-        case .spent: return category.spentAmount
+        case .allocated: return metric.allocated
+        case .forecasted: return metric.forecasted
+        case .spent: return metric.spent
         }
     }
 
@@ -724,7 +729,7 @@ struct InteractiveBudgetCategoryChart: View {
                 .frame(width: 120)
 
             // All three values for this category
-            if let category = displayCategories.first(where: { $0.categoryName == dataPoint.categoryName }) {
+            if let metric = displayCategories.first(where: { $0.categoryName == dataPoint.categoryName }) {
                 ForEach(BudgetSeriesType.allCases, id: \.self) { series in
                     HStack(spacing: Spacing.sm) {
                         Circle()
@@ -734,21 +739,20 @@ struct InteractiveBudgetCategoryChart: View {
                             .font(Typography.caption)
                             .foregroundStyle(SemanticColors.textSecondary)
                         Spacer()
-                        Text(formatCurrency(amountForSeries(category: category, series: series)))
+                        Text(formatCurrency(amountForSeries(metric: metric, series: series)))
                             .font(Typography.caption.weight(.medium))
                             .foregroundStyle(SemanticColors.textPrimary)
                     }
                 }
 
-                // Show variance
-                let variance = category.allocatedAmount - category.spentAmount
-                let varianceColor = variance >= 0 ? AppColors.success : AppColors.error
+                // Show variance (using the computed remaining property)
+                let varianceColor = metric.remaining >= 0 ? AppColors.success : AppColors.error
                 HStack {
                     Text("Remaining")
                         .font(Typography.caption)
                         .foregroundStyle(SemanticColors.textSecondary)
                     Spacer()
-                    Text(formatCurrency(variance))
+                    Text(formatCurrency(metric.remaining))
                         .font(Typography.caption.weight(.bold))
                         .foregroundStyle(varianceColor)
                 }

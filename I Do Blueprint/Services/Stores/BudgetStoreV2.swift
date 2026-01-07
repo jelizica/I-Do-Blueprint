@@ -62,6 +62,7 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
     @Published var loadingState: LoadingState<BudgetData> = .idle
 
     @Published private(set) var categoryBenchmarks: [CategoryBenchmark] = []
+    @Published private(set) var categoryBudgetMetrics: [CategoryBudgetMetrics] = []
     @Published var savedScenarios: [SavedScenario] = []
     @Published var taxRates: [TaxInfo] = []
     @Published var weddingEvents: [WeddingEvent] = []
@@ -242,7 +243,10 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
                 let t2 = Date()
                 await loadPrimaryScenario()
                 mainThreadAccumulated += Date().timeIntervalSince(t2)
-                
+
+                // Load calculated category budget metrics for charts
+                await loadCategoryBudgetMetrics()
+
                 // Update expense payment statuses based on payment schedules
                 await updateAllExpensePaymentStatuses()
 
@@ -380,7 +384,26 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
             }
         }
     }
-    
+
+    // MARK: - Category Budget Metrics
+
+    /// Load calculated category budget metrics from the database RPC function
+    /// These metrics are computed from actual data sources:
+    /// - allocated: Sum of budget_development_items.vendor_estimate_with_tax per category
+    /// - spent: Sum of paid payment_plans linked to vendors in each category
+    /// - forecasted: Sum of vendor_information.quoted_amount per category
+    func loadCategoryBudgetMetrics() async {
+        do {
+            let metrics = try await repository.fetchCategoryBudgetMetrics()
+            categoryBudgetMetrics = metrics
+            logger.info("Loaded \(metrics.count) category budget metrics")
+        } catch {
+            await handleError(error, operation: "loadCategoryBudgetMetrics") { [weak self] in
+                await self?.loadCategoryBudgetMetrics()
+            }
+        }
+    }
+
     // MARK: - Batch Category Operations
     
     /// Batch delete multiple categories - delegates to CategoryStoreV2
@@ -456,6 +479,7 @@ class BudgetStoreV2: ObservableObject, CacheableStore {
         // Reset state and invalidate cache
         loadingState = .idle
         categoryBenchmarks = []
+        categoryBudgetMetrics = []
         savedScenarios = []
         taxRates = []
         weddingEvents = []

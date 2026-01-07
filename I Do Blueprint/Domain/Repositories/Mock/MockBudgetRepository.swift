@@ -37,6 +37,18 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         return budgetSummary
     }
 
+    // MARK: - Category Budget Metrics
+
+    var categoryMetrics: [CategoryBudgetMetrics] = []
+    var fetchCategoryMetricsCalled = false
+
+    func fetchCategoryBudgetMetrics() async throws -> [CategoryBudgetMetrics] {
+        fetchCategoryMetricsCalled = true
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return categoryMetrics
+    }
+
     // MARK: - Categories
 
     func fetchCategories() async throws -> [BudgetCategory] {

@@ -182,6 +182,38 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         }
     }
 
+    // MARK: - Category Budget Metrics
+
+    func fetchCategoryBudgetMetrics() async throws -> [CategoryBudgetMetrics] {
+        let tenantId = try await getTenantId()
+        let cacheKey = CacheConfiguration.KeyPrefix.categoryMetrics(tenantId)
+
+        // Check cache first (60 second TTL - these are calculated values)
+        if let cached: [CategoryBudgetMetrics] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: category budget metrics (\(cached.count) items)")
+            return cached
+        }
+
+        logger.info("Cache miss: fetching category budget metrics via RPC")
+        let client = try getClient()
+        let startTime = Date()
+
+        let metrics: [CategoryBudgetMetrics] = try await RepositoryNetwork.withRetry {
+            try await client
+                .rpc("get_category_budget_metrics", params: ["p_couple_id": tenantId])
+                .execute()
+                .value
+        }
+
+        let duration = Date().timeIntervalSince(startTime)
+        await PerformanceMonitor.shared.recordOperation("fetchCategoryBudgetMetrics", duration: duration)
+        logger.info("Fetched \(metrics.count) category budget metrics in \(String(format: "%.2f", duration))s")
+
+        // Cache result
+        await RepositoryCache.shared.set(cacheKey, value: metrics, ttl: 60)
+        return metrics
+    }
+
     // MARK: - Categories (Delegated to BudgetCategoryDataSource)
 
     func fetchCategories() async throws -> [BudgetCategory] {

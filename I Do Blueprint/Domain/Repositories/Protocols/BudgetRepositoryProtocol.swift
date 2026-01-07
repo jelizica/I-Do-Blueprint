@@ -45,6 +45,18 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Throws: Repository errors if fetch fails
     func fetchBudgetSummary() async throws -> BudgetSummary?
 
+    // MARK: - Category Budget Metrics Operations
+
+    /// Fetches calculated budget metrics per category using the database RPC function.
+    /// These metrics are computed from actual data sources:
+    /// - allocated: Sum of budget_development_items.vendor_estimate_with_tax per category
+    /// - spent: Sum of paid payment_plans linked to vendors in each category
+    /// - forecasted: Sum of vendor_information.quoted_amount per category
+    ///
+    /// - Returns: Array of CategoryBudgetMetrics with calculated values
+    /// - Throws: Repository errors if fetch fails
+    func fetchCategoryBudgetMetrics() async throws -> [CategoryBudgetMetrics]
+
     // MARK: - Category Operations
 
     /// Fetches all budget categories for the current couple
