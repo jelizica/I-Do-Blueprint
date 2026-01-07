@@ -1595,6 +1595,29 @@ struct FinancialPlanningSection: View {
     let onNavigateToCalculator: () -> Void
     let onNavigateToGifts: () -> Void
 
+    @Environment(\.appStores) private var appStores
+
+    /// Partner 1 name from settings
+    private var partner1Name: String {
+        let nickname = appStores.settings.settings.global.partner1Nickname
+        if !nickname.isEmpty { return nickname }
+        let fullName = appStores.settings.settings.global.partner1FullName
+        return fullName.isEmpty ? "Partner 1" : fullName.components(separatedBy: " ").first ?? fullName
+    }
+
+    /// Partner 2 name from settings
+    private var partner2Name: String {
+        let nickname = appStores.settings.settings.global.partner2Nickname
+        if !nickname.isEmpty { return nickname }
+        let fullName = appStores.settings.settings.global.partner2FullName
+        return fullName.isEmpty ? "Partner 2" : fullName.components(separatedBy: " ").first ?? fullName
+    }
+
+    /// Total budget from budget store for required calculation
+    private var totalBudget: Double {
+        appStores.budget.actualTotalBudget
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
             Text("Financial Planning")
@@ -1609,6 +1632,9 @@ struct FinancialPlanningSection: View {
                 // Monthly Affordability Card
                 MonthlyAffordabilityCard(
                     affordability: affordability,
+                    partner1Name: partner1Name,
+                    partner2Name: partner2Name,
+                    totalBudget: totalBudget,
                     onTap: onNavigateToCalculator
                 )
 
@@ -1624,17 +1650,32 @@ struct FinancialPlanningSection: View {
 
 // MARK: - Monthly Affordability Card V2
 
-/// A clean, modern affordability card matching the Financial Planning design.
-/// Shows monthly contribution, savings progress, and months remaining.
+/// A comprehensive affordability card showing monthly contributions, partner breakdown,
+/// timeline progress, and budget status. Matches the Financial Planning design reference.
 struct MonthlyAffordabilityCard: View {
     let affordability: AffordabilityStore
+    let partner1Name: String
+    let partner2Name: String
+    let totalBudget: Double
     let onTap: () -> Void
 
     @State private var isHovered = false
 
-    /// Monthly contribution from both partners
-    private var monthlyContribution: Double {
-        affordability.editedPartner1Monthly + affordability.editedPartner2Monthly
+    // MARK: - Computed Properties
+
+    /// Monthly contribution from partner 1
+    private var partner1Monthly: Double {
+        affordability.editedPartner1Monthly
+    }
+
+    /// Monthly contribution from partner 2
+    private var partner2Monthly: Double {
+        affordability.editedPartner2Monthly
+    }
+
+    /// Total monthly contribution from both partners
+    private var totalMonthly: Double {
+        partner1Monthly + partner2Monthly
     }
 
     /// Months remaining until wedding
@@ -1642,87 +1683,60 @@ struct MonthlyAffordabilityCard: View {
         affordability.monthsLeft
     }
 
-    /// Progress as percentage (0.0 to 1.0)
-    private var progress: Double {
-        affordability.progressPercentage / 100.0
+    /// Total months from start to wedding (for segmented progress)
+    private var totalMonths: Int {
+        guard let startDate = affordability.editedCalculationStartDate ?? affordability.selectedScenario?.calculationStartDate,
+              let weddingDate = affordability.editedWeddingDate else {
+            return 12
+        }
+        return max(1, Calendar.current.dateComponents([.month], from: startDate, to: weddingDate).month ?? 12)
     }
+
+    /// Months elapsed (for segmented progress)
+    private var monthsElapsed: Int {
+        totalMonths - monthsRemaining
+    }
+
+    /// Required monthly amount to reach budget
+    private var requiredMonthly: Double {
+        guard monthsRemaining > 0 else { return 0 }
+        let alreadySaved = affordability.totalSaved + affordability.totalContributions + affordability.alreadyPaid
+        let remaining = max(0, totalBudget - alreadySaved)
+        return remaining / Double(monthsRemaining)
+    }
+
+    /// Buffer amount (difference between actual and required)
+    private var bufferAmount: Double {
+        totalMonthly - requiredMonthly
+    }
+
+    /// Whether the user is on track
+    private var isOnTrack: Bool {
+        totalMonthly >= requiredMonthly
+    }
+
+    // MARK: - Body
 
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: Spacing.lg) {
-                // Header with icon and title
-                HStack(spacing: Spacing.md) {
-                    // Calendar icon with blue background
-                    ZStack {
-                        RoundedRectangle(cornerRadius: CornerRadius.md)
-                            .fill(AppColors.Budget.allocated.opacity(0.15))
-                            .frame(width: 40, height: 40)
+                // Header Row
+                headerRow
 
-                        Image(systemName: "calendar")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(AppColors.Budget.allocated)
-                    }
+                // Total Monthly Amount
+                totalAmountSection
 
-                    Text("Monthly Affordability")
-                        .font(Typography.heading)
-                        .foregroundStyle(SemanticColors.textPrimary)
+                // Partner Breakdown Pills
+                partnerBreakdownRow
 
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(SemanticColors.textTertiary)
-                }
+                // Months to Wedding Progress
+                monthsProgressSection
 
                 Divider()
                     .background(SemanticColors.borderLight)
 
-                // Monthly Contribution
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Monthly Contribution")
-                        .font(Typography.bodySmall)
-                        .foregroundStyle(SemanticColors.textSecondary)
-
-                    Text(formatCurrency(monthlyContribution))
-                        .font(.system(size: 32, weight: .bold, design: .rounded))
-                        .foregroundStyle(AppColors.Budget.income)
-                }
-
-                // Savings Progress
-                VStack(alignment: .leading, spacing: Spacing.sm) {
-                    HStack {
-                        Text("Savings Progress")
-                            .font(Typography.bodySmall)
-                            .foregroundStyle(SemanticColors.textSecondary)
-
-                        Spacer()
-
-                        Text("\(Int(progress * 100))%")
-                            .font(Typography.bodySmall)
-                            .foregroundStyle(SemanticColors.textSecondary)
-                    }
-
-                    // Custom progress bar
-                    GeometryReader { geometry in
-                        ZStack(alignment: .leading) {
-                            // Background track
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(SemanticColors.borderLight)
-                                .frame(height: 8)
-
-                            // Progress fill
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(AppColors.Budget.allocated)
-                                .frame(width: max(geometry.size.width * progress, 8), height: 8)
-                        }
-                    }
-                    .frame(height: 8)
-
-                    // Months remaining
-                    Text("\(monthsRemaining) months remaining")
-                        .font(Typography.caption)
-                        .foregroundStyle(SemanticColors.textTertiary)
-                }
+                // Footer: Required, Buffer, Status
+                footerRow
             }
             .padding(Spacing.lg)
             .background(
@@ -1747,6 +1761,188 @@ struct MonthlyAffordabilityCard: View {
             }
         }
     }
+
+    // MARK: - Header Row
+
+    private var headerRow: some View {
+        HStack {
+            Text("Monthly Affordability")
+                .font(Typography.heading)
+                .foregroundStyle(SemanticColors.textPrimary)
+
+            Spacer()
+
+            Image(systemName: "gearshape")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(SemanticColors.textTertiary)
+        }
+    }
+
+    // MARK: - Total Amount Section
+
+    private var totalAmountSection: some View {
+        HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
+            Text(formatCurrency(totalMonthly))
+                .font(.system(size: 36, weight: .bold, design: .rounded))
+                .foregroundStyle(SemanticColors.textPrimary)
+
+            Text("/month")
+                .font(Typography.bodyRegular)
+                .foregroundStyle(SemanticColors.textTertiary)
+        }
+    }
+
+    // MARK: - Partner Breakdown Row
+
+    private var partnerBreakdownRow: some View {
+        HStack(spacing: Spacing.md) {
+            // Partner 1 Pill
+            partnerPill(
+                name: partner1Name.uppercased(),
+                amount: partner1Monthly,
+                color: Color.orange.opacity(0.8)
+            )
+
+            // Partner 2 Pill
+            partnerPill(
+                name: partner2Name.uppercased(),
+                amount: partner2Monthly,
+                color: Color.yellow.opacity(0.7)
+            )
+        }
+    }
+
+    private func partnerPill(name: String, amount: Double, color: Color) -> some View {
+        HStack(spacing: Spacing.sm) {
+            // Avatar circle
+            Circle()
+                .fill(color)
+                .frame(width: 28, height: 28)
+                .overlay(
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.white.opacity(0.8))
+                )
+
+            VStack(alignment: .leading, spacing: 0) {
+                Text(name)
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(SemanticColors.textSecondary)
+                    .tracking(0.5)
+
+                Text(formatCurrency(amount))
+                    .font(Typography.bodySmall.weight(.semibold))
+                    .foregroundStyle(SemanticColors.textPrimary)
+            }
+        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.lg)
+                        .stroke(SemanticColors.borderLight, lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Months Progress Section
+
+    private var monthsProgressSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            HStack {
+                Text("Months to Wedding")
+                    .font(Typography.bodySmall)
+                    .foregroundStyle(SemanticColors.textSecondary)
+
+                Spacer()
+
+                Text("\(monthsRemaining) Months")
+                    .font(Typography.bodySmall.weight(.semibold))
+                    .foregroundStyle(SemanticColors.textPrimary)
+            }
+
+            // Segmented progress bar
+            segmentedProgressBar
+        }
+    }
+
+    private var segmentedProgressBar: some View {
+        GeometryReader { geometry in
+            let segmentCount = min(totalMonths, 12) // Cap at 12 segments for readability
+            let segmentWidth = (geometry.size.width - CGFloat(segmentCount - 1) * 4) / CGFloat(segmentCount)
+            let filledSegments = Int(Double(monthsElapsed) / Double(totalMonths) * Double(segmentCount))
+
+            HStack(spacing: 4) {
+                ForEach(0..<segmentCount, id: \.self) { index in
+                    RoundedRectangle(cornerRadius: 3)
+                        .fill(index < filledSegments ? AppColors.Budget.allocated : SemanticColors.borderLight)
+                        .frame(width: segmentWidth, height: 10)
+                }
+            }
+        }
+        .frame(height: 10)
+    }
+
+    // MARK: - Footer Row
+
+    private var footerRow: some View {
+        HStack(spacing: Spacing.lg) {
+            // Required
+            VStack(alignment: .leading, spacing: 2) {
+                Text("REQUIRED")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(SemanticColors.textTertiary)
+                    .tracking(0.5)
+
+                Text("\(formatCurrency(requiredMonthly))/mo")
+                    .font(Typography.bodySmall.weight(.semibold))
+                    .foregroundStyle(SemanticColors.textPrimary)
+            }
+
+            // Buffer
+            VStack(alignment: .leading, spacing: 2) {
+                Text("BUFFER")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(SemanticColors.textTertiary)
+                    .tracking(0.5)
+
+                Text(bufferAmount >= 0 ? "+\(formatCurrency(bufferAmount))" : formatCurrency(bufferAmount))
+                    .font(Typography.bodySmall.weight(.semibold))
+                    .foregroundStyle(bufferAmount >= 0 ? AppColors.Budget.underBudget : AppColors.Budget.overBudget)
+            }
+
+            Spacer()
+
+            // Status Badge
+            statusBadge
+        }
+    }
+
+    private var statusBadge: some View {
+        HStack(spacing: Spacing.xs) {
+            Image(systemName: isOnTrack ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                .font(.system(size: 14))
+                .foregroundStyle(isOnTrack ? AppColors.Budget.underBudget : AppColors.Budget.overBudget)
+
+            Text(isOnTrack ? "On Track" : "Behind")
+                .font(Typography.bodySmall.weight(.medium))
+                .foregroundStyle(isOnTrack ? AppColors.Budget.underBudget : AppColors.Budget.overBudget)
+        }
+        .padding(.horizontal, Spacing.md)
+        .padding(.vertical, Spacing.sm)
+        .background(
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill((isOnTrack ? AppColors.Budget.underBudget : AppColors.Budget.overBudget).opacity(0.1))
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.lg)
+                        .stroke((isOnTrack ? AppColors.Budget.underBudget : AppColors.Budget.overBudget).opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+
+    // MARK: - Formatting
 
     private func formatCurrency(_ amount: Double) -> String {
         NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0"
