@@ -95,6 +95,9 @@ extension BudgetDevelopmentView {
             return
         }
 
+        // Preserve existing isPrimary value if updating an existing scenario
+        let existingIsPrimary = savedScenarios.first(where: { $0.id == currentScenarioId })?.isPrimary ?? false
+
         let scenarioData = SavedScenario(
             id: currentScenarioId ?? UUID().uuidString,
             scenarioName: budgetName,
@@ -103,7 +106,7 @@ extension BudgetDevelopmentView {
             totalWithoutTax: totalWithoutTax,
             totalTax: totalTax,
             totalWithTax: totalWithTax,
-            isPrimary: false,
+            isPrimary: existingIsPrimary,
             coupleId: coupleId,  // ✅ Pass UUID directly
             isTestData: false)
 
