@@ -25,9 +25,9 @@ struct BouquetFlowerView: View {
     // MARK: - Layout Constants
     
     private let centerHubRadius: CGFloat = 60
-    private let minPetalLength: CGFloat = 70
-    private let maxPetalLength: CGFloat = 180
     private let petalWidthRatio: CGFloat = 0.4
+    /// Minimum petal length as a ratio of max (smallest expense won't be smaller than this)
+    private let minPetalRatio: CGFloat = 0.35
     
     // MARK: - Computed Properties
     
@@ -36,18 +36,36 @@ struct BouquetFlowerView: View {
         categories.sorted { $0.totalBudgeted > $1.totalBudgeted }
     }
     
-    /// Calculate petal length based on budget proportion
-    private func petalLength(for category: BouquetCategoryData) -> CGFloat {
-        guard totalBudget > 0 else { return minPetalLength }
-        
-        let proportion = category.totalBudgeted / totalBudget
-        // Scale between min and max based on proportion
-        // Use square root to prevent largest petals from dominating too much
-        let scaledProportion = sqrt(proportion)
-        return minPetalLength + (maxPetalLength - minPetalLength) * CGFloat(scaledProportion)
+    /// The largest budget amount among all categories
+    private var maxCategoryBudget: Double {
+        categories.map { $0.totalBudgeted }.max() ?? 1.0
     }
     
-    /// Calculate angle for each petal
+    /// Calculate the maximum petal length that fits in the container
+    /// This is the space from the center hub edge to the container edge
+    private func maxPetalLength(for availableRadius: CGFloat) -> CGFloat {
+        // Available radius minus center hub radius minus some padding
+        let maxLength = availableRadius - centerHubRadius - Spacing.lg
+        // Clamp to reasonable bounds
+        return max(60, min(maxLength, 200))
+    }
+    
+    /// Calculate petal length based on budget proportion relative to largest category
+    /// The largest expense gets the maximum petal length, others scale proportionally
+    private func petalLength(for category: BouquetCategoryData, maxLength: CGFloat) -> CGFloat {
+        guard maxCategoryBudget > 0 else { return maxLength * minPetalRatio }
+        
+        // Calculate proportion relative to the largest category (not total budget)
+        let proportion = category.totalBudgeted / maxCategoryBudget
+        
+        // Scale between minPetalRatio and 1.0 of maxLength
+        // Use square root to prevent smallest petals from being too tiny
+        let scaledProportion = sqrt(proportion)
+        let minLength = maxLength * minPetalRatio
+        return minLength + (maxLength - minLength) * CGFloat(scaledProportion)
+    }
+    
+    /// Calculate angle for each petal - evenly distributed around the center
     private func petalAngle(at index: Int, total: Int) -> Double {
         guard total > 0 else { return 0 }
         let angleStep = 360.0 / Double(total)
@@ -61,6 +79,7 @@ struct BouquetFlowerView: View {
         GeometryReader { geometry in
             let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
             let availableRadius = min(geometry.size.width, geometry.size.height) / 2 - Spacing.lg
+            let maxLength = maxPetalLength(for: availableRadius)
             
             ZStack {
                 // Background glow
@@ -74,9 +93,9 @@ struct BouquetFlowerView: View {
                     animate: animateFlower
                 )
                 
-                // Petals
+                // Petals - all in a single layer around the center
                 ForEach(Array(sortedCategories.enumerated()), id: \.element.id) { index, category in
-                    let length = petalLength(for: category)
+                    let length = petalLength(for: category, maxLength: maxLength)
                     let angle = petalAngle(at: index, total: sortedCategories.count)
                     
                     RadialPetalView(
@@ -306,14 +325,7 @@ struct RadialPetalView: View {
                 .frame(width: width * 2, height: totalPetalHeight)
                 .offset(y: -(length / 2 + centerOffset / 2))
             
-            // Status indicator at tip
-            if category.totalSpent > 0 {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 10, height: 10)
-                    .shadow(color: statusColor.opacity(0.5), radius: 4)
-                    .offset(y: -(length + centerOffset - 10))
-            }
+            // Status indicator dots removed - redundant with legend
         }
         .frame(width: frameSize, height: frameSize)
         .rotationEffect(.degrees(angle))
