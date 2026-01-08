@@ -350,12 +350,9 @@ struct RadialPetalView: View {
         }
         .frame(width: frameSize, height: frameSize)
         // Define hit-testing area to match the visible petal shape
-        // CRITICAL: The rotation must be included in contentShape to match the visual rotation
-        // Without this, the hit-test area stays at 0 degrees while the visual is rotated
         .contentShape(
             PetalShape(width: width, length: length)
                 .offset(y: petalOffset)
-                .rotation(Angle(degrees: angle))
         )
         .onTapGesture {
             onTap?()
@@ -363,8 +360,12 @@ struct RadialPetalView: View {
         .onHover { hovering in
             onHoverChanged?(hovering)
         }
-        // Visual rotation - now matches the contentShape rotation
-        .rotationEffect(.degrees(angle))
+        // CRITICAL FIX: Use _RotationEffect with ignoredByLayout() instead of .rotationEffect()
+        // Regular .rotationEffect() affects how GeometryProxy converts frames between coordinate spaces,
+        // causing hit-testing misalignment. _RotationEffect().ignoredByLayout() applies visual rotation
+        // WITHOUT affecting coordinate space calculations, keeping hit-test areas aligned with visuals.
+        // Reference: harshil.net article on rotationEffect and GeometryProxy
+        .modifier(_RotationEffect(angle: .degrees(angle), anchor: .center).ignoredByLayout())
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)
         .animation(
