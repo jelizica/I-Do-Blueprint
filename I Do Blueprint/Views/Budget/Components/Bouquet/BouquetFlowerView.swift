@@ -349,18 +349,21 @@ struct RadialPetalView: View {
             // Status indicator dots removed - redundant with legend
         }
         .frame(width: frameSize, height: frameSize)
-        // Define hit-testing area to match the visible petal shape only
+        // Define hit-testing area to match the visible petal shape
+        // CRITICAL: The rotation must be included in contentShape to match the visual rotation
+        // Without this, the hit-test area stays at 0 degrees while the visual is rotated
         .contentShape(
             PetalShape(width: width, length: length)
                 .offset(y: petalOffset)
+                .rotation(Angle(degrees: angle))
         )
-        // Gestures must be BEFORE rotation so they align with contentShape
         .onTapGesture {
             onTap?()
         }
         .onHover { hovering in
             onHoverChanged?(hovering)
         }
+        // Visual rotation - now matches the contentShape rotation
         .rotationEffect(.degrees(angle))
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)
