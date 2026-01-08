@@ -77,9 +77,14 @@ struct BouquetFlowerView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            let center = CGPoint(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            // Calculate max petal length based on available width
             let availableRadius = min(geometry.size.width, geometry.size.height) / 2 - Spacing.lg
             let maxLength = maxPetalLength(for: availableRadius)
+            
+            // Position flower center so the top petal tip is at the top padding
+            // Center Y = padding + maxPetalLength + centerHubRadius
+            let flowerCenterY = Spacing.lg + maxLength + centerHubRadius
+            let center = CGPoint(x: geometry.size.width / 2, y: flowerCenterY)
             
             ZStack {
                 // Background glow

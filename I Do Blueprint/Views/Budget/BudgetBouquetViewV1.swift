@@ -263,6 +263,14 @@ struct BudgetBouquetViewV1: View {
 
     @ViewBuilder
     private func flowerSection(geometry: GeometryProxy) -> some View {
+        // Calculate the height needed for the flower visualization
+        // Components: padding + maxPetalLength + centerHub + stem + leaves + pot + padding
+        // Using approximate values that match BouquetFlowerView constants
+        let centerHubRadius: CGFloat = 60
+        let maxPetalLength: CGFloat = 140 // Approximate max petal length
+        let stemAndPotHeight: CGFloat = 250 // Stem + leaves + pot
+        let totalFlowerHeight = Spacing.lg + maxPetalLength + centerHubRadius + stemAndPotHeight + Spacing.lg
+        
         VStack(spacing: Spacing.md) {
             BouquetFlowerView(
                 categories: dataProvider.categories,
@@ -275,7 +283,7 @@ struct BudgetBouquetViewV1: View {
                     print("Tapped category: \(category.categoryName)")
                 }
             )
-            .frame(height: 550)
+            .frame(height: totalFlowerHeight)
 
             // Selected category details
             if let selectedId = selectedCategoryId,
