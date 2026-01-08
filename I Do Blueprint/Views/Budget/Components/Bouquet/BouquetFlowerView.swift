@@ -120,18 +120,14 @@ struct BouquetFlowerView: View {
                     )
                     .position(center)
                     .onTapGesture {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            if selectedCategoryId == category.id {
-                                selectedCategoryId = nil
-                            } else {
-                                selectedCategoryId = category.id
-                                onPetalTap?(category)
-                            }
-                        }
+                        // Clicking navigates to category detail page
+                        onPetalTap?(category)
                     }
                     .onHover { hovering in
                         withAnimation(.easeInOut(duration: 0.15)) {
                             hoveredCategoryId = hovering ? category.id : nil
+                            // Hovering shows detail at bottom (sets selectedCategoryId)
+                            selectedCategoryId = hovering ? category.id : nil
                         }
                     }
                 }

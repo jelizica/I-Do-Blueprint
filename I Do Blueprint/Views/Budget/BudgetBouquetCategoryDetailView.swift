@@ -180,7 +180,7 @@ struct BudgetBouquetCategoryDetailView: View {
 
                 // Divider
                 Rectangle()
-                    .fill(SemanticColors.borderSubtle)
+                    .fill(SemanticColors.borderLight)
                     .frame(width: 1, height: 24)
 
                 // Breadcrumbs
@@ -311,7 +311,7 @@ struct BudgetBouquetCategoryDetailView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .stroke(
-                        isSelected ? Color.clear : SemanticColors.borderSubtle,
+                        isSelected ? Color.clear : SemanticColors.borderLight,
                         lineWidth: 1
                     )
             )
@@ -328,7 +328,7 @@ struct BudgetBouquetCategoryDetailView: View {
 
         LazyVGrid(columns: gridItems, spacing: Spacing.lg) {
             // Total Budget
-            BouquetStatCard(
+            CategoryDetailStatCard(
                 icon: "dollarsign.circle.fill",
                 iconGradient: [SemanticColors.primaryAction, SemanticColors.primaryActionHover],
                 title: "Total Budget",
@@ -338,7 +338,7 @@ struct BudgetBouquetCategoryDetailView: View {
             )
 
             // Total Spent
-            BouquetStatCard(
+            CategoryDetailStatCard(
                 icon: "chart.line.uptrend.xyaxis",
                 iconGradient: [SemanticColors.statusSuccess, Color.fromHex("#10b981")],
                 title: "Total Spent",
@@ -349,7 +349,7 @@ struct BudgetBouquetCategoryDetailView: View {
             )
 
             // Remaining
-            BouquetStatCard(
+            CategoryDetailStatCard(
                 icon: "banknote.fill",
                 iconGradient: [Color.fromHex("#f59e0b"), Color.fromHex("#d97706")],
                 title: "Remaining",
@@ -360,7 +360,7 @@ struct BudgetBouquetCategoryDetailView: View {
             )
 
             // Budget Items
-            BouquetStatCard(
+            CategoryDetailStatCard(
                 icon: "square.stack.3d.up.fill",
                 iconGradient: [Color.fromHex("#ec4899"), Color.fromHex("#db2777")],
                 title: "Budget Items",
@@ -415,7 +415,7 @@ struct BudgetBouquetCategoryDetailView: View {
 
                         context.stroke(
                             path,
-                            with: .color(SemanticColors.borderSubtle.opacity(0.5)),
+                            with: .color(SemanticColors.borderLight.opacity(0.5)),
                             style: StrokeStyle(lineWidth: 2, dash: [5, 5])
                         )
                     }
@@ -721,9 +721,9 @@ struct BudgetBouquetCategoryDetailView: View {
     }
 }
 
-// MARK: - Bouquet Stat Card Component
+// MARK: - Category Detail Stat Card Component
 
-struct BouquetStatCard: View {
+struct CategoryDetailStatCard: View {
     let icon: String
     let iconGradient: [Color]
     let title: String

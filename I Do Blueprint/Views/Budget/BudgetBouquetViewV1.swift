@@ -46,6 +46,9 @@ struct BudgetBouquetViewV1: View {
     @State private var animateFlower: Bool = false
     @State private var isLoading: Bool = true
 
+    /// Category selected for detail view navigation
+    @State private var selectedCategoryForDetail: BouquetCategoryData?
+
     // MARK: - Computed Properties
 
     private var primaryScenarioId: String? {
@@ -59,6 +62,48 @@ struct BudgetBouquetViewV1: View {
     // MARK: - Body
 
     var body: some View {
+        Group {
+            // Show category detail view if a category is selected for detail
+            if let category = selectedCategoryForDetail {
+                BudgetBouquetCategoryDetailView(
+                    category: category,
+                    allCategories: dataProvider.categories,
+                    currentPage: currentPage,
+                    onCategorySelected: { newCategory in
+                        // Navigate to a different category's detail
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedCategoryForDetail = newCategory
+                        }
+                    },
+                    onBackToBouquet: {
+                        // Return to bouquet view
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedCategoryForDetail = nil
+                        }
+                    }
+                )
+            } else {
+                // Show main bouquet view
+                bouquetMainView
+            }
+        }
+        .onAppear {
+            // Delay animation start slightly for smoother appearance
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    animateFlower = true
+                }
+            }
+        }
+        .task {
+            await loadData()
+        }
+    }
+
+    // MARK: - Bouquet Main View
+
+    @ViewBuilder
+    private var bouquetMainView: some View {
         GeometryReader { geometry in
             let windowSize = geometry.size.width.windowSize
             let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
@@ -81,17 +126,6 @@ struct BudgetBouquetViewV1: View {
                 }
             }
             .background(SemanticColors.backgroundPrimary)
-        }
-        .onAppear {
-            // Delay animation start slightly for smoother appearance
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.easeInOut(duration: 0.8)) {
-                    animateFlower = true
-                }
-            }
-        }
-        .task {
-            await loadData()
         }
     }
 
@@ -279,8 +313,10 @@ struct BudgetBouquetViewV1: View {
                 selectedCategoryId: $selectedCategoryId,
                 animateFlower: animateFlower,
                 onPetalTap: { category in
-                    // Future: Navigate to category detail
-                    print("Tapped category: \(category.categoryName)")
+                    // Navigate to category detail view
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        selectedCategoryForDetail = category
+                    }
                 }
             )
             .frame(height: totalFlowerHeight)
