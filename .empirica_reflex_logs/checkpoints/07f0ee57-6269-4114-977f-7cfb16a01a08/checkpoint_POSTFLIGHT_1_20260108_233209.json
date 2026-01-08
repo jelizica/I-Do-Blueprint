@@ -1,0 +1,158 @@
+{
+  "session_id": "07f0ee57-6269-4114-977f-7cfb16a01a08",
+  "phase": "POSTFLIGHT",
+  "round": 1,
+  "timestamp": "2026-01-08T23:32:08.372077+00:00",
+  "vectors": {
+    "know": 0.78,
+    "do": 0.8,
+    "context": 0.75,
+    "clarity": 0.8,
+    "coherence": 0.8,
+    "signal": 0.75,
+    "density": 0.75,
+    "state": 0.9,
+    "change": 0.8,
+    "completion": 0.9,
+    "impact": 0.75,
+    "engagement": 0.75,
+    "uncertainty": 0.25
+  },
+  "overall_confidence": 0.777,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.75,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "know": 0.23,
+      "do": 0.2,
+      "context": 0.2,
+      "clarity": 0.2,
+      "coherence": 0.2,
+      "signal": 0.2,
+      "density": 0.2,
+      "state": 0.5,
+      "change": 0.55,
+      "completion": 0.7,
+      "impact": 0.15,
+      "engagement": 0.0,
+      "uncertainty": -0.2
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "614f7389f16dbbc6a3ffe33aed88bf4f638797fd",
+    "git_notes_ref": "empirica/session/07f0ee57-6269-4114-977f-7cfb16a01a08/POSTFLIGHT/1"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "4d36e7f262632babff14affe8734f07530cb286d",
+    "commits_since_last_checkpoint": [
+      {
+        "sha": "4d36e7f262632babff14affe8734f07530cb286d",
+        "message": "chore: update local vector index",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T15:31:34-08:00",
+        "files_changed": [
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_docs/storage.sqlite",
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_epistemics/storage.sqlite",
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite",
+          ".qdrant_data/meta.json"
+        ]
+      },
+      {
+        "sha": "d593e64caec9c5fd8804c75c904b18fdaf900a92",
+        "message": "chore: empirica session logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T15:31:20-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db",
+          ".empirica_reflex_logs/checkpoints/07f0ee57-6269-4114-977f-7cfb16a01a08/checkpoint_CHECK_1_20260108_233039.json",
+          ".empirica_reflex_logs/checkpoints/07f0ee57-6269-4114-977f-7cfb16a01a08/checkpoint_PREFLIGHT_1_20260108_231802.json"
+        ]
+      },
+      {
+        "sha": "40b070cbfc4bf8bd01bd175e19134c9cbf3597a0",
+        "message": "fix: decouple bouquet hover from selection",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T15:30:56-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      }
+    ],
+    "uncommitted_changes": {
+      "files_modified": [],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ""
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.72,
+      "curr": 0.78,
+      "delta": 0.06
+    },
+    "do": {
+      "prev": 0.75,
+      "curr": 0.8,
+      "delta": 0.05
+    },
+    "context": {
+      "prev": 0.7,
+      "curr": 0.75,
+      "delta": 0.05
+    },
+    "clarity": {
+      "prev": 0.75,
+      "curr": 0.8,
+      "delta": 0.05
+    },
+    "coherence": {
+      "prev": 0.75,
+      "curr": 0.8,
+      "delta": 0.05
+    },
+    "signal": {
+      "prev": 0.7,
+      "curr": 0.75,
+      "delta": 0.05
+    },
+    "density": {
+      "prev": 0.7,
+      "curr": 0.75,
+      "delta": 0.05
+    },
+    "state": {
+      "prev": 0.75,
+      "curr": 0.9,
+      "delta": 0.15
+    },
+    "change": {
+      "prev": 0.65,
+      "curr": 0.8,
+      "delta": 0.15
+    },
+    "completion": {
+      "prev": 0.55,
+      "curr": 0.9,
+      "delta": 0.35
+    },
+    "impact": {
+      "prev": 0.7,
+      "curr": 0.75,
+      "delta": 0.05
+    },
+    "engagement": {
+      "prev": 0.75,
+      "curr": 0.75,
+      "delta": 0.0
+    },
+    "uncertainty": {
+      "prev": 0.33,
+      "curr": 0.25,
+      "delta": -0.08
+    }
+  },
+  "token_count": 305
+}
