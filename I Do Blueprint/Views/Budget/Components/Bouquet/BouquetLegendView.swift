@@ -11,10 +11,10 @@ import SwiftUI
 // MARK: - Main Legend View
 
 struct BouquetLegendView: View {
-    let categories: [BudgetCategory]
+    let categories: [BouquetCategoryData]
     let totalBudget: Double
-    @Binding var hoveredCategoryId: UUID?
-    @Binding var selectedCategoryId: UUID?
+    @Binding var hoveredCategoryId: String?
+    @Binding var selectedCategoryId: String?
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
@@ -35,6 +35,9 @@ struct BouquetLegendView: View {
 
             // Petal size guide
             petalSizeGuide
+            
+            // Progress fill guide
+            progressFillGuide
         }
         .padding(Spacing.lg)
         .background(SemanticColors.backgroundSecondary)
@@ -63,8 +66,8 @@ struct BouquetLegendView: View {
                 .font(Typography.subheading)
                 .foregroundColor(SemanticColors.textSecondary)
 
-            ForEach(categoriesSortedByAmount) { category in
-                CategoryLegendRow(
+            ForEach(categories) { category in
+                CategoryLegendRowV2(
                     category: category,
                     totalBudget: totalBudget,
                     isHovered: hoveredCategoryId == category.id,
@@ -96,7 +99,7 @@ struct BouquetLegendView: View {
                 .font(Typography.subheading)
                 .foregroundColor(SemanticColors.textSecondary)
 
-            ForEach(BouquetSpendingStatus.allCases, id: \.self) { status in
+            ForEach(SpendingStatusType.allCases, id: \.self) { status in
                 HStack(spacing: Spacing.sm) {
                     Circle()
                         .fill(status.color)
@@ -134,6 +137,30 @@ struct BouquetLegendView: View {
             .padding(.top, Spacing.xs)
         }
     }
+    
+    // MARK: - Progress Fill Guide
+    
+    private var progressFillGuide: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("Progress Fill")
+                .font(Typography.subheading)
+                .foregroundColor(SemanticColors.textSecondary)
+
+            Text("Darker fill shows how much has been spent")
+                .font(Typography.caption)
+                .foregroundColor(SemanticColors.textTertiary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            // Visual example
+            HStack(spacing: Spacing.md) {
+                progressFillExample(progress: 0.25, label: "25%")
+                progressFillExample(progress: 0.50, label: "50%")
+                progressFillExample(progress: 0.75, label: "75%")
+                progressFillExample(progress: 1.0, label: "100%")
+            }
+            .padding(.top, Spacing.xs)
+        }
+    }
 
     @ViewBuilder
     private func petalScaleItem(size: PetalScaleSize, label: String) -> some View {
@@ -148,11 +175,26 @@ struct BouquetLegendView: View {
                 .foregroundColor(SemanticColors.textTertiary)
         }
     }
+    
+    @ViewBuilder
+    private func progressFillExample(progress: Double, label: String) -> some View {
+        VStack(spacing: Spacing.xxs) {
+            ZStack(alignment: .bottom) {
+                // Background
+                Capsule()
+                    .fill(SemanticColors.primaryAction.opacity(0.3))
+                    .frame(width: 12, height: 36)
+                
+                // Fill
+                Capsule()
+                    .fill(SemanticColors.primaryAction)
+                    .frame(width: 12, height: 36 * progress)
+            }
 
-    // MARK: - Helpers
-
-    private var categoriesSortedByAmount: [BudgetCategory] {
-        categories.sorted { $0.allocatedAmount > $1.allocatedAmount }
+            Text(label)
+                .font(Typography.caption2)
+                .foregroundColor(SemanticColors.textTertiary)
+        }
     }
 }
 
@@ -178,28 +220,63 @@ private enum PetalScaleSize {
     }
 }
 
-// MARK: - Category Legend Row
+// MARK: - Spending Status Type
 
-struct CategoryLegendRow: View {
-    let category: BudgetCategory
+private enum SpendingStatusType: CaseIterable {
+    case underBudget
+    case onTrack
+    case overBudget
+    case notStarted
+    
+    var label: String {
+        switch self {
+        case .underBudget: return "Under Budget"
+        case .onTrack: return "On Track"
+        case .overBudget: return "Over Budget"
+        case .notStarted: return "Not Started"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .underBudget: return SemanticColors.statusSuccess
+        case .onTrack: return SemanticColors.statusPending
+        case .overBudget: return SemanticColors.statusWarning
+        case .notStarted: return SemanticColors.textTertiary
+        }
+    }
+}
+
+// MARK: - Category Legend Row V2
+
+struct CategoryLegendRowV2: View {
+    let category: BouquetCategoryData
     let totalBudget: Double
     let isHovered: Bool
     let isSelected: Bool
 
     private var percentage: Double {
         guard totalBudget > 0 else { return 0 }
-        return (category.allocatedAmount / totalBudget) * 100
+        return (category.totalBudgeted / totalBudget) * 100
     }
 
-    private var spendingStatus: BouquetSpendingStatus {
-        BouquetSpendingStatus.from(category: category)
+    private var statusColor: Color {
+        if category.isOverBudget {
+            return SemanticColors.statusWarning
+        } else if category.progressRatio >= 0.9 {
+            return SemanticColors.statusPending
+        } else if category.progressRatio > 0 {
+            return SemanticColors.statusSuccess
+        } else {
+            return SemanticColors.textTertiary
+        }
     }
 
     var body: some View {
         HStack(spacing: Spacing.sm) {
             // Color indicator
             RoundedRectangle(cornerRadius: CornerRadius.sm)
-                .fill(Color.fromHex(category.color))
+                .fill(category.color)
                 .frame(width: 4, height: 32)
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -219,7 +296,7 @@ struct CategoryLegendRow: View {
 
                 // Budget amount and percentage
                 HStack(spacing: Spacing.xs) {
-                    Text(formatCurrency(category.allocatedAmount))
+                    Text(formatCurrency(category.totalBudgeted))
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textSecondary)
 
@@ -233,7 +310,7 @@ struct CategoryLegendRow: View {
 
             // Status indicator
             Circle()
-                .fill(spendingStatus.color)
+                .fill(statusColor)
                 .frame(width: 8, height: 8)
         }
         .padding(.horizontal, Spacing.sm)
@@ -258,63 +335,14 @@ struct CategoryLegendRow: View {
     }
 }
 
-// MARK: - Spending Status Extension
-
-extension BouquetSpendingStatus: CaseIterable {
-    static var allCases: [BouquetSpendingStatus] {
-        [.underBudget, .onTrack, .overBudget, .notStarted]
-    }
-}
-
 // MARK: - Preview
 
 #Preview("Budget Legend") {
-    BouquetLegendView(
-        categories: [
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
-                categoryName: "Venue",
-                allocatedAmount: 15000,
-                spentAmount: 12000,
-                priorityLevel: 1,
-                isEssential: true,
-                forecastedAmount: 15000,
-                confidenceLevel: 0.9,
-                lockedAllocation: false,
-                color: "#EF2A78",
-                createdAt: Date()
-            ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
-                categoryName: "Photography",
-                allocatedAmount: 5000,
-                spentAmount: 2500,
-                priorityLevel: 2,
-                isEssential: true,
-                forecastedAmount: 5000,
-                confidenceLevel: 0.8,
-                lockedAllocation: false,
-                color: "#83A276",
-                createdAt: Date()
-            ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
-                categoryName: "Catering",
-                allocatedAmount: 8000,
-                spentAmount: 9000,
-                priorityLevel: 1,
-                isEssential: true,
-                forecastedAmount: 8500,
-                confidenceLevel: 0.7,
-                lockedAllocation: false,
-                color: "#8F24F5",
-                createdAt: Date()
-            )
-        ],
-        totalBudget: 28000,
+    let provider = BouquetDataProvider.preview()
+    
+    return BouquetLegendView(
+        categories: provider.categories,
+        totalBudget: provider.totalBudgeted,
         hoveredCategoryId: .constant(nil),
         selectedCategoryId: .constant(nil)
     )

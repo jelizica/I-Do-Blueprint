@@ -11,24 +11,24 @@ import SwiftUI
 // MARK: - Main Alerts View
 
 struct BouquetAlertsView: View {
-    let categories: [BudgetCategory]
+    let categories: [BouquetCategoryData]
 
     // MARK: - Computed Properties
 
-    private var overBudgetCategories: [BudgetCategory] {
+    private var overBudgetCategories: [BouquetCategoryData] {
         categories.filter { $0.isOverBudget }
     }
 
-    private var nearLimitCategories: [BudgetCategory] {
+    private var nearLimitCategories: [BouquetCategoryData] {
         categories.filter { category in
             !category.isOverBudget &&
-            category.allocatedAmount > 0 &&
-            category.percentageSpent >= 80
+            category.totalBudgeted > 0 &&
+            category.progressRatio >= 0.8
         }
     }
 
-    private var notStartedCategories: [BudgetCategory] {
-        categories.filter { $0.spentAmount == 0 && $0.allocatedAmount > 0 }
+    private var notStartedCategories: [BouquetCategoryData] {
+        categories.filter { $0.totalSpent == 0 && $0.totalBudgeted > 0 }
     }
 
     private var hasAlerts: Bool {
@@ -135,7 +135,7 @@ struct BouquetAlertsView: View {
         title: String,
         icon: String,
         color: Color,
-        categories: [BudgetCategory],
+        categories: [BouquetCategoryData],
         alertType: AlertType
     ) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
@@ -152,7 +152,7 @@ struct BouquetAlertsView: View {
 
             // Category alerts
             ForEach(categories) { category in
-                AlertRow(
+                AlertRowV2(
                     category: category,
                     alertType: alertType
                 )
@@ -253,21 +253,25 @@ private enum AlertType {
     }
 }
 
-// MARK: - Alert Row
+// MARK: - Alert Row V2
 
-private struct AlertRow: View {
-    let category: BudgetCategory
+private struct AlertRowV2: View {
+    let category: BouquetCategoryData
     let alertType: AlertType
 
     private var overAmount: Double {
-        max(0, category.spentAmount - category.allocatedAmount)
+        max(0, category.totalSpent - category.totalBudgeted)
+    }
+    
+    private var percentageSpent: Double {
+        category.progressRatio * 100
     }
 
     var body: some View {
         HStack(spacing: Spacing.sm) {
             // Category color indicator
             RoundedRectangle(cornerRadius: CornerRadius.sm)
-                .fill(Color.fromHex(category.color))
+                .fill(category.color)
                 .frame(width: 4, height: 40)
 
             // Category info
@@ -278,7 +282,7 @@ private struct AlertRow: View {
                     .lineLimit(1)
 
                 HStack(spacing: Spacing.xs) {
-                    Text(formatCurrency(category.spentAmount))
+                    Text(formatCurrency(category.totalSpent))
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textSecondary)
 
@@ -286,7 +290,7 @@ private struct AlertRow: View {
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textTertiary)
 
-                    Text(formatCurrency(category.allocatedAmount))
+                    Text(formatCurrency(category.totalBudgeted))
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textTertiary)
                 }
@@ -309,7 +313,7 @@ private struct AlertRow: View {
                         .font(Typography.caption2)
                         .foregroundColor(SemanticColors.error)
                 } else {
-                    Text("\(Int(category.percentageSpent))%")
+                    Text("\(Int(percentageSpent))%")
                         .font(Typography.caption2)
                         .foregroundColor(alertType.badgeColor)
                 }
@@ -334,61 +338,37 @@ private struct AlertRow: View {
 #Preview("Budget Alerts - With Issues") {
     BouquetAlertsView(
         categories: [
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
+            BouquetCategoryData(
+                id: "catering",
                 categoryName: "Catering",
-                allocatedAmount: 8000,
-                spentAmount: 9500,
-                priorityLevel: 1,
-                isEssential: true,
-                forecastedAmount: 8500,
-                confidenceLevel: 0.7,
-                lockedAllocation: false,
-                color: "#8F24F5",
-                createdAt: Date()
+                totalBudgeted: 8000,
+                totalSpent: 9500,
+                itemCount: 3,
+                color: Color.fromHex("#8F24F5")
             ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
+            BouquetCategoryData(
+                id: "venue",
                 categoryName: "Venue",
-                allocatedAmount: 15000,
-                spentAmount: 14000,
-                priorityLevel: 1,
-                isEssential: true,
-                forecastedAmount: 15000,
-                confidenceLevel: 0.9,
-                lockedAllocation: false,
-                color: "#EF2A78",
-                createdAt: Date()
+                totalBudgeted: 15000,
+                totalSpent: 14000,
+                itemCount: 2,
+                color: Color.fromHex("#EF2A78")
             ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
+            BouquetCategoryData(
+                id: "photography",
                 categoryName: "Photography",
-                allocatedAmount: 5000,
-                spentAmount: 4200,
-                priorityLevel: 2,
-                isEssential: true,
-                forecastedAmount: 5000,
-                confidenceLevel: 0.8,
-                lockedAllocation: false,
-                color: "#83A276",
-                createdAt: Date()
+                totalBudgeted: 5000,
+                totalSpent: 4200,
+                itemCount: 2,
+                color: Color.fromHex("#83A276")
             ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
+            BouquetCategoryData(
+                id: "flowers",
                 categoryName: "Flowers",
-                allocatedAmount: 3000,
-                spentAmount: 0,
-                priorityLevel: 3,
-                isEssential: false,
-                forecastedAmount: 3000,
-                confidenceLevel: 0.6,
-                lockedAllocation: false,
-                color: "#DB643D",
-                createdAt: Date()
+                totalBudgeted: 3000,
+                totalSpent: 0,
+                itemCount: 1,
+                color: Color.fromHex("#DB643D")
             )
         ]
     )
@@ -400,33 +380,21 @@ private struct AlertRow: View {
 #Preview("Budget Alerts - All Clear") {
     BouquetAlertsView(
         categories: [
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
+            BouquetCategoryData(
+                id: "venue",
                 categoryName: "Venue",
-                allocatedAmount: 15000,
-                spentAmount: 10000,
-                priorityLevel: 1,
-                isEssential: true,
-                forecastedAmount: 15000,
-                confidenceLevel: 0.9,
-                lockedAllocation: false,
-                color: "#EF2A78",
-                createdAt: Date()
+                totalBudgeted: 15000,
+                totalSpent: 10000,
+                itemCount: 2,
+                color: Color.fromHex("#EF2A78")
             ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
+            BouquetCategoryData(
+                id: "photography",
                 categoryName: "Photography",
-                allocatedAmount: 5000,
-                spentAmount: 2500,
-                priorityLevel: 2,
-                isEssential: true,
-                forecastedAmount: 5000,
-                confidenceLevel: 0.8,
-                lockedAllocation: false,
-                color: "#83A276",
-                createdAt: Date()
+                totalBudgeted: 5000,
+                totalSpent: 2500,
+                itemCount: 2,
+                color: Color.fromHex("#83A276")
             )
         ]
     )

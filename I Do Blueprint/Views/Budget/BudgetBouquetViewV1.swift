@@ -6,9 +6,9 @@
 //  Each petal represents a budget category with:
 //  - Petal size = budget amount (larger = higher allocation)
 //  - Petal color = category type
-//  - Opacity/glow = spending status (under budget, on track, over budget)
+//  - Progress fill = spending status (darker fill shows spent/budgeted ratio)
 //
-//  Alternative to the card-based BudgetDashboardViewV1
+//  Data source: Budget development items grouped by category
 //
 
 import SwiftUI
@@ -40,31 +40,20 @@ struct BudgetBouquetViewV1: View {
 
     // MARK: - State
 
-    @State private var hoveredCategoryId: UUID?
-    @State private var selectedCategoryId: UUID?
+    @StateObject private var dataProvider = BouquetDataProvider()
+    @State private var hoveredCategoryId: String?
+    @State private var selectedCategoryId: String?
     @State private var animateFlower: Bool = false
+    @State private var isLoading: Bool = true
 
     // MARK: - Computed Properties
 
-    private var categories: [BudgetCategory] {
-        budgetStore.categoryStore.categories
+    private var primaryScenarioId: String? {
+        budgetStore.primaryScenario?.id.uuidString
     }
 
-    private var totalBudget: Double {
-        categories.reduce(0) { $0 + $1.allocatedAmount }
-    }
-
-    private var totalSpent: Double {
-        categories.reduce(0) { $0 + $1.spentAmount }
-    }
-
-    private var totalRemaining: Double {
-        totalBudget - totalSpent
-    }
-
-    private var overallProgress: Double {
-        guard totalBudget > 0 else { return 0 }
-        return min(1.0, totalSpent / totalBudget)
+    private var hasData: Bool {
+        dataProvider.hasData
     }
 
     // MARK: - Body
@@ -79,17 +68,26 @@ struct BudgetBouquetViewV1: View {
                 bouquetHeader(windowSize: windowSize)
 
                 // Main content
-                ScrollView {
-                    mainContent(windowSize: windowSize, geometry: geometry)
-                        .padding(.horizontal, horizontalPadding)
-                        .padding(.top, Spacing.lg)
+                if isLoading {
+                    loadingView
+                } else if !hasData {
+                    emptyStateView
+                } else {
+                    ScrollView {
+                        mainContent(windowSize: windowSize, geometry: geometry)
+                            .padding(.horizontal, horizontalPadding)
+                            .padding(.top, Spacing.lg)
+                    }
                 }
             }
             .background(SemanticColors.backgroundPrimary)
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 0.8).delay(0.2)) {
-                animateFlower = true
+            // Delay animation start slightly for smoother appearance
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                withAnimation(.easeInOut(duration: 0.8)) {
+                    animateFlower = true
+                }
             }
         }
         .task {
@@ -140,6 +138,84 @@ struct BudgetBouquetViewV1: View {
         .background(SemanticColors.backgroundSecondary)
     }
 
+    // MARK: - Loading View
+
+    private var loadingView: some View {
+        VStack(spacing: Spacing.lg) {
+            ProgressView()
+                .scaleEffect(1.5)
+            
+            Text("Loading budget data...")
+                .font(Typography.bodyRegular)
+                .foregroundColor(SemanticColors.textSecondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Empty State View
+
+    private var emptyStateView: some View {
+        VStack(spacing: Spacing.xl) {
+            // Decorative icon
+            Image(systemName: "leaf.fill")
+                .font(.system(size: 60))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [
+                            SemanticColors.primaryAction.opacity(0.6),
+                            SemanticColors.primaryActionHover.opacity(0.4)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .padding(.bottom, Spacing.md)
+            
+            VStack(spacing: Spacing.sm) {
+                Text("Your Budget Bouquet is Waiting to Bloom")
+                    .font(Typography.heading)
+                    .foregroundColor(SemanticColors.textPrimary)
+                    .multilineTextAlignment(.center)
+                
+                Text("Add budget items to your categories in the Budget Builder to see your beautiful flower visualization grow.")
+                    .font(Typography.bodyRegular)
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: 400)
+            }
+            
+            // Action button
+            Button {
+                // Navigate to budget builder
+                currentPage.wrappedValue = .budgetBuilder
+            } label: {
+                HStack(spacing: Spacing.sm) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Go to Budget Builder")
+                }
+                .font(Typography.bodyRegular)
+                .fontWeight(.medium)
+                .foregroundColor(SemanticColors.textOnPrimary)
+                .padding(.horizontal, Spacing.xl)
+                .padding(.vertical, Spacing.md)
+                .background(
+                    LinearGradient(
+                        colors: [
+                            SemanticColors.primaryAction,
+                            SemanticColors.primaryActionHover
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .cornerRadius(CornerRadius.lg)
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(Spacing.xl)
+    }
+
     // MARK: - Main Content
 
     @ViewBuilder
@@ -151,7 +227,7 @@ struct BudgetBouquetViewV1: View {
             VStack(spacing: Spacing.xl) {
                 // Flower visualization takes full width
                 flowerSection(geometry: geometry)
-                    .frame(height: 400)
+                    .frame(height: 500)
 
                 // Legend below
                 legendSection
@@ -179,7 +255,7 @@ struct BudgetBouquetViewV1: View {
                 }
                 .frame(width: 300)
             }
-            .frame(minHeight: 500)
+            .frame(minHeight: 600)
         }
     }
 
@@ -193,17 +269,21 @@ struct BudgetBouquetViewV1: View {
                 .foregroundColor(SemanticColors.textPrimary)
 
             BouquetFlowerView(
-                categories: categories,
-                totalBudget: totalBudget,
+                categories: dataProvider.categories,
+                totalBudget: dataProvider.totalBudgeted,
                 hoveredCategoryId: $hoveredCategoryId,
                 selectedCategoryId: $selectedCategoryId,
-                animateFlower: animateFlower
+                animateFlower: animateFlower,
+                onPetalTap: { category in
+                    // Future: Navigate to category detail
+                    print("Tapped category: \(category.categoryName)")
+                }
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             // Selected category details
             if let selectedId = selectedCategoryId,
-               let category = categories.first(where: { $0.id == selectedId }) {
+               let category = dataProvider.categories.first(where: { $0.id == selectedId }) {
                 selectedCategoryDetail(category: category)
                     .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
@@ -217,8 +297,8 @@ struct BudgetBouquetViewV1: View {
 
     private var legendSection: some View {
         BouquetLegendView(
-            categories: categories,
-            totalBudget: totalBudget,
+            categories: dataProvider.categories,
+            totalBudget: dataProvider.totalBudgeted,
             hoveredCategoryId: $hoveredCategoryId,
             selectedCategoryId: $selectedCategoryId
         )
@@ -228,28 +308,28 @@ struct BudgetBouquetViewV1: View {
 
     private var statsSection: some View {
         BouquetQuickStatsView(
-            totalBudget: totalBudget,
-            totalSpent: totalSpent,
-            totalRemaining: totalRemaining,
-            overallProgress: overallProgress,
-            categories: categories
+            totalBudget: dataProvider.totalBudgeted,
+            totalSpent: dataProvider.totalSpent,
+            totalRemaining: dataProvider.totalBudgeted - dataProvider.totalSpent,
+            overallProgress: dataProvider.overallProgress,
+            categories: dataProvider.categories
         )
     }
 
     // MARK: - Alerts Section
 
     private var alertsSection: some View {
-        BouquetAlertsView(categories: categories)
+        BouquetAlertsView(categories: dataProvider.categories)
     }
 
     // MARK: - Selected Category Detail
 
     @ViewBuilder
-    private func selectedCategoryDetail(category: BudgetCategory) -> some View {
+    private func selectedCategoryDetail(category: BouquetCategoryData) -> some View {
         HStack(spacing: Spacing.lg) {
             // Category color indicator
             Circle()
-                .fill(Color.fromHex(category.color))
+                .fill(category.color)
                 .frame(width: 16, height: 16)
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
@@ -257,9 +337,13 @@ struct BudgetBouquetViewV1: View {
                     .font(Typography.heading)
                     .foregroundColor(SemanticColors.textPrimary)
 
-                Text("\(formatCurrency(category.spentAmount)) of \(formatCurrency(category.allocatedAmount))")
+                Text("\(formatCurrency(category.totalSpent)) of \(formatCurrency(category.totalBudgeted))")
                     .font(Typography.bodySmall)
                     .foregroundColor(SemanticColors.textSecondary)
+                
+                Text("\(category.itemCount) item\(category.itemCount == 1 ? "" : "s")")
+                    .font(Typography.caption)
+                    .foregroundColor(SemanticColors.textTertiary)
             }
 
             Spacer()
@@ -268,7 +352,9 @@ struct BudgetBouquetViewV1: View {
             spendingStatusBadge(for: category)
 
             Button {
-                selectedCategoryId = nil
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                    selectedCategoryId = nil
+                }
             } label: {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(SemanticColors.textTertiary)
@@ -283,8 +369,8 @@ struct BudgetBouquetViewV1: View {
     // MARK: - Helpers
 
     @ViewBuilder
-    private func spendingStatusBadge(for category: BudgetCategory) -> some View {
-        let status = BouquetSpendingStatus.from(category: category)
+    private func spendingStatusBadge(for category: BouquetCategoryData) -> some View {
+        let status = spendingStatus(for: category)
 
         HStack(spacing: Spacing.xs) {
             Circle()
@@ -301,6 +387,18 @@ struct BudgetBouquetViewV1: View {
         .cornerRadius(CornerRadius.pill)
     }
 
+    private func spendingStatus(for category: BouquetCategoryData) -> (label: String, color: Color) {
+        if category.isOverBudget {
+            return ("Over Budget", SemanticColors.statusWarning)
+        } else if category.progressRatio >= 0.9 {
+            return ("On Track", SemanticColors.statusPending)
+        } else if category.progressRatio > 0 {
+            return ("Under Budget", SemanticColors.statusSuccess)
+        } else {
+            return ("Not Started", SemanticColors.textTertiary)
+        }
+    }
+
     private func formatCurrency(_ value: Double) -> String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
@@ -310,59 +408,38 @@ struct BudgetBouquetViewV1: View {
     }
 
     private func loadData() async {
-        // Data is already loaded via BudgetStoreV2 environment object
-        // This is a hook for any additional data loading if needed
-    }
-}
-
-// MARK: - Spending Status
-
-enum BouquetSpendingStatus {
-    case underBudget
-    case onTrack
-    case overBudget
-    case notStarted
-
-    var label: String {
-        switch self {
-        case .underBudget: return "Under Budget"
-        case .onTrack: return "On Track"
-        case .overBudget: return "Over Budget"
-        case .notStarted: return "Not Started"
+        isLoading = true
+        
+        // Get the primary scenario ID
+        guard let scenarioId = primaryScenarioId else {
+            isLoading = false
+            return
         }
-    }
-
-    var color: Color {
-        switch self {
-        case .underBudget: return SemanticColors.statusSuccess
-        case .onTrack: return SemanticColors.statusPending
-        case .overBudget: return SemanticColors.statusWarning
-        case .notStarted: return SemanticColors.textTertiary
-        }
-    }
-
-    static func from(category: BudgetCategory) -> BouquetSpendingStatus {
-        guard category.allocatedAmount > 0 else { return .notStarted }
-
-        let percentSpent = category.percentageSpent
-
-        if category.spentAmount == 0 {
-            return .notStarted
-        } else if category.isOverBudget {
-            return .overBudget
-        } else if percentSpent >= 80 {
-            return .onTrack
-        } else {
-            return .underBudget
-        }
+        
+        // Load data from the budget development store
+        await dataProvider.loadData(
+            from: budgetStore.development,
+            scenarioId: scenarioId
+        )
+        
+        isLoading = false
     }
 }
 
 // MARK: - Preview
 
-#Preview {
+#Preview("Budget Bouquet - With Data") {
     BudgetBouquetViewV1()
         .environmentObject(BudgetStoreV2())
         .environmentObject(SettingsStoreV2())
         .frame(width: 1200, height: 800)
+}
+
+#Preview("Budget Bouquet - Empty State") {
+    let view = BudgetBouquetViewV1()
+    // The empty state will show when dataProvider has no categories
+    return view
+        .environmentObject(BudgetStoreV2())
+        .environmentObject(SettingsStoreV2())
+        .frame(width: 800, height: 600)
 }

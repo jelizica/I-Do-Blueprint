@@ -15,7 +15,7 @@ struct BouquetQuickStatsView: View {
     let totalSpent: Double
     let totalRemaining: Double
     let overallProgress: Double
-    let categories: [BudgetCategory]
+    let categories: [BouquetCategoryData]
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
@@ -147,7 +147,7 @@ struct BouquetQuickStatsView: View {
                     .padding(.vertical, Spacing.sm)
             } else {
                 ForEach(topExpenseCategories.prefix(3)) { category in
-                    TopExpenseRow(category: category, totalSpent: totalSpent)
+                    TopExpenseRowV2(category: category, totalSpent: totalSpent)
                 }
             }
         }
@@ -177,10 +177,10 @@ struct BouquetQuickStatsView: View {
         }
     }
 
-    private var topExpenseCategories: [BudgetCategory] {
+    private var topExpenseCategories: [BouquetCategoryData] {
         categories
-            .filter { $0.spentAmount > 0 }
-            .sorted { $0.spentAmount > $1.spentAmount }
+            .filter { $0.totalSpent > 0 }
+            .sorted { $0.totalSpent > $1.totalSpent }
     }
 
     private func formatCurrency(_ value: Double) -> String {
@@ -225,22 +225,22 @@ private struct BouquetStatCard: View {
     }
 }
 
-// MARK: - Top Expense Row
+// MARK: - Top Expense Row V2
 
-private struct TopExpenseRow: View {
-    let category: BudgetCategory
+private struct TopExpenseRowV2: View {
+    let category: BouquetCategoryData
     let totalSpent: Double
 
     private var percentage: Double {
         guard totalSpent > 0 else { return 0 }
-        return (category.spentAmount / totalSpent) * 100
+        return (category.totalSpent / totalSpent) * 100
     }
 
     var body: some View {
         HStack(spacing: Spacing.sm) {
             // Color indicator
             Circle()
-                .fill(Color.fromHex(category.color))
+                .fill(category.color)
                 .frame(width: 8, height: 8)
 
             // Category name
@@ -253,7 +253,7 @@ private struct TopExpenseRow: View {
 
             // Amount and percentage
             VStack(alignment: .trailing, spacing: Spacing.xxs) {
-                Text(formatCurrency(category.spentAmount))
+                Text(formatCurrency(category.totalSpent))
                     .font(Typography.caption)
                     .foregroundColor(SemanticColors.textPrimary)
 
@@ -277,69 +277,14 @@ private struct TopExpenseRow: View {
 // MARK: - Preview
 
 #Preview("Quick Stats") {
-    BouquetQuickStatsView(
-        totalBudget: 50000,
-        totalSpent: 32000,
-        totalRemaining: 18000,
-        overallProgress: 0.64,
-        categories: [
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
-                categoryName: "Venue",
-                allocatedAmount: 15000,
-                spentAmount: 15000,
-                priorityLevel: 1,
-                isEssential: true,
-                forecastedAmount: 15000,
-                confidenceLevel: 0.9,
-                lockedAllocation: false,
-                color: "#EF2A78",
-                createdAt: Date()
-            ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
-                categoryName: "Catering",
-                allocatedAmount: 8000,
-                spentAmount: 10000,
-                priorityLevel: 1,
-                isEssential: true,
-                forecastedAmount: 8500,
-                confidenceLevel: 0.7,
-                lockedAllocation: false,
-                color: "#8F24F5",
-                createdAt: Date()
-            ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
-                categoryName: "Photography",
-                allocatedAmount: 5000,
-                spentAmount: 5000,
-                priorityLevel: 2,
-                isEssential: true,
-                forecastedAmount: 5000,
-                confidenceLevel: 0.8,
-                lockedAllocation: false,
-                color: "#83A276",
-                createdAt: Date()
-            ),
-            BudgetCategory(
-                id: UUID(),
-                coupleId: UUID(),
-                categoryName: "Flowers",
-                allocatedAmount: 3000,
-                spentAmount: 2000,
-                priorityLevel: 3,
-                isEssential: false,
-                forecastedAmount: 3000,
-                confidenceLevel: 0.6,
-                lockedAllocation: false,
-                color: "#DB643D",
-                createdAt: Date()
-            )
-        ]
+    let provider = BouquetDataProvider.preview()
+    
+    return BouquetQuickStatsView(
+        totalBudget: provider.totalBudgeted,
+        totalSpent: provider.totalSpent,
+        totalRemaining: provider.totalBudgeted - provider.totalSpent,
+        overallProgress: provider.overallProgress,
+        categories: provider.categories
     )
     .frame(width: 300)
     .padding()
