@@ -29,7 +29,9 @@ struct BouquetFlowerView: View {
     /// Minimum petal length as a ratio of max (smallest expense won't be smaller than this)
     private let minPetalRatio: CGFloat = 0.35
     /// Padding from container edge to petal tip
-    private let edgePadding: CGFloat = Spacing.lg
+    /// Note: The parent container (flowerSection) already has Spacing.lg padding,
+    /// so we only need a small additional margin here to match the hover details card alignment
+    private let edgePadding: CGFloat = Spacing.xs  // 4px - just enough to prevent clipping
     
     // MARK: - Computed Properties
     
@@ -116,20 +118,20 @@ struct BouquetFlowerView: View {
                         isHovered: hoveredCategoryId == category.id,
                         isSelected: selectedCategoryId == category.id,
                         animate: animateFlower,
-                        animationDelay: Double(index) * 0.05
+                        animationDelay: Double(index) * 0.05,
+                        onTap: {
+                            // Clicking navigates to category detail page
+                            onPetalTap?(category)
+                        },
+                        onHoverChanged: { hovering in
+                            withAnimation(.easeInOut(duration: 0.15)) {
+                                hoveredCategoryId = hovering ? category.id : nil
+                                // Hovering shows detail at bottom (sets selectedCategoryId)
+                                selectedCategoryId = hovering ? category.id : nil
+                            }
+                        }
                     )
                     .position(center)
-                    .onTapGesture {
-                        // Clicking navigates to category detail page
-                        onPetalTap?(category)
-                    }
-                    .onHover { hovering in
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            hoveredCategoryId = hovering ? category.id : nil
-                            // Hovering shows detail at bottom (sets selectedCategoryId)
-                            selectedCategoryId = hovering ? category.id : nil
-                        }
-                    }
                 }
                 
                 // Center hub
@@ -248,6 +250,11 @@ struct RadialPetalView: View {
     let isSelected: Bool
     let animate: Bool
     let animationDelay: Double
+
+    /// Callback when petal is tapped
+    var onTap: (() -> Void)?
+    /// Callback when hover state changes
+    var onHoverChanged: ((Bool) -> Void)?
     
     private var progressRatio: CGFloat {
         CGFloat(min(1.0, category.progressRatio))
@@ -347,6 +354,13 @@ struct RadialPetalView: View {
             PetalShape(width: width, length: length)
                 .offset(y: petalOffset)
         )
+        // Gestures must be BEFORE rotation so they align with contentShape
+        .onTapGesture {
+            onTap?()
+        }
+        .onHover { hovering in
+            onHoverChanged?(hovering)
+        }
         .rotationEffect(.degrees(angle))
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)
