@@ -275,6 +275,15 @@ struct RadialPetalView: View {
         return max(petalWidth, petalHeight) * 1.5
     }
     
+    /// The offset needed to position the petal so it starts at centerOffset from the flower center
+    /// and extends outward by `length` pixels.
+    /// The petal shape draws from frame bottom (petal base) to frame bottom - length (petal tip).
+    /// We want: petal base at centerOffset from center, petal tip at centerOffset + length from center.
+    /// Frame is centered in ZStack, so we offset by: -(centerOffset + length/2)
+    private var petalOffset: CGFloat {
+        -(centerOffset + length / 2)
+    }
+    
     var body: some View {
         // Use a square frame large enough to contain the petal at any rotation
         ZStack {
@@ -285,7 +294,7 @@ struct RadialPetalView: View {
                     .blur(radius: 10)
                     .scaleEffect(1.15)
                     .frame(width: width * 2, height: totalPetalHeight)
-                    .offset(y: -(length / 2 + centerOffset / 2))
+                    .offset(y: petalOffset)
             }
             
             // Background petal (lighter color)
@@ -301,7 +310,7 @@ struct RadialPetalView: View {
                     )
                 )
                 .frame(width: width * 2, height: totalPetalHeight)
-                .offset(y: -(length / 2 + centerOffset / 2))
+                .offset(y: petalOffset)
             
             // Progress fill (darker color, clipped to progress)
             petalShape
@@ -319,7 +328,7 @@ struct RadialPetalView: View {
                     ProgressClipShape(progress: progressRatio, petalLength: length)
                 )
                 .frame(width: width * 2, height: totalPetalHeight)
-                .offset(y: -(length / 2 + centerOffset / 2))
+                .offset(y: petalOffset)
             
             // Petal outline
             petalShape
@@ -328,7 +337,7 @@ struct RadialPetalView: View {
                     lineWidth: isSelected ? 2.5 : 1.5
                 )
                 .frame(width: width * 2, height: totalPetalHeight)
-                .offset(y: -(length / 2 + centerOffset / 2))
+                .offset(y: petalOffset)
             
             // Status indicator dots removed - redundant with legend
         }
@@ -336,7 +345,7 @@ struct RadialPetalView: View {
         // Define hit-testing area to match the visible petal shape only
         .contentShape(
             PetalShape(width: width, length: length)
-                .offset(y: -(length / 2 + centerOffset / 2))
+                .offset(y: petalOffset)
         )
         .rotationEffect(.degrees(angle))
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
