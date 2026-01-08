@@ -22,9 +22,9 @@ struct GlobalSidebarViewV1: View {
     @EnvironmentObject var coordinator: AppCoordinator
     @EnvironmentObject var appStores: AppStores
 
-    // Track expanded state for collapsible sections
-    @State private var isDashboardsExpanded = true
-    @State private var isBudgetExpanded = true
+    // Track expanded state for collapsible sections (collapsed by default)
+    @State private var isDashboardsExpanded = false
+    @State private var isBudgetExpanded = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -161,14 +161,13 @@ struct GlobalSidebarViewV1: View {
             // Expanded content
             if isBudgetExpanded {
                 VStack(spacing: Spacing.lg) {
-                    // Planning & Analysis subsection (5 pages)
+                    // Budget Planning subsection (4 pages)
                     BudgetSubsectionV1(
-                        title: "Planning & Analysis",
+                        title: "Budget Planning",
                         items: [
                             BudgetSubItem(icon: BudgetPage.budgetOverview.icon, title: "Budget Overview", page: .budgetOverview),
+                            BudgetSubItem(icon: BudgetPage.budgetBouquet.icon, title: "Budget Bouquet", page: .budgetBouquet),
                             BudgetSubItem(icon: BudgetPage.budgetBuilder.icon, title: "Budget Builder", page: .budgetBuilder),
-                            BudgetSubItem(icon: BudgetPage.analytics.icon, title: "Analytics Hub", page: .analytics),
-                            BudgetSubItem(icon: BudgetPage.cashFlow.icon, title: "Cash Flow", page: .cashFlow),
                             BudgetSubItem(icon: BudgetPage.calculator.icon, title: "Calculator", page: .calculator)
                         ],
                         selectedPage: coordinator.budgetPage
@@ -176,12 +175,11 @@ struct GlobalSidebarViewV1: View {
                         coordinator.navigateToBudget(page: page)
                     }
 
-                    // Expenses subsection (4 pages)
+                    // Expense Tracking subsection (3 pages)
                     BudgetSubsectionV1(
-                        title: "Expenses",
+                        title: "Expense Tracking",
                         items: [
                             BudgetSubItem(icon: BudgetPage.expenseTracker.icon, title: "Expense Tracker", page: .expenseTracker),
-                            BudgetSubItem(icon: BudgetPage.expenseReports.icon, title: "Expense Reports", page: .expenseReports),
                             BudgetSubItem(icon: BudgetPage.expenseCategories.icon, title: "Categories", page: .expenseCategories),
                             BudgetSubItem(icon: BudgetPage.paymentSchedule.icon, title: "Payment Schedule", page: .paymentSchedule)
                         ],

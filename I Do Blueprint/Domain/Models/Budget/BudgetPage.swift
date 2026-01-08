@@ -17,8 +17,9 @@ enum BudgetPage: String, CaseIterable, Identifiable {
     // Dashboard V1 (enhanced dashboard with charts and insights)
     case dashboardV1 = "Financial Dashboard"
 
-    // Planning & Analysis Group (5 pages)
+    // Planning & Analysis Group (6 pages)
     case budgetOverview = "Budget Overview"
+    case budgetBouquet = "Budget Bouquet"
     case budgetBuilder = "Budget Builder"
     case analytics = "Analytics Hub"
     case cashFlow = "Account Cash Flow"
@@ -41,7 +42,7 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         switch self {
         case .hub, .dashboardV1:
             return nil  // Hub and Dashboard are not in a group
-        case .budgetOverview, .budgetBuilder, .analytics, .cashFlow, .calculator:
+        case .budgetOverview, .budgetBouquet, .budgetBuilder, .analytics, .cashFlow, .calculator:
             return .planningAnalysis
         case .expenseTracker, .expenseReports, .expenseCategories, .paymentSchedule:
             return .expenses
@@ -58,6 +59,7 @@ enum BudgetPage: String, CaseIterable, Identifiable {
 
         // Planning & Analysis
         case .budgetOverview: return "chart.bar.fill"
+        case .budgetBouquet: return "leaf.fill"
         case .budgetBuilder: return "hammer.fill"
         case .analytics: return "chart.xyaxis.line"
         case .cashFlow: return "chart.line.uptrend.xyaxis"
@@ -90,6 +92,8 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         // Planning & Analysis group
         case .budgetOverview:
             BudgetOverviewDashboardViewV2(currentPage: currentPage)
+        case .budgetBouquet:
+            BudgetBouquetViewV1(currentPage: currentPage)
         case .budgetBuilder:
             BudgetDevelopmentView(currentPage: currentPage)
         case .analytics:
