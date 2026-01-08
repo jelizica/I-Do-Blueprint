@@ -217,6 +217,8 @@ extension BudgetDevelopmentView {
         }
 
         await budgetStore.refresh()
+        // Sync local state with store after refresh to reflect persisted changes
+        await fetchSavedScenarios()
     }
 
     func handleRenameScenario() async {
