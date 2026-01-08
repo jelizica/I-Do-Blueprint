@@ -45,9 +45,12 @@ struct BudgetDashboardViewV1: View {
                     ScrollView(.vertical, showsIndicators: true) {
                         VStack(spacing: windowSize == .compact ? Spacing.lg : Spacing.xl) {
                             // Summary Cards Row
+                            // totalBudget = primary scenario total (from budget development)
+                            // totalSpent = paid payments from payment schedule
+                            // remainingBudget = primary scenario total - all payments (paid + pending)
                             BudgetSummaryCardsRow(
                                 windowSize: windowSize,
-                                totalBudget: budgetStore.actualTotalBudget,
+                                totalBudget: budgetStore.primaryScenarioTotal,
                                 totalSpent: budgetStore.totalSpent,
                                 remainingBudget: budgetStore.remainingBudget,
                                 percentageSpent: budgetStore.percentageSpent,
@@ -490,19 +493,29 @@ struct InteractiveBudgetCategoryChart: View {
     }
 
     // Parent categories: top-level with children (categories that have children pointing to them)
+    // Sorted by average of allocated, forecasted, and spent (highest first)
     private var parentCategories: [CategoryBudgetMetrics] {
         metrics.filter { metric in
             metric.isParentCategory && parentCategoryIds.contains(metric.categoryId)
         }
-        .sorted { $0.allocated > $1.allocated }
+        .sorted { lhs, rhs in
+            let avgLhs = (lhs.allocated + lhs.forecasted + lhs.spent) / 3.0
+            let avgRhs = (rhs.allocated + rhs.forecasted + rhs.spent) / 3.0
+            return avgLhs > avgRhs
+        }
     }
 
     // Leaf categories: top-level with NO children (standalone)
+    // Sorted by average of allocated, forecasted, and spent (highest first)
     private var leafCategories: [CategoryBudgetMetrics] {
         metrics.filter { metric in
             metric.isParentCategory && !parentCategoryIds.contains(metric.categoryId)
         }
-        .sorted { $0.allocated > $1.allocated }
+        .sorted { lhs, rhs in
+            let avgLhs = (lhs.allocated + lhs.forecasted + lhs.spent) / 3.0
+            let avgRhs = (rhs.allocated + rhs.forecasted + rhs.spent) / 3.0
+            return avgLhs > avgRhs
+        }
     }
 
     private var displayCategories: [CategoryBudgetMetrics] {
@@ -534,35 +547,70 @@ struct InteractiveBudgetCategoryChart: View {
     /// Minimum width per category group in the chart (3 bars + spacing)
     private let categoryWidth: CGFloat = 80
 
+    /// Maximum Y-axis value for synchronized scales between fixed axis and scrollable chart
+    private var maxYValue: Double {
+        let maxAmount = displayCategories.reduce(0.0) { result, metric in
+            max(result, metric.allocated, metric.forecasted, metric.spent)
+        }
+        // Round up to a nice number for clean axis labels (add 10% padding)
+        let padded = maxAmount * 1.1
+        // Round to nearest $1000 for cleaner labels
+        return ceil(padded / 1000) * 1000
+    }
+
+    /// Fixed Y-axis width
+    private let yAxisWidth: CGFloat = 55
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            // Category Type Toggle
-            categoryTypeToggle
+        HStack(alignment: .top, spacing: 0) {
+            // Fixed Y-axis column (left-aligned with toggle and legend)
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                // Invisible spacer to align with toggle height
+                Color.clear
+                    .frame(height: 28) // Match toggle button height
 
-            if displayCategories.isEmpty {
-                emptyState
-            } else {
-                // Horizontal scroll for unlimited categories
-                ScrollView(.horizontal, showsIndicators: true) {
-                    ZStack(alignment: .topLeading) {
-                        // Main Chart with dynamic width based on category count
-                        chartView
-                            .frame(width: max(300, CGFloat(displayCategories.count) * categoryWidth))
-
-                        // Tooltip overlay - allowsHitTesting(false) prevents tooltip from intercepting hover events
-                        if isTooltipVisible, let dataPoint = hoveredDataPoint {
-                            tooltipView(for: dataPoint)
-                                .position(tooltipPosition)
-                                .allowsHitTesting(false)
-                                .transition(.opacity.animation(.easeInOut(duration: 0.15)))
-                        }
-                    }
-                    .frame(height: 180)
+                if !displayCategories.isEmpty {
+                    // Fixed Y-axis (stationary)
+                    fixedYAxisView
+                        .frame(width: yAxisWidth, height: 180)
                 }
-            }
 
-            // Legend
-            legendView
+                // Invisible spacer to align with legend height
+                Color.clear
+                    .frame(height: 16) // Match legend height
+            }
+            .frame(width: yAxisWidth)
+
+            // Main content column (toggle, chart data, legend)
+            VStack(alignment: .leading, spacing: Spacing.md) {
+                // Category Type Toggle
+                categoryTypeToggle
+
+                if displayCategories.isEmpty {
+                    emptyState
+                } else {
+                    // Scrollable chart data area (X-axis scrolls with data)
+                    ScrollView(.horizontal, showsIndicators: true) {
+                        ZStack(alignment: .topLeading) {
+                            // Main Chart with dynamic width based on category count
+                            scrollableChartView
+                                .frame(width: max(300, CGFloat(displayCategories.count) * categoryWidth))
+
+                            // Tooltip overlay - allowsHitTesting(false) prevents tooltip from intercepting hover events
+                            if isTooltipVisible, let dataPoint = hoveredDataPoint {
+                                tooltipView(for: dataPoint)
+                                    .position(tooltipPosition)
+                                    .allowsHitTesting(false)
+                                    .transition(.opacity.animation(.easeInOut(duration: 0.15)))
+                            }
+                        }
+                        .frame(height: 180)
+                    }
+                }
+
+                // Legend
+                legendView
+            }
         }
     }
 
@@ -609,9 +657,41 @@ struct InteractiveBudgetCategoryChart: View {
         }
     }
 
-    // MARK: - Chart View
+    // MARK: - Fixed Y-Axis View
 
-    private var chartView: some View {
+    /// Fixed Y-axis chart that stays stationary while data scrolls
+    private var fixedYAxisView: some View {
+        // Create a minimal chart with one invisible data point to establish Y-axis scale
+        Chart {
+            // Invisible bar to establish the Y-axis scale matching the scrollable chart
+            BarMark(
+                x: .value("Category", " "),
+                y: .value("Amount", maxYValue)
+            )
+            .opacity(0)
+        }
+        .chartYScale(domain: 0...maxYValue)
+        .chartXAxis(.hidden)
+        .chartYAxis {
+            AxisMarks { value in
+                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4, 4]))
+                    .foregroundStyle(SemanticColors.borderLight)
+                AxisValueLabel {
+                    if let amount = value.as(Double.self) {
+                        Text(formatShortCurrency(amount))
+                            .font(.caption2)
+                            .foregroundStyle(SemanticColors.textSecondary)
+                    }
+                }
+            }
+        }
+        .chartLegend(.hidden)
+    }
+
+    // MARK: - Scrollable Chart View
+
+    /// Chart data area that scrolls horizontally (Y-axis hidden, synced with fixed Y-axis)
+    private var scrollableChartView: some View {
         GeometryReader { geometry in
             Chart(chartDataPoints) { dataPoint in
                 BarMark(
@@ -627,6 +707,7 @@ struct InteractiveBudgetCategoryChart: View {
                         : 0.4
                 )
             }
+            .chartYScale(domain: 0...maxYValue) // Sync scale with fixed Y-axis
             .chartForegroundStyleScale([
                 BudgetSeriesType.allocated.rawValue: BudgetSeriesType.allocated.color,
                 BudgetSeriesType.forecasted.rawValue: BudgetSeriesType.forecasted.color,
@@ -639,19 +720,7 @@ struct InteractiveBudgetCategoryChart: View {
                         .font(.caption2)
                 }
             }
-            .chartYAxis {
-                AxisMarks { value in
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5, dash: [4, 4]))
-                        .foregroundStyle(SemanticColors.borderLight)
-                    AxisValueLabel {
-                        if let amount = value.as(Double.self) {
-                            Text(formatShortCurrency(amount))
-                                .font(.caption2)
-                                .foregroundStyle(SemanticColors.textSecondary)
-                        }
-                    }
-                }
-            }
+            .chartYAxis(.hidden) // Y-axis is shown in fixed view
             .chartOverlay { proxy in
                 GeometryReader { overlayGeometry in
                     Rectangle()

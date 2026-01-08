@@ -146,12 +146,10 @@ extension BudgetStoreV2 {
         return actualTotalBudget
     }
 
-    /// Total amount spent across all expenses
+    /// Total amount spent (paid payments from payment schedule)
+    /// This represents actual money that has been paid out
     var totalSpent: Double {
-        if case .loaded(let data) = loadingState {
-            return data.expenses.reduce(0) { $0 + $1.amount }
-        }
-        return 0
+        payments.totalPaid
     }
 
     /// Total amount allocated across all categories
@@ -170,15 +168,16 @@ extension BudgetStoreV2 {
         return totalAllocated
     }
 
-    /// Remaining budget
+    /// Remaining budget (primary scenario total minus all payments - paid and pending)
+    /// This shows how much budget is left after accounting for all committed payments
     var remainingBudget: Double {
-        actualTotalBudget - totalSpent
+        primaryScenarioTotal - (payments.totalPaid + payments.totalPending)
     }
 
-    /// Percentage of budget spent (based on expenses vs actual budget)
+    /// Percentage of budget spent (based on paid payments vs primary scenario total)
     var percentageSpent: Double {
-        guard actualTotalBudget > 0 else { return 0 }
-        return (totalSpent / actualTotalBudget) * 100
+        guard primaryScenarioTotal > 0 else { return 0 }
+        return (totalSpent / primaryScenarioTotal) * 100
     }
 
     /// Percentage of budget paid (based on paid payments vs primary scenario)
@@ -195,15 +194,15 @@ extension BudgetStoreV2 {
         return (totalAllocated / actualTotalBudget) * 100
     }
 
-    /// Whether budget is exceeded
+    /// Whether budget is exceeded (total payments exceed primary scenario total)
     var isOverBudget: Bool {
-        totalSpent > actualTotalBudget
+        (payments.totalPaid + payments.totalPending) > primaryScenarioTotal
     }
 
-    /// Budget utilization percentage
+    /// Budget utilization percentage (all committed payments vs primary scenario)
     var budgetUtilization: Double {
-        guard actualTotalBudget > 0 else { return 0 }
-        return (totalSpent / actualTotalBudget) * 100
+        guard primaryScenarioTotal > 0 else { return 0 }
+        return ((payments.totalPaid + payments.totalPending) / primaryScenarioTotal) * 100
     }
 
     // MARK: - Gift and Payment Calculations

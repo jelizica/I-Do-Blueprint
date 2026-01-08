@@ -118,10 +118,14 @@ struct ExpenseCategoriesView: View {
             }
         }
         
-        // Build subcategories-by-parent dictionary
+        // Build subcategories-by-parent dictionary for ALL categories (not just top-level)
+        // This enables proper N-level hierarchy display when folders are nested
         var subcategoriesByParent: [UUID: [BudgetCategory]] = [:]
-        for parent in parents {
-            subcategoriesByParent[parent.id] = filtered.filter { $0.parentCategoryId == parent.id }
+        for category in allCategories {
+            let children = filtered.filter { $0.parentCategoryId == category.id }
+            if !children.isEmpty {
+                subcategoriesByParent[category.id] = children
+            }
         }
         
         // Update all cached values at once
@@ -229,6 +233,7 @@ struct ExpenseCategoriesView: View {
                                         subcategories: cachedSubcategoriesByParent[parentCategory.id] ?? [],
                                         budgetStore: budgetStore,
                                         spentByCategory: cachedSpentByCategory,
+                                        allSubcategoriesByParent: cachedSubcategoriesByParent,
                                         onEdit: { category in
                                             editingCategory = category
                                         },

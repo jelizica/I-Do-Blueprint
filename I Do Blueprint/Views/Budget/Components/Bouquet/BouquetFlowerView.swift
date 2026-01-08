@@ -25,9 +25,9 @@ struct BouquetFlowerView: View {
     // MARK: - Layout Constants
     
     private let centerHubRadius: CGFloat = 60
-    private let minPetalLength: CGFloat = 50
-    private let maxPetalLength: CGFloat = 140
-    private let petalWidthRatio: CGFloat = 0.35
+    private let minPetalLength: CGFloat = 70
+    private let maxPetalLength: CGFloat = 180
+    private let petalWidthRatio: CGFloat = 0.4
     
     // MARK: - Computed Properties
     
@@ -237,7 +237,22 @@ struct RadialPetalView: View {
         category.color.darkened(by: 0.3)
     }
     
+    /// The total height needed for the petal including offset from center
+    private var totalPetalHeight: CGFloat {
+        length + centerOffset
+    }
+    
+    /// Frame size large enough to contain the rotated petal
+    /// When rotated, the bounding box needs to be the diagonal of the original
+    private var frameSize: CGFloat {
+        // Use the diagonal of the petal's bounding box to ensure it fits when rotated
+        let petalWidth = width * 2
+        let petalHeight = totalPetalHeight
+        return max(petalWidth, petalHeight) * 1.5
+    }
+    
     var body: some View {
+        // Use a square frame large enough to contain the petal at any rotation
         ZStack {
             // Glow effect for hover/selected
             if isHovered || isSelected {
@@ -245,6 +260,8 @@ struct RadialPetalView: View {
                     .fill(statusColor.opacity(0.4))
                     .blur(radius: 10)
                     .scaleEffect(1.15)
+                    .frame(width: width * 2, height: totalPetalHeight)
+                    .offset(y: -(length / 2 + centerOffset / 2))
             }
             
             // Background petal (lighter color)
@@ -259,6 +276,8 @@ struct RadialPetalView: View {
                         endPoint: .top
                     )
                 )
+                .frame(width: width * 2, height: totalPetalHeight)
+                .offset(y: -(length / 2 + centerOffset / 2))
             
             // Progress fill (darker color, clipped to progress)
             petalShape
@@ -275,6 +294,8 @@ struct RadialPetalView: View {
                 .clipShape(
                     ProgressClipShape(progress: progressRatio, petalLength: length)
                 )
+                .frame(width: width * 2, height: totalPetalHeight)
+                .offset(y: -(length / 2 + centerOffset / 2))
             
             // Petal outline
             petalShape
@@ -282,18 +303,19 @@ struct RadialPetalView: View {
                     isSelected ? statusColor : baseColor.opacity(0.6),
                     lineWidth: isSelected ? 2.5 : 1.5
                 )
+                .frame(width: width * 2, height: totalPetalHeight)
+                .offset(y: -(length / 2 + centerOffset / 2))
             
             // Status indicator at tip
             if category.totalSpent > 0 {
                 Circle()
                     .fill(statusColor)
-                    .frame(width: 8, height: 8)
+                    .frame(width: 10, height: 10)
                     .shadow(color: statusColor.opacity(0.5), radius: 4)
-                    .offset(y: -length + 8)
+                    .offset(y: -(length + centerOffset - 10))
             }
         }
-        .frame(width: width * 2, height: length + centerOffset)
-        .offset(y: -(length / 2 + centerOffset / 2))
+        .frame(width: frameSize, height: frameSize)
         .rotationEffect(.degrees(angle))
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)

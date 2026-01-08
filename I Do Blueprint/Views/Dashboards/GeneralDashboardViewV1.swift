@@ -57,9 +57,6 @@ struct GeneralDashboardViewV1: View {
                     // Main content grid
                     mainContentGrid
 
-                    // Special Attention section
-                    specialAttentionSection
-
                     // Financial Planning section
                     financialPlanningSection
 
@@ -192,10 +189,12 @@ struct GeneralDashboardViewV1: View {
         }
     }
 
-    /// Couple names from settings
+    /// Couple names from settings (prefers nicknames if available)
     private var coupleNames: String {
-        let partner1 = settingsStore.settings.global.partner1FullName
-        let partner2 = settingsStore.settings.global.partner2FullName
+        let settings = settingsStore.settings.global
+        // Prefer nickname if available, fall back to full name
+        let partner1 = settings.partner1Nickname.isEmpty ? settings.partner1FullName : settings.partner1Nickname
+        let partner2 = settings.partner2Nickname.isEmpty ? settings.partner2FullName : settings.partner2Nickname
 
         if !partner1.isEmpty && !partner2.isEmpty {
             return "\(partner1) & \(partner2)"
@@ -602,8 +601,8 @@ struct GeneralDashboardViewV1: View {
 
                 Spacer()
 
-                // Event count badge
-                let eventCount = timelineStore.weddingDayEvents.count
+                // Event count badge (parent events only)
+                let eventCount = timelineStore.parentWeddingDayEvents.count
                 Text("\(eventCount) Planned")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(SemanticColors.statusSuccess)
@@ -620,7 +619,8 @@ struct GeneralDashboardViewV1: View {
     }
 
     private var eventTimeline: some View {
-        let events = Array(timelineStore.weddingDayEvents
+        // Use parentWeddingDayEvents to show only parent events (not sub-events)
+        let events = Array(timelineStore.parentWeddingDayEvents
             .sorted { ($0.startTime ?? $0.eventDate) < ($1.startTime ?? $1.eventDate) }
             .prefix(4))
 
@@ -1007,90 +1007,27 @@ struct GeneralDashboardViewV1: View {
         }
     }
 
-    // MARK: - Special Attention Section
-
-    private var specialAttentionSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.lg) {
-            // Section header
-            HStack {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(SemanticColors.statusWarning)
-
-                Text("Special Attention")
-                    .font(Typography.title3)
-                    .foregroundColor(SemanticColors.textPrimary)
-            }
-
-            // Attention cards
-            HStack(spacing: Spacing.lg) {
-                specialAttentionCard(
-                    icon: "leaf.fill",
-                    title: "Dietary Requirements",
-                    count: dietaryRequirementsCount,
-                    color: .green
-                )
-
-                specialAttentionCard(
-                    icon: "figure.roll",
-                    title: "Accessibility Needs",
-                    count: accessibilityNeedsCount,
-                    color: .blue
-                )
-
-                specialAttentionCard(
-                    icon: "star.fill",
-                    title: "Wedding Party",
-                    count: weddingPartyCount,
-                    color: .purple
-                )
-            }
-        }
-        .glassPanel(cornerRadius: CornerRadius.xl, padding: Spacing.xl)
-    }
+    // MARK: - Special Attention Computed Properties (used by compact card in Column 3)
 
     private var dietaryRequirementsCount: Int {
         guestStore.guests.filter { guest in
-            (guest.dietaryRestrictions ?? "").isEmpty == false || guest.mealOption != nil
+            // Only count attending/confirmed guests (consistent with seating progress card)
+            guard guest.rsvpStatus == .attending || guest.rsvpStatus == .confirmed else { return false }
+            guard let restrictions = guest.dietaryRestrictions else { return false }
+            return !restrictions.isEmpty
         }.count
     }
 
     private var accessibilityNeedsCount: Int {
         guestStore.guests.filter { guest in
-            guest.accessibilityNeeds != nil && !guest.accessibilityNeeds!.isEmpty
+            // Only count attending/confirmed guests
+            guard guest.rsvpStatus == .attending || guest.rsvpStatus == .confirmed else { return false }
+            return guest.accessibilityNeeds != nil && !guest.accessibilityNeeds!.isEmpty
         }.count
     }
 
     private var weddingPartyCount: Int {
         guestStore.guests.filter { $0.isWeddingParty }.count
-    }
-
-    private func specialAttentionCard(icon: String, title: String, count: Int, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack(spacing: Spacing.sm) {
-                Image(systemName: icon)
-                    .font(.system(size: 16))
-                    .foregroundColor(color)
-
-                Text(title)
-                    .font(Typography.bodySmall)
-                    .foregroundColor(SemanticColors.textPrimary)
-            }
-
-            Text("\(count)")
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundColor(count > 0 ? color : SemanticColors.textSecondary)
-
-            Text(count == 1 ? "guest" : "guests")
-                .font(Typography.caption)
-                .foregroundColor(SemanticColors.textSecondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(Spacing.lg)
-        .background(
-            RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(color.opacity(0.08))
-        )
     }
 
     // MARK: - Financial Planning Section
@@ -1396,19 +1333,37 @@ struct GeneralDashboardViewV1: View {
     }
 
     private var giftsContributorList: some View {
-        // Sample contributor data - would come from gifts store
-        let contributors: [(name: String, description: String, status: String)] = [
-            ("Parents (Her)", "Venue Deposit", "Received"),
-            ("Parents (Him)", "Rehearsal Dinner", "Pledged"),
-            ("Grandparents", "Dress Fund", "Received")
-        ]
+        // Combine received gifts and pending contributions from database
+        let contributors = recentContributors
 
         return VStack(spacing: Spacing.sm) {
-            ForEach(contributors, id: \.name) { contributor in
-                contributorRow(name: contributor.name, description: contributor.description, status: contributor.status)
+            if contributors.isEmpty {
+                Text("No contributions yet")
+                    .font(Typography.caption)
+                    .foregroundColor(SemanticColors.textTertiary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, Spacing.md)
+            } else {
+                ForEach(contributors, id: \.id) { contributor in
+                    contributorRow(
+                        name: contributor.fromPerson ?? "Unknown",
+                        description: contributor.title,
+                        status: contributor.status.displayName
+                    )
+                }
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Recent contributors from gifts store (combines received and pending)
+    private var recentContributors: [GiftOrOwed] {
+        // Get the 3 most recent gifts/contributions, sorted by date
+        let allContributors = budgetStore.gifts.giftsAndOwed
+            .filter { $0.fromPerson != nil && !$0.fromPerson!.isEmpty }
+            .sorted { ($0.receivedDate ?? $0.expectedDate ?? $0.createdAt) > ($1.receivedDate ?? $1.expectedDate ?? $1.createdAt) }
+
+        return Array(allContributors.prefix(3))
     }
 
     private func contributorRow(name: String, description: String, status: String) -> some View {
@@ -1968,8 +1923,20 @@ struct GeneralDashboardViewV1: View {
 
     // MARK: - Needs Your Approval Section
 
+    /// Expenses pending approval from the database
+    private var pendingApprovalExpenses: [Expense] {
+        budgetStore.expenseStore.expenses
+            .filter { $0.approvalStatus?.lowercased() == "pending" }
+            .sorted { $0.createdAt > $1.createdAt }
+            .prefix(5)
+            .map { $0 }
+    }
+
     private var needsApprovalSection: some View {
-        VStack(alignment: .leading, spacing: Spacing.lg) {
+        let pendingExpenses = pendingApprovalExpenses
+        let pendingCount = pendingExpenses.count
+
+        return VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
             HStack {
                 Text("Needs Your Approval")
@@ -1978,60 +1945,65 @@ struct GeneralDashboardViewV1: View {
 
                 Spacer()
 
-                // Pending badge
-                HStack(spacing: Spacing.xs) {
-                    Text("2 Pending")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(SemanticColors.statusWarning)
+                // Pending badge (only show if there are pending items)
+                if pendingCount > 0 {
+                    HStack(spacing: Spacing.xs) {
+                        Text("\(pendingCount) Pending")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(SemanticColors.statusWarning)
 
-                    Circle()
-                        .fill(SemanticColors.statusWarning)
-                        .frame(width: 6, height: 6)
+                        Circle()
+                            .fill(SemanticColors.statusWarning)
+                            .frame(width: 6, height: 6)
+                    }
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xxs)
+                    .background(
+                        Capsule()
+                            .fill(SemanticColors.statusWarning.opacity(0.1))
+                    )
                 }
-                .padding(.horizontal, Spacing.sm)
-                .padding(.vertical, Spacing.xxs)
-                .background(
-                    Capsule()
-                        .fill(SemanticColors.statusWarning.opacity(0.1))
-                )
             }
 
-            // Approval items
+            // Approval items from database
             VStack(spacing: Spacing.md) {
-                approvalItem(
-                    title: "Extra Florals for Arch",
-                    requestedBy: "Wedding Planner",
-                    amount: 450.00
-                )
-
-                approvalItem(
-                    title: "Upgrade to Premium Bar",
-                    requestedBy: settingsStore.settings.global.partner2FullName.isEmpty ? "Partner" : settingsStore.settings.global.partner2FullName,
-                    amount: 1200.00
-                )
+                if pendingExpenses.isEmpty {
+                    Text("No items pending approval")
+                        .font(Typography.bodySmall)
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .padding(.vertical, Spacing.lg)
+                } else {
+                    ForEach(pendingExpenses, id: \.id) { expense in
+                        approvalItem(
+                            expense: expense
+                        )
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassPanel(cornerRadius: CornerRadius.xl, padding: Spacing.xl)
     }
 
-    private func approvalItem(title: String, requestedBy: String, amount: Double) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.sm) {
+    private func approvalItem(expense: Expense) -> some View {
+        let vendorName = expense.vendorName ?? "Unknown Vendor"
+
+        return VStack(alignment: .leading, spacing: Spacing.sm) {
             HStack {
                 VStack(alignment: .leading, spacing: Spacing.xxs) {
-                    Text(title)
+                    Text(expense.expenseName)
                         .font(Typography.bodySmall)
                         .fontWeight(.bold)
                         .foregroundColor(SemanticColors.textPrimary)
 
-                    Text("Requested by \(requestedBy)")
+                    Text("From \(vendorName)")
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textSecondary)
                 }
 
                 Spacer()
 
-                Text(formatCurrency(amount))
+                Text(formatCurrency(expense.amount))
                     .font(Typography.bodySmall)
                     .fontWeight(.bold)
                     .foregroundColor(SemanticColors.textPrimary)
@@ -2039,7 +2011,13 @@ struct GeneralDashboardViewV1: View {
 
             // Action buttons
             HStack(spacing: Spacing.sm) {
-                Button(action: {}) {
+                Button(action: {
+                    Task {
+                        var updatedExpense = expense
+                        updatedExpense.approvalStatus = "approved"
+                        await budgetStore.expenseStore.updateExpense(updatedExpense)
+                    }
+                }) {
                     Text("Approve")
                         .font(Typography.caption)
                         .fontWeight(.bold)
@@ -2053,7 +2031,13 @@ struct GeneralDashboardViewV1: View {
                 }
                 .buttonStyle(.plain)
 
-                Button(action: {}) {
+                Button(action: {
+                    Task {
+                        var updatedExpense = expense
+                        updatedExpense.approvalStatus = "declined"
+                        await budgetStore.expenseStore.updateExpense(updatedExpense)
+                    }
+                }) {
                     Text("Decline")
                         .font(Typography.caption)
                         .fontWeight(.bold)
@@ -2085,6 +2069,14 @@ struct GeneralDashboardViewV1: View {
 
     // MARK: - Recent Transactions Section
 
+    /// Recent paid payment transactions from the database
+    private var recentPaidPayments: [PaymentSchedule] {
+        budgetStore.payments.paidPayments
+            .sorted { $0.paymentDate > $1.paymentDate }
+            .prefix(5)
+            .map { $0 }
+    }
+
     private var recentTransactionsSection: some View {
         VStack(alignment: .leading, spacing: Spacing.lg) {
             // Header
@@ -2101,7 +2093,11 @@ struct GeneralDashboardViewV1: View {
 
                 Spacer()
 
-                Button(action: {}) {
+                Button(action: {
+                    Task {
+                        await budgetStore.payments.loadPaymentSchedules()
+                    }
+                }) {
                     Image(systemName: "arrow.clockwise")
                         .font(.system(size: 14))
                         .foregroundColor(SemanticColors.textTertiary)
@@ -2109,38 +2105,68 @@ struct GeneralDashboardViewV1: View {
                 .buttonStyle(.plain)
             }
 
-            // Transaction timeline
+            // Transaction timeline from database
             VStack(alignment: .leading, spacing: 0) {
-                transactionTimelineItem(
-                    date: "Today, 10:23 AM",
-                    description: "Paid Cake Tasting Fee to Sweet Delights.",
-                    highlight: "Cake Tasting Fee",
-                    amount: "-$50.00",
-                    amountColor: BlushPink.base,
-                    isLast: false
-                )
-
-                transactionTimelineItem(
-                    date: "Yesterday, 4:15 PM",
-                    description: "Deposit cleared for Videographer.",
-                    highlight: "Videographer",
-                    amount: "Verified",
-                    amountColor: SemanticColors.statusSuccess,
-                    isLast: false
-                )
-
-                transactionTimelineItem(
-                    date: "Feb 20, 9:00 AM",
-                    description: "Added new budget category: Guest Favors.",
-                    highlight: "Guest Favors",
-                    amount: nil,
-                    amountColor: nil,
-                    isLast: true
-                )
+                let payments = recentPaidPayments
+                if payments.isEmpty {
+                    Text("No recent transactions")
+                        .font(Typography.bodySmall)
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .padding(.vertical, Spacing.lg)
+                } else {
+                    ForEach(Array(payments.enumerated()), id: \.element.id) { index, payment in
+                        transactionTimelineItem(
+                            date: formatTransactionDate(payment.paymentDate),
+                            description: buildPaymentDescription(payment),
+                            highlight: payment.vendor,
+                            amount: formatCurrency(-payment.paymentAmount),
+                            amountColor: BlushPink.base,
+                            isLast: index == payments.count - 1
+                        )
+                    }
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .glassPanel(cornerRadius: CornerRadius.xl, padding: Spacing.xl)
+    }
+
+    /// Format date for transaction display (e.g., "Today, 10:23 AM" or "Feb 20, 9:00 AM")
+    private func formatTransactionDate(_ date: Date) -> String {
+        let calendar = Calendar.current
+        let userTimezone = DateFormatting.userTimeZone(from: settingsStore.settings)
+
+        if calendar.isDateInToday(date) {
+            let timeFormatter = DateFormatter()
+            timeFormatter.timeZone = userTimezone
+            timeFormatter.dateFormat = "h:mm a"
+            return "Today, \(timeFormatter.string(from: date))"
+        } else if calendar.isDateInYesterday(date) {
+            let timeFormatter = DateFormatter()
+            timeFormatter.timeZone = userTimezone
+            timeFormatter.dateFormat = "h:mm a"
+            return "Yesterday, \(timeFormatter.string(from: date))"
+        } else {
+            let dateFormatter = DateFormatter()
+            dateFormatter.timeZone = userTimezone
+            dateFormatter.dateFormat = "MMM d, h:mm a"
+            return dateFormatter.string(from: date)
+        }
+    }
+
+    /// Build a description for a payment transaction
+    private func buildPaymentDescription(_ payment: PaymentSchedule) -> String {
+        let typeDescription: String
+        if payment.isDeposit {
+            typeDescription = "Paid deposit to"
+        } else if payment.isRetainer {
+            typeDescription = "Paid retainer to"
+        } else if let paymentType = payment.paymentType, !paymentType.isEmpty {
+            typeDescription = "Paid \(paymentType.lowercased()) to"
+        } else {
+            typeDescription = "Paid"
+        }
+        return "\(typeDescription) \(payment.vendor)."
     }
 
     private func transactionTimelineItem(

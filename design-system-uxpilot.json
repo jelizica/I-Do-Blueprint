@@ -1,0 +1,748 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "$name": "I Do Blueprint - Wedding Planning Design System",
+  "$description": "A romantic, elegant design system for wedding planning applications. Optimized for Budget Bouquet visualization.",
+
+  "color": {
+    "$description": "Core color palette inspired by wedding aesthetics",
+
+    "primary": {
+      "$description": "Primary brand colors - soft romantic tones",
+      "blush": {
+        "$value": "#F8E8E8",
+        "$type": "color",
+        "$description": "Soft blush pink - primary brand color, backgrounds"
+      },
+      "blush-light": {
+        "$value": "#FDF5F5",
+        "$type": "color",
+        "$description": "Light blush - hover states, subtle backgrounds"
+      },
+      "blush-dark": {
+        "$value": "#E8D0D0",
+        "$type": "color",
+        "$description": "Dark blush - pressed states, borders"
+      }
+    },
+
+    "secondary": {
+      "$description": "Secondary colors - nature-inspired accents",
+      "sage": {
+        "$value": "#B8D4C8",
+        "$type": "color",
+        "$description": "Sage green - secondary accent, success states"
+      },
+      "sage-light": {
+        "$value": "#D4E8E0",
+        "$type": "color",
+        "$description": "Light sage - subtle backgrounds"
+      },
+      "sage-dark": {
+        "$value": "#8BB8A8",
+        "$type": "color",
+        "$description": "Dark sage - emphasis"
+      }
+    },
+
+    "accent": {
+      "$description": "Accent colors for highlights and calls-to-action",
+      "champagne": {
+        "$value": "#D4AF37",
+        "$type": "color",
+        "$description": "Champagne gold - primary accent, CTAs, progress indicators"
+      },
+      "champagne-light": {
+        "$value": "#E8D078",
+        "$type": "color",
+        "$description": "Light champagne - hover states"
+      },
+      "champagne-dark": {
+        "$value": "#B8962E",
+        "$type": "color",
+        "$description": "Dark champagne - pressed states"
+      }
+    },
+
+    "category": {
+      "$description": "Budget category colors for flower petals and data visualization",
+      "venue": {
+        "$value": "#E57373",
+        "$type": "color",
+        "$description": "Soft coral - Venue & Catering category"
+      },
+      "attire": {
+        "$value": "#D8D0E8",
+        "$type": "color",
+        "$description": "Lavender - Attire & Beauty category"
+      },
+      "flowers": {
+        "$value": "#81C784",
+        "$type": "color",
+        "$description": "Soft green - Flowers & Decor category"
+      },
+      "entertainment": {
+        "$value": "#A4C3D2",
+        "$type": "color",
+        "$description": "Dusty blue - Entertainment category"
+      },
+      "photography": {
+        "$value": "#FFDAB9",
+        "$type": "color",
+        "$description": "Soft peach - Photography & Video category"
+      },
+      "stationery": {
+        "$value": "#F0E6D3",
+        "$type": "color",
+        "$description": "Cream - Stationery & Invitations category"
+      },
+      "transportation": {
+        "$value": "#C9B8D4",
+        "$type": "color",
+        "$description": "Soft purple - Transportation category"
+      },
+      "gifts": {
+        "$value": "#B8D4D4",
+        "$type": "color",
+        "$description": "Soft teal - Gifts & Favors category"
+      }
+    },
+
+    "semantic": {
+      "$description": "Semantic colors for status and feedback",
+      "success": {
+        "$value": "#81C784",
+        "$type": "color",
+        "$description": "Soft green - success, under budget, linked items"
+      },
+      "warning": {
+        "$value": "#FFB74D",
+        "$type": "color",
+        "$description": "Amber - warning, approaching budget limit"
+      },
+      "error": {
+        "$value": "#E57373",
+        "$type": "color",
+        "$description": "Soft coral - error, over budget"
+      },
+      "info": {
+        "$value": "#A4C3D2",
+        "$type": "color",
+        "$description": "Dusty blue - informational"
+      }
+    },
+
+    "neutral": {
+      "$description": "Neutral colors for backgrounds and text",
+      "background": {
+        "$value": "#FAFAF8",
+        "$type": "color",
+        "$description": "Warm off-white - page backgrounds"
+      },
+      "surface": {
+        "$value": "#FFFFFF",
+        "$type": "color",
+        "$description": "Pure white - cards, modals, elevated surfaces"
+      },
+      "surface-secondary": {
+        "$value": "#F5F5F3",
+        "$type": "color",
+        "$description": "Light warm gray - secondary surfaces"
+      },
+      "border": {
+        "$value": "#E8E8E6",
+        "$type": "color",
+        "$description": "Soft border color"
+      },
+      "border-subtle": {
+        "$value": "#F0F0EE",
+        "$type": "color",
+        "$description": "Very subtle border for cards"
+      }
+    },
+
+    "text": {
+      "$description": "Text colors",
+      "primary": {
+        "$value": "#2D3436",
+        "$type": "color",
+        "$description": "Charcoal - primary text"
+      },
+      "secondary": {
+        "$value": "#636E72",
+        "$type": "color",
+        "$description": "Warm gray - secondary text, labels"
+      },
+      "tertiary": {
+        "$value": "#95A5A6",
+        "$type": "color",
+        "$description": "Light gray - placeholder text, disabled"
+      },
+      "inverse": {
+        "$value": "#FFFFFF",
+        "$type": "color",
+        "$description": "White - text on dark backgrounds"
+      },
+      "accent": {
+        "$value": "#D4AF37",
+        "$type": "color",
+        "$description": "Champagne gold - accent text, links"
+      }
+    }
+  },
+
+  "typography": {
+    "$description": "Typography system with elegant, readable fonts",
+
+    "fontFamily": {
+      "display": {
+        "$value": "Playfair Display, Georgia, serif",
+        "$type": "fontFamily",
+        "$description": "Elegant serif for headings and display text"
+      },
+      "body": {
+        "$value": "Inter, -apple-system, BlinkMacSystemFont, sans-serif",
+        "$type": "fontFamily",
+        "$description": "Clean sans-serif for body text and UI"
+      },
+      "accent": {
+        "$value": "Cormorant Garamond, Georgia, serif",
+        "$type": "fontFamily",
+        "$description": "Refined serif for special callouts and quotes"
+      },
+      "mono": {
+        "$value": "SF Mono, Menlo, monospace",
+        "$type": "fontFamily",
+        "$description": "Monospace for numbers and data"
+      }
+    },
+
+    "fontSize": {
+      "2xs": {
+        "$value": "10px",
+        "$type": "dimension",
+        "$description": "Tiny labels"
+      },
+      "xs": {
+        "$value": "12px",
+        "$type": "dimension",
+        "$description": "Small labels, captions"
+      },
+      "sm": {
+        "$value": "14px",
+        "$type": "dimension",
+        "$description": "Secondary text, descriptions"
+      },
+      "base": {
+        "$value": "16px",
+        "$type": "dimension",
+        "$description": "Base body text"
+      },
+      "lg": {
+        "$value": "18px",
+        "$type": "dimension",
+        "$description": "Large body text"
+      },
+      "xl": {
+        "$value": "20px",
+        "$type": "dimension",
+        "$description": "Small headings"
+      },
+      "2xl": {
+        "$value": "24px",
+        "$type": "dimension",
+        "$description": "Section headings"
+      },
+      "3xl": {
+        "$value": "30px",
+        "$type": "dimension",
+        "$description": "Page headings"
+      },
+      "4xl": {
+        "$value": "36px",
+        "$type": "dimension",
+        "$description": "Large display"
+      },
+      "5xl": {
+        "$value": "48px",
+        "$type": "dimension",
+        "$description": "Hero text"
+      }
+    },
+
+    "fontWeight": {
+      "regular": {
+        "$value": "400",
+        "$type": "fontWeight",
+        "$description": "Regular weight for body text"
+      },
+      "medium": {
+        "$value": "500",
+        "$type": "fontWeight",
+        "$description": "Medium weight for emphasis"
+      },
+      "semibold": {
+        "$value": "600",
+        "$type": "fontWeight",
+        "$description": "Semibold for subheadings"
+      },
+      "bold": {
+        "$value": "700",
+        "$type": "fontWeight",
+        "$description": "Bold for headings"
+      }
+    },
+
+    "lineHeight": {
+      "tight": {
+        "$value": "1.2",
+        "$type": "number",
+        "$description": "Tight line height for headings"
+      },
+      "normal": {
+        "$value": "1.5",
+        "$type": "number",
+        "$description": "Normal line height for body"
+      },
+      "relaxed": {
+        "$value": "1.75",
+        "$type": "number",
+        "$description": "Relaxed line height for readability"
+      }
+    },
+
+    "letterSpacing": {
+      "tight": {
+        "$value": "-0.02em",
+        "$type": "dimension",
+        "$description": "Tight tracking for large text"
+      },
+      "normal": {
+        "$value": "0",
+        "$type": "dimension",
+        "$description": "Normal tracking"
+      },
+      "wide": {
+        "$value": "0.05em",
+        "$type": "dimension",
+        "$description": "Wide tracking for small caps, labels"
+      }
+    }
+  },
+
+  "spacing": {
+    "$description": "Consistent spacing scale",
+    "0": {
+      "$value": "0px",
+      "$type": "dimension"
+    },
+    "1": {
+      "$value": "4px",
+      "$type": "dimension",
+      "$description": "Minimal spacing"
+    },
+    "2": {
+      "$value": "8px",
+      "$type": "dimension",
+      "$description": "Compact spacing"
+    },
+    "3": {
+      "$value": "12px",
+      "$type": "dimension",
+      "$description": "Small spacing"
+    },
+    "4": {
+      "$value": "16px",
+      "$type": "dimension",
+      "$description": "Base spacing"
+    },
+    "5": {
+      "$value": "20px",
+      "$type": "dimension",
+      "$description": "Medium spacing"
+    },
+    "6": {
+      "$value": "24px",
+      "$type": "dimension",
+      "$description": "Large spacing"
+    },
+    "8": {
+      "$value": "32px",
+      "$type": "dimension",
+      "$description": "Extra large spacing"
+    },
+    "10": {
+      "$value": "40px",
+      "$type": "dimension",
+      "$description": "Section spacing"
+    },
+    "12": {
+      "$value": "48px",
+      "$type": "dimension",
+      "$description": "Component spacing"
+    },
+    "16": {
+      "$value": "64px",
+      "$type": "dimension",
+      "$description": "Page section spacing"
+    },
+    "20": {
+      "$value": "80px",
+      "$type": "dimension",
+      "$description": "Large section spacing"
+    }
+  },
+
+  "borderRadius": {
+    "$description": "Border radius values for different UI elements",
+    "none": {
+      "$value": "0px",
+      "$type": "dimension"
+    },
+    "sm": {
+      "$value": "4px",
+      "$type": "dimension",
+      "$description": "Small radius for badges, chips"
+    },
+    "md": {
+      "$value": "8px",
+      "$type": "dimension",
+      "$description": "Medium radius for buttons, inputs"
+    },
+    "lg": {
+      "$value": "12px",
+      "$type": "dimension",
+      "$description": "Large radius for cards"
+    },
+    "xl": {
+      "$value": "16px",
+      "$type": "dimension",
+      "$description": "Extra large radius for modals"
+    },
+    "2xl": {
+      "$value": "24px",
+      "$type": "dimension",
+      "$description": "Pill shapes, large containers"
+    },
+    "full": {
+      "$value": "9999px",
+      "$type": "dimension",
+      "$description": "Fully rounded (circles, pills)"
+    }
+  },
+
+  "shadow": {
+    "$description": "Elevation shadows for depth hierarchy",
+    "sm": {
+      "$value": {
+        "color": "#0000000D",
+        "offsetX": "0px",
+        "offsetY": "1px",
+        "blur": "2px",
+        "spread": "0px"
+      },
+      "$type": "shadow",
+      "$description": "Subtle shadow for interactive elements"
+    },
+    "md": {
+      "$value": {
+        "color": "#0000001A",
+        "offsetX": "0px",
+        "offsetY": "4px",
+        "blur": "6px",
+        "spread": "-1px"
+      },
+      "$type": "shadow",
+      "$description": "Medium shadow for cards"
+    },
+    "lg": {
+      "$value": {
+        "color": "#0000001A",
+        "offsetX": "0px",
+        "offsetY": "10px",
+        "blur": "15px",
+        "spread": "-3px"
+      },
+      "$type": "shadow",
+      "$description": "Large shadow for modals, dropdowns"
+    },
+    "xl": {
+      "$value": {
+        "color": "#00000026",
+        "offsetX": "0px",
+        "offsetY": "20px",
+        "blur": "25px",
+        "spread": "-5px"
+      },
+      "$type": "shadow",
+      "$description": "Extra large shadow for floating elements"
+    },
+    "glow-gold": {
+      "$value": {
+        "color": "#D4AF3733",
+        "offsetX": "0px",
+        "offsetY": "0px",
+        "blur": "20px",
+        "spread": "0px"
+      },
+      "$type": "shadow",
+      "$description": "Golden glow for highlighted elements"
+    },
+    "glow-success": {
+      "$value": {
+        "color": "#81C78433",
+        "offsetX": "0px",
+        "offsetY": "0px",
+        "blur": "16px",
+        "spread": "0px"
+      },
+      "$type": "shadow",
+      "$description": "Green glow for success states"
+    }
+  },
+
+  "border": {
+    "$description": "Border styles",
+    "subtle": {
+      "$value": {
+        "color": "#E8E8E6",
+        "width": "1px",
+        "style": "solid"
+      },
+      "$type": "border",
+      "$description": "Subtle border for cards and inputs"
+    },
+    "medium": {
+      "$value": {
+        "color": "#D4D4D2",
+        "width": "1px",
+        "style": "solid"
+      },
+      "$type": "border",
+      "$description": "Medium border for emphasis"
+    },
+    "accent": {
+      "$value": {
+        "color": "#D4AF37",
+        "width": "2px",
+        "style": "solid"
+      },
+      "$type": "border",
+      "$description": "Accent border for focus states"
+    }
+  },
+
+  "duration": {
+    "$description": "Animation durations",
+    "instant": {
+      "$value": "0ms",
+      "$type": "duration"
+    },
+    "fast": {
+      "$value": "150ms",
+      "$type": "duration",
+      "$description": "Fast transitions for hover states"
+    },
+    "normal": {
+      "$value": "250ms",
+      "$type": "duration",
+      "$description": "Normal transitions"
+    },
+    "slow": {
+      "$value": "400ms",
+      "$type": "duration",
+      "$description": "Slow transitions for complex animations"
+    },
+    "slower": {
+      "$value": "600ms",
+      "$type": "duration",
+      "$description": "Slower animations for emphasis"
+    }
+  },
+
+  "cubicBezier": {
+    "$description": "Easing functions for animations",
+    "ease-out": {
+      "$value": [0, 0, 0.2, 1],
+      "$type": "cubicBezier",
+      "$description": "Decelerate - elements coming to rest"
+    },
+    "ease-in": {
+      "$value": [0.4, 0, 1, 1],
+      "$type": "cubicBezier",
+      "$description": "Accelerate - elements leaving"
+    },
+    "ease-in-out": {
+      "$value": [0.4, 0, 0.2, 1],
+      "$type": "cubicBezier",
+      "$description": "Standard easing"
+    },
+    "spring": {
+      "$value": [0.175, 0.885, 0.32, 1.275],
+      "$type": "cubicBezier",
+      "$description": "Spring bounce for playful interactions"
+    }
+  },
+
+  "component": {
+    "$description": "Component-specific tokens for Budget Bouquet visualization",
+
+    "bouquet": {
+      "$description": "Budget Bouquet flower visualization tokens",
+      "center": {
+        "size": {
+          "$value": "120px",
+          "$type": "dimension",
+          "$description": "Size of the center circle (total budget)"
+        },
+        "background": {
+          "$value": "#D4AF37",
+          "$type": "color",
+          "$description": "Champagne gold center"
+        }
+      },
+      "petal": {
+        "minSize": {
+          "$value": "60px",
+          "$type": "dimension",
+          "$description": "Minimum petal size"
+        },
+        "maxSize": {
+          "$value": "140px",
+          "$type": "dimension",
+          "$description": "Maximum petal size"
+        },
+        "borderRadius": {
+          "$value": "50% 50% 50% 50%",
+          "$type": "dimension",
+          "$description": "Organic petal shape"
+        }
+      },
+      "stem": {
+        "width": {
+          "$value": "3px",
+          "$type": "dimension",
+          "$description": "Stem line width"
+        },
+        "color": {
+          "$value": "#B8D4C8",
+          "$type": "color",
+          "$description": "Sage green stem"
+        }
+      }
+    },
+
+    "progressRing": {
+      "$description": "Circular progress indicator tokens",
+      "trackColor": {
+        "$value": "#E8E8E6",
+        "$type": "color",
+        "$description": "Background track color"
+      },
+      "strokeWidth": {
+        "$value": "8px",
+        "$type": "dimension",
+        "$description": "Progress ring stroke width"
+      }
+    },
+
+    "card": {
+      "$description": "Card component tokens",
+      "background": {
+        "$value": "#FFFFFF",
+        "$type": "color"
+      },
+      "borderRadius": {
+        "$value": "12px",
+        "$type": "dimension"
+      },
+      "padding": {
+        "$value": "20px",
+        "$type": "dimension"
+      },
+      "shadow": {
+        "$value": {
+          "color": "#0000001A",
+          "offsetX": "0px",
+          "offsetY": "4px",
+          "blur": "12px",
+          "spread": "0px"
+        },
+        "$type": "shadow"
+      }
+    },
+
+    "button": {
+      "$description": "Button component tokens",
+      "primary": {
+        "background": {
+          "$value": "#D4AF37",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "#FFFFFF",
+          "$type": "color"
+        },
+        "borderRadius": {
+          "$value": "8px",
+          "$type": "dimension"
+        },
+        "paddingX": {
+          "$value": "20px",
+          "$type": "dimension"
+        },
+        "paddingY": {
+          "$value": "12px",
+          "$type": "dimension"
+        }
+      },
+      "secondary": {
+        "background": {
+          "$value": "#FAFAF8",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "#2D3436",
+          "$type": "color"
+        },
+        "border": {
+          "$value": "#E8E8E6",
+          "$type": "color"
+        }
+      }
+    },
+
+    "badge": {
+      "$description": "Status badge tokens",
+      "success": {
+        "background": {
+          "$value": "#E8F5E9",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "#2E7D32",
+          "$type": "color"
+        }
+      },
+      "warning": {
+        "background": {
+          "$value": "#FFF3E0",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "#E65100",
+          "$type": "color"
+        }
+      },
+      "error": {
+        "background": {
+          "$value": "#FFEBEE",
+          "$type": "color"
+        },
+        "text": {
+          "$value": "#C62828",
+          "$type": "color"
+        }
+      }
+    }
+  }
+}

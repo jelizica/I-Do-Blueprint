@@ -1,0 +1,115 @@
+{
+  "mcpServers": {
+    "adr-analysis[id=H4XX1O]": {
+      "args": [
+        "-y",
+        "mcp-adr-analysis-server"
+      ],
+      "command": "npx",
+      "env": {
+        "ADR_DIRECTORY": "docs/adrs",
+        "LOG_LEVEL": "ERROR",
+        "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}",
+        "PROJECT_PATH": "${PROJECT_PATH}"
+      },
+      "type": "stdio"
+    },
+    "basic-memory[id=2K474S]": {
+      "args": [
+        "basic-memory",
+        "mcp"
+      ],
+      "command": "uvx"
+    },
+    "beads[id=NJYIKZ]": {
+      "args": [
+        "beads-mcp"
+      ],
+      "command": "uvx",
+      "type": "stdio"
+    },
+    "code-guardian[id=91EQWF]": {
+      "args": [
+        "/Users/jessicaclark/Development/mcp-servers/code-guardian/dist/index.js"
+      ],
+      "command": "/Users/jessicaclark/.nvm/versions/node/v20.19.6/bin/node",
+      "env": {
+        "CCG_PROJECT_ROOT": "${PROJECT_PATH}"
+      },
+      "type": "stdio"
+    },
+    "exa[id=EP8BAI]": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,get_code_context_exa,crawling_exa,company_research_exa,linkedin_search_exa,deep_researcher_start,deep_researcher_check"
+    },
+    "greb-mcp[id=FYSDMT]": {
+      "command": "greb-mcp",
+      "env": {
+        "GREB_API_KEY": "${GREB_API_KEY}"
+      },
+      "type": "stdio"
+    },
+    "llm-council[id=T7YUUA]": {
+      "args": [
+        "--directory",
+        "/Users/jessicaclark/Development/mcp-servers/llm-council",
+        "run",
+        "llm-council-mcp"
+      ],
+      "command": "uv",
+      "env": {
+        "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}"
+      }
+    },
+    "local-file-organizer[id=VMGVZU]": {
+      "args": [
+        "/Users/jessicaclark/Development/mcp-servers/local_file_organizer/file_organizer.py",
+        "${PROJECT_PATH}"
+      ],
+      "command": "/Users/jessicaclark/Development/mcp-servers/local_file_organizer/venv/bin/python",
+      "type": "stdio"
+    },
+    "narsil-mcp[id=3HVMF8]": {
+      "args": [
+        "--repos",
+        "${PROJECT_PATH}",
+        "--git",
+        "--call-graph",
+        "--lsp"
+      ],
+      "command": "narsil-mcp",
+      "env": {
+        "NARSIL_DISABLED_TOOLS": "neural_search,find_semantic_clones,get_neural_stats,get_chunks,get_chunk_stats,get_embedding_stats,get_control_flow,find_dead_code,infer_types,check_type_errors,get_typed_taint_flow,get_import_graph,find_circular_imports,get_incremental_status,find_injection_vulnerabilities,trace_taint,get_security_summary,scan_security,check_owasp_top10,check_cwe_top25,explain_vulnerability,suggest_fix,generate_sbom,check_dependencies,check_licenses,find_upgrade_path,add_remote_repo,list_remote_files,get_remote_file,get_metrics",
+        "NARSIL_ENABLED_CATEGORIES": "Repository,Symbols,Search,CallGraph,DataFlow,Git,LSP"
+      },
+      "type": "stdio"
+    },
+    "reddit[id=YN0OLY]": {
+      "args": [
+        "-y",
+        "reddit-mcp-buddy"
+      ],
+      "command": "npx"
+    },
+    "Ref[id=DURRZW]": {
+      "type": "http",
+      "url": "https://api.ref.tools/mcp?apiKey=${REF_API_KEY}"
+    },
+    "supabase[id=AVY8PC]": {
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://mcp.supabase.com/mcp?project_ref=pcmasfomyhqapaaaxzby"
+      ],
+      "command": "npx",
+      "type": "stdio"
+    },
+    "swiftzilla[id=OO70CO]": {
+      "headers": {
+        "Authorization": "Bearer ${SWIFTZILLA_API_KEY}"
+      },
+      "type": "sse",
+      "url": "https://swiftzilla.dev/mcp/sse"
+    }
+  }
+}

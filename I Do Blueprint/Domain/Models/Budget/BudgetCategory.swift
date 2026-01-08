@@ -88,6 +88,31 @@ struct BudgetCategory: Identifiable, Codable, Hashable {
         self.updatedAt = updatedAt
     }
 
+    // Custom encoding to ensure nil values are explicitly encoded as null
+    // This is critical for Supabase updates - omitted keys are not updated
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+
+        try container.encode(id, forKey: .id)
+        try container.encode(coupleId, forKey: .coupleId)
+        try container.encode(categoryName, forKey: .categoryName)
+        // Explicitly encode nil as null so Supabase sets parent_category_id to NULL
+        try container.encode(parentCategoryId, forKey: .parentCategoryId)
+        try container.encode(allocatedAmount, forKey: .allocatedAmount)
+        try container.encode(spentAmount, forKey: .spentAmount)
+        try container.encode(typicalPercentage, forKey: .typicalPercentage)
+        try container.encode(priorityLevel, forKey: .priorityLevel)
+        try container.encode(isEssential, forKey: .isEssential)
+        try container.encode(notes, forKey: .notes)
+        try container.encode(forecastedAmount, forKey: .forecastedAmount)
+        try container.encode(confidenceLevel, forKey: .confidenceLevel)
+        try container.encode(lockedAllocation, forKey: .lockedAllocation)
+        try container.encode(description, forKey: .description)
+        try container.encode(color, forKey: .color)
+        try container.encode(createdAt, forKey: .createdAt)
+        try container.encode(updatedAt, forKey: .updatedAt)
+    }
+
     // Custom decoding to handle different date formats
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
