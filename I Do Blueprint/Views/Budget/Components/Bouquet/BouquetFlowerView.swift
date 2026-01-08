@@ -362,9 +362,13 @@ struct RadialPetalView: View {
             Button {
                 onTap?()
             } label: {
-                Color.clear
+                // Color.clear can be treated as non-hit-testable in some cases.
+                // Use a real shape to ensure the button participates in hit-testing.
+                Rectangle()
+                    .fill(Color.clear)
             }
             .buttonStyle(.plain)
+            .allowsHitTesting(true)
             // Match the petal hit area rather than the large square frame.
             .contentShape(
                 PetalShape(width: width, length: length)
