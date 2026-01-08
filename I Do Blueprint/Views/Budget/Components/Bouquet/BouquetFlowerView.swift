@@ -124,14 +124,19 @@ struct BouquetFlowerView: View {
                             onPetalTap?(category)
                         },
                         onHoverChanged: { hovering in
+                            // IMPORTANT: Do not couple hover to selection.
+                            // On macOS, SwiftUI hover tracking can be frame-based (even when contentShape is set),
+                            // which causes incorrect "selected" details when petals overlap.
+                            // Selection for details is click-only; hover is visual-only.
                             withAnimation(.easeInOut(duration: 0.15)) {
                                 hoveredCategoryId = hovering ? category.id : nil
-                                // Hovering shows detail at bottom (sets selectedCategoryId)
-                                selectedCategoryId = hovering ? category.id : nil
                             }
                         }
                     )
                     .position(center)
+                    // Ensure the hovered/selected petal is visually and interactively above neighbors.
+                    // This helps resolve overlapping frames competing for hit-testing.
+                    .zIndex((hoveredCategoryId == category.id || selectedCategoryId == category.id) ? 1 : 0)
                 }
                 
                 // Center hub
