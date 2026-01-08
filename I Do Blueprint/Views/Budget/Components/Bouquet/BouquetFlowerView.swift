@@ -333,6 +333,11 @@ struct RadialPetalView: View {
             // Status indicator dots removed - redundant with legend
         }
         .frame(width: frameSize, height: frameSize)
+        // Define hit-testing area to match the visible petal shape only
+        .contentShape(
+            PetalShape(width: width, length: length)
+                .offset(y: -(length / 2 + centerOffset / 2))
+        )
         .rotationEffect(.degrees(angle))
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)
