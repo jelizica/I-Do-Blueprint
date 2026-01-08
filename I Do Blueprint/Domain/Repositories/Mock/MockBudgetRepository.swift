@@ -268,6 +268,13 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         return scenario
     }
 
+    func deleteBudgetDevelopmentScenario(id: String) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        budgetDevelopmentScenarios.removeAll { $0.id == id }
+        budgetDevelopmentItems.removeAll { $0.scenarioId == id }
+    }
+
     func createBudgetDevelopmentItem(_ item: BudgetItem) async throws -> BudgetItem {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }

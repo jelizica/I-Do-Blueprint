@@ -184,13 +184,33 @@ class BudgetDevelopmentStoreV2: ObservableObject {
     func updateBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
         let updated = try await repository.updateBudgetDevelopmentScenario(scenario)
         logger.info("Updated budget development scenario: \(updated.scenarioName)")
-        
+
         // Invalidate cache for this scenario
         await invalidateScenarioCache(scenarioId: updated.id)
-        
+
         return updated
     }
-    
+
+    /// Create a new budget development scenario
+    func createBudgetDevelopmentScenario(_ scenario: SavedScenario) async throws -> SavedScenario {
+        let created = try await repository.createBudgetDevelopmentScenario(scenario)
+        logger.info("Created budget development scenario: \(created.scenarioName)")
+
+        // Invalidate cache
+        await invalidateScenarioCache()
+
+        return created
+    }
+
+    /// Delete a budget development scenario and all its items
+    func deleteBudgetDevelopmentScenario(id: String) async throws {
+        try await repository.deleteBudgetDevelopmentScenario(id: id)
+        logger.info("Deleted budget development scenario: \(id)")
+
+        // Invalidate cache
+        await invalidateScenarioCache(scenarioId: id)
+    }
+
     // MARK: - Folder Operations
     
     /// Creates a new budget folder

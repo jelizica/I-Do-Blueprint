@@ -149,7 +149,48 @@ actor BudgetDevelopmentDataSource {
             throw BudgetError.updateFailed(underlying: error)
         }
     }
-    
+
+    /// Deletes a budget development scenario and all its associated items
+    func deleteBudgetDevelopmentScenario(id: String, tenantId: UUID) async throws {
+        let startTime = Date()
+
+        do {
+            // First delete all items associated with this scenario
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .delete()
+                    .eq("scenario_id", value: id)
+                    .execute()
+            }
+
+            // Then delete the scenario itself
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_scenarios")
+                    .delete()
+                    .eq("id", value: id)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Deleted budget development scenario: \(id) in \(String(format: "%.2f", duration))s")
+
+            await invalidateScenarioCaches(tenantId: tenantId)
+            await invalidateItemCaches(scenarioId: id)
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to delete budget development scenario after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "deleteBudgetDevelopmentScenario",
+                "scenarioId": id,
+                "tenantId": tenantId.uuidString
+            ])
+            throw BudgetError.deleteFailed(underlying: error)
+        }
+    }
+
     /// Fetches the primary budget scenario for the tenant
     func fetchPrimaryBudgetScenario(tenantId: UUID) async throws -> BudgetDevelopmentScenario? {
         let cacheKey = "primary_budget_scenario_\(tenantId.uuidString)"

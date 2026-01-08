@@ -263,11 +263,7 @@ struct BudgetBouquetViewV1: View {
 
     @ViewBuilder
     private func flowerSection(geometry: GeometryProxy) -> some View {
-        VStack(spacing: Spacing.lg) {
-            Text("Your Budget Bouquet")
-                .font(Typography.heading)
-                .foregroundColor(SemanticColors.textPrimary)
-
+        VStack(spacing: Spacing.md) {
             BouquetFlowerView(
                 categories: dataProvider.categories,
                 totalBudget: dataProvider.totalBudgeted,
@@ -279,7 +275,7 @@ struct BudgetBouquetViewV1: View {
                     print("Tapped category: \(category.categoryName)")
                 }
             )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(height: 550)
 
             // Selected category details
             if let selectedId = selectedCategoryId,

@@ -286,6 +286,11 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Throws: Repository errors if deletion fails or item not found
     func deleteBudgetDevelopmentItem(id: String) async throws
 
+    /// Deletes a budget development scenario and all its items
+    /// - Parameter id: The ID of the scenario to delete
+    /// - Throws: Repository errors if deletion fails or scenario not found
+    func deleteBudgetDevelopmentScenario(id: String) async throws
+
     // MARK: - Tax Rate Operations
 
     /// Fetches all tax rates for the current couple

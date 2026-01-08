@@ -228,13 +228,27 @@ extension BudgetDevelopmentView {
         guard !renameScenarioData.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
               let index = savedScenarios.firstIndex(where: { $0.id == renameScenarioData.id }) else { return }
 
-        savedScenarios[index].scenarioName = renameScenarioData.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedName = renameScenarioData.name.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // Update local state
+        savedScenarios[index].scenarioName = trimmedName
 
         if currentScenarioId == renameScenarioData.id {
-            budgetName = savedScenarios[index].scenarioName
+            budgetName = trimmedName
         }
 
         showingRenameDialog = false
+
+        // Persist to database
+        do {
+            _ = try await budgetStore.development.updateBudgetDevelopmentScenario(savedScenarios[index])
+            logger.info("Successfully renamed scenario to: \(trimmedName)")
+        } catch {
+            logger.error("Failed to rename scenario", error: error)
+            // Revert local state on error
+            await fetchSavedScenarios()
+        }
+
         await budgetStore.refresh()
     }
 
@@ -254,17 +268,39 @@ extension BudgetDevelopmentView {
             coupleId: originalScenario.coupleId,
             isTestData: originalScenario.isTestData)
 
-        savedScenarios.append(duplicateScenario)
         showingDuplicateDialog = false
+
+        // Persist to database first
+        do {
+            let created = try await budgetStore.development.createBudgetDevelopmentScenario(duplicateScenario)
+            savedScenarios.append(created)
+            logger.info("Successfully duplicated scenario: \(created.scenarioName)")
+        } catch {
+            logger.error("Failed to duplicate scenario", error: error)
+            // Don't update local state on error
+        }
+
         await budgetStore.refresh()
     }
 
     func handleDeleteScenario() async {
-        savedScenarios.removeAll { $0.id == deleteScenarioData.id }
+        let scenarioIdToDelete = deleteScenarioData.id
 
-        if currentScenarioId == deleteScenarioData.id {
-            selectedScenario = "new"
-            await loadScenario("new")
+        // Persist deletion to database first
+        do {
+            try await budgetStore.development.deleteBudgetDevelopmentScenario(id: scenarioIdToDelete)
+            logger.info("Successfully deleted scenario: \(scenarioIdToDelete)")
+
+            // Update local state after successful deletion
+            savedScenarios.removeAll { $0.id == scenarioIdToDelete }
+
+            if currentScenarioId == scenarioIdToDelete {
+                selectedScenario = "new"
+                await loadScenario("new")
+            }
+        } catch {
+            logger.error("Failed to delete scenario", error: error)
+            // Don't update local state on error
         }
 
         await budgetStore.refresh()

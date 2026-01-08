@@ -568,6 +568,12 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         return try await dataSource.updateBudgetDevelopmentScenario(scenario)
     }
 
+    func deleteBudgetDevelopmentScenario(id: String) async throws {
+        let tenantId = try await getTenantId()
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        try await dataSource.deleteBudgetDevelopmentScenario(id: id, tenantId: tenantId)
+    }
+
     func createBudgetDevelopmentItem(_ item: BudgetItem) async throws -> BudgetItem {
         let dataSource = try await getBudgetDevelopmentDataSource()
         return try await dataSource.createBudgetDevelopmentItem(item)
