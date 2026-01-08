@@ -134,9 +134,6 @@ struct BouquetFlowerView: View {
                         }
                     )
                     .position(center)
-                    // Ensure the hovered/selected petal is visually and interactively above neighbors.
-                    // This helps resolve overlapping frames competing for hit-testing.
-                    .zIndex((hoveredCategoryId == category.id || selectedCategoryId == category.id) ? 1 : 0)
                 }
                 
                 // Center hub
@@ -359,8 +356,20 @@ struct RadialPetalView: View {
             PetalShape(width: width, length: length)
                 .offset(y: petalOffset)
         )
-        .onTapGesture {
-            onTap?()
+        // Use a plain Button for more reliable click handling on macOS.
+        // This avoids some gesture competition edge-cases when many rotated views overlap.
+        .overlay {
+            Button {
+                onTap?()
+            } label: {
+                Color.clear
+            }
+            .buttonStyle(.plain)
+            // Match the petal hit area rather than the large square frame.
+            .contentShape(
+                PetalShape(width: width, length: length)
+                    .offset(y: petalOffset)
+            )
         }
         .onHover { hovering in
             onHoverChanged?(hovering)
