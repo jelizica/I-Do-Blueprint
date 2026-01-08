@@ -28,6 +28,8 @@ struct BouquetFlowerView: View {
     private let petalWidthRatio: CGFloat = 0.4
     /// Minimum petal length as a ratio of max (smallest expense won't be smaller than this)
     private let minPetalRatio: CGFloat = 0.35
+    /// Padding from container edge to petal tip
+    private let edgePadding: CGFloat = Spacing.lg
     
     // MARK: - Computed Properties
     
@@ -42,12 +44,13 @@ struct BouquetFlowerView: View {
     }
     
     /// Calculate the maximum petal length that fits in the container
-    /// This is the space from the center hub edge to the container edge
-    private func maxPetalLength(for availableRadius: CGFloat) -> CGFloat {
-        // Available radius minus center hub radius minus some padding
-        let maxLength = availableRadius - centerHubRadius - Spacing.lg
-        // Clamp to reasonable bounds
-        return max(60, min(maxLength, 200))
+    /// Formula: (half of container width) - centerHubRadius - edgePadding
+    /// This ensures the petal tip reaches from the hub edge to near the container edge
+    private func maxPetalLength(for containerWidth: CGFloat) -> CGFloat {
+        // Max petal length = distance from center to edge - hub radius - padding
+        let maxLength = (containerWidth / 2) - centerHubRadius - edgePadding
+        // Ensure minimum reasonable size
+        return max(60, maxLength)
     }
     
     /// Calculate petal length based on budget proportion relative to largest category
@@ -77,18 +80,19 @@ struct BouquetFlowerView: View {
     
     var body: some View {
         GeometryReader { geometry in
-            // Calculate max petal length based on available width
-            let availableRadius = min(geometry.size.width, geometry.size.height) / 2 - Spacing.lg
-            let maxLength = maxPetalLength(for: availableRadius)
+            // Calculate max petal length based on container width
+            // maxPetalLength = (containerWidth / 2) - centerHubRadius - edgePadding
+            let containerWidth = geometry.size.width
+            let maxLength = maxPetalLength(for: containerWidth)
             
             // Position flower center so the top petal tip is at the top padding
-            // Center Y = padding + maxPetalLength + centerHubRadius
-            let flowerCenterY = Spacing.lg + maxLength + centerHubRadius
-            let center = CGPoint(x: geometry.size.width / 2, y: flowerCenterY)
+            // Center Y = edgePadding + maxPetalLength + centerHubRadius
+            let flowerCenterY = edgePadding + maxLength + centerHubRadius
+            let center = CGPoint(x: containerWidth / 2, y: flowerCenterY)
             
             ZStack {
-                // Background glow
-                backgroundGlow(at: center, radius: availableRadius)
+                // Background glow - use maxLength + centerHubRadius as the glow radius
+                backgroundGlow(at: center, radius: maxLength + centerHubRadius)
                 
                 // Decorative elements (stem, leaves, pot)
                 BouquetDecorativeElements(
