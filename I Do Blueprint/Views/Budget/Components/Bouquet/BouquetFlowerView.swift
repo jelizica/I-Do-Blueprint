@@ -349,10 +349,10 @@ struct RadialPetalView: View {
                 .fill(Color.black.opacity(0.001))
                 .frame(width: width * 2, height: totalPetalHeight)
                 .offset(y: petalOffset)
-                .contentShape(
-                    PetalShape(width: width, length: length)
-                        .rotation(.degrees(angle))
-                )
+                // Hit-test should follow the same transform chain as the overlay view.
+                // Applying rotation both here (in contentShape) and again via _RotationEffect can
+                // lead to a 180°/mirrored hit region on macOS. Let the view transform handle it.
+                .contentShape(PetalShape(width: width, length: length))
                 .modifier(_RotationEffect(angle: .degrees(angle), anchor: .center).ignoredByLayout())
                 .onTapGesture {
                     logger.debug("Bouquet petal tapped: \(category.categoryName) (\(category.id)) angle=\(angle) length=\(length) width=\(width)")
