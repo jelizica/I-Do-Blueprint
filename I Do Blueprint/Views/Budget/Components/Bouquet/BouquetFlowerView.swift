@@ -356,7 +356,11 @@ struct RadialPetalView: View {
             }
         }
         .frame(width: frameSize, height: frameSize)
-        .modifier(_RotationEffect(angle: .degrees(angle), anchor: .center).ignoredByLayout())
+        // Use standard .rotationEffect() instead of _RotationEffect().ignoredByLayout()
+        // because ignoredByLayout() only affects layout, NOT hit-testing on macOS.
+        // With _RotationEffect, the hit region stays in the pre-rotation position,
+        // causing only petals near 0° (like Attire) to be clickable.
+        .rotationEffect(.degrees(angle))
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)
         .animation(
