@@ -298,6 +298,12 @@ struct BudgetBouquetViewV1: View {
     @ViewBuilder
     private func flowerSection(geometry: GeometryProxy) -> some View {
         // Calculate the height needed for the flower visualization
+        // DEBUG: verify clicks reach the bouquet flower container at all.
+        // If this prints but petals do not, hit-testing is failing at the petal level.
+        // If this does NOT print, some higher-level overlay/gesture is swallowing clicks.
+        let _ = { () -> Void in
+            // no-op; keeps local debug intent close to the gesture below
+        }()
         // Components: padding + maxPetalLength + centerHub + stem + leaves + pot + padding
         // Using approximate values that match BouquetFlowerView constants
         let centerHubRadius: CGFloat = 60
@@ -331,6 +337,9 @@ struct BudgetBouquetViewV1: View {
         .padding(Spacing.lg)
         .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
+        .onTapGesture {
+            print("BOUQUET_CONTAINER_TAP")
+        }
     }
 
     // MARK: - Legend Section
