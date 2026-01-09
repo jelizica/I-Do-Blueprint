@@ -131,10 +131,6 @@ struct BouquetFlowerView: View {
                         },
                         onHoverChanged: nil
                     )
-                    // IMPORTANT: position petals by offsetting them from the flower center,
-                    // rather than drawing inside a huge frame and offsetting internally.
-                    // This keeps the hit-test region aligned with the visible content.
-                    .offset(y: -((centerHubRadius + 5) + length / 2))
                     .position(center)
                 }
                 
@@ -274,16 +270,30 @@ struct RadialPetalView: View {
         category.color.darkened(by: 0.3)
     }
     
-    /// The height needed for the petal body itself.
-    /// NOTE: radial offset from the flower center is applied by the parent (BouquetFlowerView)
-    /// to avoid macOS SwiftUI hit-testing issues when mixing large frames + internal offsets.
-    private var petalHeight: CGFloat {
+    /// The total height needed for the petal including offset from center
+    private var totalPetalHeight: CGFloat {
         length + centerOffset
+    }
+
+    /// Frame size large enough to contain the rotated petal
+    /// When rotated, the bounding box needs to be the diagonal of the original
+    private var frameSize: CGFloat {
+        // Use the diagonal of the petal's bounding box to ensure it fits when rotated
+        let petalWidth = width * 2
+        let petalHeight = totalPetalHeight
+        return max(petalWidth, petalHeight) * 1.5
+    }
+
+    /// The offset needed to position the petal so it starts at centerOffset from the flower center
+    /// and extends outward by `length` pixels.
+    /// The petal shape draws from frame bottom (petal base) to frame bottom - length (petal tip).
+    /// We want: petal base at centerOffset from center, petal tip at centerOffset + length from center.
+    /// Frame is centered in ZStack, so we offset by: -(centerOffset + length/2)
+    private var petalOffset: CGFloat {
+        -(centerOffset + length / 2)
     }
     
     var body: some View {
-        // IMPORTANT: keep the interactive region aligned with the petal's visible bounds.
-        // Apply contentShape + rotation at this level and do NOT use a large container frame.
         ZStack {
             ZStack {
                 // Glow effect for hover/selected
@@ -330,20 +340,27 @@ struct RadialPetalView: View {
                         lineWidth: isSelected ? 2.5 : 1.5
                     )
             }
-            .frame(width: width * 2, height: petalHeight)
-            .onTapGesture {
-                logger.debug("Bouquet petal tapped: \(category.categoryName) (\(category.id)) angle=\(angle) length=\(length) width=\(width)")
-                NSLog("BOUQUET_TAP: category=\(category.categoryName) id=\(category.id) angle=\(angle) length=\(length) width=\(width)")
+            .frame(width: width * 2, height: totalPetalHeight)
+            .offset(y: petalOffset)
 
-                onTap?()
-            }
+            // Hit-test overlay: separate from the offset+rotated drawing to keep taps reliable on macOS.
+            // IMPORTANT: use a near-transparent fill (not Color.clear) so it receives events.
+            Rectangle()
+                .fill(Color.black.opacity(0.001))
+                .frame(width: width * 2, height: totalPetalHeight)
+                .offset(y: petalOffset)
+                .contentShape(
+                    PetalShape(width: width, length: length)
+                        .rotation(.degrees(angle))
+                )
+                .modifier(_RotationEffect(angle: .degrees(angle), anchor: .center).ignoredByLayout())
+                .onTapGesture {
+                    logger.debug("Bouquet petal tapped: \(category.categoryName) (\(category.id)) angle=\(angle) length=\(length) width=\(width)")
+                    NSLog("BOUQUET_TAP: category=\(category.categoryName) id=\(category.id) angle=\(angle) length=\(length) width=\(width)")
+                    onTap?()
+                }
         }
-        // Hit-test using a shape that matches the petal's visual rotation.
-        // IMPORTANT: contentShape must be applied before positioning in the parent.
-        .contentShape(
-            PetalShape(width: width, length: length)
-                .rotation(.degrees(angle))
-        )
+        .frame(width: frameSize, height: frameSize)
         .modifier(_RotationEffect(angle: .degrees(angle), anchor: .center).ignoredByLayout())
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)
