@@ -346,11 +346,13 @@ struct RadialPetalView: View {
             // Hit-test overlay: use the actual PetalShape as a (near-transparent) view.
             // This makes the clickable region match the petal pixels, avoiding the need to "hunt"
             // for the correct tap point.
+            // NOTE: Do NOT apply rotation here — the outer container already rotates the entire
+            // RadialPetalView via _RotationEffect. Applying rotation twice causes hit regions
+            // to land in the wrong place for most petals.
             PetalShape(width: width, length: length)
                 .fill(Color.black.opacity(0.001))
                 .frame(width: width * 2, height: totalPetalHeight)
                 .offset(y: petalOffset)
-                .modifier(_RotationEffect(angle: .degrees(angle), anchor: .center).ignoredByLayout())
                 .onTapGesture {
                     logger.debug("Bouquet petal tapped: \(category.categoryName) (\(category.id)) angle=\(angle) length=\(length) width=\(width)")
                     NSLog("BOUQUET_TAP: category=\(category.categoryName) id=\(category.id) angle=\(angle) length=\(length) width=\(width)")
