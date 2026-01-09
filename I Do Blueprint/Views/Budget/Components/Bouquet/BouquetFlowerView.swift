@@ -9,6 +9,7 @@
 //
 
 import SwiftUI
+import Foundation
 
 // MARK: - Debug
 
@@ -346,6 +347,7 @@ struct RadialPetalView: View {
             .offset(y: petalOffset)
             .onTapGesture {
                 logger.debug("Bouquet petal tapped: \(category.categoryName) (\(category.id)) angle=\(angle) length=\(length) width=\(width)")
+                NSLog("BOUQUET_TAP: category=\(category.categoryName) id=\(category.id) angle=\(angle) length=\(length) width=\(width)")
 
                 onTap?()
             }
