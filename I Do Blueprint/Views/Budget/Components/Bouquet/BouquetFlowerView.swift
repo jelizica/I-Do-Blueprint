@@ -115,7 +115,7 @@ struct BouquetFlowerView: View {
                 ForEach(Array(sortedCategories.enumerated()), id: \.element.id) { index, category in
                     let length = petalLength(for: category, maxLength: maxLength)
                     let angle = petalAngle(at: index, total: sortedCategories.count)
-                    
+
                     RadialPetalView(
                         category: category,
                         length: length,
@@ -127,11 +127,14 @@ struct BouquetFlowerView: View {
                         animate: animateFlower,
                         animationDelay: Double(index) * 0.05,
                         onTap: {
-                            // Clicking navigates to category detail page
                             onPetalTap?(category)
                         },
                         onHoverChanged: nil
                     )
+                    // IMPORTANT: position petals by offsetting them from the flower center,
+                    // rather than drawing inside a huge frame and offsetting internally.
+                    // This keeps the hit-test region aligned with the visible content.
+                    .offset(y: -((centerHubRadius + 5) + length / 2))
                     .position(center)
                 }
                 
@@ -271,32 +274,16 @@ struct RadialPetalView: View {
         category.color.darkened(by: 0.3)
     }
     
-    /// The total height needed for the petal including offset from center
-    private var totalPetalHeight: CGFloat {
+    /// The height needed for the petal body itself.
+    /// NOTE: radial offset from the flower center is applied by the parent (BouquetFlowerView)
+    /// to avoid macOS SwiftUI hit-testing issues when mixing large frames + internal offsets.
+    private var petalHeight: CGFloat {
         length + centerOffset
     }
     
-    /// Frame size large enough to contain the rotated petal
-    /// When rotated, the bounding box needs to be the diagonal of the original
-    private var frameSize: CGFloat {
-        // Use the diagonal of the petal's bounding box to ensure it fits when rotated
-        let petalWidth = width * 2
-        let petalHeight = totalPetalHeight
-        return max(petalWidth, petalHeight) * 1.5
-    }
-    
-    /// The offset needed to position the petal so it starts at centerOffset from the flower center
-    /// and extends outward by `length` pixels.
-    /// The petal shape draws from frame bottom (petal base) to frame bottom - length (petal tip).
-    /// We want: petal base at centerOffset from center, petal tip at centerOffset + length from center.
-    /// Frame is centered in ZStack, so we offset by: -(centerOffset + length/2)
-    private var petalOffset: CGFloat {
-        -(centerOffset + length / 2)
-    }
-    
     var body: some View {
-        // IMPORTANT: make the *offset petal drawing* be the interactive element.
-        // Use onTapGesture instead of Button for more predictable hit-testing on macOS when rotated.
+        // IMPORTANT: keep the interactive region aligned with the petal's visible bounds.
+        // Apply contentShape + rotation at this level and do NOT use a large container frame.
         ZStack {
             ZStack {
                 // Glow effect for hover/selected
@@ -343,8 +330,7 @@ struct RadialPetalView: View {
                         lineWidth: isSelected ? 2.5 : 1.5
                     )
             }
-            .frame(width: width * 2, height: totalPetalHeight)
-            .offset(y: petalOffset)
+            .frame(width: width * 2, height: petalHeight)
             .onTapGesture {
                 logger.debug("Bouquet petal tapped: \(category.categoryName) (\(category.id)) angle=\(angle) length=\(length) width=\(width)")
                 NSLog("BOUQUET_TAP: category=\(category.categoryName) id=\(category.id) angle=\(angle) length=\(length) width=\(width)")
@@ -352,19 +338,12 @@ struct RadialPetalView: View {
                 onTap?()
             }
         }
-        .frame(width: frameSize, height: frameSize)
         // Hit-test using a shape that matches the petal's visual rotation.
-        // On macOS, hit-testing can be evaluated against pre-rotation geometry unless
-        // the contentShape encodes the rotation.
+        // IMPORTANT: contentShape must be applied before positioning in the parent.
         .contentShape(
             PetalShape(width: width, length: length)
                 .rotation(.degrees(angle))
         )
-        // CRITICAL FIX: Use _RotationEffect with ignoredByLayout() instead of .rotationEffect()
-        // Regular .rotationEffect() affects how GeometryProxy converts frames between coordinate spaces,
-        // causing hit-testing misalignment. _RotationEffect().ignoredByLayout() applies visual rotation
-        // WITHOUT affecting coordinate space calculations, keeping hit-test areas aligned with visuals.
-        // Reference: harshil.net article on rotationEffect and GeometryProxy
         .modifier(_RotationEffect(angle: .degrees(angle), anchor: .center).ignoredByLayout())
         .scaleEffect(isHovered ? 1.08 : (isSelected ? 1.05 : 1.0))
         .scaleEffect(animate ? 1.0 : 0.0)
