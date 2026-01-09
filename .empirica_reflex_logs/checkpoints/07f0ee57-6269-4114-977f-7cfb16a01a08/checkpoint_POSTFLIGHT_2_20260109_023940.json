@@ -1,0 +1,401 @@
+{
+  "session_id": "07f0ee57-6269-4114-977f-7cfb16a01a08",
+  "phase": "POSTFLIGHT",
+  "round": 2,
+  "timestamp": "2026-01-09T02:39:39.652523+00:00",
+  "vectors": {
+    "know": 0.95,
+    "do": 0.9,
+    "context": 0.95,
+    "clarity": 0.95,
+    "coherence": 0.9,
+    "signal": 0.95,
+    "density": 0.85,
+    "state": 0.95,
+    "change": 0.9,
+    "completion": 1.0,
+    "impact": 0.95,
+    "engagement": 0.95,
+    "uncertainty": 0.1
+  },
+  "overall_confidence": 0.933,
+  "meta": {
+    "reasoning": "",
+    "task_summary": "Task completed",
+    "postflight_confidence": 0.9,
+    "calibration_accuracy": "good",
+    "deltas": {
+      "know": 0.4,
+      "do": 0.3,
+      "context": 0.4,
+      "clarity": 0.35,
+      "coherence": 0.3,
+      "signal": 0.4,
+      "density": 0.3,
+      "state": 0.55,
+      "change": 0.65,
+      "completion": 0.8,
+      "impact": 0.35,
+      "engagement": 0.2,
+      "uncertainty": -0.35
+    },
+    "calibration_issues": [],
+    "git_commit_sha": "e2275adfefa9aac136d49c828cacaa13070955d2",
+    "git_notes_ref": "empirica/session/07f0ee57-6269-4114-977f-7cfb16a01a08/POSTFLIGHT/2"
+  },
+  "epistemic_tags": {},
+  "git_state": {
+    "head_commit": "fd0ae945a27140128a32df5949de05553c0aa77e",
+    "commits_since_last_checkpoint": [
+      {
+        "sha": "fd0ae945a27140128a32df5949de05553c0aa77e",
+        "message": "fix: use standard rotationEffect for petal hit testing",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T18:20:31-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "2f5a0130811063535c490c96cd854656ecedd811",
+        "message": "fix: attach tap gesture to visual petal layer for reliable hit testing",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T18:16:45-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "58747d5a753a244913ba373abc57149f4844f144",
+        "message": "fix: remove double rotation from petal hit overlay",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T18:12:47-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "bc1a85534b2b5c3d6f38930a6d3e29748235b172",
+        "message": "fix: make bouquet petal hit areas match petal shape",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T18:06:33-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/BudgetBouquetViewV1.swift",
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "6aaeaa792be47c5637b4069d5f9d9dc784d2688e",
+        "message": "fix: correct bouquet petal tap angle mapping",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T17:59:03-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "d96eebbe7077b7fc498e2665a3df10f4ce7ea93a",
+        "message": "fix: restore bouquet petal layout while preserving reliable taps",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T17:46:46-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "d33e400d9b93b8fc6e4de65a678874a33bf8bb43",
+        "message": "fix: align bouquet petal hit testing with rendered bounds",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T17:35:30-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "8996ac507bc17e2919d701e63072455adc30a40d",
+        "message": "chore: add bouquet container tap diagnostic",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T17:26:56-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/BudgetBouquetViewV1.swift"
+        ]
+      },
+      {
+        "sha": "8dca55b04175d8b45ba24d8df84f3d12bf1ee2ba",
+        "message": "chore: add NSLog bouquet tap instrumentation",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T17:05:19-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "42b1c111ee3c5bee2a6e7c6171ad1a0a7fd188ed",
+        "message": "chore: add bouquet tap debug logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:55:30-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "269b8e6fc7ced3b79c28c797950d9f3cffc3a6e5",
+        "message": "chore: update local vector index",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:40:15-08:00",
+        "files_changed": [
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+        ]
+      },
+      {
+        "sha": "6e1f79e701a0bc191177a6fa873e8091791baf9c",
+        "message": "chore: empirica logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:40:13-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db"
+        ]
+      },
+      {
+        "sha": "c8bd37d8dbbbdfe24b0ecd744647db265f15a3fc",
+        "message": "fix: rotate bouquet petal hit areas",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:40:05-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "9dddda85ff6f8aa55b1d36f38a15be7cf197bfb6",
+        "message": "chore: update local vector index",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:36:30-08:00",
+        "files_changed": [
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+        ]
+      },
+      {
+        "sha": "c6bae0e7e421833d532e34a7e98e275f80c137f8",
+        "message": "chore: empirica logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:36:28-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db"
+        ]
+      },
+      {
+        "sha": "927451f7db39eec5f2028fd278de2d0165e38c9e",
+        "message": "fix: remove hover and use tap gesture for bouquet petals",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:36:15-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "80cdc9380cd58d07efb4903f43d1ceb3aa0d8c58",
+        "message": "chore: update local vector index",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:31:00-08:00",
+        "files_changed": [
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+        ]
+      },
+      {
+        "sha": "746e81735489797b310f7ec98b52737d10086a1b",
+        "message": "chore: empirica logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:30:58-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db"
+        ]
+      },
+      {
+        "sha": "aa5d1a7271c95220654e38068665311159515616",
+        "message": "fix: align petal hit testing with rendered offset",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:30:47-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "a0abc451ec41ac3c1894cfddbe81534a47a35613",
+        "message": "chore: update local vector index",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:24:18-08:00",
+        "files_changed": [
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+        ]
+      },
+      {
+        "sha": "d77f1a3f8f807048bc7b07b83910193918288cc1",
+        "message": "chore: empirica logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:24:16-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db"
+        ]
+      },
+      {
+        "sha": "2774d6c542db5c34a6f60b7c169c5da14a7c0204",
+        "message": "fix: prevent bouquet decorative layers from intercepting clicks",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:24:07-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "cbda11e6cfdcbd43f24b4df0e36697f7c202ae27",
+        "message": "chore: update local vector index",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:15:04-08:00",
+        "files_changed": [
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+        ]
+      },
+      {
+        "sha": "fa8746c20a85ba7256e96a05ed009a1e6f502bf7",
+        "message": "chore: empirica logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:14:56-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db"
+        ]
+      },
+      {
+        "sha": "b2e12eea63fe16e818bccf4ce2f88165faf76e86",
+        "message": "fix: allow petal clicks through bouquet hub",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:14:38-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "f99bb59bec0638f29014455a86ffc69820bddf23",
+        "message": "fix: make bouquet petals clickable buttons",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T16:08:24-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "edc491e47fc0cd9f2182b1e50fd1957b25d7bf43",
+        "message": "fix: restore bouquet petal click handler",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T15:56:29-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      },
+      {
+        "sha": "82ac56500c68074b5ced22a1f74d725783039bc5",
+        "message": "chore: update local vector index",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T15:39:26-08:00",
+        "files_changed": [
+          ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+        ]
+      },
+      {
+        "sha": "16659ae10f6bdd371a030bb135e292a51aaa0047",
+        "message": "chore: empirica logs",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T15:39:14-08:00",
+        "files_changed": [
+          ".empirica/sessions/sessions.db",
+          ".empirica_reflex_logs/checkpoints/07f0ee57-6269-4114-977f-7cfb16a01a08/checkpoint_POSTFLIGHT_1_20260108_233209.json"
+        ]
+      },
+      {
+        "sha": "ee623cf0908d0adab5e01e94467a6a517b9dfa8f",
+        "message": "fix: improve bouquet petal click hit testing",
+        "author": "Jessica Clark",
+        "timestamp": "2026-01-08T15:38:54-08:00",
+        "files_changed": [
+          "I Do Blueprint/Views/Budget/Components/Bouquet/BouquetFlowerView.swift"
+        ]
+      }
+    ],
+    "uncommitted_changes": {
+      "files_modified": [
+        ".empirica/sessions/sessions.db",
+        ".qdrant_data/collection/project_e9b8120c-74d3-43ec-8881-0ed5a5bf3356_memory/storage.sqlite"
+      ],
+      "files_added": [],
+      "files_deleted": [],
+      "diff_stat": ".empirica/sessions/sessions.db                     | Bin 2072576 -> 2084864 bytes\n .../storage.sqlite                                 | Bin 6537216 -> 6553600 bytes\n 2 files changed, 0 insertions(+), 0 deletions(-)"
+    }
+  },
+  "learning_delta": {
+    "know": {
+      "prev": 0.78,
+      "curr": 0.95,
+      "delta": 0.17
+    },
+    "do": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "context": {
+      "prev": 0.75,
+      "curr": 0.95,
+      "delta": 0.2
+    },
+    "clarity": {
+      "prev": 0.8,
+      "curr": 0.95,
+      "delta": 0.15
+    },
+    "coherence": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "signal": {
+      "prev": 0.75,
+      "curr": 0.95,
+      "delta": 0.2
+    },
+    "density": {
+      "prev": 0.75,
+      "curr": 0.85,
+      "delta": 0.1
+    },
+    "state": {
+      "prev": 0.9,
+      "curr": 0.95,
+      "delta": 0.05
+    },
+    "change": {
+      "prev": 0.8,
+      "curr": 0.9,
+      "delta": 0.1
+    },
+    "completion": {
+      "prev": 0.9,
+      "curr": 1.0,
+      "delta": 0.1
+    },
+    "impact": {
+      "prev": 0.75,
+      "curr": 0.95,
+      "delta": 0.2
+    },
+    "engagement": {
+      "prev": 0.75,
+      "curr": 0.95,
+      "delta": 0.2
+    },
+    "uncertainty": {
+      "prev": 0.25,
+      "curr": 0.1,
+      "delta": -0.15
+    }
+  },
+  "token_count": 949
+}

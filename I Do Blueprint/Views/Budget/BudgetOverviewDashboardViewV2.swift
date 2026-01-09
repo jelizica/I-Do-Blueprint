@@ -45,12 +45,16 @@ struct BudgetOverviewDashboardViewV2: View {
 
     // View toggle state
     @State private var viewMode: ViewMode = .cards
+    
+    // Bouquet data provider
+    @StateObject private var bouquetDataProvider = BouquetDataProvider()
 
     private let logger = AppLogger.ui
 
     enum ViewMode {
         case cards
         case table
+        case bouquet
     }
 
     var body: some View {
@@ -258,6 +262,7 @@ struct BudgetOverviewDashboardViewV2: View {
             budgetItems: budgetItems,
             expandedFolderIds: $expandedFolderIds,
             viewMode: viewMode,
+            bouquetDataProvider: bouquetDataProvider,
             onEditExpense: handleEditExpense,
             onRemoveExpense: handleUnlinkExpense,
             onEditGift: handleEditGift,
@@ -320,7 +325,10 @@ struct BudgetOverviewDashboardViewV2: View {
 
     private func loadBudgetItems() async {
         budgetItems = await budgetStore.development.loadBudgetDevelopmentItemsWithSpentAmounts(scenarioId: selectedScenarioId)
-            }
+        
+        // Load data into bouquet provider
+        bouquetDataProvider.loadData(from: budgetItems)
+    }
 
     // MARK: - Search and Filtering
 

@@ -13,6 +13,7 @@ struct BudgetOverviewItemsSection: View {
     let budgetItems: [BudgetOverviewItem]
     @Binding var expandedFolderIds: Set<String>
     let viewMode: BudgetOverviewDashboardViewV2.ViewMode
+    @ObservedObject var bouquetDataProvider: BouquetDataProvider
     let onEditExpense: (String, String) -> Void
     let onRemoveExpense: (String, String) async -> Void
     let onEditGift: (String, String) -> Void
@@ -136,6 +137,8 @@ struct BudgetOverviewItemsSection: View {
                     cardsView
                 case .table:
                     tableView
+                case .bouquet:
+                    bouquetView
                 }
             }
         }
@@ -235,6 +238,23 @@ struct BudgetOverviewItemsSection: View {
         } else {
             regularTableView
         }
+    }
+    
+    // MARK: - Bouquet View
+    
+    @State private var hoveredCategoryId: String?
+    @State private var selectedCategoryId: String?
+    
+    private var bouquetView: some View {
+        BouquetFlowerView(
+            categories: bouquetDataProvider.categories,
+            totalBudget: bouquetDataProvider.totalBudgeted,
+            hoveredCategoryId: $hoveredCategoryId,
+            selectedCategoryId: $selectedCategoryId,
+            animateFlower: true,
+            onPetalTap: nil
+        )
+        .frame(maxWidth: .infinity, minHeight: 600)
     }
     
     // MARK: - Compact Table View (Expandable Rows)

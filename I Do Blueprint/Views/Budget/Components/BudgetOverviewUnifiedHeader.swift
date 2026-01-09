@@ -109,6 +109,15 @@ struct BudgetOverviewUnifiedHeader: View {
                             Image(systemName: "checkmark")
                         }
                     }
+                    
+                    Button {
+                        viewMode = .bouquet
+                    } label: {
+                        Label("Bouquet", systemImage: "leaf.fill")
+                        if viewMode == .bouquet {
+                            Image(systemName: "checkmark")
+                        }
+                    }
                 }
             }
         } label: {
@@ -265,9 +274,11 @@ struct BudgetOverviewUnifiedHeader: View {
                     .tag(BudgetOverviewDashboardViewV2.ViewMode.cards)
                 Image(systemName: "list.bullet")
                     .tag(BudgetOverviewDashboardViewV2.ViewMode.table)
+                Image(systemName: "leaf.fill")
+                    .tag(BudgetOverviewDashboardViewV2.ViewMode.bouquet)
             }
             .pickerStyle(.segmented)
-            .frame(width: 100)
+            .frame(width: 150)
         }
     }
     
