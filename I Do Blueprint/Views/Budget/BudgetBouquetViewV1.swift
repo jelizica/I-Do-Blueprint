@@ -337,9 +337,6 @@ struct BudgetBouquetViewV1: View {
         .padding(Spacing.lg)
         .background(SemanticColors.backgroundSecondary)
         .cornerRadius(CornerRadius.lg)
-        .onTapGesture {
-            print("BOUQUET_CONTAINER_TAP")
-        }
     }
 
     // MARK: - Legend Section
