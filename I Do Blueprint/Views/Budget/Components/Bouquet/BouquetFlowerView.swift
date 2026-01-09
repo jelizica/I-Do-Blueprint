@@ -340,13 +340,18 @@ struct RadialPetalView: View {
             }
             .frame(width: width * 2, height: totalPetalHeight)
             .offset(y: petalOffset)
-            // Hit-test exactly the petal shape in its own coordinates.
-            .contentShape(PetalShape(width: width, length: length))
             .onTapGesture {
                 onTap?()
             }
         }
         .frame(width: frameSize, height: frameSize)
+        // Hit-test using a shape that matches the petal's visual rotation.
+        // On macOS, hit-testing can be evaluated against pre-rotation geometry unless
+        // the contentShape encodes the rotation.
+        .contentShape(
+            PetalShape(width: width, length: length)
+                .rotation(.degrees(angle))
+        )
         // CRITICAL FIX: Use _RotationEffect with ignoredByLayout() instead of .rotationEffect()
         // Regular .rotationEffect() affects how GeometryProxy converts frames between coordinate spaces,
         // causing hit-testing misalignment. _RotationEffect().ignoredByLayout() applies visual rotation
