@@ -117,7 +117,7 @@ struct BouquetFlowerView: View {
                         width: length * petalWidthRatio,
                         angle: angle,
                         centerOffset: centerHubRadius + 5,
-                        isHovered: hoveredCategoryId == category.id,
+                        isHovered: false,
                         isSelected: selectedCategoryId == category.id,
                         animate: animateFlower,
                         animationDelay: Double(index) * 0.05,
@@ -125,15 +125,7 @@ struct BouquetFlowerView: View {
                             // Clicking navigates to category detail page
                             onPetalTap?(category)
                         },
-                        onHoverChanged: { hovering in
-                            // IMPORTANT: Do not couple hover to selection.
-                            // On macOS, SwiftUI hover tracking can be frame-based (even when contentShape is set),
-                            // which causes incorrect "selected" details when petals overlap.
-                            // Selection for details is click-only; hover is visual-only.
-                            withAnimation(.easeInOut(duration: 0.15)) {
-                                hoveredCategoryId = hovering ? category.id : nil
-                            }
-                        }
+                        onHoverChanged: nil
                     )
                     .position(center)
                 }
@@ -259,7 +251,7 @@ struct RadialPetalView: View {
 
     /// Callback when petal is tapped
     var onTap: (() -> Void)?
-    /// Callback when hover state changes
+    /// Callback when hover state changes (disabled; hover was interfering with hit testing)
     var onHoverChanged: ((Bool) -> Void)?
     
     private var progressRatio: CGFloat {
@@ -299,67 +291,62 @@ struct RadialPetalView: View {
     
     var body: some View {
         // IMPORTANT: make the *offset petal drawing* be the interactive element.
-        // This ensures hit-testing follows the same transform chain as what’s rendered.
+        // Use onTapGesture instead of Button for more predictable hit-testing on macOS when rotated.
         ZStack {
-            Button {
-                onTap?()
-            } label: {
-                ZStack {
-                    // Glow effect for hover/selected
-                    if isHovered || isSelected {
-                        petalShape
-                            .fill(statusColor.opacity(0.4))
-                            .blur(radius: 10)
-                            .scaleEffect(1.15)
-                    }
-
-                    // Background petal (lighter color)
+            ZStack {
+                // Glow effect for hover/selected
+                if isHovered || isSelected {
                     petalShape
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    baseColor.opacity(0.5),
-                                    baseColor.opacity(0.3)
-                                ],
-                                startPoint: .bottom,
-                                endPoint: .top
-                            )
-                        )
-
-                    // Progress fill (darker color, clipped to progress)
-                    petalShape
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    fillColor,
-                                    fillColor.opacity(0.8)
-                                ],
-                                startPoint: .bottom,
-                                endPoint: .top
-                            )
-                        )
-                        .clipShape(
-                            ProgressClipShape(progress: progressRatio, petalLength: length)
-                        )
-
-                    // Petal outline
-                    petalShape
-                        .stroke(
-                            isSelected ? statusColor : baseColor.opacity(0.6),
-                            lineWidth: isSelected ? 2.5 : 1.5
-                        )
+                        .fill(statusColor.opacity(0.4))
+                        .blur(radius: 10)
+                        .scaleEffect(1.15)
                 }
-                .frame(width: width * 2, height: totalPetalHeight)
-                .offset(y: petalOffset)
+
+                // Background petal (lighter color)
+                petalShape
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                baseColor.opacity(0.5),
+                                baseColor.opacity(0.3)
+                            ],
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
+
+                // Progress fill (darker color, clipped to progress)
+                petalShape
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                fillColor,
+                                fillColor.opacity(0.8)
+                            ],
+                            startPoint: .bottom,
+                            endPoint: .top
+                        )
+                    )
+                    .clipShape(
+                        ProgressClipShape(progress: progressRatio, petalLength: length)
+                    )
+
+                // Petal outline
+                petalShape
+                    .stroke(
+                        isSelected ? statusColor : baseColor.opacity(0.6),
+                        lineWidth: isSelected ? 2.5 : 1.5
+                    )
             }
-            .buttonStyle(.plain)
+            .frame(width: width * 2, height: totalPetalHeight)
+            .offset(y: petalOffset)
             // Hit-test exactly the petal shape in its own coordinates.
-            .contentShape(.interaction, PetalShape(width: width, length: length))
+            .contentShape(PetalShape(width: width, length: length))
+            .onTapGesture {
+                onTap?()
+            }
         }
         .frame(width: frameSize, height: frameSize)
-        .onHover { hovering in
-            onHoverChanged?(hovering)
-        }
         // CRITICAL FIX: Use _RotationEffect with ignoredByLayout() instead of .rotationEffect()
         // Regular .rotationEffect() affects how GeometryProxy converts frames between coordinate spaces,
         // causing hit-testing misalignment. _RotationEffect().ignoredByLayout() applies visual rotation
