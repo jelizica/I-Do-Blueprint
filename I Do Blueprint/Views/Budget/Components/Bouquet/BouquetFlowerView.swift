@@ -103,6 +103,8 @@ struct BouquetFlowerView: View {
                     containerHeight: geometry.size.height,
                     animate: animateFlower
                 )
+                // Decorative elements are visual-only; do not intercept clicks meant for petals.
+                .allowsHitTesting(false)
                 
                 // Petals - all in a single layer around the center
                 ForEach(Array(sortedCategories.enumerated()), id: \.element.id) { index, category in
