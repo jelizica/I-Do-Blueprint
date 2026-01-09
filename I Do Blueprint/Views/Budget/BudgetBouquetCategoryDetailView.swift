@@ -73,6 +73,9 @@ struct BudgetBouquetCategoryDetailView: View {
     /// Binding to navigate back
     var currentPage: Binding<BudgetPage>
 
+    /// Optional scenario ID override - if provided, uses this instead of budgetStore.primaryScenario
+    var scenarioId: String?
+
     /// Callback when a different category is selected
     var onCategorySelected: ((BouquetCategoryData) -> Void)?
 
@@ -88,8 +91,12 @@ struct BudgetBouquetCategoryDetailView: View {
 
     // MARK: - Computed Properties
 
-    private var primaryScenarioId: String? {
-        budgetStore.primaryScenario?.id.uuidString
+    /// Returns the scenario ID to use - prefers the passed scenarioId, falls back to store's primaryScenario
+    private var effectiveScenarioId: String? {
+        if let scenarioId = scenarioId, !scenarioId.isEmpty {
+            return scenarioId
+        }
+        return budgetStore.primaryScenario?.id.uuidString
     }
 
     // MARK: - Body
@@ -677,7 +684,7 @@ struct BudgetBouquetCategoryDetailView: View {
     private func loadItems() async {
         isLoading = true
 
-        guard let scenarioId = primaryScenarioId else {
+        guard let scenarioId = effectiveScenarioId else {
             isLoading = false
             return
         }

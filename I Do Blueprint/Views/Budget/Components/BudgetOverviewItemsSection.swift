@@ -14,6 +14,8 @@ struct BudgetOverviewItemsSection: View {
     @Binding var expandedFolderIds: Set<String>
     let viewMode: BudgetOverviewDashboardViewV2.ViewMode
     @ObservedObject var bouquetDataProvider: BouquetDataProvider
+    /// Scenario ID for loading category detail items
+    let scenarioId: String
     let onEditExpense: (String, String) -> Void
     let onRemoveExpense: (String, String) async -> Void
     let onEditGift: (String, String) -> Void
@@ -242,19 +244,43 @@ struct BudgetOverviewItemsSection: View {
     
     // MARK: - Bouquet View
     
-    @State private var hoveredCategoryId: String?
-    @State private var selectedCategoryId: String?
+    /// Category selected for detail view navigation
+    @State private var selectedCategoryForDetail: BouquetCategoryData?
     
     private var bouquetView: some View {
-        BouquetFlowerView(
-            categories: bouquetDataProvider.categories,
-            totalBudget: bouquetDataProvider.totalBudgeted,
-            hoveredCategoryId: $hoveredCategoryId,
-            selectedCategoryId: $selectedCategoryId,
-            animateFlower: true,
-            onPetalTap: nil
-        )
-        .frame(maxWidth: .infinity, minHeight: 600)
+        Group {
+            // Show category detail view if a category is selected
+            if let category = selectedCategoryForDetail {
+                BudgetBouquetCategoryDetailView(
+                    category: category,
+                    allCategories: bouquetDataProvider.categories,
+                    currentPage: .constant(.budgetOverview),
+                    scenarioId: scenarioId,
+                    onCategorySelected: { newCategory in
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedCategoryForDetail = newCategory
+                        }
+                    },
+                    onBackToBouquet: {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedCategoryForDetail = nil
+                        }
+                    }
+                )
+            } else {
+                // Show main bouquet content using reusable component
+                BouquetContentView(
+                    dataProvider: bouquetDataProvider,
+                    windowSize: windowSize,
+                    onPetalTap: { category in
+                        // Navigate to category detail view
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            selectedCategoryForDetail = category
+                        }
+                    }
+                )
+            }
+        }
     }
     
     // MARK: - Compact Table View (Expandable Rows)

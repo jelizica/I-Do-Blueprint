@@ -263,6 +263,7 @@ struct BudgetOverviewDashboardViewV2: View {
             expandedFolderIds: $expandedFolderIds,
             viewMode: viewMode,
             bouquetDataProvider: bouquetDataProvider,
+            scenarioId: selectedScenarioId,
             onEditExpense: handleEditExpense,
             onRemoveExpense: handleUnlinkExpense,
             onEditGift: handleEditGift,
