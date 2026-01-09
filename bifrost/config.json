@@ -1,0 +1,115 @@
+{
+  "mcp": {
+    "tool_manager_config": {
+      "code_mode_binding_level": "server"
+    },
+    "client_configs": [
+      {
+        "name": "exa",
+        "connection_type": "http",
+        "connection_string": "https://mcp.exa.ai/mcp?tools=web_search_exa,get_code_context_exa,crawling_exa,company_research_exa,linkedin_search_exa,deep_researcher_start,deep_researcher_check",
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "swiftzilla",
+        "connection_type": "sse",
+        "connection_string": "https://swiftzilla.dev/mcp/sse",
+        "headers": {
+          "Authorization": "env.SWIFTZILLA_AUTH"
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "adr_analysis",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "npx",
+          "args": ["-y", "mcp-adr-analysis-server"],
+          "envs": ["HOME", "PATH", "ADR_DIRECTORY", "LOG_LEVEL", "OPENROUTER_API_KEY", "PROJECT_PATH"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "basic_memory",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "uvx",
+          "args": ["basic-memory", "mcp"],
+          "envs": ["HOME", "PATH"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "reddit",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "npx",
+          "args": ["-y", "reddit-mcp-buddy"],
+          "envs": ["HOME", "PATH"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "beads",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "uvx",
+          "args": ["beads-mcp"],
+          "envs": ["HOME", "PATH"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "greb_mcp",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "greb-mcp",
+          "envs": ["HOME", "PATH", "GREB_API_KEY"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "supabase",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "npx",
+          "args": ["-y", "mcp-remote", "https://mcp.supabase.com/mcp?project_ref=pcmasfomyhqapaaaxzby"],
+          "envs": ["HOME", "PATH", "SUPABASE_ACCESS_TOKEN"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "narsil_mcp",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "narsil-mcp",
+          "args": [
+            "--repos", "/workspace",
+            "--git", "--call-graph", "--lsp"
+          ],
+          "envs": ["HOME", "PATH", "NARSIL_ENABLED_CATEGORIES", "NARSIL_DISABLED_TOOLS"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      },
+      {
+        "name": "empirica_mcp",
+        "connection_type": "stdio",
+        "stdio_config": {
+          "command": "empirica-mcp",
+          "envs": ["HOME", "PATH"]
+        },
+        "tools_to_execute": ["*"],
+        "is_code_mode_client": true
+      }
+    ]
+  }
+}
