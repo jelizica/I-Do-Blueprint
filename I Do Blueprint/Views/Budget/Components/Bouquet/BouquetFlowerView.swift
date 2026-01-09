@@ -298,73 +298,65 @@ struct RadialPetalView: View {
     }
     
     var body: some View {
-        Button {
-            onTap?()
-        } label: {
-            // Use a square frame large enough to contain the petal at any rotation
-            ZStack {
-                // Glow effect for hover/selected
-                if isHovered || isSelected {
+        // IMPORTANT: make the *offset petal drawing* be the interactive element.
+        // This ensures hit-testing follows the same transform chain as what’s rendered.
+        ZStack {
+            Button {
+                onTap?()
+            } label: {
+                ZStack {
+                    // Glow effect for hover/selected
+                    if isHovered || isSelected {
+                        petalShape
+                            .fill(statusColor.opacity(0.4))
+                            .blur(radius: 10)
+                            .scaleEffect(1.15)
+                    }
+
+                    // Background petal (lighter color)
                     petalShape
-                        .fill(statusColor.opacity(0.4))
-                        .blur(radius: 10)
-                        .scaleEffect(1.15)
-                        .frame(width: width * 2, height: totalPetalHeight)
-                        .offset(y: petalOffset)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    baseColor.opacity(0.5),
+                                    baseColor.opacity(0.3)
+                                ],
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                        )
+
+                    // Progress fill (darker color, clipped to progress)
+                    petalShape
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    fillColor,
+                                    fillColor.opacity(0.8)
+                                ],
+                                startPoint: .bottom,
+                                endPoint: .top
+                            )
+                        )
+                        .clipShape(
+                            ProgressClipShape(progress: progressRatio, petalLength: length)
+                        )
+
+                    // Petal outline
+                    petalShape
+                        .stroke(
+                            isSelected ? statusColor : baseColor.opacity(0.6),
+                            lineWidth: isSelected ? 2.5 : 1.5
+                        )
                 }
-
-                // Background petal (lighter color)
-                petalShape
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                baseColor.opacity(0.5),
-                                baseColor.opacity(0.3)
-                            ],
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                    )
-                    .frame(width: width * 2, height: totalPetalHeight)
-                    .offset(y: petalOffset)
-
-                // Progress fill (darker color, clipped to progress)
-                petalShape
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                fillColor,
-                                fillColor.opacity(0.8)
-                            ],
-                            startPoint: .bottom,
-                            endPoint: .top
-                        )
-                    )
-                    .clipShape(
-                        ProgressClipShape(progress: progressRatio, petalLength: length)
-                    )
-                    .frame(width: width * 2, height: totalPetalHeight)
-                    .offset(y: petalOffset)
-
-                // Petal outline
-                petalShape
-                    .stroke(
-                        isSelected ? statusColor : baseColor.opacity(0.6),
-                        lineWidth: isSelected ? 2.5 : 1.5
-                    )
-                    .frame(width: width * 2, height: totalPetalHeight)
-                    .offset(y: petalOffset)
-
-                // Status indicator dots removed - redundant with legend
-            }
-            .frame(width: frameSize, height: frameSize)
-        }
-        .buttonStyle(.plain)
-        // Define hit-testing area to match the visible petal shape (not the large square frame)
-        .contentShape(
-            PetalShape(width: width, length: length)
+                .frame(width: width * 2, height: totalPetalHeight)
                 .offset(y: petalOffset)
-        )
+            }
+            .buttonStyle(.plain)
+            // Hit-test exactly the petal shape in its own coordinates.
+            .contentShape(.interaction, PetalShape(width: width, length: length))
+        }
+        .frame(width: frameSize, height: frameSize)
         .onHover { hovering in
             onHoverChanged?(hovering)
         }
