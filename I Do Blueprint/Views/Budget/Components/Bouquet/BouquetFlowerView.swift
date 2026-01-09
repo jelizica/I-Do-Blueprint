@@ -10,6 +10,10 @@
 
 import SwiftUI
 
+// MARK: - Debug
+
+private let logger = AppLogger.ui
+
 // MARK: - Main Flower View
 
 struct BouquetFlowerView: View {
@@ -341,6 +345,8 @@ struct RadialPetalView: View {
             .frame(width: width * 2, height: totalPetalHeight)
             .offset(y: petalOffset)
             .onTapGesture {
+                logger.debug("Bouquet petal tapped: \(category.categoryName) (\(category.id)) angle=\(angle) length=\(length) width=\(width)")
+
                 onTap?()
             }
         }
