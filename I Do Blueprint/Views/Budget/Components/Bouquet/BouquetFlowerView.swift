@@ -215,6 +215,8 @@ struct BouquetFlowerView: View {
             .padding(Spacing.sm)
         }
         .position(center)
+        // Allow clicks/drags to reach petals underneath; hub is informational only.
+        .allowsHitTesting(false)
         .scaleEffect(animateFlower ? 1.0 : 0.0)
         .animation(.spring(response: 0.5, dampingFraction: 0.6).delay(0.2), value: animateFlower)
     }
