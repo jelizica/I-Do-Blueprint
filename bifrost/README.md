@@ -3430,6 +3430,225 @@ mcp__llm-council__council_get_conversation(
 
 ---
 
+### exa-mcp
+
+> **AI-native web search using neural embeddings and next-link prediction**
+
+| | |
+|---|---|
+| **Repository** | [github.com/exa-labs/exa-mcp-server](https://github.com/exa-labs/exa-mcp-server) |
+| **GitHub Stars** | 3.5k+ |
+| **Type** | Remote MCP (HTTP) |
+| **License** | MIT |
+| **Tools** | 7 |
+| **Install** | None required (hosted) |
+
+**Why Exa?**
+
+| Feature | Exa | Tavily | Perplexity | Firecrawl |
+|---------|-----|--------|------------|-----------|
+| Neural/semantic search | **Yes (core)** | Keyword + AI | Yes | No (scraping) |
+| Code-specific search | **Yes (billions of repos)** | No | Limited | No |
+| Next-link prediction | **Yes (unique)** | No | No | No |
+| Livecrawl (real-time) | **Yes (preferred mode)** | Limited | No | Yes |
+| Deep research (agentic) | **Yes (multi-step)** | No | No | No |
+| LinkedIn search | **Yes** | No | No | No |
+| Company research | **Yes** | Basic | Yes | No |
+| Response latency | Fast (<400ms) to Deep | Fast | Medium | Slow |
+| Hosted MCP (no install) | **Yes** | No | No | No |
+| Pricing | $0.005/search | $0.01/search | Subscription | $0.001/page |
+
+**What Makes Exa Different:**
+
+Exa is fundamentally different from traditional search engines. Instead of keyword matching, it uses **embeddings-based "next-link prediction"** - trained on billions of web links to predict what page should come next given a query context. This means:
+
+1. **Semantic Understanding**: Queries like "best practices for SwiftUI MVVM" return conceptually relevant results, not just keyword matches
+2. **AI-Optimized Output**: Returns structured data designed for LLM consumption, not HTML pages
+3. **Code Intelligence**: Dedicated code search over GitHub repos, documentation, and StackOverflow
+4. **Real-time Data**: Livecrawl fetches fresh content, not stale cached pages
+
+**Available Tools:**
+
+| Tool | Description | Use Case |
+|------|-------------|----------|
+| `web_search_exa` | Neural web search with semantic understanding | General research, finding articles, tutorials |
+| `get_code_context_exa` | Code-specific search across billions of repos | API docs, code examples, library usage |
+| `deep_researcher_start` | Start async multi-step agentic research | Complex questions requiring synthesis |
+| `deep_researcher_check` | Poll research task status and get results | Retrieve deep research findings |
+| `company_research_exa` | Comprehensive company intelligence | Business research, competitor analysis |
+| `crawling_exa` | Extract full content from specific URLs | Read article content, scrape pages |
+| `linkedin_search_exa` | Search LinkedIn profiles and companies | Recruiting, professional networking research |
+
+**Search Types:**
+
+| Type | Latency | Description | Best For |
+|------|---------|-------------|----------|
+| `auto` | Variable | Combines keyword + neural intelligently | **Default - most queries** |
+| `neural` | ~500ms | Pure semantic/embedding search | Conceptual queries, research |
+| `fast` | <400ms | Prioritizes speed over depth | Quick lookups, simple facts |
+| `deep` | 15-120s | Comprehensive multi-step research | Complex analysis, synthesis |
+
+**Livecrawl Options:**
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `preferred` | Use live content when available | **Recommended default** |
+| `fallback` | Live only if cached unavailable | Balance freshness/speed |
+| `always` | Force live crawl every time | News, rapidly changing content |
+| `never` | Only cached content | Maximum speed, historical data |
+
+**When to Use:**
+
+| Scenario | Tool | Why |
+|----------|------|-----|
+| "How do I use SwiftUI NavigationStack?" | `get_code_context_exa` | Code-specific search with examples |
+| "Latest news about AI regulation" | `web_search_exa` (livecrawl: always) | Fresh content required |
+| "Research Company X's market position" | `company_research_exa` | Structured business intelligence |
+| "Compare microservices vs monolith" | `deep_researcher_start/check` | Complex multi-source synthesis |
+| "Find React developers in SF" | `linkedin_search_exa` | Professional profile search |
+| "Extract content from this URL" | `crawling_exa` | Full page content extraction |
+| General web search | `web_search_exa` (auto) | Semantic understanding of intent |
+
+**When NOT to Use (Use Alternatives):**
+
+| Scenario | Use Instead | Why |
+|----------|-------------|-----|
+| Apple/Swift official documentation | **Swiftzilla** | Direct Apple docs access |
+| Local codebase search | **narsil-mcp** or **greb-mcp** | Already indexed, faster |
+| Reddit discussions | **Reddit MCP** | Dedicated Reddit API |
+| Already have specific URL | `crawling_exa` or **Firecrawl** | Direct fetch is faster |
+| Need structured data extraction | **Firecrawl** | Better HTML-to-structured conversion |
+
+**Bifrost Configuration:**
+
+Exa MCP is a **remote HTTP server** - no local installation required:
+
+```json
+{
+  "mcpServers": {
+    "exa": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp"
+    }
+  }
+}
+```
+
+**Tool Selection (Optional):**
+
+Limit which tools are exposed by adding query parameters:
+
+```json
+{
+  "mcpServers": {
+    "exa": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,get_code_context_exa,crawling_exa"
+    }
+  }
+}
+```
+
+Available tool parameter values:
+- `web_search_exa`
+- `get_code_context_exa`
+- `deep_researcher_start`
+- `deep_researcher_check`
+- `company_research_exa`
+- `crawling_exa`
+- `linkedin_search_exa`
+
+**Environment Variables:**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| None | - | Hosted service handles authentication |
+
+Note: Exa MCP is fully hosted. API authentication is handled by the MCP server, not through environment variables. Usage is tied to your Exa account.
+
+**Pricing:**
+
+| Operation | Cost |
+|-----------|------|
+| Neural search | $0.005/search |
+| Deep search | $0.015/search |
+| Content retrieval | $0.001/page |
+| Code context | $0.005/query |
+| Company research | $0.01/query |
+| LinkedIn search | $0.005/query |
+
+**Rate Limits:**
+
+| Endpoint | Limit |
+|----------|-------|
+| Search | 5 QPS |
+| Contents | 50 QPS |
+| Answer/Research | 5 QPS |
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| "Rate limit exceeded" | Reduce query frequency, implement backoff |
+| Empty search results | Try `type: "neural"` for semantic queries |
+| Stale content | Use `livecrawl: "always"` or `"preferred"` |
+| Deep research timeout | Use `deep_researcher_check` to poll status |
+| LinkedIn results empty | LinkedIn data availability varies by region |
+| Code search irrelevant | Be specific about language/framework in query |
+| High costs | Use `type: "fast"` for simple queries, cache results |
+
+**Integration with Other Bifrost Tools:**
+
+| Combined With | Use Case |
+|---------------|----------|
+| **basic-memory** | Store research findings for long-term knowledge |
+| **narsil-mcp** | Exa for external docs, Narsil for local codebase |
+| **greb-mcp** | Exa for web code examples, Greb for project search |
+| **adr-analysis** | Research best practices before architectural decisions |
+| **llm-council** | Gather Exa research, then deliberate with council |
+| **beads-mcp** | Track research tasks and findings as issues |
+
+**Example Workflows:**
+
+1. **Code Research Pattern:**
+   ```
+   User: "How do I implement OAuth in SwiftUI?"
+
+   1. get_code_context_exa("SwiftUI OAuth implementation ASWebAuthenticationSession")
+   2. Review code examples from results
+   3. Store key patterns in basic-memory
+   ```
+
+2. **Deep Research Pattern:**
+   ```
+   User: "Analyze the tradeoffs between SQLite and Core Data for iOS"
+
+   1. deep_researcher_start("Compare SQLite vs Core Data for iOS apps: performance, complexity, sync capabilities")
+   2. deep_researcher_check(taskId) - poll until complete
+   3. Synthesize findings into ADR with adr-analysis
+   ```
+
+3. **Company Due Diligence:**
+   ```
+   User: "Research Supabase as a backend option"
+
+   1. company_research_exa("Supabase")
+   2. web_search_exa("Supabase production issues OR problems")
+   3. linkedin_search_exa("Supabase engineers")
+   4. Combine insights for decision
+   ```
+
+**Resources:**
+
+- [Exa Documentation](https://docs.exa.ai/)
+- [Exa MCP Reference](https://exa.ai/docs/reference/exa-mcp)
+- [GitHub Repository](https://github.com/exa-labs/exa-mcp-server)
+- [Exa Dashboard](https://dashboard.exa.ai/)
+- [Search Types Guide](https://docs.exa.ai/reference/search)
+- [API Pricing](https://exa.ai/pricing)
+
+---
+
 ## Data Persistence
 
 | What | Where | Persisted |
