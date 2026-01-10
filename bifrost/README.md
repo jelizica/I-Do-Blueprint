@@ -477,26 +477,103 @@ mcp__adr-analysis__memory_loading(action: "load_adrs")
 | **NPM** | [@swiftzilla/mcp](https://www.npmjs.com/package/@swiftzilla/mcp) |
 | **Language** | TypeScript |
 | **License** | ISC |
+| **Tools** | 1 (Deep RAG Query) |
+| **Index Size** | 100,000+ pages |
 | **Pricing** | Free tier (50 queries/day) or $3/mo unlimited |
 | **Install** | `npm install -g @swiftzilla/mcp` |
 
-**Features:**
-- 📚 **Official Documentation** - Complete indexing of Apple Developer Documentation and Swift API Guidelines
-- 🎓 **WWDC Transcripts** - Searchable knowledge from framework engineers
-- 🔄 **Daily Updates** - Re-indexed within 24 hours of Apple docs changes
-- ⚡ **Swift 6.0 Ready** - Latest concurrency patterns, macros, and SwiftUI modifiers
-- 🔌 **MCP Native** - Supports both SSE and STDIO transports
-
 **Why SwiftZilla?**
-General purpose LLMs struggle with Swift because:
-- Training data cuts off before WWDC updates
-- Hallucinated APIs that don't exist or were deprecated
-- Broken SwiftUI views with invalid modifiers
 
-SwiftZilla provides real-time access to 100,000+ pages of official docs, recipes, and evolution proposals.
+General purpose LLMs (Claude, GPT, Gemini) struggle with Swift because:
 
-**Compatible With:**
-Cursor, Windsurf, Claude Desktop, Claude Code, VS Code Copilot, and any MCP-compatible agent.
+| Problem | Impact |
+|---------|--------|
+| **Outdated Context** | Training data cuts off before WWDC - misses new APIs |
+| **Hallucinated APIs** | Methods that don't exist or were deprecated years ago |
+| **Broken Views** | SwiftUI preview crashes from invalid modifiers |
+| **Wrong Patterns** | Deprecated concurrency patterns (pre-Swift 6) |
+
+**Example LLM Hallucinations SwiftZilla Prevents:**
+```swift
+// ❌ Standard LLM Output (broken)
+.navigationBarTitle("Home")        // Deprecated in iOS 16.0
+.standardStyle(.prominent)         // This modifier doesn't exist
+
+// ✅ SwiftZilla-Enhanced Output (correct)
+.navigationTitle("Home")           // Current API
+.toolbarBackground(.visible)       // Real modifier
+```
+
+**Data Sources Indexed:**
+
+| Source | Content | Update Frequency |
+|--------|---------|------------------|
+| **Apple Developer Documentation** | Complete Swift, SwiftUI, UIKit, AppKit, Foundation APIs | Daily |
+| **Swift API Design Guidelines** | Official naming and design conventions | On change |
+| **WWDC Transcripts** | Searchable knowledge from Apple engineers | After each WWDC |
+| **Swift Evolution Proposals** | SE-xxxx proposals, accepted and implemented | On change |
+| **Swift Recipes** | Official code patterns and best practices | Weekly |
+
+**Key Features:**
+
+- 📚 **100,000+ Pages Indexed** - Complete Apple Developer ecosystem
+- 🎓 **WWDC Transcripts** - Search sessions by topic, not just title
+- 🔄 **24-Hour Update Cycle** - When Apple updates docs, SwiftZilla knows within a day
+- ⚡ **Swift 6.0 Ready** - Latest concurrency patterns, macros, Observation framework
+- 🔌 **MCP Native** - Supports both SSE and STDIO transports
+- 🤖 **Agentic DeepSearch** - Interactive AI that can answer complex Swift questions
+
+**SwiftZilla vs Competitors:**
+
+| Feature | SwiftZilla | Apple RAG MCP | Apple Doc MCP | narsil-mcp (Swift) |
+|---------|------------|---------------|---------------|---------------------|
+| **Primary Focus** | Apple docs RAG | Apple docs RAG | Apple docs | Code analysis |
+| **Documentation Scope** | 100,000+ pages | Docs + YouTube | Docs only | None (code only) |
+| **WWDC Transcripts** | ✅ Searchable | ✅ Video content | ❌ | ❌ |
+| **Swift Evolution** | ✅ | ❌ | ❌ | ❌ |
+| **Update Frequency** | Daily | Real-time | Unknown | N/A |
+| **AI Reranking** | ✅ | ✅ Qwen3-Reranker | ❌ | TF-IDF only |
+| **Free Tier** | 50 queries/day | Free (limited) | Free | Unlimited (local) |
+| **Paid Tier** | $3/mo unlimited | API key limits | N/A | N/A |
+| **Agentic Search** | ✅ DeepSearch | ❌ | ❌ | ❌ |
+| **Code Intelligence** | ❌ | ❌ | ❌ | ✅ (15 languages) |
+
+**When to Use SwiftZilla:**
+
+| Use Case | SwiftZilla | Alternative |
+|----------|------------|-------------|
+| **Swift/SwiftUI API lookup** | ✅ Best choice | Generic web search |
+| **WWDC session content** | ✅ Searchable transcripts | YouTube manual search |
+| **Latest iOS/macOS APIs** | ✅ Daily updates | LLM (stale knowledge) |
+| **Swift 6 concurrency** | ✅ Current patterns | LLM (outdated patterns) |
+| **Code analysis/navigation** | Use narsil-mcp | ✅ narsil-mcp |
+| **Symbol definitions** | Use mcpls + sourcekit-lsp | ✅ mcpls |
+| **Security scanning** | Use narsil-mcp | ✅ narsil-mcp |
+
+**Architecture:**
+
+```
+Claude Code → @swiftzilla/mcp (STDIO) → swiftzilla.dev/mcp/sse (SSE) → RAG Index
+                     ↓
+              API Key Authentication
+                     ↓
+              Deep RAG Query Results
+```
+
+The MCP package acts as a **STDIO-to-SSE proxy**, connecting local MCP clients to SwiftZilla's cloud-hosted RAG infrastructure.
+
+**Compatible Clients:**
+
+| Client | Support | Notes |
+|--------|---------|-------|
+| **Claude Code** | ✅ | Full STDIO support |
+| **Claude Desktop** | ✅ | Full STDIO support |
+| **Cursor** | ✅ | Full MCP support |
+| **Windsurf** | ✅ | Full MCP support |
+| **VS Code Copilot** | ✅ | Via MCP extension |
+| **Kilo Code** | ✅ | Full MCP support |
+| **OpenCode** | ✅ | Full MCP support |
+| **Augment Code** | ✅ | Full MCP support |
 
 **Bifrost Configuration:**
 ```json
@@ -507,51 +584,239 @@ Cursor, Windsurf, Claude Desktop, Claude Code, VS Code Copilot, and any MCP-comp
 }
 ```
 
-**Required Env Vars:**
-- `SWIFTZILLA_API_KEY` - API key from [swiftzilla.dev](https://swiftzilla.dev/) (free tier available)
+**Alternative Configuration (Environment Variable):**
+```json
+{
+  "name": "swiftzilla",
+  "command": "npx",
+  "args": ["-y", "@swiftzilla/mcp"],
+  "env": {
+    "API_KEY": "${SWIFTZILLA_API_KEY}"
+  }
+}
+```
+
+**Environment Variables:**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SWIFTZILLA_API_KEY` | **Yes** | API key from [swiftzilla.dev](https://swiftzilla.dev/) |
+
+**Getting an API Key:**
+
+1. Go to [swiftzilla.dev](https://swiftzilla.dev/)
+2. Click "Get Developer Access" (GitHub OAuth)
+3. Free tier: 50 deep RAG queries per day
+4. Developer Pass ($3/mo): Unlimited queries, priority handling
+
+**Rate Limits:**
+
+| Tier | Queries/Day | Priority |
+|------|-------------|----------|
+| Free | 50 | Standard |
+| Developer ($3/mo) | Unlimited | Priority |
+| Community Pool | Shared 10M tokens | While supplies last |
+
+**Example Usage:**
+
+When working on Swift/Apple development, SwiftZilla is automatically used by the AI agent to look up:
+
+- SwiftUI view modifiers and their parameters
+- Swift concurrency patterns (async/await, actors, Sendable)
+- Foundation API signatures and behavior
+- Platform availability (`@available` annotations)
+- Deprecated API replacements
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| "API key invalid" | Verify key format, regenerate at swiftzilla.dev/dashboard |
+| "Rate limit exceeded" | Upgrade to Developer Pass or wait for daily reset |
+| Stale results | SwiftZilla updates daily; report issues via dashboard |
+| Connection timeout | Check network; SwiftZilla uses SSE which may be blocked by firewalls |
+
+**Integration with Other Bifrost Tools:**
+
+| Combined With | Use Case |
+|---------------|----------|
+| **narsil-mcp** | SwiftZilla for API docs, narsil for code navigation/call graphs |
+| **mcpls + sourcekit-lsp** | SwiftZilla for docs, mcpls for real-time type info/completions |
+| **code-sentinel** | SwiftZilla for correct patterns, code-sentinel for quality checks |
+| **basic-memory** | Store SwiftZilla findings for long-term project knowledge |
 
 ---
 
 ### reddit-mcp-buddy
 
-> Clean, LLM-optimized Reddit MCP server - browse posts, search content, analyze users
+> Clean, LLM-optimized Reddit MCP server - browse posts, search content, analyze users. No fluff, just Reddit data.
 
 | | |
 |---|---|
 | **Repository** | [github.com/karanb192/reddit-mcp-buddy](https://github.com/karanb192/reddit-mcp-buddy) |
 | **NPM** | [reddit-mcp-buddy](https://www.npmjs.com/package/reddit-mcp-buddy) |
-| **Language** | TypeScript |
+| **MCP Registry** | [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io/v0/servers/5677b351-373d-4137-bc58-28f1ba0d105d) |
+| **Language** | TypeScript (68%), JavaScript (17%), Shell (14%) |
 | **License** | MIT |
 | **Tools** | 5 |
 | **Stars** | 187+ |
-| **Install** | `npm install -g reddit-mcp-buddy` |
+| **Forks** | 34 |
+| **Version** | 1.1.10 |
+| **Node.js** | >=18.0.0 |
+| **Install** | `npm install -g reddit-mcp-buddy` or `npx -y reddit-mcp-buddy` |
 
-**Features:**
+**Why reddit-mcp-buddy?**
+
+| Feature | reddit-mcp-buddy | Other Reddit MCPs |
+|---------|------------------|-------------------|
+| **Zero Setup** | ✅ Works instantly | ❌ Requires API keys |
+| **Max Rate Limit** | ✅ 100 req/min (proven) | ❓ Unverified claims |
+| **Language** | TypeScript/Node.js | Python (most) |
+| **Tools Count** | 5 (focused) | 8-10 (redundant) |
+| **Fake Metrics** | ✅ Real data only | ❌ "Sentiment scores" |
+| **Search** | ✅ Full search | Limited or none |
+| **Caching** | ✅ Smart 50MB cache | Usually none |
+| **LLM Optimized** | ✅ Clear params | Confusing options |
+| **Rate Limit Testing** | ✅ Built-in tools | ❌ No verification |
+| **Desktop Extension** | ✅ `.mcpb` one-click install | ❌ Manual config |
+
+**What Makes It Different:**
+
+Most Reddit MCP servers suffer from common problems:
+- ❌ **Fake metrics** - "Sentiment scores" that are just keyword counting
+- ❌ **Complex setup** - Requiring API keys just to start
+- ❌ **Bloated responses** - Returning 100+ fields of Reddit's raw API
+- ❌ **Poor LLM integration** - Confusing parameters and unclear descriptions
+
+reddit-mcp-buddy does it right:
+- ✅ **Real data only** - If it's not from Reddit's API, it's not made up
+- ✅ **Clean responses** - Only the fields that matter
+- ✅ **Clear parameters** - LLMs understand exactly what to send
+- ✅ **Fast & cached** - Responses are instant when possible
+
+**Key Features:**
+
 - 🚀 **Zero Setup** - Works instantly, no Reddit API registration needed
 - ⚡ **Three-Tier Auth** - 10/60/100 requests per minute based on auth level
 - 🎯 **Clean Data** - No fake "sentiment analysis" or made-up metrics
-- 🧠 **LLM-Optimized** - Built specifically for AI assistants
+- 🧠 **LLM-Optimized** - Built specifically for AI assistants like Claude
 - 📦 **Smart Caching** - 50MB memory-safe cache with adaptive TTLs
+- 🔒 **Privacy-First** - No tracking, no analytics, all data stays local
+- 📋 **Read-Only** - Never posts, comments, or modifies Reddit content
 
 **Available Tools:**
 
-| Tool | Description |
-|------|-------------|
-| `browse_subreddit` | Browse posts from any subreddit (hot, new, top, rising) |
-| `search_reddit` | Search across Reddit with filters (subreddit, author, time, flair) |
-| `get_post_details` | Get post with full comment threads |
-| `user_analysis` | Analyze user karma, posts, comments, activity |
-| `reddit_explain` | Explain Reddit terms (karma, cake day, AMA, etc.) |
+| Tool | Description | Key Parameters |
+|------|-------------|----------------|
+| `browse_subreddit` | Browse posts from any subreddit (hot, new, top, rising, controversial) | `subreddit`, `sort`, `time`, `limit`, `include_subreddit_info` |
+| `search_reddit` | Search across Reddit with filters (subreddit, author, time, flair) | `query`, `subreddits[]`, `sort`, `time`, `author`, `flair` |
+| `get_post_details` | Get post with full comment threads | `url` OR `post_id`, `comment_sort`, `comment_depth`, `max_top_comments` |
+| `user_analysis` | Analyze user karma, posts, comments, activity patterns | `username`, `posts_limit`, `comments_limit`, `time_range` |
+| `reddit_explain` | Explain Reddit terms (karma, cake day, AMA, ELI5, etc.) | `term` |
 
-**Rate Limits:**
+**Tool Deep Dive:**
 
-| Mode | Requests/Min | Requirements |
-|------|--------------|--------------|
-| Anonymous | 10 | None |
-| App-only | 60 | Client ID + Secret |
-| Authenticated | 100 | All 4 credentials |
+**`browse_subreddit`** - Fetch posts from any subreddit:
+```
+- Subreddit options:
+  - "all" - entire Reddit frontpage
+  - "popular" - trending across Reddit
+  - Any specific subreddit (e.g., "technology", "programming")
+- Sort: hot, new, top, rising, controversial
+- Time range: hour, day, week, month, year, all (for top/controversial)
+- Limit: 1-100 posts (default 25)
+- include_subreddit_info: Optional metadata (subscriber count, description)
+```
+
+**`search_reddit`** - Search across Reddit:
+```
+- Query: Your search terms
+- Filter by: subreddit, author, time, flair
+- Sort: relevance, hot, top, new, comments
+```
+
+**`get_post_details`** - Get post with comments:
+```
+- Input options:
+  - Reddit URL (full URL including subreddit) - 1 API call
+  - Post ID + subreddit (most efficient) - 1 API call
+  - Post ID alone (auto-detects subreddit) - 2 API calls
+- comment_sort: best, top, new, controversial, qa
+- comment_depth: 1-10 (default 3)
+- max_top_comments: 1-20 (default 5)
+- extract_links: Include embedded links
+```
+
+**`user_analysis`** - Analyze Reddit users:
+```
+- Returns: karma breakdown, posts, comments, active subreddits
+- posts_limit: 0-100 (default 10)
+- comments_limit: 0-100 (default 10)
+- time_range: day, week, month, year, all
+- top_subreddits_limit: 1-50 (default 10)
+```
+
+**Three-Tier Authentication System:**
+
+| Mode | Rate Limit | Cache TTL | Required Credentials | Best For |
+|------|------------|-----------|----------------------|----------|
+| **Anonymous** | 10 req/min | 15 min | None | Testing, light usage |
+| **App-Only** | 60 req/min | 5 min | Client ID + Secret | Regular browsing |
+| **Authenticated** | 100 req/min | 5 min | All 4 credentials | Heavy usage, automation |
+
+**Authentication Setup (for higher rate limits):**
+
+1. Go to [reddit.com/prefs/apps](https://www.reddit.com/prefs/apps)
+2. Click "Create App" or "Create Another App"
+3. Fill out the form:
+   - **Name**: Any name (e.g., "reddit-mcp-buddy")
+   - **App type**: Select **"script"** (CRITICAL for 100 rpm!)
+   - **Redirect URI**: `http://localhost:8080` (required but unused)
+4. Get your **Client ID** (under app name) and **Client Secret**
+
+**Important**: Script apps support BOTH app-only (60 rpm) and authenticated (100 rpm) modes. Web apps only support app-only mode (60 rpm maximum). For 100 requests/minute, you MUST use a script app with username + password.
+
+**Smart Caching System:**
+
+| Feature | Description |
+|---------|-------------|
+| **Memory Safe** | Hard limit of 50MB - won't affect system performance |
+| **Adaptive TTLs** | Hot posts (5min), New posts (2min), Top posts (30min) |
+| **LRU Eviction** | Automatically removes least-used data when approaching limits |
+| **Hit Tracking** | Optimizes cache based on actual usage patterns |
+| **Disable Option** | Set `REDDIT_BUDDY_NO_CACHE=true` to always fetch fresh |
+
+**When to Use reddit-mcp-buddy:**
+
+| Use Case | reddit-mcp-buddy | Alternative |
+|----------|------------------|-------------|
+| **Quick Reddit research** | ✅ Best choice - zero setup | Other MCPs (require API keys) |
+| **Trend analysis** | ✅ Browse hot/top/rising | Basic search MCPs |
+| **User activity analysis** | ✅ Built-in user_analysis | Manual browsing |
+| **Comment thread analysis** | ✅ Full comment trees | Limited depth MCPs |
+| **Reddit terminology help** | ✅ reddit_explain tool | Web search |
+| **Posting/commenting** | ❌ Read-only by design | jordanburke/reddit-mcp-server |
+| **Moderation tasks** | ❌ No mod tools | Reddit's official API |
+
+**Comparison with Other Reddit MCP Servers:**
+
+| Server | Stars | Language | Auth Required | Tools | Write Access | Caching |
+|--------|-------|----------|---------------|-------|--------------|---------|
+| **reddit-mcp-buddy** | 187+ | TypeScript | No (optional) | 5 | ❌ Read-only | ✅ 50MB smart cache |
+| adhikasp/mcp-reddit | ~50 | Python | Yes | 6 | ❌ Read-only | ❌ None |
+| jordanburke/reddit-mcp-server | 7 | TypeScript | Yes | 8+ | ✅ Can post | ❌ None |
+| GridfireAI/reddit-mcp | ~10 | Python | Yes | 4 | ❌ Read-only | ❌ None |
+
+**Privacy & Data Handling:**
+
+- **No Tracking**: No analytics, telemetry, or usage data collected
+- **No Third Parties**: Data flows directly between your machine and Reddit's API
+- **Local Cache Only**: Temporary in-memory cache, cleared on server stop
+- **Credentials**: Stored locally in `~/.reddit-mcp-buddy/auth.json` (password never written to disk)
+- **Open Source**: Full source available for security auditing
 
 **Bifrost Configuration:**
+
 ```json
 {
   "name": "reddit",
@@ -560,17 +825,102 @@ Cursor, Windsurf, Claude Desktop, Claude Code, VS Code Copilot, and any MCP-comp
 }
 ```
 
-**Optional Env Vars** (for higher rate limits):
-- `REDDIT_CLIENT_ID` - Reddit app client ID
-- `REDDIT_CLIENT_SECRET` - Reddit app secret
-- `REDDIT_USERNAME` - Reddit account username
-- `REDDIT_PASSWORD` - Reddit account password
+**Authenticated Configuration (60-100 req/min):**
+
+```json
+{
+  "name": "reddit",
+  "command": "npx",
+  "args": ["-y", "reddit-mcp-buddy"],
+  "env": {
+    "REDDIT_CLIENT_ID": "${REDDIT_CLIENT_ID}",
+    "REDDIT_CLIENT_SECRET": "${REDDIT_CLIENT_SECRET}",
+    "REDDIT_USERNAME": "${REDDIT_USERNAME}",
+    "REDDIT_PASSWORD": "${REDDIT_PASSWORD}"
+  }
+}
+```
+
+**Environment Variables:**
+
+| Variable | Required | Description | Rate Limit Impact |
+|----------|----------|-------------|-------------------|
+| `REDDIT_CLIENT_ID` | No | Reddit app client ID | 60 req/min (with secret) |
+| `REDDIT_CLIENT_SECRET` | No | Reddit app secret | 60 req/min (with ID) |
+| `REDDIT_USERNAME` | No | Reddit account username | 100 req/min (with all 4) |
+| `REDDIT_PASSWORD` | No | Reddit account password | 100 req/min (with all 4) |
+| `REDDIT_USER_AGENT` | No | Custom user agent string | - |
+| `REDDIT_BUDDY_HTTP` | No | Run as HTTP server instead of stdio | - |
+| `REDDIT_BUDDY_PORT` | No | HTTP server port (default: 3000) | - |
+| `REDDIT_BUDDY_NO_CACHE` | No | Disable caching (always fetch fresh) | - |
+
+**Example Queries:**
+
+Ask your AI assistant:
+
+| Query | Tool Used |
+|-------|-----------|
+| "What's trending on Reddit?" | `browse_subreddit` (subreddit="all", sort="hot") |
+| "Search for discussions about AI" | `search_reddit` (query="AI") |
+| "Get comments from this Reddit post" | `get_post_details` (url="...") |
+| "Analyze user spez" | `user_analysis` (username="spez") |
+| "Explain Reddit karma" | `reddit_explain` (term="karma") |
+| "What's hot in r/technology?" | `browse_subreddit` (subreddit="technology", sort="hot") |
+| "Top posts about GPT-4 this week" | `search_reddit` (query="GPT-4", time="week", sort="top") |
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| "Can't achieve 100 requests/minute" | Ensure app type is **"script"** not "web" or "installed". Script apps created by one account can only authenticate as that same account. |
+| "Command not found" error | Ensure npm is installed: `node --version && npm --version`. Try with full path: `$(npm bin -g)/reddit-mcp-buddy` |
+| Rate limit errors | Add Reddit credentials (see Authentication Setup above) |
+| "Subreddit not found" | Check spelling (case-insensitive). Some subreddits may be private or quarantined. Try "all" or "popular" instead. |
+| Connection issues | Check [redditstatus.com](https://www.redditstatus.com). Firewall may be blocking requests. Try restarting MCP server. |
+
+**Integration with Other Bifrost Tools:**
+
+| Combined With | Use Case |
+|---------------|----------|
+| **basic-memory** | Store Reddit research findings for long-term project knowledge |
+| **mcp-adr-analysis** | Research community sentiment before architectural decisions |
+| **kindly-web-search** | Combine Reddit discussions with broader web research |
+| **narsil-mcp** | Find Reddit discussions about specific code patterns |
+
+**Testing & Development:**
+
+```bash
+# Clone repository for testing
+git clone https://github.com/karanb192/reddit-mcp-buddy.git
+cd reddit-mcp-buddy
+npm install
+
+# Test rate limits
+npm run test:rate-limit           # Test with current environment
+npm run test:rate-limit:anon      # Test anonymous mode (10 rpm)
+npm run test:rate-limit:app       # Test app-only mode (60 rpm)
+npm run test:rate-limit:auth      # Test authenticated mode (100 rpm)
+
+# Run in HTTP mode for testing
+npx -y reddit-mcp-buddy --http    # Runs on port 3000
+REDDIT_BUDDY_PORT=8080 npx -y reddit-mcp-buddy --http  # Custom port
+
+# Interactive auth setup (local testing only)
+npx -y reddit-mcp-buddy --auth
+```
+
+**Related Resources:**
+
+- [MCP Registry Entry](https://registry.modelcontextprotocol.io/v0/servers/5677b351-373d-4137-bc58-28f1ba0d105d)
+- [MCP Specification](https://spec.modelcontextprotocol.io)
+- [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk)
+- [Reddit API Documentation](https://www.reddit.com/dev/api/)
 
 ---
 
 ### code-sentinel-mcp
 
-> Comprehensive code quality analysis - detect security vulnerabilities, deceptive patterns, and incomplete code
+> Comprehensive code quality analysis - detect security vulnerabilities, deceptive patterns, and incomplete code that passes traditional linters
 
 | | |
 |---|---|
@@ -580,34 +930,98 @@ Cursor, Windsurf, Claude Desktop, Claude Code, VS Code Copilot, and any MCP-comp
 | **Language** | TypeScript |
 | **License** | MIT |
 | **Tools** | 7 |
-| **Patterns** | 93 |
+| **Patterns** | 93 distinct patterns across 5 categories |
 | **Install** | `npm install -g code-sentinel-mcp` |
+| **Version** | 0.2.6 (latest) |
 
-**Features:**
-- 🔒 **Security Analysis** - 16 patterns: hardcoded secrets, SQL injection, XSS, command injection
-- 🎭 **Deceptive Pattern Detection** - 17 patterns: empty catch blocks, silent failures, error hiding
-- 📝 **Placeholder Detection** - 19 patterns: TODO/FIXME, lorem ipsum, incomplete implementations
-- 🐛 **Error & Code Smell Detection** - 18 patterns: type coercion, null references, async anti-patterns
-- ✅ **Strength Recognition** - 23 patterns: highlights good practices like proper typing, error handling
+**The Problem Code Sentinel Solves:**
 
-**Why Pattern-Based?**
-Traditional linters detect syntax errors. CodeSentinel detects **semantically deceptive patterns** - code that is syntactically valid but hides serious issues that AI agents commonly produce:
-- Empty catches that swallow errors
-- Fake implementations (`return true; // TODO: implement`)
-- Error-masking fallbacks (`|| []` hiding fetch failures)
-- Linter suppression abuse (`@ts-ignore`)
+AI-generated code often produces **syntactically correct but semantically deceptive** patterns that pass all traditional linters. These include:
+
+```typescript
+// Passes ESLint, fails Code Sentinel (CS-DEC-006: empty catch)
+try {
+  await criticalOperation();
+} catch (error) {
+  // TODO: handle error
+}
+
+// Passes ESLint, fails Code Sentinel (CS-DEC-003: fake success)
+async function validateUser(id: string): Promise<boolean> {
+  return true; // TODO: implement actual validation
+}
+
+// Passes ESLint, fails Code Sentinel (CS-DEC-010: error-masking fallback)
+const users = await fetchUsers().catch(() => []);
+```
+
+**Why Code Sentinel vs Traditional Tools:**
+
+| Capability | ESLint/TSLint | Tree-sitter | Semgrep | Codacy | Code Sentinel |
+|------------|---------------|-------------|---------|--------|---------------|
+| Syntax errors | Yes | Yes | Yes | Yes | No (use linter) |
+| Security patterns | Limited | No | Yes | Yes | Yes (16 patterns) |
+| Deceptive patterns | No | No | Limited | No | **Yes (17 patterns)** |
+| Placeholder detection | No | No | No | No | **Yes (19 patterns)** |
+| Strength recognition | No | No | No | Limited | **Yes (23 patterns)** |
+| AI-generated code focus | No | No | No | No | **Primary focus** |
+| Pattern-based (not AST) | No | No | Yes | Mixed | **Yes (intentional)** |
+| Offline/local | Yes | Yes | Yes | No | Yes |
+| Zero config | Varies | Yes | No | No | **Yes** |
+
+**When to Use Code Sentinel:**
+
+| Use Case | Recommended Tool | Why |
+|----------|------------------|-----|
+| Syntax checking | ESLint/Prettier | Faster, purpose-built |
+| Security audit (rules-based) | Semgrep | 3000+ community rules |
+| Platform code quality | Codacy | Dashboard, team features |
+| **AI output validation** | **Code Sentinel** | Catches deceptive patterns |
+| **PR review automation** | **Code Sentinel** | Detects incomplete implementations |
+| **Before production deploy** | **Code Sentinel** | Catches hidden failures |
+| Refactoring assistance | Code Guardian | 113+ refactoring tools |
+| Call graph analysis | Narsil MCP | AST-based navigation |
+
+**Pattern Categories (93 Total):**
+
+| Category | Count | ID Prefix | Examples |
+|----------|-------|-----------|----------|
+| **Security** | 16 | `CS-SEC-*` | Hardcoded secrets, SQL injection, XSS, command injection, path traversal, weak crypto |
+| **Deceptive** | 17 | `CS-DEC-*` | Empty catch blocks, silent failures, fake implementations, error-masking fallbacks |
+| **Placeholders** | 19 | `CS-PH-*` | TODO/FIXME markers, lorem ipsum, hardcoded test data, incomplete stubs |
+| **Errors/Smells** | 18 | `CS-ERR-*` | Type coercion bugs, null reference risks, async anti-patterns, memory leaks |
+| **Strengths** | 23 | `CS-STR-*` | Proper typing, error handling, input validation, security headers |
 
 **Available Tools:**
 
-| Tool | Description |
-|------|-------------|
-| `analyze_code` | Full analysis returning structured JSON with issues and strengths |
-| `generate_report` | Full analysis with visual HTML report |
-| `check_security` | Security-focused vulnerability audit |
-| `check_deceptive_patterns` | Detect error-hiding and false confidence patterns |
-| `check_placeholders` | Find TODOs, dummy data, incomplete implementations |
-| `analyze_patterns` | Architectural, design, and implementation pattern analysis |
-| `analyze_design_patterns` | Gang of Four design pattern detection |
+| Tool | Description | Best For |
+|------|-------------|----------|
+| `analyze_code` | Full analysis returning structured JSON with issues and strengths | CI/CD integration, programmatic analysis |
+| `generate_report` | Full analysis with visual HTML report | Human review, PR comments |
+| `check_security` | Security-focused vulnerability audit | Security reviews, pre-deploy |
+| `check_deceptive_patterns` | Detect error-hiding and false confidence patterns | AI output validation |
+| `check_placeholders` | Find TODOs, dummy data, incomplete implementations | Pre-merge gates |
+| `analyze_patterns` | Architectural, design, and implementation pattern analysis | Architecture reviews |
+| `analyze_design_patterns` | Gang of Four design pattern detection | Design audits |
+
+**Tool Parameters:**
+
+```typescript
+// analyze_code
+{
+  code: string;           // Required: source code to analyze
+  language?: string;      // Optional: auto-detected if not provided
+  filename?: string;      // Optional: helps with language detection
+}
+
+// generate_report
+{
+  code: string;
+  language?: string;
+  filename?: string;
+  format?: 'html' | 'json';  // Default: html
+}
+```
 
 **Supported Languages:**
 TypeScript, JavaScript, Python, Go, Rust, Java, Kotlin, Swift, C#, C/C++, PHP, Vue, Svelte
@@ -617,7 +1031,73 @@ TypeScript, JavaScript, Python, Go, Rust, Java, Kotlin, Swift, C#, C/C++, PHP, V
 Score = 100 - (critical × 25) - (high × 15) - (medium × 5) - (low × 1) + (strengths × 2)
 ```
 
-**Bifrost Configuration:**
+- **90-100**: Excellent - Production ready
+- **70-89**: Good - Minor issues to address
+- **50-69**: Fair - Significant issues present
+- **Below 50**: Poor - Major refactoring needed
+
+**Sample Output:**
+
+```json
+{
+  "score": 72,
+  "issues": [
+    {
+      "id": "CS-DEC-006",
+      "category": "deceptive",
+      "severity": "high",
+      "message": "Empty catch block swallows errors silently",
+      "line": 45,
+      "suggestion": "Log the error or rethrow with context"
+    }
+  ],
+  "strengths": [
+    {
+      "id": "CS-STR-001",
+      "category": "strengths",
+      "message": "Proper TypeScript strict typing used",
+      "line": 1
+    }
+  ],
+  "summary": {
+    "total_issues": 3,
+    "critical": 0,
+    "high": 1,
+    "medium": 2,
+    "low": 0,
+    "strengths_found": 5
+  }
+}
+```
+
+**Extensibility - Data-Driven Patterns:**
+
+Code Sentinel uses a data-driven pattern system. Each pattern is defined declaratively with match types:
+
+| Match Type | Purpose | Example Pattern |
+|------------|---------|-----------------|
+| `empty_block` | Detects empty code blocks | Empty catch handlers |
+| `function_call` | Matches specific function calls | `console.log` in production |
+| `catch_handler` | Analyzes error handling | Silent error swallowing |
+| `secret_pattern` | Regex-based secret detection | API keys, passwords |
+| `string_literal` | Matches string content | Hardcoded credentials |
+| `comment_marker` | Finds comment patterns | TODO, FIXME, HACK |
+
+**Adding Custom Patterns** (future roadmap):
+```json
+{
+  "id": "CUSTOM-001",
+  "name": "Deprecated API Usage",
+  "category": "errors",
+  "severity": "medium",
+  "match_type": "function_call",
+  "pattern": "legacyApi\\.",
+  "message": "Legacy API is deprecated, use newApi instead",
+  "suggestion": "Migrate to newApi.* methods"
+}
+```
+
+**Bifrost Configuration (Local):**
 ```json
 {
   "name": "code-sentinel",
@@ -626,7 +1106,68 @@ Score = 100 - (critical × 25) - (high × 15) - (medium × 5) - (low × 1) + (st
 }
 ```
 
+**Bifrost Configuration (Remote - No Local Install):**
+```json
+{
+  "name": "code-sentinel",
+  "transport": {
+    "type": "sse",
+    "url": "https://code-sentinel-mcp.sharara.dev/sse"
+  }
+}
+```
+
+The remote server runs on Cloudflare Workers with Durable Objects for stateful MCP sessions.
+
 **No env vars required.**
+
+**Integration with Other MCP Tools:**
+
+Code Sentinel works best as part of a validation pipeline:
+
+```
+1. Narsil MCP     → Navigate codebase, find code to review
+2. Code Sentinel  → Analyze for deceptive patterns and issues
+3. Semgrep MCP    → Deep security rule scanning (if needed)
+4. Basic Memory   → Store findings for future reference
+```
+
+**CI/CD Integration Example:**
+
+```yaml
+# .github/workflows/code-quality.yml
+- name: Code Sentinel Analysis
+  run: |
+    npx code-sentinel-mcp analyze-code \
+      --file src/**/*.ts \
+      --format json \
+      --fail-on-score 70
+```
+
+**Troubleshooting:**
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| "Language not detected" | Missing filename/extension | Provide `language` parameter explicitly |
+| Low score on valid code | Overly strict patterns | Review specific pattern IDs, consider context |
+| Remote server timeout | Network/server issues | Fall back to local `npx` installation |
+| Missing patterns in output | Pattern not applicable to language | Check language support for specific pattern |
+
+**Competitor Comparison:**
+
+| Tool | Focus | Strengths | Limitations |
+|------|-------|-----------|-------------|
+| **Code Sentinel** | AI code validation | Deceptive pattern detection, zero-config, offline | Not a linter replacement |
+| **Codacy MCP** | Platform integration | Dashboard, team features, 40+ language support | Requires Codacy account/API |
+| **Semgrep MCP** | Security scanning | 3000+ rules, custom rules | Security-focused only, complex setup |
+| **Code Guardian** | Refactoring | 113+ tools, workflow automation | Broad scope, less specialized |
+
+**Related Resources:**
+
+- [Code Sentinel GitHub](https://github.com/salrad22/code-sentinel)
+- [NPM Package](https://www.npmjs.com/package/code-sentinel-mcp)
+- [Remote Server](https://code-sentinel-mcp.sharara.dev/)
+- [Pattern Documentation](https://github.com/salrad22/code-sentinel#patterns)
 
 ---
 
