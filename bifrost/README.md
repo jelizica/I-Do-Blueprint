@@ -1179,54 +1179,209 @@ Code Sentinel works best as part of a validation pipeline:
 |---|---|
 | **Repository** | [github.com/basicmachines-co/basic-memory](https://github.com/basicmachines-co/basic-memory) |
 | **Website** | [basicmemory.com](https://basicmemory.com) |
+| **Documentation** | [docs.basicmemory.com](https://docs.basicmemory.com) |
 | **PyPI** | [basic-memory](https://pypi.org/project/basic-memory/) |
-| **Language** | Python |
+| **Language** | Python 3.12+ |
 | **License** | AGPL-3.0 |
+| **Version** | 0.17.4+ |
 | **Stars** | 2.3k+ |
-| **Tools** | 15+ |
-| **Install** | `uv tool install basic-memory` |
+| **Tools** | 15+ MCP tools |
+| **Install** | `uv tool install basic-memory` or `pipx install basic-memory` |
 
-**Features:**
-- 🧠 **Persistent Memory** - AI assistants remember context across conversations
+**Core Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     AI Assistants                                │
+│     (Claude Desktop, Claude Code, Cursor, VS Code)              │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │ MCP Protocol
+                          ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Basic Memory Server                           │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
+│  │ MCP Tools   │  │ Knowledge   │  │ Full-Text + Semantic    │  │
+│  │ (15+ tools) │  │ Graph       │  │ Search (SQLite FTS5)    │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────────┘  │
+└─────────────────────────┬───────────────────────────────────────┘
+                          │
+           ┌──────────────┼──────────────┐
+           ▼              ▼              ▼
+    ┌────────────┐ ┌────────────┐ ┌────────────┐
+    │ Markdown   │ │ SQLite     │ │ Basic      │
+    │ Files      │ │ Index      │ │ Memory     │
+    │ (local)    │ │ (local)    │ │ Cloud      │
+    └────────────┘ └────────────┘ └────────────┘
+```
+
+**Why Basic Memory?**
+
+| Problem | Basic Memory Solution |
+|---------|----------------------|
+| **AI Amnesia** | Persistent knowledge graph survives conversation restarts |
+| **Vendor Lock-in** | Plain Markdown files you own - no proprietary formats |
+| **Context Limits** | `build_context` retrieves relevant knowledge on-demand |
+| **Knowledge Silos** | Semantic links connect related topics automatically |
+| **Manual Handoffs** | `recent_activity` shows what changed across sessions |
+
+**Core Features:**
+
+- 🧠 **Persistent Memory** - AI assistants remember context across conversations and sessions
 - 📝 **Markdown Files** - All knowledge stored as local Markdown files you control
-- 🔗 **Knowledge Graph** - Semantic links between topics with traversable relationships
-- 🔍 **Full-Text Search** - Search across your entire knowledge base
-- 📁 **Obsidian Compatible** - Works with existing Markdown editors
-- ☁️ **Cloud Sync** (Optional) - Cross-device sync with Basic Memory Cloud
+- 🔗 **Knowledge Graph** - Semantic links between topics with traversable relationships via WikiLinks
+- 🔍 **Full-Text + Semantic Search** - SQLite FTS5 powered search across your entire knowledge base
+- 📁 **Obsidian Compatible** - Works with existing Markdown editors (Obsidian, VS Code, etc.)
+- 🔄 **File Watching** - Automatic sync when files change externally
+- 🏷️ **Tags & Categories** - Organize knowledge with hashtags and observation categories
+- 📊 **Canvas Visualization** - Generate visual knowledge maps compatible with Obsidian Canvas
+- ☁️ **Cloud Sync** (Optional) - Cross-device sync with Basic Memory Cloud ($14.25/mo)
 
-**Available Tools:**
+**Available MCP Tools:**
 
-| Tool | Description |
-|------|-------------|
-| `write_note` | Create or update notes with semantic content |
-| `read_note` | Read notes by title or permalink |
-| `search` | Search across the knowledge base |
-| `build_context` | Navigate knowledge graph via memory:// URLs |
-| `recent_activity` | Find recently updated information |
-| `edit_note` | Edit notes incrementally |
-| `move_note` | Move notes with database consistency |
-| `delete_note` | Delete notes from knowledge base |
-| `canvas` | Generate knowledge visualizations |
-| `list_memory_projects` | List all available projects |
+| Tool | Description | Example Use |
+|------|-------------|-------------|
+| `write_note` | Create or update notes with semantic content | Store meeting notes, decisions, research |
+| `read_note` | Read notes by title or permalink | Retrieve specific knowledge |
+| `view_note` | View note as formatted artifact | Better readability for complex notes |
+| `search_notes` | Full-text search with filters | Find information by keyword |
+| `search` | Quick content search | Fast lookups |
+| `build_context` | Navigate knowledge graph via `memory://` URLs | Continue from previous discussions |
+| `recent_activity` | Find recently updated information | Session handoffs, "what changed?" |
+| `edit_note` | Incremental edits (append, prepend, replace) | Update existing knowledge |
+| `move_note` | Move notes maintaining database consistency | Reorganize knowledge structure |
+| `delete_note` | Remove notes from knowledge base | Clean up outdated information |
+| `canvas` | Generate Obsidian-compatible visualizations | Create knowledge maps |
+| `list_memory_projects` | List all available projects | Multi-project management |
+| `create_memory_project` | Create new knowledge project | Start fresh knowledge base |
+| `delete_project` | Remove a project | Clean up unused projects |
+| `list_directory` | Browse knowledge structure | Explore folder organization |
+| `read_content` | Read raw file content by path | Access specific files |
 
-**Semantic Markdown Format:**
+**Knowledge Format - Semantic Markdown:**
+
+Basic Memory uses a structured Markdown format with three key sections:
+
 ```markdown
 ---
 title: Coffee Brewing Methods
+type: reference
 permalink: coffee-brewing-methods
-tags: [coffee, brewing]
+tags: [coffee, brewing, specialty]
+created: 2024-01-15
+modified: 2024-01-20
 ---
 
 ## Observations
-- [method] Pour over provides more clarity #brewing
-- [tip] Water temperature at 205°F extracts optimal compounds
+
+Observations capture discrete facts with optional categories and tags:
+
+- [method] Pour over provides more clarity and highlights origin flavors #brewing #manual
+- [tip] Water temperature at 195-205°F extracts optimal compounds #temperature
+- [equipment] Gooseneck kettle essential for controlled pour rate #gear
+- [science] Bloom phase releases CO2, improving extraction uniformity
 
 ## Relations
+
+Relations create the knowledge graph using WikiLinks:
+
 - relates_to [[Coffee Bean Origins]]
 - requires [[Proper Grinding Technique]]
+- contrasts_with [[French Press Method]]
+- part_of [[Home Barista Guide]]
+- influences [[Extraction Time]]
 ```
 
+**Observation Categories:**
+
+| Category | Purpose | Example |
+|----------|---------|---------|
+| `[fact]` | Verified information | `[fact] Water boils at 212°F at sea level` |
+| `[tip]` | Practical advice | `[tip] Pre-wet filter to remove paper taste` |
+| `[method]` | Process description | `[method] V60 uses spiral pour technique` |
+| `[decision]` | Choices made | `[decision] Using Chemex for clarity` |
+| `[question]` | Open questions | `[question] Does grind size affect bloom?` |
+| `[insight]` | Discoveries | `[insight] Darker roasts need lower temp` |
+| Custom | Any category you need | `[architecture] Service layer pattern` |
+
+**Relation Types:**
+
+| Relation | Meaning | Creates Link |
+|----------|---------|--------------|
+| `relates_to` | General connection | Bidirectional |
+| `requires` | Dependency | Directional |
+| `part_of` | Hierarchy/containment | Directional |
+| `influences` | Causal relationship | Directional |
+| `contrasts_with` | Comparison/opposition | Bidirectional |
+| `implements` | Realization | Directional |
+| `extends` | Enhancement | Directional |
+| Custom | Any relation you need | As defined |
+
+**Memory URLs - Knowledge Navigation:**
+
+Basic Memory introduces the `memory://` URL scheme for knowledge navigation:
+
+```
+memory://coffee-brewing-methods           # Direct note access
+memory://projects/web-app/*               # Pattern matching
+memory://architecture/decisions           # Folder traversal
+memory://*authentication*                 # Wildcard search
+```
+
+**Use with `build_context` tool:**
+```python
+# AI can request: "Continue from our discussion about authentication"
+build_context(url="memory://authentication", depth=2, max_related=10)
+```
+
+**CLI Commands:**
+
+| Command | Description |
+|---------|-------------|
+| `basic-memory mcp` | Start MCP server (used by AI clients) |
+| `basic-memory sync` | Sync markdown files to database |
+| `basic-memory import` | Import from Claude/ChatGPT exports |
+| `basic-memory project list` | List all projects |
+| `basic-memory project add <name> <path>` | Add new project |
+| `basic-memory project set-default <name>` | Set default project |
+| `basic-memory stats` | Show knowledge base statistics |
+| `basic-memory search <query>` | Search from command line |
+| `basic-memory cloud login` | Authenticate with Basic Memory Cloud |
+| `basic-memory cloud bisync` | Bidirectional cloud sync |
+| `basic-memory cloud mount` | FUSE mount for cloud storage |
+
+**Configuration:**
+
+Configuration file: `~/.basic-memory/config.json`
+
+```json
+{
+  "projects": {
+    "main": {
+      "path": "~/basic-memory"
+    },
+    "work": {
+      "path": "~/Documents/work-notes"
+    },
+    "research": {
+      "path": "~/obsidian-vault/research"
+    }
+  },
+  "default_project": "main",
+  "sync_on_start": true,
+  "watch_files": true
+}
+```
+
+**Environment Variables:**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BASIC_MEMORY_HOME` | `~/.basic-memory` | Configuration directory |
+| `BASIC_MEMORY_PROJECT` | `main` | Default project name |
+| `BASIC_MEMORY_LOG_LEVEL` | `INFO` | Logging verbosity |
+
 **Bifrost Configuration:**
+
 ```json
 {
   "name": "basic-memory",
@@ -1235,13 +1390,132 @@ tags: [coffee, brewing]
 }
 ```
 
-**No env vars required.** Data stored in `~/basic-memory/` by default.
+**With Specific Project:**
+```json
+{
+  "name": "basic-memory",
+  "command": "uvx",
+  "args": ["basic-memory", "mcp"],
+  "env": {
+    "BASIC_MEMORY_PROJECT": "work"
+  }
+}
+```
+
+**Using pipx instead of uv:**
+```json
+{
+  "name": "basic-memory",
+  "command": "basic-memory",
+  "args": ["mcp"]
+}
+```
+
+**Basic Memory vs Competitors:**
+
+| Feature | Basic Memory | Mem0 | Zep | LangChain Memory | MemGPT | OpenAI Memory |
+|---------|-------------|------|-----|------------------|--------|---------------|
+| **Storage** | Local Markdown | Cloud/Vector DB | PostgreSQL | In-memory/Redis | JSON + Vector | Cloud (OpenAI) |
+| **Data Ownership** | ✅ Full local control | ❌ Cloud-dependent | ⚠️ Self-host option | ⚠️ Depends on backend | ✅ Local files | ❌ OpenAI servers |
+| **Knowledge Graph** | ✅ WikiLinks + Relations | ⚠️ Limited | ✅ Temporal graph | ❌ | ⚠️ Hierarchical | ❌ |
+| **MCP Native** | ✅ First-class | ⚠️ Via adapters | ❌ | ❌ | ⚠️ Experimental | ❌ |
+| **Human Readable** | ✅ Plain Markdown | ❌ JSON/Vectors | ❌ Database | ❌ | ⚠️ JSON | ❌ |
+| **Obsidian Compatible** | ✅ Native | ❌ | ❌ | ❌ | ❌ | ❌ |
+| **Multi-User** | ⚠️ Via cloud sync | ✅ Built-in | ✅ Built-in | ⚠️ Depends | ❌ | ✅ |
+| **Cost** | Free (Cloud: $14.25/mo) | Free tier + paid | Self-host or paid | Free | Free | Included with Plus |
+| **Offline** | ✅ Full functionality | ❌ | ⚠️ Self-host only | ✅ | ✅ | ❌ |
+| **Search** | Full-text + Semantic | Vector similarity | Hybrid | Configurable | Vector | Semantic |
+
+**When to Use Basic Memory:**
+
+| Use Case | Basic Memory | Alternative |
+|----------|-------------|-------------|
+| **Long-term project knowledge** | ✅ Best choice - persistent, searchable | Beads for task tracking |
+| **Cross-session context** | ✅ `build_context` with memory:// URLs | Session files (manual) |
+| **Architectural decisions** | ✅ Store with relations | ADR-analysis for formal ADRs |
+| **Research notes** | ✅ Observations + tags | Plain Markdown files |
+| **Meeting notes** | ✅ Structured capture | Obsidian/Notion |
+| **Code patterns** | ✅ With code blocks | narsil-mcp for code analysis |
+| **Team collaboration** | ⚠️ Via Cloud sync | Notion/Confluence |
+| **Task/Issue tracking** | Use beads-mcp instead | ✅ beads-mcp |
+| **Git-backed history** | Use beads-mcp | ✅ beads-mcp |
+| **Real-time collaboration** | ❌ Not supported | Google Docs/Notion |
+
+**Integration with Other Tools:**
+
+| Combined With | Use Case |
+|--------------|----------|
+| **beads-mcp** | Beads tracks tasks (HOW/WHEN), Basic Memory stores knowledge (WHY/WHAT) |
+| **adr-analysis** | Store ADR decisions and research findings for long-term reference |
+| **narsil-mcp** | Store code pattern discoveries, architecture insights |
+| **code-guardian** | Persist quality decisions and validation learnings |
+| **llm-council** | Archive council deliberations and decisions |
+
+**Typical Workflow:**
+
+```bash
+# 1. Start a session - check recent activity
+recent_activity(timeframe="7d", project="my-project")
+
+# 2. Load relevant context for current work
+build_context(url="memory://authentication-design", depth=2)
+
+# 3. Work with AI assistant... discoveries happen
+
+# 4. Capture new knowledge
+write_note(
+  title="OAuth2 Implementation Insights",
+  folder="architecture/auth",
+  content="""
+## Observations
+- [decision] Using PKCE flow for public clients #security
+- [insight] Refresh token rotation prevents replay attacks #tokens
+- [tip] Store tokens in httpOnly cookies for web apps #storage
+
+## Relations
+- implements [[Authentication Strategy]]
+- relates_to [[Session Management]]
+"""
+)
+
+# 5. End session - knowledge persists for next time
+```
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| Notes not appearing | Run `basic-memory sync` to rebuild index |
+| Search returns nothing | Check project path, verify files exist |
+| MCP connection fails | Ensure `uvx` or `basic-memory` is in PATH |
+| Memory URLs not resolving | Check permalink matches note title/path |
+| Slow search | Large knowledge bases may need index optimization |
+| Cloud sync conflicts | Use `basic-memory cloud bisync --dry-run` to preview |
+| Permission errors | Check file permissions in knowledge directory |
+
+**Best Practices:**
+
+1. **Use descriptive titles** - Titles become permalinks for `memory://` URLs
+2. **Add tags liberally** - Tags improve searchability (`#architecture`, `#decision`)
+3. **Create relations** - WikiLinks build the knowledge graph
+4. **Use observation categories** - `[decision]`, `[insight]`, `[tip]` add semantic meaning
+5. **Organize by folder** - `architecture/`, `research/`, `meetings/` for structure
+6. **Regular sync** - Run `basic-memory sync` after external edits
+7. **Start sessions with context** - Use `build_context` to load relevant knowledge
+
+**Resources:**
+
+- [Documentation](https://docs.basicmemory.com)
+- [User Guide](https://docs.basicmemory.com/user-guide/)
+- [Knowledge Format Guide](https://docs.basicmemory.com/guides/knowledge-format/)
+- [CLI Reference](https://docs.basicmemory.com/guides/cli-reference/)
+- [GitHub Issues](https://github.com/basicmachines-co/basic-memory/issues)
 
 ---
 
 ### beads-mcp
 
-> A memory upgrade for your coding agent - distributed, git-backed graph issue tracker
+> A memory upgrade for your coding agent - distributed, git-backed graph issue tracker with dependency tracking
 
 | | |
 |---|---|
@@ -1250,30 +1524,155 @@ tags: [coffee, brewing]
 | **PyPI** | [beads-mcp](https://pypi.org/project/beads-mcp/) |
 | **Language** | Go (94%), Python (4%) |
 | **License** | MIT |
-| **Stars** | 9.4k+ |
-| **Contributors** | 131 |
-| **Install** | `uv tool install beads-mcp` |
+| **Stars** | 9.5k+ |
+| **Forks** | 576+ |
+| **Contributors** | 131+ |
+| **Tools** | 10 |
+| **Install** | `uv tool install beads-mcp` or `brew install steveyegge/tap/bd` |
+
+**Why beads-mcp?**
+
+| Feature | beads-mcp | GitHub Issues | Jira | Linear | Taskwarrior |
+|---------|-----------|---------------|------|--------|-------------|
+| **Git-native storage** | ✅ JSONL in `.beads/` | ❌ Remote API | ❌ Cloud | ❌ Cloud | ❌ Local files |
+| **Agent-optimized** | ✅ JSON output, MCP tools | ❌ Needs scraping | ❌ API complexity | Partial | ❌ Human CLI |
+| **Dependency graph** | ✅ 4 link types | Partial (mentions) | ✅ | ✅ | ❌ |
+| **Ready task detection** | ✅ `bd ready` | ❌ Manual | ❌ Filters | ❌ Views | ❌ |
+| **Multi-agent/branch safe** | ✅ Hash-based IDs | ❌ Conflicts | ❌ Locks | ❌ | ❌ |
+| **Memory compaction** | ✅ Semantic decay | ❌ | ❌ | ❌ | ❌ |
+| **Offline-first** | ✅ Git sync | ❌ | ❌ | ❌ | ✅ |
+| **Zero config** | ✅ | ❌ Token/auth | ❌ Complex setup | ❌ Account | ✅ |
+| **Survives context reset** | ✅ Persistent | ❌ | ❌ | ❌ | ✅ |
 
 **Features:**
 
-- **Git as Database** - Issues stored as JSONL in `.beads/`. Versioned, branched, and merged like code
-- **Agent-Optimized** - JSON output, dependency tracking, auto-ready task detection
-- **Zero Conflict** - Hash-based IDs (`bd-a1b2`) prevent merge collisions in multi-agent/multi-branch workflows
-- **Invisible Infrastructure** - SQLite local cache for speed; background daemon for auto-sync
-- **Compaction** - Semantic "memory decay" summarizes old closed tasks to save context window
-- **Hierarchical IDs** - Supports epics (`bd-a3f8`) → tasks (`bd-a3f8.1`) → subtasks (`bd-a3f8.1.1`)
-- **Stealth Mode** - `bd init --stealth` for personal use on shared projects without committing
+- 🗂️ **Git as Database** - Issues stored as JSONL in `.beads/`. Versioned, branched, and merged like code
+- 🤖 **Agent-Optimized** - JSON output (`--output json`), MCP tools, dependency tracking, auto-ready task detection
+- 🔀 **Zero Conflict** - Hash-based IDs (`beads-a1b2`) prevent merge collisions in multi-agent/multi-branch workflows
+- ⚡ **Invisible Infrastructure** - SQLite local cache for speed; background daemon for auto-sync
+- 🧠 **Memory Compaction** - Semantic "memory decay" summarizes old closed tasks to save context window tokens
+- 📊 **Hierarchical IDs** - Supports epics (`beads-a3f8`) → tasks (`beads-a3f8.1`) → subtasks (`beads-a3f8.1.1`)
+- 👻 **Stealth Mode** - `bd init --stealth` for personal use on shared projects without committing to git
+- 🔄 **Background Daemon** - Auto-sync with git remote, global daemon for multi-project workflows
+- 📈 **Project Statistics** - Track velocity, completion rates, and issue health
 
-**Essential Commands:**
+**When to Use beads-mcp:**
 
-| Command | Action |
-|---------|--------|
-| `bd ready` | List tasks with no open blockers |
-| `bd create "Title" -p 0` | Create a P0 (critical) task |
-| `bd dep add <child> <parent>` | Link tasks (blocks, related, parent-child) |
-| `bd show <id>` | View task details and audit trail |
-| `bd sync` | Sync with git remote |
-| `bd stats` | Project statistics |
+| Use Case | beads-mcp | Alternative |
+|----------|-----------|-------------|
+| **AI agent task tracking** | ✅ Best choice - built for agents | GitHub Issues (needs MCP wrapper) |
+| **Multi-session memory** | ✅ Survives context resets | basic-memory (knowledge, not tasks) |
+| **Dependency-aware work queue** | ✅ `bd ready` shows unblocked tasks | Linear/Jira (complex setup) |
+| **Multi-agent coordination** | ✅ Hash IDs prevent collisions | None - unique to beads |
+| **Offline development** | ✅ Git-native, local-first | Taskwarrior (no deps) |
+| **Knowledge documentation** | ❌ Use basic-memory | basic-memory ([[links]], notes) |
+| **CI/CD integration** | ❌ Use GitHub Issues | GitHub Issues (native actions) |
+| **Team with non-technical users** | ❌ CLI-only | Linear, Jira (web UI) |
+
+**Dependency Types (4 link types):**
+
+| Type | Syntax | Meaning |
+|------|--------|---------|
+| **blocks** | `bd dep add A B` | A is blocked by B (B must complete first) |
+| **related** | `bd dep add A B --type related` | A and B are related (no ordering) |
+| **parent** | `bd dep add A B --type parent` | A is a child of B (epic/task hierarchy) |
+| **discovered-from** | `bd dep add A B --type discovered-from` | A was discovered while working on B |
+
+**MCP Tools (10 total):**
+
+| Tool | Description | Example Use |
+|------|-------------|-------------|
+| `init` | Initialize beads in current project | `mcp__beads__init()` |
+| `create` | Create a new issue | `mcp__beads__create(title: "Fix auth bug", type: "bug", priority: 1)` |
+| `list` | List issues with filters | `mcp__beads__list(status: ["open", "in_progress"])` |
+| `ready` | Find issues with no open blockers | `mcp__beads__ready()` → what to work on next |
+| `show` | View issue details and audit trail | `mcp__beads__show(id: "beads-a1b2")` |
+| `update` | Update issue status/priority/fields | `mcp__beads__update(id: "beads-a1b2", status: "in_progress")` |
+| `close` | Mark issue as completed | `mcp__beads__close(id: "beads-a1b2")` |
+| `dep` | Manage dependencies between issues | `mcp__beads__dep(action: "add", from: "beads-x", to: "beads-y")` |
+| `blocked` | Show all blocked issues | `mcp__beads__blocked()` → identify bottlenecks |
+| `stats` | Project statistics and health | `mcp__beads__stats()` → velocity, open/closed counts |
+
+**CLI Commands (Full Reference):**
+
+| Command | Action | Agent Output |
+|---------|--------|--------------|
+| `bd init` | Initialize `.beads/` directory | `--output json` for structured init result |
+| `bd create "Title" -p 0` | Create a P0 (critical) task | Returns issue ID |
+| `bd create "Title" --type bug` | Create a bug report | Types: `task`, `bug`, `feature`, `epic` |
+| `bd list --status open` | List open issues | JSON array of issues |
+| `bd list --status in_progress` | Show active work | What am I working on? |
+| `bd ready` | Issues with no open blockers | **THE key command** - what to work on next |
+| `bd show <id>` | View issue details + audit trail | Full issue with history |
+| `bd update <id> --status in_progress` | Claim an issue | Marks you as working on it |
+| `bd update <id> --priority 0` | Escalate priority | P0=critical, P1=high, P2=medium, P3=low, P4=backlog |
+| `bd close <id>` | Mark issue as done | Updates status to `closed` |
+| `bd close <id1> <id2> <id3>` | Batch close multiple | Efficient multi-close |
+| `bd dep add <A> <B>` | A is blocked by B | Creates `blocks` relationship |
+| `bd dep add <A> <B> --type related` | A relates to B | Creates `related` relationship |
+| `bd dep remove <A> <B>` | Remove dependency | Unlinks issues |
+| `bd blocked` | Show blocked issues | Find bottlenecks |
+| `bd stats` | Project statistics | Open, closed, blocked counts |
+| `bd sync` | Sync with git remote | Push/pull `.beads/` changes |
+| `bd sync --status` | Check sync status | Dry run before sync |
+| `bd daemon start` | Start background sync | Auto-sync every 30s |
+| `bd daemon stop` | Stop background sync | Manual mode |
+| `bd compact` | Summarize old closed issues | Memory decay for context savings |
+| `bd restore <id>` | Restore compacted issue | Full history from git notes |
+
+**Priority Levels:**
+
+| Priority | CLI Flag | Meaning |
+|----------|----------|---------|
+| P0 | `-p 0` or `--priority 0` | Critical - drop everything |
+| P1 | `-p 1` | High - do this sprint |
+| P2 | `-p 2` | Medium (default) |
+| P3 | `-p 3` | Low - nice to have |
+| P4 | `-p 4` | Backlog - someday |
+
+**Daemon Mode:**
+
+Beads supports background auto-sync to keep your local cache up-to-date with the git remote:
+
+```bash
+# Start daemon for current project
+bd daemon start
+
+# Start global daemon (multi-project)
+bd daemon start --global
+
+# Check daemon status
+bd daemon status
+
+# Stop daemon
+bd daemon stop
+```
+
+**Memory Compaction:**
+
+Old closed issues can be "compacted" to save context window tokens. Beads uses semantic summarization to preserve key information while reducing token count:
+
+```bash
+# Compact issues older than 30 days
+bd compact --older-than 30d
+
+# Preview what would be compacted
+bd compact --dry-run
+
+# Restore a compacted issue (pulls from git notes)
+bd restore beads-a1b2
+```
+
+**Hierarchical Task Structure:**
+
+```
+beads-a3f8 (Epic: User Authentication)
+├── beads-a3f8.1 (Task: Login page)
+│   ├── beads-a3f8.1.1 (Subtask: Email validation)
+│   └── beads-a3f8.1.2 (Subtask: Password strength)
+├── beads-a3f8.2 (Task: OAuth integration)
+└── beads-a3f8.3 (Task: Session management)
+```
 
 **Bifrost Configuration:**
 ```json
@@ -1284,7 +1683,74 @@ tags: [coffee, brewing]
 }
 ```
 
-**No env vars required.** Issues stored in `.beads/` directory (git-tracked).
+**Environment Variables (all optional):**
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `BEADS_PATH` | `.beads/` | Custom path for beads storage |
+| `BEADS_DB` | `.beads/beads.db` | SQLite cache location |
+| `BEADS_ACTOR` | Git user.name | Actor name for audit trail |
+| `BEADS_NO_AUTO_FLUSH` | `false` | Disable auto-flush to JSONL |
+| `BEADS_NO_AUTO_IMPORT` | `false` | Disable auto-import from JSONL |
+
+**Installation Options:**
+
+```bash
+# Homebrew (macOS/Linux) - recommended
+brew install steveyegge/tap/bd
+
+# NPM (Node.js)
+npm install -g @beads/bd
+
+# Go
+go install github.com/steveyegge/beads/cmd/bd@latest
+
+# Python MCP server
+uv tool install beads-mcp
+# or
+pip install beads-mcp
+
+# Direct binary (curl)
+curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/install.sh | bash
+```
+
+**Integration with Other Bifrost Tools:**
+
+| Tool | Integration Pattern |
+|------|---------------------|
+| **basic-memory** | Document decisions in basic-memory, track execution in beads |
+| **narsil-mcp** | Use narsil to find code, create beads issues for refactoring work |
+| **mcp-adr-analysis** | Generate ADRs for architectural decisions, track implementation in beads |
+| **code-guardian** | Code quality findings → beads issues for fixes |
+| **greb-mcp** | Search for patterns, create beads issues for matches needing attention |
+
+**AI Agent Best Practices:**
+
+1. **Session Start:** Run `bd ready` to see available work
+2. **Claim Work:** `bd update <id> --status in_progress` before starting
+3. **Track Discoveries:** Create new issues for discovered work with `--type discovered-from`
+4. **Maintain Deps:** Use `bd dep add` to link related work
+5. **Session End:** `bd close` completed work, `bd sync` to push changes
+6. **Context Recovery:** After compaction, `bd show` retrieves full history from git
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| "Not a beads project" | Run `bd init` in project root |
+| Sync conflicts | `bd sync` uses git merge - resolve like code conflicts |
+| Missing issues after clone | Run `bd sync` to import from JSONL |
+| Daemon not syncing | Check `bd daemon status`, restart with `bd daemon start` |
+| Compacted issue lost data | Use `bd restore <id>` to recover from git notes |
+
+**Resources:**
+
+- [Documentation](https://github.com/steveyegge/beads#readme)
+- [CLI Reference](https://github.com/steveyegge/beads/blob/main/docs/CLI.md)
+- [Agent Instructions](https://github.com/steveyegge/beads/blob/main/AGENT_INSTRUCTIONS.md)
+- [MCP Server (PyPI)](https://pypi.org/project/beads-mcp/)
+- [NPM Package](https://www.npmjs.com/package/@beads/bd)
+- [GitHub Issues](https://github.com/steveyegge/beads/issues)
 
 ---
 
