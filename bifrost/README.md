@@ -3649,6 +3649,311 @@ Note: Exa MCP is fully hosted. API authentication is handled by the MCP server, 
 
 ---
 
+### supabase-mcp
+
+> **Official Supabase MCP server for database operations, Edge Functions, and project management**
+
+| | |
+|---|---|
+| **Repository** | [github.com/supabase-community/supabase-mcp](https://github.com/supabase-community/supabase-mcp) |
+| **GitHub Stars** | 2.4k+ |
+| **Type** | Remote MCP (HTTP via SSE) |
+| **License** | Apache-2.0 |
+| **Tools** | 20+ (varies by feature selection) |
+| **Install** | None required for hosted; `npx supabase-mcp` for local |
+| **Auth** | OAuth 2.1 (hosted) or Personal Access Token (local) |
+
+**Why Supabase MCP?**
+
+| Feature | Supabase MCP | Prisma MCP | DBHub | MCP Toolbox for DBs |
+|---------|--------------|------------|-------|---------------------|
+| Hosted (no install) | **Yes** | No | No | No |
+| OAuth authentication | **Yes (2.1)** | No | No | No |
+| Database read/write | **Yes** | Yes | Yes | Yes |
+| Schema migrations | **Yes (apply_migration)** | No | No | No |
+| Edge Functions | **Yes (deploy, manage)** | No | No | No |
+| Branching support | **Yes (create, merge, rebase)** | No | No | No |
+| Storage management | **Yes (buckets, files)** | No | No | No |
+| Auth system integration | **Yes** | No | No | No |
+| TypeScript types gen | **Yes** | Yes | No | No |
+| Docs search | **Yes (RAG-style)** | No | No | No |
+| Read-only mode | **Yes (?read_only)** | Yes | Yes | Yes |
+| Multi-project | **Yes (?project_ref)** | Per-config | Yes | Yes |
+| Prompt injection safety | Moderate (RLS helps) | Moderate | Moderate | Moderate |
+
+**What Makes Supabase MCP Different:**
+
+Supabase MCP is the **only full-stack database MCP** that includes:
+
+1. **Hosted Remote Server**: No installation required - just configure the URL `https://mcp.supabase.com/mcp`
+2. **OAuth 2.1 Auth**: Dynamic client registration (PKCE) - no API keys to manage
+3. **Project Scoping**: Restrict AI to a single project with `?project_ref=<ref>`
+4. **Feature Groups**: Control tool exposure with `?features=database,docs` for token efficiency
+5. **Full DevOps Pipeline**: Database → Edge Functions → Branching → Deployment all in one MCP
+
+**Available Tools by Category:**
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| **Account** | `list_organizations`, `list_projects`, `get_project` | Project and org management |
+| **Database** | `list_tables`, `list_extensions`, `execute_sql`, `apply_migration` | Full PostgreSQL control |
+| **Debugging** | `get_logs`, `get_advisors` | Service logs, security/perf advisors |
+| **Development** | `get_project_url`, `get_publishable_keys`, `generate_typescript_types` | Dev helpers |
+| **Edge Functions** | `list_edge_functions`, `get_edge_function`, `deploy_edge_function` | Serverless deployment |
+| **Branching** | `create_branch`, `list_branches`, `delete_branch`, `merge_branch`, `reset_branch`, `rebase_branch` | Git-like DB branching |
+| **Docs** | `search_docs` | GraphQL-based docs search |
+| **Storage** | Bucket and file operations | Object storage management |
+
+**Key Tools Deep Dive:**
+
+| Tool | Description | Example Use Case |
+|------|-------------|------------------|
+| `list_tables` | List all tables with schemas | "What tables exist in my project?" |
+| `execute_sql` | Run arbitrary SQL (respects RLS) | "Count users created this week" |
+| `apply_migration` | Create versioned migrations | "Add a status column to orders" |
+| `get_logs` | Fetch logs by service | "Show me auth errors from today" |
+| `get_advisors` | Security/performance insights | "Check for RLS policy issues" |
+| `deploy_edge_function` | Deploy Deno functions | "Deploy my webhook handler" |
+| `create_branch` | Create preview database | "Make a branch for testing" |
+| `search_docs` | GraphQL docs search | "How do I set up RLS?" |
+| `generate_typescript_types` | Generate types from schema | "Create types for my tables" |
+
+**Feature Groups (Token Efficiency):**
+
+| Configuration | Tools Loaded | Token Cost |
+|---------------|--------------|------------|
+| All features (default) | 20+ tools | ~19.3k tokens |
+| `?features=database,docs` | 8 tools | ~4.2k tokens |
+| `?features=database` | 5 tools | ~2.5k tokens |
+| `?features=docs` | 1 tool | ~0.8k tokens |
+
+Available feature groups: `account`, `database`, `debugging`, `development`, `edge_functions`, `branching`, `docs`, `storage`
+
+**When to Use:**
+
+| Scenario | Use Supabase MCP? | Why |
+|----------|-------------------|-----|
+| Query your Supabase database | ✅ **Yes** | Direct SQL access with RLS |
+| Apply database migrations | ✅ **Yes** | Version-controlled schema changes |
+| Deploy Edge Functions | ✅ **Yes** | One-command deployment |
+| Branch for testing | ✅ **Yes** | Isolated preview environments |
+| Debug auth/storage issues | ✅ **Yes** | Service logs access |
+| Generate TypeScript types | ✅ **Yes** | Schema-to-types automation |
+| General PostgreSQL (non-Supabase) | ❌ Use DBHub | Supabase-specific integration |
+| Prisma-managed schemas | ❌ Use Prisma MCP | Prisma-specific migrations |
+| Read-only analytics | ✅ Yes (with ?read_only) | Safe for prod exploration |
+
+**When NOT to Use (Use Alternatives):**
+
+| Scenario | Use Instead | Why |
+|----------|-------------|-----|
+| Non-Supabase PostgreSQL | **DBHub** or **MCP Toolbox** | Supabase-specific auth |
+| Prisma-managed database | **Prisma MCP** | Schema drift risk |
+| Production write operations | **Direct Supabase client** | More control, audit trails |
+| Complex multi-step transactions | **Direct SQL/client** | MCP is per-query |
+| Sensitive data environments | Consider **local MCP** | OAuth tokens in hosted |
+
+**Security Considerations:**
+
+⚠️ **The "Lethal Trifecta" (applies to ALL database MCPs):**
+
+1. **Write access** to database
+2. **AI-controlled SQL** execution
+3. **User-influenced prompts** (potential injection)
+
+**Mitigations provided by Supabase MCP:**
+
+| Risk | Mitigation | Configuration |
+|------|------------|---------------|
+| Destructive queries | Read-only mode | `?read_only=true` |
+| Cross-project access | Project scoping | `?project_ref=<ref>` |
+| Tool sprawl | Feature groups | `?features=database,docs` |
+| Direct table writes | RLS enforcement | Always enabled |
+| Over-privileged access | Dedicated postgres user | `authenticator` role in read-only |
+
+**Best Practice Configuration:**
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=your-project-ref&read_only=true&features=database,docs"
+    }
+  }
+}
+```
+
+**Bifrost Configuration Options:**
+
+**Option 1: Hosted Remote (Recommended for most cases)**
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp"
+    }
+  }
+}
+```
+
+OAuth authentication happens automatically via browser redirect.
+
+**Option 2: Hosted with Project Scoping (Production)**
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=abcdefghijklmnop&read_only=true&features=database,docs,debugging"
+    }
+  }
+}
+```
+
+**Option 3: Local STDIO (Self-managed auth)**
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "supabase-mcp"],
+      "env": {
+        "SUPABASE_ACCESS_TOKEN": "${SUPABASE_ACCESS_TOKEN}"
+      }
+    }
+  }
+}
+```
+
+**URL Query Parameters:**
+
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `project_ref` | string | Restrict to single project | `?project_ref=abcdef123456` |
+| `read_only` | boolean | Use read-only postgres user | `?read_only=true` |
+| `features` | string | Comma-separated feature groups | `?features=database,docs` |
+
+**Environment Variables (Local STDIO only):**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SUPABASE_ACCESS_TOKEN` | Yes (local) | Personal Access Token from dashboard |
+
+For hosted version, OAuth handles authentication - no tokens needed.
+
+**Integration with Other Bifrost Tools:**
+
+| Combined With | Use Case |
+|---------------|----------|
+| **adr-analysis** | Generate ADRs from schema decisions |
+| **narsil-mcp** | Search codebase for Supabase client usage |
+| **basic-memory** | Store schema patterns and decisions |
+| **beads-mcp** | Track migration tasks and database work |
+| **llm-council** | Deliberate on schema design decisions |
+| **greb-mcp** | Find all repository.fetch() calls |
+
+**Example Workflows:**
+
+1. **Database Exploration:**
+   ```
+   User: "What tables do I have and their relationships?"
+
+   1. list_tables(schemas: ["public"])
+   2. execute_sql("SELECT ... FROM information_schema.table_constraints")
+   3. Summarize schema structure
+   ```
+
+2. **Safe Migration Pattern:**
+   ```
+   User: "Add a status column to the orders table"
+
+   1. list_tables() - verify table exists
+   2. execute_sql("SELECT column_name FROM information_schema.columns WHERE table_name = 'orders'")
+   3. apply_migration(name: "add_orders_status", query: "ALTER TABLE orders ADD COLUMN status text DEFAULT 'pending'")
+   4. generate_typescript_types() - update client types
+   ```
+
+3. **Debug Production Issue:**
+   ```
+   User: "Users are getting auth errors"
+
+   1. get_logs(service: "auth") - recent auth logs
+   2. get_advisors(type: "security") - check for RLS issues
+   3. execute_sql("SELECT * FROM auth.users WHERE last_sign_in_at > now() - interval '1 hour'")
+   ```
+
+4. **Feature Branch Workflow:**
+   ```
+   User: "Create a branch for testing new schema"
+
+   1. create_branch(name: "feature-new-schema")
+   2. apply_migration(...) - make changes on branch
+   3. Test via branch URL
+   4. merge_branch(branch_id: "...") - apply to production
+   ```
+
+**Deploying Custom MCP Servers on Supabase:**
+
+Supabase supports deploying your own MCP servers as Edge Functions using `mcp-lite`:
+
+```typescript
+// supabase/functions/my-mcp/index.ts
+import { createMcpLiteServer } from 'npm:mcp-lite@0.0.4'
+
+Deno.serve(async (req) => {
+  const response = await createMcpLiteServer({
+    tools: [{
+      name: 'my_tool',
+      description: 'Custom tool',
+      parameters: { type: 'object', properties: {} },
+      handler: async (params) => ({ result: 'Hello!' })
+    }]
+  })(req)
+  return response
+})
+```
+
+Deploy with: `supabase functions deploy my-mcp`
+
+**Self-Hosting Requirements:**
+
+If self-hosting Supabase and want MCP:
+
+1. Supabase version with MCP support
+2. OAuth server configuration (API Gateway)
+3. Environment: `MCP_ENABLED=true`, `MCP_CLIENT_ID`, `MCP_CLIENT_SECRET`
+
+See: [Supabase Self-Hosting MCP Docs](https://supabase.com/docs/guides/self-hosting/enable-mcp)
+
+**Troubleshooting:**
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| OAuth redirect fails | Browser popup blocked | Allow popups for supabase.com |
+| "Project not found" | Wrong project_ref | Get ref from Supabase dashboard URL |
+| Read-only violations | Missing ?read_only param | Add `?read_only=true` for safe exploration |
+| Tool not available | Feature group excluded | Add feature to `?features=` parameter |
+| Token cost too high | All features loaded | Use `?features=database,docs` minimum |
+| Edge function deploy fails | Invalid Deno syntax | Check `import "jsr:@supabase/functions-js/edge-runtime.d.ts"` |
+| Branch operations fail | Branching not enabled | Enable in Supabase dashboard |
+
+**Resources:**
+
+- [Supabase MCP Documentation](https://supabase.com/docs/guides/getting-started/mcp)
+- [GitHub Repository](https://github.com/supabase-community/supabase-mcp)
+- [MCP Authentication Guide](https://supabase.com/docs/guides/auth/oauth-server/mcp-authentication)
+- [Building MCP with mcp-lite](https://supabase.com/docs/guides/functions/examples/mcp-server-mcp-lite)
+- [Self-Hosting MCP](https://supabase.com/docs/guides/self-hosting/enable-mcp)
+- [Deploy Custom MCP Servers](https://supabase.com/docs/guides/getting-started/byo-mcp)
+
+---
+
 ## Data Persistence
 
 | What | Where | Persisted |
