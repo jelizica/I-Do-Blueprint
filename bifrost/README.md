@@ -70,6 +70,8 @@ Claude Code → Bifrost Gateway (localhost:8080) → MCP Servers (in container)
 | [code-guardian](#code-guardian) | Local | Code quality & validation | None |
 | [local-file-organizer](#local-file-organizer) | Local | File organization | None |
 | [llm-council](#llm-council) | Local | Multi-model deliberation | `OPENROUTER_API_KEY` |
+| [exa-mcp](#exa-mcp) | Remote | AI-native web search, code context | None (hosted) |
+| [supabase-mcp](#supabase-mcp) | Remote | Database, Edge Functions, branching | `SUPABASE_ACCESS_TOKEN` (local only) |
 
 ---
 
