@@ -2215,7 +2215,7 @@ User: "Search arXiv for transformer attention mechanism papers"
 
 ### code-guardian (CodeGuardian Studio)
 
-> AI-powered code refactor engine for large repositories - 113+ MCP tools for code quality, workflow management, and automated optimization
+> AI safety layer and code refactor engine for Claude Code - 113+ MCP tools for code quality, workflow management, automated optimization, and **AI guardrails** that prevent dangerous operations
 
 | | |
 |---|---|
@@ -2223,42 +2223,144 @@ User: "Search arXiv for transformer attention mechanism papers"
 | **NPM** | [codeguardian-studio](https://www.npmjs.com/package/codeguardian-studio) |
 | **Website** | [codeguardian.studio](https://codeguardian.studio) |
 | **Language** | TypeScript (97.4%) |
-| **License** | MIT |
+| **License** | MIT (Open Core) |
 | **Version** | 4.1.1 |
 | **Node.js** | >=18.0.0 |
+| **Pricing** | Dev (Free) / Team ($19/mo) / Enterprise (Custom) |
 
-**Overview:**
+**Why Code Guardian?**
 
-CodeGuardian Studio is a comprehensive MCP server providing **113+ tools** organized into specialized modules for code analysis, refactoring, workflow management, and AI-assisted development. Built for Claude Code integration.
+| Feature | Code Guardian | Guardrails AI | NeMo Guardrails | Semgrep MCP |
+|---------|---------------|---------------|-----------------|-------------|
+| **MCP Tools** | 113+ | N/A | N/A | ~10 |
+| **Code Analysis** | ✅ Deep hotspot detection | ❌ | ❌ | ✅ Pattern-based |
+| **AI Safety Layer** | ✅ Blocks dangerous ops | ✅ LLM output validation | ✅ Conversation rails | ❌ |
+| **Session Persistence** | ✅ Resume across sessions | ❌ | ❌ | ❌ |
+| **Memory System** | ✅ Decisions, patterns, conventions | ❌ | ❌ | ❌ |
+| **Latent Chain Reasoning** | ✅ 4-phase workflow | ❌ | ❌ | ❌ |
+| **Tech Debt Scoring** | ✅ TDI grades A-F | ❌ | ❌ | ❌ |
+| **Token Budget Governor** | ✅ Context management | ❌ | ❌ | ❌ |
+| **100% Local** | ✅ No data leaves machine | ❌ Cloud-based | Partial | ✅ |
 
-**Core Modules:**
+**What Makes Code Guardian Different:**
+
+1. **AI Safety Layer** - Prevents dangerous AI actions *before* they execute:
+   - ❌ Blocks `rm -rf /` and mass file deletions
+   - ❌ Blocks breaking API changes without deprecation
+   - ❌ Blocks unsafe database migrations (DROP TABLE)
+   - ❌ Blocks force push to main/protected branches
+   - ❌ Blocks secrets/credentials in code
+   - ❌ Blocks fake tests (tests without assertions)
+
+2. **Tech Debt Index (TDI)** - Composite metric (0-100) grading code health:
+   - **Grade A (0-20)**: Excellent, minimal tech debt
+   - **Grade B (21-40)**: Good, manageable tech debt
+   - **Grade C (41-60)**: Fair, needs attention
+   - **Grade D (61-80)**: Poor, significant debt
+   - **Grade F (81-100)**: Critical, urgent refactoring needed
+
+3. **Latent Chain Mode** - Structured 4-phase reasoning:
+   - **Analysis** → Understand the problem, gather context
+   - **Plan** → Design solution, identify risks
+   - **Impl** → Execute with safety checks
+   - **Review** → Validate, document, learn
+
+**Core Modules (113+ Tools):**
 
 | Module | Tools | Purpose |
 |--------|-------|---------|
-| **Code Optimizer** | 8 | Scan repos, calculate metrics, detect hotspots, generate refactor plans |
-| **Memory** | 5 | Persistent memory across sessions (decisions, patterns, conventions) |
-| **Guard** | 6 | Code validation, fake test detection, security checks |
-| **Workflow** | 12 | Task management, progress tracking, dependencies |
-| **Latent Chain** | 15 | Multi-phase reasoning (analysis → plan → impl → review) |
-| **Agents** | 7 | Specialized agent coordination and selection |
-| **Thinking** | 10 | Structured reasoning models, code style references |
-| **Documents** | 9 | Document registry, search, and management |
-| **Testing** | 10 | Test execution, browser automation, coverage |
-| **Resources** | 12 | Token budgeting, checkpoints, governor states |
-| **Session** | 10 | Session lifecycle, timeline, export/resume |
-| **AutoAgent** | 7 | Task decomposition, tool routing, error fix loops |
-| **RAG** | 6 | Semantic code search with embeddings |
-| **Progress** | 4 | Workflow visualization, blocker detection |
-| **Proof Pack** | 3 | Tamper-evident validation records with SHA-256 |
+| **Code Optimizer** | 8 | `code_scan_repository`, `code_metrics`, `code_hotspots`, `code_refactor_plan`, `code_quick_analysis` |
+| **Memory** | 5 | `memory_store`, `memory_recall`, `memory_forget`, `memory_list`, `memory_summary` |
+| **Guard** | 6 | `guard_validate`, `guard_check_test`, `guard_rules`, `guard_toggle_rule`, `guard_status` |
+| **Workflow** | 12 | `workflow_task_create`, `workflow_task_start`, `workflow_task_update`, `workflow_task_complete` |
+| **Latent Chain** | 15 | `latent_context_create`, `latent_context_update`, `latent_phase_transition`, `latent_apply_patch` |
+| **Agents** | 7 | `agents_list`, `agents_select`, `agents_register`, `agents_coordinate`, `agents_reload` |
+| **Thinking** | 10 | `thinking_get_model`, `thinking_suggest_model`, `thinking_get_workflow`, `thinking_save_snippet` |
+| **Documents** | 9 | `documents_search`, `documents_create`, `documents_update`, `documents_register`, `documents_scan` |
+| **Testing** | 10 | `testing_run`, `testing_run_affected`, `testing_browser_open`, `testing_browser_screenshot` |
+| **Resources** | 12 | `resource_status`, `resource_checkpoint_create`, `resource_governor_state`, `resource_action_allowed` |
+| **Session** | 10 | `session_init`, `session_end`, `session_status`, `session_timeline`, `session_resume` |
+| **AutoAgent** | 7 | `auto_decompose_task`, `auto_route_tools`, `auto_fix_loop`, `auto_recall_errors` |
+| **RAG** | 6 | `rag_build_index`, `rag_query`, `rag_related_code`, `rag_status`, `rag_clear_index` |
+| **Progress** | 4 | `progress_status`, `progress_blockers`, `progress_mermaid`, `progress_clear` |
+| **Proof Pack** | 3 | `proof_pack_create`, `proof_pack_verify`, `proof_tdi_calculate` |
+
+**When to Use Code Guardian:**
+
+| Use Case | Code Guardian | Alternative |
+|----------|---------------|-------------|
+| **AI safety guardrails** | ✅ Best choice - blocks dangerous ops | Guardrails AI (LLM output only) |
+| **Code refactoring prioritization** | ✅ Hotspot detection + TDI scoring | SonarQube (heavyweight) |
+| **Session persistence** | ✅ Resume work across conversations | None (unique feature) |
+| **Multi-phase reasoning** | ✅ Latent Chain workflow | Manual process |
+| **Fake test detection** | ✅ Guard module catches assertions | Semgrep (rules-based) |
+| **Token budget management** | ✅ Governor + checkpointing | Manual tracking |
+| **Code pattern memory** | ✅ Store conventions, decisions | Basic Memory (general purpose) |
+| **Security scanning** | ⚠️ Basic (use narsil-mcp) | narsil-mcp (taint analysis) |
+| **Deep code search** | ⚠️ Basic RAG (use greb/narsil) | greb-mcp, narsil-mcp |
 
 **Key Features:**
 
 - **Code Hotspot Detection** - Identifies files with high complexity and churn for prioritized refactoring
-- **Latent Chain Mode** - 4-phase workflow (analysis → plan → impl → review) with context persistence
+- **Latent Chain Mode** - 4-phase workflow (Analysis → Plan → Impl → Review) with context persistence
 - **Memory Persistence** - Store decisions, patterns, and conventions across sessions
-- **Token Budget Governor** - Manages context window usage with automatic checkpointing
+- **Token Budget Governor** - Manages context window with automatic checkpointing at 70%/85% thresholds
 - **Proof Packs** - Creates tamper-evident records of code validation with SHA-256 hashes
 - **Browser Testing** - Playwright integration for visual testing and screenshot capture
+- **Thinking Models** - Chain-of-thought, tree-of-thoughts, ReAct, decomposition, first-principles
+- **Agent Coordination** - Select and coordinate specialized agents for complex tasks
+
+**Guard Module - What Gets Blocked:**
+
+| Category | Examples | Rule |
+|----------|----------|------|
+| **File Operations** | `rm -rf /`, mass delete, overwrite system files | `dangerous-commands` |
+| **API Breaking** | Remove public endpoints, change signatures | `breaking-changes` |
+| **Database** | `DROP TABLE`, `TRUNCATE`, unsafe migrations | `unsafe-migrations` |
+| **Git Operations** | Force push main, delete protected branches | `unsafe-git` |
+| **Secrets** | Hardcoded passwords, API keys in code | `secrets-detection` |
+| **Test Quality** | Tests without assertions, mocked everything | `fake-tests` |
+| **Code Smells** | Empty catch blocks, disabled features | `code-quality` |
+
+**Session Lifecycle:**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  session_init  →  Work  →  session_end                  │
+│       │                         │                       │
+│       ▼                         ▼                       │
+│  Creates session         Saves to disk                  │
+│  Loads memory            Exports timeline               │
+│  Sets up guards          Creates handoff                │
+└─────────────────────────────────────────────────────────┘
+                    │
+                    ▼
+┌─────────────────────────────────────────────────────────┐
+│  Next Session: session_resume                           │
+│  • Full context restored                                │
+│  • Memory persisted                                     │
+│  • Timeline continued                                   │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Token Budget Governor:**
+
+| Mode | Threshold | Behavior |
+|------|-----------|----------|
+| **Normal** | < 70% | All actions allowed |
+| **Conservative** | 70-84% | Delta-only responses, no browser testing |
+| **Critical** | ≥ 85% | Must checkpoint immediately, finish and save only |
+
+**Thinking Models Available:**
+
+| Model | When to Use |
+|-------|-------------|
+| `chain-of-thought` | Step-by-step debugging, logic problems |
+| `tree-of-thoughts` | Multiple approaches, compare trade-offs |
+| `react` | Exploration, experimentation (Reason + Act) |
+| `self-consistency` | Verification, reliability (multiple solutions) |
+| `decomposition` | Break complex problems into smaller parts |
+| `first-principles` | Question assumptions, find fundamentals |
 
 **Bifrost Configuration:**
 
@@ -2273,7 +2375,90 @@ CodeGuardian Studio is a comprehensive MCP server providing **113+ tools** organ
 }
 ```
 
-**Note:** Local server - copied into Docker image and built during image creation. Requires the `@ccg/cloud-client` package to be built first.
+**Full-Featured Configuration:**
+
+```json
+{
+  "name": "code-guardian",
+  "command": "node",
+  "args": ["/opt/mcp-servers/code-guardian/dist/index.js"],
+  "env": {
+    "CCG_PROJECT_ROOT": "/workspace",
+    "CCG_MEMORY_DIR": "/workspace/.ccg",
+    "CCG_ENABLE_BROWSER": "true",
+    "CCG_STRICT_MODE": "true"
+  }
+}
+```
+
+**Environment Variables:**
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CCG_PROJECT_ROOT` | Project root directory | Required |
+| `CCG_MEMORY_DIR` | Memory/session storage directory | `.ccg/` |
+| `CCG_ENABLE_BROWSER` | Enable Playwright browser testing | `false` |
+| `CCG_STRICT_MODE` | Treat warnings as blocking errors | `false` |
+| `CCG_CONFIRM_POLICY` | Diff confirmation: `auto`, `prompt`, `never` | `auto` |
+
+**Quick Start Commands:**
+
+```bash
+# Initialize session
+session_init
+
+# Scan repository for hotspots
+code_quick_analysis
+
+# Store a decision
+memory_store --content "Use Repository pattern" --type decision --importance 8
+
+# Create a task
+workflow_task_create --name "Refactor auth module" --priority high
+
+# Validate code before commit
+guard_validate --code "..." --filename "auth.ts" --ruleset backend
+
+# End session (saves everything)
+session_end --reason "Day end"
+```
+
+**Case Study Results (Self-Dogfooding):**
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| **TDI Score** | 75 (Grade D) | 68 (Grade D) | -9.3% |
+| **Hotspots** | 12 files | 5 files | -58% |
+| **Avg Complexity** | 28.4 | 22.1 | -22% |
+| **Max Nesting** | 8 levels | 5 levels | -37% |
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| Session not persisting | Check `CCG_MEMORY_DIR` exists and is writable |
+| Guards not blocking | Verify `CCG_STRICT_MODE=true` for strict enforcement |
+| Browser tests failing | Ensure Playwright is installed: `npx playwright install` |
+| Memory recall empty | Store memories with `importance >= 5` for retention |
+| Token budget exceeded | Use `resource_checkpoint_create` before large operations |
+
+**Integration with Other Bifrost Tools:**
+
+| Tool Combination | Use Case |
+|------------------|----------|
+| **Code Guardian + narsil-mcp** | CCG for guardrails + narsil for deep security scanning |
+| **Code Guardian + greb-mcp** | CCG for workflow + greb for semantic code search |
+| **Code Guardian + Basic Memory** | CCG for code patterns + Basic Memory for project knowledge |
+| **Code Guardian + beads-mcp** | CCG for session tracking + beads for issue management |
+
+**Resources:**
+
+- [Official Website](https://codeguardian.studio) - Features, pricing, case studies
+- [GitHub Repository](https://github.com/phuongrealmax/code-guardian) - Source code, issues
+- [NPM Package](https://www.npmjs.com/package/codeguardian-studio) - Installation
+- [Case Study](https://codeguardian.studio/case-study) - TDI metrics and results
+
+**Note:** Local server - copied into Docker image and built during image creation. 100% local execution - no data leaves your machine.
 
 ---
 
@@ -2971,6 +3156,277 @@ mcp__local-file-organizer__bulk_move_files(path: "~/Downloads/Videos", category:
 - [MCP Python SDK Documentation](https://github.com/anthropics/mcp-python-sdk)
 - [FastMCP Framework](https://github.com/jlowin/fastmcp)
 - [Official Filesystem MCP](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem) (for comparison)
+
+---
+
+### llm-council
+
+> Multi-model LLM deliberation system with 3-stage consensus - collect diverse perspectives, peer-rank responses anonymously, synthesize final answer
+
+| | |
+|---|---|
+| **Repository** | [github.com/karpathy/llm-council](https://github.com/karpathy/llm-council) (original by Andrej Karpathy) |
+| **Fork** | [github.com/khuynh22/llm-council](https://github.com/khuynh22/llm-council) (MCP integration) |
+| **Language** | Python 3.10+ |
+| **License** | MIT |
+| **Framework** | MCP Python SDK |
+| **Tools** | 4 |
+| **Backend** | OpenRouter API (single key, multiple models) |
+| **Install** | Pre-installed in Bifrost Docker image |
+
+**Why llm-council?**
+
+| Feature | llm-council | ai-counsel | consensus | Single Model |
+|---------|-------------|------------|-----------|--------------|
+| **Multi-Model Diversity** | ✅ 5 models default | ✅ 4 models | ✅ Configurable | ❌ Single view |
+| **Peer Review (Stage 2)** | ✅ Anonymized ranking | ❌ Voting only | ❌ No peer review | ❌ N/A |
+| **Chairman Synthesis** | ✅ Dedicated synthesizer | ❌ Consensus merge | ❌ Strategy-based | ❌ N/A |
+| **Conversation Memory** | ✅ SQLite storage | ✅ Decision graphs | ❌ Stateless | ✅ Context window |
+| **MCP Protocol** | ✅ Native | ✅ Native | ❌ Langchain | ❌ Direct API |
+| **Local Models** | ❌ OpenRouter only | ✅ Ollama support | ❌ Cloud only | ✅ Depends |
+| **Execution Time** | 30-120s (3 stages) | 60-300s (debates) | 10-30s (parallel) | 3-10s |
+| **API Cost** | Medium (5×3 calls) | Low (local option) | Medium | Low |
+
+**The 3-Stage Deliberation Process:**
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│  STAGE 1: Individual Responses                                          │
+│  ─────────────────────────────                                          │
+│  • Query 5 models in parallel via OpenRouter                            │
+│  • Each model responds independently to the user question               │
+│  • No cross-model contamination at this stage                           │
+│                                                                         │
+│  Models: GPT-5.1, Gemini 3 Pro, Claude Sonnet 4.5, Claude Opus 4, Grok 4│
+├─────────────────────────────────────────────────────────────────────────┤
+│  STAGE 2: Anonymized Peer Ranking                                       │
+│  ────────────────────────────────                                       │
+│  • Each model receives ALL Stage 1 responses (anonymized as A, B, C...) │
+│  • Models evaluate and rank responses without knowing authorship        │
+│  • Aggregate rankings calculated from all peer reviews                  │
+│  • Reveals which models' responses are most valued by peers             │
+├─────────────────────────────────────────────────────────────────────────┤
+│  STAGE 3: Chairman Synthesis                                            │
+│  ───────────────────────────                                            │
+│  • Chairman model (Gemini 3 Pro by default) receives:                   │
+│    - Original question                                                  │
+│    - All Stage 1 responses with model names                            │
+│    - All Stage 2 rankings and evaluations                              │
+│  • Synthesizes final answer incorporating collective wisdom             │
+│  • Result represents council consensus, not single-model bias           │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+**When to Use llm-council:**
+
+| Use Case | llm-council | Alternative |
+|----------|-------------|-------------|
+| **Critical architectural decisions** | ✅ Best choice - diverse expert opinions | Single model with chain-of-thought |
+| **Controversial or nuanced topics** | ✅ Reduces single-model bias | Manual comparison of responses |
+| **Evaluating multiple approaches** | ✅ Peer ranking reveals quality | Human evaluation |
+| **Complex trade-off analysis** | ✅ Synthesis weighs competing views | Decision matrix prompts |
+| **Quick questions (< 10s needed)** | Use single model | ✅ Direct API call |
+| **Cost-sensitive queries** | Use single model | ✅ Lower API costs |
+| **Local/offline operation** | Use ai-counsel with Ollama | ✅ ai-counsel |
+| **Multi-round debates** | Use ai-counsel | ✅ ai-counsel (deliberative rounds) |
+| **Simple fact lookup** | Use single model + search | ✅ Web search tools |
+
+**Default Council Configuration:**
+
+| Role | Model | Purpose |
+|------|-------|---------|
+| **Council Member** | `openai/gpt-5.1` | OpenAI's latest reasoning model |
+| **Council Member** | `google/gemini-3-pro-preview` | Google's frontier model |
+| **Council Member** | `anthropic/claude-sonnet-4.5` | Anthropic's balanced model |
+| **Council Member** | `anthropic/claude-opus-4-20250514` | Anthropic's most capable model |
+| **Council Member** | `x-ai/grok-4` | xAI's frontier model |
+| **Chairman** | `google/gemini-3-pro-preview` | Synthesis and final answer |
+
+**MCP Tools (4 total):**
+
+| Tool | Parameters | Description |
+|------|------------|-------------|
+| `council_query` | `question`, `council_models?`, `chairman_model?`, `save_conversation?` | Full 3-stage deliberation (30-120s). Returns synthesized answer with all stage data. |
+| `council_stage1` | `question`, `council_models?` | Stage 1 only - parallel individual responses. Fast comparison without ranking. |
+| `council_list_conversations` | None | List all saved council conversations with metadata |
+| `council_get_conversation` | `conversation_id` | Retrieve full conversation by ID with all stages |
+
+**Response Structure:**
+
+```json
+{
+  "question": "What is the best caching strategy for a mobile app?",
+  "stage1_responses": [
+    {"model": "openai/gpt-5.1", "response": "For mobile apps, I recommend..."},
+    {"model": "google/gemini-3-pro-preview", "response": "Consider a hybrid approach..."},
+    {"model": "anthropic/claude-sonnet-4.5", "response": "The optimal strategy depends on..."},
+    {"model": "anthropic/claude-opus-4-20250514", "response": "Mobile caching requires..."},
+    {"model": "x-ai/grok-4", "response": "There are three main patterns..."}
+  ],
+  "stage2_rankings": [
+    {
+      "model": "openai/gpt-5.1",
+      "ranking": "Response C provides the most comprehensive...\n\nFINAL RANKING:\n1. Response C\n2. Response E\n3. Response A\n4. Response B\n5. Response D",
+      "parsed_ranking": ["Response C", "Response E", "Response A", "Response B", "Response D"]
+    }
+  ],
+  "stage3_synthesis": {
+    "model": "google/gemini-3-pro-preview",
+    "response": "Based on the council's deliberation, the recommended caching strategy is..."
+  },
+  "metadata": {
+    "label_to_model": {"Response A": "openai/gpt-5.1", "Response B": "google/gemini-3-pro-preview"},
+    "aggregate_rankings": [
+      {"model": "anthropic/claude-sonnet-4.5", "average_rank": 1.8, "rankings_count": 5},
+      {"model": "x-ai/grok-4", "average_rank": 2.2, "rankings_count": 5}
+    ]
+  },
+  "conversation_id": "550e8400-e29b-41d4-a716-446655440000",
+  "resource_uri": "council://conversations/550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**Workflow Examples:**
+
+```bash
+# Full council deliberation for critical decisions
+mcp__llm-council__council_query(
+  question: "Should we use SQLite or PostgreSQL for local-first mobile architecture?",
+  save_conversation: true
+)
+# Returns: 3-stage deliberation with synthesis (~60s)
+
+# Quick comparison without ranking (Stage 1 only)
+mcp__llm-council__council_stage1(
+  question: "What are the pros and cons of SwiftUI vs UIKit?"
+)
+# Returns: 5 parallel responses (~15s)
+
+# Use custom models for specialized topics
+mcp__llm-council__council_query(
+  question: "Evaluate this Go code for performance issues",
+  council_models: ["anthropic/claude-opus-4-20250514", "google/gemini-3-pro-preview", "openai/gpt-5.1"],
+  chairman_model: "anthropic/claude-opus-4-20250514"
+)
+
+# Retrieve past deliberation for reference
+mcp__llm-council__council_get_conversation(
+  conversation_id: "550e8400-e29b-41d4-a716-446655440000"
+)
+```
+
+**Comparison with Competitors:**
+
+| Aspect | llm-council | ai-counsel | consensus | PolyCouncil |
+|--------|-------------|------------|-----------|-------------|
+| **Philosophy** | Expert panel + chairman | Deliberative democracy | Voting strategies | Local model council |
+| **Unique Feature** | Anonymized peer ranking | Multi-round debates | Langchain integration | LM Studio support |
+| **Best For** | High-stakes decisions | Consensus building | Simple aggregation | Privacy-sensitive |
+| **Complexity** | Medium | High | Low | Low |
+| **Setup** | OpenRouter API key | Can use Ollama | Multiple API keys | LM Studio |
+| **MCP Support** | ✅ Native | ✅ Native | ❌ Python library | ❌ Python library |
+
+**Detailed Competitor Analysis:**
+
+**ai-counsel** (166 GitHub stars):
+- True deliberative consensus with multi-round debates
+- Structured voting and decision graph memory
+- Supports local models via Ollama
+- Tracks decision history in knowledge graph
+- Better for: Extended debates, local/private use, complex multi-round discussions
+
+**consensus** (Langchain-compatible):
+- Multiple voting strategies: majority, weighted, ranked choice
+- Integrates with existing Langchain pipelines
+- Simpler than llm-council (no peer review stage)
+- Better for: Langchain users, simple aggregation needs
+
+**PolyCouncil**:
+- Designed for LM Studio local models
+- No cloud API dependencies
+- Better for: Air-gapped environments, local model testing
+
+**Key Advantages of llm-council:**
+1. **Peer Review Stage** - Only system with anonymized cross-model evaluation
+2. **Aggregate Rankings** - Quantitative quality metrics from peer review
+3. **Chairman Pattern** - Dedicated synthesis rather than voting/merging
+4. **OpenRouter Integration** - Single API key for 100+ models
+5. **Conversation Memory** - SQLite storage for reviewing past deliberations
+
+**Bifrost Configuration:**
+
+```json
+{
+  "name": "llm-council",
+  "command": "/opt/mcp-servers/llm-council/venv/bin/python",
+  "args": ["-m", "backend.mcp_server"],
+  "env": {
+    "OPENROUTER_API_KEY": "${OPENROUTER_API_KEY}"
+  }
+}
+```
+
+**CLI Usage (Outside MCP):**
+
+```bash
+# Quick Stage 1 comparison
+./scripts/council --stage1 "What is the best caching strategy?"
+
+# Full 3-stage deliberation
+./scripts/council "Should we use SQLite or PostgreSQL for local-first?"
+
+# Extended timeout for complex questions
+./scripts/council --timeout=300 "Evaluate this architecture proposal..."
+```
+
+**Cost Estimation:**
+
+| Query Type | API Calls | Approximate Cost* |
+|------------|-----------|-------------------|
+| `council_stage1` | 5 (parallel) | $0.05-0.15 |
+| `council_query` | 5 + 5 + 1 = 11 | $0.15-0.40 |
+| Custom 3 models | 3 + 3 + 1 = 7 | $0.10-0.25 |
+
+*Costs vary by model and response length. OpenRouter pricing applies.
+
+**Limitations:**
+
+| Limitation | Workaround |
+|------------|------------|
+| No local model support | Use ai-counsel with Ollama for local models |
+| 30-120s execution time | Use `council_stage1` for faster (15s) comparison |
+| OpenRouter dependency | Requires internet and API key |
+| No streaming responses | Wait for full completion |
+| Fixed 3-stage process | Cannot customize deliberation stages |
+| No real-time collaboration | Single-user, synchronous queries |
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| "All models failed to respond" | Check `OPENROUTER_API_KEY` is set and valid |
+| Timeout errors | Increase timeout or use `council_stage1` for faster results |
+| Empty stage2_rankings | Some models may fail to parse ranking format; check logs |
+| High costs | Reduce council size or use cheaper models |
+| Conversation not found | Verify `save_conversation: true` was used |
+
+**Integration with Other Bifrost Tools:**
+
+| Combined With | Use Case |
+|---------------|----------|
+| **basic-memory** | Store council decisions for long-term architectural knowledge |
+| **beads-mcp** | Track deliberation tasks and outcomes as issues |
+| **adr-analysis** | Generate ADRs from council architectural decisions |
+| **narsil-mcp** | Analyze code before asking council for review |
+
+**Resources:**
+
+- [Original Repository (Karpathy)](https://github.com/karpathy/llm-council)
+- [MCP Fork](https://github.com/khuynh22/llm-council)
+- [OpenRouter API](https://openrouter.ai/docs)
+- [OpenRouter Model List](https://openrouter.ai/models)
+- [MCP Python SDK](https://github.com/anthropics/mcp-python-sdk)
+- [ai-counsel Alternative](https://github.com/blueman82/ai-counsel)
 
 ---
 
