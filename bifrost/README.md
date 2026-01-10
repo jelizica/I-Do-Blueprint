@@ -2350,19 +2350,34 @@ mcpls bridges the gap between AI coding assistants and language servers. Instead
 | **Call Hierarchy** | `prepare_call_hierarchy` | Get callable items at position |
 | | `get_incoming_calls` | Find all callers (who calls this?) |
 | | `get_outgoing_calls` | Find all callees (what does this call?) |
+| **Monitoring** | `get_server_logs` | View language server output for debugging |
+| | `get_server_messages` | Check server status and protocol messages |
 
 **Supported Language Servers:**
 
-| Language | Server | Notes |
-|----------|--------|-------|
-| **Swift** | sourcekit-lsp | Included in Swift toolchain |
-| Rust | rust-analyzer | Zero-config, built-in |
-| Python | pyright | Full type inference |
-| TypeScript/JS | typescript-language-server | JSX/TSX support |
-| Go | gopls | Modules and workspaces |
-| C/C++ | clangd | compile_commands.json |
+| Language | Server | Auto-Detect | Notes |
+|----------|--------|-------------|-------|
+| **Swift** | sourcekit-lsp | `.swift` | Included in Swift toolchain |
+| **Rust** | rust-analyzer | `.rs` | Zero-config, built-in detection |
+| **Python** | pyright | `.py` | Full type inference, strict mode |
+| **TypeScript/JS** | typescript-language-server | `.ts`, `.tsx`, `.js` | JSX/TSX support |
+| **Go** | gopls | `.go` | Module and workspace support |
+| **C/C++** | clangd | `.c`, `.cpp`, `.h` | Requires compile_commands.json |
+| **Java** | jdtls | `.java` | Eclipse JDT Language Server |
 
-**Bifrost Configuration (Swift via sourcekit-lsp):**
+**Installation:**
+
+```bash
+# From crates.io (recommended)
+cargo install mcpls
+
+# From source
+git clone https://github.com/bug-ops/mcpls
+cd mcpls
+cargo build --release
+```
+
+**Bifrost Configuration (Basic):**
 
 ```json
 {
@@ -2372,26 +2387,95 @@ mcpls bridges the gap between AI coding assistants and language servers. Instead
 }
 ```
 
+**Bifrost Configuration (Swift Project):**
+
+```json
+{
+  "name": "mcpls",
+  "command": "mcpls",
+  "args": [],
+  "env": {
+    "SOURCEKIT_TOOLCHAIN_PATH": "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain"
+  }
+}
+```
+
 **mcpls Configuration (`~/.config/mcpls/mcpls.toml`):**
 
 ```toml
+# Swift via sourcekit-lsp
 [[lsp_servers]]
 language_id = "swift"
 command = "sourcekit-lsp"
 args = []
 file_patterns = ["**/*.swift"]
+
+# Rust via rust-analyzer (auto-detected, optional explicit config)
+[[lsp_servers]]
+language_id = "rust"
+command = "rust-analyzer"
+args = []
+file_patterns = ["**/*.rs"]
+
+# Python via pyright
+[[lsp_servers]]
+language_id = "python"
+command = "pyright-langserver"
+args = ["--stdio"]
+file_patterns = ["**/*.py"]
+
+# TypeScript/JavaScript
+[[lsp_servers]]
+language_id = "typescript"
+command = "typescript-language-server"
+args = ["--stdio"]
+file_patterns = ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"]
 ```
 
 **Architecture:**
 
 ```
-AI Agent (Claude) ←→ MCP Protocol ←→ mcpls ←→ LSP Protocol ←→ Language Servers
-                                                              ├── sourcekit-lsp (Swift)
-                                                              ├── rust-analyzer (Rust)
-                                                              └── pyright (Python)
+                         mcpls (Rust Binary)
+                               │
+    ┌──────────────────────────┼──────────────────────────┐
+    │                          │                          │
+    ▼                          ▼                          ▼
+┌────────────┐          ┌────────────┐          ┌────────────┐
+│ MCP Client │          │ LSP Router │          │ Config Mgr │
+│ (stdio)    │          │            │          │ (TOML)     │
+└─────┬──────┘          └─────┬──────┘          └────────────┘
+      │                       │
+      ▼                       ▼
+┌────────────┐     ┌────────────────────────────────────────┐
+│ AI Agent   │     │        Language Servers (LSP)           │
+│ (Claude)   │     ├────────────────────────────────────────┤
+└────────────┘     │ sourcekit-lsp │ rust-analyzer │ pyright│
+                   └────────────────────────────────────────┘
 ```
 
-**Note:** Single Rust binary with no runtime dependencies. The Docker image includes Swift 5.10.1 toolchain with sourcekit-lsp for Swift language intelligence.
+**Integration with Other Tools:**
+
+| Tool | Integration Pattern | Use Case |
+|------|---------------------|----------|
+| **narsil-mcp** | mcpls for live diagnostics, narsil for security | Code intelligence + security scanning |
+| **SwiftZilla** | mcpls for code nav, SwiftZilla for Apple docs | Swift development workflow |
+| **greb-mcp** | mcpls for local LSP, greb for cloud AI search | Semantic search + type navigation |
+| **code-sentinel** | mcpls for refactoring, sentinel for quality | Refactoring with quality gates |
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| `sourcekit-lsp` not found | Install Xcode CLI Tools: `xcode-select --install` |
+| Swift diagnostics not working | Set `SOURCEKIT_TOOLCHAIN_PATH` environment variable |
+| Rust projects not detected | Install rust-analyzer: `rustup component add rust-analyzer` |
+| Python type errors incomplete | Install pyright: `npm install -g pyright` |
+| Config file not loading | Check path: `~/.config/mcpls/mcpls.toml` |
+| LSP server crashes | Check server logs: `get_server_logs` tool |
+| High memory usage | Exclude large generated directories in file_patterns |
+| Slow initial indexing | Normal for large projects - subsequent queries fast |
+
+**Note:** Single Rust binary with no runtime dependencies. The Docker image includes Swift 5.10.1 toolchain with sourcekit-lsp for Swift language intelligence. For Rust projects, mcpls auto-detects rust-analyzer without configuration.
 
 ---
 
@@ -2692,53 +2776,137 @@ mcp-prompt-engine render git_stage_commit -a type=feat
 
 ### local-file-organizer
 
-> MCP server for intelligent file organization - automatically categorize and organize files by type with project-aware safety
+> Intelligent file organization MCP server with project-aware safety - automatically categorize, analyze, and organize files while protecting code repositories
 
 | | |
 |---|---|
 | **Repository** | [github.com/diganto-deb/local_file_organizer](https://github.com/diganto-deb/local_file_organizer) |
-| **Language** | Python |
+| **Language** | Python 3.11+ |
 | **License** | MIT |
 | **Framework** | MCP Python SDK (FastMCP) |
+| **Tools** | 9 |
+| **Dependencies** | `mcp>=0.1.0`, `pathlib` |
+| **Install** | Pre-installed in Bifrost Docker image |
 
-**Overview:**
+**Why local-file-organizer?**
 
-A file organization system that safely manages files across directories. Features smart categorization by file type, project directory detection to avoid disrupting code repositories, and detailed analytics on file distribution.
+| Feature | local-file-organizer | Official Filesystem MCP | Better MCP File Server |
+|---------|---------------------|------------------------|------------------------|
+| **Smart Categorization** | ✅ 8 categories by extension | ❌ Raw file operations | ❌ Path aliasing only |
+| **Project Detection** | ✅ 35+ project indicators | ❌ No awareness | ❌ No awareness |
+| **Bulk Organization** | ✅ By category or extension | ❌ Manual moves | ❌ Manual moves |
+| **Dry Run Preview** | ✅ `confirm=false` | ❌ Direct execution | ❌ Direct execution |
+| **Recursive Analysis** | ✅ With depth control | Partial | ❌ |
+| **Directory Analytics** | ✅ Size, counts, distribution | ❌ Basic metadata | ❌ |
+| **File Writing** | ❌ Organization only | ✅ Full CRUD | ✅ Full CRUD |
+| **Security Model** | Directory allowlist | Directory allowlist | Path aliasing |
 
-**File Categories:**
+**When to Use local-file-organizer:**
 
-| Category | Extensions |
-|----------|------------|
-| Documents | PDF, DOC, DOCX, TXT, RTF, MD, HTML, JSON, CSV, XLSX |
-| Images | JPG, PNG, GIF, SVG, WEBP, HEIC, TIFF, BMP |
-| Videos | MP4, MOV, AVI, MKV, WMV, FLV, WEBM |
-| Audio | MP3, WAV, OGG, FLAC, M4A, AAC |
-| Archives | ZIP, RAR, 7Z, TAR, GZ, ISO, DMG |
-| Code | PY, JS, TS, HTML, CSS, Java, Swift, Go, Rust |
-| Applications | DMG, APP, EXE, MSI, PKG, APK |
-| Others | Uncategorized files |
+| Use Case | local-file-organizer | Alternative |
+|----------|---------------------|-------------|
+| **Cleaning up Downloads folder** | ✅ Best choice - auto-categorizes by type | Manual moves with Filesystem MCP |
+| **Organizing media libraries** | ✅ Bulk move by Images/Videos/Audio | Manual sorting |
+| **Analyzing disk usage by file type** | ✅ Built-in analytics with size stats | Third-party tools |
+| **Tidying project archives** | ✅ Respects git repos and npm packages | Risk of breaking projects |
+| **Reading/writing file contents** | Use Filesystem MCP instead | ✅ Filesystem MCP |
+| **Creating/deleting files** | Use Filesystem MCP instead | ✅ Filesystem MCP |
+| **Git-aware file operations** | Use narsil-mcp instead | ✅ narsil-mcp |
 
-**MCP Tools:**
+**Core Architecture:**
 
-| Tool | Description |
-|------|-------------|
-| `list_categories` | List all file categories supported |
-| `list_allowed_directories` | Show directories MCP server can access |
-| `create_category_directories` | Create category folders in target directory |
-| `list_directory_files` | List all files in a directory |
-| `analyze_directory` | Categorize files without moving (preview mode) |
-| `organize_files` | Move files into category directories |
-| `get_metadata` | Detailed file/directory metadata and stats |
-| `analyze_project_directories` | Identify project directories (won't be disrupted) |
-| `bulk_move_files` | Move files by type or extension in batch |
+```
+┌─────────────────────────────────────────────────────────────┐
+│  analyze_directory (preview)                                │
+│     └── Categorizes files without moving                    │
+├─────────────────────────────────────────────────────────────┤
+│  organize_files / bulk_move_files (execute)                 │
+│     └── Moves files to category directories                 │
+├─────────────────────────────────────────────────────────────┤
+│  Project Detection Layer                                    │
+│     └── Skips directories with project indicators           │
+│         (.git, package.json, Cargo.toml, etc.)              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**File Categories (8 total):**
+
+| Category | Extensions | Example Use |
+|----------|------------|-------------|
+| **Documents** | `.pdf`, `.doc`, `.docx`, `.txt`, `.rtf`, `.md`, `.html`, `.json`, `.csv`, `.xlsx`, `.pptx`, `.tex`, `.pages`, `.key`, `.numbers`, `.odt`, `.ttl` | Reports, manuals, data files |
+| **Images** | `.jpg`, `.jpeg`, `.png`, `.gif`, `.svg`, `.webp`, `.heic`, `.tiff`, `.bmp`, `.raw` | Photos, screenshots, graphics |
+| **Videos** | `.mp4`, `.mov`, `.avi`, `.mkv`, `.wmv`, `.flv`, `.webm`, `.m4v` | Movies, screen recordings |
+| **Audio** | `.mp3`, `.wav`, `.ogg`, `.flac`, `.m4a`, `.aac`, `.wma`, `.aiff` | Music, podcasts, recordings |
+| **Archives** | `.zip`, `.rar`, `.7z`, `.tar`, `.gz`, `.bz2`, `.xz`, `.iso`, `.dmg` | Compressed files, disk images |
+| **Code** | `.py`, `.js`, `.ts`, `.jsx`, `.tsx`, `.html`, `.css`, `.java`, `.cpp`, `.c`, `.h`, `.php`, `.rb`, `.go`, `.rs`, `.swift`, `.kt`, `.scala`, `.vue`, `.vsix` | Source files (moved only if loose) |
+| **Applications** | `.dmg`, `.app`, `.exe`, `.msi`, `.deb`, `.rpm`, `.apk`, `.pkg` | Installers, executables |
+| **Others** | All unrecognized extensions | Catch-all category |
+
+**Project Indicators (35+ patterns):**
+
+The server detects and protects directories containing:
+
+| Type | Indicators |
+|------|------------|
+| **Version Control** | `.git`, `.gitignore` |
+| **Node.js** | `package.json`, `package-lock.json`, `yarn.lock`, `node_modules` |
+| **Python** | `requirements.txt`, `setup.py`, `Pipfile`, `venv`, `__pycache__` |
+| **Rust** | `Cargo.toml`, `target` |
+| **Java/Kotlin** | `pom.xml`, `build.gradle`, `build.sbt` |
+| **Ruby** | `Gemfile` |
+| **Go** | `go.mod` (detected via src directory) |
+| **Docker** | `Dockerfile`, `docker-compose.yml` |
+| **IDE** | `.idea`, `.vscode` |
+| **Build** | `Makefile`, `CMakeLists.txt`, `build`, `dist` |
+| **Xcode** | `.xcodeproj`, `Packages` |
+| **Other** | `.env`, `tsconfig.json`, `webpack.config.js`, `composer.json` |
+
+**MCP Tools (9 total):**
+
+| Tool | Parameters | Description |
+|------|------------|-------------|
+| `list_categories` | None | List all 8 file categories with their extensions |
+| `list_allowed_directories` | None | Show directories the server can access (home directory) |
+| `create_category_directories` | `path` | Create all category folders in target directory |
+| `list_directory_files` | `path` | List files and directories with `[FILE]`/`[DIR]` prefixes |
+| `analyze_directory` | `path`, `recursive?`, `max_depth?` | Categorize files without moving - preview mode |
+| `organize_files` | `path`, `confirm?`, `respect_projects?` | Move files to category directories (dry run by default) |
+| `get_metadata` | `path`, `include_stats?` | Detailed metadata: size, dates, category breakdown, largest files |
+| `analyze_project_directories` | `path` | Identify subdirectories that are projects with their indicators |
+| `bulk_move_files` | `path`, `category?`, `file_extension?`, `respect_projects?` | Batch move by category or extension |
 
 **Key Features:**
 
-- **Directory Security** - Only operates on explicitly allowed directories
-- **Project Detection** - Identifies git repos, npm projects, etc. and avoids disrupting them
-- **Recursive Processing** - Analyze and organize nested directory structures
-- **Dry Run Mode** - Preview changes before executing (`confirm=false`)
-- **Bulk Operations** - Move files by category or extension efficiently
+- **Directory Security** - Only operates on explicitly allowed directories (user home by default)
+- **Project Detection** - Identifies 35+ project indicators to avoid disrupting repositories
+- **Recursive Processing** - Analyze nested directories with configurable depth control (`max_depth`)
+- **Dry Run Mode** - Preview all changes before executing (`confirm=false` is default)
+- **Bulk Operations** - Move files by category (`category="Images"`) or extension (`file_extension=".mp4"`)
+- **Smart Analytics** - File counts, size distribution, largest files, category breakdown
+- **Excluded Directories** - Automatically skips `.git`, `node_modules`, `__pycache__`, `venv`, `.DS_Store`
+
+**Workflow Example:**
+
+```bash
+# Step 1: Analyze what's in Downloads (dry run)
+mcp__local-file-organizer__analyze_directory(path: "~/Downloads", recursive: true, max_depth: 2)
+# Returns: 45 Documents, 120 Images, 15 Videos, 8 Archives...
+
+# Step 2: Check for project directories that would be protected
+mcp__local-file-organizer__analyze_project_directories(path: "~/Downloads")
+# Returns: my-repo (indicators: .git, package.json)
+
+# Step 3: Preview organization plan
+mcp__local-file-organizer__organize_files(path: "~/Downloads", confirm: false)
+# Returns: "To proceed with organizing files, call with confirm=True"
+
+# Step 4: Execute organization
+mcp__local-file-organizer__organize_files(path: "~/Downloads", confirm: true, respect_projects: true)
+# Returns: Moved 188 files, my-repo preserved
+
+# Step 5: Bulk move remaining videos to external drive
+mcp__local-file-organizer__bulk_move_files(path: "~/Downloads/Videos", category: "Videos")
+```
 
 **Bifrost Configuration:**
 
@@ -2750,7 +2918,59 @@ A file organization system that safely manages files across directories. Feature
 }
 ```
 
-**Note:** Local server - copied into Docker image with Python virtual environment. Respects project directories (detects `.git`, `package.json`, `Cargo.toml`, etc.).
+**Implementation Details:**
+
+| Aspect | Detail |
+|--------|--------|
+| **Server Framework** | FastMCP (Python MCP SDK) |
+| **File Operations** | `shutil.move()` for atomic moves |
+| **Path Handling** | `pathlib.Path` for cross-platform compatibility |
+| **Logging** | Python `logging` module with timestamps |
+| **Error Handling** | Per-file error tracking with summary report |
+
+**Comparison with Alternatives:**
+
+| Server | Focus | Best For |
+|--------|-------|----------|
+| **local-file-organizer** | Organization & categorization | Cleaning up messy directories, analyzing file distribution |
+| **Filesystem MCP** (official) | Raw file operations | Reading/writing file contents, creating files, general CRUD |
+| **Better MCP File Server** | Simplified API with path aliases | LLM-friendly file access with 6-function API |
+| **narsil-mcp** | Code intelligence | Git history, code search, call graphs (not general files) |
+
+**Limitations:**
+
+| Limitation | Workaround |
+|------------|------------|
+| Cannot read/write file contents | Use Filesystem MCP for content operations |
+| Cannot create new files | Use Filesystem MCP for file creation |
+| Cannot rename files individually | Use Filesystem MCP or shell commands |
+| No cloud storage support | Limited to local filesystem |
+| Categories are extension-based | Cannot detect file type by content/magic bytes |
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| Permission denied | Check that path is under user's home directory |
+| Project not detected | Add missing indicators to `PROJECT_INDICATORS` in source |
+| Files not categorized | Check extension is in `CATEGORIES` dict; falls back to "Others" |
+| Recursive too slow | Reduce `max_depth` parameter or exclude more directories |
+| Files moved unexpectedly | Use `confirm=false` first to preview; enable `respect_projects=true` |
+
+**Integration with Other Bifrost Tools:**
+
+| Combined With | Use Case |
+|---------------|----------|
+| **narsil-mcp** | Organize files first, then analyze code structure |
+| **basic-memory** | Store organization patterns and file distribution notes |
+| **beads-mcp** | Track file cleanup tasks as issues |
+
+**Resources:**
+
+- [GitHub Repository](https://github.com/diganto-deb/local_file_organizer)
+- [MCP Python SDK Documentation](https://github.com/anthropics/mcp-python-sdk)
+- [FastMCP Framework](https://github.com/jlowin/fastmcp)
+- [Official Filesystem MCP](https://github.com/modelcontextprotocol/servers/tree/main/src/filesystem) (for comparison)
 
 ---
 
