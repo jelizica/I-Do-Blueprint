@@ -19,12 +19,28 @@ open http://localhost:8080
 
 | Command | Description |
 |---------|-------------|
-| `bifrost-build` | Build Docker image |
-| `bifrost-rebuild` | Force rebuild (no cache) |
+| `bifrost-build` | Build Docker image (auto-cleans old images, preserves cache) |
+| `bifrost-rebuild` | Force rebuild (no cache, cleans all) |
 | `bifrost` | Start Bifrost gateway |
 | `bifrost-stop` | Stop container |
 | `bifrost-stop --colima` | Stop container + Colima |
+| `bifrost-status` | Check Bifrost status & MCP count |
 | `bifrost-shell` | Shell into running container |
+| `bifrost-clean` | Clean dangling images (preserves build cache) |
+| `bifrost-clean-all` | Deep clean: all unused images + build cache |
+
+### Disk Space Management
+
+The build commands automatically manage Docker disk space:
+
+| Command | Dangling Images | Build Cache | Use Case |
+|---------|-----------------|-------------|----------|
+| `bifrost-build` | Cleans | **Preserved** | Normal builds (~1 min with cache) |
+| `bifrost-rebuild` | Cleans | **Clears** | After Dockerfile changes |
+| `bifrost-clean` | Cleans | **Preserved** | Quick cleanup |
+| `bifrost-clean-all` | Cleans | **Clears** | Reclaim max disk space |
+
+> **Tip**: Build cache enables ~1 min rebuilds vs 15-20 min cold builds. Only use `bifrost-rebuild` or `bifrost-clean-all` when you need to reclaim significant disk space.
 
 ## Architecture
 
@@ -1756,30 +1772,92 @@ curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/install.sh | 
 
 ### cheetah-greb (Greb MCP)
 
-> AI-powered intelligent code search - natural language queries with cloud GPU reranking
+> AI-powered intelligent code search - hybrid local + cloud GPU architecture for natural language code queries
 
 | | |
 |---|---|
+| **Website** | [grebmcp.com](https://grebmcp.com) |
 | **PyPI** | [cheetah-greb](https://pypi.org/project/cheetah-greb/) |
 | **API** | `https://search.grebmcp.com` |
-| **Language** | Python |
+| **Language** | Python (local) + Rust/CUDA (cloud) |
 | **License** | MIT |
 | **Python** | 3.10-3.13 (3.14 not yet supported) |
-| **Install** | `uv tool install cheetah-greb` |
+| **Install** | `uv tool install cheetah-greb` or `pip install cheetah-greb` |
+
+**Architecture Overview:**
+
+Greb uses a **hybrid local + cloud GPU** approach that balances privacy, speed, and intelligence:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                         LOCAL (Your Machine)                        │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. ripgrep text search (fast pattern matching)                     │
+│  2. Tree-sitter AST parsing (code structure awareness)              │
+│  3. Chunk extraction & deduplication                                │
+│  4. Semantic reference extraction                                   │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ Compressed chunks (minimal data)
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                      CLOUD GPU (grebmcp.com)                        │
+├─────────────────────────────────────────────────────────────────────┤
+│  1. SPLADE sparse embeddings (vocabulary-based matching)            │
+│  2. Cross-encoder reranking (deep semantic understanding)           │
+│  3. ONNX Runtime + CUDA acceleration                                │
+│  4. Relevance scoring with natural language explanations            │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Key Architectural Benefits:**
+- **Privacy-first**: Only compressed code chunks leave your machine, not full files
+- **Speed**: Local ripgrep pre-filtering reduces cloud processing load
+- **Intelligence**: GPU-accelerated neural reranking understands code semantics
+- **Cost-effective**: Token-based billing means you pay only for what you use
 
 **Features:**
 
-- 🔍 **Natural Language Search** - Search code using conversational queries like "find authentication middleware"
-- 🧠 **AI-Powered Reranking** - Cloud GPU acceleration for intelligent result ranking
-- 📊 **Relevance Scoring** - Each result includes score (0-1) and AI explanation of why it matches
-- 🎯 **Code Spans** - Returns actual code context with surrounding lines
+- 🔍 **Natural Language Search** - Query code conversationally: "find authentication middleware", "where is database connection pooling configured"
+- 🧠 **AI-Powered Reranking** - SPLADE + cross-encoder models on cloud GPUs understand code semantics, not just text matching
+- 📊 **Relevance Scoring** - Each result includes score (0-1) and AI-generated explanation of why it matches
+- 🎯 **Code Spans** - Returns actual code context with surrounding lines for immediate understanding
+- 🌳 **AST-Aware** - Tree-sitter parsing extracts semantic references (imports, function calls, class inheritance)
 - 🔌 **Dual Integration** - REST API for programmatic access or MCP server for AI assistants
+- 💰 **Token-Based Pricing** - Pay-as-you-go model, no monthly subscriptions required
+
+**Why Greb? (vs Competitors)**
+
+| Feature | Greb MCP | narsil-mcp | Sourcegraph MCP | Code-Index-MCP |
+|---------|----------|------------|-----------------|----------------|
+| **Search Type** | Hybrid (local + cloud GPU) | Local TF-IDF + optional embeddings | Enterprise graph search | Local-only indexing |
+| **Natural Language** | ✅ Neural reranking | ⚠️ BM25/TF-IDF (keyword-focused) | ✅ With Cody | ❌ Pattern-based |
+| **GPU Acceleration** | ✅ Cloud CUDA | ❌ CPU only | ✅ Enterprise servers | ❌ None |
+| **Privacy** | ⚠️ Chunks sent to cloud | ✅ Fully local | ⚠️ Requires Sourcegraph instance | ✅ Fully local |
+| **Setup Complexity** | Low (API key) | Low (single binary) | High (enterprise deployment) | Medium (indexing required) |
+| **Call Graphs** | ❌ | ✅ Full analysis | ✅ Code intelligence | ❌ |
+| **Git Integration** | ❌ | ✅ Blame, history, contributors | ✅ Repository context | ❌ |
+| **Pricing** | Token-based (~$0.001/search) | Free (optional embedding costs) | Enterprise licensing | Free |
+| **Best For** | Semantic "what does X do" queries | Structure "who calls X" queries | Enterprise codebases | Small projects |
+
+**When to Use Greb:**
+
+| Use Case | Greb MCP | Better Alternative |
+|----------|----------|-------------------|
+| "Find where we handle authentication" | ✅ Best choice | - |
+| "What functions process payments" | ✅ Best choice | - |
+| "Similar code to this snippet" | ✅ Best choice | - |
+| "Who calls this function" | ❌ Use narsil-mcp | ✅ narsil-mcp |
+| "Show me the call graph" | ❌ Use narsil-mcp | ✅ narsil-mcp |
+| "Git blame for this file" | ❌ Use narsil-mcp | ✅ narsil-mcp |
+| "Find all struct definitions" | ⚠️ Works, but narsil faster | ✅ narsil-mcp |
+| Enterprise-scale codebase search | ⚠️ Works, but enterprise needs | ✅ Sourcegraph |
+| Fully offline/air-gapped | ❌ Requires cloud | ✅ narsil-mcp |
 
 **Available Tools:**
 
 | Tool | Description |
 |------|-------------|
-| `code_search` | Search code using natural language queries |
+| `code_search` | Search code using natural language queries with AI reranking |
 
 **Search Response Format:**
 ```json
@@ -1811,17 +1889,67 @@ curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/install.sh | 
 
 | Variable | Description |
 |----------|-------------|
-| `GREB_API_KEY` | API key from Greb dashboard (format: `grb_xxx`) |
+| `GREB_API_KEY` | API key from [Greb dashboard](https://grebmcp.com) (format: `grb_xxx`) |
 
 **Optional:** `GREB_API_URL` defaults to `https://search.grebmcp.com`
 
-**Note:** First search is slower (~30-60s) as models download from HuggingFace. Subsequent searches are fast.
+**REST API Usage (Alternative to MCP):**
+```bash
+# Direct REST API call
+curl -X POST "https://search.grebmcp.com/search" \
+  -H "Authorization: Bearer $GREB_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "find authentication middleware",
+    "directory": "/path/to/project"
+  }'
+```
+
+**Performance Notes:**
+- First search: ~30-60s (models download from HuggingFace to cloud cache)
+- Subsequent searches: ~2-5s depending on codebase size
+- Local ripgrep pre-filtering: <1s for most codebases
+
+**Complementary Usage with narsil-mcp:**
+
+Greb and narsil-mcp serve different purposes and work well together:
+
+```
+# Semantic discovery (Greb)
+"What handles user authentication?" → Greb finds relevant code semantically
+
+# Structural analysis (narsil)
+Found auth.js → narsil: "What calls authenticateToken?" → Full call graph
+
+# Combined workflow
+1. Greb: "Find payment processing logic" → Discovers PaymentService.ts
+2. narsil: get_callers(function: "processPayment") → See all entry points
+3. narsil: get_callees(function: "processPayment") → See dependencies
+4. narsil: get_symbol_history(symbol: "processPayment") → Git history
+```
+
+**Privacy Considerations:**
+- Only code chunks (not full files) are sent to Greb cloud
+- No code is stored persistently on Greb servers
+- Processing happens in ephemeral GPU instances
+- For fully air-gapped environments, use narsil-mcp instead
+
+**Pricing:**
+- Token-based billing (~$0.001 per search query)
+- No monthly subscription required
+- Free tier available for evaluation
+- See [grebmcp.com](https://grebmcp.com) for current pricing
+
+**Resources:**
+- [Architecture Blog Post](https://grebmcp.com/blog/architecture)
+- [Getting Started Guide](https://grebmcp.com/get-started/introduction)
+- [PyPI Package](https://pypi.org/project/cheetah-greb/)
 
 ---
 
 ### kindly-web-search
 
-> Web search + robust content retrieval for AI coding tools - returns the full conversation, not just snippets
+> Web search + robust content retrieval for AI coding tools - returns full conversations (questions, answers, comments), not just snippets
 
 | | |
 |---|---|
@@ -1833,24 +1961,112 @@ curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/install.sh | 
 | **Tools** | 2 |
 | **Install** | `uv tool install git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server` |
 
-**Features:**
+**The Problem Kindly Solves:**
 
-- 🔍 **Full Conversation Retrieval** - Returns questions, answers, comments, reactions - not just snippets
-- 📚 **Direct API Integration** - StackExchange, GitHub Issues, arXiv, Wikipedia in LLM-optimized formats
-- 🌐 **Real-Time Parsing** - Headless browser (Chromium) for cutting-edge issues posted yesterday
-- 🔄 **Multi-Provider Support** - Serper (primary), Tavily, or self-hosted SearXNG
-- 📦 **Replaces Multiple Tools** - Generic web search, StackOverflow, web scraping MCP servers
+Most web search MCP servers return search results with title, URL, and a brief snippet - but not the actual content you need. When debugging an error, you don't just want to know a StackOverflow question exists; you want the accepted answer, comments, and alternative solutions. Traditional MCP servers require:
 
-**Why Different?** Most web search MCPs return just title, URL, and snippet. Kindly returns the full page content (Markdown, best-effort) in a single call - no need for follow-up scraping.
+1. Search → get URLs
+2. Scrape each URL separately
+3. Parse and clean the content
+4. Hope the scraper handles dynamic content
+
+Kindly combines all of this into a single `web_search` call that returns full page content in Markdown format.
+
+**Core Features:**
+
+| Feature | Description |
+|---------|-------------|
+| **Full Conversation Retrieval** | Returns questions, answers, comments, reactions, metadata - not just snippets |
+| **Direct API Integration** | StackExchange, GitHub Issues, arXiv, Wikipedia via native APIs (LLM-optimized formats) |
+| **Real-Time Browser Parsing** | Headless Chromium via `nodriver` for dynamic content and cutting-edge issues |
+| **Multi-Provider Search** | Serper (primary), Tavily (fallback), or self-hosted SearXNG |
+| **Anti-Bot Bypass** | Uses `nodriver` (successor to undetected-chromedriver) for sites with bot protection |
+| **Single-Call Architecture** | No follow-up scraping needed - content included in search results |
+
+**Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      Kindly Web Search                          │
+├─────────────────────────────────────────────────────────────────┤
+│  Search Providers          │  Content Extraction               │
+│  ├─ Serper (primary)       │  ├─ Native APIs (optimal)         │
+│  ├─ Tavily (fallback)      │  │   ├─ StackExchange API         │
+│  └─ SearXNG (self-hosted)  │  │   ├─ GitHub Issues API         │
+│                            │  │   ├─ arXiv API                  │
+│                            │  │   └─ Wikipedia API              │
+│                            │  └─ nodriver Browser (fallback)    │
+│                            │      └─ Chromium headless          │
+├─────────────────────────────────────────────────────────────────┤
+│  Output: Markdown-formatted content ready for LLM consumption   │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 **Available Tools:**
 
-| Tool | Description |
-|------|-------------|
-| `web_search` | Search query → top results with title, link, snippet, and `page_content` (Markdown) |
-| `get_content` | URL → full page content (Markdown, best-effort) |
+| Tool | Parameters | Description |
+|------|------------|-------------|
+| `web_search` | `query` (str), `num_results` (int, default=3) | Search and return top results with full page content in Markdown |
+| `get_content` | `url` (str) | Fetch and parse a specific URL to Markdown (best-effort) |
+
+**Tool Output Structure:**
+
+```json
+{
+  "results": [
+    {
+      "title": "How to fix TypeScript error TS2345",
+      "link": "https://stackoverflow.com/questions/12345",
+      "snippet": "I'm getting error TS2345 when...",
+      "page_content": "# How to fix TypeScript error TS2345\n\n## Question\n...\n\n## Accepted Answer\n...\n\n## Comments\n..."
+    }
+  ]
+}
+```
+
+**When to Use Kindly:**
+
+| Scenario | Kindly | Alternative |
+|----------|--------|-------------|
+| Debug error messages | ✅ Full SO answers with comments | Exa/Tavily snippets need follow-up |
+| Research GitHub issues | ✅ Native API with full discussion | Generic scraping misses dynamic content |
+| Find code examples | ✅ Complete examples in context | Snippets truncate important details |
+| Academic paper lookup | ✅ arXiv API integration | PDF parsing complications |
+| General web research | ✅ Good | Exa semantic search may be better |
+| Site-specific deep crawling | ❌ Use Firecrawl | Single-page focus |
+| JavaScript-heavy SPAs | ⚠️ Works via nodriver | Dedicated browser MCP may be better |
+
+**When NOT to Use Kindly:**
+
+- **Semantic/neural search** - Use Exa for meaning-based queries across large corpora
+- **Deep site crawling** - Use Firecrawl for crawling entire sites/sitemaps
+- **Real-time collaboration data** - Use dedicated Slack/Discord MCPs
+- **Structured data extraction** - Use specialized scrapers with schemas
+
+**Competitor Comparison:**
+
+| Feature | Kindly | Exa | Tavily | Firecrawl | Generic Search MCP |
+|---------|--------|-----|--------|-----------|-------------------|
+| **Full page content** | ✅ Included | ❌ Separate call | ✅ AI Extract | ✅ Yes | ❌ No |
+| **StackOverflow optimized** | ✅ Native API | ❌ | ❌ | ❌ | ❌ |
+| **GitHub Issues** | ✅ Native API | ❌ | ❌ | ❌ | ❌ |
+| **Anti-bot bypass** | ✅ nodriver | ❌ | ❌ | ✅ | ❌ |
+| **Semantic search** | ❌ | ✅ Neural | ✅ AI-native | ❌ | ❌ |
+| **Site crawling** | ❌ Single page | ❌ | ❌ | ✅ Full site | ❌ |
+| **Self-hosted option** | ✅ SearXNG | ❌ | ❌ | ✅ | Varies |
+| **Cost (per 1K searches)** | ~$5 (Serper) | ~$138 | ~$190 | ~$20 | Varies |
+| **Setup complexity** | Medium | Low | Low | Medium | Low |
+
+**Search Provider Comparison:**
+
+| Provider | Pros | Cons | Cost |
+|----------|------|------|------|
+| **Serper** (recommended) | Fast, reliable, good value | Requires API key | ~$5/1K searches |
+| **Tavily** | AI-optimized results, RAG-friendly | Higher cost | ~$190/1K searches |
+| **SearXNG** | Self-hosted, no API costs, privacy | Requires setup, variable quality | Free (self-hosted) |
 
 **Bifrost Configuration:**
+
 ```json
 {
   "name": "kindly-web-search",
@@ -1866,17 +2082,134 @@ curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/install.sh | 
 }
 ```
 
+**Alternative: Tavily Provider:**
+
+```json
+{
+  "name": "kindly-web-search",
+  "command": "uvx",
+  "args": [
+    "--from", "git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server",
+    "kindly-web-search-mcp-server", "start-mcp-server"
+  ],
+  "env": {
+    "TAVILY_API_KEY": "${TAVILY_API_KEY}",
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+  }
+}
+```
+
+**Alternative: Self-Hosted SearXNG:**
+
+```json
+{
+  "name": "kindly-web-search",
+  "command": "uvx",
+  "args": [
+    "--from", "git+https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server",
+    "kindly-web-search-mcp-server", "start-mcp-server"
+  ],
+  "env": {
+    "SEARXNG_BASE_URL": "http://localhost:8080",
+    "GITHUB_TOKEN": "${GITHUB_TOKEN}"
+  }
+}
+```
+
 **Environment Variables:**
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `SERPER_API_KEY` | One of these | Serper search API (recommended) |
-| `TAVILY_API_KEY` | One of these | Tavily search API (alternative) |
-| `SEARXNG_BASE_URL` | One of these | Self-hosted SearXNG instance |
-| `GITHUB_TOKEN` | Recommended | Better GitHub Issue extraction (read-only, public repos) |
-| `KINDLY_BROWSER_EXECUTABLE_PATH` | Auto-detect | Override Chromium path if needed |
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `SERPER_API_KEY` | One of three | - | Serper.dev API key (recommended provider) |
+| `TAVILY_API_KEY` | One of three | - | Tavily API key (AI-optimized alternative) |
+| `SEARXNG_BASE_URL` | One of three | - | Self-hosted SearXNG instance URL |
+| `GITHUB_TOKEN` | Recommended | - | GitHub PAT for better Issues extraction (read-only, public repos) |
+| `KINDLY_BROWSER_EXECUTABLE_PATH` | Optional | Auto-detect | Override Chromium/Chrome executable path |
 
-**Note:** Requires Chromium-based browser on same machine. Docker image includes Chromium for container deployments.
+**Requirements:**
+
+- **Python 3.10+** - Required for `nodriver` async features
+- **Chromium-based browser** - Chrome, Chromium, or Edge on the same machine
+- **Search API key** - At least one of: Serper, Tavily, or SearXNG instance
+- **UV package manager** - For `uvx` installation method
+
+**Docker Deployment:**
+
+For containerized environments, the official Docker image includes Chromium:
+
+```bash
+# Run with Streamable HTTP transport
+docker run -p 8000:8000 \
+  -e SERPER_API_KEY=your_key \
+  -e GITHUB_TOKEN=your_token \
+  ghcr.io/shelpuk-ai-technology-consulting/kindly-web-search-mcp-server
+```
+
+**Supported AI Clients:**
+
+| Client | Status | Notes |
+|--------|--------|-------|
+| Claude Code | ✅ Full support | Primary development target |
+| Codex CLI | ✅ Full support | `codex mcp add` integration |
+| Cursor | ✅ Full support | Via `mcp.json` config |
+| Claude Desktop | ✅ Full support | Via `claude_desktop_config.json` |
+| GitHub Copilot | ✅ Full support | VS Code settings integration |
+| Gemini CLI | ✅ Full support | Via `settings.json` |
+| Antigravity | ✅ Full support | Direct config support |
+
+**Troubleshooting:**
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| `Browser not found` | Chromium not installed or not in PATH | Install Chrome/Chromium, or set `KINDLY_BROWSER_EXECUTABLE_PATH` |
+| `No search results` | Missing or invalid API key | Verify `SERPER_API_KEY` or `TAVILY_API_KEY` is set correctly |
+| `GitHub content incomplete` | Missing token or rate limited | Add `GITHUB_TOKEN` with `repo:read` scope |
+| `Timeout on page load` | Site blocking headless browsers | Try different search results; site may have strong anti-bot |
+| `Empty page_content` | Dynamic content not loaded | Content may require JS execution; `nodriver` handles most cases |
+| `SearXNG connection refused` | Instance not running | Verify SearXNG is running at `SEARXNG_BASE_URL` |
+
+**nodriver Technology:**
+
+Kindly uses `nodriver` for browser automation - the successor to `undetected-chromedriver`:
+
+- **Async-first design** - Built on `asyncio` for efficient concurrent page loading
+- **No external dependencies** - Pure Python, no Selenium/WebDriver
+- **Anti-detection built-in** - Bypasses common bot detection (Cloudflare, etc.)
+- **Fresh browser profiles** - Each session uses a clean profile
+- **Memory efficient** - Lower overhead than traditional browser automation
+
+**Usage Examples:**
+
+```
+# Search for error solutions (returns full SO answers)
+User: "Search for TypeScript error TS2345 argument of type"
+
+# Research a specific GitHub issue
+User: "Get the content from https://github.com/vercel/next.js/issues/12345"
+
+# Find implementation examples
+User: "Search for React useEffect cleanup pattern examples"
+
+# Academic research
+User: "Search arXiv for transformer attention mechanism papers"
+```
+
+**Comparison with Bifrost's Other Search Tools:**
+
+| Tool | Best For | Content Depth | Search Type |
+|------|----------|---------------|-------------|
+| **Kindly** | Developer Q&A, GitHub Issues, full page content | Full page (Markdown) | Keyword + extraction |
+| **Exa** | Semantic search, research, embeddings | Snippets + optional content | Neural/semantic |
+| **Reddit MCP** | Community discussions, sentiment | Full threads | Platform-specific |
+| **Narsil** | Codebase search | Code chunks | AST-aware |
+
+**Resources:**
+
+- [GitHub Repository](https://github.com/Shelpuk-AI-Technology-Consulting/kindly-web-search-mcp-server)
+- [Shelpuk AI Technology Consulting](https://www.shelpuk.com)
+- [Serper API](https://serper.dev) - Recommended search provider
+- [Tavily API](https://tavily.com) - AI-optimized alternative
+- [nodriver Documentation](https://github.com/nickolaj-jepsen/nodriver) - Browser automation library
 
 ---
 
@@ -1955,17 +2288,49 @@ CodeGuardian Studio is a comprehensive MCP server providing **113+ tools** organ
 | **Language** | Rust (99.7%) |
 | **License** | MIT / Apache-2.0 |
 | **Stars** | 7+ |
+| **Version** | 0.3.0 |
 | **MSRV** | Rust 1.85+ |
+| **Install** | `cargo install mcpls` |
 
 **Overview:**
 
 mcpls bridges the gap between AI coding assistants and language servers. Instead of treating code as text, it gives AI agents access to the same compiler-level understanding that IDEs have: type information, cross-references, semantic navigation, and real diagnostics.
 
-**Why mcpls:**
+**Why mcpls?**
 
-- AI assistants "see" code as text, not as structured, typed systems
-- mcpls exposes LSP capabilities through MCP, enabling compiler-level reasoning
-- Zero configuration for Rust projects - just install and go
+| Feature | mcpls | mcp-language-server | lsp-mcp | SwiftLens | narsil-mcp |
+|---------|-------|---------------------|---------|-----------|------------|
+| **Implementation** | Rust (single binary) | Go | TypeScript | Python | Rust |
+| **Multi-Language** | ✅ 6+ LSP servers | ✅ 5 servers | ✅ Multiple | ❌ Swift only | ✅ 15 (tree-sitter) |
+| **Live Diagnostics** | ✅ Push-based | ✅ | ❌ | ✅ | ❌ Static only |
+| **Call Hierarchy** | ✅ Incoming/Outgoing | ❌ | ❌ | ✅ | ✅ Call graph |
+| **Code Actions** | ✅ Quick fixes | ✅ | ❌ | ❌ | ❌ |
+| **Rename Refactoring** | ✅ Workspace-wide | ❌ | ❌ | ❌ | ❌ |
+| **Completions** | ✅ Type-aware | ✅ | ❌ | ❌ | ❌ |
+| **Zero Config** | ✅ Rust projects | Partial | ❌ | ❌ | ✅ |
+| **Stars** | 7+ | 1.4k | 161 | 102 | 200+ |
+
+**Key Differentiators:**
+
+- **Compiler-Level Intelligence**: Uses actual language servers (rust-analyzer, sourcekit-lsp) for real type info
+- **Async-First Architecture**: Built on Tokio for non-blocking, concurrent LSP communication
+- **Single Binary**: No Python, Node.js, or runtime dependencies - just the Rust binary
+- **Push-Based Diagnostics**: Real-time compiler errors via `get_cached_diagnostics`
+- **Refactoring Support**: Workspace-wide symbol rename with reference tracking
+
+**When to Use mcpls:**
+
+| Use Case | mcpls | Alternative |
+|----------|-------|-------------|
+| **Swift/iOS development** | ✅ sourcekit-lsp integration | SwiftLens (simpler, fewer tools) |
+| **Rust development** | ✅ Zero-config rust-analyzer | narsil-mcp (security focus) |
+| **Real-time compiler diagnostics** | ✅ Best choice - push-based | narsil-mcp (static only) |
+| **Code completion suggestions** | ✅ Type-aware completions | Native IDE |
+| **Workspace-wide refactoring** | ✅ rename_symbol with tracking | Manual find/replace |
+| **Call hierarchy analysis** | ✅ get_incoming/outgoing_calls | narsil-mcp (get_callers) |
+| **Security scanning** | ❌ Use narsil-mcp | narsil-mcp (taint, CVE) |
+| **Code search & similarity** | ❌ Use narsil-mcp/greb | narsil-mcp (BM25, neural) |
+| **Git integration** | ❌ Use narsil-mcp | narsil-mcp (--git flag) |
 
 **MCP Tools:**
 
@@ -2032,55 +2397,202 @@ AI Agent (Claude) ←→ MCP Protocol ←→ mcpls ←→ LSP Protocol ←→ La
 
 ### mcp-prompt-engine
 
-> MCP server for managing and serving dynamic prompt templates using Go's powerful text/template engine
+> MCP server for managing and serving dynamic prompt templates using Go's powerful text/template engine. Create reusable, logic-driven prompts with variables, partials, and conditionals.
 
 | | |
 |---|---|
 | **Repository** | [github.com/vasayxtx/mcp-prompt-engine](https://github.com/vasayxtx/mcp-prompt-engine) |
 | **Docker** | [ghcr.io/vasayxtx/mcp-prompt-engine](https://ghcr.io/vasayxtx/mcp-prompt-engine) |
+| **Go.Dev** | [pkg.go.dev/github.com/vasayxtx/mcp-prompt-engine](https://pkg.go.dev/github.com/vasayxtx/mcp-prompt-engine) |
 | **Language** | Go (97.5%) |
 | **License** | MIT |
 | **Stars** | 15+ |
 | **Version** | 0.4.0 |
+| **Install** | `go install github.com/vasayxtx/mcp-prompt-engine@latest` |
 
-**Overview:**
+**Why mcp-prompt-engine?**
 
-MCP Prompt Engine is a server for managing reusable, logic-driven prompt templates. Create prompts with variables, partials, and conditionals that can be served to any MCP-compatible client (Claude Code, Claude Desktop, Gemini CLI, VSCode with Copilot).
+| Feature | mcp-prompt-engine | Smart Prompts MCP | prompts-mcp-server | Langfuse Prompt Mgmt |
+|---------|-------------------|-------------------|---------------------|----------------------|
+| **Template Engine** | ✅ Go text/template | ❌ No templating | ❌ Static markdown | ✅ Mustache |
+| **Logic Support** | ✅ Conditionals, loops, functions | ❌ | ❌ | Partial |
+| **Reusable Partials** | ✅ `_partial.tmpl` inclusion | ❌ | ❌ | ❌ |
+| **Hot-Reload** | ✅ File watching | ❌ GitHub fetch | ❌ | ✅ API-based |
+| **JSON Args Parsing** | ✅ Auto booleans/arrays/objects | ❌ | ❌ | ❌ |
+| **Environment Fallbacks** | ✅ Env vars as defaults | ❌ | ❌ | ❌ |
+| **Storage** | Local files | GitHub only | Local markdown | Cloud SaaS |
+| **Offline/Local** | ✅ Fully local | ❌ Requires GitHub | ✅ | ❌ Cloud required |
+| **CLI Tools** | ✅ list/render/validate | ❌ | ❌ | ❌ |
+| **Docker Image** | ✅ Pre-built GHCR | ❌ | ❌ | N/A |
+| **Dependencies** | None (single binary) | Node.js | Node.js | API key |
+| **Cost** | Free | Free (GitHub limits) | Free | Freemium |
+
+**The Problem It Solves:**
+
+Prompt engineering suffers from several issues:
+- ❌ **Scattered prompts** - Copy-pasted across projects and tools
+- ❌ **No reusability** - Common patterns duplicated everywhere
+- ❌ **Static content** - No dynamic logic or conditionals
+- ❌ **Version drift** - Different versions in different places
+- ❌ **No validation** - Syntax errors discovered at runtime
+
+mcp-prompt-engine solves these by treating prompts as **code**:
+- ✅ **Single source of truth** - All prompts in one directory
+- ✅ **DRY with partials** - Extract common patterns once
+- ✅ **Dynamic templates** - Conditionals, loops, functions
+- ✅ **Git-friendly** - Version control your prompts
+- ✅ **CLI validation** - Catch errors before runtime
 
 **Key Features:**
 
-- **Go Templates** - Full power of `text/template` syntax (variables, conditionals, loops)
-- **Reusable Partials** - Define common components in `_partial.tmpl` files
-- **Prompt Arguments** - Template variables automatically exposed as MCP prompt arguments
-- **Hot-Reload** - Auto-detects file changes without server restart
-- **JSON Argument Parsing** - Automatic parsing of booleans, numbers, arrays, objects
-- **Environment Fallbacks** - Inject env vars as fallback values for arguments
+- 🔧 **Go Templates** - Full power of `text/template` syntax (variables, conditionals, loops, functions)
+- 📦 **Reusable Partials** - Define common components in `_partial.tmpl` files and include anywhere
+- 🔌 **MCP Native** - Works with any MCP client: Claude Code, Claude Desktop, Gemini CLI, VSCode Copilot
+- 📝 **Prompt Arguments** - Template variables automatically exposed as MCP prompt arguments
+- 🔄 **Hot-Reload** - Auto-detects file changes without server restart
+- 🔢 **Smart JSON Parsing** - Automatic parsing of booleans, numbers, arrays, objects
+- 🌍 **Environment Fallbacks** - Inject env vars as default values for missing arguments
+- 📋 **Rich CLI** - List, validate, and render prompts from the command line
+- 🐳 **Docker Ready** - Pre-built container image for easy deployment
 
-**Template Syntax:**
+**Template Syntax (Go text/template):**
 
 ```go
-{{/* Brief description of the prompt */}}
-{{- template "_partial_name" . -}}
+{{/* Brief description of the prompt - becomes the MCP prompt description */}}
+
+{{- template "_partial_name" . -}}  {{/* Include a partial */}}
 
 Your prompt text with {{.variable}} placeholders.
 
-{{if .condition}}
-  Conditional content
+{{/* Conditionals */}}
+{{if .enable_feature}}
+  Feature is enabled: {{.feature_name}}
+{{else}}
+  Feature is disabled
 {{end}}
 
+{{/* Loops */}}
 {{range .items}}
   - {{.}}
 {{end}}
+
+{{/* Logical operators */}}
+{{if and .condition1 .condition2}}
+  Both conditions are true
+{{end}}
+
+{{if or .option1 .option2}}
+  At least one option is set
+{{end}}
+
+{{/* Built-in variables */}}
+Current date: {{.date}}
 ```
+
+**JSON Argument Parsing:**
+
+The server automatically parses argument values as JSON, enabling rich data types:
+
+| Input | Parsed As | Example |
+|-------|-----------|---------|
+| `true`, `false` | Go boolean | `{{if .enabled}}...{{end}}` |
+| `42`, `3.14` | Go number | `Timeout: {{.timeout}}s` |
+| `["a", "b", "c"]` | Go slice | `{{range .items}}{{.}}{{end}}` |
+| `{"key": "value"}` | Go map | `Setting: {{.config.timeout}}` |
+| Invalid JSON | String | Treated as literal text |
+
+Use `--disable-json-args` flag to treat all arguments as strings.
 
 **CLI Commands:**
 
-| Command | Description |
-|---------|-------------|
-| `list` | List available prompts (add `--verbose` for details) |
-| `render <name>` | Render a prompt with arguments (`-a key=value`) |
-| `validate` | Check templates for syntax errors |
-| `serve` | Start the MCP server |
+| Command | Description | Example |
+|---------|-------------|---------|
+| `list` | List available prompts | `mcp-prompt-engine list --verbose` |
+| `render <name>` | Render a prompt with arguments | `mcp-prompt-engine render git_commit -a type=feat` |
+| `validate` | Check templates for syntax errors | `mcp-prompt-engine validate git_commit` |
+| `serve` | Start the MCP server | `mcp-prompt-engine serve --quiet` |
+
+**Render with Environment Variables:**
+
+```bash
+# Environment variables are automatically injected as fallbacks
+TYPE=fix mcp-prompt-engine render git_commit
+# Equivalent to: mcp-prompt-engine render git_commit -a type=fix
+```
+
+**Prompt Directory Structure:**
+
+```
+prompts/
+├── _header.tmpl              # Partial (starts with _) - shared header
+├── _git_commit_role.tmpl     # Partial for git commit context
+├── _code_review_checklist.tmpl  # Partial for review checklist
+├── git_stage_commit.tmpl     # Main prompt: uses _git_commit_role partial
+├── git_amend_commit.tmpl     # Another commit prompt
+├── code_review.tmpl          # Code review prompt
+└── explain_code.tmpl         # Code explanation prompt
+```
+
+**Example: Git Commit Prompt with Partial**
+
+**1. Create the partial (`prompts/_git_commit_role.tmpl`):**
+
+```go
+{{ define "_git_commit_role" }}
+You are an expert programmer specializing in writing clear, concise, and conventional Git commit messages.
+Commit message must strictly follow the Conventional Commits specification.
+
+The final commit message format:
+```
+<<type>>: A brief, imperative-tense summary of changes
+
+[Optional longer description explaining the "why" of the change]
+```
+
+{{ if .type -}}
+Use {{.type}} as the commit type.
+{{ end }}
+{{ end }}
+```
+
+**2. Create the main prompt (`prompts/git_stage_commit.tmpl`):**
+
+```go
+{{- /* Commit currently staged changes */ -}}
+
+{{- template "_git_commit_role" . -}}
+
+Your task is to commit all currently staged changes.
+
+To understand the context, analyze the staged code using: `git diff --staged`
+
+Based on that analysis, commit staged changes using a suitable commit message.
+```
+
+**3. Validate and test:**
+
+```bash
+# Validate syntax
+mcp-prompt-engine validate git_stage_commit
+# ✓ git_stage_commit.tmpl - Valid
+
+# Render with arguments
+mcp-prompt-engine render git_stage_commit -a type=feat
+```
+
+**When to Use mcp-prompt-engine:**
+
+| Use Case | mcp-prompt-engine | Alternative |
+|----------|-------------------|-------------|
+| **Reusable prompt templates** | ✅ Best choice - partials + templating | Manual copy-paste |
+| **Dynamic prompts with logic** | ✅ Conditionals, loops, functions | Static prompts |
+| **Team prompt standardization** | ✅ Git-versioned prompt library | Shared docs |
+| **Local-first / offline** | ✅ No external dependencies | Cloud prompt managers |
+| **CI/CD prompt validation** | ✅ CLI validate command | Manual testing |
+| **Complex data in prompts** | ✅ JSON arrays/objects | String manipulation |
+| **GitHub-hosted prompts** | Use Smart Prompts MCP | ✅ Fetches from GitHub |
+| **SaaS prompt management** | Use Langfuse | ✅ Cloud UI + versioning |
+| **Markdown-only prompts** | Use prompts-mcp-server | ✅ YAML frontmatter |
 
 **Bifrost Configuration:**
 
@@ -2095,17 +2607,86 @@ Your prompt text with {{.variable}} placeholders.
 }
 ```
 
-**Prompt Directory Structure:**
+**Docker Configuration:**
 
-```
-prompts/
-├── _header.tmpl          # Partial (reusable, starts with _)
-├── _git_commit_role.tmpl # Partial for git commits
-├── git_stage_commit.tmpl # Main prompt
-└── code_review.tmpl      # Another prompt
+```json
+{
+  "name": "mcp-prompt-engine",
+  "command": "docker",
+  "args": [
+    "run", "-i", "--rm",
+    "-v", "/path/to/prompts:/app/prompts:ro",
+    "-v", "/path/to/logs:/app/logs",
+    "ghcr.io/vasayxtx/mcp-prompt-engine"
+  ]
+}
 ```
 
-**Note:** Supports any MCP client with prompts capability. Pre-built Docker image available at `ghcr.io/vasayxtx/mcp-prompt-engine`.
+**Installation Options:**
+
+| Method | Command |
+|--------|---------|
+| **Go Install** | `go install github.com/vasayxtx/mcp-prompt-engine@latest` |
+| **Docker** | `docker pull ghcr.io/vasayxtx/mcp-prompt-engine` |
+| **From Source** | `git clone ... && make build` |
+| **Pre-built Binary** | [GitHub Releases](https://github.com/vasayxtx/mcp-prompt-engine/releases) |
+
+**Compatible Clients:**
+
+| Client | Prompts Support | Notes |
+|--------|-----------------|-------|
+| **Claude Code** | ✅ | `/prompt_name` invocation |
+| **Claude Desktop** | ✅ | Prompt picker UI |
+| **Gemini CLI** | ✅ | `/prompt_name` invocation |
+| **VSCode + Copilot** | ✅ | Via MCP extension |
+| **Cursor** | ✅ | Full MCP support |
+| **Windsurf** | ✅ | Full MCP support |
+
+**Server Flags:**
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--prompts <dir>` | Directory containing `.tmpl` files | `./prompts` |
+| `--quiet` | Suppress non-error output | Off |
+| `--log-file <path>` | Write logs to file | stderr |
+| `--disable-json-args` | Treat all arguments as strings | Off (JSON parsing enabled) |
+
+**Troubleshooting:**
+
+| Issue | Solution |
+|-------|----------|
+| Template syntax error | Run `mcp-prompt-engine validate <name>` to check syntax |
+| Partial not found | Ensure partial starts with `_` and is in prompts directory |
+| Variables not rendered | Check variable names match between template and arguments |
+| Hot-reload not working | Check file permissions, ensure `.tmpl` extension |
+| JSON args not parsing | Ensure valid JSON syntax; use `--disable-json-args` if needed |
+| Docker mount issues | Use absolute paths, ensure `:ro` for read-only prompts |
+
+**Integration with Other Bifrost Tools:**
+
+| Combined With | Use Case |
+|---------------|----------|
+| **basic-memory** | Store prompt usage patterns and refinements |
+| **beads-mcp** | Track prompt development as tasks |
+| **code-guardian** | Validate prompt template quality |
+| **adr-analysis** | Document prompt design decisions |
+
+**Real-World Use Cases:**
+
+| Scenario | Benefit |
+|----------|---------|
+| **Standardized git commits** | Team uses same commit message format via shared partial |
+| **Code review checklists** | Consistent review criteria across all PRs |
+| **Documentation generation** | Template-driven docs with project-specific variables |
+| **Multi-language support** | Conditional content based on `{{.language}}` argument |
+| **Feature flags in prompts** | Enable/disable prompt sections via boolean args |
+
+**Resources:**
+
+- [GitHub Repository](https://github.com/vasayxtx/mcp-prompt-engine)
+- [Go.Dev Documentation](https://pkg.go.dev/github.com/vasayxtx/mcp-prompt-engine)
+- [Go text/template Reference](https://pkg.go.dev/text/template)
+- [MCP Prompts Specification](https://modelcontextprotocol.io/specification/2025-06-18/server/prompts)
 
 ---
 
