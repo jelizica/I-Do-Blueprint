@@ -537,10 +537,11 @@ struct BudgetBouquetCategoryDetailView: View {
                     .allowsHitTesting(false) // Canvas must not intercept taps meant for petal cards
                 }
                 
-                // Center Hub (scaled)
+                // Center Hub (scaled) - disable hit testing so petal cards behind can receive taps
                 smallCenterHub(size: centerSize)
                     .frame(width: centerSize, height: centerSize)
-                
+                    .allowsHitTesting(false) // Don't block taps from reaching petal cards
+
                 // Petal Cards (scaled)
                 ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                     scaledPetalCard(
@@ -671,26 +672,30 @@ struct BudgetBouquetCategoryDetailView: View {
                 .stroke(isHovered ? item.color : item.color.opacity(0.3), lineWidth: isHovered ? 1.5 : 0.5)
         )
         .shadow(color: isHovered ? item.color.opacity(0.25) : Color.black.opacity(0.03), radius: isHovered ? 8 : 3, x: 0, y: isHovered ? 2 : 1)
-        // CRITICAL: Apply transforms BEFORE gesture modifiers
-        // When offset is BEFORE onTapGesture, the hit area is calculated AFTER
-        // the offset transformation, so it matches the visual position of the card
+        // macOS Hit Testing Fix:
+        // 1. Use .contentShape(.interaction, ...) for explicit interaction hit testing
+        // 2. Use .simultaneousGesture() instead of .onTapGesture() for ScrollView compatibility
+        // 3. Apply transforms (offset, scale) and then gestures in proper order
+        .contentShape(.interaction, Rectangle()) // Explicit interaction shape for macOS
         .zIndex(isHovered ? 100 : Double(total - index)) // Bring hovered card to front
         .offset(x: animateItems ? xOffset : 0, y: animateItems ? yOffset : 0)
         .scaleEffect(animateItems ? 1 : 0.5)
         .opacity(animateItems ? 1 : 0)
-        // Gesture modifiers AFTER transforms so hit area matches visual position
-        .contentShape(Rectangle())
         .onHover { hovering in
             hoveredItemId = hovering ? item.id : nil
         }
-        .onTapGesture {
-            // Open the budget item detail modal
-            AppLogger.ui.info("Petal card tapped: \(item.itemName)")
-            Task {
-                await loadLinkedItemsForItem(item)
-                selectedItemForDetail = item
-            }
-        }
+        // Use simultaneousGesture for better compatibility with nested ScrollViews on macOS
+        .simultaneousGesture(
+            TapGesture()
+                .onEnded { _ in
+                    // Open the budget item detail modal
+                    AppLogger.ui.info("Petal card tapped: \(item.itemName)")
+                    Task {
+                        await loadLinkedItemsForItem(item)
+                        selectedItemForDetail = item
+                    }
+                }
+        )
         .animation(
             .spring(response: 0.4, dampingFraction: 0.7)
                 .delay(Double(index) * 0.05),
