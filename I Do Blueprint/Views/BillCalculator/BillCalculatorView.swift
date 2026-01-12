@@ -1018,7 +1018,7 @@ struct BillCalculatorView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, Spacing.md)
             .foregroundColor(SemanticColors.textSecondary)
-            .background(Color.clear)
+            .contentShape(Rectangle()) // Hit area for the entire button
             .overlay(
                 RoundedRectangle(cornerRadius: CornerRadius.md)
                     .stroke(style: StrokeStyle(lineWidth: 2, dash: [6]))
@@ -1026,7 +1026,6 @@ struct BillCalculatorView: View {
             )
         }
         .buttonStyle(.plain)
-        .contentShape(Rectangle())
         .onHover { hovering in
             if hovering {
                 NSCursor.pointingHand.push()
