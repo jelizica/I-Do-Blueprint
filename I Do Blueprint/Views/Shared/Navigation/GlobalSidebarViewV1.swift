@@ -213,6 +213,15 @@ struct GlobalSidebarViewV1: View {
     private var additionalNavigationSection: some View {
         VStack(spacing: Spacing.xxs) {
             SidebarNavItemV1(
+                tab: .billCalculator,
+                icon: "function",
+                title: "Bill Calculator",
+                isSelected: coordinator.selectedTab == .billCalculator
+            ) {
+                coordinator.navigate(to: .billCalculator)
+            }
+
+            SidebarNavItemV1(
                 tab: .timeline,
                 icon: "calendar.badge.clock",
                 title: "Timeline",

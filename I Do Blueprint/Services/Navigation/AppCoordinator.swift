@@ -53,6 +53,7 @@ class AppCoordinator: ObservableObject {
         case vendors = "vendors"
         case dashboards = "dashboards"  // Dashboards folder (contains Financial Dashboard, etc.)
         case budget = "budget"
+        case billCalculator = "billCalculator"
         case visualPlanning = "visualPlanning"
         case timeline = "timeline"
         case collaboration = "collaboration"
@@ -67,6 +68,7 @@ class AppCoordinator: ObservableObject {
             case .vendors: return "Vendors"
             case .dashboards: return "Dashboards"
             case .budget: return "Budget"
+            case .billCalculator: return "Bill Calculator"
             case .visualPlanning: return "Visual Planning"
             case .timeline: return "Timeline"
             case .collaboration: return "Collaboration"
@@ -83,6 +85,7 @@ class AppCoordinator: ObservableObject {
             case .vendors: return "building.2.fill"
             case .dashboards: return "square.grid.2x2.fill"
             case .budget: return "dollarsign.circle.fill"
+            case .billCalculator: return "function"
             case .visualPlanning: return "paintpalette.fill"
             case .timeline: return "calendar"
             case .collaboration: return "person.2.fill"
@@ -105,6 +108,8 @@ class AppCoordinator: ObservableObject {
                 DashboardsNavigationWrapper()
             case .budget:
                 BudgetNavigationWrapper()
+            case .billCalculator:
+                BillCalculatorView()
             case .visualPlanning:
                 VisualPlanningMainViewV2()
             case .timeline:
