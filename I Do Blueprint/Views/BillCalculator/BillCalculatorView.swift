@@ -513,8 +513,11 @@ struct BillCalculatorView: View {
                     .font(Typography.caption)
                     .foregroundColor(SemanticColors.textSecondary)
             }
+
+            Spacer(minLength: 0)
         }
         .padding(Spacing.md)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppColors.infoLight)
         .cornerRadius(CornerRadius.md)
         .overlay(
