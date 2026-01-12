@@ -21,6 +21,11 @@ struct BillCalculatorView: View {
     @State private var showingDeleteAlert = false
     @State private var useGuestCountFromDatabase = true
 
+    // Modal state
+    @State private var showingAddPerPersonModal = false
+    @State private var showingAddServiceFeeModal = false
+    @State private var showingAddFlatFeeModal = false
+
     private var vendorStore: VendorStoreV2 { appStores.vendor }
     private var settingsStore: SettingsStoreV2 { appStores.settings }
     private var guestStore: GuestStoreV2 { appStores.guest }
@@ -56,6 +61,44 @@ struct BillCalculatorView: View {
             if useGuestCountFromDatabase {
                 calculator.guestCount = newCount
             }
+        }
+        .sheet(isPresented: $showingAddPerPersonModal) {
+            AddPerPersonItemModal(
+                guestCount: calculator.guestCount,
+                onAdd: { item in
+                    calculator.perPersonItems.append(item)
+                    lastSaved = Date()
+                },
+                onAddAnother: { item in
+                    calculator.perPersonItems.append(item)
+                    lastSaved = Date()
+                }
+            )
+        }
+        .sheet(isPresented: $showingAddServiceFeeModal) {
+            AddServiceFeeModal(
+                subtotal: calculator.serviceFeeSubtotal,
+                onAdd: { item in
+                    calculator.serviceFeeItems.append(item)
+                    lastSaved = Date()
+                },
+                onAddAnother: { item in
+                    calculator.serviceFeeItems.append(item)
+                    lastSaved = Date()
+                }
+            )
+        }
+        .sheet(isPresented: $showingAddFlatFeeModal) {
+            AddFlatFeeItemModal(
+                onAdd: { item in
+                    calculator.flatFeeItems.append(item)
+                    lastSaved = Date()
+                },
+                onAddAnother: { item in
+                    calculator.flatFeeItems.append(item)
+                    lastSaved = Date()
+                }
+            )
         }
     }
 
@@ -107,11 +150,11 @@ struct BillCalculatorView: View {
                         endPoint: .bottomTrailing
                     )
                 )
-                .frame(width: 40, height: 40)
+                .frame(width: Spacing.huge - Spacing.sm, height: Spacing.huge - Spacing.sm)
 
             Image(systemName: "function")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white)
+                .font(Typography.subheading)
+                .foregroundColor(SemanticColors.textOnPrimary)
         }
     }
 
@@ -291,8 +334,8 @@ struct BillCalculatorView: View {
                     }
                 }) {
                     Image(systemName: "minus")
-                        .font(.system(size: 12, weight: .bold))
-                        .frame(width: 32, height: 32)
+                        .font(Typography.caption.weight(.bold))
+                        .frame(width: Spacing.xxxl, height: Spacing.xxxl)
                         .background(SemanticColors.controlBackground)
                         .foregroundColor(useGuestCountFromDatabase ? SemanticColors.textTertiary : SemanticColors.textPrimary)
                         .cornerRadius(CornerRadius.md)
@@ -324,8 +367,8 @@ struct BillCalculatorView: View {
                     }
                 }) {
                     Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .bold))
-                        .frame(width: 32, height: 32)
+                        .font(Typography.caption.weight(.bold))
+                        .frame(width: Spacing.xxxl, height: Spacing.xxxl)
                         .background(SemanticColors.controlBackground)
                         .foregroundColor(useGuestCountFromDatabase ? SemanticColors.textTertiary : SemanticColors.textPrimary)
                         .cornerRadius(CornerRadius.md)
@@ -367,7 +410,7 @@ struct BillCalculatorView: View {
         } label: {
             HStack(spacing: Spacing.xxs) {
                 Image(systemName: useGuestCountFromDatabase ? "person.3.fill" : "pencil")
-                    .font(.system(size: 10))
+                    .font(Typography.caption2)
                 Text(useGuestCountFromDatabase ? "Auto" : "Manual")
                     .font(Typography.caption)
             }
@@ -421,7 +464,7 @@ struct BillCalculatorView: View {
                 }
 
                 addItemButton(type: .perPerson, accentColor: SoftLavender.shade500) {
-                    calculator.addPerPersonItem()
+                    showingAddPerPersonModal = true
                 }
             }
         }
@@ -435,8 +478,8 @@ struct BillCalculatorView: View {
             subtitle: "Percentage-based fees on subtotal",
             icon: "percent",
             sectionTotal: calculator.serviceFeeTotal,
-            gradientColors: [Color.fromHex("3B82F6"), Color.fromHex("2563EB")],
-            accentColor: Color.fromHex("3B82F6")
+            gradientColors: [AppColors.info, AppColors.info.opacity(0.85)],
+            accentColor: AppColors.info
         ) {
             VStack(spacing: Spacing.md) {
                 serviceFeeInfoBox
@@ -449,8 +492,8 @@ struct BillCalculatorView: View {
                     )
                 }
 
-                addItemButton(type: .serviceFee, accentColor: Color.fromHex("3B82F6")) {
-                    calculator.addServiceFeeItem()
+                addItemButton(type: .serviceFee, accentColor: AppColors.info) {
+                    showingAddServiceFeeModal = true
                 }
             }
         }
@@ -459,8 +502,8 @@ struct BillCalculatorView: View {
     private var serviceFeeInfoBox: some View {
         HStack(alignment: .top, spacing: Spacing.md) {
             Image(systemName: "info.circle.fill")
-                .foregroundColor(Color.fromHex("3B82F6"))
-                .font(.system(size: 16))
+                .foregroundColor(AppColors.info)
+                .font(Typography.numberSmall)
 
             VStack(alignment: .leading, spacing: Spacing.xxs) {
                 Text("Service fees are calculated on subtotal")
@@ -472,11 +515,11 @@ struct BillCalculatorView: View {
             }
         }
         .padding(Spacing.md)
-        .background(Color.fromHex("3B82F6").opacity(0.1))
+        .background(AppColors.infoLight)
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(Color.fromHex("3B82F6").opacity(0.3), lineWidth: 1)
+                .stroke(AppColors.info.opacity(Opacity.semiLight), lineWidth: 1)
         )
     }
 
@@ -488,8 +531,8 @@ struct BillCalculatorView: View {
             subtitle: "One-time fixed costs",
             icon: "tag.fill",
             sectionTotal: calculator.flatFeeTotal,
-            gradientColors: [Color.fromHex("10B981"), Color.fromHex("059669")],
-            accentColor: Color.fromHex("10B981")
+            gradientColors: [SageGreen.shade500, SageGreen.shade600],
+            accentColor: SageGreen.shade500
         ) {
             VStack(spacing: Spacing.md) {
                 ForEach(Array(calculator.flatFeeItems.enumerated()), id: \.element.id) { index, item in
@@ -499,8 +542,8 @@ struct BillCalculatorView: View {
                     )
                 }
 
-                addItemButton(type: .flatFee, accentColor: Color.fromHex("10B981")) {
-                    calculator.addFlatFeeItem()
+                addItemButton(type: .flatFee, accentColor: SageGreen.shade500) {
+                    showingAddFlatFeeModal = true
                 }
             }
         }
@@ -571,8 +614,8 @@ struct BillCalculatorView: View {
             VStack(spacing: Spacing.lg) {
                 VStack(spacing: Spacing.md) {
                     summaryRow(label: "Per-Person Items", amount: calculator.perPersonTotal, dotColor: SoftLavender.shade500)
-                    summaryRow(label: "Service Fees", amount: calculator.serviceFeeTotal, dotColor: Color.fromHex("3B82F6"))
-                    summaryRow(label: "Flat Fees", amount: calculator.flatFeeTotal, dotColor: Color.fromHex("10B981"))
+                    summaryRow(label: "Service Fees", amount: calculator.serviceFeeTotal, dotColor: AppColors.info)
+                    summaryRow(label: "Flat Fees", amount: calculator.flatFeeTotal, dotColor: SageGreen.shade500)
 
                     HStack {
                         Text("Subtotal")
@@ -652,7 +695,7 @@ struct BillCalculatorView: View {
             HStack(spacing: Spacing.sm) {
                 Circle()
                     .fill(dotColor)
-                    .frame(width: 8, height: 8)
+                    .frame(width: Spacing.sm, height: Spacing.sm)
                 Text(label)
                     .font(Typography.bodySmall)
                     .foregroundColor(SemanticColors.textSecondary)
@@ -804,7 +847,7 @@ struct BillCalculatorView: View {
             HStack(spacing: Spacing.sm) {
                 Image(systemName: icon)
                     .foregroundColor(isHighlighted ? SemanticColors.primaryAction : SemanticColors.primaryAction)
-                    .font(.system(size: 14))
+                    .font(Typography.bodySmall)
                 Text(label)
                     .font(Typography.bodySmall)
                     .foregroundColor(SemanticColors.textSecondary)
@@ -877,8 +920,8 @@ struct BillCalculatorView: View {
             HStack(spacing: Spacing.xl) {
                 HStack(spacing: Spacing.xs) {
                     Circle()
-                        .fill(Color.green)
-                        .frame(width: 8, height: 8)
+                        .fill(SemanticColors.statusSuccess)
+                        .frame(width: Spacing.sm, height: Spacing.sm)
                     Text("Auto-saved \(lastSavedText)")
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textSecondary)
@@ -915,7 +958,7 @@ struct BillCalculatorView: View {
                 .buttonStyle(.plain)
 
                 Divider()
-                    .frame(height: 20)
+                    .frame(height: Spacing.xl)
 
                 Button(action: {}) {
                     HStack(spacing: Spacing.xs) {
@@ -956,7 +999,7 @@ struct BillCalculatorView: View {
         HStack(spacing: Spacing.xs) {
             Image(systemName: icon)
                 .foregroundColor(SemanticColors.primaryAction)
-                .font(.system(size: 12))
+                .font(Typography.caption)
             Text(value)
                 .font(Typography.bodySmall.weight(.semibold))
                 .foregroundColor(isHighlighted ? SemanticColors.primaryAction : SemanticColors.textPrimary)
