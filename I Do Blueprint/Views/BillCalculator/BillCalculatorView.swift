@@ -19,11 +19,12 @@ struct BillCalculatorView: View {
     @State private var selectedEventId: String?
     @State private var lastSaved: Date = Date()
     @State private var showingDeleteAlert = false
-    @State private var useGuestCountFromDatabase = false
+    @State private var useGuestCountFromDatabase = true
 
     private var vendorStore: VendorStoreV2 { appStores.vendor }
     private var settingsStore: SettingsStoreV2 { appStores.settings }
     private var guestStore: GuestStoreV2 { appStores.guest }
+    private var budgetStore: BudgetStoreV2 { appStores.budget }
 
     init(coupleId: UUID = UUID()) {
         _calculator = State(initialValue: BillCalculator(coupleId: coupleId))
@@ -40,6 +41,11 @@ struct BillCalculatorView: View {
             await vendorStore.loadVendors()
             await settingsStore.loadSettings()
             await guestStore.loadGuestData()
+            await budgetStore.loadBudgetData()
+            // Set initial guest count from database if auto mode
+            if useGuestCountFromDatabase {
+                calculator.guestCount = guestStore.attendingCount
+            }
         }
         .onChange(of: useGuestCountFromDatabase) { _, useDatabase in
             if useDatabase {
@@ -196,9 +202,6 @@ struct BillCalculatorView: View {
                         .font(Typography.bodyRegular.weight(.medium))
                         .foregroundColor(calculator.vendorName == nil ? SemanticColors.textTertiary : SemanticColors.textPrimary)
                     Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(SemanticColors.textTertiary)
                 }
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
@@ -243,7 +246,7 @@ struct BillCalculatorView: View {
                 .tracking(0.5)
 
             Menu {
-                ForEach(settingsStore.settings.global.weddingEvents.sorted(by: { $0.eventOrder < $1.eventOrder }), id: \.id) { event in
+                ForEach(budgetStore.weddingEvents.sorted(by: { ($0.eventOrder ?? 0) < ($1.eventOrder ?? 0) }), id: \.id) { event in
                     Button(event.eventName) {
                         calculator.eventId = event.id
                         calculator.eventName = event.eventName
@@ -255,9 +258,6 @@ struct BillCalculatorView: View {
                         .font(Typography.bodyRegular.weight(.medium))
                         .foregroundColor(calculator.eventName == nil ? SemanticColors.textTertiary : SemanticColors.textPrimary)
                     Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(SemanticColors.textTertiary)
                 }
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
@@ -269,7 +269,7 @@ struct BillCalculatorView: View {
                 )
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 180)
+            .frame(width: 200)
         }
     }
 
@@ -370,8 +370,6 @@ struct BillCalculatorView: View {
                     .font(.system(size: 10))
                 Text(useGuestCountFromDatabase ? "Auto" : "Manual")
                     .font(Typography.caption)
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8))
             }
             .foregroundColor(SemanticColors.primaryAction)
             .padding(.horizontal, Spacing.xs)
@@ -727,9 +725,6 @@ struct BillCalculatorView: View {
                         .font(Typography.bodyRegular.weight(.medium))
                         .foregroundColor(SemanticColors.textPrimary)
                     Spacer()
-                    Image(systemName: "chevron.down")
-                        .font(.caption)
-                        .foregroundColor(SemanticColors.textTertiary)
                 }
                 .padding(.horizontal, Spacing.md)
                 .padding(.vertical, Spacing.sm)
