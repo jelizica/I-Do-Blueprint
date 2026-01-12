@@ -19,9 +19,11 @@ struct BillCalculatorView: View {
     @State private var selectedEventId: String?
     @State private var lastSaved: Date = Date()
     @State private var showingDeleteAlert = false
+    @State private var useGuestCountFromDatabase = false
 
     private var vendorStore: VendorStoreV2 { appStores.vendor }
     private var settingsStore: SettingsStoreV2 { appStores.settings }
+    private var guestStore: GuestStoreV2 { appStores.guest }
 
     init(coupleId: UUID = UUID()) {
         _calculator = State(initialValue: BillCalculator(coupleId: coupleId))
@@ -37,6 +39,17 @@ struct BillCalculatorView: View {
         .task {
             await vendorStore.loadVendors()
             await settingsStore.loadSettings()
+            await guestStore.loadGuestData()
+        }
+        .onChange(of: useGuestCountFromDatabase) { _, useDatabase in
+            if useDatabase {
+                calculator.guestCount = guestStore.attendingCount
+            }
+        }
+        .onChange(of: guestStore.attendingCount) { _, newCount in
+            if useGuestCountFromDatabase {
+                calculator.guestCount = newCount
+            }
         }
     }
 
@@ -196,6 +209,7 @@ struct BillCalculatorView: View {
                         .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                 )
             }
+            .menuStyle(.borderlessButton)
             .frame(width: 200)
         }
     }
@@ -229,7 +243,7 @@ struct BillCalculatorView: View {
                 .tracking(0.5)
 
             Menu {
-                ForEach(settingsStore.settings.global.weddingEvents, id: \.id) { event in
+                ForEach(settingsStore.settings.global.weddingEvents.sorted(by: { $0.eventOrder < $1.eventOrder }), id: \.id) { event in
                     Button(event.eventName) {
                         calculator.eventId = event.id
                         calculator.eventName = event.eventName
@@ -254,24 +268,33 @@ struct BillCalculatorView: View {
                         .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                 )
             }
+            .menuStyle(.borderlessButton)
             .frame(width: 180)
         }
     }
 
     private var guestCountStepper: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text("GUEST COUNT")
-                .font(Typography.caption.weight(.semibold))
-                .foregroundColor(SemanticColors.textSecondary)
-                .tracking(0.5)
+            HStack(spacing: Spacing.sm) {
+                Text("GUEST COUNT")
+                    .font(Typography.caption.weight(.semibold))
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .tracking(0.5)
+
+                guestCountSourceToggle
+            }
 
             HStack(spacing: Spacing.xs) {
-                Button(action: { if calculator.guestCount > 0 { calculator.guestCount -= 1 } }) {
+                Button(action: {
+                    if !useGuestCountFromDatabase && calculator.guestCount > 0 {
+                        calculator.guestCount -= 1
+                    }
+                }) {
                     Image(systemName: "minus")
                         .font(.system(size: 12, weight: .bold))
                         .frame(width: 32, height: 32)
                         .background(SemanticColors.controlBackground)
-                        .foregroundColor(SemanticColors.textPrimary)
+                        .foregroundColor(useGuestCountFromDatabase ? SemanticColors.textTertiary : SemanticColors.textPrimary)
                         .cornerRadius(CornerRadius.md)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
@@ -279,6 +302,7 @@ struct BillCalculatorView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .disabled(useGuestCountFromDatabase)
 
                 TextField("", value: $calculator.guestCount, format: .number)
                     .textFieldStyle(.plain)
@@ -292,13 +316,18 @@ struct BillCalculatorView: View {
                         RoundedRectangle(cornerRadius: CornerRadius.md)
                             .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                     )
+                    .disabled(useGuestCountFromDatabase)
 
-                Button(action: { calculator.guestCount += 1 }) {
+                Button(action: {
+                    if !useGuestCountFromDatabase {
+                        calculator.guestCount += 1
+                    }
+                }) {
                     Image(systemName: "plus")
                         .font(.system(size: 12, weight: .bold))
                         .frame(width: 32, height: 32)
                         .background(SemanticColors.controlBackground)
-                        .foregroundColor(SemanticColors.textPrimary)
+                        .foregroundColor(useGuestCountFromDatabase ? SemanticColors.textTertiary : SemanticColors.textPrimary)
                         .cornerRadius(CornerRadius.md)
                         .overlay(
                             RoundedRectangle(cornerRadius: CornerRadius.md)
@@ -306,8 +335,51 @@ struct BillCalculatorView: View {
                         )
                 }
                 .buttonStyle(.plain)
+                .disabled(useGuestCountFromDatabase)
             }
         }
+    }
+
+    private var guestCountSourceToggle: some View {
+        Menu {
+            Button {
+                useGuestCountFromDatabase = false
+            } label: {
+                HStack {
+                    Text("Manual Entry")
+                    if !useGuestCountFromDatabase {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+
+            Button {
+                useGuestCountFromDatabase = true
+                calculator.guestCount = guestStore.attendingCount
+            } label: {
+                HStack {
+                    Text("From Guest List (\(guestStore.attendingCount) attending)")
+                    if useGuestCountFromDatabase {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+        } label: {
+            HStack(spacing: Spacing.xxs) {
+                Image(systemName: useGuestCountFromDatabase ? "person.3.fill" : "pencil")
+                    .font(.system(size: 10))
+                Text(useGuestCountFromDatabase ? "Auto" : "Manual")
+                    .font(Typography.caption)
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8))
+            }
+            .foregroundColor(SemanticColors.primaryAction)
+            .padding(.horizontal, Spacing.xs)
+            .padding(.vertical, Spacing.xxs)
+            .background(SemanticColors.primaryAction.opacity(0.1))
+            .cornerRadius(CornerRadius.sm)
+        }
+        .menuStyle(.borderlessButton)
     }
 
     // MARK: - Content View
@@ -636,10 +708,18 @@ struct BillCalculatorView: View {
                 .foregroundColor(SemanticColors.textSecondary)
 
             Menu {
-                ForEach(TaxRateOption.allOptions, id: \.id) { option in
-                    Button(option.name) {
-                        calculator.taxRate = option.rate
+                ForEach(settingsStore.settings.budget.taxRates, id: \.id) { taxRate in
+                    Button("\(taxRate.name) (\(String(format: "%.2f", taxRate.rate))%)") {
+                        calculator.taxRate = taxRate.rate
                     }
+                }
+
+                if !settingsStore.settings.budget.taxRates.isEmpty {
+                    Divider()
+                }
+
+                Button("No Tax (0%)") {
+                    calculator.taxRate = 0
                 }
             } label: {
                 HStack {
@@ -660,12 +740,18 @@ struct BillCalculatorView: View {
                         .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                 )
             }
+            .menuStyle(.borderlessButton)
         }
     }
 
     private var taxRateDisplayName: String {
-        TaxRateOption.allOptions.first { $0.rate == calculator.taxRate }?.name
-            ?? "\(String(format: "%.1f", calculator.taxRate))% - Custom Rate"
+        if calculator.taxRate == 0 {
+            return "No Tax (0%)"
+        }
+        if let matchingRate = settingsStore.settings.budget.taxRates.first(where: { $0.rate == calculator.taxRate }) {
+            return "\(matchingRate.name) (\(String(format: "%.2f", matchingRate.rate))%)"
+        }
+        return "\(String(format: "%.2f", calculator.taxRate))% - Custom Rate"
     }
 
     private var estimatedTotalBox: some View {
