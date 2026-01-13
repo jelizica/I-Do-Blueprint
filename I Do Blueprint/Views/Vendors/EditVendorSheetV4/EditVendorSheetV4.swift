@@ -211,9 +211,7 @@ struct EditVendorSheetV4: View {
             }
         }
         .frame(width: dynamicSize.width, height: dynamicSize.height)
-        .background(glassBackground)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xxl))
-        .macOSShadow(.modal)
+        .modalBackground(cornerRadius: CornerRadius.xxl)
         .task {
             await loadAllData()
         }
@@ -229,18 +227,6 @@ struct EditVendorSheetV4: View {
             }
         } message: {
             Text("Are you sure you want to delete \(vendorName)? This action cannot be undone.")
-        }
-    }
-    
-    // MARK: - Glass Background
-    
-    private var glassBackground: some View {
-        ZStack {
-            // Base background
-            SemanticColors.backgroundPrimary
-            
-            // Glass effect overlay
-            Color.white.opacity(colorScheme == .dark ? 0.05 : 0.85)
         }
     }
     

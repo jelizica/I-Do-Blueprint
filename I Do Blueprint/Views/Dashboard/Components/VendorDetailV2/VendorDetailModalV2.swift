@@ -127,8 +127,7 @@ struct VendorDetailModalV2: View {
             .background(SemanticColors.backgroundPrimary)
         }
         .frame(width: dynamicSize.width, height: dynamicSize.height)
-        .background(SemanticColors.backgroundPrimary)
-        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xl))
+        .modalBackground(cornerRadius: CornerRadius.xl)
         .sheet(isPresented: $showingEditSheet) {
             EditVendorSheetV4(
                 vendor: vendor,
