@@ -90,7 +90,7 @@ struct VendorDetailModalV2: View {
 
             Divider()
 
-            // Content
+            // Content - transparent to show modal vibrancy
             ScrollView {
                 VStack(spacing: Spacing.xl) {
                     switch selectedTab {
@@ -124,7 +124,6 @@ struct VendorDetailModalV2: View {
                 }
                 .padding(Spacing.xl)
             }
-            .background(SemanticColors.backgroundPrimary)
         }
         .frame(width: dynamicSize.width, height: dynamicSize.height)
         .modalBackground(cornerRadius: CornerRadius.xl)

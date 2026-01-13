@@ -112,20 +112,19 @@ struct VendorDetailOverviewTabV2: View {
                 }
                 
                 Spacer()
-                
+
                 Image(systemName: "info.circle")
                     .font(.system(size: 16))
                     .foregroundColor(SemanticColors.textTertiary)
             }
             .padding(Spacing.md)
-            .background(SemanticColors.backgroundSecondary)
+            .background(Color.white.opacity(0.6))
             .cornerRadius(CornerRadius.md)
         }
-        .padding(Spacing.lg)
-        .background(SemanticColors.backgroundSecondary.opacity(0.5))
-        .cornerRadius(CornerRadius.lg)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .modalCard(style: .primary, cornerRadius: CornerRadius.lg, padding: Spacing.lg)
     }
-    
+
     // MARK: - Export Info Banner
     
     private var exportInfoBanner: some View {
@@ -354,7 +353,7 @@ struct VendorDetailOverviewTabV2: View {
                     Image(systemName: "person.crop.circle.badge.questionmark")
                         .font(.system(size: 14))
                         .foregroundColor(SemanticColors.textSecondary)
-                    
+
                     Text("No contact information available")
                         .font(Typography.caption)
                         .foregroundColor(SemanticColors.textSecondary)
@@ -363,8 +362,55 @@ struct VendorDetailOverviewTabV2: View {
             }
         }
         .padding(Spacing.md)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.md)
+        .background(contactCardBackground)
+    }
+
+    // Dynamic contact card background matching guest modal card style
+    private var contactCardBackground: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.white.opacity(0.85))
+
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            SemanticColors.primaryAction.opacity(0.08),
+                            SemanticColors.primaryAction.opacity(0.02)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            SemanticColors.primaryAction.opacity(0.25),
+                            SemanticColors.primaryAction.opacity(0.08)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: SemanticColors.primaryAction.opacity(0.08), radius: 6, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
 
     // MARK: - Contact Information Section (Full width, below Quick Info)
@@ -559,13 +605,13 @@ struct QuickInfoCardV2: View {
             Image(systemName: icon)
                 .font(.system(size: 20))
                 .foregroundColor(color)
-            
+
             Text(title)
                 .font(Typography.bodyRegular)
                 .fontWeight(.semibold)
                 .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(1)
-            
+
             Text(subtitle)
                 .font(Typography.caption2)
                 .foregroundColor(SemanticColors.textSecondary)
@@ -573,8 +619,58 @@ struct QuickInfoCardV2: View {
         }
         .frame(maxWidth: .infinity)
         .padding(Spacing.md)
-        .background(backgroundColor)
-        .cornerRadius(CornerRadius.md)
+        .background(dynamicCardBackground)
+    }
+
+    // Dynamic card background matching guest modal card style
+    private var dynamicCardBackground: some View {
+        ZStack {
+            // Base fill with strong opacity for visibility
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(Color.white.opacity(0.85))
+
+            // Color gradient overlay using the card's color
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            color.opacity(0.12),
+                            color.opacity(0.04)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            // Inner highlight at top edge for 3D effect
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.md)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            color.opacity(0.3),
+                            color.opacity(0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: color.opacity(0.1), radius: 6, x: 0, y: 3)
+        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
     }
 }
 
