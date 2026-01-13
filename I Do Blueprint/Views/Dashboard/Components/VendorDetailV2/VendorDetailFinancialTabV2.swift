@@ -118,9 +118,7 @@ struct VendorDetailFinancialTabV2: View {
                     )
                 }
             }
-            .padding(Spacing.lg)
-            .background(SemanticColors.backgroundSecondary)
-            .cornerRadius(CornerRadius.lg)
+            .modalCard(style: .primary, cornerRadius: CornerRadius.lg, padding: Spacing.lg)
         }
         .frame(maxWidth: .infinity)
     }
@@ -177,9 +175,7 @@ struct VendorDetailFinancialTabV2: View {
                     }
                 }
             }
-            .padding(Spacing.lg)
-            .background(SemanticColors.backgroundSecondary)
-            .cornerRadius(CornerRadius.lg)
+            .modalCard(style: .success, cornerRadius: CornerRadius.lg, padding: Spacing.lg)
         }
         .frame(maxWidth: .infinity)
     }
@@ -208,9 +204,7 @@ struct VendorDetailFinancialTabV2: View {
                     ExpenseRowV2(expense: expense)
                 }
             }
-            .padding(Spacing.md)
-            .background(SemanticColors.backgroundSecondary)
-            .cornerRadius(CornerRadius.md)
+            .modalCard(style: .warning, cornerRadius: CornerRadius.md, padding: Spacing.md)
         }
     }
 
@@ -247,9 +241,7 @@ struct VendorDetailFinancialTabV2: View {
                     PaymentRowV2(payment: payment)
                 }
             }
-            .padding(Spacing.md)
-            .background(SemanticColors.backgroundSecondary)
-            .cornerRadius(CornerRadius.md)
+            .modalCard(style: .success, cornerRadius: CornerRadius.md, padding: Spacing.md)
         }
     }
 
