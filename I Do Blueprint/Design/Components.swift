@@ -1042,3 +1042,245 @@ public struct GlassMetricCard: View {
 }
 
 // Note: MetricCardSkeleton is defined in Views/Shared/Loading/Skeletons/MetricCardSkeleton.swift
+
+// MARK: - Modal Styles (Glassmorphism)
+
+/// Card style variants for modal content cards
+/// Each style uses theme-aware colors via SemanticColors for consistency across wedding themes
+public enum ModalCardColorStyle {
+    /// Primary theme color (pink for blush, sage for sage-serenity, etc.)
+    case primary
+    /// Secondary theme color
+    case secondary
+    /// Success/confirmation style (green tones)
+    case success
+    /// Warning/alert style (gold/amber tones)
+    case warning
+    /// Mixed accent style combining primary and secondary
+    case accent
+    /// Neutral style with no color tint
+    case neutral
+
+    /// The main theme color for this style
+    var themeColor: Color {
+        switch self {
+        case .primary: return SemanticColors.primaryAction
+        case .secondary: return SemanticColors.secondaryAction
+        case .success: return SemanticColors.statusSuccess
+        case .warning: return SemanticColors.statusWarning
+        case .accent: return SemanticColors.primaryAction
+        case .neutral: return Color.gray
+        }
+    }
+
+    /// Gradient overlay opacity values (start, end)
+    var gradientOpacity: (start: Double, end: Double) {
+        switch self {
+        case .primary, .secondary, .warning: return (0.15, 0.05)
+        case .success: return (0.12, 0.04)
+        case .accent: return (0.10, 0.06)
+        case .neutral: return (0, 0)
+        }
+    }
+
+    /// Border gradient opacity values (start, end)
+    var borderOpacity: (start: Double, end: Double) {
+        switch self {
+        case .primary, .secondary, .warning: return (0.4, 0.15)
+        case .success: return (0.35, 0.12)
+        case .accent, .neutral: return (0.5, 0.2)
+        }
+    }
+
+    /// Shadow color opacity
+    var shadowOpacity: Double {
+        switch self {
+        case .primary, .secondary, .warning: return 0.15
+        case .success: return 0.12
+        case .accent: return 0.10
+        case .neutral: return 0.08
+        }
+    }
+}
+
+/// View modifier for modal container background with native macOS vibrancy
+/// Creates a translucent, frosted-glass appearance for modal windows
+///
+/// Usage:
+/// ```swift
+/// VStack { /* modal content */ }
+///     .modalBackground(cornerRadius: 20)
+/// ```
+public struct ModalBackgroundStyle: ViewModifier {
+    let cornerRadius: CGFloat
+
+    public init(cornerRadius: CGFloat = 20) {
+        self.cornerRadius = cornerRadius
+    }
+
+    public func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    // Native macOS vibrancy - provides true translucent blur effect
+                    VisualEffectBackground(
+                        material: .popover,
+                        blendingMode: .behindWindow,
+                        state: .active
+                    )
+
+                    // Subtle theme-aware gradient overlay
+                    LinearGradient(
+                        colors: [
+                            SemanticColors.primaryAction.opacity(0.06),
+                            SemanticColors.secondaryAction.opacity(0.03)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+                .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: cornerRadius))
+            .shadow(color: Color.black.opacity(0.12), radius: 24, x: 0, y: 8)
+    }
+}
+
+/// View modifier for cards within modals
+/// Creates visually distinct cards with depth, shadows, and theme-aware colors
+///
+/// Usage:
+/// ```swift
+/// VStack { /* card content */ }
+///     .modalCard(style: .primary, cornerRadius: 16, padding: 16)
+/// ```
+public struct ModalCardStyle: ViewModifier {
+    let style: ModalCardColorStyle
+    let cornerRadius: CGFloat
+    let padding: CGFloat
+
+    public init(
+        style: ModalCardColorStyle = .neutral,
+        cornerRadius: CGFloat = 16,
+        padding: CGFloat = Spacing.md
+    ) {
+        self.style = style
+        self.cornerRadius = cornerRadius
+        self.padding = padding
+    }
+
+    public func body(content: Content) -> some View {
+        content
+            .padding(padding)
+            .background(cardBackground)
+    }
+
+    @ViewBuilder
+    private var cardBackground: some View {
+        let opacities = style.gradientOpacity
+        let borderOpacities = style.borderOpacity
+
+        ZStack {
+            // Base fill with strong opacity for visibility against translucent modal
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(Color.white.opacity(style == .neutral ? 0.80 : 0.85))
+
+            // Theme color gradient overlay
+            if style != .neutral {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                style.themeColor.opacity(opacities.start),
+                                style == .accent
+                                    ? SemanticColors.secondaryAction.opacity(opacities.end)
+                                    : style.themeColor.opacity(opacities.end)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            // Inner highlight at top edge for 3D effect
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(style == .neutral ? 0.5 : 0.6),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            style == .neutral || style == .accent
+                                ? Color.white.opacity(borderOpacities.start)
+                                : style.themeColor.opacity(borderOpacities.start),
+                            style == .neutral || style == .accent
+                                ? (style == .neutral ? Color.gray.opacity(0.15) : Color.white.opacity(borderOpacities.end))
+                                : style.themeColor.opacity(borderOpacities.end)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: style == .neutral ? 1 : 1.5
+                )
+        )
+        .shadow(color: style.themeColor.opacity(style.shadowOpacity), radius: 8, x: 0, y: 4)
+        .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+    }
+}
+
+// MARK: - Modal Style View Extensions
+
+extension View {
+    /// Apply modal container background with native macOS vibrancy
+    /// - Parameter cornerRadius: Corner radius for the modal container (default: 20)
+    /// - Returns: View with translucent modal background applied
+    ///
+    /// Usage:
+    /// ```swift
+    /// VStack {
+    ///     // Modal content
+    /// }
+    /// .frame(width: 800, height: 600)
+    /// .modalBackground()
+    /// ```
+    public func modalBackground(cornerRadius: CGFloat = 20) -> some View {
+        modifier(ModalBackgroundStyle(cornerRadius: cornerRadius))
+    }
+
+    /// Apply modal card style with theme-aware colors and depth
+    /// - Parameters:
+    ///   - style: The color style variant (primary, secondary, success, warning, accent, neutral)
+    ///   - cornerRadius: Corner radius for the card (default: 16)
+    ///   - padding: Internal padding (default: Spacing.md)
+    /// - Returns: View with modal card styling applied
+    ///
+    /// Usage:
+    /// ```swift
+    /// VStack {
+    ///     Text("Personal Info")
+    ///     // Card content
+    /// }
+    /// .modalCard(style: .primary)
+    /// ```
+    public func modalCard(
+        style: ModalCardColorStyle = .neutral,
+        cornerRadius: CGFloat = 16,
+        padding: CGFloat = Spacing.md
+    ) -> some View {
+        modifier(ModalCardStyle(style: style, cornerRadius: cornerRadius, padding: padding))
+    }
+}

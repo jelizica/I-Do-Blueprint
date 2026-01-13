@@ -93,33 +93,7 @@ struct ViewGuestModal: View {
             footerSection
         }
         .frame(width: dynamicSize.width, height: dynamicSize.height)
-        .background(
-            ZStack {
-                // Native macOS vibrancy - provides true translucent blur effect
-                VisualEffectBackground(
-                    material: .popover,
-                    blendingMode: .behindWindow,
-                    state: .active
-                )
-
-                // Subtle theme-aware gradient overlay
-                LinearGradient(
-                    colors: [
-                        SemanticColors.primaryAction.opacity(0.06),
-                        SemanticColors.secondaryAction.opacity(0.03)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.black.opacity(0.12), radius: 24, x: 0, y: 8)
+        .modalBackground(cornerRadius: 20)
     }
 
     // MARK: - Header Section
@@ -263,9 +237,8 @@ struct ViewGuestModal: View {
                 )
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .primary))
+        .modalCard(style: .primary, padding: Spacing.lg)
     }
 
     // MARK: - Contact Card
@@ -301,9 +274,8 @@ struct ViewGuestModal: View {
                 )
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .neutral))
+        .modalCard(style: .neutral, padding: Spacing.lg)
     }
 
     private var hasAddress: Bool {
@@ -383,9 +355,8 @@ struct ViewGuestModal: View {
                 }
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .success))
+        .modalCard(style: .success, padding: Spacing.lg)
     }
 
     // MARK: - Wedding Party Card
@@ -438,9 +409,8 @@ struct ViewGuestModal: View {
                 }
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .warning))
+        .modalCard(style: .warning, padding: Spacing.lg)
     }
 
     // MARK: - Accessibility Card
@@ -468,9 +438,8 @@ struct ViewGuestModal: View {
                 }
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .secondary))
+        .modalCard(style: .secondary, padding: Spacing.lg)
     }
 
     // MARK: - Dining Card
@@ -548,9 +517,8 @@ struct ViewGuestModal: View {
                     .italic()
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .neutral))
+        .modalCard(style: .neutral, padding: Spacing.lg)
     }
 
     // MARK: - Notes Card
@@ -579,9 +547,8 @@ struct ViewGuestModal: View {
                 }
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(cardBackground(style: .accent))
+        .modalCard(style: .accent, padding: Spacing.lg)
     }
 
     // MARK: - Footer Section
@@ -669,293 +636,6 @@ struct ViewGuestModal: View {
         }
     }
 
-    // Card background styles - glassmorphism with theme-aware color tints
-    private enum CardBackgroundStyle {
-        case primary    // Uses theme's primary color (pink for blush, sage for sage-serenity, etc.)
-        case secondary  // Uses theme's secondary color
-        case success    // Uses success/green tones
-        case warning    // Uses warning/gold tones
-        case accent     // Uses a complementary accent
-        case neutral    // Neutral frosted glass
-    }
-
-    @ViewBuilder
-    private func cardBackground(style: CardBackgroundStyle) -> some View {
-        switch style {
-        case .primary:
-            // Dynamic card with theme primary color - strong presence
-            ZStack {
-                // Base fill with stronger opacity for visibility
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.85))
-
-                // Color gradient overlay
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.primaryAction.opacity(0.15),
-                                SemanticColors.primaryAction.opacity(0.05)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                // Inner highlight at top edge
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.primaryAction.opacity(0.4),
-                                SemanticColors.primaryAction.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-            )
-            .shadow(color: SemanticColors.primaryAction.opacity(0.15), radius: 8, x: 0, y: 4)
-            .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
-
-        case .secondary:
-            // Dynamic card with theme secondary color
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.85))
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.secondaryAction.opacity(0.15),
-                                SemanticColors.secondaryAction.opacity(0.05)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.secondaryAction.opacity(0.4),
-                                SemanticColors.secondaryAction.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-            )
-            .shadow(color: SemanticColors.secondaryAction.opacity(0.15), radius: 8, x: 0, y: 4)
-            .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
-
-        case .success:
-            // Dynamic card with success/green accent
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.85))
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.statusSuccess.opacity(0.12),
-                                SemanticColors.statusSuccess.opacity(0.04)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.statusSuccess.opacity(0.35),
-                                SemanticColors.statusSuccess.opacity(0.12)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-            )
-            .shadow(color: SemanticColors.statusSuccess.opacity(0.12), radius: 8, x: 0, y: 4)
-            .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
-
-        case .warning:
-            // Dynamic card with warning/gold accent
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.85))
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.statusWarning.opacity(0.15),
-                                SemanticColors.statusWarning.opacity(0.05)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.statusWarning.opacity(0.4),
-                                SemanticColors.statusWarning.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-            )
-            .shadow(color: SemanticColors.statusWarning.opacity(0.15), radius: 8, x: 0, y: 4)
-            .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
-
-        case .accent:
-            // Dynamic card with mixed accent colors
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.85))
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                SemanticColors.primaryAction.opacity(0.10),
-                                SemanticColors.secondaryAction.opacity(0.06)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0.2)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
-            )
-            .shadow(color: SemanticColors.primaryAction.opacity(0.10), radius: 8, x: 0, y: 4)
-            .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
-
-        case .neutral:
-            // Neutral card with subtle depth
-            ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.white.opacity(0.80))
-
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.5),
-                                Color.white.opacity(0)
-                            ],
-                            startPoint: .top,
-                            endPoint: .center
-                        )
-                    )
-            }
-            .overlay(
-                RoundedRectangle(cornerRadius: 16)
-                    .stroke(
-                        LinearGradient(
-                            colors: [
-                                Color.white.opacity(0.6),
-                                Color.gray.opacity(0.15)
-                            ],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1
-                    )
-            )
-            .shadow(color: Color.black.opacity(0.08), radius: 6, x: 0, y: 3)
-            .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 1)
-        }
-    }
 }
 
 // MARK: - Supporting Components
