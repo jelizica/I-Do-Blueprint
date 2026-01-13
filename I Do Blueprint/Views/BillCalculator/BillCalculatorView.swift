@@ -20,7 +20,6 @@ struct BillCalculatorView: View {
     @State private var lastSaved: Date = Date()
     @State private var showingDeleteAlert = false
     @State private var calculatorToDelete: BillCalculator?
-    @State private var useGuestCountFromDatabase = true
     @State private var isSaving = false
     @State private var hasUnsavedChanges = false
     @State private var initializationError: String?
@@ -42,6 +41,11 @@ struct BillCalculatorView: View {
     private var guestStore: GuestStoreV2 { appStores.guest }
     private var budgetStore: BudgetStoreV2 { appStores.budget }
     private var billCalculatorStore: BillCalculatorStoreV2 { appStores.billCalculator }
+
+    /// Whether to use guest count from database (auto mode) - inverse of useManualGuestCount
+    private var useGuestCountFromDatabase: Bool {
+        !calculator.useManualGuestCount
+    }
 
     /// Initialize with a new empty calculator using the current session's tenant ID
     init() {
@@ -92,6 +96,7 @@ struct BillCalculatorView: View {
                             eventId: calculator.eventId,
                             taxInfoId: calculator.taxInfoId,
                             guestCount: calculator.guestCount,
+                            useManualGuestCount: calculator.useManualGuestCount,
                             notes: calculator.notes,
                             createdAt: calculator.createdAt,
                             updatedAt: calculator.updatedAt,
@@ -123,8 +128,9 @@ struct BillCalculatorView: View {
                 calculator.guestCount = guestStore.attendingCount
             }
         }
-        .onChange(of: useGuestCountFromDatabase) { _, useDatabase in
-            if useDatabase {
+        .onChange(of: calculator.useManualGuestCount) { _, isManual in
+            // When switching to auto mode, sync guest count from database
+            if !isManual {
                 calculator.guestCount = guestStore.attendingCount
             }
         }
@@ -504,11 +510,12 @@ struct BillCalculatorView: View {
     }
 
     private var headerInputsRow: some View {
-        HStack(spacing: Spacing.xl) {
+        HStack(spacing: Spacing.lg) {
             vendorPicker
             billNameField
             eventPicker
             expensePicker
+            Spacer()
             guestCountStepper
         }
     }
@@ -547,7 +554,7 @@ struct BillCalculatorView: View {
                 )
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 200)
+            .frame(width: 160)
         }
     }
 
@@ -569,6 +576,7 @@ struct BillCalculatorView: View {
                     RoundedRectangle(cornerRadius: CornerRadius.md)
                         .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                 )
+                .frame(minWidth: 150, maxWidth: 250)
         }
     }
 
@@ -605,7 +613,7 @@ struct BillCalculatorView: View {
                 )
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 200)
+            .frame(width: 180)
         }
     }
 
@@ -704,7 +712,7 @@ struct BillCalculatorView: View {
                 )
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 220)
+            .frame(width: 180)
         }
     }
 
@@ -785,34 +793,34 @@ struct BillCalculatorView: View {
     private var guestCountSourceToggle: some View {
         Menu {
             Button {
-                useGuestCountFromDatabase = false
+                calculator.useManualGuestCount = true
                 hasUnsavedChanges = true
             } label: {
                 HStack {
                     Text("Manual Entry")
-                    if !useGuestCountFromDatabase {
+                    if calculator.useManualGuestCount {
                         Image(systemName: "checkmark")
                     }
                 }
             }
 
             Button {
-                useGuestCountFromDatabase = true
+                calculator.useManualGuestCount = false
                 calculator.guestCount = guestStore.attendingCount
                 hasUnsavedChanges = true
             } label: {
                 HStack {
                     Text("From Guest List (\(guestStore.attendingCount) attending)")
-                    if useGuestCountFromDatabase {
+                    if !calculator.useManualGuestCount {
                         Image(systemName: "checkmark")
                     }
                 }
             }
         } label: {
             HStack(spacing: Spacing.xxs) {
-                Image(systemName: useGuestCountFromDatabase ? "person.3.fill" : "pencil")
+                Image(systemName: calculator.useManualGuestCount ? "pencil" : "person.3.fill")
                     .font(Typography.caption2)
-                Text(useGuestCountFromDatabase ? "Auto" : "Manual")
+                Text(calculator.useManualGuestCount ? "Manual" : "Auto")
                     .font(Typography.caption)
             }
             .foregroundColor(SemanticColors.primaryAction)
@@ -1176,6 +1184,7 @@ struct BillCalculatorView: View {
                             eventId: calculator.eventId,
                             taxInfoId: taxInfo.id,
                             guestCount: calculator.guestCount,
+                            useManualGuestCount: calculator.useManualGuestCount,
                             notes: calculator.notes,
                             createdAt: calculator.createdAt,
                             updatedAt: calculator.updatedAt,
@@ -1203,6 +1212,7 @@ struct BillCalculatorView: View {
                         eventId: calculator.eventId,
                         taxInfoId: nil,
                         guestCount: calculator.guestCount,
+                        useManualGuestCount: calculator.useManualGuestCount,
                         notes: calculator.notes,
                         createdAt: calculator.createdAt,
                         updatedAt: calculator.updatedAt,
@@ -1610,9 +1620,12 @@ struct BillCalculatorView: View {
         defer { isLinkingExpense = false }
 
         do {
-            // If there's an existing link, remove it first
-            if linkedExpenseId != nil {
-                try await budgetStore.repository.unlinkAllBillCalculatorsFromExpense(expenseId: linkedExpenseId!)
+            // If there's an existing link, remove only this bill calculator's link (not all links to that expense)
+            if let oldExpenseId = linkedExpenseId {
+                let existingLinks = try await budgetStore.repository.fetchBillCalculatorLinksForExpense(expenseId: oldExpenseId)
+                if let linkToRemove = existingLinks.first(where: { $0.billCalculatorId == calculator.id }) {
+                    try await budgetStore.repository.unlinkBillCalculatorFromExpense(linkId: linkToRemove.id)
+                }
             }
 
             // Create the new link
