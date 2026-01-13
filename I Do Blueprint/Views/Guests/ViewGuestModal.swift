@@ -95,19 +95,28 @@ struct ViewGuestModal: View {
         .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(
             RoundedRectangle(cornerRadius: 20)
-                .fill(SemanticColors.backgroundPrimary.opacity(0.92))
-                .background(
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    // Subtle gradient overlay for wedding theme
                     RoundedRectangle(cornerRadius: 20)
-                        .fill(.ultraThinMaterial)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SemanticColors.primaryAction.opacity(0.08),
+                                    SemanticColors.secondaryAction.opacity(0.05)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                 )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                .stroke(Color.white.opacity(0.3), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: SemanticColors.primaryAction.opacity(0.15), radius: 40, x: 0, y: 20)
-        .shadow(color: Color.black.opacity(0.1), radius: 20, x: 0, y: 10)
+        .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
     }
 
     // MARK: - Header Section

@@ -205,6 +205,7 @@ private struct MainAppView: View {
                     .environmentObject(settingsStore)
                     .environmentObject(appStores.budget)
                     .environmentObject(coordinator)
+                    .presentationBackground(.ultraThinMaterial)
             }
         }
     }
