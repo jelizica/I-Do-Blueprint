@@ -83,8 +83,12 @@ struct VendorDetailNotesTabV2: View {
                 }
             }
             .padding(Spacing.sm)
-            .background(SemanticColors.backgroundSecondary)
+            .background(Color.white.opacity(0.75))
             .cornerRadius(CornerRadius.md)
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
+            )
 
             // Add Note Button
             Button(action: { isAddingNote = true }) {
@@ -150,7 +154,7 @@ struct VendorDetailNotesTabV2: View {
                 .font(Typography.bodyRegular)
                 .padding(Spacing.sm)
                 .frame(minHeight: 200)
-                .background(SemanticColors.backgroundSecondary)
+                .background(Color.white.opacity(0.9))
                 .cornerRadius(CornerRadius.md)
                 .overlay(
                     RoundedRectangle(cornerRadius: CornerRadius.md)
@@ -164,10 +168,8 @@ struct VendorDetailNotesTabV2: View {
                         .foregroundColor(SemanticColors.textSecondary)
                         .padding(.horizontal, Spacing.lg)
                         .padding(.vertical, Spacing.sm)
-                        .background(SemanticColors.backgroundSecondary)
-                        .cornerRadius(CornerRadius.md)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(GlassCloseButtonStyle(cornerRadius: CornerRadius.md))
 
                 Spacer()
 
@@ -182,15 +184,11 @@ struct VendorDetailNotesTabV2: View {
                     .foregroundColor(.white)
                     .padding(.horizontal, Spacing.lg)
                     .padding(.vertical, Spacing.sm)
-                    .background(SemanticColors.success)
-                    .cornerRadius(CornerRadius.md)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(GlassActionButtonStyle(color: SemanticColors.success))
             }
         }
-        .padding(Spacing.md)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
+        .modalCard(style: .neutral, cornerRadius: CornerRadius.lg, padding: Spacing.md)
     }
 
     private var emptyNotesView: some View {
@@ -228,15 +226,11 @@ struct VendorDetailNotesTabV2: View {
                 .foregroundColor(.white)
                 .padding(.horizontal, Spacing.xl)
                 .padding(.vertical, Spacing.md)
-                .background(SemanticColors.primaryAction)
-                .cornerRadius(CornerRadius.md)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(GlassActionButtonStyle(color: SemanticColors.primaryAction))
         }
         .frame(maxWidth: .infinity)
-        .padding(Spacing.xxl)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
+        .modalCard(style: .primary, cornerRadius: CornerRadius.lg, padding: Spacing.xxl)
         .sheet(isPresented: $isAddingNote) {
             AddNoteSheetV2(
                 vendorName: vendor.vendorName,
@@ -272,9 +266,7 @@ struct VendorDetailNotesTabV2: View {
             .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
-        .padding(Spacing.xxl)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
+        .modalCard(style: .neutral, cornerRadius: CornerRadius.lg, padding: Spacing.xxl)
     }
 
     // MARK: - Actions
@@ -379,14 +371,55 @@ struct NoteCardV2: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(Spacing.lg)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
+        .background(noteCardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .stroke(isHovering ? SemanticColors.primaryAction.opacity(Opacity.semiLight) : Color.clear, lineWidth: 1)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            isHovering ? SemanticColors.primaryAction.opacity(0.4) : Color.white.opacity(0.5),
+                            isHovering ? SemanticColors.primaryAction.opacity(0.2) : Color.gray.opacity(0.15)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: isHovering ? 1.5 : 1
+                )
         )
+        .shadow(color: isHovering ? SemanticColors.primaryAction.opacity(0.12) : Color.black.opacity(0.05), radius: isHovering ? 6 : 3, x: 0, y: isHovering ? 3 : 2)
         .onHover { hovering in
             isHovering = hovering
+        }
+    }
+
+    private var noteCardBackground: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(Color.white.opacity(0.85))
+
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            SemanticColors.primaryAction.opacity(0.08),
+                            SemanticColors.primaryAction.opacity(0.02)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
         }
     }
 }

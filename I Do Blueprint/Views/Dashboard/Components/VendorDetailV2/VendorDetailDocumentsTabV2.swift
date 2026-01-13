@@ -156,9 +156,7 @@ struct VendorDetailDocumentsTabV2: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(Spacing.xxl)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
+        .modalCard(style: .neutral, cornerRadius: CornerRadius.lg, padding: Spacing.xxl)
     }
 
     // MARK: - Computed Properties
@@ -216,8 +214,12 @@ struct DocumentFormatBadge: View {
             .foregroundColor(SemanticColors.textSecondary)
             .padding(.horizontal, Spacing.sm)
             .padding(.vertical, Spacing.xxs)
-            .background(SemanticColors.backgroundSecondary)
+            .background(Color.white.opacity(0.7))
             .cornerRadius(CornerRadius.sm)
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.sm)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 0.5)
+            )
     }
 }
 
@@ -262,16 +264,45 @@ struct DocumentThumbnailCardV2: View {
             .padding(Spacing.sm)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
+        .background(documentCardBackground)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
-                .stroke(isHovering ? SemanticColors.primaryAction.opacity(Opacity.semiLight) : Color.clear, lineWidth: 2)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            isHovering ? SemanticColors.primaryAction.opacity(0.4) : Color.white.opacity(0.5),
+                            isHovering ? SemanticColors.primaryAction.opacity(0.2) : Color.gray.opacity(0.15)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: isHovering ? 1.5 : 1
+                )
         )
+        .shadow(color: isHovering ? SemanticColors.primaryAction.opacity(0.15) : Color.black.opacity(0.06), radius: isHovering ? 8 : 4, x: 0, y: isHovering ? 4 : 2)
         .scaleEffect(isHovering ? 1.02 : 1.0)
         .animation(.easeInOut(duration: 0.2), value: isHovering)
         .onHover { hovering in
             isHovering = hovering
+        }
+    }
+
+    private var documentCardBackground: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(Color.white.opacity(0.85))
+
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.5),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
         }
     }
 
