@@ -83,12 +83,8 @@ struct VendorDetailModalV2: View {
                 onDismiss: { dismiss() }
             )
 
-            Divider()
-
             // Tab Bar
             VendorDetailTabBarV2(selectedTab: $selectedTab)
-
-            Divider()
 
             // Content - transparent to show modal vibrancy
             ScrollView {

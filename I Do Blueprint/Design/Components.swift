@@ -1446,3 +1446,107 @@ public struct GlassCloseButtonStyle: ButtonStyle {
         .shadow(color: Color.black.opacity(0.08), radius: isHovering ? 4 : 2, x: 0, y: isHovering ? 2 : 1)
     }
 }
+
+/// A custom ButtonStyle for tab buttons within glassmorphism modals
+/// Features selected state with primary color fill and unselected with neutral glass effect
+///
+/// Usage:
+/// ```swift
+/// Button("Tab Name") { }
+///     .buttonStyle(GlassTabButtonStyle(isSelected: true, accentColor: .pink))
+/// ```
+public struct GlassTabButtonStyle: ButtonStyle {
+    let isSelected: Bool
+    let accentColor: Color
+    let cornerRadius: CGFloat
+
+    @State private var isHovering = false
+
+    public init(
+        isSelected: Bool,
+        accentColor: Color? = nil,
+        cornerRadius: CGFloat = CornerRadius.md
+    ) {
+        self.isSelected = isSelected
+        self.accentColor = accentColor ?? SemanticColors.primaryAction
+        self.cornerRadius = cornerRadius
+    }
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(buttonBackground(isPressed: configuration.isPressed))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovering = hovering
+                }
+            }
+    }
+
+    @ViewBuilder
+    private func buttonBackground(isPressed: Bool) -> some View {
+        ZStack {
+            // Base fill
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(isSelected ? accentColor : (isHovering ? Color.white.opacity(0.85) : Color.white.opacity(0.65)))
+
+            // Color gradient overlay for selected state
+            if isSelected {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.white.opacity(0.2),
+                                Color.white.opacity(0)
+                            ],
+                            startPoint: .top,
+                            endPoint: .center
+                        )
+                    )
+            } else if !isHovering {
+                // Subtle neutral gradient for unselected
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                Color.gray.opacity(0.08),
+                                Color.gray.opacity(0.02)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            // Inner highlight for 3D depth
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(isSelected ? 0.4 : (isHovering ? 0.5 : 0.35)),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            isSelected ? Color.white.opacity(0.5) : (isHovering ? accentColor.opacity(0.3) : Color.white.opacity(0.4)),
+                            isSelected ? accentColor.opacity(0.3) : (isHovering ? accentColor.opacity(0.15) : Color.gray.opacity(0.15))
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: isSelected ? 1.5 : 1
+                )
+        )
+        .shadow(color: isSelected ? accentColor.opacity(0.2) : Color.black.opacity(isHovering ? 0.08 : 0.05), radius: isSelected ? 8 : (isHovering ? 4 : 2), x: 0, y: isSelected ? 4 : (isHovering ? 2 : 1))
+        .shadow(color: Color.black.opacity(0.04), radius: 1, x: 0, y: 1)
+    }
+}

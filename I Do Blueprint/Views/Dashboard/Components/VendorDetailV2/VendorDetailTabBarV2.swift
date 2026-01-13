@@ -49,8 +49,6 @@ struct VendorTabButtonV2: View {
     let isSelected: Bool
     let action: () -> Void
 
-    @State private var isHovering = false
-
     var body: some View {
         Button(action: action) {
             HStack(spacing: Spacing.sm) {
@@ -60,22 +58,11 @@ struct VendorTabButtonV2: View {
                     .font(Typography.bodyRegular)
                     .fontWeight(isSelected ? .semibold : .regular)
             }
-            .foregroundColor(isSelected ? SemanticColors.primaryAction : SemanticColors.textSecondary)
+            .foregroundColor(isSelected ? .white : SemanticColors.textSecondary)
             .padding(.horizontal, Spacing.lg)
             .padding(.vertical, Spacing.sm)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(isSelected ? SemanticColors.primaryAction.opacity(Opacity.subtle) : (isHovering ? SemanticColors.backgroundSecondary : Color.clear))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(isSelected ? SemanticColors.primaryAction.opacity(Opacity.semiLight) : Color.clear, lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            isHovering = hovering
-        }
+        .buttonStyle(GlassTabButtonStyle(isSelected: isSelected))
         .accessibleActionButton(label: title, hint: "Shows \(title.lowercased()) tab")
     }
 }
