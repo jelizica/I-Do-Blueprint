@@ -94,140 +94,161 @@ struct GuestDetailViewV4: View {
                 // Adaptive layout based on available height
                 // Compact mode: header scrolls with content
                 // Normal mode: fixed header, scrollable content
-                VStack(spacing: 0) {
-                    if isCompactMode {
-                        // COMPACT MODE: Everything scrolls, smaller header
-                        ScrollView {
-                            VStack(spacing: 0) {
-                                // Compact Header (horizontal, smaller)
-                                GuestDetailCompactHeader(
-                                    guest: guest,
-                                    settings: settings,
-                                    onDismiss: { dismiss() }
-                                )
-                                
-                                // Content sections
+                ZStack {
+                    // Mesh gradient background for glassmorphism effect
+                    MeshGradientBackground()
+
+                    VStack(spacing: 0) {
+                        if isCompactMode {
+                            // COMPACT MODE: Everything scrolls, smaller header
+                            ScrollView {
+                                VStack(spacing: Spacing.lg) {
+                                    // Compact Header (horizontal, smaller)
+                                    GuestDetailCompactHeader(
+                                        guest: guest,
+                                        settings: settings,
+                                        onDismiss: { dismiss() }
+                                    )
+
+                                    // Content sections with glass panels
+                                    VStack(alignment: .leading, spacing: Spacing.lg) {
+                                        // Contact Information
+                                        GuestDetailContactSection(guest: guest)
+                                            .glassPanel()
+
+                                        // RSVP Status and Meal Choice Row
+                                        GuestDetailStatusRow(guest: guest)
+                                            .glassPanel()
+
+                                        // Dietary Restrictions
+                                        if let restrictions = guest.dietaryRestrictions, !restrictions.isEmpty {
+                                            GuestDetailDietarySection(restrictions: restrictions)
+                                                .glassPanel()
+                                        }
+
+                                        // Accessibility Needs
+                                        if hasAccessibilityNeeds {
+                                            GuestDetailAccessibilitySection(
+                                                accessibilityNeeds: guest.accessibilityNeeds!
+                                            )
+                                            .glassPanel()
+                                        }
+
+                                        // Event Attendance (dynamically based on created events)
+                                        GuestDetailEventAttendance(
+                                            guest: guest,
+                                            weddingEvents: budgetStore.weddingEvents
+                                        )
+                                        .glassPanel()
+
+                                        // Wedding Party Section (only for wedding party members)
+                                        if isWeddingPartyMember {
+                                            GuestDetailWeddingPartySection(guest: guest)
+                                                .glassPanel()
+                                        }
+
+                                        // Address Information
+                                        if hasAddress {
+                                            GuestDetailAddressSection(guest: guest)
+                                                .glassPanel()
+                                        }
+
+                                        // Notes
+                                        if let notes = guest.notes, !notes.isEmpty {
+                                            GuestDetailNotesSection(notes: notes)
+                                                .glassPanel()
+                                        }
+
+                                        // Additional Details
+                                        if shouldShowAdditionalDetails {
+                                            GuestDetailAdditionalDetails(guest: guest)
+                                                .glassPanel()
+                                        }
+                                    }
+                                    .padding(.horizontal, Spacing.lg)
+                                    .padding(.bottom, Spacing.lg)
+                                }
+                            }
+                        } else {
+                            // NORMAL MODE: Fixed header, scrollable content
+                            // Glassmorphism Header with Avatar
+                            GuestDetailHeader(
+                                guest: guest,
+                                settings: settings,
+                                onDismiss: { dismiss() }
+                            )
+
+                            // Content Section
+                            ScrollView {
                                 VStack(alignment: .leading, spacing: Spacing.lg) {
                                     // Contact Information
                                     GuestDetailContactSection(guest: guest)
-                                    
+                                        .glassPanel()
+
                                     // RSVP Status and Meal Choice Row
                                     GuestDetailStatusRow(guest: guest)
-                                    
+                                        .glassPanel()
+
                                     // Dietary Restrictions
                                     if let restrictions = guest.dietaryRestrictions, !restrictions.isEmpty {
                                         GuestDetailDietarySection(restrictions: restrictions)
+                                            .glassPanel()
                                     }
-                                    
+
                                     // Accessibility Needs
                                     if hasAccessibilityNeeds {
                                         GuestDetailAccessibilitySection(
                                             accessibilityNeeds: guest.accessibilityNeeds!
                                         )
+                                        .glassPanel()
                                     }
-                                    
+
                                     // Event Attendance (dynamically based on created events)
                                     GuestDetailEventAttendance(
                                         guest: guest,
                                         weddingEvents: budgetStore.weddingEvents
                                     )
-                                    
+                                    .glassPanel()
+
                                     // Wedding Party Section (only for wedding party members)
                                     if isWeddingPartyMember {
                                         GuestDetailWeddingPartySection(guest: guest)
+                                            .glassPanel()
                                     }
-                                    
+
                                     // Address Information
                                     if hasAddress {
                                         GuestDetailAddressSection(guest: guest)
+                                            .glassPanel()
                                     }
-                                    
+
                                     // Notes
                                     if let notes = guest.notes, !notes.isEmpty {
                                         GuestDetailNotesSection(notes: notes)
+                                            .glassPanel()
                                     }
-                                    
+
                                     // Additional Details
                                     if shouldShowAdditionalDetails {
-                                        Divider()
                                         GuestDetailAdditionalDetails(guest: guest)
+                                            .glassPanel()
                                     }
                                 }
-                                .padding(Spacing.lg)
+                                .padding(Spacing.xl)
                             }
                         }
-                    } else {
-                        // NORMAL MODE: Fixed header, scrollable content
-                        // Gradient Header with Avatar
-                        GuestDetailHeader(
-                            guest: guest,
-                            settings: settings,
-                            onDismiss: { dismiss() }
+
+                        // Action Buttons - ALWAYS fixed at bottom
+                        GuestDetailActionButtons(
+                            onEdit: { showingEditSheet = true },
+                            onDelete: { showingDeleteAlert = true }
                         )
-                        
-                        // Content Section
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: Spacing.xl) {
-                                // Contact Information
-                                GuestDetailContactSection(guest: guest)
-                                
-                                // RSVP Status and Meal Choice Row
-                                GuestDetailStatusRow(guest: guest)
-                                
-                                // Dietary Restrictions
-                                if let restrictions = guest.dietaryRestrictions, !restrictions.isEmpty {
-                                    GuestDetailDietarySection(restrictions: restrictions)
-                                }
-                                
-                                // Accessibility Needs
-                                if hasAccessibilityNeeds {
-                                    GuestDetailAccessibilitySection(
-                                        accessibilityNeeds: guest.accessibilityNeeds!
-                                    )
-                                }
-                                
-                                // Event Attendance (dynamically based on created events)
-                                GuestDetailEventAttendance(
-                                    guest: guest,
-                                    weddingEvents: budgetStore.weddingEvents
-                                )
-                                
-                                // Wedding Party Section (only for wedding party members)
-                                if isWeddingPartyMember {
-                                    GuestDetailWeddingPartySection(guest: guest)
-                                }
-                                
-                                // Address Information
-                                if hasAddress {
-                                    GuestDetailAddressSection(guest: guest)
-                                }
-                                
-                                // Notes
-                                if let notes = guest.notes, !notes.isEmpty {
-                                    GuestDetailNotesSection(notes: notes)
-                                }
-                                
-                                // Additional Details
-                                if shouldShowAdditionalDetails {
-                                    Divider()
-                                    GuestDetailAdditionalDetails(guest: guest)
-                                }
-                            }
-                            .padding(Spacing.xl)
-                        }
                     }
-                    
-                    // Action Buttons - ALWAYS fixed at bottom
-                    GuestDetailActionButtons(
-                        onEdit: { showingEditSheet = true },
-                        onDelete: { showingDeleteAlert = true }
-                    )
                 }
                 // Dynamic frame size based on parent window size
                 // This explicit frame tells the sheet how big to be
                 .frame(width: dynamicSize.width, height: dynamicSize.height)
-                .background(SemanticColors.backgroundSecondary)
-                .cornerRadius(CornerRadius.lg)
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
                 .sheet(isPresented: $showingEditSheet) {
                     EditGuestSheetV2(guest: guest, guestStore: guestStore) { _ in
                         // Reload will happen automatically through the store
