@@ -33,7 +33,6 @@ struct VendorDetailHeaderV2: View {
             closeButton
         }
         .padding(Spacing.xl)
-        .background(SemanticColors.backgroundPrimary)
     }
 
     // MARK: - Components

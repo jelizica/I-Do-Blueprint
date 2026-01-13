@@ -33,7 +33,6 @@ struct VendorDetailTabBarV2: View {
         }
         .padding(.horizontal, Spacing.xl)
         .padding(.vertical, Spacing.md)
-        .background(SemanticColors.backgroundPrimary)
     }
 }
 
