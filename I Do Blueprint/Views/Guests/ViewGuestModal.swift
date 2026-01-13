@@ -94,29 +94,32 @@ struct ViewGuestModal: View {
         }
         .frame(width: dynamicSize.width, height: dynamicSize.height)
         .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    // Subtle gradient overlay for wedding theme
-                    RoundedRectangle(cornerRadius: 20)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    SemanticColors.primaryAction.opacity(0.08),
-                                    SemanticColors.secondaryAction.opacity(0.05)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+            ZStack {
+                // Native macOS vibrancy - provides true translucent blur effect
+                VisualEffectBackground(
+                    material: .popover,
+                    blendingMode: .behindWindow,
+                    state: .active
                 )
+
+                // Subtle theme-aware gradient overlay
+                LinearGradient(
+                    colors: [
+                        SemanticColors.primaryAction.opacity(0.06),
+                        SemanticColors.secondaryAction.opacity(0.03)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            }
+            .clipShape(RoundedRectangle(cornerRadius: 20))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 20)
-                .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                .stroke(Color.white.opacity(0.2), lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: 20))
-        .shadow(color: Color.black.opacity(0.15), radius: 20, x: 0, y: 10)
+        .shadow(color: Color.black.opacity(0.12), radius: 24, x: 0, y: 8)
     }
 
     // MARK: - Header Section

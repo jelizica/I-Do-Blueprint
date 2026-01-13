@@ -7,6 +7,90 @@
 //
 
 import SwiftUI
+import AppKit
+
+// MARK: - Native macOS Visual Effect View
+
+/// NSVisualEffectView wrapper for true native macOS vibrancy and blur effects
+/// This provides the authentic macOS translucent background that SwiftUI materials approximate
+///
+/// Usage:
+/// ```swift
+/// MyView()
+///     .background(VisualEffectBackground(material: .popover, blendingMode: .behindWindow))
+/// ```
+public struct VisualEffectBackground: NSViewRepresentable {
+    let material: NSVisualEffectView.Material
+    let blendingMode: NSVisualEffectView.BlendingMode
+    let state: NSVisualEffectView.State
+    let isEmphasized: Bool
+
+    public init(
+        material: NSVisualEffectView.Material = .popover,
+        blendingMode: NSVisualEffectView.BlendingMode = .behindWindow,
+        state: NSVisualEffectView.State = .active,
+        isEmphasized: Bool = false
+    ) {
+        self.material = material
+        self.blendingMode = blendingMode
+        self.state = state
+        self.isEmphasized = isEmphasized
+    }
+
+    public func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = material
+        view.blendingMode = blendingMode
+        view.state = state
+        view.isEmphasized = isEmphasized
+        return view
+    }
+
+    public func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
+        nsView.material = material
+        nsView.blendingMode = blendingMode
+        nsView.state = state
+        nsView.isEmphasized = isEmphasized
+    }
+}
+
+/// View modifier to apply native macOS visual effect background
+public struct VisualEffectModifier: ViewModifier {
+    let material: NSVisualEffectView.Material
+    let blendingMode: NSVisualEffectView.BlendingMode
+
+    public init(
+        material: NSVisualEffectView.Material = .popover,
+        blendingMode: NSVisualEffectView.BlendingMode = .behindWindow
+    ) {
+        self.material = material
+        self.blendingMode = blendingMode
+    }
+
+    public func body(content: Content) -> some View {
+        content
+            .background(
+                VisualEffectBackground(
+                    material: material,
+                    blendingMode: blendingMode
+                )
+            )
+    }
+}
+
+extension View {
+    /// Apply native macOS visual effect (vibrancy/blur) as background
+    /// - Parameters:
+    ///   - material: The NSVisualEffectView.Material to use (default: .popover)
+    ///   - blendingMode: The blending mode (default: .behindWindow)
+    /// - Returns: View with native vibrancy background
+    public func visualEffect(
+        material: NSVisualEffectView.Material = .popover,
+        blendingMode: NSVisualEffectView.BlendingMode = .behindWindow
+    ) -> some View {
+        modifier(VisualEffectModifier(material: material, blendingMode: blendingMode))
+    }
+}
 
 // MARK: - macOS Native Materials
 
