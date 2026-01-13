@@ -545,7 +545,7 @@ struct GuestListAvatarView: View {
     ]
 
     return ZStack {
-        MeshGradientBackgroundV7()
+        MeshGradientBackground()
             .ignoresSafeArea()
 
         GuestListView(

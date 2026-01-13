@@ -159,15 +159,20 @@ struct VendorCardV4: View {
     }
 
     // MARK: - Status Badge
+    // Uses GlassStatusBadge from Design/Components.swift for consistent V7 styling
 
     private var statusBadge: some View {
         Group {
             if vendor.isArchived {
-                BadgeV4(text: "Archived", color: SemanticColors.statusWarning)
+                GlassStatusBadge(
+                    text: "Archived",
+                    color: Terracotta.shade500,
+                    backgroundColor: Terracotta.shade100
+                )
             } else if vendor.isBooked == true {
-                BadgeV4(text: "Booked", color: SemanticColors.statusSuccess)
+                GlassStatusBadge(status: .booked)
             } else {
-                BadgeV4(text: "Available", color: SemanticColors.statusPending)
+                GlassStatusBadge(status: .pending)
             }
         }
     }

@@ -196,40 +196,49 @@ struct GuestCardV4: View {
 }
 
 // MARK: - Status Badge
+// Uses GlassStatusBadge from Design/Components.swift for consistent V7 styling
 
 struct GuestStatusBadge: View {
     let status: RSVPStatus
-    
+
     var body: some View {
-        Group {
-            switch status {
-            case .confirmed:
-                badge(text: "Confirmed", color: SemanticColors.statusSuccess, background: SemanticColors.statusSuccess.opacity(Opacity.subtle))
-            case .attending:
-                badge(text: "Attending", color: SemanticColors.statusSuccess, background: SemanticColors.statusSuccess.opacity(Opacity.subtle))
-            case .pending:
-                badge(text: "Pending", color: SemanticColors.statusPending, background: SemanticColors.statusPending.opacity(Opacity.subtle))
-            case .maybe:
-                badge(text: "Maybe", color: SemanticColors.statusPending, background: SemanticColors.statusPending.opacity(Opacity.subtle))
-            case .invited:
-                badge(text: "Invited", color: SemanticColors.statusPending, background: SemanticColors.statusPending.opacity(Opacity.subtle))
-            case .declined:
-                badge(text: "Declined", color: SemanticColors.statusWarning, background: SemanticColors.statusWarning.opacity(Opacity.subtle))
-            case .noResponse:
-                badge(text: "No Response", color: SemanticColors.statusWarning, background: SemanticColors.statusWarning.opacity(Opacity.subtle))
-            default:
-                badge(text: status.displayName, color: SemanticColors.textSecondary, background: SemanticColors.backgroundSecondary)
-            }
+        switch status {
+        case .confirmed:
+            GlassStatusBadge(status: .confirmed)
+        case .attending:
+            GlassStatusBadge(
+                text: "Attending",
+                color: AppGradients.sageDark,
+                backgroundColor: AppGradients.sageGreen.opacity(0.5)
+            )
+        case .pending:
+            GlassStatusBadge(status: .pending)
+        case .maybe:
+            GlassStatusBadge(
+                text: "Maybe",
+                color: SoftLavender.shade500,
+                backgroundColor: SoftLavender.shade100
+            )
+        case .invited:
+            GlassStatusBadge(
+                text: "Invited",
+                color: SoftLavender.shade500,
+                backgroundColor: SoftLavender.shade100
+            )
+        case .declined:
+            GlassStatusBadge(status: .declined)
+        case .noResponse:
+            GlassStatusBadge(
+                text: "No Response",
+                color: Terracotta.shade500,
+                backgroundColor: Terracotta.shade100
+            )
+        default:
+            GlassStatusBadge(
+                text: status.displayName,
+                color: SemanticColors.textSecondary,
+                backgroundColor: SemanticColors.backgroundSecondary
+            )
         }
-    }
-    
-    private func badge(text: String, color: Color, background: Color) -> some View {
-        Text(text)
-            .font(Typography.caption)
-            .foregroundColor(color)
-            .padding(.horizontal, Spacing.md)
-            .padding(.vertical, Spacing.xs)
-            .background(background)
-            .cornerRadius(9999)
     }
 }

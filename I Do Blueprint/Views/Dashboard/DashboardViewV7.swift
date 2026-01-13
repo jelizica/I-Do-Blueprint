@@ -96,7 +96,7 @@ struct DashboardViewV7: View {
         return NavigationStack {
             ZStack {
                 // MARK: - Mesh Gradient Background
-                MeshGradientBackgroundV7()
+                MeshGradientBackground()
                     .ignoresSafeArea()
 
                 // Use VStack with fixed-height header elements, then masonry layout
@@ -841,69 +841,8 @@ struct MasonryColumnsView: View {
 }
 
 // MARK: - Mesh Gradient Background
-
-/// Enhanced mesh gradient background with vibrant, saturated colors
-/// Inspired by guest_management.png glassmorphism design
-/// Features larger blobs, higher saturation, and stronger blur for depth
-struct MeshGradientBackgroundV7: View {
-    @EnvironmentObject private var settingsStore: SettingsStoreV2
-    
-    var body: some View {
-        let colors = AppGradients.meshGradientColors(for: settingsStore.settings.theme)
-        
-        return ZStack {
-            // Base color with subtle warmth
-            colors.base
-            
-            // Vibrant color blobs - larger and more saturated for glassmorphism effect
-            GeometryReader { geometry in
-                ZStack {
-                    // Blob 1 - Large pink/primary blob top-left area
-                    Circle()
-                        .fill(colors.blob1)
-                        .frame(width: 500, height: 500)
-                        .blur(radius: 120)
-                        .position(x: geometry.size.width * 0.15, y: geometry.size.height * 0.15)
-                    
-                    // Blob 2 - Large green/secondary blob bottom-right
-                    Circle()
-                        .fill(colors.blob2)
-                        .frame(width: 600, height: 600)
-                        .blur(radius: 130)
-                        .position(x: geometry.size.width * 0.85, y: geometry.size.height * 0.75)
-                    
-                    // Blob 3 - Purple/accent blob center-right
-                    Circle()
-                        .fill(colors.blob3)
-                        .frame(width: 450, height: 450)
-                        .blur(radius: 110)
-                        .position(x: geometry.size.width * 0.7, y: geometry.size.height * 0.35)
-                    
-                    // Blob 4 - Secondary pink blob bottom-left for balance
-                    Circle()
-                        .fill(colors.blob1.opacity(0.6))
-                        .frame(width: 400, height: 400)
-                        .blur(radius: 100)
-                        .position(x: geometry.size.width * 0.2, y: geometry.size.height * 0.85)
-                    
-                    // Blob 5 - Small accent blob top-right
-                    Circle()
-                        .fill(colors.blob3.opacity(0.5))
-                        .frame(width: 300, height: 300)
-                        .blur(radius: 90)
-                        .position(x: geometry.size.width * 0.9, y: geometry.size.height * 0.1)
-                    
-                    // Blob 6 - Center green accent for depth
-                    Circle()
-                        .fill(colors.blob2.opacity(0.4))
-                        .frame(width: 350, height: 350)
-                        .blur(radius: 100)
-                        .position(x: geometry.size.width * 0.4, y: geometry.size.height * 0.55)
-                }
-            }
-        }
-    }
-}
+// Note: Uses MeshGradientBackground from Design/Gradients.swift
+// MeshGradientBackgroundV7 was removed as duplicate - use MeshGradientBackground instead
 
 // MARK: - Dashboard Header
 
@@ -976,137 +915,58 @@ struct DashboardHeaderV7: View {
 }
 
 // MARK: - Metric Cards
+// These cards use the reusable GlassMetricCard pattern from Design/Components.swift
 
 struct RSVPMetricCardV7: View {
     let confirmed: Int
     let pending: Int
     let total: Int
-    
+
     private var progress: Double {
         guard total > 0 else { return 0 }
         return Double(confirmed) / Double(total)
     }
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Total Responses")
-                        .font(Typography.caption)
-                        .foregroundColor(SemanticColors.textSecondary)
-                    Text("\(confirmed + pending) RSVP")
-                        .font(Typography.title3)
-                        .foregroundColor(SemanticColors.textPrimary)
-                }
-                
-                Spacer()
-                
-                NativeIconBadge(
-                    systemName: "person.2.fill",
-                    color: AppGradients.weddingPink,
-                    size: 40
-                )
-            }
-            
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(height: 8)
-                    
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(AppGradients.weddingPink)
-                        .frame(width: geometry.size.width * progress, height: 8)
-                }
-            }
-            .frame(height: 8)
-            
-            HStack {
-                HStack(spacing: Spacing.xs) {
-                    Circle()
-                        .fill(AppGradients.weddingPink)
-                        .frame(width: 6, height: 6)
-                    Text("Confirmed: \(confirmed)")
-                        .font(Typography.caption2)
-                        .foregroundColor(SemanticColors.textSecondary)
-                }
-                
-                Spacer()
-                
-                HStack(spacing: Spacing.xs) {
-                    Circle()
-                        .fill(Color.gray.opacity(0.3))
-                        .frame(width: 6, height: 6)
-                    Text("Pending: \(pending)")
-                        .font(Typography.caption2)
-                        .foregroundColor(SemanticColors.textSecondary)
-                }
-            }
-        }
-        .glassPanel()
+        GlassMetricCard(
+            icon: "person.2.fill",
+            iconColor: AppGradients.weddingPink,
+            title: "Total Responses",
+            value: "\(confirmed + pending) RSVP",
+            progress: progress,
+            progressColor: AppGradients.weddingPink,
+            legend: [
+                .init(label: "Confirmed", value: "\(confirmed)", color: AppGradients.weddingPink),
+                .init(label: "Pending", value: "\(pending)", color: Color.gray.opacity(0.3))
+            ]
+        )
     }
 }
 
 struct VendorMetricCardV7: View {
     let booked: Int
     let total: Int
-    
+
     private var progress: Double {
         guard total > 0 else { return 0 }
         return Double(booked) / Double(total)
     }
-    
+
     private var percentage: Int {
         guard total > 0 else { return 0 }
         return Int((Double(booked) / Double(total)) * 100)
     }
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Vendors Booked")
-                        .font(Typography.caption)
-                        .foregroundColor(SemanticColors.textSecondary)
-                    HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-                        Text("\(booked)")
-                            .font(Typography.title3)
-                            .foregroundColor(SemanticColors.textPrimary)
-                        Text("/ \(total)")
-                            .font(Typography.bodyRegular)
-                            .foregroundColor(SemanticColors.textTertiary)
-                    }
-                }
-                
-                Spacer()
-                
-                NativeIconBadge(
-                    systemName: "wrench.and.screwdriver.fill",
-                    color: AppGradients.sageDark,
-                    size: 40
-                )
-            }
-            
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(height: 8)
-                    
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(AppGradients.sageDark)
-                        .frame(width: geometry.size.width * progress, height: 8)
-                }
-            }
-            .frame(height: 8)
-            
-            Text("\(percentage)% Completed")
-                .font(Typography.caption2)
-                .foregroundColor(SemanticColors.textSecondary)
-        }
-        .glassPanel()
+        GlassMetricCard(
+            icon: "wrench.and.screwdriver.fill",
+            iconColor: AppGradients.sageDark,
+            title: "Vendors Booked",
+            value: "\(booked) / \(total)",
+            progress: progress,
+            progressColor: AppGradients.sageDark,
+            subtitle: "\(percentage)% Completed"
+        )
     }
 }
 
@@ -1114,66 +974,36 @@ struct BudgetMetricCardV7: View {
     let spent: Double
     let total: Double
     let percentage: Double
-    
+
     private var progress: Double {
         guard total > 0 else { return 0 }
         return min(spent / total, 1.0)
     }
-    
+
     private var formattedSpent: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: spent)) ?? "$0"
     }
-    
+
     private var formattedTotal: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .currency
         formatter.maximumFractionDigits = 0
         return formatter.string(from: NSNumber(value: total)) ?? "$0"
     }
-    
+
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("Budget Used")
-                        .font(Typography.caption)
-                        .foregroundColor(SemanticColors.textSecondary)
-                    Text(formattedSpent)
-                        .font(Typography.title3)
-                        .foregroundColor(SemanticColors.textPrimary)
-                }
-                
-                Spacer()
-                
-                NativeIconBadge(
-                    systemName: "dollarsign.circle.fill",
-                    color: AppGradients.sageDark,
-                    size: 40
-                )
-            }
-            
-            // Progress bar
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(Color.gray.opacity(0.2))
-                        .frame(height: 8)
-                    
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(AppGradients.sageDark)
-                        .frame(width: geometry.size.width * progress, height: 8)
-                }
-            }
-            .frame(height: 8)
-            
-            Text("Total Budget: \(formattedTotal)")
-                .font(Typography.caption2)
-                .foregroundColor(SemanticColors.textSecondary)
-        }
-        .glassPanel()
+        GlassMetricCard(
+            icon: "dollarsign.circle.fill",
+            iconColor: AppGradients.sageDark,
+            title: "Budget Used",
+            value: formattedSpent,
+            progress: progress,
+            progressColor: AppGradients.sageDark,
+            subtitle: "Total Budget: \(formattedTotal)"
+        )
     }
 }
 
@@ -1414,39 +1244,25 @@ struct TaskManagerCardV7: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                Text("Task Manager")
-                    .font(Typography.heading)
-                    .foregroundColor(SemanticColors.textPrimary)
-
-                Spacer()
-
-                Menu {
-                    Button {
-                        // Add task action
-                    } label: {
-                        Label("Add Task", systemImage: "plus")
-                    }
-                    Button {
-                        // View all tasks action
-                    } label: {
-                        Label("View All Tasks", systemImage: "list.bullet")
-                    }
-                    Divider()
-                    Button {
-                        // Filter tasks action
-                    } label: {
-                        Label("Filter Tasks", systemImage: "line.3.horizontal.decrease.circle")
-                    }
+            GlassCardHeader(title: "Task Manager") {
+                Button {
+                    // Add task action
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(SemanticColors.textTertiary)
-                        .frame(width: 24, height: 24)
+                    Label("Add Task", systemImage: "plus")
                 }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
+                Button {
+                    // View all tasks action
+                } label: {
+                    Label("View All Tasks", systemImage: "list.bullet")
+                }
+                Divider()
+                Button {
+                    // Filter tasks action
+                } label: {
+                    Label("Filter Tasks", systemImage: "line.3.horizontal.decrease.circle")
+                }
             }
-            
+
             if recentTasks.isEmpty {
                 Text("No tasks yet")
                     .font(Typography.bodySmall)
@@ -1567,42 +1383,28 @@ struct GuestResponsesCardV7: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                Text("Guest Responses")
-                    .font(Typography.heading)
-                    .foregroundColor(SemanticColors.textPrimary)
-
-                Spacer()
-
-                Menu {
-                    Button {
-                        // Add guest action
-                    } label: {
-                        Label("Add Guest", systemImage: "plus")
-                    }
-                    Button {
-                        // View all guests action
-                    } label: {
-                        Label("View All Guests", systemImage: "list.bullet")
-                    }
-                    Divider()
-                    Button {
-                        // Send reminders action
-                    } label: {
-                        Label("Send RSVP Reminders", systemImage: "envelope")
-                    }
-                    Button {
-                        // Export guest list action
-                    } label: {
-                        Label("Export Guest List", systemImage: "square.and.arrow.up")
-                    }
+            GlassCardHeader(title: "Guest Responses") {
+                Button {
+                    // Add guest action
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(SemanticColors.textTertiary)
-                        .frame(width: 24, height: 24)
+                    Label("Add Guest", systemImage: "plus")
                 }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
+                Button {
+                    // View all guests action
+                } label: {
+                    Label("View All Guests", systemImage: "list.bullet")
+                }
+                Divider()
+                Button {
+                    // Send reminders action
+                } label: {
+                    Label("Send RSVP Reminders", systemImage: "envelope")
+                }
+                Button {
+                    // Export guest list action
+                } label: {
+                    Label("Export Guest List", systemImage: "square.and.arrow.up")
+                }
             }
 
             if recentGuests.isEmpty {
@@ -1709,20 +1511,16 @@ struct GuestRowV7: View {
             }
             
             Spacer()
-            
-            // Status badge
-            Text(status.text.uppercased())
-                .font(.system(size: 10, weight: .bold))
-                .foregroundColor(status.color)
-                .padding(.horizontal, Spacing.sm)
-                .padding(.vertical, Spacing.xs)
-                .background(
-                    Capsule()
-                        .fill(status.backgroundColor)
-                )
+
+            // Status badge - uses reusable GlassStatusBadge
+            GlassStatusBadge(
+                text: status.text,
+                color: status.color,
+                backgroundColor: status.backgroundColor
+            )
         }
     }
-    
+
     // MARK: - Avatar View
     
     @ViewBuilder
@@ -1817,39 +1615,25 @@ struct PaymentsDueCardV7: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                Text("Payments Due (\(currentMonthName))")
-                    .font(Typography.heading)
-                    .foregroundColor(SemanticColors.textPrimary)
-
-                Spacer()
-
-                Menu {
-                    Button {
-                        // Add payment action
-                    } label: {
-                        Label("Add Payment", systemImage: "plus")
-                    }
-                    Button {
-                        // View all payments action
-                    } label: {
-                        Label("View All Payments", systemImage: "list.bullet")
-                    }
-                    Divider()
-                    Button {
-                        // Mark all paid action
-                    } label: {
-                        Label("Mark All Paid", systemImage: "checkmark.circle")
-                    }
+            GlassCardHeader(title: "Payments Due (\(currentMonthName))") {
+                Button {
+                    // Add payment action
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(SemanticColors.textTertiary)
-                        .frame(width: 24, height: 24)
+                    Label("Add Payment", systemImage: "plus")
                 }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
+                Button {
+                    // View all payments action
+                } label: {
+                    Label("View All Payments", systemImage: "list.bullet")
+                }
+                Divider()
+                Button {
+                    // Mark all paid action
+                } label: {
+                    Label("Mark All Paid", systemImage: "checkmark.circle")
+                }
             }
-            
+
             if currentMonthPayments.isEmpty {
                 Text("No payments this month")
                     .font(Typography.bodySmall)
@@ -2150,42 +1934,28 @@ struct VendorListCardV7: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
-            HStack {
-                Text("Vendor List")
-                    .font(Typography.heading)
-                    .foregroundColor(SemanticColors.textPrimary)
-
-                Spacer()
-
-                Menu {
-                    Button {
-                        // Add vendor action
-                    } label: {
-                        Label("Add Vendor", systemImage: "plus")
-                    }
-                    Button {
-                        // View all vendors action
-                    } label: {
-                        Label("View All Vendors", systemImage: "list.bullet")
-                    }
-                    Divider()
-                    Button {
-                        // Compare vendors action
-                    } label: {
-                        Label("Compare Vendors", systemImage: "square.grid.2x2")
-                    }
-                    Button {
-                        // Export action
-                    } label: {
-                        Label("Export Vendor List", systemImage: "square.and.arrow.up")
-                    }
+            GlassCardHeader(title: "Vendor List") {
+                Button {
+                    // Add vendor action
                 } label: {
-                    Image(systemName: "ellipsis")
-                        .foregroundColor(SemanticColors.textTertiary)
-                        .frame(width: 24, height: 24)
+                    Label("Add Vendor", systemImage: "plus")
                 }
-                .menuStyle(.borderlessButton)
-                .menuIndicator(.hidden)
+                Button {
+                    // View all vendors action
+                } label: {
+                    Label("View All Vendors", systemImage: "list.bullet")
+                }
+                Divider()
+                Button {
+                    // Compare vendors action
+                } label: {
+                    Label("Compare Vendors", systemImage: "square.grid.2x2")
+                }
+                Button {
+                    // Export action
+                } label: {
+                    Label("Export Vendor List", systemImage: "square.and.arrow.up")
+                }
             }
 
             if recentVendors.isEmpty {

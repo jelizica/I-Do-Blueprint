@@ -45,7 +45,7 @@ struct GeneralDashboardViewV1: View {
     var body: some View {
         ZStack {
             // Background gradient
-            MeshGradientBackgroundV7()
+            MeshGradientBackground()
                 .ignoresSafeArea()
 
             // Main content

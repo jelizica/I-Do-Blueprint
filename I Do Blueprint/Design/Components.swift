@@ -602,3 +602,359 @@ extension View {
         modifier(AccessibleHeading(level: level))
     }
 }
+
+// MARK: - Glassmorphism Components (V7 Dashboard)
+
+/// Card header with title and optional ellipsis menu
+/// Used consistently across all V7 dashboard cards
+///
+/// Usage:
+/// ```swift
+/// GlassCardHeader(title: "Budget Overview") {
+///     Button("View Details") { }
+///     Button("Export") { }
+/// }
+/// ```
+public struct GlassCardHeader<MenuContent: View>: View {
+    let title: String
+    let showMenu: Bool
+    @ViewBuilder let menuContent: () -> MenuContent
+
+    public init(
+        title: String,
+        showMenu: Bool = true,
+        @ViewBuilder menuContent: @escaping () -> MenuContent
+    ) {
+        self.title = title
+        self.showMenu = showMenu
+        self.menuContent = menuContent
+    }
+
+    public var body: some View {
+        HStack {
+            Text(title)
+                .font(Typography.heading)
+                .foregroundColor(SemanticColors.textPrimary)
+
+            Spacer()
+
+            if showMenu {
+                Menu {
+                    menuContent()
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(SemanticColors.textTertiary)
+                        .frame(width: 24, height: 24)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+            }
+        }
+    }
+}
+
+/// Convenience initializer for GlassCardHeader without menu
+extension GlassCardHeader where MenuContent == EmptyView {
+    public init(title: String) {
+        self.title = title
+        self.showMenu = false
+        self.menuContent = { EmptyView() }
+    }
+}
+
+// MARK: - Glass Status Badge
+
+/// Status badge with capsule background for glassmorphism UI
+/// Supports predefined status types or custom colors
+///
+/// Usage:
+/// ```swift
+/// GlassStatusBadge(status: .confirmed)
+/// GlassStatusBadge(text: "Custom", color: .blue, backgroundColor: .blue.opacity(0.2))
+/// ```
+public struct GlassStatusBadge: View {
+    let text: String
+    let color: Color
+    let backgroundColor: Color
+    let size: BadgeSize
+
+    public enum BadgeSize {
+        case small
+        case regular
+
+        var fontSize: CGFloat {
+            switch self {
+            case .small: return 9
+            case .regular: return 10
+            }
+        }
+
+        var horizontalPadding: CGFloat {
+            switch self {
+            case .small: return Spacing.xs
+            case .regular: return Spacing.sm
+            }
+        }
+
+        var verticalPadding: CGFloat {
+            switch self {
+            case .small: return 2
+            case .regular: return Spacing.xs
+            }
+        }
+    }
+
+    /// Predefined status types with consistent colors
+    public enum StatusType {
+        case confirmed
+        case pending
+        case declined
+        case booked
+        case overdue
+        case custom(text: String, color: Color, background: Color)
+
+        var text: String {
+            switch self {
+            case .confirmed: return "CONFIRMED"
+            case .pending: return "PENDING"
+            case .declined: return "DECLINED"
+            case .booked: return "BOOKED"
+            case .overdue: return "OVERDUE"
+            case .custom(let text, _, _): return text.uppercased()
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .confirmed, .booked: return AppGradients.sageDark
+            case .pending: return SoftLavender.shade500
+            case .declined: return Terracotta.shade500
+            case .overdue: return AppGradients.weddingPink
+            case .custom(_, let color, _): return color
+            }
+        }
+
+        var backgroundColor: Color {
+            switch self {
+            case .confirmed, .booked: return AppGradients.sageGreen.opacity(0.5)
+            case .pending: return SoftLavender.shade100
+            case .declined: return Terracotta.shade100
+            case .overdue: return AppGradients.weddingPink.opacity(0.15)
+            case .custom(_, _, let bg): return bg
+            }
+        }
+    }
+
+    /// Initialize with predefined status type
+    public init(status: StatusType, size: BadgeSize = .regular) {
+        self.text = status.text
+        self.color = status.color
+        self.backgroundColor = status.backgroundColor
+        self.size = size
+    }
+
+    /// Initialize with custom text and colors
+    public init(
+        text: String,
+        color: Color,
+        backgroundColor: Color,
+        size: BadgeSize = .regular
+    ) {
+        self.text = text.uppercased()
+        self.color = color
+        self.backgroundColor = backgroundColor
+        self.size = size
+    }
+
+    public var body: some View {
+        Text(text)
+            .font(.system(size: size.fontSize, weight: .bold))
+            .foregroundColor(color)
+            .padding(.horizontal, size.horizontalPadding)
+            .padding(.vertical, size.verticalPadding)
+            .background(
+                Capsule()
+                    .fill(backgroundColor)
+            )
+    }
+}
+
+// MARK: - Glass Progress Bar
+
+/// Progress bar with optional legend for glassmorphism UI
+/// Supports single or dual progress bars with configurable colors
+///
+/// Usage:
+/// ```swift
+/// // Simple progress bar
+/// GlassProgressBar(progress: 0.65, color: AppGradients.weddingPink)
+///
+/// // With legend
+/// GlassProgressBar(
+///     progress: 0.65,
+///     color: AppGradients.weddingPink,
+///     legend: [
+///         .init(label: "Confirmed", value: "45", color: AppGradients.weddingPink),
+///         .init(label: "Pending", value: "25", color: .gray)
+///     ]
+/// )
+/// ```
+public struct GlassProgressBar: View {
+    let progress: Double
+    let color: Color
+    let height: CGFloat
+    let legend: [LegendItem]?
+
+    public struct LegendItem: Identifiable {
+        public let id = UUID()
+        public let label: String
+        public let value: String
+        public let color: Color
+
+        public init(label: String, value: String, color: Color) {
+            self.label = label
+            self.value = value
+            self.color = color
+        }
+    }
+
+    public init(
+        progress: Double,
+        color: Color,
+        height: CGFloat = 8,
+        legend: [LegendItem]? = nil
+    ) {
+        self.progress = min(max(progress, 0), 1)
+        self.color = color
+        self.height = height
+        self.legend = legend
+    }
+
+    public var body: some View {
+        VStack(spacing: Spacing.sm) {
+            // Progress bar
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: height / 2)
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(height: height)
+
+                    RoundedRectangle(cornerRadius: height / 2)
+                        .fill(color)
+                        .frame(width: geometry.size.width * progress, height: height)
+                }
+            }
+            .frame(height: height)
+
+            // Legend (if provided)
+            if let legend = legend {
+                HStack {
+                    ForEach(Array(legend.enumerated()), id: \.element.id) { index, item in
+                        if index > 0 {
+                            Spacer()
+                        }
+                        HStack(spacing: Spacing.xs) {
+                            Circle()
+                                .fill(item.color)
+                                .frame(width: 6, height: 6)
+                            Text("\(item.label): \(item.value)")
+                                .font(Typography.caption2)
+                                .foregroundColor(SemanticColors.textSecondary)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Glass Metric Card
+
+/// Complete metric card with icon, title, value, progress, and subtitle
+/// Used for dashboard KPI cards (RSVP, Budget, Vendors, Countdown)
+///
+/// Usage:
+/// ```swift
+/// GlassMetricCard(
+///     icon: "person.2.fill",
+///     iconColor: AppGradients.weddingPink,
+///     title: "Total Responses",
+///     value: "45 RSVP",
+///     progress: 0.65,
+///     progressColor: AppGradients.weddingPink,
+///     subtitle: "Confirmed: 30 | Pending: 15"
+/// )
+/// ```
+public struct GlassMetricCard: View {
+    let icon: String
+    let iconColor: Color
+    let title: String
+    let value: String
+    let progress: Double?
+    let progressColor: Color?
+    let subtitle: String?
+    let legend: [GlassProgressBar.LegendItem]?
+
+    public init(
+        icon: String,
+        iconColor: Color,
+        title: String,
+        value: String,
+        progress: Double? = nil,
+        progressColor: Color? = nil,
+        subtitle: String? = nil,
+        legend: [GlassProgressBar.LegendItem]? = nil
+    ) {
+        self.icon = icon
+        self.iconColor = iconColor
+        self.title = title
+        self.value = value
+        self.progress = progress
+        self.progressColor = progressColor
+        self.subtitle = subtitle
+        self.legend = legend
+    }
+
+    public var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            // Header row: Title + Icon
+            HStack {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(title)
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
+                    Text(value)
+                        .font(Typography.title3)
+                        .foregroundColor(SemanticColors.textPrimary)
+                }
+
+                Spacer()
+
+                NativeIconBadge(
+                    systemName: icon,
+                    color: iconColor,
+                    size: 40
+                )
+            }
+
+            // Progress bar (if provided)
+            if let progress = progress, let color = progressColor {
+                GlassProgressBar(
+                    progress: progress,
+                    color: color,
+                    legend: legend
+                )
+            }
+
+            // Subtitle (if provided, and no legend)
+            if let subtitle = subtitle, legend == nil {
+                Text(subtitle)
+                    .font(Typography.caption2)
+                    .foregroundColor(SemanticColors.textSecondary)
+            }
+        }
+        .glassPanel()
+    }
+}
+
+// Note: MetricCardSkeleton is defined in Views/Shared/Loading/Skeletons/MetricCardSkeleton.swift

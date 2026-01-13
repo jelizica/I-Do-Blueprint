@@ -87,8 +87,8 @@ struct VendorManagementViewV5: View {
             let availableWidth = geometry.size.width - (horizontalPadding * 2)
 
             ZStack {
-                // Mesh gradient background
-                MeshGradientBackgroundView()
+                // Mesh gradient background - uses canonical MeshGradientBackground from Gradients.swift
+                MeshGradientBackground()
                     .ignoresSafeArea()
 
                 ScrollView {

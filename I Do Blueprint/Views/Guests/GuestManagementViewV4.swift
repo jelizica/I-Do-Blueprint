@@ -37,7 +37,8 @@ struct GuestManagementViewV4: View {
             let availableWidth = geometry.size.width - (horizontalPadding * 2)
 
             ZStack {
-                AppGradients.appBackground
+                // Mesh gradient background matching DashboardViewV7
+                MeshGradientBackground()
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {

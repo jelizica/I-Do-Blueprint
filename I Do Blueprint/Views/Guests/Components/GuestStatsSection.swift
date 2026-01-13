@@ -120,6 +120,8 @@ struct GuestStatsSection: View {
     }
 }
 
+/// Guest management stat card with glassmorphism styling
+/// Uses glassPanel() modifier and NativeIconBadge for consistent V7 design
 struct GuestManagementStatCard: View {
     let title: String
     let value: String
@@ -148,15 +150,14 @@ struct GuestManagementStatCard: View {
 
                 Spacer()
 
-                Image(systemName: icon)
-                    .font(.system(size: 24))
-                    .foregroundColor(SemanticColors.primaryAction.opacity(Opacity.light))
+                NativeIconBadge(
+                    systemName: icon,
+                    color: SemanticColors.primaryAction,
+                    size: 40
+                )
             }
         }
-        .padding(Spacing.lg)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(SemanticColors.backgroundSecondary)
-        .cornerRadius(CornerRadius.lg)
-        .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        .glassPanel()
     }
 }

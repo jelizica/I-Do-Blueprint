@@ -44,7 +44,7 @@ struct GuestDashboardViewV2: View {
     var body: some View {
         ZStack {
             // Mesh gradient background matching DashboardViewV7
-            MeshGradientBackgroundV7()
+            MeshGradientBackground()
                 .ignoresSafeArea()
 
             // Single ScrollView containing all content - standard scroll behavior
