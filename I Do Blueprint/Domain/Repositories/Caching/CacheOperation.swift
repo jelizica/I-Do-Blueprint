@@ -51,4 +51,15 @@ enum CacheOperation {
     case documentCreated(tenantId: UUID)
     case documentUpdated(tenantId: UUID)
     case documentDeleted(tenantId: UUID)
+
+    // Bill Calculator operations
+    case billCalculatorCreated(tenantId: UUID, calculatorId: UUID)
+    case billCalculatorUpdated(tenantId: UUID, calculatorId: UUID)
+    case billCalculatorDeleted(tenantId: UUID, calculatorId: UUID)
+    case billCalculatorItemCreated(tenantId: UUID, calculatorId: UUID)
+    case billCalculatorItemUpdated(tenantId: UUID, calculatorId: UUID)
+    case billCalculatorItemDeleted(tenantId: UUID, calculatorId: UUID)
+
+    // Expense Bill Calculator Link operations
+    case expenseBillLinksChanged(expenseId: UUID)
 }

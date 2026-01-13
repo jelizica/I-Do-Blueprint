@@ -19,7 +19,18 @@ struct BillCalculatorView: View {
     @State private var selectedEventId: String?
     @State private var lastSaved: Date = Date()
     @State private var showingDeleteAlert = false
+    @State private var calculatorToDelete: BillCalculator?
     @State private var useGuestCountFromDatabase = true
+    @State private var isSaving = false
+    @State private var hasUnsavedChanges = false
+    @State private var initializationError: String?
+    @State private var isLoadingCalculators = true
+
+    // Expense linking state
+    @State private var linkedExpenseId: UUID?
+    @State private var linkedExpense: Expense?
+    @State private var isLoadingLinkedExpense = false
+    @State private var isLinkingExpense = false
 
     // Modal state
     @State private var showingAddPerPersonModal = false
@@ -30,9 +41,19 @@ struct BillCalculatorView: View {
     private var settingsStore: SettingsStoreV2 { appStores.settings }
     private var guestStore: GuestStoreV2 { appStores.guest }
     private var budgetStore: BudgetStoreV2 { appStores.budget }
+    private var billCalculatorStore: BillCalculatorStoreV2 { appStores.billCalculator }
 
-    init(coupleId: UUID = UUID()) {
-        _calculator = State(initialValue: BillCalculator(coupleId: coupleId))
+    /// Initialize with a new empty calculator using the current session's tenant ID
+    init() {
+        // Get tenant ID from session, fall back to placeholder if not authenticated
+        // The placeholder will be replaced in .task when session is available
+        let tenantId = SessionManager.shared.getTenantId() ?? UUID()
+        _calculator = State(initialValue: BillCalculator(coupleId: tenantId))
+    }
+
+    /// Initialize with an existing calculator for editing
+    init(calculator: BillCalculator) {
+        _calculator = State(initialValue: calculator)
     }
 
     var body: some View {
@@ -43,12 +64,62 @@ struct BillCalculatorView: View {
         }
         .background(SemanticColors.backgroundSecondary)
         .task {
+            isLoadingCalculators = true
+
+            // Load calculators and tax info in parallel (tax info needed for dropdown)
+            async let calculatorsLoad: () = billCalculatorStore.loadCalculators()
+            async let taxInfoLoad: () = billCalculatorStore.loadTaxInfoOptions()
+            await calculatorsLoad
+            await taxInfoLoad
+
+            // If there are existing calculators, load the most recent one
+            if let mostRecent = billCalculatorStore.calculators.first {
+                calculator = mostRecent
+                hasUnsavedChanges = false
+                if let savedAt = mostRecent.updatedAt ?? mostRecent.createdAt {
+                    lastSaved = savedAt
+                }
+            } else {
+                // No existing calculators - ensure we have the correct tenant ID for new one
+                if let tenantId = SessionManager.shared.getTenantId() {
+                    // Update calculator with correct tenant ID if it was initialized with placeholder
+                    if calculator.coupleId != tenantId {
+                        calculator = BillCalculator(
+                            id: calculator.id,
+                            coupleId: tenantId,
+                            name: calculator.name,
+                            vendorId: calculator.vendorId,
+                            eventId: calculator.eventId,
+                            taxInfoId: calculator.taxInfoId,
+                            guestCount: calculator.guestCount,
+                            notes: calculator.notes,
+                            createdAt: calculator.createdAt,
+                            updatedAt: calculator.updatedAt,
+                            vendorName: calculator.vendorName,
+                            eventName: calculator.eventName,
+                            taxRate: calculator.taxRate,
+                            taxRegion: calculator.taxRegion,
+                            items: calculator.items
+                        )
+                    }
+                } else {
+                    initializationError = "Not authenticated. Please sign in to create a bill calculator."
+                }
+            }
+
+            isLoadingCalculators = false
+
             await vendorStore.loadVendors()
             await settingsStore.loadSettings()
             await guestStore.loadGuestData()
             await budgetStore.loadBudgetData()
+
+            // Load linked expense for current calculator
+            await loadLinkedExpense()
+
+            // Note: Tax info already loaded above in parallel with calculators
             // Set initial guest count from database if auto mode
-            if useGuestCountFromDatabase {
+            if useGuestCountFromDatabase && calculator.createdAt == nil {
                 calculator.guestCount = guestStore.attendingCount
             }
         }
@@ -66,12 +137,24 @@ struct BillCalculatorView: View {
             AddPerPersonItemModal(
                 guestCount: calculator.guestCount,
                 onAdd: { item in
-                    calculator.perPersonItems.append(item)
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .perPerson
+                    )
+                    calculator.addItem(calcItem)
                     lastSaved = Date()
+                    hasUnsavedChanges = true
                 },
                 onAddAnother: { item in
-                    calculator.perPersonItems.append(item)
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .perPerson
+                    )
+                    calculator.addItem(calcItem)
                     lastSaved = Date()
+                    hasUnsavedChanges = true
                 }
             )
         }
@@ -79,24 +162,48 @@ struct BillCalculatorView: View {
             AddServiceFeeModal(
                 subtotal: calculator.serviceFeeSubtotal,
                 onAdd: { item in
-                    calculator.serviceFeeItems.append(item)
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .serviceFee
+                    )
+                    calculator.addItem(calcItem)
                     lastSaved = Date()
+                    hasUnsavedChanges = true
                 },
                 onAddAnother: { item in
-                    calculator.serviceFeeItems.append(item)
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .serviceFee
+                    )
+                    calculator.addItem(calcItem)
                     lastSaved = Date()
+                    hasUnsavedChanges = true
                 }
             )
         }
         .sheet(isPresented: $showingAddFlatFeeModal) {
             AddFlatFeeItemModal(
                 onAdd: { item in
-                    calculator.flatFeeItems.append(item)
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .flatFee
+                    )
+                    calculator.addItem(calcItem)
                     lastSaved = Date()
+                    hasUnsavedChanges = true
                 },
                 onAddAnother: { item in
-                    calculator.flatFeeItems.append(item)
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .flatFee
+                    )
+                    calculator.addItem(calcItem)
                     lastSaved = Date()
+                    hasUnsavedChanges = true
                 }
             )
         }
@@ -121,6 +228,10 @@ struct BillCalculatorView: View {
 
                 Spacer()
 
+                calculatorSelector
+
+                Spacer()
+
                 HStack(spacing: Spacing.md) {
                     lastSavedIndicator
                     shareButton
@@ -138,6 +249,174 @@ struct BillCalculatorView: View {
         }
         .background(SemanticColors.backgroundPrimary)
         .macOSShadow(.subtle)
+    }
+
+    private var calculatorSelector: some View {
+        HStack(spacing: Spacing.md) {
+            if isLoadingCalculators {
+                ProgressView()
+                    .controlSize(.small)
+                Text("Loading calculators...")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textSecondary)
+            } else {
+                Menu {
+                    // Existing calculators with submenus for actions
+                    if !billCalculatorStore.calculators.isEmpty {
+                        ForEach(billCalculatorStore.calculators) { calc in
+                            Menu {
+                                Button {
+                                    selectCalculator(calc)
+                                } label: {
+                                    Label("Select", systemImage: "checkmark.circle")
+                                }
+
+                                Divider()
+
+                                Button(role: .destructive) {
+                                    calculatorToDelete = calc
+                                    showingDeleteAlert = true
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            } label: {
+                                HStack {
+                                    Text(calculatorDisplayName(calc))
+                                    if calc.id == calculator.id {
+                                        Image(systemName: "checkmark")
+                                    }
+                                }
+                            }
+                        }
+
+                        Divider()
+                    }
+
+                    // New bill option
+                    Button {
+                        createNewCalculator()
+                    } label: {
+                        HStack {
+                            Image(systemName: "plus")
+                            Text("New Bill")
+                        }
+                    }
+                } label: {
+                    HStack(spacing: Spacing.sm) {
+                        Image(systemName: "doc.text")
+                            .foregroundColor(SemanticColors.primaryAction)
+
+                        Text(calculatorDisplayName(calculator))
+                            .font(Typography.bodyRegular.weight(.medium))
+                            .foregroundColor(SemanticColors.textPrimary)
+                            .lineLimit(1)
+
+                        if calculator.createdAt == nil {
+                            Text("(New)")
+                                .font(Typography.caption)
+                                .foregroundColor(SemanticColors.textTertiary)
+                        }
+
+                        Image(systemName: "chevron.down")
+                            .font(Typography.caption)
+                            .foregroundColor(SemanticColors.textSecondary)
+                    }
+                    .padding(.horizontal, Spacing.md)
+                    .padding(.vertical, Spacing.sm)
+                    .background(SemanticColors.controlBackground)
+                    .cornerRadius(CornerRadius.md)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.md)
+                            .stroke(SemanticColors.borderPrimary, lineWidth: 1)
+                    )
+                }
+                .menuStyle(.borderlessButton)
+            }
+        }
+    }
+
+    private func calculatorDisplayName(_ calc: BillCalculator) -> String {
+        if !calc.name.isEmpty {
+            return calc.name
+        } else if let eventName = calc.eventName {
+            return eventName
+        } else if let vendorName = calc.vendorName {
+            return vendorName
+        } else {
+            return "Untitled Bill"
+        }
+    }
+
+    private func selectCalculator(_ calc: BillCalculator) {
+        // Check for unsaved changes before switching
+        if hasUnsavedChanges {
+            // For now, just switch - in the future could show confirmation dialog
+            // TODO: Add confirmation dialog for unsaved changes
+        }
+        calculator = calc
+        hasUnsavedChanges = false
+        if let savedAt = calc.updatedAt ?? calc.createdAt {
+            lastSaved = savedAt
+        }
+
+        // Load linked expense for the selected calculator
+        Task {
+            await loadLinkedExpense()
+        }
+    }
+
+    private func createNewCalculator() {
+        // Check for unsaved changes before creating new
+        if hasUnsavedChanges {
+            // For now, just create new - in the future could show confirmation dialog
+            // TODO: Add confirmation dialog for unsaved changes
+        }
+
+        let tenantId = SessionManager.shared.getTenantId() ?? UUID()
+        calculator = BillCalculator(
+            coupleId: tenantId,
+            guestCount: guestStore.attendingCount
+        )
+
+        // Clear linked expense state for new calculator
+        linkedExpenseId = nil
+        linkedExpense = nil
+        hasUnsavedChanges = false
+        lastSaved = Date()
+    }
+
+    private func deleteCalculator(_ calcToDelete: BillCalculator) async {
+        // Only delete if the calculator has been saved to the database
+        guard calcToDelete.createdAt != nil else {
+            // Not saved yet, just create a new empty calculator if deleting current
+            if calcToDelete.id == calculator.id {
+                createNewCalculator()
+            }
+            return
+        }
+
+        let calculatorId = calcToDelete.id
+        let isDeletingCurrent = calcToDelete.id == calculator.id
+
+        // Delete from database
+        await billCalculatorStore.deleteCalculator(id: calculatorId)
+
+        // Refresh calculators list
+        await billCalculatorStore.loadCalculators()
+
+        // If we deleted the current calculator, switch to another or create new
+        if isDeletingCurrent {
+            if let nextCalculator = billCalculatorStore.calculators.first {
+                calculator = nextCalculator
+                hasUnsavedChanges = false
+                if let savedAt = nextCalculator.updatedAt ?? nextCalculator.createdAt {
+                    lastSaved = savedAt
+                }
+            } else {
+                // No more calculators, create a new empty one
+                createNewCalculator()
+            }
+        }
     }
 
     private var calculatorIcon: some View {
@@ -198,10 +477,19 @@ struct BillCalculatorView: View {
     }
 
     private var saveToBudgetButton: some View {
-        Button(action: {}) {
+        Button(action: {
+            Task {
+                await saveCalculator()
+            }
+        }) {
             HStack(spacing: Spacing.xs) {
-                Image(systemName: "square.and.arrow.down")
-                Text("Save to Budget")
+                if isSaving {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: "square.and.arrow.down")
+                }
+                Text(isSaving ? "Saving..." : "Save to Budget")
             }
             .font(Typography.bodySmall.weight(.medium))
             .padding(.horizontal, Spacing.lg)
@@ -212,6 +500,7 @@ struct BillCalculatorView: View {
         }
         .buttonStyle(.plain)
         .macOSShadow(.subtle)
+        .disabled(isSaving || !hasUnsavedChanges)
     }
 
     private var headerInputsRow: some View {
@@ -219,6 +508,7 @@ struct BillCalculatorView: View {
             vendorPicker
             billNameField
             eventPicker
+            expensePicker
             guestCountStepper
         }
     }
@@ -235,6 +525,7 @@ struct BillCalculatorView: View {
                     Button(vendor.vendorName) {
                         calculator.vendorId = vendor.id
                         calculator.vendorName = vendor.vendorName
+                        hasUnsavedChanges = true
                     }
                 }
                 Divider()
@@ -291,8 +582,10 @@ struct BillCalculatorView: View {
             Menu {
                 ForEach(budgetStore.weddingEvents.sorted(by: { ($0.eventOrder ?? 0) < ($1.eventOrder ?? 0) }), id: \.id) { event in
                     Button(event.eventName) {
-                        calculator.eventId = event.id
+                        // Convert String ID to UUID if valid
+                        calculator.eventId = UUID(uuidString: event.id)
                         calculator.eventName = event.eventName
+                        hasUnsavedChanges = true
                     }
                 }
             } label: {
@@ -316,6 +609,105 @@ struct BillCalculatorView: View {
         }
     }
 
+    private var expensePicker: some View {
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.xs) {
+                Text("LINK TO EXPENSE")
+                    .font(Typography.caption.weight(.semibold))
+                    .foregroundColor(SemanticColors.textSecondary)
+                    .tracking(0.5)
+
+                if isLinkingExpense {
+                    ProgressView()
+                        .controlSize(.mini)
+                }
+            }
+
+            Menu {
+                // Option to clear/unlink
+                if linkedExpenseId != nil {
+                    Button {
+                        Task {
+                            await unlinkExpense()
+                        }
+                    } label: {
+                        HStack {
+                            Image(systemName: "xmark.circle")
+                            Text("Remove Link")
+                        }
+                    }
+
+                    Divider()
+                }
+
+                // Available expenses
+                ForEach(budgetStore.expenseStore.expenses, id: \.id) { expense in
+                    Button {
+                        Task {
+                            await linkToExpense(expense)
+                        }
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading) {
+                                Text(expense.expenseName)
+                                if let vendorName = expense.vendorName {
+                                    Text(vendorName)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            Spacer()
+                            Text(formatCurrency(expense.amount))
+                                .foregroundColor(.secondary)
+                            if linkedExpenseId == expense.id {
+                                Image(systemName: "checkmark")
+                            }
+                        }
+                    }
+                }
+
+                if budgetStore.expenseStore.expenses.isEmpty {
+                    Text("No expenses available")
+                        .foregroundColor(.secondary)
+                }
+            } label: {
+                HStack {
+                    if isLoadingLinkedExpense {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else if let expense = linkedExpense {
+                        HStack(spacing: Spacing.xs) {
+                            Image(systemName: "link")
+                                .foregroundColor(SemanticColors.statusSuccess)
+                            Text(expense.expenseName)
+                                .font(Typography.bodyRegular.weight(.medium))
+                                .foregroundColor(SemanticColors.textPrimary)
+                                .lineLimit(1)
+                        }
+                    } else {
+                        Text("Link to Expense")
+                            .font(Typography.bodyRegular.weight(.medium))
+                            .foregroundColor(SemanticColors.textTertiary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.down")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
+                }
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
+                .background(linkedExpense != nil ? SemanticColors.statusSuccess.opacity(Opacity.verySubtle) : SemanticColors.controlBackground)
+                .cornerRadius(CornerRadius.md)
+                .overlay(
+                    RoundedRectangle(cornerRadius: CornerRadius.md)
+                        .stroke(linkedExpense != nil ? SemanticColors.statusSuccess : SemanticColors.borderPrimary, lineWidth: 1)
+                )
+            }
+            .menuStyle(.borderlessButton)
+            .frame(width: 220)
+        }
+    }
+
     private var guestCountStepper: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
             HStack(spacing: Spacing.sm) {
@@ -331,6 +723,7 @@ struct BillCalculatorView: View {
                 Button(action: {
                     if !useGuestCountFromDatabase && calculator.guestCount > 0 {
                         calculator.guestCount -= 1
+                        hasUnsavedChanges = true
                     }
                 }) {
                     Image(systemName: "minus")
@@ -360,10 +753,16 @@ struct BillCalculatorView: View {
                             .stroke(SemanticColors.borderPrimary, lineWidth: 1)
                     )
                     .disabled(useGuestCountFromDatabase)
+                    .onChange(of: calculator.guestCount) { _, _ in
+                        if !useGuestCountFromDatabase {
+                            hasUnsavedChanges = true
+                        }
+                    }
 
                 Button(action: {
                     if !useGuestCountFromDatabase {
                         calculator.guestCount += 1
+                        hasUnsavedChanges = true
                     }
                 }) {
                     Image(systemName: "plus")
@@ -387,6 +786,7 @@ struct BillCalculatorView: View {
         Menu {
             Button {
                 useGuestCountFromDatabase = false
+                hasUnsavedChanges = true
             } label: {
                 HStack {
                     Text("Manual Entry")
@@ -399,6 +799,7 @@ struct BillCalculatorView: View {
             Button {
                 useGuestCountFromDatabase = true
                 calculator.guestCount = guestStore.attendingCount
+                hasUnsavedChanges = true
             } label: {
                 HStack {
                     Text("From Guest List (\(guestStore.attendingCount) attending)")
@@ -459,7 +860,10 @@ struct BillCalculatorView: View {
                     PerPersonItemRow(
                         item: bindingForPerPersonItem(at: index),
                         guestCount: calculator.guestCount,
-                        onDelete: { calculator.removePerPersonItem(at: index) }
+                        onDelete: {
+                            calculator.removePerPersonItem(at: index)
+                            hasUnsavedChanges = true
+                        }
                     )
                 }
 
@@ -488,7 +892,10 @@ struct BillCalculatorView: View {
                     ServiceFeeItemRow(
                         item: bindingForServiceFeeItem(at: index),
                         subtotal: calculator.serviceFeeSubtotal,
-                        onDelete: { calculator.removeServiceFeeItem(at: index) }
+                        onDelete: {
+                            calculator.removeServiceFeeItem(at: index)
+                            hasUnsavedChanges = true
+                        }
                     )
                 }
 
@@ -541,7 +948,10 @@ struct BillCalculatorView: View {
                 ForEach(Array(calculator.flatFeeItems.enumerated()), id: \.element.id) { index, item in
                     FlatFeeItemRow(
                         item: bindingForFlatFeeItem(at: index),
-                        onDelete: { calculator.removeFlatFeeItem(at: index) }
+                        onDelete: {
+                            calculator.removeFlatFeeItem(at: index)
+                            hasUnsavedChanges = true
+                        }
                     )
                 }
 
@@ -638,7 +1048,7 @@ struct BillCalculatorView: View {
 
                 VStack(spacing: Spacing.sm) {
                     HStack {
-                        Text("Tax Amount (\(String(format: "%.1f", calculator.taxRate))%)")
+                        Text("Tax Amount (\(String(format: "%.1f", calculator.effectiveTaxRate))%)")
                             .font(Typography.bodySmall)
                             .foregroundColor(SemanticColors.textSecondary)
                         Spacer()
@@ -752,18 +1162,57 @@ struct BillCalculatorView: View {
                 .foregroundColor(SemanticColors.textSecondary)
 
             Menu {
-                ForEach(settingsStore.settings.budget.taxRates, id: \.id) { taxRate in
-                    Button("\(taxRate.name) (\(String(format: "%.2f", taxRate.rate))%)") {
-                        calculator.taxRate = taxRate.rate
+                // Tax info options from database
+                ForEach(billCalculatorStore.taxInfoOptions) { taxInfo in
+                    Button(taxInfo.displayName) {
+                        calculator.taxInfoId = taxInfo.id
+                        // Update the joined tax rate field for display purposes
+                        // Use taxRateAsPercentage since BillCalculator expects percentage format
+                        calculator = BillCalculator(
+                            id: calculator.id,
+                            coupleId: calculator.coupleId,
+                            name: calculator.name,
+                            vendorId: calculator.vendorId,
+                            eventId: calculator.eventId,
+                            taxInfoId: taxInfo.id,
+                            guestCount: calculator.guestCount,
+                            notes: calculator.notes,
+                            createdAt: calculator.createdAt,
+                            updatedAt: calculator.updatedAt,
+                            vendorName: calculator.vendorName,
+                            eventName: calculator.eventName,
+                            taxRate: taxInfo.taxRateAsPercentage,
+                            taxRegion: taxInfo.region,
+                            items: calculator.items
+                        )
+                        hasUnsavedChanges = true
                     }
                 }
 
-                if !settingsStore.settings.budget.taxRates.isEmpty {
+                if !billCalculatorStore.taxInfoOptions.isEmpty {
                     Divider()
                 }
 
                 Button("No Tax (0%)") {
-                    calculator.taxRate = 0
+                    calculator.taxInfoId = nil
+                    calculator = BillCalculator(
+                        id: calculator.id,
+                        coupleId: calculator.coupleId,
+                        name: calculator.name,
+                        vendorId: calculator.vendorId,
+                        eventId: calculator.eventId,
+                        taxInfoId: nil,
+                        guestCount: calculator.guestCount,
+                        notes: calculator.notes,
+                        createdAt: calculator.createdAt,
+                        updatedAt: calculator.updatedAt,
+                        vendorName: calculator.vendorName,
+                        eventName: calculator.eventName,
+                        taxRate: 0,
+                        taxRegion: nil,
+                        items: calculator.items
+                    )
+                    hasUnsavedChanges = true
                 }
             } label: {
                 HStack {
@@ -786,13 +1235,14 @@ struct BillCalculatorView: View {
     }
 
     private var taxRateDisplayName: String {
-        if calculator.taxRate == 0 {
+        let effectiveRate = calculator.taxRate ?? 0
+        if effectiveRate == 0 {
             return "No Tax (0%)"
         }
-        if let matchingRate = settingsStore.settings.budget.taxRates.first(where: { $0.rate == calculator.taxRate }) {
-            return "\(matchingRate.name) (\(String(format: "%.2f", matchingRate.rate))%)"
+        if let region = calculator.taxRegion {
+            return "\(String(format: "%.2f", effectiveRate))% - \(region)"
         }
-        return "\(String(format: "%.2f", calculator.taxRate))% - Custom Rate"
+        return "\(String(format: "%.2f", effectiveRate))%"
     }
 
     private var estimatedTotalBox: some View {
@@ -873,7 +1323,7 @@ struct BillCalculatorView: View {
                 actionButton(icon: "doc.on.doc", label: "Duplicate Calculator") {}
                 actionButton(icon: "tablecells", label: "Export to Excel") {}
                 actionButton(icon: "printer", label: "Print Summary") {}
-                actionButton(icon: "trash", label: "Delete Calculator", isDestructive: true) {
+                actionButton(icon: "trash", label: "Delete Bill", isDestructive: true) {
                     showingDeleteAlert = true
                 }
             }
@@ -888,11 +1338,19 @@ struct BillCalculatorView: View {
         )
         .cornerRadius(CornerRadius.lg)
         .macOSShadow(.subtle)
-        .alert("Delete Calculator", isPresented: $showingDeleteAlert) {
-            Button("Cancel", role: .cancel) {}
-            Button("Delete", role: .destructive) {}
+        .alert("Delete Bill", isPresented: $showingDeleteAlert) {
+            Button("Cancel", role: .cancel) {
+                calculatorToDelete = nil
+            }
+            Button("Delete", role: .destructive) {
+                Task {
+                    await deleteCalculator(calculatorToDelete ?? calculator)
+                    calculatorToDelete = nil
+                }
+            }
         } message: {
-            Text("Are you sure you want to delete this calculator? This action cannot be undone.")
+            let name = calculatorDisplayName(calculatorToDelete ?? calculator)
+            Text("Are you sure you want to delete \"\(name)\"? This action cannot be undone.")
         }
     }
 
@@ -1045,30 +1503,196 @@ struct BillCalculatorView: View {
         return formatter.string(from: NSNumber(value: value)) ?? "$0.00"
     }
 
+    /// Creates a binding for a per-person item that adapts BillCalculatorItem to BillLineItem
     private func bindingForPerPersonItem(at index: Int) -> Binding<BillLineItem> {
         Binding(
-            get: { calculator.perPersonItems[index] },
-            set: { calculator.perPersonItems[index] = $0 }
+            get: {
+                let item = calculator.perPersonItems[index]
+                return BillLineItem(id: item.id, name: item.name, amount: item.amount, sortOrder: item.sortOrder)
+            },
+            set: { newValue in
+                // Find and update the item in the items array
+                if let itemIndex = calculator.items.firstIndex(where: { $0.id == newValue.id }) {
+                    calculator.items[itemIndex].name = newValue.name
+                    calculator.items[itemIndex].amount = newValue.amount
+                    calculator.items[itemIndex].sortOrder = newValue.sortOrder
+                    hasUnsavedChanges = true
+                }
+            }
         )
     }
 
+    /// Creates a binding for a service fee item that adapts BillCalculatorItem to BillLineItem
     private func bindingForServiceFeeItem(at index: Int) -> Binding<BillLineItem> {
         Binding(
-            get: { calculator.serviceFeeItems[index] },
-            set: { calculator.serviceFeeItems[index] = $0 }
+            get: {
+                let item = calculator.serviceFeeItems[index]
+                return BillLineItem(id: item.id, name: item.name, amount: item.amount, sortOrder: item.sortOrder)
+            },
+            set: { newValue in
+                // Find and update the item in the items array
+                if let itemIndex = calculator.items.firstIndex(where: { $0.id == newValue.id }) {
+                    calculator.items[itemIndex].name = newValue.name
+                    calculator.items[itemIndex].amount = newValue.amount
+                    calculator.items[itemIndex].sortOrder = newValue.sortOrder
+                    hasUnsavedChanges = true
+                }
+            }
         )
     }
 
+    /// Creates a binding for a flat fee item that adapts BillCalculatorItem to BillLineItem
     private func bindingForFlatFeeItem(at index: Int) -> Binding<BillLineItem> {
         Binding(
-            get: { calculator.flatFeeItems[index] },
-            set: { calculator.flatFeeItems[index] = $0 }
+            get: {
+                let item = calculator.flatFeeItems[index]
+                return BillLineItem(id: item.id, name: item.name, amount: item.amount, sortOrder: item.sortOrder)
+            },
+            set: { newValue in
+                // Find and update the item in the items array
+                if let itemIndex = calculator.items.firstIndex(where: { $0.id == newValue.id }) {
+                    calculator.items[itemIndex].name = newValue.name
+                    calculator.items[itemIndex].amount = newValue.amount
+                    calculator.items[itemIndex].sortOrder = newValue.sortOrder
+                    hasUnsavedChanges = true
+                }
+            }
         )
+    }
+
+    // MARK: - Expense Linking
+
+    /// Loads the linked expense for the current calculator
+    private func loadLinkedExpense() async {
+        guard calculator.createdAt != nil else {
+            // Calculator hasn't been saved yet, no links possible
+            linkedExpenseId = nil
+            linkedExpense = nil
+            return
+        }
+
+        isLoadingLinkedExpense = true
+        defer { isLoadingLinkedExpense = false }
+
+        do {
+            let links = try await budgetStore.repository.fetchExpenseLinksForBillCalculator(
+                billCalculatorId: calculator.id
+            )
+
+            if let firstLink = links.first {
+                linkedExpenseId = firstLink.expenseId
+                // Find the expense in our loaded expenses
+                linkedExpense = budgetStore.expenseStore.expenses.first { $0.id == firstLink.expenseId }
+            } else {
+                linkedExpenseId = nil
+                linkedExpense = nil
+            }
+        } catch {
+            AppLogger.ui.error("Failed to load linked expense for calculator \(calculator.id)", error: error)
+            linkedExpenseId = nil
+            linkedExpense = nil
+        }
+    }
+
+    /// Links this bill calculator to an expense
+    private func linkToExpense(_ expense: Expense) async {
+        // If already linked to this expense, do nothing
+        guard linkedExpenseId != expense.id else { return }
+
+        // First, ensure the calculator is saved
+        if calculator.createdAt == nil {
+            await saveCalculator()
+            // If save failed (calculator still not saved), abort
+            guard calculator.createdAt != nil else { return }
+        }
+
+        isLinkingExpense = true
+        defer { isLinkingExpense = false }
+
+        do {
+            // If there's an existing link, remove it first
+            if linkedExpenseId != nil {
+                try await budgetStore.repository.unlinkAllBillCalculatorsFromExpense(expenseId: linkedExpenseId!)
+            }
+
+            // Create the new link
+            _ = try await budgetStore.repository.linkBillCalculatorsToExpense(
+                expenseId: expense.id,
+                billCalculatorIds: [calculator.id],
+                linkType: .full,
+                notes: nil
+            )
+
+            linkedExpenseId = expense.id
+            linkedExpense = expense
+
+            AppLogger.ui.info("Linked bill calculator \(calculator.id) to expense \(expense.id)")
+        } catch {
+            AppLogger.ui.error("Failed to link bill calculator to expense", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "linkBillToExpense", feature: "billCalculator")
+            )
+        }
+    }
+
+    /// Unlinks this bill calculator from its current expense
+    private func unlinkExpense() async {
+        guard let expenseId = linkedExpenseId else { return }
+
+        isLinkingExpense = true
+        defer { isLinkingExpense = false }
+
+        do {
+            // Get the specific link to remove
+            let links = try await budgetStore.repository.fetchBillCalculatorLinksForExpense(expenseId: expenseId)
+            if let linkToRemove = links.first(where: { $0.billCalculatorId == calculator.id }) {
+                try await budgetStore.repository.unlinkBillCalculatorFromExpense(linkId: linkToRemove.id)
+            }
+
+            linkedExpenseId = nil
+            linkedExpense = nil
+
+            AppLogger.ui.info("Unlinked bill calculator \(calculator.id) from expense \(expenseId)")
+        } catch {
+            AppLogger.ui.error("Failed to unlink bill calculator from expense", error: error)
+            ErrorHandler.shared.handle(
+                error,
+                context: ErrorContext(operation: "unlinkBillFromExpense", feature: "billCalculator")
+            )
+        }
+    }
+
+    // MARK: - Store Operations
+
+    /// Saves the calculator to the database
+    private func saveCalculator() async {
+        guard hasUnsavedChanges else { return }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        // Check if this is a new calculator or an update
+        if calculator.createdAt == nil {
+            // Create new
+            if let created = await billCalculatorStore.createCalculator(calculator) {
+                calculator = created
+                hasUnsavedChanges = false
+                lastSaved = Date()
+            }
+        } else {
+            // Update existing
+            if let updated = await billCalculatorStore.updateCalculator(calculator) {
+                calculator = updated
+                hasUnsavedChanges = false
+                lastSaved = Date()
+            }
+        }
     }
 }
 
 // MARK: - Preview
 
 #Preview {
-    BillCalculatorView(coupleId: UUID())
+    BillCalculatorView()
 }

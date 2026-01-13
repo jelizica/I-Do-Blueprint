@@ -990,4 +990,165 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         let dataSource = try await getBudgetDevelopmentDataSource()
         try await dataSource.deleteFolder(folderId: folderId, deleteContents: deleteContents)
     }
+
+    // MARK: - Expense Bill Calculator Link Operations
+
+    func fetchBillCalculatorLinksForExpense(expenseId: UUID) async throws -> [ExpenseBillCalculatorLink] {
+        let tenantId = try await getTenantId()
+        let cacheKey = CacheConfiguration.KeyPrefix.expenseBillLinks(expenseId)
+
+        // Check cache first
+        if let cached: [ExpenseBillCalculatorLink] = await RepositoryCache.shared.get(cacheKey, maxAge: CacheConfiguration.TTL.expenseLinks) {
+            logger.info("Cache hit: expense bill links for \(expenseId)")
+            return cached
+        }
+
+        logger.info("Cache miss: fetching expense bill links from database")
+        let client = try getClient()
+
+        let links: [ExpenseBillCalculatorLink] = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("expense_bill_calculator_links")
+                .select()
+                .eq("expense_id", value: expenseId)
+                .eq("couple_id", value: tenantId)
+                .execute()
+                .value
+        }
+
+        await RepositoryCache.shared.set(cacheKey, value: links, ttl: CacheConfiguration.TTL.expenseLinks)
+        return links
+    }
+
+    func fetchExpenseLinksForBillCalculator(billCalculatorId: UUID) async throws -> [ExpenseBillCalculatorLink] {
+        let tenantId = try await getTenantId()
+        let cacheKey = CacheConfiguration.KeyPrefix.billCalculatorExpenseLinks(billCalculatorId)
+
+        // Check cache first
+        if let cached: [ExpenseBillCalculatorLink] = await RepositoryCache.shared.get(cacheKey, maxAge: CacheConfiguration.TTL.expenseLinks) {
+            logger.info("Cache hit: bill calculator expense links for \(billCalculatorId)")
+            return cached
+        }
+
+        logger.info("Cache miss: fetching bill calculator expense links from database")
+        let client = try getClient()
+
+        let links: [ExpenseBillCalculatorLink] = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("expense_bill_calculator_links")
+                .select()
+                .eq("bill_calculator_id", value: billCalculatorId)
+                .eq("couple_id", value: tenantId)
+                .execute()
+                .value
+        }
+
+        await RepositoryCache.shared.set(cacheKey, value: links, ttl: CacheConfiguration.TTL.expenseLinks)
+        return links
+    }
+
+    func linkBillCalculatorsToExpense(
+        expenseId: UUID,
+        billCalculatorIds: [UUID],
+        linkType: ExpenseBillCalculatorLink.LinkType,
+        notes: String?
+    ) async throws -> [ExpenseBillCalculatorLink] {
+        guard !billCalculatorIds.isEmpty else { return [] }
+
+        let tenantId = try await getTenantId()
+        try await ensureValidSession()
+        let client = try getClient()
+
+        // Create link records
+        let linksToCreate = billCalculatorIds.map { billCalculatorId in
+            [
+                "expense_id": expenseId.uuidString,
+                "bill_calculator_id": billCalculatorId.uuidString,
+                "couple_id": tenantId.uuidString,
+                "link_type": linkType.rawValue,
+                "notes": notes ?? ""
+            ]
+        }
+
+        let createdLinks: [ExpenseBillCalculatorLink] = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("expense_bill_calculator_links")
+                .insert(linksToCreate)
+                .select()
+                .execute()
+                .value
+        }
+
+        // Invalidate caches
+        await cacheStrategy.invalidate(for: .expenseBillLinksChanged(expenseId: expenseId))
+        for billCalculatorId in billCalculatorIds {
+            await RepositoryCache.shared.remove(CacheConfiguration.KeyPrefix.billCalculatorExpenseLinks(billCalculatorId))
+        }
+
+        logger.info("Linked \(createdLinks.count) bill calculators to expense \(expenseId)")
+        return createdLinks
+    }
+
+    func unlinkBillCalculatorFromExpense(linkId: UUID) async throws {
+        let tenantId = try await getTenantId()
+        try await ensureValidSession()
+        let client = try getClient()
+
+        // First fetch the link to get IDs for cache invalidation
+        let link: ExpenseBillCalculatorLink? = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("expense_bill_calculator_links")
+                .select()
+                .eq("id", value: linkId)
+                .eq("couple_id", value: tenantId)
+                .single()
+                .execute()
+                .value
+        }
+
+        guard let existingLink = link else {
+            throw BudgetError.notFound
+        }
+
+        try await RepositoryNetwork.withRetry {
+            try await client
+                .from("expense_bill_calculator_links")
+                .delete()
+                .eq("id", value: linkId)
+                .eq("couple_id", value: tenantId)
+                .execute()
+        }
+
+        // Invalidate caches
+        await cacheStrategy.invalidate(for: .expenseBillLinksChanged(expenseId: existingLink.expenseId))
+        await RepositoryCache.shared.remove(CacheConfiguration.KeyPrefix.billCalculatorExpenseLinks(existingLink.billCalculatorId))
+
+        logger.info("Unlinked bill calculator from expense, link ID: \(linkId)")
+    }
+
+    func unlinkAllBillCalculatorsFromExpense(expenseId: UUID) async throws {
+        let tenantId = try await getTenantId()
+        try await ensureValidSession()
+        let client = try getClient()
+
+        // First fetch existing links for cache invalidation
+        let existingLinks = try await fetchBillCalculatorLinksForExpense(expenseId: expenseId)
+
+        try await RepositoryNetwork.withRetry {
+            try await client
+                .from("expense_bill_calculator_links")
+                .delete()
+                .eq("expense_id", value: expenseId)
+                .eq("couple_id", value: tenantId)
+                .execute()
+        }
+
+        // Invalidate caches
+        await cacheStrategy.invalidate(for: .expenseBillLinksChanged(expenseId: expenseId))
+        for link in existingLinks {
+            await RepositoryCache.shared.remove(CacheConfiguration.KeyPrefix.billCalculatorExpenseLinks(link.billCalculatorId))
+        }
+
+        logger.info("Unlinked all bill calculators from expense \(expenseId)")
+    }
 }

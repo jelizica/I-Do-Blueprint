@@ -730,4 +730,43 @@ protocol BudgetRepositoryProtocol: Sendable {
     ///   - deleteContents: If true, delete all contents; if false, move to parent
     /// - Throws: Repository errors if deletion fails or folder not found
     func deleteFolder(folderId: String, deleteContents: Bool) async throws
+
+    // MARK: - Expense Bill Calculator Link Operations
+
+    /// Fetches all bill calculator links for a specific expense
+    /// - Parameter expenseId: The UUID of the expense
+    /// - Returns: Array of expense bill calculator links
+    /// - Throws: Repository errors if fetch fails
+    func fetchBillCalculatorLinksForExpense(expenseId: UUID) async throws -> [ExpenseBillCalculatorLink]
+
+    /// Fetches all expense links for a specific bill calculator
+    /// - Parameter billCalculatorId: The UUID of the bill calculator
+    /// - Returns: Array of expense bill calculator links
+    /// - Throws: Repository errors if fetch fails
+    func fetchExpenseLinksForBillCalculator(billCalculatorId: UUID) async throws -> [ExpenseBillCalculatorLink]
+
+    /// Creates links between an expense and multiple bill calculators
+    /// - Parameters:
+    ///   - expenseId: The UUID of the expense to link
+    ///   - billCalculatorIds: Array of bill calculator UUIDs to link
+    ///   - linkType: The type of link (defaults to .full)
+    ///   - notes: Optional notes for the links
+    /// - Returns: Array of created links
+    /// - Throws: Repository errors if creation fails
+    func linkBillCalculatorsToExpense(
+        expenseId: UUID,
+        billCalculatorIds: [UUID],
+        linkType: ExpenseBillCalculatorLink.LinkType,
+        notes: String?
+    ) async throws -> [ExpenseBillCalculatorLink]
+
+    /// Removes a link between an expense and a bill calculator
+    /// - Parameter linkId: The UUID of the link to remove
+    /// - Throws: Repository errors if deletion fails
+    func unlinkBillCalculatorFromExpense(linkId: UUID) async throws
+
+    /// Removes all bill calculator links for a specific expense
+    /// - Parameter expenseId: The UUID of the expense
+    /// - Throws: Repository errors if deletion fails
+    func unlinkAllBillCalculatorsFromExpense(expenseId: UUID) async throws
 }

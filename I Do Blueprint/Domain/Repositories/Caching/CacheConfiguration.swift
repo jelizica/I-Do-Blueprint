@@ -66,7 +66,13 @@ struct CacheConfiguration {
         
         case seatingChart = "seating_chart"
         case mealSelections = "meal_selections"
-        
+
+        case billCalculator = "bill_calculators"
+        case billCalculatorDetail = "bill_calculator_detail"
+        case taxInfo = "tax_info"
+        case expenseBillLinks = "expense_bill_links"
+        case billCalculatorExpenseLinks = "bill_calculator_expense_links"
+
         /// Generate a cache key with tenant ID
         func key(tenantId: UUID) -> String {
             "\(rawValue)_\(tenantId.uuidString)"
@@ -80,9 +86,27 @@ struct CacheConfiguration {
         // MARK: - Convenience Static Methods
 
         /// Category budget metrics cache key
-        static func categoryMetrics(_ tenantId: UUID) -> String {
+        nonisolated static func categoryMetrics(_ tenantId: UUID) -> String {
             KeyPrefix.categoryMetrics.key(tenantId: tenantId)
         }
+
+        /// Expense bill calculator links cache key
+        nonisolated static func expenseBillLinks(_ expenseId: UUID) -> String {
+            "\(KeyPrefix.expenseBillLinks.rawValue)_\(expenseId.uuidString)"
+        }
+
+        /// Bill calculator expense links cache key
+        nonisolated static func billCalculatorExpenseLinks(_ billCalculatorId: UUID) -> String {
+            "\(KeyPrefix.billCalculatorExpenseLinks.rawValue)_\(billCalculatorId.uuidString)"
+        }
+    }
+
+    // MARK: - TTL Configuration (domain-specific)
+
+    /// Domain-specific TTL values
+    enum TTL {
+        /// TTL for expense bill links (60 seconds)
+        static let expenseLinks: TimeInterval = 60
     }
     
     // MARK: - Cache Warming Strategy

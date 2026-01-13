@@ -18,6 +18,8 @@ actor BudgetCacheStrategy: CacheInvalidationStrategy {
             await invalidateCategoryCaches(operation: operation)
         case .expenseCreated(let tenantId), .expenseUpdated(let tenantId), .expenseDeleted(let tenantId):
             await invalidateExpenseCaches(tenantId: tenantId, operation: operation)
+        case .expenseBillLinksChanged(let expenseId):
+            await invalidateExpenseBillLinksCaches(expenseId: expenseId, operation: operation)
         default:
             break
         }
@@ -63,7 +65,18 @@ actor BudgetCacheStrategy: CacheInvalidationStrategy {
         await cache.remove("budget_summary")
         await cache.remove("budget_overview_items")
         keysInvalidated += 3
-        
+
+        await monitor.trackInvalidation(operation, keysInvalidated: keysInvalidated)
+    }
+
+    private func invalidateExpenseBillLinksCaches(expenseId: UUID, operation: CacheOperation) async {
+        var keysInvalidated = 0
+
+        // Invalidate the expense bill links cache
+        let cacheKey = CacheConfiguration.KeyPrefix.expenseBillLinks(expenseId)
+        await cache.remove(cacheKey)
+        keysInvalidated += 1
+
         await monitor.trackInvalidation(operation, keysInvalidated: keysInvalidated)
     }
 }

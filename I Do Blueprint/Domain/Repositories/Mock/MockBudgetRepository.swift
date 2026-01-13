@@ -877,4 +877,42 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         
         return BatchDeleteResult(succeeded: succeeded, failed: failed)
     }
+
+    // MARK: - Expense Bill Calculator Link Operations
+
+    func fetchBillCalculatorLinksForExpense(expenseId: UUID) async throws -> [ExpenseBillCalculatorLink] {
+        // Return mock links filtered by expense ID
+        return []
+    }
+
+    func fetchExpenseLinksForBillCalculator(billCalculatorId: UUID) async throws -> [ExpenseBillCalculatorLink] {
+        // Return mock links filtered by bill calculator ID
+        return []
+    }
+
+    func linkBillCalculatorsToExpense(
+        expenseId: UUID,
+        billCalculatorIds: [UUID],
+        linkType: ExpenseBillCalculatorLink.LinkType,
+        notes: String?
+    ) async throws -> [ExpenseBillCalculatorLink] {
+        // Create and return mock links
+        return billCalculatorIds.map { billCalculatorId in
+            ExpenseBillCalculatorLink(
+                expenseId: expenseId,
+                billCalculatorId: billCalculatorId,
+                coupleId: UUID(),
+                linkType: linkType,
+                notes: notes
+            )
+        }
+    }
+
+    func unlinkBillCalculatorFromExpense(linkId: UUID) async throws {
+        // No-op for mock
+    }
+
+    func unlinkAllBillCalculatorsFromExpense(expenseId: UUID) async throws {
+        // No-op for mock
+    }
 }
