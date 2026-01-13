@@ -142,10 +142,8 @@ struct VendorDetailHeaderV2: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(SemanticColors.textSecondary)
                 .frame(width: 32, height: 32)
-                .background(SemanticColors.backgroundSecondary)
-                .cornerRadius(CornerRadius.sm)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(GlassCloseButtonStyle())
         .accessibleActionButton(label: "Close modal", hint: "Closes vendor details")
     }
 
@@ -198,8 +196,6 @@ struct VendorActionButton: View {
     let color: Color
     let action: () -> Void
 
-    @State private var isHovering = false
-
     var body: some View {
         Button(action: action) {
             VStack(spacing: Spacing.xxs) {
@@ -208,23 +204,9 @@ struct VendorActionButton: View {
                 Text(label)
                     .font(Typography.caption2)
             }
-            .foregroundColor(isHovering ? .white : color)
             .frame(width: 56, height: 52)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .fill(isHovering ? color : color.opacity(Opacity.subtle))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: CornerRadius.md)
-                    .stroke(color.opacity(Opacity.semiLight), lineWidth: 1)
-            )
         }
-        .buttonStyle(.plain)
-        .onHover { hovering in
-            withAnimation(.easeInOut(duration: 0.2)) {
-                isHovering = hovering
-            }
-        }
+        .buttonStyle(GlassActionButtonStyle(color: color))
         .accessibleActionButton(label: label, hint: "Opens \(label.lowercased()) action")
     }
 }

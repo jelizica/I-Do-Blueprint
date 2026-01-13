@@ -1284,3 +1284,165 @@ extension View {
         modifier(ModalCardStyle(style: style, cornerRadius: cornerRadius, padding: padding))
     }
 }
+
+// MARK: - Glass Action Button Style
+
+/// A custom ButtonStyle for action buttons within glassmorphism modals
+/// Matches the ModalCardStyle design with:
+/// - White base layer with high opacity
+/// - Color-tinted gradient overlay
+/// - Inner highlight for 3D depth
+/// - Gradient border stroke
+/// - Dual shadows (colored glow + drop shadow)
+/// - Hover state with inverted colors
+///
+/// Usage:
+/// ```swift
+/// Button("Action") { }
+///     .buttonStyle(GlassActionButtonStyle(color: .green))
+/// ```
+public struct GlassActionButtonStyle: ButtonStyle {
+    let color: Color
+    let cornerRadius: CGFloat
+
+    @State private var isHovering = false
+
+    public init(color: Color, cornerRadius: CGFloat = CornerRadius.md) {
+        self.color = color
+        self.cornerRadius = cornerRadius
+    }
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(buttonBackground(isPressed: configuration.isPressed))
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovering = hovering
+                }
+            }
+    }
+
+    @ViewBuilder
+    private func buttonBackground(isPressed: Bool) -> some View {
+        ZStack {
+            // Base fill - white with high opacity
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(isHovering ? color : Color.white.opacity(0.85))
+
+            // Color gradient overlay (only when not hovered)
+            if !isHovering {
+                RoundedRectangle(cornerRadius: cornerRadius)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                color.opacity(0.15),
+                                color.opacity(0.05)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            }
+
+            // Inner highlight for 3D depth
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(isHovering ? 0.3 : 0.5),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            color.opacity(isHovering ? 0.6 : 0.4),
+                            color.opacity(isHovering ? 0.3 : 0.15)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1.5
+                )
+        )
+        .shadow(color: color.opacity(isHovering ? 0.25 : 0.15), radius: isHovering ? 10 : 6, x: 0, y: isHovering ? 5 : 3)
+        .shadow(color: Color.black.opacity(0.06), radius: 2, x: 0, y: 1)
+    }
+}
+
+/// A custom ButtonStyle for close/dismiss buttons within glassmorphism modals
+/// Neutral gray tones that work well against translucent backgrounds
+///
+/// Usage:
+/// ```swift
+/// Button { dismiss() } label: {
+///     Image(systemName: "xmark")
+/// }
+/// .buttonStyle(GlassCloseButtonStyle())
+/// ```
+public struct GlassCloseButtonStyle: ButtonStyle {
+    let cornerRadius: CGFloat
+
+    @State private var isHovering = false
+
+    public init(cornerRadius: CGFloat = CornerRadius.sm) {
+        self.cornerRadius = cornerRadius
+    }
+
+    public func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .background(buttonBackground(isPressed: configuration.isPressed))
+            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
+            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
+            .onHover { hovering in
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    isHovering = hovering
+                }
+            }
+    }
+
+    @ViewBuilder
+    private func buttonBackground(isPressed: Bool) -> some View {
+        ZStack {
+            // Base fill
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(isHovering ? Color.gray.opacity(0.3) : Color.white.opacity(0.75))
+
+            // Inner highlight
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(isHovering ? 0.2 : 0.4),
+                            Color.white.opacity(0)
+                        ],
+                        startPoint: .top,
+                        endPoint: .center
+                    )
+                )
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(isHovering ? 0.5 : 0.4),
+                            Color.gray.opacity(isHovering ? 0.3 : 0.2)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+        .shadow(color: Color.black.opacity(0.08), radius: isHovering ? 4 : 2, x: 0, y: isHovering ? 2 : 1)
+    }
+}
