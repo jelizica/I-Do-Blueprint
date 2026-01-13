@@ -666,111 +666,135 @@ struct ViewGuestModal: View {
         }
     }
 
-    // Card background styles - theme-aware using design system palettes
+    // Card background styles - glassmorphism with theme-aware color tints
     private enum CardBackgroundStyle {
         case primary    // Uses theme's primary color (pink for blush, sage for sage-serenity, etc.)
         case secondary  // Uses theme's secondary color
         case success    // Uses success/green tones
         case warning    // Uses warning/gold tones
         case accent     // Uses a complementary accent
-        case neutral    // Neutral white/gray
+        case neutral    // Neutral frosted glass
     }
 
     @ViewBuilder
     private func cardBackground(style: CardBackgroundStyle) -> some View {
         switch style {
         case .primary:
-            // Theme-aware primary color background
+            // Glassmorphism with theme primary color tint
             RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            SemanticColors.primaryAction.opacity(0.12),
-                            SemanticColors.primaryAction.opacity(0.06)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(SemanticColors.primaryAction.opacity(0.2), lineWidth: 1)
-                )
-        case .secondary:
-            // Theme-aware secondary color background
-            RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            SemanticColors.secondaryAction.opacity(0.12),
-                            SemanticColors.secondaryAction.opacity(0.06)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(SemanticColors.secondaryAction.opacity(0.2), lineWidth: 1)
-                )
-        case .success:
-            // Theme-aware success/green background
-            RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            SemanticColors.statusSuccess.opacity(0.12),
-                            SemanticColors.statusSuccess.opacity(0.06)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(SemanticColors.statusSuccess.opacity(0.2), lineWidth: 1)
-                )
-        case .warning:
-            // Theme-aware warning/gold background
-            RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            SemanticColors.statusWarning.opacity(0.12),
-                            SemanticColors.statusWarning.opacity(0.06)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .stroke(SemanticColors.statusWarning.opacity(0.2), lineWidth: 1)
-                )
-        case .accent:
-            // Complementary accent using primary with different opacity
-            RoundedRectangle(cornerRadius: 16)
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            SemanticColors.primaryAction.opacity(0.08),
-                            SemanticColors.secondaryAction.opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SemanticColors.primaryAction.opacity(0.08),
+                                    SemanticColors.primaryAction.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
                         .stroke(SemanticColors.primaryAction.opacity(0.15), lineWidth: 1)
                 )
-        case .neutral:
-            // Neutral background using theme's background colors
+        case .secondary:
+            // Glassmorphism with theme secondary color tint
             RoundedRectangle(cornerRadius: 16)
-                .fill(SemanticColors.backgroundSecondary.opacity(0.6))
+                .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(SemanticColors.textSecondary.opacity(0.1), lineWidth: 1)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SemanticColors.secondaryAction.opacity(0.08),
+                                    SemanticColors.secondaryAction.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(SemanticColors.secondaryAction.opacity(0.15), lineWidth: 1)
+                )
+        case .success:
+            // Glassmorphism with success/green tint
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SemanticColors.statusSuccess.opacity(0.08),
+                                    SemanticColors.statusSuccess.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(SemanticColors.statusSuccess.opacity(0.15), lineWidth: 1)
+                )
+        case .warning:
+            // Glassmorphism with warning/gold tint
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SemanticColors.statusWarning.opacity(0.08),
+                                    SemanticColors.statusWarning.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(SemanticColors.statusWarning.opacity(0.15), lineWidth: 1)
+                )
+        case .accent:
+            // Glassmorphism with complementary accent tint
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    SemanticColors.primaryAction.opacity(0.05),
+                                    SemanticColors.secondaryAction.opacity(0.03)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.15), lineWidth: 1)
+                )
+        case .neutral:
+            // Pure glassmorphism with subtle white tint
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color.white.opacity(0.03))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .stroke(Color.white.opacity(0.1), lineWidth: 1)
                 )
         }
     }
