@@ -23,6 +23,7 @@ struct VendorDetailModalV2: View {
     // Financial data
     @State private var expenses: [Expense] = []
     @State private var payments: [PaymentSchedule] = []
+    @State private var billCalculators: [BillCalculator] = []
     @State private var isLoadingFinancials = false
     @State private var financialLoadError: Error?
 
@@ -33,6 +34,7 @@ struct VendorDetailModalV2: View {
 
     @Dependency(\.budgetRepository) var budgetRepository
     @Dependency(\.documentRepository) var documentRepository
+    @Dependency(\.billCalculatorRepository) var billCalculatorRepository
 
     private let logger = AppLogger.ui
 
@@ -101,6 +103,7 @@ struct VendorDetailModalV2: View {
                             vendor: vendor,
                             expenses: expenses,
                             payments: payments,
+                            billCalculators: billCalculators,
                             isLoading: isLoadingFinancials
                         )
                     case 2:
@@ -203,11 +206,13 @@ struct VendorDetailModalV2: View {
         do {
             async let expensesTask = budgetRepository.fetchExpensesByVendor(vendorId: vendor.id)
             async let paymentsTask = budgetRepository.fetchPaymentSchedulesByVendor(vendorId: vendor.id)
+            async let billsTask = billCalculatorRepository.fetchCalculatorsByVendor(vendorId: vendor.id)
 
             expenses = try await expensesTask
             payments = try await paymentsTask
+            billCalculators = try await billsTask
 
-            logger.info("Loaded financial data for vendor \(vendor.vendorName): \(expenses.count) expenses, \(payments.count) payments")
+            logger.info("Loaded financial data for vendor \(vendor.vendorName): \(expenses.count) expenses, \(payments.count) payments, \(billCalculators.count) bills")
         } catch {
             financialLoadError = error
             logger.error("Error loading financial data for vendor \(vendor.id)", error: error)

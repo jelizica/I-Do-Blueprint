@@ -11,6 +11,7 @@ struct VendorDetailFinancialTabV2: View {
     let vendor: Vendor
     let expenses: [Expense]
     let payments: [PaymentSchedule]
+    let billCalculators: [BillCalculator]
     let isLoading: Bool
 
     var body: some View {
@@ -59,6 +60,11 @@ struct VendorDetailFinancialTabV2: View {
             // Expenses Section
             if !expenses.isEmpty {
                 expensesSection
+            }
+
+            // Bill Calculators Section
+            if !billCalculators.isEmpty {
+                billCalculatorsSection
             }
 
             // Payment Schedule Details
@@ -245,14 +251,46 @@ struct VendorDetailFinancialTabV2: View {
         }
     }
 
+    // MARK: - Bill Calculators Section
+
+    private var billCalculatorsSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                SectionHeaderV2(
+                    title: "Bills (\(billCalculators.count))",
+                    icon: "doc.text.fill",
+                    color: SemanticColors.secondaryAction
+                )
+
+                Spacer()
+
+                Text("Total: \(totalBillsAmount.formatted(.currency(code: "USD")))")
+                    .font(Typography.caption)
+                    .fontWeight(.semibold)
+                    .foregroundColor(SemanticColors.textSecondary)
+            }
+
+            VStack(spacing: Spacing.sm) {
+                ForEach(billCalculators) { bill in
+                    BillCalculatorRowV2(bill: bill)
+                }
+            }
+            .modalCard(style: .secondary, cornerRadius: CornerRadius.md, padding: Spacing.md)
+        }
+    }
+
     // MARK: - Computed Properties
 
     private var hasAnyFinancialInfo: Bool {
-        vendor.quotedAmount != nil || !expenses.isEmpty || !payments.isEmpty
+        vendor.quotedAmount != nil || !expenses.isEmpty || !payments.isEmpty || !billCalculators.isEmpty
     }
 
     private var totalExpenses: Double {
         expenses.reduce(0) { $0 + $1.amount }
+    }
+
+    private var totalBillsAmount: Double {
+        billCalculators.reduce(0) { $0 + $1.grandTotal }
     }
 
     private var totalPaid: Double {
@@ -571,6 +609,71 @@ struct PaymentRowV2: View {
                         .fontWeight(.medium)
                 }
                 .foregroundColor(isPaid ? SemanticColors.success : SemanticColors.warning)
+            }
+        }
+        .padding(Spacing.sm)
+        .background(SemanticColors.backgroundPrimary.opacity(Opacity.medium))
+        .cornerRadius(CornerRadius.sm)
+    }
+}
+
+struct BillCalculatorRowV2: View {
+    let bill: BillCalculator
+
+    var body: some View {
+        HStack(spacing: Spacing.md) {
+            // Icon
+            ZStack {
+                Circle()
+                    .fill(SemanticColors.secondaryAction.opacity(Opacity.subtle))
+                    .frame(width: 40, height: 40)
+
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 16))
+                    .foregroundColor(SemanticColors.secondaryAction)
+            }
+
+            // Bill details
+            VStack(alignment: .leading, spacing: Spacing.xxs) {
+                Text(bill.name.isEmpty ? "Untitled Bill" : bill.name)
+                    .font(Typography.bodyRegular)
+                    .fontWeight(.medium)
+                    .foregroundColor(SemanticColors.textPrimary)
+
+                HStack(spacing: Spacing.sm) {
+                    // Guest count
+                    HStack(spacing: Spacing.xxs) {
+                        Image(systemName: "person.2.fill")
+                            .font(.system(size: 10))
+                        Text("\(bill.guestCount) guests")
+                    }
+                    .font(Typography.caption)
+                    .foregroundColor(SemanticColors.textSecondary)
+
+                    // Event name if available
+                    if let eventName = bill.eventName {
+                        Text("•")
+                            .foregroundColor(SemanticColors.textTertiary)
+                        Text(eventName)
+                            .font(Typography.caption)
+                            .foregroundColor(SemanticColors.textSecondary)
+                            .lineLimit(1)
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Totals
+            VStack(alignment: .trailing, spacing: Spacing.xxs) {
+                Text(bill.grandTotal.formatted(.currency(code: "USD")))
+                    .font(Typography.bodyRegular)
+                    .fontWeight(.bold)
+                    .foregroundColor(SemanticColors.textPrimary)
+
+                Text("\(bill.perGuestCost.formatted(.currency(code: "USD")))/guest")
+                    .font(Typography.caption2)
+                    .foregroundColor(SemanticColors.textSecondary)
             }
         }
         .padding(Spacing.sm)

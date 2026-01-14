@@ -182,6 +182,71 @@ actor LiveBillCalculatorRepository: BillCalculatorRepositoryProtocol {
         return calculator
     }
 
+    func fetchCalculatorsByVendor(vendorId: Int64) async throws -> [BillCalculator] {
+        let tenantId = try await getTenantId()
+        let cacheKey = "bill_calculators_vendor_\(tenantId.uuidString)_\(vendorId)"
+
+        // Check cache first
+        if let cached: [BillCalculator] = await RepositoryCache.shared.get(cacheKey, maxAge: 60) {
+            logger.info("Cache hit: bill calculators for vendor \(vendorId) (\(cached.count) items)")
+            return cached
+        }
+
+        let client = try getClient()
+        let startTime = Date()
+        logger.info("Cache miss: fetching bill calculators for vendor \(vendorId) from database")
+
+        // Fetch calculators with joined data filtered by vendor_id
+        let calculatorRows: [BillCalculatorRow] = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("bill_calculators")
+                .select("""
+                    *,
+                    vendor_information(vendor_name),
+                    wedding_events(event_name),
+                    tax_info(tax_rate, region)
+                """)
+                .eq("couple_id", value: tenantId)
+                .eq("vendor_id", value: String(vendorId))
+                .order("created_at", ascending: false)
+                .execute()
+                .value
+        }
+
+        // Fetch all items for these calculators
+        let calculatorIds = calculatorRows.map { $0.id }
+        var itemsByCalculator: [UUID: [BillCalculatorItem]] = [:]
+
+        if !calculatorIds.isEmpty {
+            let items: [BillCalculatorItem] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("bill_calculator_items")
+                    .select()
+                    .in("calculator_id", values: calculatorIds)
+                    .eq("couple_id", value: tenantId)
+                    .execute()
+                    .value
+            }
+
+            for item in items {
+                itemsByCalculator[item.calculatorId, default: []].append(item)
+            }
+        }
+
+        // Combine calculators with their items
+        let calculators = calculatorRows.map { row in
+            row.toBillCalculator(items: itemsByCalculator[row.id] ?? [])
+        }
+
+        let duration = Date().timeIntervalSince(startTime)
+        await RepositoryCache.shared.set(cacheKey, value: calculators, ttl: 60)
+        await PerformanceMonitor.shared.recordOperation("fetchBillCalculatorsByVendor", duration: duration)
+        logger.info("Fetched \(calculators.count) bill calculators for vendor \(vendorId) in \(String(format: "%.2f", duration))s")
+        AnalyticsService.trackNetwork(operation: "fetchBillCalculatorsByVendor", outcome: .success, duration: duration)
+
+        return calculators
+    }
+
     func createCalculator(_ calculator: BillCalculator) async throws -> BillCalculator {
         do {
             let client = try getClient()
