@@ -11,6 +11,41 @@
 
 import Foundation
 
+// MARK: - Guest Count Mode
+
+/// Mode for determining how item quantities are calculated
+enum GuestCountMode: String, Codable, CaseIterable, Identifiable, Sendable {
+    case auto = "auto"
+    case manual = "manual"
+    case variable = "variable"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .auto: return "Auto"
+        case .manual: return "Manual"
+        case .variable: return "Variable"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .auto: return "Uses attending guest count from guest list"
+        case .manual: return "Fixed guest count entered manually"
+        case .variable: return "Each item has its own quantity"
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .auto: return "person.3.fill"
+        case .manual: return "pencil"
+        case .variable: return "number.square"
+        }
+    }
+}
+
 // MARK: - Bill Calculator Item Types
 
 /// Type of line item in a bill calculator
@@ -29,6 +64,15 @@ enum BillItemType: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Display name when in variable item count mode
+    var variableModeDisplayName: String {
+        switch self {
+        case .perPerson: return "Per-Item"
+        case .serviceFee: return "Service Fee"
+        case .flatFee: return "Flat Fee"
+        }
+    }
+
     var description: String {
         switch self {
         case .perPerson: return "Costs multiplied by guest count"
@@ -37,9 +81,27 @@ enum BillItemType: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
+    /// Description when in variable item count mode
+    var variableModeDescription: String {
+        switch self {
+        case .perPerson: return "Costs multiplied by item quantity"
+        case .serviceFee: return "Percentage-based fees on subtotal"
+        case .flatFee: return "One-time fixed costs"
+        }
+    }
+
     var icon: String {
         switch self {
         case .perPerson: return "person.fill"
+        case .serviceFee: return "percent"
+        case .flatFee: return "tag.fill"
+        }
+    }
+
+    /// Icon when in variable item count mode
+    var variableModeIcon: String {
+        switch self {
+        case .perPerson: return "number.square"
         case .serviceFee: return "percent"
         case .flatFee: return "tag.fill"
         }
@@ -56,6 +118,7 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
     var type: BillItemType
     var name: String
     var amount: Double
+    var quantity: Int
     var sortOrder: Int
     let createdAt: Date?
     var updatedAt: Date?
@@ -67,6 +130,7 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         case type
         case name
         case amount
+        case quantity = "item_quantity"
         case sortOrder = "sort_order"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -79,6 +143,7 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         type: BillItemType,
         name: String = "",
         amount: Double = 0,
+        quantity: Int = 1,
         sortOrder: Int = 0,
         createdAt: Date? = nil,
         updatedAt: Date? = nil
@@ -89,15 +154,39 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         self.type = type
         self.name = name
         self.amount = amount
+        self.quantity = quantity
         self.sortOrder = sortOrder
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
 
-    /// Calculates the total for a per-person item
+    // MARK: - Custom Decoding
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        calculatorId = try container.decode(UUID.self, forKey: .calculatorId)
+        coupleId = try container.decode(UUID.self, forKey: .coupleId)
+        type = try container.decode(BillItemType.self, forKey: .type)
+        name = try container.decode(String.self, forKey: .name)
+        amount = try container.decode(Double.self, forKey: .amount)
+        // Default to 1 if quantity is missing (backward compatibility)
+        quantity = try container.decodeIfPresent(Int.self, forKey: .quantity) ?? 1
+        sortOrder = try container.decode(Int.self, forKey: .sortOrder)
+        createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt)
+        updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt)
+    }
+
+    /// Calculates the total for a per-person item (uses guest count)
     func perPersonTotal(guestCount: Int) -> Double {
         guard type == .perPerson else { return 0 }
         return amount * Double(guestCount)
+    }
+
+    /// Calculates the total for a variable quantity item (uses item's own quantity)
+    var variableItemTotal: Double {
+        guard type == .perPerson else { return 0 }
+        return amount * Double(quantity)
     }
 
     /// Calculates the total for a service fee item (percentage)
@@ -122,6 +211,7 @@ struct BillCalculatorItemInsertData: Codable {
     let type: String
     let name: String
     let amount: Double
+    let quantity: Int
     let sortOrder: Int
 
     enum CodingKeys: String, CodingKey {
@@ -130,6 +220,7 @@ struct BillCalculatorItemInsertData: Codable {
         case type
         case name
         case amount
+        case quantity = "item_quantity"
         case sortOrder = "sort_order"
     }
 
@@ -139,6 +230,7 @@ struct BillCalculatorItemInsertData: Codable {
         self.type = item.type.rawValue
         self.name = item.name
         self.amount = item.amount
+        self.quantity = item.quantity
         self.sortOrder = item.sortOrder
     }
 }
@@ -147,12 +239,14 @@ struct BillCalculatorItemInsertData: Codable {
 struct BillCalculatorItemUpdateData: Codable {
     let name: String
     let amount: Double
+    let quantity: Int
     let sortOrder: Int
     let type: String
 
     enum CodingKeys: String, CodingKey {
         case name
         case amount
+        case quantity = "item_quantity"
         case sortOrder = "sort_order"
         case type
     }
@@ -160,6 +254,7 @@ struct BillCalculatorItemUpdateData: Codable {
     init(from item: BillCalculatorItem) {
         self.name = item.name
         self.amount = item.amount
+        self.quantity = item.quantity
         self.sortOrder = item.sortOrder
         self.type = item.type.rawValue
     }
@@ -177,7 +272,7 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
     var eventId: UUID?
     var taxInfoId: Int64?
     var guestCount: Int
-    var useManualGuestCount: Bool
+    var guestCountMode: GuestCountMode
     var notes: String?
     let createdAt: Date?
     var updatedAt: Date?
@@ -201,6 +296,7 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         case eventId = "event_id"
         case taxInfoId = "tax_info_id"
         case guestCount = "guest_count"
+        case guestCountMode = "guest_count_mode"
         case useManualGuestCount = "use_manual_guest_count"
         case notes
         case createdAt = "created_at"
@@ -225,7 +321,16 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         eventId = try container.decodeIfPresent(UUID.self, forKey: .eventId)
         taxInfoId = try container.decodeIfPresent(Int64.self, forKey: .taxInfoId)
         guestCount = try container.decode(Int.self, forKey: .guestCount)
-        useManualGuestCount = try container.decodeIfPresent(Bool.self, forKey: .useManualGuestCount) ?? false
+
+        // Decode guestCountMode with backward compatibility for useManualGuestCount
+        if let mode = try? container.decodeIfPresent(GuestCountMode.self, forKey: .guestCountMode) {
+            guestCountMode = mode
+        } else {
+            // Fallback: convert legacy useManualGuestCount boolean to new mode
+            let useManual = try container.decodeIfPresent(Bool.self, forKey: .useManualGuestCount) ?? false
+            guestCountMode = useManual ? .manual : .auto
+        }
+
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt)
@@ -234,6 +339,29 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         taxRate = try container.decodeIfPresent(Double.self, forKey: .taxRate)
         taxRegion = try container.decodeIfPresent(String.self, forKey: .taxRegion)
         items = try container.decodeIfPresent([BillCalculatorItem].self, forKey: .items) ?? []
+    }
+
+    // MARK: - Custom Encoding
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(coupleId, forKey: .coupleId)
+        try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(vendorId, forKey: .vendorId)
+        try container.encodeIfPresent(eventId, forKey: .eventId)
+        try container.encodeIfPresent(taxInfoId, forKey: .taxInfoId)
+        try container.encode(guestCount, forKey: .guestCount)
+        try container.encode(guestCountMode, forKey: .guestCountMode)
+        try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encodeIfPresent(createdAt, forKey: .createdAt)
+        try container.encodeIfPresent(updatedAt, forKey: .updatedAt)
+        try container.encodeIfPresent(vendorName, forKey: .vendorName)
+        try container.encodeIfPresent(eventName, forKey: .eventName)
+        try container.encodeIfPresent(taxRate, forKey: .taxRate)
+        try container.encodeIfPresent(taxRegion, forKey: .taxRegion)
+        try container.encode(items, forKey: .items)
+        // Note: useManualGuestCount is intentionally NOT encoded - it's only used for decoding legacy data
     }
 
     // MARK: - Initializer
@@ -246,7 +374,7 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         eventId: UUID? = nil,
         taxInfoId: Int64? = nil,
         guestCount: Int = 0,
-        useManualGuestCount: Bool = false,
+        guestCountMode: GuestCountMode = .auto,
         notes: String? = nil,
         createdAt: Date? = nil,
         updatedAt: Date? = nil,
@@ -263,7 +391,7 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         self.eventId = eventId
         self.taxInfoId = taxInfoId
         self.guestCount = guestCount
-        self.useManualGuestCount = useManualGuestCount
+        self.guestCountMode = guestCountMode
         self.notes = notes
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -272,6 +400,19 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         self.taxRate = taxRate
         self.taxRegion = taxRegion
         self.items = items
+    }
+
+    // MARK: - Backward Compatibility
+
+    /// Backward-compatible property that maps to the new guestCountMode
+    var useManualGuestCount: Bool {
+        get { guestCountMode == .manual }
+        set { guestCountMode = newValue ? .manual : .auto }
+    }
+
+    /// Whether this calculator uses variable item counts (each item has its own quantity)
+    var usesVariableItemCount: Bool {
+        guestCountMode == .variable
     }
 
     // MARK: - Computed Properties (Filtered Items)
@@ -298,12 +439,18 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         taxRate ?? 0
     }
 
-    /// Total for all per-person items
+    /// Total for all per-person/per-item items (mode-aware)
     var perPersonTotal: Double {
-        perPersonItems.reduce(0) { $0 + $1.perPersonTotal(guestCount: guestCount) }
+        if usesVariableItemCount {
+            // Variable mode: each item uses its own quantity
+            return perPersonItems.reduce(0) { $0 + $1.variableItemTotal }
+        } else {
+            // Auto/Manual mode: all items use the shared guest count
+            return perPersonItems.reduce(0) { $0 + $1.perPersonTotal(guestCount: guestCount) }
+        }
     }
 
-    /// Subtotal for service fee calculation (per-person items only)
+    /// Subtotal for service fee calculation (per-person/per-item items only)
     var serviceFeeSubtotal: Double {
         perPersonTotal
     }
@@ -333,10 +480,15 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         subtotal + taxAmount
     }
 
-    /// Per-guest cost (subtotal divided by guest count)
+    /// Per-guest cost (subtotal divided by guest count) - only meaningful in auto/manual mode
     var perGuestCost: Double {
         guard guestCount > 0 else { return 0 }
         return subtotal / Double(guestCount)
+    }
+
+    /// Total quantity across all per-person items (for variable mode display)
+    var totalItemQuantity: Int {
+        perPersonItems.reduce(0) { $0 + $1.quantity }
     }
 
     /// Total number of line items
@@ -347,6 +499,9 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
     /// Summary string for display
     var summaryDescription: String {
         let displayName = eventName ?? (name.isEmpty ? "Bill" : name)
+        if usesVariableItemCount {
+            return "\(displayName) - \(totalItemQuantity) items"
+        }
         return "\(displayName) - \(guestCount) guests"
     }
 
@@ -405,6 +560,39 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
             }
         }
     }
+
+    // MARK: - Mode Conversion
+
+    /// Converts items when switching between guest count modes
+    /// - When switching TO variable mode: Sets each item's quantity to the current guest count
+    /// - When switching FROM variable mode: Items keep their quantities but calculation uses guest count
+    mutating func convertToMode(_ newMode: GuestCountMode) {
+        let oldMode = guestCountMode
+
+        // No conversion needed if mode isn't changing
+        guard oldMode != newMode else { return }
+
+        // When switching TO variable mode from auto/manual,
+        // set each per-person item's quantity to the current guest count
+        if newMode == .variable && oldMode != .variable {
+            for i in items.indices where items[i].type == .perPerson {
+                items[i].quantity = guestCount > 0 ? guestCount : 1
+            }
+        }
+
+        // When switching FROM variable mode to auto/manual,
+        // optionally calculate a suggested guest count from item quantities
+        // (items keep their quantities for potential conversion back)
+        if oldMode == .variable && newMode != .variable {
+            // Use the maximum quantity among items as suggested guest count
+            let maxQuantity = perPersonItems.map(\.quantity).max() ?? guestCount
+            if guestCount == 0 && maxQuantity > 0 {
+                guestCount = maxQuantity
+            }
+        }
+
+        guestCountMode = newMode
+    }
 }
 
 // MARK: - Bill Calculator Insert Data
@@ -417,7 +605,7 @@ struct BillCalculatorInsertData: Codable {
     var eventId: UUID?
     var taxInfoId: Int64?
     var guestCount: Int
-    var useManualGuestCount: Bool
+    var guestCountMode: String
     var notes: String?
 
     enum CodingKeys: String, CodingKey {
@@ -427,7 +615,7 @@ struct BillCalculatorInsertData: Codable {
         case eventId = "event_id"
         case taxInfoId = "tax_info_id"
         case guestCount = "guest_count"
-        case useManualGuestCount = "use_manual_guest_count"
+        case guestCountMode = "guest_count_mode"
         case notes
     }
 
@@ -438,7 +626,7 @@ struct BillCalculatorInsertData: Codable {
         self.eventId = calculator.eventId
         self.taxInfoId = calculator.taxInfoId
         self.guestCount = calculator.guestCount
-        self.useManualGuestCount = calculator.useManualGuestCount
+        self.guestCountMode = calculator.guestCountMode.rawValue
         self.notes = calculator.notes
     }
 }
@@ -530,23 +718,31 @@ struct BillLineItem: Codable, Identifiable, Equatable, Hashable, Sendable {
     let id: UUID
     var name: String
     var amount: Double
+    var quantity: Int
     var sortOrder: Int
 
     init(
         id: UUID = UUID(),
         name: String = "",
         amount: Double = 0,
+        quantity: Int = 1,
         sortOrder: Int = 0
     ) {
         self.id = id
         self.name = name
         self.amount = amount
+        self.quantity = quantity
         self.sortOrder = sortOrder
     }
 
     /// Calculates the total for a per-person item
     func perPersonTotal(guestCount: Int) -> Double {
         return amount * Double(guestCount)
+    }
+
+    /// Calculates the total for a variable quantity item
+    var variableItemTotal: Double {
+        return amount * Double(quantity)
     }
 
     /// Calculates the total for a service fee item (percentage)
@@ -568,6 +764,7 @@ struct BillLineItem: Codable, Identifiable, Equatable, Hashable, Sendable {
             type: type,
             name: name,
             amount: amount,
+            quantity: quantity,
             sortOrder: sortOrder
         )
     }

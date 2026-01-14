@@ -35,6 +35,7 @@ struct BillCalculatorView: View {
     @State private var showingAddPerPersonModal = false
     @State private var showingAddServiceFeeModal = false
     @State private var showingAddFlatFeeModal = false
+    @State private var showingAddVariableItemModal = false
 
     private var vendorStore: VendorStoreV2 { appStores.vendor }
     private var settingsStore: SettingsStoreV2 { appStores.settings }
@@ -42,9 +43,14 @@ struct BillCalculatorView: View {
     private var budgetStore: BudgetStoreV2 { appStores.budget }
     private var billCalculatorStore: BillCalculatorStoreV2 { appStores.billCalculator }
 
-    /// Whether to use guest count from database (auto mode) - inverse of useManualGuestCount
+    /// Whether to use guest count from database (auto mode)
     private var useGuestCountFromDatabase: Bool {
-        !calculator.useManualGuestCount
+        calculator.guestCountMode == .auto
+    }
+
+    /// Whether to show variable item mode (per-item quantities)
+    private var usesVariableItemCount: Bool {
+        calculator.guestCountMode == .variable
     }
 
     /// Initialize with a new empty calculator using the current session's tenant ID
@@ -61,12 +67,16 @@ struct BillCalculatorView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            headerView
-            contentView
-            footerView
+        ZStack {
+            // Mesh gradient background from design system
+            MeshGradientBackground()
+
+            VStack(spacing: 0) {
+                headerView
+                contentView
+                footerView
+            }
         }
-        .background(SemanticColors.backgroundSecondary)
         .task {
             isLoadingCalculators = true
 
@@ -96,7 +106,7 @@ struct BillCalculatorView: View {
                             eventId: calculator.eventId,
                             taxInfoId: calculator.taxInfoId,
                             guestCount: calculator.guestCount,
-                            useManualGuestCount: calculator.useManualGuestCount,
+                            guestCountMode: calculator.guestCountMode,
                             notes: calculator.notes,
                             createdAt: calculator.createdAt,
                             updatedAt: calculator.updatedAt,
@@ -128,11 +138,12 @@ struct BillCalculatorView: View {
                 calculator.guestCount = guestStore.attendingCount
             }
         }
-        .onChange(of: calculator.useManualGuestCount) { _, isManual in
+        .onChange(of: calculator.guestCountMode) { _, newMode in
             // When switching to auto mode, sync guest count from database
-            if !isManual {
+            if newMode == .auto {
                 calculator.guestCount = guestStore.attendingCount
             }
+            // Mode conversion is handled by BillCalculator.convertToMode() if needed
         }
         .onChange(of: guestStore.attendingCount) { _, newCount in
             if useGuestCountFromDatabase {
@@ -213,6 +224,30 @@ struct BillCalculatorView: View {
                 }
             )
         }
+        .sheet(isPresented: $showingAddVariableItemModal) {
+            AddVariableItemModal(
+                onAdd: { item in
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .perPerson
+                    )
+                    calculator.addItem(calcItem)
+                    lastSaved = Date()
+                    hasUnsavedChanges = true
+                },
+                onAddAnother: { item in
+                    let calcItem = item.toBillCalculatorItem(
+                        calculatorId: calculator.id,
+                        coupleId: calculator.coupleId,
+                        type: .perPerson
+                    )
+                    calculator.addItem(calcItem)
+                    lastSaved = Date()
+                    hasUnsavedChanges = true
+                }
+            )
+        }
     }
 
     // MARK: - Header View
@@ -244,17 +279,18 @@ struct BillCalculatorView: View {
                     saveToBudgetButton
                 }
             }
-            .padding(.horizontal, Spacing.xxl)
+            .padding(.horizontal, Spacing.xl)
             .padding(.vertical, Spacing.lg)
 
             Divider()
 
             headerInputsRow
-                .padding(.horizontal, Spacing.xxl)
+                .padding(.horizontal, Spacing.xl)
                 .padding(.vertical, Spacing.lg)
         }
-        .background(SemanticColors.backgroundPrimary)
-        .macOSShadow(.subtle)
+        .glassPanel(cornerRadius: CornerRadius.lg, padding: 0)
+        .padding(.horizontal, Spacing.xxl)
+        .padding(.top, Spacing.xxl)
     }
 
     private var calculatorSelector: some View {
@@ -428,18 +464,12 @@ struct BillCalculatorView: View {
     private var calculatorIcon: some View {
         ZStack {
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .fill(
-                    LinearGradient(
-                        colors: [SoftLavender.shade500, BlushPink.shade500],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(SemanticColors.primaryAction.opacity(0.15))
                 .frame(width: Spacing.huge - Spacing.sm, height: Spacing.huge - Spacing.sm)
 
             Image(systemName: "function")
                 .font(Typography.subheading)
-                .foregroundColor(SemanticColors.textOnPrimary)
+                .foregroundColor(SemanticColors.primaryAction)
         }
     }
 
@@ -554,8 +584,8 @@ struct BillCalculatorView: View {
                 )
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 160)
         }
+        .frame(width: 160)
     }
 
     private var billNameField: some View {
@@ -613,8 +643,8 @@ struct BillCalculatorView: View {
                 )
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 180)
         }
+        .frame(width: 180)
     }
 
     private var expensePicker: some View {
@@ -712,8 +742,8 @@ struct BillCalculatorView: View {
                 )
             }
             .menuStyle(.borderlessButton)
-            .frame(width: 180)
         }
+        .frame(width: 200)
     }
 
     private var guestCountStepper: some View {
@@ -792,35 +822,58 @@ struct BillCalculatorView: View {
 
     private var guestCountSourceToggle: some View {
         Menu {
+            // Auto mode - uses guest list count
             Button {
-                calculator.useManualGuestCount = true
+                calculator.convertToMode(.auto)
+                calculator.guestCount = guestStore.attendingCount
                 hasUnsavedChanges = true
             } label: {
                 HStack {
-                    Text("Manual Entry")
-                    if calculator.useManualGuestCount {
+                    Image(systemName: "person.3.fill")
+                    Text("Auto (\(guestStore.attendingCount) attending)")
+                    Spacer()
+                    if calculator.guestCountMode == .auto {
                         Image(systemName: "checkmark")
                     }
                 }
             }
 
+            // Manual mode - user enters count
             Button {
-                calculator.useManualGuestCount = false
-                calculator.guestCount = guestStore.attendingCount
+                calculator.convertToMode(.manual)
                 hasUnsavedChanges = true
             } label: {
                 HStack {
-                    Text("From Guest List (\(guestStore.attendingCount) attending)")
-                    if !calculator.useManualGuestCount {
+                    Image(systemName: "pencil")
+                    Text("Manual Entry")
+                    Spacer()
+                    if calculator.guestCountMode == .manual {
+                        Image(systemName: "checkmark")
+                    }
+                }
+            }
+
+            Divider()
+
+            // Variable mode - each item has its own quantity
+            Button {
+                calculator.convertToMode(.variable)
+                hasUnsavedChanges = true
+            } label: {
+                HStack {
+                    Image(systemName: "number.square")
+                    Text("Variable (Per-Item)")
+                    Spacer()
+                    if calculator.guestCountMode == .variable {
                         Image(systemName: "checkmark")
                     }
                 }
             }
         } label: {
             HStack(spacing: Spacing.xxs) {
-                Image(systemName: calculator.useManualGuestCount ? "pencil" : "person.3.fill")
+                Image(systemName: calculator.guestCountMode.icon)
                     .font(Typography.caption2)
-                Text(calculator.useManualGuestCount ? "Manual" : "Auto")
+                Text(calculator.guestCountMode.displayName)
                     .font(Typography.caption)
             }
             .foregroundColor(SemanticColors.primaryAction)
@@ -856,27 +909,44 @@ struct BillCalculatorView: View {
 
     private var perPersonSection: some View {
         BillCalculatorSectionView(
-            title: "Per-Person Items",
-            subtitle: "Costs multiplied by guest count",
-            icon: "person.fill",
+            title: usesVariableItemCount ? "Per-Item Expenses" : "Per-Person Items",
+            subtitle: usesVariableItemCount ? "Each item has its own quantity" : "Costs multiplied by guest count",
+            icon: usesVariableItemCount ? "number.square" : "person.fill",
             sectionTotal: calculator.perPersonTotal,
-            gradientColors: [SoftLavender.shade500, BlushPink.shade500],
             accentColor: SoftLavender.shade500
         ) {
             VStack(spacing: Spacing.md) {
-                ForEach(Array(calculator.perPersonItems.enumerated()), id: \.element.id) { index, item in
-                    PerPersonItemRow(
-                        item: bindingForPerPersonItem(at: index),
-                        guestCount: calculator.guestCount,
-                        onDelete: {
-                            calculator.removePerPersonItem(at: index)
-                            hasUnsavedChanges = true
-                        }
-                    )
+                ForEach(Array(calculator.perPersonItems.enumerated()), id: \.element.id) { index, _ in
+                    if usesVariableItemCount {
+                        // Variable mode: show VariableItemRow with editable quantity
+                        VariableItemRow(
+                            item: bindingForPerPersonItem(at: index),
+                            onDelete: {
+                                calculator.removePerPersonItem(at: index)
+                                hasUnsavedChanges = true
+                            }
+                        )
+                    } else {
+                        // Auto/Manual mode: show standard PerPersonItemRow
+                        PerPersonItemRow(
+                            item: bindingForPerPersonItem(at: index),
+                            guestCount: calculator.guestCount,
+                            onDelete: {
+                                calculator.removePerPersonItem(at: index)
+                                hasUnsavedChanges = true
+                            }
+                        )
+                    }
                 }
 
-                addItemButton(type: .perPerson, accentColor: SoftLavender.shade500) {
-                    showingAddPerPersonModal = true
+                if usesVariableItemCount {
+                    addItemButton(type: .perPerson, accentColor: SoftLavender.shade500) {
+                        showingAddVariableItemModal = true
+                    }
+                } else {
+                    addItemButton(type: .perPerson, accentColor: SoftLavender.shade500) {
+                        showingAddPerPersonModal = true
+                    }
                 }
             }
         }
@@ -890,7 +960,6 @@ struct BillCalculatorView: View {
             subtitle: "Percentage-based fees on subtotal",
             icon: "percent",
             sectionTotal: calculator.serviceFeeTotal,
-            gradientColors: [AppColors.info, AppColors.info.opacity(0.85)],
             accentColor: AppColors.info
         ) {
             VStack(spacing: Spacing.md) {
@@ -949,7 +1018,6 @@ struct BillCalculatorView: View {
             subtitle: "One-time fixed costs",
             icon: "tag.fill",
             sectionTotal: calculator.flatFeeTotal,
-            gradientColors: [SageGreen.shade500, SageGreen.shade600],
             accentColor: SageGreen.shade500
         ) {
             VStack(spacing: Spacing.md) {
@@ -983,7 +1051,6 @@ struct BillCalculatorView: View {
             }
             .padding(Spacing.lg)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(SemanticColors.backgroundPrimary)
 
             Divider()
 
@@ -995,11 +1062,8 @@ struct BillCalculatorView: View {
             .scrollContentBackground(.hidden)
             .frame(minHeight: 100)
             .padding(Spacing.md)
-            .background(SemanticColors.contentBackground)
         }
-        .background(SemanticColors.backgroundPrimary)
-        .cornerRadius(CornerRadius.lg)
-        .macOSShadow(.subtle)
+        .glassPanel(cornerRadius: CornerRadius.lg, padding: 0)
     }
 
     // MARK: - Cost Summary Sidebar
@@ -1017,20 +1081,13 @@ struct BillCalculatorView: View {
             VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text("Cost Summary")
                     .font(Typography.title3)
-                    .foregroundColor(.white)
+                    .foregroundColor(SemanticColors.textPrimary)
                 Text(calculator.summaryDescription)
                     .font(Typography.caption)
-                    .foregroundColor(.white.opacity(0.9))
+                    .foregroundColor(SemanticColors.textSecondary)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(Spacing.lg)
-            .background(
-                LinearGradient(
-                    colors: [SoftLavender.shade500, BlushPink.shade500],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
 
             VStack(spacing: Spacing.lg) {
                 VStack(spacing: Spacing.md) {
@@ -1106,9 +1163,7 @@ struct BillCalculatorView: View {
             }
             .padding(Spacing.lg)
         }
-        .background(SemanticColors.backgroundPrimary)
-        .cornerRadius(CornerRadius.lg)
-        .macOSShadow(.elevated)
+        .glassPanel(cornerRadius: CornerRadius.lg, padding: 0)
     }
 
     private func summaryRow(label: String, amount: Double, dotColor: Color) -> some View {
@@ -1149,17 +1204,11 @@ struct BillCalculatorView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(Spacing.md)
-        .background(
-            LinearGradient(
-                colors: [SoftLavender.shade50, BlushPink.shade50],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
-        )
+        .background(SemanticColors.primaryAction.opacity(0.08))
         .cornerRadius(CornerRadius.md)
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.md)
-                .stroke(SoftLavender.shade200, lineWidth: 1)
+                .stroke(SemanticColors.primaryAction.opacity(0.2), lineWidth: 1)
         )
     }
 
@@ -1184,7 +1233,7 @@ struct BillCalculatorView: View {
                             eventId: calculator.eventId,
                             taxInfoId: taxInfo.id,
                             guestCount: calculator.guestCount,
-                            useManualGuestCount: calculator.useManualGuestCount,
+                            guestCountMode: calculator.guestCountMode,
                             notes: calculator.notes,
                             createdAt: calculator.createdAt,
                             updatedAt: calculator.updatedAt,
@@ -1212,7 +1261,7 @@ struct BillCalculatorView: View {
                         eventId: calculator.eventId,
                         taxInfoId: nil,
                         guestCount: calculator.guestCount,
-                        useManualGuestCount: calculator.useManualGuestCount,
+                        guestCountMode: calculator.guestCountMode,
                         notes: calculator.notes,
                         createdAt: calculator.createdAt,
                         updatedAt: calculator.updatedAt,
@@ -1260,26 +1309,24 @@ struct BillCalculatorView: View {
             HStack {
                 Text("Estimated Total")
                     .font(Typography.bodyRegular.weight(.semibold))
-                    .foregroundColor(.white)
+                    .foregroundColor(SemanticColors.textPrimary)
                 Spacer()
                 Text(formatCurrency(calculator.grandTotal))
                     .font(Typography.displaySmall)
-                    .foregroundColor(.white)
+                    .foregroundColor(SemanticColors.primaryAction)
             }
             Text("Including all fees and taxes")
                 .font(Typography.caption)
-                .foregroundColor(.white.opacity(0.9))
+                .foregroundColor(SemanticColors.textSecondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(Spacing.lg)
-        .background(
-            LinearGradient(
-                colors: [SoftLavender.shade500, BlushPink.shade500],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        .background(SemanticColors.primaryAction.opacity(0.12))
         .cornerRadius(CornerRadius.lg)
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
+                .stroke(SemanticColors.primaryAction.opacity(0.3), lineWidth: 1)
+        )
     }
 
     private var quickStatsCard: some View {
@@ -1299,10 +1346,7 @@ struct BillCalculatorView: View {
                 statRow(icon: "banknote", label: "Grand Total", value: formatCurrency(calculator.grandTotal), isHighlighted: true)
             }
         }
-        .padding(Spacing.lg)
-        .background(SemanticColors.backgroundPrimary)
-        .cornerRadius(CornerRadius.lg)
-        .macOSShadow(.subtle)
+        .glassPanel(cornerRadius: CornerRadius.lg, padding: Spacing.lg)
     }
 
     private func statRow(icon: String, label: String, value: String, isHighlighted: Bool = false) -> some View {
@@ -1338,16 +1382,7 @@ struct BillCalculatorView: View {
                 }
             }
         }
-        .padding(Spacing.lg)
-        .background(
-            LinearGradient(
-                colors: [SemanticColors.backgroundSecondary, SemanticColors.backgroundTertiary],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-        )
-        .cornerRadius(CornerRadius.lg)
-        .macOSShadow(.subtle)
+        .glassPanel(cornerRadius: CornerRadius.lg, padding: Spacing.lg)
         .alert("Delete Bill", isPresented: $showingDeleteAlert) {
             Button("Cancel", role: .cancel) {
                 calculatorToDelete = nil
@@ -1462,8 +1497,7 @@ struct BillCalculatorView: View {
         }
         .padding(.horizontal, Spacing.xxl)
         .padding(.vertical, Spacing.md)
-        .background(SemanticColors.backgroundPrimary)
-        .macOSShadow(.subtle)
+        .glassPanel(cornerRadius: 0, padding: 0)
     }
 
     private func footerStat(icon: String, value: String, isHighlighted: Bool = false) -> some View {
@@ -1518,13 +1552,14 @@ struct BillCalculatorView: View {
         Binding(
             get: {
                 let item = calculator.perPersonItems[index]
-                return BillLineItem(id: item.id, name: item.name, amount: item.amount, sortOrder: item.sortOrder)
+                return BillLineItem(id: item.id, name: item.name, amount: item.amount, quantity: item.quantity, sortOrder: item.sortOrder)
             },
             set: { newValue in
                 // Find and update the item in the items array
                 if let itemIndex = calculator.items.firstIndex(where: { $0.id == newValue.id }) {
                     calculator.items[itemIndex].name = newValue.name
                     calculator.items[itemIndex].amount = newValue.amount
+                    calculator.items[itemIndex].quantity = newValue.quantity
                     calculator.items[itemIndex].sortOrder = newValue.sortOrder
                     hasUnsavedChanges = true
                 }
@@ -1537,13 +1572,14 @@ struct BillCalculatorView: View {
         Binding(
             get: {
                 let item = calculator.serviceFeeItems[index]
-                return BillLineItem(id: item.id, name: item.name, amount: item.amount, sortOrder: item.sortOrder)
+                return BillLineItem(id: item.id, name: item.name, amount: item.amount, quantity: item.quantity, sortOrder: item.sortOrder)
             },
             set: { newValue in
                 // Find and update the item in the items array
                 if let itemIndex = calculator.items.firstIndex(where: { $0.id == newValue.id }) {
                     calculator.items[itemIndex].name = newValue.name
                     calculator.items[itemIndex].amount = newValue.amount
+                    calculator.items[itemIndex].quantity = newValue.quantity
                     calculator.items[itemIndex].sortOrder = newValue.sortOrder
                     hasUnsavedChanges = true
                 }
@@ -1556,13 +1592,14 @@ struct BillCalculatorView: View {
         Binding(
             get: {
                 let item = calculator.flatFeeItems[index]
-                return BillLineItem(id: item.id, name: item.name, amount: item.amount, sortOrder: item.sortOrder)
+                return BillLineItem(id: item.id, name: item.name, amount: item.amount, quantity: item.quantity, sortOrder: item.sortOrder)
             },
             set: { newValue in
                 // Find and update the item in the items array
                 if let itemIndex = calculator.items.firstIndex(where: { $0.id == newValue.id }) {
                     calculator.items[itemIndex].name = newValue.name
                     calculator.items[itemIndex].amount = newValue.amount
+                    calculator.items[itemIndex].quantity = newValue.quantity
                     calculator.items[itemIndex].sortOrder = newValue.sortOrder
                     hasUnsavedChanges = true
                 }

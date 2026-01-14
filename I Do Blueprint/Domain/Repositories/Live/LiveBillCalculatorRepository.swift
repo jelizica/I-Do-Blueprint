@@ -669,7 +669,8 @@ private struct BillCalculatorRow: Decodable {
     let eventId: UUID?
     let taxInfoId: Int64?
     let guestCount: Int
-    let useManualGuestCount: Bool?
+    let guestCountMode: String? // New field from guest_count_mode column
+    let useManualGuestCount: Bool? // Legacy field for backward compatibility
     let notes: String?
     let createdAt: Date?
     let updatedAt: Date?
@@ -687,6 +688,7 @@ private struct BillCalculatorRow: Decodable {
         case eventId = "event_id"
         case taxInfoId = "tax_info_id"
         case guestCount = "guest_count"
+        case guestCountMode = "guest_count_mode"
         case useManualGuestCount = "use_manual_guest_count"
         case notes
         case createdAt = "created_at"
@@ -742,7 +744,17 @@ private struct BillCalculatorRow: Decodable {
     }
 
     func toBillCalculator(items: [BillCalculatorItem]) -> BillCalculator {
-        BillCalculator(
+        // Determine guest count mode with fallback to legacy useManualGuestCount
+        let mode: GuestCountMode
+        if let modeString = guestCountMode, let parsedMode = GuestCountMode(rawValue: modeString) {
+            mode = parsedMode
+        } else if useManualGuestCount == true {
+            mode = .manual
+        } else {
+            mode = .auto
+        }
+
+        return BillCalculator(
             id: id,
             coupleId: coupleId,
             name: name,
@@ -750,7 +762,7 @@ private struct BillCalculatorRow: Decodable {
             eventId: eventId,
             taxInfoId: taxInfoId,
             guestCount: guestCount,
-            useManualGuestCount: useManualGuestCount ?? false,
+            guestCountMode: mode,
             notes: notes,
             createdAt: createdAt,
             updatedAt: updatedAt,
