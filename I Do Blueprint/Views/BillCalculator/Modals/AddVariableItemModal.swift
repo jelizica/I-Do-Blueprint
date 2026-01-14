@@ -24,12 +24,19 @@ struct AddVariableItemModal: View {
 
     // MARK: - Callbacks
 
+    let guestCount: Int
     let onAdd: (BillLineItem) -> Void
     let onAddAnother: (BillLineItem) -> Void
 
     // MARK: - Computed Properties
 
     private var settingsStore: SettingsStoreV2 { appStores.settings }
+    private var guestStore: GuestStoreV2 { appStores.guest }
+
+    /// The current attending guest count (live from store)
+    private var currentGuestCount: Int {
+        guestStore.attendingCount
+    }
 
     private var totalCost: Double {
         amountPerItem * Double(quantity)
@@ -206,12 +213,36 @@ struct AddVariableItemModal: View {
                 .buttonStyle(.plain)
 
                 Spacer()
+
+                // Use Guest Count button
+                useGuestCountButton
             }
 
             Text("How many of this item do you need?")
                 .font(Typography.caption)
                 .foregroundColor(SemanticColors.textTertiary)
         }
+    }
+
+    private var useGuestCountButton: some View {
+        Button(action: {
+            quantity = currentGuestCount
+        }) {
+            HStack(spacing: Spacing.xxs) {
+                Image(systemName: "person.3.fill")
+                    .font(Typography.caption2)
+                Text("Use Guest Count (\(currentGuestCount))")
+                    .font(Typography.caption)
+            }
+            .foregroundColor(SemanticColors.primaryAction)
+            .padding(.horizontal, Spacing.sm)
+            .padding(.vertical, Spacing.xs)
+            .background(SemanticColors.primaryAction.opacity(0.1))
+            .cornerRadius(CornerRadius.sm)
+        }
+        .buttonStyle(.plain)
+        .disabled(currentGuestCount <= 0)
+        .opacity(currentGuestCount > 0 ? 1 : Opacity.medium)
     }
 
     private var calculationPreviewBox: some View {
@@ -397,6 +428,7 @@ struct AddVariableItemModal: View {
 
 #Preview {
     AddVariableItemModal(
+        guestCount: 150,
         onAdd: { _ in },
         onAddAnother: { _ in }
     )

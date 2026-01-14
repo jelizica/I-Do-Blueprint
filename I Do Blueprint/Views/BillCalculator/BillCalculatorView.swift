@@ -226,6 +226,7 @@ struct BillCalculatorView: View {
         }
         .sheet(isPresented: $showingAddVariableItemModal) {
             AddVariableItemModal(
+                guestCount: guestStore.attendingCount,
                 onAdd: { item in
                     let calcItem = item.toBillCalculatorItem(
                         calculatorId: calculator.id,
