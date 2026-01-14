@@ -21,6 +21,8 @@ struct AddVariableItemModal: View {
     @State private var amountPerItem: Double = 0
     @State private var quantity: Int = 1
     @State private var itemDescription: String = ""
+    @State private var showMultiplierOptions: Bool = false
+    @State private var customMultiplier: Double = 1.0
 
     // MARK: - Callbacks
 
@@ -46,6 +48,21 @@ struct AddVariableItemModal: View {
         !itemName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && amountPerItem > 0 && quantity > 0
     }
 
+    /// Common multiplier presets for quantity calculations
+    private var multiplierPresets: [(label: String, value: Double)] {
+        [
+            ("1×", 1.0),
+            ("1.2×", 1.2),
+            ("1.5×", 1.5),
+            ("2×", 2.0)
+        ]
+    }
+
+    /// Calculate quantity from guest count and multiplier
+    private func calculateWithMultiplier(_ multiplier: Double) -> Int {
+        max(1, Int(ceil(Double(currentGuestCount) * multiplier)))
+    }
+
     // MARK: - Body
 
     var body: some View {
@@ -54,7 +71,7 @@ struct AddVariableItemModal: View {
             formContentView
             footerView
         }
-        .frame(width: 520, height: 620)
+        .frame(width: 520, height: 700)
         .glassPanel(cornerRadius: CornerRadius.xxl, padding: 0)
     }
 
@@ -218,6 +235,9 @@ struct AddVariableItemModal: View {
                 useGuestCountButton
             }
 
+            // Multiplier equation section
+            multiplierSection
+
             Text("How many of this item do you need?")
                 .font(Typography.caption)
                 .foregroundColor(SemanticColors.textTertiary)
@@ -243,6 +263,126 @@ struct AddVariableItemModal: View {
         .buttonStyle(.plain)
         .disabled(currentGuestCount <= 0)
         .opacity(currentGuestCount > 0 ? 1 : Opacity.medium)
+    }
+
+    // MARK: - Multiplier Section
+
+    private var multiplierSection: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            // Toggle to show/hide multiplier options
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showMultiplierOptions.toggle()
+                }
+            }) {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "function")
+                        .font(Typography.caption)
+                    Text("Use Formula")
+                        .font(Typography.caption)
+                    Spacer()
+                    Image(systemName: showMultiplierOptions ? "chevron.up" : "chevron.down")
+                        .font(Typography.caption2)
+                }
+                .foregroundColor(SemanticColors.textSecondary)
+                .padding(.vertical, Spacing.xs)
+            }
+            .buttonStyle(.plain)
+            .disabled(currentGuestCount <= 0)
+            .opacity(currentGuestCount > 0 ? 1 : Opacity.medium)
+
+            if showMultiplierOptions && currentGuestCount > 0 {
+                multiplierOptionsView
+            }
+        }
+        .padding(.top, Spacing.sm)
+    }
+
+    private var multiplierOptionsView: some View {
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            // Formula display
+            HStack(spacing: Spacing.xs) {
+                Text("\(currentGuestCount) guests")
+                    .font(Typography.bodySmall.weight(.medium))
+                    .foregroundColor(SemanticColors.textPrimary)
+                Text("×")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textTertiary)
+
+                // Custom multiplier input
+                TextField("1.0", value: $customMultiplier, format: .number.precision(.fractionLength(1)))
+                    .textFieldStyle(.plain)
+                    .font(Typography.bodySmall.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .frame(width: 50)
+                    .padding(.horizontal, Spacing.xs)
+                    .padding(.vertical, Spacing.xxs)
+                    .background(SemanticColors.controlBackground)
+                    .cornerRadius(CornerRadius.sm)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.sm)
+                            .stroke(SemanticColors.borderPrimary, lineWidth: 1)
+                    )
+
+                Text("=")
+                    .font(Typography.bodySmall)
+                    .foregroundColor(SemanticColors.textTertiary)
+
+                Text("\(calculateWithMultiplier(customMultiplier))")
+                    .font(Typography.bodySmall.weight(.bold))
+                    .foregroundColor(SemanticColors.primaryAction)
+
+                Spacer()
+
+                // Apply button
+                Button(action: {
+                    quantity = calculateWithMultiplier(customMultiplier)
+                }) {
+                    Text("Apply")
+                        .font(Typography.caption.weight(.semibold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, Spacing.sm)
+                        .padding(.vertical, Spacing.xxs)
+                        .background(SemanticColors.primaryAction)
+                        .cornerRadius(CornerRadius.sm)
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Preset multiplier pills
+            HStack(spacing: Spacing.xs) {
+                ForEach(multiplierPresets, id: \.value) { preset in
+                    Button(action: {
+                        customMultiplier = preset.value
+                        quantity = calculateWithMultiplier(preset.value)
+                    }) {
+                        Text(preset.label)
+                            .font(Typography.caption)
+                            .foregroundColor(customMultiplier == preset.value ? .white : SemanticColors.textSecondary)
+                            .padding(.horizontal, Spacing.sm)
+                            .padding(.vertical, Spacing.xxs)
+                            .background(customMultiplier == preset.value ? SemanticColors.primaryAction : SemanticColors.controlBackground)
+                            .cornerRadius(CornerRadius.sm)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: CornerRadius.sm)
+                                    .stroke(customMultiplier == preset.value ? Color.clear : SemanticColors.borderPrimary, lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+
+                Spacer()
+            }
+
+            // Helper text
+            Text("Great for napkins, favors, or items needing extras")
+                .font(Typography.caption2)
+                .foregroundColor(SemanticColors.textTertiary)
+                .italic()
+        }
+        .padding(Spacing.md)
+        .background(SemanticColors.backgroundSecondary.opacity(0.5))
+        .cornerRadius(CornerRadius.md)
     }
 
     private var calculationPreviewBox: some View {
@@ -421,6 +561,8 @@ struct AddVariableItemModal: View {
         amountPerItem = 0
         quantity = 1
         itemDescription = ""
+        showMultiplierOptions = false
+        customMultiplier = 1.0
     }
 }
 
