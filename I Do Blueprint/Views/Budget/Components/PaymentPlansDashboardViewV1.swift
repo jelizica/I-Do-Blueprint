@@ -535,9 +535,26 @@ private struct PaymentGroupCard: View {
 
                 // Progress and amount
                 VStack(alignment: .trailing, spacing: Spacing.xs) {
-                    Text(formatCurrency(group.totalAmount))
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
+                    // Show paid amount prominently, with total as context
+                    if group.paidAmount > 0 && group.paidAmount < group.totalAmount {
+                        // Partial progress: show paid of total
+                        Text("\(formatCurrency(group.paidAmount)) paid")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(Color.fromHex("F59E0B"))
+                        Text("of \(formatCurrency(group.totalAmount))")
+                            .font(.system(size: 13))
+                            .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
+                    } else if group.paidAmount >= group.totalAmount {
+                        // Fully paid
+                        Text(formatCurrency(group.paidAmount))
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(Color.fromHex("10B981"))
+                    } else {
+                        // Nothing paid yet
+                        Text(formatCurrency(group.totalAmount))
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
+                    }
 
                     // Progress bar
                     progressBar
