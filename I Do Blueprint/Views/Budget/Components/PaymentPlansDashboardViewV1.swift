@@ -29,6 +29,11 @@ struct PaymentPlansDashboardViewV1: View {
     let getVendorName: (Int64?) -> String?
     let onPaymentTap: (PaymentSchedule) -> Void
 
+    // Selection mode support - selecting a plan selects all its payments
+    @Binding var isSelectionMode: Bool
+    @Binding var selectedPaymentIds: Set<Int64>
+    let onBulkDelete: ([Int64]) -> Void
+
     @Environment(\.colorScheme) private var colorScheme
     @State private var expandedGroupIds: Set<String> = []
     @State private var hoveredCardId: String?
@@ -156,7 +161,8 @@ struct PaymentPlansDashboardViewV1: View {
         payments: [PaymentSchedule]
     ) -> PaymentGroup {
         let totalAmount = payments.reduce(0) { $0 + $1.paymentAmount }
-        let paidAmount = payments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
+        // Use actual amountPaid for accurate tracking (includes partial payments)
+        let paidAmount = payments.reduce(0) { $0 + $1.amountPaid }
         let upcomingPayments = payments.filter { !$0.paid && $0.paymentDate > Date() }
         let overduePayments = payments.filter { !$0.paid && $0.paymentDate < Date() }
 
@@ -203,9 +209,9 @@ struct PaymentPlansDashboardViewV1: View {
         paymentSchedules.count
     }
 
-    /// Total paid amount
+    /// Total paid amount (uses actual amountPaid for partial payment accuracy)
     private var totalPaid: Double {
-        paymentSchedules.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
+        paymentSchedules.reduce(0) { $0 + $1.amountPaid }
     }
 
     /// Overall completion percentage
@@ -246,29 +252,52 @@ struct PaymentPlansDashboardViewV1: View {
     private var groupedCardsSection: some View {
         LazyVStack(spacing: Spacing.md) {
             ForEach(paymentGroups, id: \.id) { group in
-                PaymentGroupCard(
-                    group: group,
-                    isExpanded: expandedGroupIds.contains(group.id),
-                    isHovered: hoveredCardId == group.id,
-                    isDarkMode: isDarkMode,
-                    windowSize: windowSize,
-                    onToggleExpand: {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            if expandedGroupIds.contains(group.id) {
-                                expandedGroupIds.remove(group.id)
+                HStack(spacing: Spacing.sm) {
+                    // Plan-level selection checkbox
+                    if isSelectionMode {
+                        let groupPaymentIds = Set(group.payments.map { $0.id })
+                        let allSelected = groupPaymentIds.isSubset(of: selectedPaymentIds)
+
+                        Button(action: {
+                            if allSelected {
+                                selectedPaymentIds.subtract(groupPaymentIds)
                             } else {
-                                expandedGroupIds.insert(group.id)
+                                selectedPaymentIds.formUnion(groupPaymentIds)
                             }
+                        }) {
+                            Image(systemName: allSelected ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 24))
+                                .foregroundColor(allSelected ? SemanticColors.primaryAction : SemanticColors.textTertiary)
                         }
-                    },
-                    onHover: { hovering in
-                        hoveredCardId = hovering ? group.id : nil
-                    },
-                    onTogglePaidStatus: onTogglePaidStatus,
-                    onUpdate: onUpdate,
-                    onDelete: onDelete,
-                    onPaymentTap: onPaymentTap
-                )
+                        .buttonStyle(.plain)
+                    }
+
+                    PaymentGroupCard(
+                        group: group,
+                        isExpanded: expandedGroupIds.contains(group.id),
+                        isHovered: hoveredCardId == group.id,
+                        isDarkMode: isDarkMode,
+                        windowSize: windowSize,
+                        isSelectionMode: isSelectionMode,
+                        selectedPaymentIds: $selectedPaymentIds,
+                        onToggleExpand: {
+                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                if expandedGroupIds.contains(group.id) {
+                                    expandedGroupIds.remove(group.id)
+                                } else {
+                                    expandedGroupIds.insert(group.id)
+                                }
+                            }
+                        },
+                        onHover: { hovering in
+                            hoveredCardId = hovering ? group.id : nil
+                        },
+                        onTogglePaidStatus: onTogglePaidStatus,
+                        onUpdate: onUpdate,
+                        onDelete: onDelete,
+                        onPaymentTap: onPaymentTap
+                    )
+                }
             }
         }
         .padding(.horizontal)
@@ -389,6 +418,8 @@ private struct PaymentGroupCard: View {
     let isHovered: Bool
     let isDarkMode: Bool
     let windowSize: WindowSize
+    var isSelectionMode: Bool = false
+    @Binding var selectedPaymentIds: Set<Int64>
     let onToggleExpand: () -> Void
     let onHover: (Bool) -> Void
     let onTogglePaidStatus: (PaymentSchedule) -> Void
@@ -587,16 +618,46 @@ private struct PaymentGroupCard: View {
     private var paymentsList: some View {
         VStack(spacing: 0) {
             ForEach(group.payments, id: \.id) { payment in
-                PaymentRowItem(
-                    payment: payment,
-                    isDarkMode: isDarkMode,
-                    onTogglePaid: {
-                        var updated = payment
-                        updated.paid.toggle()
-                        onTogglePaidStatus(updated)
-                    },
-                    onTap: { onPaymentTap(payment) }
-                )
+                HStack(spacing: Spacing.sm) {
+                    // Individual payment selection checkbox
+                    if isSelectionMode {
+                        Button(action: {
+                            if selectedPaymentIds.contains(payment.id) {
+                                selectedPaymentIds.remove(payment.id)
+                            } else {
+                                selectedPaymentIds.insert(payment.id)
+                            }
+                        }) {
+                            Image(systemName: selectedPaymentIds.contains(payment.id) ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 20))
+                                .foregroundColor(selectedPaymentIds.contains(payment.id) ? SemanticColors.primaryAction : SemanticColors.textTertiary)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.leading, Spacing.lg)
+                    }
+
+                    PaymentRowItem(
+                        payment: payment,
+                        isDarkMode: isDarkMode,
+                        isSelectionMode: isSelectionMode,
+                        onTogglePaid: {
+                            var updated = payment
+                            updated.paid.toggle()
+                            onTogglePaidStatus(updated)
+                        },
+                        onTap: {
+                            if isSelectionMode {
+                                if selectedPaymentIds.contains(payment.id) {
+                                    selectedPaymentIds.remove(payment.id)
+                                } else {
+                                    selectedPaymentIds.insert(payment.id)
+                                }
+                            } else {
+                                onPaymentTap(payment)
+                            }
+                        }
+                    )
+                }
 
                 if payment.id != group.payments.last?.id {
                     Divider()
@@ -621,6 +682,7 @@ private struct PaymentGroupCard: View {
 private struct PaymentRowItem: View {
     let payment: PaymentSchedule
     let isDarkMode: Bool
+    var isSelectionMode: Bool = false
     let onTogglePaid: () -> Void
     let onTap: () -> Void
 
@@ -632,6 +694,8 @@ private struct PaymentRowItem: View {
     private var status: PaymentDisplayStatus {
         if payment.paid {
             return .paid
+        } else if payment.isPartiallyPaid {
+            return .partial
         } else if payment.paymentDate < Date() {
             return .overdue
         } else {
@@ -664,11 +728,22 @@ private struct PaymentRowItem: View {
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Amount
-                Text(formatCurrency(payment.paymentAmount))
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
-                    .frame(width: 80, alignment: .trailing)
+                // Amount - show paid amount for partial payments
+                VStack(alignment: .trailing, spacing: 2) {
+                    if payment.isPartiallyPaid {
+                        Text("\(formatCurrency(payment.amountPaid)) paid")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Color.fromHex("F59E0B"))
+                        Text("of \(formatCurrency(payment.paymentAmount))")
+                            .font(.system(size: 11))
+                            .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
+                    } else {
+                        Text(formatCurrency(payment.paymentAmount))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
+                    }
+                }
+                .frame(width: 100, alignment: .trailing)
 
                 // Status badge
                 statusBadge
@@ -727,6 +802,7 @@ private struct PaymentRowItem: View {
 
 private enum PaymentDisplayStatus {
     case paid
+    case partial
     case dueSoon
     case scheduled
     case overdue
@@ -734,6 +810,7 @@ private enum PaymentDisplayStatus {
     var displayName: String {
         switch self {
         case .paid: return "Paid"
+        case .partial: return "Partial"
         case .dueSoon: return "Due Soon"
         case .scheduled: return "Scheduled"
         case .overdue: return "Overdue"
@@ -743,6 +820,7 @@ private enum PaymentDisplayStatus {
     var color: Color {
         switch self {
         case .paid: return Color.fromHex("10B981")
+        case .partial: return Color.fromHex("F59E0B")
         case .dueSoon: return Color.fromHex("F59E0B")
         case .scheduled: return Color.fromHex("6366F1")
         case .overdue: return Color.fromHex("DC2626")
@@ -752,6 +830,7 @@ private enum PaymentDisplayStatus {
     var backgroundColor: Color {
         switch self {
         case .paid: return Color.fromHex("D1FAE5")
+        case .partial: return Color.fromHex("FEF3C7")
         case .dueSoon: return Color.fromHex("FEF3C7")
         case .scheduled: return Color.fromHex("E0E7FF")
         case .overdue: return Color.fromHex("FEE2E2")
@@ -761,6 +840,7 @@ private enum PaymentDisplayStatus {
     var textColor: Color {
         switch self {
         case .paid: return Color.fromHex("047857")
+        case .partial: return Color.fromHex("B45309")
         case .dueSoon: return Color.fromHex("B45309")
         case .scheduled: return Color.fromHex("4338CA")
         case .overdue: return Color.fromHex("DC2626")
@@ -784,7 +864,10 @@ private enum PaymentDisplayStatus {
         onUpdate: { _ in },
         onDelete: { _ in },
         getVendorName: { _ in "Sample Vendor" },
-        onPaymentTap: { _ in }
+        onPaymentTap: { _ in },
+        isSelectionMode: .constant(false),
+        selectedPaymentIds: .constant([]),
+        onBulkDelete: { _ in }
     )
     .frame(width: 1200, height: 800)
     .preferredColorScheme(.light)
@@ -804,7 +887,10 @@ private enum PaymentDisplayStatus {
         onUpdate: { _ in },
         onDelete: { _ in },
         getVendorName: { _ in "Sample Vendor" },
-        onPaymentTap: { _ in }
+        onPaymentTap: { _ in },
+        isSelectionMode: .constant(false),
+        selectedPaymentIds: .constant([]),
+        onBulkDelete: { _ in }
     )
     .frame(width: 1200, height: 800)
     .preferredColorScheme(.dark)
