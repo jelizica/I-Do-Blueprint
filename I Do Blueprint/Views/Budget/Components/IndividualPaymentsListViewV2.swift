@@ -18,6 +18,12 @@ struct IndividualPaymentsListViewV2: View {
     let getVendorName: (Int64?) -> String?
     let userTimezone: TimeZone
     let onPaymentTap: (PaymentSchedule) -> Void
+    var onRecordPayment: ((PaymentSchedule) -> Void)? = nil
+
+    // Selection mode support
+    @Binding var isSelectionMode: Bool
+    @Binding var selectedPaymentIds: Set<Int64>
+    let onBulkDelete: ([Int64]) -> Void
 
     @Environment(\.colorScheme) private var colorScheme
 
@@ -56,28 +62,80 @@ struct IndividualPaymentsListViewV2: View {
 
     private func monthSection(title: String, payments: [PaymentSchedule]) -> some View {
         VStack(alignment: .leading, spacing: Spacing.sm) {
-            // Month header
-            Text(title.uppercased())
-                .font(.system(size: 11, weight: .bold))
-                .tracking(0.8)
-                .foregroundColor(SemanticColors.textSecondary)
-                .padding(.leading, Spacing.xs)
-                .padding(.top, Spacing.sm)
+            // Month header with select all option in selection mode
+            HStack {
+                Text(title.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundColor(SemanticColors.textSecondary)
+
+                if isSelectionMode {
+                    Spacer()
+
+                    let monthPaymentIds = Set(payments.map { $0.id })
+                    let allSelected = monthPaymentIds.isSubset(of: selectedPaymentIds)
+
+                    Button(action: {
+                        if allSelected {
+                            selectedPaymentIds.subtract(monthPaymentIds)
+                        } else {
+                            selectedPaymentIds.formUnion(monthPaymentIds)
+                        }
+                    }) {
+                        Text(allSelected ? "Deselect All" : "Select All")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundColor(SemanticColors.primaryAction)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.leading, Spacing.xs)
+            .padding(.top, Spacing.sm)
 
             // Payment cards
             VStack(spacing: Spacing.sm) {
                 ForEach(payments, id: \.id) { payment in
-                    PaymentCardV2(
-                        payment: payment,
-                        expense: getExpenseForPayment(payment),
-                        windowSize: windowSize,
-                        colorScheme: colorScheme,
-                        onUpdate: onUpdate,
-                        onDelete: onDelete,
-                        getVendorName: getVendorName,
-                        userTimezone: userTimezone,
-                        onTap: { onPaymentTap(payment) }
-                    )
+                    HStack(spacing: Spacing.sm) {
+                        // Selection checkbox
+                        if isSelectionMode {
+                            Button(action: {
+                                if selectedPaymentIds.contains(payment.id) {
+                                    selectedPaymentIds.remove(payment.id)
+                                } else {
+                                    selectedPaymentIds.insert(payment.id)
+                                }
+                            }) {
+                                Image(systemName: selectedPaymentIds.contains(payment.id) ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 22))
+                                    .foregroundColor(selectedPaymentIds.contains(payment.id) ? SemanticColors.primaryAction : SemanticColors.textTertiary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        PaymentCardV2(
+                            payment: payment,
+                            expense: getExpenseForPayment(payment),
+                            windowSize: windowSize,
+                            colorScheme: colorScheme,
+                            onUpdate: onUpdate,
+                            onDelete: onDelete,
+                            getVendorName: getVendorName,
+                            userTimezone: userTimezone,
+                            isSelectionMode: isSelectionMode,
+                            onRecordPayment: onRecordPayment,
+                            onTap: {
+                                if isSelectionMode {
+                                    if selectedPaymentIds.contains(payment.id) {
+                                        selectedPaymentIds.remove(payment.id)
+                                    } else {
+                                        selectedPaymentIds.insert(payment.id)
+                                    }
+                                } else {
+                                    onPaymentTap(payment)
+                                }
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -119,6 +177,8 @@ private struct PaymentCardV2: View {
     let onDelete: (PaymentSchedule) -> Void
     let getVendorName: (Int64?) -> String?
     let userTimezone: TimeZone
+    var isSelectionMode: Bool = false
+    var onRecordPayment: ((PaymentSchedule) -> Void)? = nil
     let onTap: () -> Void
 
     @State private var isHovered = false
@@ -209,6 +269,34 @@ private struct PaymentCardV2: View {
         .buttonStyle(.plain)
         .onHover { hovering in
             isHovered = hovering
+        }
+        .contextMenu {
+            if !payment.paid {
+                // Record Payment option (allows partial payments)
+                if let recordHandler = onRecordPayment {
+                    Button(action: { recordHandler(payment) }) {
+                        Label("Record Payment...", systemImage: "dollarsign.circle")
+                    }
+
+                    Divider()
+                }
+
+                // Quick mark as paid (full amount)
+                Button(action: togglePaidStatus) {
+                    Label("Mark as Paid", systemImage: "checkmark.circle")
+                }
+            } else {
+                // Mark as unpaid
+                Button(action: togglePaidStatus) {
+                    Label("Mark as Unpaid", systemImage: "xmark.circle")
+                }
+            }
+
+            Divider()
+
+            Button(role: .destructive, action: { onDelete(payment) }) {
+                Label("Delete Payment", systemImage: "trash")
+            }
         }
     }
 
@@ -517,7 +605,10 @@ private struct PaymentCardV2: View {
         onDelete: { _ in },
         getVendorName: { _ in nil },
         userTimezone: .current,
-        onPaymentTap: { _ in }
+        onPaymentTap: { _ in },
+        isSelectionMode: .constant(false),
+        selectedPaymentIds: .constant([]),
+        onBulkDelete: { _ in }
     )
     .preferredColorScheme(.light)
 }
@@ -531,7 +622,10 @@ private struct PaymentCardV2: View {
         onDelete: { _ in },
         getVendorName: { _ in nil },
         userTimezone: .current,
-        onPaymentTap: { _ in }
+        onPaymentTap: { _ in },
+        isSelectionMode: .constant(false),
+        selectedPaymentIds: .constant([]),
+        onBulkDelete: { _ in }
     )
     .preferredColorScheme(.dark)
 }

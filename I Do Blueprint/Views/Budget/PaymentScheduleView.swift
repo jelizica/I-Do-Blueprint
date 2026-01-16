@@ -31,9 +31,15 @@ struct PaymentScheduleView: View {
     // Search state
     @State private var searchQuery: String = ""
 
+    // Selection mode states
+    @State private var isSelectionMode: Bool = false
+    @State private var selectedPaymentIds: Set<Int64> = []
+    @State private var showDeleteConfirmation: Bool = false
+
     // Dialog states
     @State private var showingAddPayment = false
     @State private var selectedPaymentForDetail: PaymentSchedule?
+    @State private var selectedPaymentForRecording: PaymentSchedule?
 
     // Error state
     @State private var loadError: String?
@@ -75,6 +81,19 @@ struct PaymentScheduleView: View {
                         )
                         .environmentObject(AppStores.shared.settings)
                     }
+                    .sheet(item: $selectedPaymentForRecording) { payment in
+                        RecordPaymentModal(
+                            payment: payment,
+                            onRecordPayment: { amount in
+                                await budgetStore.payments.recordPartialPayment(
+                                    payment: payment,
+                                    amountPaid: amount
+                                )
+                            }
+                        )
+                        .environmentObject(AppStores.shared.settings)
+                        .environmentObject(AppCoordinator.shared)
+                    }
                     .alert("Error Loading Payment Plans", isPresented: $showErrorAlert) {
                         Button("OK") {
                             loadError = nil
@@ -95,17 +114,97 @@ struct PaymentScheduleView: View {
     
     private func contentView(windowSize: WindowSize, availableWidth: CGFloat, horizontalPadding: CGFloat) -> some View {
         VStack(spacing: 0) {
+            // Selection mode toolbar (shown when selection mode is active)
+            if isSelectionMode {
+                selectionToolbar(windowSize: windowSize)
+            }
+
             // Unified header
             PaymentScheduleUnifiedHeader(
                 windowSize: windowSize,
                 currentPage: currentPage,
-                onAddPayment: { showingAddPayment = true }
+                onAddPayment: { showingAddPayment = true },
+                isSelectionMode: $isSelectionMode,
+                selectedCount: selectedPaymentIds.count,
+                onToggleSelectionMode: {
+                    isSelectionMode.toggle()
+                    if !isSelectionMode {
+                        selectedPaymentIds.removeAll()
+                    }
+                }
             )
-            
+
             headerView(windowSize: windowSize)
             Divider()
             paymentListView(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
         }
+        .confirmationDialog(
+            "Delete \(selectedPaymentIds.count) Payment\(selectedPaymentIds.count == 1 ? "" : "s")?",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    _ = await budgetStore.payments.bulkDeletePayments(ids: Array(selectedPaymentIds))
+                    selectedPaymentIds.removeAll()
+                    isSelectionMode = false
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This action cannot be undone. The selected payments will be permanently deleted.")
+        }
+    }
+
+    // MARK: - Selection Toolbar
+
+    private func selectionToolbar(windowSize: WindowSize) -> some View {
+        HStack(spacing: Spacing.md) {
+            // Selection count
+            Text("\(selectedPaymentIds.count) selected")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(SemanticColors.textPrimary)
+
+            Spacer()
+
+            // Select all visible
+            Button(action: {
+                let visibleIds = Set(filteredPayments.map { $0.id })
+                if visibleIds.isSubset(of: selectedPaymentIds) {
+                    selectedPaymentIds.subtract(visibleIds)
+                } else {
+                    selectedPaymentIds.formUnion(visibleIds)
+                }
+            }) {
+                let visibleIds = Set(filteredPayments.map { $0.id })
+                let allSelected = visibleIds.isSubset(of: selectedPaymentIds)
+                Text(allSelected ? "Deselect All" : "Select All")
+                    .font(.system(size: 13, weight: .medium))
+            }
+            .buttonStyle(.plain)
+
+            // Delete button
+            Button(action: {
+                showDeleteConfirmation = true
+            }) {
+                Label("Delete", systemImage: "trash")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(AppColors.error)
+            .disabled(selectedPaymentIds.isEmpty)
+
+            // Cancel selection
+            Button("Cancel") {
+                isSelectionMode = false
+                selectedPaymentIds.removeAll()
+            }
+            .buttonStyle(.bordered)
+        }
+        .padding(.horizontal, Spacing.lg)
+        .padding(.vertical, Spacing.md)
+        .background(SemanticColors.backgroundSecondary)
     }
 
     private func headerView(windowSize: WindowSize) -> some View {
@@ -190,6 +289,14 @@ struct PaymentScheduleView: View {
                         userTimezone: userTimezone,
                         onPaymentTap: { payment in
                             selectedPaymentForDetail = payment
+                        },
+                        onRecordPayment: { payment in
+                            selectedPaymentForRecording = payment
+                        },
+                        isSelectionMode: $isSelectionMode,
+                        selectedPaymentIds: $selectedPaymentIds,
+                        onBulkDelete: { ids in
+                            showDeleteConfirmation = true
                         }
                     )
                 }
@@ -242,6 +349,11 @@ struct PaymentScheduleView: View {
                 getVendorName: getVendorNameById,
                 onPaymentTap: { payment in
                     selectedPaymentForDetail = payment
+                },
+                isSelectionMode: $isSelectionMode,
+                selectedPaymentIds: $selectedPaymentIds,
+                onBulkDelete: { ids in
+                    showDeleteConfirmation = true
                 }
             )
             .frame(width: availableWidth)
@@ -293,6 +405,7 @@ struct PaymentScheduleView: View {
             },
             getVendorName: getVendorNameById
         )
+        .environmentObject(AppCoordinator.shared)
     }
 
     // MARK: - Computed Properties

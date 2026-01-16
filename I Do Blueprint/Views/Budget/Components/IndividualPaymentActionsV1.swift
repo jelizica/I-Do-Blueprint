@@ -11,13 +11,19 @@ import SwiftUI
 struct IndividualPaymentActionsV1: View {
     let payment: PaymentSchedule
     let onMarkPaid: () -> Void
+    let onRecordPayment: () -> Void
     let onViewReceipt: () -> Void
     let onEdit: () -> Void
     let onPlan: () -> Void
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            // Mark as Paid - Primary action when unpaid
+            // Record Payment - Primary action when unpaid (allows partial payments)
+            if !payment.paid {
+                recordPaymentButton
+            }
+
+            // Mark as Paid - Secondary option when unpaid, or status display when paid
             markPaidButton
 
             // View Receipt - Enabled when paid
@@ -39,6 +45,32 @@ struct IndividualPaymentActionsV1: View {
             }
         }
         .frame(minWidth: 200)
+    }
+
+    // MARK: - Record Payment Button
+
+    private var recordPaymentButton: some View {
+        Button(action: onRecordPayment) {
+            HStack(spacing: Spacing.sm) {
+                Image(systemName: "dollarsign.circle.fill")
+                    .font(.body)
+                Text("Record Payment")
+                    .font(Typography.bodyRegular.weight(.medium))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, Spacing.md)
+            .background(
+                RoundedRectangle(cornerRadius: CornerRadius.lg)
+                    .fill(AppColors.Budget.allocated)
+            )
+            .shadow(
+                color: AppColors.Budget.allocated.opacity(0.3),
+                radius: 8,
+                y: 4
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Mark as Paid Button

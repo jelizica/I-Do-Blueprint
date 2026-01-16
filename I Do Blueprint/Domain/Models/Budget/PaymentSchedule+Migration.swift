@@ -75,13 +75,22 @@ extension PaymentSchedule {
         let totalPaymentCount = try container.decodeIfPresent(Int.self, forKey: .totalPaymentCount)
         let paymentPlanType = try container.decodeIfPresent(String.self, forKey: .paymentPlanType)
         let paymentPlanId = try container.decodeIfPresent(UUID.self, forKey: .paymentPlanId)
-        
+        let segmentIndex = try container.decodeIfPresent(Int.self, forKey: .segmentIndex)
+
         // Custom date decoding using shared DateDecodingHelpers (refactored from duplicated code)
         let paymentDate = try DateDecodingHelpers.decodeDate(from: container, forKey: .paymentDate)
         let startDate = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .startDate)
         let createdAt = try DateDecodingHelpers.decodeDate(from: container, forKey: .createdAt)
         let updatedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .updatedAt)
-        
+
+        // Decode partial payment tracking fields
+        let originalAmount = try container.decodeIfPresent(Double.self, forKey: .originalAmount)
+        let amountPaid = try container.decodeIfPresent(Double.self, forKey: .amountPaid) ?? 0
+        let carryoverAmount = try container.decodeIfPresent(Double.self, forKey: .carryoverAmount) ?? 0
+        let carryoverFromId = try container.decodeIfPresent(Int64.self, forKey: .carryoverFromId)
+        let isCarryover = try container.decodeIfPresent(Bool.self, forKey: .isCarryover) ?? false
+        let paymentRecordedAt = try DateDecodingHelpers.decodeDateIfPresent(from: container, forKey: .paymentRecordedAt)
+
         // Initialize self using the memberwise initializer
         self.init(
             id: id,
@@ -108,8 +117,15 @@ extension PaymentSchedule {
             totalPaymentCount: totalPaymentCount,
             paymentPlanType: paymentPlanType,
             paymentPlanId: paymentPlanId,
+            segmentIndex: segmentIndex,
             createdAt: createdAt,
-            updatedAt: updatedAt
+            updatedAt: updatedAt,
+            originalAmount: originalAmount,
+            amountPaid: amountPaid,
+            carryoverAmount: carryoverAmount,
+            carryoverFromId: carryoverFromId,
+            isCarryover: isCarryover,
+            paymentRecordedAt: paymentRecordedAt
         )
     }
     

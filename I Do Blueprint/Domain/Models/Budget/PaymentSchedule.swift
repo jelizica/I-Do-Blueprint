@@ -34,8 +34,24 @@ struct PaymentSchedule: Identifiable, Codable {
     var totalPaymentCount: Int?
     var paymentPlanType: String?
     var paymentPlanId: UUID?
+    var segmentIndex: Int?  // For async plans: 0-based index of the segment this payment belongs to
     var createdAt: Date
     var updatedAt: Date?
+
+    // MARK: - Partial Payment Tracking Fields
+
+    /// The originally scheduled payment amount (immutable after creation)
+    var originalAmount: Double
+    /// The actual amount paid by the user (may differ from paymentAmount for partial/over payments)
+    var amountPaid: Double
+    /// Amount carried over from a previous underpayment
+    var carryoverAmount: Double
+    /// Reference to the payment that generated this carryover
+    var carryoverFromId: Int64?
+    /// True if this payment was auto-created from an underpayment
+    var isCarryover: Bool
+    /// Timestamp when the payment was actually recorded/made
+    var paymentRecordedAt: Date?
 
     // Computed properties for backward compatibility
     var amount: Double {
@@ -68,6 +84,38 @@ struct PaymentSchedule: Identifiable, Codable {
         return .pending
     }
 
+    // MARK: - Partial Payment Computed Properties
+
+    /// The remaining balance to be paid on this payment
+    var remainingBalance: Double {
+        max(0, paymentAmount - amountPaid)
+    }
+
+    /// Whether this payment has been partially paid
+    var isPartiallyPaid: Bool {
+        amountPaid > 0 && amountPaid < paymentAmount
+    }
+
+    /// Whether this payment was overpaid
+    var isOverpaid: Bool {
+        amountPaid > paymentAmount
+    }
+
+    /// The overpayment amount (excess paid beyond what was due)
+    var overpaymentAmount: Double {
+        max(0, amountPaid - paymentAmount)
+    }
+
+    /// The underpayment amount (shortfall from what was due)
+    var underpaymentAmount: Double {
+        max(0, paymentAmount - amountPaid)
+    }
+
+    /// Whether any payment has been recorded
+    var hasPaymentRecorded: Bool {
+        amountPaid > 0
+    }
+
     // Explicit memberwise initializer
     init(
         id: Int64,
@@ -94,8 +142,15 @@ struct PaymentSchedule: Identifiable, Codable {
         totalPaymentCount: Int? = nil,
         paymentPlanType: String? = nil,
         paymentPlanId: UUID? = nil,
+        segmentIndex: Int? = nil,
         createdAt: Date,
-        updatedAt: Date? = nil
+        updatedAt: Date? = nil,
+        originalAmount: Double? = nil,
+        amountPaid: Double = 0,
+        carryoverAmount: Double = 0,
+        carryoverFromId: Int64? = nil,
+        isCarryover: Bool = false,
+        paymentRecordedAt: Date? = nil
     ) {
         self.id = id
         self.coupleId = coupleId
@@ -121,8 +176,16 @@ struct PaymentSchedule: Identifiable, Codable {
         self.totalPaymentCount = totalPaymentCount
         self.paymentPlanType = paymentPlanType
         self.paymentPlanId = paymentPlanId
+        self.segmentIndex = segmentIndex
         self.createdAt = createdAt
         self.updatedAt = updatedAt
+        // Default originalAmount to paymentAmount if not provided (backward compatibility)
+        self.originalAmount = originalAmount ?? paymentAmount
+        self.amountPaid = amountPaid
+        self.carryoverAmount = carryoverAmount
+        self.carryoverFromId = carryoverFromId
+        self.isCarryover = isCarryover
+        self.paymentRecordedAt = paymentRecordedAt
     }
 
     // Custom decoding moved to PaymentSchedule+Migration.swift extension
@@ -155,7 +218,15 @@ struct PaymentSchedule: Identifiable, Codable {
         case totalPaymentCount = "total_payment_count"
         case paymentPlanType = "payment_plan_type"
         case paymentPlanId = "payment_plan_id"
+        case segmentIndex = "segment_index"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+        // Partial payment tracking fields
+        case originalAmount = "original_amount"
+        case amountPaid = "amount_paid"
+        case carryoverAmount = "carryover_amount"
+        case carryoverFromId = "carryover_from_id"
+        case isCarryover = "is_carryover"
+        case paymentRecordedAt = "payment_recorded_at"
     }
 }

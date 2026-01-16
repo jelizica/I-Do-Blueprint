@@ -17,6 +17,10 @@ struct IndividualPaymentDetailViewV1: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var showingEditSheet = false
+    @State private var showingPlanModal = false
+    @State private var showingRecordPaymentModal = false
+    @State private var paymentPlanSummary: PaymentPlanSummary?
+    @State private var isLoadingPlan = false
     @State private var hasAppeared = false
 
     // MARK: - Proportional Modal Sizing Pattern
@@ -66,6 +70,19 @@ struct IndividualPaymentDetailViewV1: View {
     private var relatedExpense: Expense? {
         guard case .loaded(let data) = budgetStore.loadingState else { return nil }
         return data.expenses.first { $0.id == payment.expenseId }
+    }
+
+    /// Whether this payment is part of a payment plan
+    private var isPartOfPlan: Bool {
+        payment.paymentPlanId != nil
+    }
+
+    /// All payments in the same plan as this payment
+    private var planPayments: [PaymentSchedule] {
+        guard let planId = payment.paymentPlanId else { return [] }
+        return budgetStore.payments.paymentSchedules
+            .filter { $0.paymentPlanId == planId }
+            .sorted { $0.paymentDate < $1.paymentDate }
     }
 
     // MARK: - Body
@@ -129,6 +146,41 @@ struct IndividualPaymentDetailViewV1: View {
             )
             .environmentObject(settingsStore)
         }
+        .sheet(isPresented: $showingPlanModal) {
+            if let summary = paymentPlanSummary {
+                PaymentPlanDetailModal(
+                    plan: summary,
+                    paymentSchedules: budgetStore.payments.paymentSchedules,
+                    onUpdate: { updatedPayment in
+                        Task {
+                            await budgetStore.payments.updatePayment(updatedPayment)
+                        }
+                    },
+                    onDelete: { paymentToDelete in
+                        Task {
+                            await budgetStore.payments.deletePayment(id: paymentToDelete.id)
+                        }
+                    },
+                    getVendorName: { vendorId in
+                        guard let id = vendorId else { return nil }
+                        return vendorStore.vendors.first(where: { $0.id == id })?.vendorName
+                    }
+                )
+            }
+        }
+        .sheet(isPresented: $showingRecordPaymentModal) {
+            RecordPaymentModal(
+                payment: payment,
+                onRecordPayment: { amount in
+                    await budgetStore.payments.recordPartialPayment(
+                        payment: payment,
+                        amountPaid: amount
+                    )
+                }
+            )
+            .environmentObject(settingsStore)
+            .environmentObject(coordinator)
+        }
     }
 
     // MARK: - Hero Card
@@ -159,6 +211,7 @@ struct IndividualPaymentDetailViewV1: View {
                 IndividualPaymentActionsV1(
                     payment: payment,
                     onMarkPaid: handleMarkPaid,
+                    onRecordPayment: { showingRecordPaymentModal = true },
                     onViewReceipt: handleViewReceipt,
                     onEdit: { showingEditSheet = true },
                     onPlan: handlePlan
@@ -201,6 +254,97 @@ struct IndividualPaymentDetailViewV1: View {
     }
 
     private func handlePlan() {
-        // TODO: Implement payment planning
+        guard let planId = payment.paymentPlanId,
+              let expenseId = payment.expenseId else { return }
+
+        isLoadingPlan = true
+
+        Task {
+            // Load the payment plan summary
+            if let summary = await budgetStore.payments.loadPaymentPlanSummary(expenseId: expenseId) {
+                await MainActor.run {
+                    self.paymentPlanSummary = summary
+                    self.isLoadingPlan = false
+                    self.showingPlanModal = true
+                }
+            } else {
+                // Try to construct a basic summary from the payments we have
+                let payments = planPayments
+                if !payments.isEmpty {
+                    let summary = constructPlanSummary(from: payments, planId: planId)
+                    await MainActor.run {
+                        self.paymentPlanSummary = summary
+                        self.isLoadingPlan = false
+                        self.showingPlanModal = true
+                    }
+                } else {
+                    await MainActor.run {
+                        self.isLoadingPlan = false
+                    }
+                }
+            }
+        }
+    }
+
+    private func constructPlanSummary(from payments: [PaymentSchedule], planId: UUID) -> PaymentPlanSummary {
+        let total = payments.reduce(0) { $0 + $1.paymentAmount }
+        let paid = payments.filter { $0.paid }.reduce(0) { $0 + $1.paymentAmount }
+        let paidCount = payments.filter { $0.paid }.count
+        let unpaidCount = payments.count - paidCount
+        let sortedPayments = payments.sorted { $0.paymentDate < $1.paymentDate }
+        let depositPayments = payments.filter { $0.isDeposit }
+        let overduePayments = sortedPayments.filter { !$0.paid && $0.paymentDate < Date() }
+        let allPaid = payments.allSatisfy { $0.paid }
+        let anyPaid = payments.contains { $0.paid }
+
+        // Determine plan status
+        let planStatus: PaymentPlanSummary.PlanStatus
+        if allPaid {
+            planStatus = .completed
+        } else if !overduePayments.isEmpty {
+            planStatus = .overdue
+        } else if anyPaid {
+            planStatus = .inProgress
+        } else {
+            planStatus = .pending
+        }
+
+        return PaymentPlanSummary(
+            paymentPlanId: planId,
+            expenseId: payment.expenseId ?? UUID(),
+            coupleId: payment.coupleId,
+            vendor: vendorName,
+            vendorId: payment.vendorId ?? 0,
+            vendorType: payment.vendorType,
+            paymentType: payment.paymentType ?? "plan",
+            paymentPlanType: payment.paymentPlanType ?? "custom",
+            planTypeDisplay: payment.paymentPlanType ?? "Payment Plan",
+            totalPayments: payments.count,
+            firstPaymentDate: sortedPayments.first?.paymentDate ?? Date(),
+            lastPaymentDate: sortedPayments.last?.paymentDate ?? Date(),
+            depositDate: depositPayments.first?.paymentDate,
+            totalAmount: total,
+            amountPaid: paid,
+            amountRemaining: total - paid,
+            depositAmount: depositPayments.first?.paymentAmount ?? 0,
+            percentPaid: total > 0 ? (paid / total * 100) : 0,
+            actualPaymentCount: Int64(payments.count),
+            paymentsCompleted: Int64(paidCount),
+            paymentsRemaining: Int64(unpaidCount),
+            depositCount: Int64(depositPayments.count),
+            allPaid: allPaid,
+            anyPaid: anyPaid,
+            hasDeposit: !depositPayments.isEmpty,
+            hasRetainer: payments.contains { $0.isRetainer },
+            planStatus: planStatus,
+            nextPaymentDate: sortedPayments.first { !$0.paid }?.paymentDate,
+            nextPaymentAmount: sortedPayments.first { !$0.paid }?.paymentAmount,
+            daysUntilNextPayment: nil,
+            overdueCount: Int64(overduePayments.count),
+            overdueAmount: overduePayments.reduce(0) { $0 + $1.paymentAmount },
+            combinedNotes: nil,
+            planCreatedAt: payments.first?.createdAt ?? Date(),
+            planUpdatedAt: payments.compactMap { $0.updatedAt }.max()
+        )
     }
 }
