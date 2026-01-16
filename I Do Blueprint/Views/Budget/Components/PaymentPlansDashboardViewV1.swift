@@ -161,8 +161,19 @@ struct PaymentPlansDashboardViewV1: View {
         payments: [PaymentSchedule]
     ) -> PaymentGroup {
         let totalAmount = payments.reduce(0) { $0 + $1.paymentAmount }
-        // Use actual amountPaid for accurate tracking (includes partial payments)
-        let paidAmount = payments.reduce(0) { $0 + $1.amountPaid }
+        // Calculate paid amount correctly:
+        // - For fully paid items: use paymentAmount (amountPaid may be 0 for legacy data)
+        // - For partially paid items: use amountPaid
+        // - For unpaid items: 0
+        let paidAmount = payments.reduce(0) { total, payment in
+            if payment.paid {
+                // Fully paid: use paymentAmount (handles legacy data where amountPaid wasn't tracked)
+                return total + payment.paymentAmount
+            } else {
+                // Partially paid or unpaid: use amountPaid (which is 0 for unpaid)
+                return total + payment.amountPaid
+            }
+        }
         let upcomingPayments = payments.filter { !$0.paid && $0.paymentDate > Date() }
         let overduePayments = payments.filter { !$0.paid && $0.paymentDate < Date() }
 
