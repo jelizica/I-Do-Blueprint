@@ -40,6 +40,8 @@ struct PerPersonItemRow: View {
                     .font(Typography.numberMedium)
                     .foregroundColor(SemanticColors.textPrimary)
                     .frame(width: 100, alignment: .trailing)
+
+                taxExemptToggle
             }
 
             deleteButton
@@ -101,6 +103,27 @@ struct PerPersonItemRow: View {
         )
     }
 
+    private var taxExemptToggle: some View {
+        Button(action: {
+            item.isTaxExempt.toggle()
+        }) {
+            HStack(spacing: Spacing.xxs) {
+                Image(systemName: item.isTaxExempt ? "checkmark.square.fill" : "square")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+                Text("No Tax")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+            }
+            .padding(.horizontal, Spacing.xs)
+            .padding(.vertical, Spacing.xxs)
+            .background(item.isTaxExempt ? SemanticColors.statusWarning.opacity(0.1) : Color.clear)
+            .cornerRadius(CornerRadius.sm)
+        }
+        .buttonStyle(.plain)
+        .help(item.isTaxExempt ? "This item is exempt from tax" : "Click to exempt from tax")
+    }
+
     private var deleteButton: some View {
         Button(action: onDelete) {
             Image(systemName: "trash")
@@ -155,6 +178,8 @@ struct ServiceFeeItemRow: View {
                     .font(Typography.numberMedium)
                     .foregroundColor(SemanticColors.textPrimary)
                     .frame(width: 100, alignment: .trailing)
+
+                taxExemptToggle
             }
 
             deleteButton
@@ -216,6 +241,27 @@ struct ServiceFeeItemRow: View {
         )
     }
 
+    private var taxExemptToggle: some View {
+        Button(action: {
+            item.isTaxExempt.toggle()
+        }) {
+            HStack(spacing: Spacing.xxs) {
+                Image(systemName: item.isTaxExempt ? "checkmark.square.fill" : "square")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+                Text("No Tax")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+            }
+            .padding(.horizontal, Spacing.xs)
+            .padding(.vertical, Spacing.xxs)
+            .background(item.isTaxExempt ? SemanticColors.statusWarning.opacity(0.1) : Color.clear)
+            .cornerRadius(CornerRadius.sm)
+        }
+        .buttonStyle(.plain)
+        .help(item.isTaxExempt ? "This item is exempt from tax" : "Click to exempt from tax")
+    }
+
     private var deleteButton: some View {
         Button(action: onDelete) {
             Image(systemName: "trash")
@@ -264,6 +310,8 @@ struct FlatFeeItemRow: View {
                     .font(Typography.numberMedium)
                     .foregroundColor(SemanticColors.textPrimary)
                     .frame(width: 100, alignment: .trailing)
+
+                taxExemptToggle
             }
 
             deleteButton
@@ -325,6 +373,27 @@ struct FlatFeeItemRow: View {
         )
     }
 
+    private var taxExemptToggle: some View {
+        Button(action: {
+            item.isTaxExempt.toggle()
+        }) {
+            HStack(spacing: Spacing.xxs) {
+                Image(systemName: item.isTaxExempt ? "checkmark.square.fill" : "square")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+                Text("No Tax")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+            }
+            .padding(.horizontal, Spacing.xs)
+            .padding(.vertical, Spacing.xxs)
+            .background(item.isTaxExempt ? SemanticColors.statusWarning.opacity(0.1) : Color.clear)
+            .cornerRadius(CornerRadius.sm)
+        }
+        .buttonStyle(.plain)
+        .help(item.isTaxExempt ? "This item is exempt from tax" : "Click to exempt from tax")
+    }
+
     private var deleteButton: some View {
         Button(action: onDelete) {
             Image(systemName: "trash")
@@ -353,11 +422,23 @@ struct FlatFeeItemRow: View {
 // MARK: - Variable Item Row (Per-Item with custom quantity)
 
 /// Row component for variable item count mode where each item has its own quantity
+/// Supports both static (manual) and dynamic (linked to guest count) quantities
 struct VariableItemRow: View {
     @Binding var item: BillLineItem
+    let guestCount: Int
     let onDelete: () -> Void
 
     @State private var isHovered = false
+
+    /// Whether this item uses dynamic quantity (linked to guest count)
+    private var isDynamic: Bool {
+        item.quantityMultiplier != nil
+    }
+
+    /// The effective quantity - either dynamic (calculated) or static (stored)
+    private var effectiveQuantity: Int {
+        item.effectiveQuantity(guestCount: guestCount)
+    }
 
     var body: some View {
         HStack(spacing: Spacing.md) {
@@ -374,13 +455,21 @@ struct VariableItemRow: View {
                     .font(Typography.bodySmall)
                     .foregroundColor(SemanticColors.textTertiary)
 
-                quantityField
-                    .frame(width: 80)
+                // Show dynamic indicator or manual quantity controls
+                if isDynamic {
+                    dynamicQuantityDisplay
+                        .frame(width: 80)
+                } else {
+                    quantityField
+                        .frame(width: 80)
+                }
 
-                Text(formatCurrency(item.variableItemTotal))
+                Text(formatCurrency(item.variableItemTotal(guestCount: guestCount)))
                     .font(Typography.numberMedium)
                     .foregroundColor(SemanticColors.textPrimary)
                     .frame(width: 100, alignment: .trailing)
+
+                taxExemptToggle
             }
 
             deleteButton
@@ -482,6 +571,50 @@ struct VariableItemRow: View {
             RoundedRectangle(cornerRadius: CornerRadius.sm)
                 .stroke(SemanticColors.borderPrimary, lineWidth: 1)
         )
+    }
+
+    /// Dynamic quantity display - shows link icon and calculated quantity
+    /// This replaces manual controls when item is linked to guest count
+    private var dynamicQuantityDisplay: some View {
+        HStack(spacing: Spacing.xs) {
+            Image(systemName: "link")
+                .font(Typography.caption2)
+                .foregroundColor(SemanticColors.success)
+
+            Text("\(effectiveQuantity)")
+                .font(Typography.bodyRegular.weight(.semibold))
+                .foregroundColor(SemanticColors.textPrimary)
+        }
+        .padding(.horizontal, Spacing.sm)
+        .padding(.vertical, Spacing.xs)
+        .background(SemanticColors.success.opacity(0.1))
+        .cornerRadius(CornerRadius.sm)
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.sm)
+                .stroke(SemanticColors.success.opacity(0.3), lineWidth: 1)
+        )
+        .help("Linked to guest count (\(guestCount) guests × \(String(format: "%.2f", item.quantityMultiplier ?? 1.0)))")
+    }
+
+    private var taxExemptToggle: some View {
+        Button(action: {
+            item.isTaxExempt.toggle()
+        }) {
+            HStack(spacing: Spacing.xxs) {
+                Image(systemName: item.isTaxExempt ? "checkmark.square.fill" : "square")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+                Text("No Tax")
+                    .font(Typography.caption)
+                    .foregroundColor(item.isTaxExempt ? SemanticColors.statusWarning : SemanticColors.textTertiary)
+            }
+            .padding(.horizontal, Spacing.xs)
+            .padding(.vertical, Spacing.xxs)
+            .background(item.isTaxExempt ? SemanticColors.statusWarning.opacity(0.1) : Color.clear)
+            .cornerRadius(CornerRadius.sm)
+        }
+        .buttonStyle(.plain)
+        .help(item.isTaxExempt ? "This item is exempt from tax" : "Click to exempt from tax")
     }
 
     private var deleteButton: some View {

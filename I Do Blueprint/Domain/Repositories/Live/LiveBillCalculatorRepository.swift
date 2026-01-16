@@ -281,6 +281,9 @@ actor LiveBillCalculatorRepository: BillCalculatorRepositoryProtocol {
                         type: item.type,
                         name: item.name,
                         amount: item.amount,
+                        quantity: item.quantity,
+                        quantityMultiplier: item.quantityMultiplier,
+                        isTaxExempt: item.isTaxExempt,
                         sortOrder: item.sortOrder
                     ))
                 }
@@ -324,32 +327,54 @@ actor LiveBillCalculatorRepository: BillCalculatorRepositoryProtocol {
 
             // Update calculator metadata
             let updateData = BillCalculatorInsertData(from: calculator)
-            let updatedRow: BillCalculatorRow = try await RepositoryNetwork.withRetry {
-                try await client
-                    .from("bill_calculators")
-                    .update(updateData)
-                    .eq("id", value: calculator.id)
-                    .eq("couple_id", value: tenantId)
-                    .select("""
-                        *,
-                        vendor_information(vendor_name),
-                        wedding_events(event_name),
-                        tax_info(tax_rate, region)
-                    """)
-                    .single()
-                    .execute()
-                    .value
+            logger.debug("Updating calculator \(calculator.id.uuidString)")
+
+            let updatedRow: BillCalculatorRow
+            do {
+                updatedRow = try await RepositoryNetwork.withRetry {
+                    try await client
+                        .from("bill_calculators")
+                        .update(updateData)
+                        .eq("id", value: calculator.id)
+                        .eq("couple_id", value: tenantId)
+                        .select("""
+                            *,
+                            vendor_information(vendor_name),
+                            wedding_events(event_name),
+                            tax_info(tax_rate, region)
+                        """)
+                        .single()
+                        .execute()
+                        .value
+                }
+                logger.debug("Successfully decoded BillCalculatorRow")
+            } catch {
+                logger.error("Failed to decode BillCalculatorRow: \(error)")
+                if let decodingError = error as? DecodingError {
+                    logger.error("DecodingError details: \(decodingError)")
+                }
+                throw error
             }
 
             // Fetch existing items from database to compare
-            let existingItems: [BillCalculatorItem] = try await RepositoryNetwork.withRetry {
-                try await client
-                    .from("bill_calculator_items")
-                    .select()
-                    .eq("calculator_id", value: calculator.id)
-                    .eq("couple_id", value: tenantId)
-                    .execute()
-                    .value
+            let existingItems: [BillCalculatorItem]
+            do {
+                existingItems = try await RepositoryNetwork.withRetry {
+                    try await client
+                        .from("bill_calculator_items")
+                        .select()
+                        .eq("calculator_id", value: calculator.id)
+                        .eq("couple_id", value: tenantId)
+                        .execute()
+                        .value
+                }
+                logger.debug("Successfully decoded \(existingItems.count) existing items")
+            } catch {
+                logger.error("Failed to decode existing BillCalculatorItems: \(error)")
+                if let decodingError = error as? DecodingError {
+                    logger.error("DecodingError details: \(decodingError)")
+                }
+                throw error
             }
 
             let existingIds = Set(existingItems.map { $0.id })
@@ -380,6 +405,9 @@ actor LiveBillCalculatorRepository: BillCalculatorRepositoryProtocol {
                         type: item.type,
                         name: item.name,
                         amount: item.amount,
+                        quantity: item.quantity,
+                        quantityMultiplier: item.quantityMultiplier,
+                        isTaxExempt: item.isTaxExempt,
                         sortOrder: item.sortOrder
                     ))
                 }
@@ -410,15 +438,25 @@ actor LiveBillCalculatorRepository: BillCalculatorRepositoryProtocol {
             }
 
             // Fetch final items state
-            let finalItems: [BillCalculatorItem] = try await RepositoryNetwork.withRetry {
-                try await client
-                    .from("bill_calculator_items")
-                    .select()
-                    .eq("calculator_id", value: calculator.id)
-                    .eq("couple_id", value: tenantId)
-                    .order("sort_order", ascending: true)
-                    .execute()
-                    .value
+            let finalItems: [BillCalculatorItem]
+            do {
+                finalItems = try await RepositoryNetwork.withRetry {
+                    try await client
+                        .from("bill_calculator_items")
+                        .select()
+                        .eq("calculator_id", value: calculator.id)
+                        .eq("couple_id", value: tenantId)
+                        .order("sort_order", ascending: true)
+                        .execute()
+                        .value
+                }
+                logger.debug("Successfully decoded \(finalItems.count) final items")
+            } catch {
+                logger.error("Failed to decode final BillCalculatorItems: \(error)")
+                if let decodingError = error as? DecodingError {
+                    logger.error("DecodingError details: \(decodingError)")
+                }
+                throw error
             }
 
             let updated = updatedRow.toBillCalculator(items: finalItems)
@@ -661,7 +699,8 @@ actor LiveBillCalculatorRepository: BillCalculatorRepositoryProtocol {
 // MARK: - Bill Calculator Row (for JOIN parsing)
 
 /// Internal struct for parsing joined query results
-private struct BillCalculatorRow: Decodable {
+/// Made internal (not private) so other repositories can reuse for bill calculator fetching
+struct BillCalculatorRow: Decodable {
     let id: UUID
     let coupleId: UUID
     let name: String

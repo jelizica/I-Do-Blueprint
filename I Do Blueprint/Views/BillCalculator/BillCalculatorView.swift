@@ -920,8 +920,10 @@ struct BillCalculatorView: View {
                 ForEach(Array(calculator.perPersonItems.enumerated()), id: \.element.id) { index, _ in
                     if usesVariableItemCount {
                         // Variable mode: show VariableItemRow with editable quantity
+                        // Pass guestCount for dynamic quantity calculation
                         VariableItemRow(
                             item: bindingForPerPersonItem(at: index),
+                            guestCount: calculator.guestCount,
                             onDelete: {
                                 calculator.removePerPersonItem(at: index)
                                 hasUnsavedChanges = true
@@ -1553,7 +1555,15 @@ struct BillCalculatorView: View {
         Binding(
             get: {
                 let item = calculator.perPersonItems[index]
-                return BillLineItem(id: item.id, name: item.name, amount: item.amount, quantity: item.quantity, sortOrder: item.sortOrder)
+                return BillLineItem(
+                    id: item.id,
+                    name: item.name,
+                    amount: item.amount,
+                    quantity: item.quantity,
+                    quantityMultiplier: item.quantityMultiplier,
+                    isTaxExempt: item.isTaxExempt,
+                    sortOrder: item.sortOrder
+                )
             },
             set: { newValue in
                 // Find and update the item in the items array
@@ -1561,6 +1571,8 @@ struct BillCalculatorView: View {
                     calculator.items[itemIndex].name = newValue.name
                     calculator.items[itemIndex].amount = newValue.amount
                     calculator.items[itemIndex].quantity = newValue.quantity
+                    calculator.items[itemIndex].quantityMultiplier = newValue.quantityMultiplier
+                    calculator.items[itemIndex].isTaxExempt = newValue.isTaxExempt
                     calculator.items[itemIndex].sortOrder = newValue.sortOrder
                     hasUnsavedChanges = true
                 }
@@ -1573,7 +1585,14 @@ struct BillCalculatorView: View {
         Binding(
             get: {
                 let item = calculator.serviceFeeItems[index]
-                return BillLineItem(id: item.id, name: item.name, amount: item.amount, quantity: item.quantity, sortOrder: item.sortOrder)
+                return BillLineItem(
+                    id: item.id,
+                    name: item.name,
+                    amount: item.amount,
+                    quantity: item.quantity,
+                    isTaxExempt: item.isTaxExempt,
+                    sortOrder: item.sortOrder
+                )
             },
             set: { newValue in
                 // Find and update the item in the items array
@@ -1581,6 +1600,7 @@ struct BillCalculatorView: View {
                     calculator.items[itemIndex].name = newValue.name
                     calculator.items[itemIndex].amount = newValue.amount
                     calculator.items[itemIndex].quantity = newValue.quantity
+                    calculator.items[itemIndex].isTaxExempt = newValue.isTaxExempt
                     calculator.items[itemIndex].sortOrder = newValue.sortOrder
                     hasUnsavedChanges = true
                 }
@@ -1593,7 +1613,14 @@ struct BillCalculatorView: View {
         Binding(
             get: {
                 let item = calculator.flatFeeItems[index]
-                return BillLineItem(id: item.id, name: item.name, amount: item.amount, quantity: item.quantity, sortOrder: item.sortOrder)
+                return BillLineItem(
+                    id: item.id,
+                    name: item.name,
+                    amount: item.amount,
+                    quantity: item.quantity,
+                    isTaxExempt: item.isTaxExempt,
+                    sortOrder: item.sortOrder
+                )
             },
             set: { newValue in
                 // Find and update the item in the items array
@@ -1601,6 +1628,7 @@ struct BillCalculatorView: View {
                     calculator.items[itemIndex].name = newValue.name
                     calculator.items[itemIndex].amount = newValue.amount
                     calculator.items[itemIndex].quantity = newValue.quantity
+                    calculator.items[itemIndex].isTaxExempt = newValue.isTaxExempt
                     calculator.items[itemIndex].sortOrder = newValue.sortOrder
                     hasUnsavedChanges = true
                 }

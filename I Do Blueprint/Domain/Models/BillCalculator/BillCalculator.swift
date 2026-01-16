@@ -119,6 +119,12 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
     var name: String
     var amount: Double
     var quantity: Int
+    /// When set, quantity is calculated dynamically as ceil(guestCount × multiplier)
+    /// nil means use the static `quantity` value
+    var quantityMultiplier: Double?
+    /// When true, this item is exempt from tax calculations
+    /// Default is false (item is taxed)
+    var isTaxExempt: Bool
     var sortOrder: Int
     let createdAt: Date?
     var updatedAt: Date?
@@ -131,6 +137,8 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         case name
         case amount
         case quantity = "item_quantity"
+        case quantityMultiplier = "quantity_multiplier"
+        case isTaxExempt = "is_tax_exempt"
         case sortOrder = "sort_order"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -144,6 +152,8 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         name: String = "",
         amount: Double = 0,
         quantity: Int = 1,
+        quantityMultiplier: Double? = nil,
+        isTaxExempt: Bool = false,
         sortOrder: Int = 0,
         createdAt: Date? = nil,
         updatedAt: Date? = nil
@@ -155,6 +165,8 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         self.name = name
         self.amount = amount
         self.quantity = quantity
+        self.quantityMultiplier = quantityMultiplier
+        self.isTaxExempt = isTaxExempt
         self.sortOrder = sortOrder
         self.createdAt = createdAt
         self.updatedAt = updatedAt
@@ -169,12 +181,39 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         coupleId = try container.decode(UUID.self, forKey: .coupleId)
         type = try container.decode(BillItemType.self, forKey: .type)
         name = try container.decode(String.self, forKey: .name)
-        amount = try container.decode(Double.self, forKey: .amount)
+
+        // PostgreSQL numeric type returns as string from Supabase - handle both formats
+        if let doubleValue = try? container.decode(Double.self, forKey: .amount) {
+            amount = doubleValue
+        } else if let stringValue = try? container.decode(String.self, forKey: .amount),
+                  let parsedDouble = Double(stringValue) {
+            amount = parsedDouble
+        } else {
+            amount = 0
+        }
+
         // Default to 1 if quantity is missing (backward compatibility)
         quantity = try container.decodeIfPresent(Int.self, forKey: .quantity) ?? 1
+        quantityMultiplier = try container.decodeIfPresent(Double.self, forKey: .quantityMultiplier)
+        // Default to false (taxed) if missing (backward compatibility)
+        isTaxExempt = try container.decodeIfPresent(Bool.self, forKey: .isTaxExempt) ?? false
         sortOrder = try container.decode(Int.self, forKey: .sortOrder)
         createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt)
         updatedAt = try container.decodeIfPresent(Date.self, forKey: .updatedAt)
+    }
+
+    /// Whether this item uses dynamic quantity calculation (linked to guest count)
+    var usesDynamicQuantity: Bool {
+        quantityMultiplier != nil
+    }
+
+    /// Gets the effective quantity for this item based on the current guest count
+    /// If quantityMultiplier is set, calculates dynamically; otherwise uses static quantity
+    func effectiveQuantity(guestCount: Int) -> Int {
+        if let multiplier = quantityMultiplier {
+            return max(1, Int(ceil(Double(guestCount) * multiplier)))
+        }
+        return quantity
     }
 
     /// Calculates the total for a per-person item (uses guest count)
@@ -183,7 +222,14 @@ struct BillCalculatorItem: Codable, Identifiable, Equatable, Hashable, Sendable 
         return amount * Double(guestCount)
     }
 
-    /// Calculates the total for a variable quantity item (uses item's own quantity)
+    /// Calculates the total for a variable quantity item
+    /// Uses dynamic calculation if multiplier is set, otherwise uses static quantity
+    func variableItemTotal(guestCount: Int) -> Double {
+        guard type == .perPerson else { return 0 }
+        return amount * Double(effectiveQuantity(guestCount: guestCount))
+    }
+
+    /// Legacy computed property - uses static quantity only (for backward compatibility)
     var variableItemTotal: Double {
         guard type == .perPerson else { return 0 }
         return amount * Double(quantity)
@@ -212,6 +258,8 @@ struct BillCalculatorItemInsertData: Codable {
     let name: String
     let amount: Double
     let quantity: Int
+    let quantityMultiplier: Double?
+    let isTaxExempt: Bool
     let sortOrder: Int
 
     enum CodingKeys: String, CodingKey {
@@ -221,6 +269,8 @@ struct BillCalculatorItemInsertData: Codable {
         case name
         case amount
         case quantity = "item_quantity"
+        case quantityMultiplier = "quantity_multiplier"
+        case isTaxExempt = "is_tax_exempt"
         case sortOrder = "sort_order"
     }
 
@@ -231,6 +281,8 @@ struct BillCalculatorItemInsertData: Codable {
         self.name = item.name
         self.amount = item.amount
         self.quantity = item.quantity
+        self.quantityMultiplier = item.quantityMultiplier
+        self.isTaxExempt = item.isTaxExempt
         self.sortOrder = item.sortOrder
     }
 }
@@ -240,6 +292,8 @@ struct BillCalculatorItemUpdateData: Codable {
     let name: String
     let amount: Double
     let quantity: Int
+    let quantityMultiplier: Double?
+    let isTaxExempt: Bool
     let sortOrder: Int
     let type: String
 
@@ -247,6 +301,8 @@ struct BillCalculatorItemUpdateData: Codable {
         case name
         case amount
         case quantity = "item_quantity"
+        case quantityMultiplier = "quantity_multiplier"
+        case isTaxExempt = "is_tax_exempt"
         case sortOrder = "sort_order"
         case type
     }
@@ -255,6 +311,8 @@ struct BillCalculatorItemUpdateData: Codable {
         self.name = item.name
         self.amount = item.amount
         self.quantity = item.quantity
+        self.quantityMultiplier = item.quantityMultiplier
+        self.isTaxExempt = item.isTaxExempt
         self.sortOrder = item.sortOrder
         self.type = item.type.rawValue
     }
@@ -440,10 +498,11 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
     }
 
     /// Total for all per-person/per-item items (mode-aware)
+    /// In variable mode, items with quantityMultiplier use dynamic calculation with guestCount
     var perPersonTotal: Double {
         if usesVariableItemCount {
-            // Variable mode: each item uses its own quantity
-            return perPersonItems.reduce(0) { $0 + $1.variableItemTotal }
+            // Variable mode: each item uses its own quantity (static or dynamic via multiplier)
+            return perPersonItems.reduce(0) { $0 + $1.variableItemTotal(guestCount: guestCount) }
         } else {
             // Auto/Manual mode: all items use the shared guest count
             return perPersonItems.reduce(0) { $0 + $1.perPersonTotal(guestCount: guestCount) }
@@ -470,9 +529,40 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
         perPersonTotal + serviceFeeTotal + flatFeeTotal
     }
 
-    /// Tax amount
+    // MARK: - Taxable Totals (excludes tax-exempt items)
+
+    /// Total for taxable per-person/per-item items only (excludes tax-exempt items)
+    var taxablePerPersonTotal: Double {
+        let taxableItems = perPersonItems.filter { !$0.isTaxExempt }
+        if usesVariableItemCount {
+            return taxableItems.reduce(0) { $0 + $1.variableItemTotal(guestCount: guestCount) }
+        } else {
+            return taxableItems.reduce(0) { $0 + $1.perPersonTotal(guestCount: guestCount) }
+        }
+    }
+
+    /// Total for taxable service fee items only (excludes tax-exempt items)
+    var taxableServiceFeeTotal: Double {
+        serviceFeeItems
+            .filter { !$0.isTaxExempt }
+            .reduce(0) { $0 + $1.serviceFeeTotal(subtotal: serviceFeeSubtotal) }
+    }
+
+    /// Total for taxable flat fee items only (excludes tax-exempt items)
+    var taxableFlatFeeTotal: Double {
+        flatFeeItems
+            .filter { !$0.isTaxExempt }
+            .reduce(0) { $0 + $1.flatFeeTotal }
+    }
+
+    /// Taxable subtotal (excludes tax-exempt items)
+    var taxableSubtotal: Double {
+        taxablePerPersonTotal + taxableServiceFeeTotal + taxableFlatFeeTotal
+    }
+
+    /// Tax amount (calculated on taxable items only)
     var taxAmount: Double {
-        subtotal * (effectiveTaxRate / 100.0)
+        taxableSubtotal * (effectiveTaxRate / 100.0)
     }
 
     /// Grand total including tax
@@ -487,8 +577,9 @@ struct BillCalculator: Codable, Identifiable, Equatable, Sendable {
     }
 
     /// Total quantity across all per-person items (for variable mode display)
+    /// Uses effective quantity which accounts for dynamic multipliers
     var totalItemQuantity: Int {
-        perPersonItems.reduce(0) { $0 + $1.quantity }
+        perPersonItems.reduce(0) { $0 + $1.effectiveQuantity(guestCount: guestCount) }
     }
 
     /// Total number of line items
@@ -719,6 +810,10 @@ struct BillLineItem: Codable, Identifiable, Equatable, Hashable, Sendable {
     var name: String
     var amount: Double
     var quantity: Int
+    /// When set, quantity is calculated dynamically as ceil(guestCount × multiplier)
+    var quantityMultiplier: Double?
+    /// When true, this item is exempt from tax calculations
+    var isTaxExempt: Bool
     var sortOrder: Int
 
     init(
@@ -726,13 +821,30 @@ struct BillLineItem: Codable, Identifiable, Equatable, Hashable, Sendable {
         name: String = "",
         amount: Double = 0,
         quantity: Int = 1,
+        quantityMultiplier: Double? = nil,
+        isTaxExempt: Bool = false,
         sortOrder: Int = 0
     ) {
         self.id = id
         self.name = name
         self.amount = amount
         self.quantity = quantity
+        self.quantityMultiplier = quantityMultiplier
+        self.isTaxExempt = isTaxExempt
         self.sortOrder = sortOrder
+    }
+
+    /// Whether this item uses dynamic quantity calculation (linked to guest count)
+    var usesDynamicQuantity: Bool {
+        quantityMultiplier != nil
+    }
+
+    /// Gets the effective quantity for this item based on the current guest count
+    func effectiveQuantity(guestCount: Int) -> Int {
+        if let multiplier = quantityMultiplier {
+            return max(1, Int(ceil(Double(guestCount) * multiplier)))
+        }
+        return quantity
     }
 
     /// Calculates the total for a per-person item
@@ -740,7 +852,12 @@ struct BillLineItem: Codable, Identifiable, Equatable, Hashable, Sendable {
         return amount * Double(guestCount)
     }
 
-    /// Calculates the total for a variable quantity item
+    /// Calculates the total for a variable quantity item (dynamic or static)
+    func variableItemTotal(guestCount: Int) -> Double {
+        return amount * Double(effectiveQuantity(guestCount: guestCount))
+    }
+
+    /// Legacy: Calculates the total using static quantity only
     var variableItemTotal: Double {
         return amount * Double(quantity)
     }
@@ -765,6 +882,8 @@ struct BillLineItem: Codable, Identifiable, Equatable, Hashable, Sendable {
             name: name,
             amount: amount,
             quantity: quantity,
+            quantityMultiplier: quantityMultiplier,
+            isTaxExempt: isTaxExempt,
             sortOrder: sortOrder
         )
     }
