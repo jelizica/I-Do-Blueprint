@@ -18,7 +18,7 @@ struct IndividualPaymentsListViewV2: View {
     let getVendorName: (Int64?) -> String?
     let userTimezone: TimeZone
     let onPaymentTap: (PaymentSchedule) -> Void
-    var onRecordPayment: ((PaymentSchedule) -> Void)? = nil
+    var onPartialPayment: ((PaymentSchedule) -> Void)? = nil  // Handler for partial payment modal
 
     // Selection mode support
     @Binding var isSelectionMode: Bool
@@ -122,7 +122,7 @@ struct IndividualPaymentsListViewV2: View {
                             getVendorName: getVendorName,
                             userTimezone: userTimezone,
                             isSelectionMode: isSelectionMode,
-                            onRecordPayment: onRecordPayment,
+                            onPartialPayment: onPartialPayment,
                             onTap: {
                                 if isSelectionMode {
                                     if selectedPaymentIds.contains(payment.id) {
@@ -178,7 +178,7 @@ private struct PaymentCardV2: View {
     let getVendorName: (Int64?) -> String?
     let userTimezone: TimeZone
     var isSelectionMode: Bool = false
-    var onRecordPayment: ((PaymentSchedule) -> Void)? = nil
+    var onPartialPayment: ((PaymentSchedule) -> Void)? = nil
     let onTap: () -> Void
 
     @State private var isHovered = false
@@ -272,27 +272,27 @@ private struct PaymentCardV2: View {
         }
         .contextMenu {
             if !payment.paid {
-                // Record Payment option (allows partial payments)
-                if let recordHandler = onRecordPayment {
-                    Button(action: { recordHandler(payment) }) {
-                        Label("Record Payment...", systemImage: "dollarsign.circle")
+                // Mark as Paid (full amount) - primary action
+                Button(action: markAsPaidFull) {
+                    Label("Mark as Paid (Full Amount)", systemImage: "checkmark.circle.fill")
+                }
+
+                // Partial Payment option - opens modal for specific amount
+                if let partialHandler = onPartialPayment {
+                    Button(action: { partialHandler(payment) }) {
+                        Label("Make Partial Payment...", systemImage: "dollarsign.circle")
                     }
-
-                    Divider()
                 }
 
-                // Quick mark as paid (full amount)
-                Button(action: togglePaidStatus) {
-                    Label("Mark as Paid", systemImage: "checkmark.circle")
-                }
+                Divider()
             } else {
                 // Mark as unpaid
                 Button(action: togglePaidStatus) {
                     Label("Mark as Unpaid", systemImage: "xmark.circle")
                 }
-            }
 
-            Divider()
+                Divider()
+            }
 
             Button(role: .destructive, action: { onDelete(payment) }) {
                 Label("Delete Payment", systemImage: "trash")
@@ -338,7 +338,13 @@ private struct PaymentCardV2: View {
     }
 
     private var statusCircle: some View {
-        Button(action: togglePaidStatus) {
+        Button(action: {
+            if payment.paid {
+                togglePaidStatus() // Mark as unpaid
+            } else {
+                markAsPaidFull() // Mark as paid with full amount
+            }
+        }) {
             ZStack {
                 Circle()
                     .fill(payment.paid ? AppColors.success : Color.clear)
@@ -586,9 +592,25 @@ private struct PaymentCardV2: View {
 
     // MARK: - Actions
 
+    /// Mark as paid with full amount (sets amountPaid = paymentAmount)
+    private func markAsPaidFull() {
+        var updatedPayment = payment
+        updatedPayment.paid = true
+        updatedPayment.amountPaid = payment.paymentAmount
+        updatedPayment.paymentRecordedAt = Date()
+        updatedPayment.updatedAt = Date()
+        onUpdate(updatedPayment)
+    }
+
+    /// Toggle paid status (for marking as unpaid)
     private func togglePaidStatus() {
         var updatedPayment = payment
         updatedPayment.paid.toggle()
+        if !updatedPayment.paid {
+            // Reset payment tracking when marking as unpaid
+            updatedPayment.amountPaid = 0
+            updatedPayment.paymentRecordedAt = nil
+        }
         updatedPayment.updatedAt = Date()
         onUpdate(updatedPayment)
     }

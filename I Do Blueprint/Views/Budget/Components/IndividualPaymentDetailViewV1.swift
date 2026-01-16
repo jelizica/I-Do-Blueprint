@@ -18,7 +18,7 @@ struct IndividualPaymentDetailViewV1: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showingEditSheet = false
     @State private var showingPlanModal = false
-    @State private var showingRecordPaymentModal = false
+    @State private var showingPartialPaymentModal = false
     @State private var paymentPlanSummary: PaymentPlanSummary?
     @State private var isLoadingPlan = false
     @State private var hasAppeared = false
@@ -168,10 +168,10 @@ struct IndividualPaymentDetailViewV1: View {
                 )
             }
         }
-        .sheet(isPresented: $showingRecordPaymentModal) {
-            RecordPaymentModal(
+        .sheet(isPresented: $showingPartialPaymentModal) {
+            PartialPaymentModal(
                 payment: payment,
-                onRecordPayment: { amount in
+                onMakePayment: { amount in
                     await budgetStore.payments.recordPartialPayment(
                         payment: payment,
                         amountPaid: amount
@@ -211,7 +211,7 @@ struct IndividualPaymentDetailViewV1: View {
                 IndividualPaymentActionsV1(
                     payment: payment,
                     onMarkPaid: handleMarkPaid,
-                    onRecordPayment: { showingRecordPaymentModal = true },
+                    onPartialPayment: { showingPartialPaymentModal = true },
                     onViewReceipt: handleViewReceipt,
                     onEdit: { showingEditSheet = true },
                     onPlan: handlePlan

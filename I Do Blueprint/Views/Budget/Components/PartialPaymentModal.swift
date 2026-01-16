@@ -1,16 +1,16 @@
 //
-//  RecordPaymentModal.swift
+//  PartialPaymentModal.swift
 //  I Do Blueprint
 //
-//  Modal for recording partial or full payments with live preview of effects
+//  Modal for making partial or full payments with live preview of effects
 //  Supports underpayments (creates carryover) and overpayments (recalculates remainder)
 //
 
 import SwiftUI
 
-struct RecordPaymentModal: View {
+struct PartialPaymentModal: View {
     let payment: PaymentSchedule
-    let onRecordPayment: (Double) async -> PartialPaymentResult
+    let onMakePayment: (Double) async -> PartialPaymentResult
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var coordinator: AppCoordinator
@@ -102,14 +102,14 @@ struct RecordPaymentModal: View {
                 }
                 .padding(Spacing.xl)
             }
-            .navigationTitle("Record Payment")
+            .navigationTitle("Make Payment")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { dismiss() }
                 }
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Record Payment") {
-                        Task { await recordPayment() }
+                    Button("Submit Payment") {
+                        Task { await submitPayment() }
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(!isValidAmount || isRecording)
@@ -336,11 +336,11 @@ struct RecordPaymentModal: View {
         // For now, the UI shows a static preview based on the amount type
     }
 
-    private func recordPayment() async {
+    private func submitPayment() async {
         guard let amount = parsedAmount else { return }
 
         isRecording = true
-        recordResult = await onRecordPayment(amount)
+        recordResult = await onMakePayment(amount)
         isRecording = false
 
         if recordResult?.isValid == true {
@@ -410,7 +410,7 @@ private enum PaymentAmountType {
 // MARK: - Preview
 
 #Preview {
-    RecordPaymentModal(
+    PartialPaymentModal(
         payment: PaymentSchedule(
             id: 1,
             coupleId: UUID(),
@@ -424,7 +424,7 @@ private enum PaymentAmountType {
             isRetainer: false,
             createdAt: Date()
         ),
-        onRecordPayment: { amount in
+        onMakePayment: { amount in
             PartialPaymentResult(
                 updatedPayment: PaymentSchedule(
                     id: 1,

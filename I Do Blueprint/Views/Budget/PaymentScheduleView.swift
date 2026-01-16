@@ -39,7 +39,7 @@ struct PaymentScheduleView: View {
     // Dialog states
     @State private var showingAddPayment = false
     @State private var selectedPaymentForDetail: PaymentSchedule?
-    @State private var selectedPaymentForRecording: PaymentSchedule?
+    @State private var selectedPaymentForPartial: PaymentSchedule?
 
     // Error state
     @State private var loadError: String?
@@ -81,10 +81,10 @@ struct PaymentScheduleView: View {
                         )
                         .environmentObject(AppStores.shared.settings)
                     }
-                    .sheet(item: $selectedPaymentForRecording) { payment in
-                        RecordPaymentModal(
+                    .sheet(item: $selectedPaymentForPartial) { payment in
+                        PartialPaymentModal(
                             payment: payment,
-                            onRecordPayment: { amount in
+                            onMakePayment: { amount in
                                 await budgetStore.payments.recordPartialPayment(
                                     payment: payment,
                                     amountPaid: amount
@@ -290,8 +290,8 @@ struct PaymentScheduleView: View {
                         onPaymentTap: { payment in
                             selectedPaymentForDetail = payment
                         },
-                        onRecordPayment: { payment in
-                            selectedPaymentForRecording = payment
+                        onPartialPayment: { payment in
+                            selectedPaymentForPartial = payment
                         },
                         isSelectionMode: $isSelectionMode,
                         selectedPaymentIds: $selectedPaymentIds,

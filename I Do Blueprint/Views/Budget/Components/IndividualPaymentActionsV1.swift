@@ -11,20 +11,20 @@ import SwiftUI
 struct IndividualPaymentActionsV1: View {
     let payment: PaymentSchedule
     let onMarkPaid: () -> Void
-    let onRecordPayment: () -> Void
+    let onPartialPayment: () -> Void
     let onViewReceipt: () -> Void
     let onEdit: () -> Void
     let onPlan: () -> Void
 
     var body: some View {
         VStack(spacing: Spacing.md) {
-            // Record Payment - Primary action when unpaid (allows partial payments)
-            if !payment.paid {
-                recordPaymentButton
-            }
-
-            // Mark as Paid - Secondary option when unpaid, or status display when paid
+            // Mark as Paid - Primary action when unpaid
             markPaidButton
+
+            // Partial Payment - Secondary option when unpaid (allows partial payments)
+            if !payment.paid {
+                partialPaymentButton
+            }
 
             // View Receipt - Enabled when paid
             viewReceiptButton
@@ -47,27 +47,26 @@ struct IndividualPaymentActionsV1: View {
         .frame(minWidth: 200)
     }
 
-    // MARK: - Record Payment Button
+    // MARK: - Partial Payment Button
 
-    private var recordPaymentButton: some View {
-        Button(action: onRecordPayment) {
+    private var partialPaymentButton: some View {
+        Button(action: onPartialPayment) {
             HStack(spacing: Spacing.sm) {
-                Image(systemName: "dollarsign.circle.fill")
+                Image(systemName: "dollarsign.circle")
                     .font(.body)
-                Text("Record Payment")
+                Text("Partial Payment")
                     .font(Typography.bodyRegular.weight(.medium))
             }
-            .foregroundColor(.white)
+            .foregroundColor(SemanticColors.textPrimary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, Spacing.md)
             .background(
                 RoundedRectangle(cornerRadius: CornerRadius.lg)
-                    .fill(AppColors.Budget.allocated)
+                    .fill(.ultraThinMaterial)
             )
-            .shadow(
-                color: AppColors.Budget.allocated.opacity(0.3),
-                radius: 8,
-                y: 4
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.lg)
+                    .stroke(AppColors.Budget.allocated.opacity(0.3), lineWidth: 2)
             )
         }
         .buttonStyle(.plain)
