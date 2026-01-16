@@ -225,9 +225,22 @@ private struct PaymentCardV2: View {
                 // Amount and status
                 HStack(spacing: Spacing.md) {
                     VStack(alignment: .trailing, spacing: Spacing.xxs) {
-                        Text(formattedAmount)
-                            .font(.system(size: 17, weight: .bold, design: .rounded))
-                            .foregroundColor(isDarkMode ? .white : Color.fromHex("1F2937"))
+                        // Show paid amount for partial payments, otherwise show total due
+                        if payment.isPartiallyPaid {
+                            // Show what was paid
+                            Text("\(formattedAmount) paid")
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .foregroundColor(statusTextColor)
+
+                            // Show original total with strikethrough
+                            Text("of \(formattedOriginalAmount)")
+                                .font(.system(size: 12))
+                                .foregroundColor(SemanticColors.textTertiary)
+                        } else {
+                            Text(formattedAmount)
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
+                                .foregroundColor(isDarkMode ? .white : Color.fromHex("1F2937"))
+                        }
 
                         statusBadge
                     }
@@ -415,6 +428,11 @@ private struct PaymentCardV2: View {
             return isDarkMode
                 ? AppColors.success.opacity(0.3)
                 : AppColors.success.opacity(0.15)
+        } else if payment.isPartiallyPaid {
+            // Orange/amber for partial payments
+            return isDarkMode
+                ? Color.fromHex("F59E0B").opacity(0.3)
+                : Color.fromHex("F59E0B").opacity(0.15)
         } else if isOverdue {
             return isDarkMode
                 ? AppColors.error.opacity(0.3)
@@ -435,6 +453,11 @@ private struct PaymentCardV2: View {
             return isDarkMode
                 ? Color.fromHex("86EFAC") // Light green
                 : Color.fromHex("15803D") // Dark green
+        } else if payment.isPartiallyPaid {
+            // Orange/amber for partial payments
+            return isDarkMode
+                ? Color.fromHex("FBBF24") // Light amber
+                : Color.fromHex("D97706") // Dark amber
         } else if isOverdue {
             return isDarkMode
                 ? Color.fromHex("FCA5A5") // Light red
@@ -484,12 +507,23 @@ private struct PaymentCardV2: View {
     }
 
     private var formattedAmount: String {
+        // When partially paid, show the amount that was paid
+        if payment.isPartiallyPaid {
+            return NumberFormatter.currencyShort.string(from: NSNumber(value: payment.amountPaid)) ?? "$0"
+        }
+        return NumberFormatter.currencyShort.string(from: NSNumber(value: payment.paymentAmount)) ?? "$0"
+    }
+
+    /// The original total amount due (for display when partially paid)
+    private var formattedOriginalAmount: String {
         NumberFormatter.currencyShort.string(from: NSNumber(value: payment.paymentAmount)) ?? "$0"
     }
 
     private var statusText: String {
         if payment.paid {
             return "Paid"
+        } else if payment.isPartiallyPaid {
+            return "Partial"
         } else if isOverdue {
             return "Overdue"
         } else if isDueSoon {
