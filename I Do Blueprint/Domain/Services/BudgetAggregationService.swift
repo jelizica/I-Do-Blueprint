@@ -22,8 +22,8 @@ actor BudgetAggregationService: BudgetAggregationServiceProtocol {
         let gifts = try await giftsAsync
 
         // Build lookup dictionaries
-        let expenseById: [String: String] = Dictionary(
-            uniqueKeysWithValues: expenses.map { ($0.id.uuidString.lowercased(), $0.expenseName) }
+        let expenseById: [String: (name: String, amount: Double)] = Dictionary(
+            uniqueKeysWithValues: expenses.map { ($0.id.uuidString.lowercased(), (name: $0.expenseName, amount: $0.amount)) }
         )
         let giftById: [String: (id: String, title: String, amount: Double)] = Dictionary(
             uniqueKeysWithValues: gifts.map { ($0.id.uuidString.lowercased(), (id: $0.id.uuidString, title: $0.title, amount: $0.amount)) }
@@ -44,23 +44,28 @@ actor BudgetAggregationService: BudgetAggregationServiceProtocol {
             // Look up allocations already fetched for this item
             let allocations = allocationsByItem[item.id] ?? []
 
-            // Map to ExpenseLinks, using bill total if available, otherwise allocated amount
+            // Map to ExpenseLinks, applying allocation percentages to bill total if available
             let expenseLinks: [ExpenseLink] = allocations.compactMap { alloc in
                 let key = alloc.expenseId.lowercased()
-                guard let title = expenseById[key] else { return nil }
+                guard let expenseData = expenseById[key] else { return nil }
 
-                // Check if this expense has a linked bill calculator
+                // Calculate amount using allocation percentage applied to bill total
                 let amount: Double
                 if let expenseUUID = UUID(uuidString: alloc.expenseId),
-                   let billTotal = expenseBillTotals[expenseUUID] {
-                    // Bill calculator wins - use bill total instead of allocated amount
-                    amount = billTotal.totalAmount
+                   let billTotal = expenseBillTotals[expenseUUID],
+                   expenseData.amount > 0 {
+                    // Bill calculator wins - apply allocation percentage to bill total
+                    // Percentage = allocatedAmount / expenseAmount
+                    // Bill-based amount = percentage × billTotal
+                    // Simplified: (allocatedAmount / expenseAmount) × billTotal
+                    let percentage = alloc.allocatedAmount / expenseData.amount
+                    amount = percentage * billTotal.totalAmount
                 } else {
-                    // No bill linked - use manual allocation
+                    // No bill linked or expense amount is zero - use manual allocation
                     amount = alloc.allocatedAmount
                 }
 
-                return ExpenseLink(id: alloc.expenseId, title: title, amount: amount)
+                return ExpenseLink(id: alloc.expenseId, title: expenseData.name, amount: amount)
             }
 
             let totalSpent = expenseLinks.reduce(0.0) { $0 + $1.amount }
