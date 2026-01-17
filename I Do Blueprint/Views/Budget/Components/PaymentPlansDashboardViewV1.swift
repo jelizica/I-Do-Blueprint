@@ -250,18 +250,18 @@ struct PaymentPlansDashboardViewV1: View {
 
     private var dashboardContent: some View {
         ScrollView {
-            VStack(spacing: Spacing.lg) {
+            VStack(spacing: Spacing.sm) {
                 // Payment Cards (grouped based on parent's groupingStrategy)
                 groupedCardsSection
             }
-            .padding(.vertical, Spacing.lg)
+            .padding(.vertical, Spacing.sm)
         }
     }
 
     // MARK: - Grouped Cards Section
 
     private var groupedCardsSection: some View {
-        LazyVStack(spacing: Spacing.md) {
+        LazyVStack(spacing: Spacing.sm) {
             ForEach(paymentGroups, id: \.id) { group in
                 HStack(spacing: Spacing.sm) {
                     // Plan-level selection checkbox
@@ -454,15 +454,15 @@ private struct PaymentGroupCard: View {
         .background(
             ZStack {
                 // Base blur layer
-                RoundedRectangle(cornerRadius: CornerRadius.xxl)
+                RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .fill(.ultraThinMaterial)
 
                 // Semi-transparent overlay
-                RoundedRectangle(cornerRadius: CornerRadius.xxl)
+                RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .fill(Color.white.opacity(isDarkMode ? 0.08 : 0.25))
 
                 // Inner glow
-                RoundedRectangle(cornerRadius: CornerRadius.xxl)
+                RoundedRectangle(cornerRadius: CornerRadius.lg)
                     .fill(
                         RadialGradient(
                             colors: [
@@ -477,7 +477,7 @@ private struct PaymentGroupCard: View {
             }
         )
         .overlay(
-            RoundedRectangle(cornerRadius: CornerRadius.xxl)
+            RoundedRectangle(cornerRadius: CornerRadius.lg)
                 .stroke(
                     LinearGradient(
                         colors: [
@@ -506,78 +506,120 @@ private struct PaymentGroupCard: View {
                 // Group icon
                 groupIcon
 
-                // Group info
-                VStack(alignment: .leading, spacing: Spacing.xxs) {
+                // Group name and metadata (horizontal layout)
+                VStack(alignment: .leading, spacing: 2) {
                     Text(group.name)
-                        .font(.system(size: 18, weight: .bold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
 
-                    HStack(spacing: Spacing.sm) {
-                        // Show subtitle if available (e.g., vendor name for expense grouping)
+                    HStack(spacing: Spacing.xs) {
+                        // Show subtitle if available (e.g., date range for plan grouping)
                         if let subtitle = group.subtitle {
                             Text(subtitle)
-                                .font(.system(size: 13))
-                                .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
+                                .font(.system(size: 11))
+                                .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textSecondary)
 
                             Text("•")
-                                .font(.system(size: 13))
+                                .font(.system(size: 11))
                                 .foregroundColor(isDarkMode ? .white.opacity(0.4) : SemanticColors.textTertiary)
                         }
 
                         Text("\(group.paymentCount) payment\(group.paymentCount == 1 ? "" : "s")")
-                            .font(.system(size: 13))
-                            .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
-
-                        if group.overdueCount > 0 {
-                            Text("\(group.overdueCount) overdue")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(Color.fromHex("DC2626"))
-                                .padding(.horizontal, Spacing.sm)
-                                .padding(.vertical, Spacing.xxs)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.fromHex("FEE2E2"))
-                                )
-                        }
+                            .font(.system(size: 11))
+                            .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textSecondary)
                     }
                 }
 
                 Spacer()
 
-                // Progress and amount
-                VStack(alignment: .trailing, spacing: Spacing.xs) {
-                    // Show paid amount prominently, with total as context
-                    if group.paidAmount > 0 && group.paidAmount < group.totalAmount {
-                        // Partial progress: show paid of total
-                        Text("\(formatCurrency(group.paidAmount)) paid")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(Color.fromHex("F59E0B"))
-                        Text("of \(formatCurrency(group.totalAmount))")
-                            .font(.system(size: 13))
-                            .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
-                    } else if group.paidAmount >= group.totalAmount {
-                        // Fully paid
-                        Text(formatCurrency(group.paidAmount))
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(Color.fromHex("10B981"))
-                    } else {
-                        // Nothing paid yet
-                        Text(formatCurrency(group.totalAmount))
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
+                // Amount info - inline with progress
+                HStack(spacing: Spacing.md) {
+                    // Payment amount display
+                    VStack(alignment: .trailing, spacing: 2) {
+                        // Show paid amount prominently, with total as context
+                        if group.paidAmount > 0 && group.paidAmount < group.totalAmount {
+                            // Partial progress: show paid of total
+                            HStack(spacing: 4) {
+                                Text("\(formatCurrency(group.paidAmount))")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(Color.fromHex("F59E0B"))
+                                Text("paid")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
+                            }
+                            Text("of \(formatCurrency(group.totalAmount))")
+                                .font(.system(size: 10))
+                                .foregroundColor(isDarkMode ? .white.opacity(0.4) : SemanticColors.textTertiary)
+                        } else if group.paidAmount >= group.totalAmount {
+                            // Fully paid
+                            HStack(spacing: 4) {
+                                Text(formatCurrency(group.paidAmount))
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundColor(Color.fromHex("10B981"))
+                                Text("Full Payment")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
+                            }
+                        } else {
+                            // Nothing paid yet
+                            Text(formatCurrency(group.totalAmount))
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
+                        }
                     }
+                    .frame(minWidth: 120, alignment: .trailing)
 
-                    // Progress bar
-                    progressBar
+                    // Progress bar and percentage (horizontal inline)
+                    HStack(spacing: Spacing.sm) {
+                        // Progress bar
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                // Track
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color.gray.opacity(0.2))
+
+                                // Progress
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(progressColor)
+                                    .frame(width: max(geometry.size.width * (group.progressPercentage / 100), 0))
+                            }
+                        }
+                        .frame(width: 120, height: 8)
+
+                        // Progress percentage and fraction
+                        HStack(spacing: 4) {
+                            Text("\(group.paidCount)/\(group.paymentCount)")
+                                .font(.system(size: 11, weight: .medium))
+                                .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textSecondary)
+
+                            Text("\(Int(group.progressPercentage))%")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(progressColor)
+                        }
+                        .frame(minWidth: 60, alignment: .leading)
+                    }
+                }
+
+                // Overdue badge if applicable
+                if group.overdueCount > 0 {
+                    Text("\(group.overdueCount) overdue")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundColor(Color.fromHex("DC2626"))
+                        .padding(.horizontal, Spacing.xs)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule()
+                                .fill(Color.fromHex("FEE2E2"))
+                        )
                 }
 
                 // Expand indicator
                 Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textSecondary)
-                    .padding(.leading, Spacing.sm)
             }
-            .padding(Spacing.lg)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.sm)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -595,40 +637,12 @@ private struct PaymentGroupCard: View {
                     endPoint: .bottomTrailing
                 )
             )
-            .frame(width: 48, height: 48)
+            .frame(width: 32, height: 32)
             .overlay(
                 Text(group.icon)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(Color.fromHex("6366F1"))
             )
-    }
-
-    private var progressBar: some View {
-        VStack(alignment: .trailing, spacing: Spacing.xxs) {
-            HStack(spacing: Spacing.xs) {
-                Text("\(group.paidCount)/\(group.paymentCount)")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textSecondary)
-
-                Text("\(Int(group.progressPercentage))%")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(progressColor)
-            }
-
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Track
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(Color.gray.opacity(0.2))
-
-                    // Progress
-                    RoundedRectangle(cornerRadius: 3)
-                        .fill(progressColor)
-                        .frame(width: max(geometry.size.width * (group.progressPercentage / 100), 0))
-                }
-            }
-            .frame(width: 100, height: 6)
-        }
     }
 
     private var progressColor: Color {
@@ -646,7 +660,7 @@ private struct PaymentGroupCard: View {
     private var paymentsList: some View {
         VStack(spacing: 0) {
             ForEach(group.payments, id: \.id) { payment in
-                HStack(spacing: Spacing.sm) {
+                HStack(spacing: Spacing.xs) {
                     // Individual payment selection checkbox
                     if isSelectionMode {
                         Button(action: {
@@ -657,11 +671,11 @@ private struct PaymentGroupCard: View {
                             }
                         }) {
                             Image(systemName: selectedPaymentIds.contains(payment.id) ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: 20))
+                                .font(.system(size: 18))
                                 .foregroundColor(selectedPaymentIds.contains(payment.id) ? SemanticColors.primaryAction : SemanticColors.textTertiary)
                         }
                         .buttonStyle(.plain)
-                        .padding(.leading, Spacing.lg)
+                        .padding(.leading, Spacing.sm)
                     }
 
                     PaymentRowItem(
@@ -690,11 +704,11 @@ private struct PaymentGroupCard: View {
                 if payment.id != group.payments.last?.id {
                     Divider()
                         .background(Color.white.opacity(isDarkMode ? 0.05 : 0.15))
-                        .padding(.horizontal, Spacing.lg)
+                        .padding(.horizontal, Spacing.sm)
                 }
             }
         }
-        .padding(.vertical, Spacing.sm)
+        .padding(.vertical, Spacing.xxs)
     }
 
     private func formatCurrency(_ amount: Double) -> String {
@@ -741,56 +755,56 @@ private struct PaymentRowItem: View {
                 // Status indicator
                 Circle()
                     .fill(status.color)
-                    .frame(width: 10, height: 10)
+                    .frame(width: 8, height: 8)
 
-                // Date
-                Text(formatDate(payment.paymentDate))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(isDarkMode ? .white.opacity(0.8) : SemanticColors.textPrimary)
-                    .frame(width: 100, alignment: .leading)
+                // Date and description
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(formatDate(payment.paymentDate))
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.7) : SemanticColors.textPrimary)
 
-                // Notes/Description
-                Text(payment.notes ?? "Payment")
-                    .font(.system(size: 14))
-                    .foregroundColor(isDarkMode ? .white.opacity(0.6) : SemanticColors.textSecondary)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    // Notes/Description
+                    Text(payment.notes ?? "Payment")
+                        .font(.system(size: 11))
+                        .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textSecondary)
+                        .lineLimit(1)
+                }
+                .frame(width: 120, alignment: .leading)
 
-                // Amount - show paid amount for partial payments
-                VStack(alignment: .trailing, spacing: 2) {
+                Spacer()
+
+                // Amount - inline horizontal layout
+                HStack(spacing: Spacing.md) {
+                    // Amount display
                     if payment.isPartiallyPaid {
-                        Text("\(formatCurrency(payment.amountPaid)) paid")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(Color.fromHex("F59E0B"))
-                        Text("of \(formatCurrency(payment.paymentAmount))")
-                            .font(.system(size: 11))
-                            .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
+                        HStack(spacing: 4) {
+                            Text("\(formatCurrency(payment.amountPaid))")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(Color.fromHex("F59E0B"))
+                            Text("paid of \(formatCurrency(payment.paymentAmount))")
+                                .font(.system(size: 10))
+                                .foregroundColor(isDarkMode ? .white.opacity(0.5) : SemanticColors.textTertiary)
+                        }
                     } else {
                         Text(formatCurrency(payment.paymentAmount))
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(isDarkMode ? .white : SemanticColors.textPrimary)
                     }
+
+                    // Status badge
+                    statusBadge
+
+                    // Toggle button
+                    Button(action: onTogglePaid) {
+                        Image(systemName: payment.paid ? "checkmark.circle.fill" : "circle")
+                            .font(.system(size: 18))
+                            .foregroundColor(payment.paid ? Color.fromHex("10B981") : Color.gray.opacity(0.4))
+                    }
+                    .buttonStyle(.plain)
                 }
-                .frame(width: 100, alignment: .trailing)
-
-                // Status badge
-                statusBadge
-
-                // Toggle button
-                Button(action: onTogglePaid) {
-                    Image(systemName: payment.paid ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 20))
-                        .foregroundColor(payment.paid ? Color.fromHex("10B981") : Color.gray.opacity(0.4))
-                }
-                .buttonStyle(.plain)
-
-                // Detail indicator
-                Image(systemName: "chevron.right")
-                    .font(.caption)
-                    .foregroundColor(isDarkMode ? .white.opacity(0.3) : SemanticColors.textTertiary)
             }
-            .padding(.horizontal, Spacing.lg)
-            .padding(.vertical, Spacing.md)
+            .padding(.horizontal, Spacing.md)
+            .padding(.vertical, Spacing.xs)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -801,15 +815,15 @@ private struct PaymentRowItem: View {
 
     private var statusBadge: some View {
         Text(status.displayName)
-            .font(.system(size: 11, weight: .semibold))
+            .font(.system(size: 10, weight: .semibold))
             .foregroundColor(status.textColor)
-            .padding(.horizontal, Spacing.sm)
-            .padding(.vertical, Spacing.xxs)
+            .padding(.horizontal, Spacing.xs)
+            .padding(.vertical, 2)
             .background(
                 Capsule()
                     .fill(status.backgroundColor)
             )
-            .frame(width: 80)
+            .frame(width: 70)
     }
 
     private func formatDate(_ date: Date) -> String {
