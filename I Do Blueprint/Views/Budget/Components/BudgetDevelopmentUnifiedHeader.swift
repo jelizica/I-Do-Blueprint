@@ -11,7 +11,6 @@ import SwiftUI
 
 struct BudgetDevelopmentUnifiedHeader: View {
     let windowSize: WindowSize
-    @Binding var currentPage: BudgetPage
 
     // Configuration bindings
     @Binding var selectedScenario: String
@@ -94,7 +93,7 @@ struct BudgetDevelopmentUnifiedHeader: View {
 
             Spacer()
 
-            // Right: Scenario badge + Tax badge + ellipsis + navigation
+            // Right: Scenario badge + Tax badge + ellipsis
             HStack(spacing: Spacing.md) {
                 // Scenario context badge (regular mode)
                 if windowSize != .compact {
@@ -107,7 +106,6 @@ struct BudgetDevelopmentUnifiedHeader: View {
                 }
 
                 ellipsisMenu
-                budgetPageDropdown
             }
         }
         .frame(height: 56)
@@ -423,56 +421,5 @@ struct BudgetDevelopmentUnifiedHeader: View {
         }
         .buttonStyle(.plain)
         .help("More actions")
-    }
-
-    // MARK: - Navigation Dropdown
-
-    private var budgetPageDropdown: some View {
-        Menu {
-            Button {
-                currentPage = .hub
-            } label: {
-                Label("Dashboard", systemImage: "square.grid.2x2.fill")
-                if currentPage == .hub {
-                    Image(systemName: "checkmark")
-                }
-            }
-            .keyboardShortcut("1", modifiers: [.command])
-
-            Divider()
-
-            ForEach(BudgetGroup.allCases) { group in
-                Section(group.rawValue) {
-                    ForEach(group.pages) { page in
-                        Button {
-                            currentPage = page
-                        } label: {
-                            Label(page.rawValue, systemImage: page.icon)
-                            if currentPage == page {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                }
-            }
-        } label: {
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: "hammer.fill")
-                    .font(.system(size: 14))
-                Text("Budget Development")
-                    .font(.system(size: 13, weight: .medium))
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 10))
-            }
-            .foregroundColor(SemanticColors.textPrimary)
-            .padding(.horizontal, Spacing.sm)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: CornerRadius.sm)
-                    .fill(isDarkMode ? Color.white.opacity(0.05) : Color.clear)
-            )
-        }
-        .buttonStyle(.plain)
-        .help("Navigate budget pages")
     }
 }

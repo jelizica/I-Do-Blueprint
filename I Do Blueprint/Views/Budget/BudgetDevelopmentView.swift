@@ -96,7 +96,6 @@ struct BudgetDevelopmentView: View {
                     // Unified header bar - compact 56px style matching Budget Overview
                     BudgetDevelopmentUnifiedHeader(
                         windowSize: windowSize,
-                        currentPage: currentPage,
                         selectedScenario: $selectedScenario,
                         budgetName: $budgetName,
                         selectedTaxRateId: $selectedTaxRateId,
