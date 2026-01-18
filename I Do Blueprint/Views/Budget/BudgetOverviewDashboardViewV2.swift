@@ -11,7 +11,8 @@ import SwiftUI
 @MainActor
 struct BudgetOverviewDashboardViewV2: View {
     @EnvironmentObject var budgetStore: BudgetStoreV2
-    
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
+
     // Navigation state - receives binding from parent (BudgetDashboardHubView)
     @Binding var currentPage: BudgetPage
 
@@ -48,6 +49,9 @@ struct BudgetOverviewDashboardViewV2: View {
     
     // Bouquet data provider
     @StateObject private var bouquetDataProvider = BouquetDataProvider()
+    
+    // Track when bouquet category detail view is showing (to hide parent summary cards)
+    @State private var isBouquetDetailShowing: Bool = false
 
     private let logger = AppLogger.ui
 
@@ -60,22 +64,28 @@ struct BudgetOverviewDashboardViewV2: View {
     var body: some View {
         GeometryReader { geometry in
             let windowSize = geometry.size.width.windowSize
-            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xl
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xxl
             let availableWidth = geometry.size.width - (horizontalPadding * 2)
-            
-            VStack(spacing: 0) {
-                // Header section
-                headerSection(windowSize: windowSize)
 
-                if loading {
-                    loadingView
-                } else if let error {
-                    errorView(error)
-                } else {
-                    overviewContent(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
+            ZStack {
+                // Mesh gradient background matching DashboardViewV7 and GuestDashboardViewV2
+                MeshGradientBackground()
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Header section
+                    headerSection(windowSize: windowSize)
+
+                    if loading {
+                        loadingView
+                    } else if let error {
+                        errorView(error)
+                    } else {
+                        overviewContent(windowSize: windowSize, availableWidth: availableWidth, horizontalPadding: horizontalPadding)
+                    }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .onAppear {
             logger.info("Budget Overview: View appeared, current tenant: \(SessionManager.shared.getTenantId()?.uuidString ?? "none")")
@@ -182,7 +192,6 @@ struct BudgetOverviewDashboardViewV2: View {
     private func headerSection(windowSize: WindowSize) -> some View {
         BudgetOverviewUnifiedHeader(
             windowSize: windowSize,
-            currentPage: $currentPage,
             selectedScenarioId: $selectedScenarioId,
             searchQuery: $searchQuery,
             viewMode: $viewMode,
@@ -230,20 +239,28 @@ struct BudgetOverviewDashboardViewV2: View {
     }
 
     private func overviewContent(windowSize: WindowSize, availableWidth: CGFloat, horizontalPadding: CGFloat) -> some View {
-        ScrollView(.vertical, showsIndicators: true) {
-            VStack(spacing: windowSize == .compact ? Spacing.lg : 24) {
-                // Summary cards
+        VStack(spacing: 0) {
+            // Summary cards - FIXED at top (outside ScrollView)
+            // Hide when in bouquet view mode (Quick Stats panel shows this info)
+            // Also hide when bouquet detail view is showing
+            if viewMode != .bouquet && !isBouquetDetailShowing {
                 summaryCardsSection(windowSize: windowSize)
-
-                // Budget items grid
-                budgetItemsSection(windowSize: windowSize)
+                    .frame(width: availableWidth)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.top, windowSize == .compact ? Spacing.md : Spacing.lg)
+                    .padding(.bottom, Spacing.md)
             }
-            // ⭐ CRITICAL: Constrain to available width to prevent edge clipping
-            .frame(width: availableWidth)
-            .padding(.horizontal, horizontalPadding)
-            .padding(.vertical, windowSize == .compact ? Spacing.md : Spacing.lg)
+
+            // Budget items grid - SCROLLABLE
+            ScrollView(.vertical, showsIndicators: true) {
+                budgetItemsSection(windowSize: windowSize)
+                    // ⭐ CRITICAL: Constrain to available width to prevent edge clipping
+                    .frame(width: availableWidth)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.vertical, windowSize == .compact ? Spacing.md : Spacing.lg)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private func summaryCardsSection(windowSize: WindowSize) -> some View {
@@ -269,7 +286,8 @@ struct BudgetOverviewDashboardViewV2: View {
             onEditGift: handleEditGift,
             onRemoveGift: handleUnlinkGift,
             onAddExpense: handleAddExpense,
-            onAddGift: handleAddGift
+            onAddGift: handleAddGift,
+            isBouquetDetailShowing: $isBouquetDetailShowing
         )
         .animation(.easeInOut(duration: 0.2), value: expandedFolderIds)
     }
