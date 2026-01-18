@@ -59,8 +59,7 @@ struct BudgetSummaryCardsSection: View {
             BudgetDevelopmentTotalCard(
                 title: "TOTAL WITH TAX",
                 amount: totalWithTax,
-                icon: "calculator",
-                iconColor: AppColors.Budget.income
+                icon: "calculator"
             )
             .frame(maxWidth: .infinity)
 
@@ -166,7 +165,6 @@ private struct BudgetDevelopmentTotalCard: View {
     let title: String
     let amount: Double
     let icon: String
-    let iconColor: Color
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -190,19 +188,6 @@ private struct BudgetDevelopmentTotalCard: View {
                 .foregroundColor(SemanticColors.textPrimary)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-
-            // Subtitle
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: "arrow.right")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(iconColor)
-
-                Text("Before tax")
-                    .font(.system(size: 11))
-                    .foregroundColor(iconColor)
-                    .lineLimit(1)
-                    .fixedSize(horizontal: true, vertical: false)
-            }
         }
         .padding(Spacing.md)
         .frame(maxWidth: .infinity, alignment: .leading)
