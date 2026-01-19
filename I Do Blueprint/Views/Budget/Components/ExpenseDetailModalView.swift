@@ -6,6 +6,7 @@
 //  with payment schedules, vendor info, and documentation
 //
 
+import Combine
 import SwiftUI
 
 // MARK: - Main View
@@ -16,6 +17,9 @@ struct ExpenseDetailModalView: View {
     @EnvironmentObject var budgetStore: BudgetStoreV2
     @EnvironmentObject var settingsStore: SettingsStoreV2
     @EnvironmentObject private var coordinator: AppCoordinator
+
+    // Observe bill calculator store for reactive updates when guest count changes
+    @ObservedObject private var billCalculatorStore = AppStores.shared.billCalculator
 
     let expense: Expense
 
@@ -108,6 +112,15 @@ struct ExpenseDetailModalView: View {
         }
         .onAppear {
             loadData()
+        }
+        .onReceive(billCalculatorStore.objectWillChange) { _ in
+            // Refresh linked bills when bill calculator store publishes changes (e.g., guest count changed)
+            // Use DispatchQueue to ensure we get the updated values after the change is applied
+            DispatchQueue.main.async {
+                guard !linkedBillLinks.isEmpty else { return }
+                let billIds = Set(linkedBillLinks.map { $0.billCalculatorId })
+                linkedBills = billCalculatorStore.calculators.filter { billIds.contains($0.id) }
+            }
         }
         .sheet(isPresented: $showEditExpense) {
             ExpenseTrackerEditView(expense: expense)
