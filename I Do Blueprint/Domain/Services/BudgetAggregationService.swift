@@ -74,24 +74,15 @@ actor BudgetAggregationService: BudgetAggregationServiceProtocol {
 
             let totalSpent = expenseLinks.reduce(0.0) { $0 + $1.amount }
 
-            // Gift handling - prioritize new proportional allocations, fallback to legacy 1:1 linking
-            var giftLinks: [GiftLink] = []
-            var totalGiftAmount = 0.0
-
-            // Check for new proportional gift allocations first
+            // Gift handling - use proportional allocation system only
+            // Note: Legacy 1:1 linking (linked_gift_owed_id column) is deprecated and not supported.
+            // All gift linking should use the gift_budget_allocations table for proper proportional allocation.
             let giftAllocations = giftAllocationsByItem[item.id.lowercased()] ?? []
-            if !giftAllocations.isEmpty {
-                // Use new proportional allocation system
-                giftLinks = giftAllocations.compactMap { alloc in
-                    guard let giftData = giftById[alloc.giftId.lowercased()] else { return nil }
-                    return GiftLink(id: giftData.id, title: giftData.title, amount: alloc.allocatedAmount)
-                }
-                totalGiftAmount = giftLinks.reduce(0.0) { $0 + $1.amount }
-            } else if let giftId = item.linkedGiftOwedId, let gift = giftById[giftId.lowercased()] {
-                // Fallback to legacy 1:1 linking for backward compatibility
-                giftLinks = [GiftLink(id: gift.id, title: gift.title, amount: gift.amount)]
-                totalGiftAmount = gift.amount
+            let giftLinks: [GiftLink] = giftAllocations.compactMap { alloc in
+                guard let giftData = giftById[alloc.giftId.lowercased()] else { return nil }
+                return GiftLink(id: giftData.id, title: giftData.title, amount: alloc.allocatedAmount)
             }
+            let totalGiftAmount = giftLinks.reduce(0.0) { $0 + $1.amount }
 
             let effectiveSpent = max(0, totalSpent - totalGiftAmount)
 
