@@ -44,8 +44,8 @@ ALTER TABLE gift_budget_allocations ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "couples_manage_own_gift_allocations"
     ON gift_budget_allocations
     FOR ALL
-    USING (couple_id = (SELECT get_user_couple_id()))
-    WITH CHECK (couple_id = (SELECT get_user_couple_id()));
+    USING (couple_id = ANY (get_user_couple_ids()))
+    WITH CHECK (couple_id = ANY (get_user_couple_ids()));
 
 -- Trigger for updated_at
 CREATE OR REPLACE FUNCTION update_gift_allocations_updated_at()
