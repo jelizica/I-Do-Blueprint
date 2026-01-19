@@ -182,6 +182,10 @@ struct AddGiftOrOwedModal: View {
             case .pending:
                 hasReceivedDate = false
                 hasExpectedDate = true
+            case .partial:
+                // Partial keeps expected date but also allows received date
+                hasExpectedDate = true
+                hasReceivedDate = false
             case .received, .confirmed:
                 hasExpectedDate = false
                 hasReceivedDate = true

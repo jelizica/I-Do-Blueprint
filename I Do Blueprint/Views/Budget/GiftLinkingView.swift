@@ -646,6 +646,8 @@ struct GiftMultiSelectRowView: View {
         switch status {
         case .received, .confirmed:
             "checkmark.circle.fill"
+        case .partial:
+            "chart.pie.fill"
         case .pending:
             "clock.fill"
         }
@@ -733,6 +735,8 @@ struct GiftSelectionRowView: View {
         switch status {
         case .received, .confirmed:
             "checkmark.circle.fill"
+        case .partial:
+            "chart.pie.fill"
         case .pending:
             "clock.fill"
         }

@@ -20,6 +20,9 @@ struct MoneyManagementViewV2: View {
     @State private var showingAddContribution = false
     @State private var searchText = ""
     @State private var selectedTab: MoneyTab = .all
+    @State private var selectedContribution: GiftOrOwed?
+    @State private var showingPartialPaymentModal = false
+    @State private var contributionForPartialPayment: GiftOrOwed?
 
     private var giftsStore: GiftsStore { budgetStore.gifts }
 
@@ -39,13 +42,7 @@ struct MoneyManagementViewV2: View {
                         giftItemCount: giftItemCount
                     )
 
-                    // Charts Section
-                    MoneyManagementChartsSection(
-                        contributions: sortedContributions,
-                        selectedTimeRange: $selectedTimeRange
-                    )
-
-                    // Goal Tracker Banner
+                    // Goal Tracker Banner (moved up per user request)
                     MoneyManagementGoalTracker(
                         currentAmount: totalContributions,
                         goalAmount: goalAmount,
@@ -55,12 +52,30 @@ struct MoneyManagementViewV2: View {
                         giftItemCount: giftItemCount
                     )
 
-                    // Recent Contributions + Top Contributors
+                    // Recent Contributions + Top Contributors (moved up per user request)
                     MoneyManagementContributionsSection(
                         contributions: sortedContributions,
                         topContributors: topContributors,
                         totalPledged: totalPledged,
-                        pendingCount: pendingPledges.count
+                        pendingCount: pendingPledges.count,
+                        onContributionTap: { contribution in
+                            selectedContribution = contribution
+                        },
+                        onMarkReceived: { contribution in
+                            Task {
+                                await giftsStore.markAsReceived(contribution)
+                            }
+                        },
+                        onPartialPayment: { contribution in
+                            contributionForPartialPayment = contribution
+                            showingPartialPaymentModal = true
+                        }
+                    )
+
+                    // Charts Section (moved below contributions per user request)
+                    MoneyManagementChartsSection(
+                        contributions: sortedContributions,
+                        selectedTimeRange: $selectedTimeRange
                     )
 
                     // Gift Registry Items
@@ -72,7 +87,19 @@ struct MoneyManagementViewV2: View {
                     // Pending Pledges
                     MoneyManagementPendingPledges(
                         pledges: pendingPledges,
-                        totalPledged: totalPledged
+                        totalPledged: totalPledged,
+                        onPledgeTap: { pledge in
+                            selectedContribution = pledge
+                        },
+                        onMarkReceived: { pledge in
+                            Task {
+                                await giftsStore.markAsReceived(pledge)
+                            }
+                        },
+                        onPartialPayment: { pledge in
+                            contributionForPartialPayment = pledge
+                            showingPartialPaymentModal = true
+                        }
                     )
 
                     // Contribution Insights
@@ -94,6 +121,38 @@ struct MoneyManagementViewV2: View {
         }
         .sheet(isPresented: $showingAddContribution) {
             AddContributionModal()
+        }
+        .sheet(item: $selectedContribution) { contribution in
+            ContributionDetailModal(
+                contribution: contribution,
+                onUpdate: { updated in
+                    Task {
+                        await giftsStore.updateGiftOrOwed(updated)
+                    }
+                },
+                onDelete: {
+                    Task {
+                        await giftsStore.deleteGiftOrOwed(id: contribution.id)
+                    }
+                },
+                onPartialPayment: { amount in
+                    Task {
+                        await giftsStore.recordPartialContribution(contribution: contribution, amountReceived: amount)
+                    }
+                }
+            )
+            .environmentObject(settingsStore)
+        }
+        .sheet(isPresented: $showingPartialPaymentModal) {
+            if let contribution = contributionForPartialPayment {
+                PartialContributionModal(
+                    contribution: contribution,
+                    onMakePayment: { amount in
+                        await giftsStore.recordPartialContribution(contribution: contribution, amountReceived: amount)
+                    }
+                )
+                .environmentObject(settingsStore)
+            }
         }
     }
 
@@ -502,6 +561,14 @@ struct ContributionTypesChart: View {
                 } else {
                     cashAmount += contribution.amount
                 }
+            case .partial:
+                // For partial payments, count received amount as cash, remaining as pledged
+                if contribution.type == .giftReceived {
+                    giftAmount += contribution.amountReceived
+                } else {
+                    cashAmount += contribution.amountReceived
+                }
+                pledgedAmount += contribution.remainingBalance
             case .pending:
                 pledgedAmount += contribution.amount
             }
@@ -662,11 +729,19 @@ struct MoneyManagementContributionsSection: View {
     let topContributors: [(name: String, amount: Double, relationship: String?)]
     let totalPledged: Double
     let pendingCount: Int
+    var onContributionTap: ((GiftOrOwed) -> Void)?
+    var onMarkReceived: ((GiftOrOwed) -> Void)?
+    var onPartialPayment: ((GiftOrOwed) -> Void)?
 
     var body: some View {
         HStack(alignment: .top, spacing: Spacing.lg) {
             // Recent Contributions Table (2/3 width)
-            RecentContributionsTable(contributions: Array(contributions.prefix(6)))
+            RecentContributionsTable(
+                contributions: Array(contributions.prefix(6)),
+                onContributionTap: onContributionTap,
+                onMarkReceived: onMarkReceived,
+                onPartialPayment: onPartialPayment
+            )
 
             // Sidebar (1/3 width)
             VStack(spacing: Spacing.lg) {
@@ -680,6 +755,9 @@ struct MoneyManagementContributionsSection: View {
 
 struct RecentContributionsTable: View {
     let contributions: [GiftOrOwed]
+    var onContributionTap: ((GiftOrOwed) -> Void)?
+    var onMarkReceived: ((GiftOrOwed) -> Void)?
+    var onPartialPayment: ((GiftOrOwed) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -740,7 +818,12 @@ struct RecentContributionsTable: View {
 
             // Table Rows
             ForEach(contributions) { contribution in
-                ContributionRow(contribution: contribution)
+                ContributionRow(
+                    contribution: contribution,
+                    onTap: { onContributionTap?(contribution) },
+                    onMarkReceived: { onMarkReceived?(contribution) },
+                    onPartialPayment: { onPartialPayment?(contribution) }
+                )
             }
 
             Divider()
@@ -774,28 +857,48 @@ struct RecentContributionsTable: View {
 
 struct ContributionRow: View {
     let contribution: GiftOrOwed
+    var onTap: (() -> Void)?
+    var onMarkReceived: (() -> Void)?
+    var onPartialPayment: (() -> Void)?
 
     @State private var isHovered = false
+    @State private var showingActions = false
+
+    private var isPending: Bool {
+        contribution.status == .pending || contribution.status == .partial
+    }
 
     var body: some View {
         HStack {
             // Contributor
             HStack(spacing: Spacing.md) {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [BlushPink.shade300, BlushPink.shade500],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                // Avatar with progress ring for partial payments
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [BlushPink.shade300, BlushPink.shade500],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
                         )
-                    )
-                    .frame(width: 40, height: 40)
-                    .overlay(
-                        Text(String(contribution.fromPerson?.prefix(1) ?? "?"))
-                            .font(Typography.bodyRegular)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                    )
+                        .frame(width: 40, height: 40)
+                        .overlay(
+                            Text(String(contribution.fromPerson?.prefix(1) ?? "?"))
+                                .font(Typography.bodyRegular)
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                        )
+
+                    // Progress ring for partial payments
+                    if contribution.isPartiallyReceived {
+                        Circle()
+                            .trim(from: 0, to: contribution.receivedProgress)
+                            .stroke(SageGreen.shade500, lineWidth: 3)
+                            .frame(width: 44, height: 44)
+                            .rotationEffect(.degrees(-90))
+                    }
+                }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(contribution.fromPerson ?? "Anonymous")
@@ -816,12 +919,20 @@ struct ContributionRow: View {
             ContributionTypeBadge(type: contribution.type)
                 .frame(width: 100, alignment: .leading)
 
-            // Amount
-            Text(contribution.amount.currencyFormatted)
-                .font(Typography.bodySmall)
-                .fontWeight(.bold)
-                .foregroundColor(SemanticColors.textPrimary)
-                .frame(width: 100, alignment: .leading)
+            // Amount with progress for partial payments
+            VStack(alignment: .leading, spacing: 2) {
+                Text(contribution.amount.currencyFormatted)
+                    .font(Typography.bodySmall)
+                    .fontWeight(.bold)
+                    .foregroundColor(SemanticColors.textPrimary)
+
+                if contribution.isPartiallyReceived {
+                    Text("\(contribution.amountReceived.currencyFormatted) received")
+                        .font(Typography.caption2)
+                        .foregroundColor(SageGreen.shade600)
+                }
+            }
+            .frame(width: 100, alignment: .leading)
 
             // Date
             VStack(alignment: .leading, spacing: 2) {
@@ -838,12 +949,47 @@ struct ContributionRow: View {
             // Status
             ContributionStatusBadge(status: contribution.status)
                 .frame(width: 100, alignment: .leading)
+
+            // Action buttons (visible on hover)
+            if isHovered && isPending {
+                HStack(spacing: Spacing.sm) {
+                    Button {
+                        onMarkReceived?()
+                    } label: {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(SageGreen.shade500)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Mark as Received")
+
+                    Button {
+                        onPartialPayment?()
+                    } label: {
+                        Image(systemName: "chart.pie.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color.fromHex("F59E0B"))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Record Partial Payment")
+                }
+                .frame(width: 60)
+            } else {
+                Spacer()
+                    .frame(width: 60)
+            }
         }
         .padding(.horizontal, Spacing.lg)
         .padding(.vertical, Spacing.md)
         .background(isHovered ? Color.gray.opacity(0.05) : Color.clear)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?()
+        }
         .onHover { hovering in
-            isHovered = hovering
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
         }
     }
 }
@@ -885,6 +1031,8 @@ struct ContributionStatusBadge: View {
         switch status {
         case .received, .confirmed:
             return ("checkmark.circle.fill", "Received", SageGreen.shade600)
+        case .partial:
+            return ("chart.pie.fill", "Partial", Color.fromHex("F59E0B"))
         case .pending:
             return ("clock.fill", "Pending", Terracotta.shade600)
         }
@@ -1193,6 +1341,9 @@ struct GiftRegistryItemCard: View {
 struct MoneyManagementPendingPledges: View {
     let pledges: [GiftOrOwed]
     let totalPledged: Double
+    var onPledgeTap: ((GiftOrOwed) -> Void)?
+    var onMarkReceived: ((GiftOrOwed) -> Void)?
+    var onPartialPayment: ((GiftOrOwed) -> Void)?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -1230,7 +1381,12 @@ struct MoneyManagementPendingPledges: View {
                 GridItem(.flexible())
             ], spacing: Spacing.md) {
                 ForEach(pledges) { pledge in
-                    PledgeCard(pledge: pledge)
+                    PledgeCard(
+                        pledge: pledge,
+                        onTap: { onPledgeTap?(pledge) },
+                        onMarkReceived: { onMarkReceived?(pledge) },
+                        onPartialPayment: { onPartialPayment?(pledge) }
+                    )
                 }
             }
             .padding(Spacing.lg)
@@ -1241,6 +1397,11 @@ struct MoneyManagementPendingPledges: View {
 
 struct PledgeCard: View {
     let pledge: GiftOrOwed
+    var onTap: (() -> Void)?
+    var onMarkReceived: (() -> Void)?
+    var onPartialPayment: (() -> Void)?
+
+    @State private var isHovered = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.md) {
@@ -1289,24 +1450,59 @@ struct PledgeCard: View {
                     .foregroundColor(SemanticColors.textTertiary)
             }
 
-            HStack {
+            // Amount and progress
+            VStack(alignment: .leading, spacing: Spacing.xs) {
                 Text(pledge.amount.currencyFormatted)
                     .font(Typography.title3)
                     .fontWeight(.bold)
                     .foregroundColor(Terracotta.shade600)
 
-                Spacer()
+                if pledge.isPartiallyReceived {
+                    HStack(spacing: Spacing.xs) {
+                        Text("\(pledge.amountReceived.currencyFormatted) received")
+                            .font(Typography.caption2)
+                            .foregroundColor(SageGreen.shade600)
 
+                        Text("(\(Int(pledge.receivedProgress * 100))%)")
+                            .font(Typography.caption2)
+                            .foregroundColor(SemanticColors.textTertiary)
+                    }
+                }
+            }
+
+            // Action buttons
+            HStack(spacing: Spacing.sm) {
                 Button {
-                    // Remind action
+                    onMarkReceived?()
                 } label: {
                     HStack(spacing: 4) {
-                        Image(systemName: "bell.fill")
-                        Text("Remind")
+                        Image(systemName: "checkmark.circle.fill")
+                        Text("Received")
                     }
                     .font(Typography.caption2)
                     .fontWeight(.semibold)
-                    .foregroundColor(Terracotta.shade600)
+                    .foregroundColor(SageGreen.shade600)
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xs)
+                    .background(SageGreen.shade100)
+                    .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    onPartialPayment?()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chart.pie.fill")
+                        Text("Partial")
+                    }
+                    .font(Typography.caption2)
+                    .fontWeight(.semibold)
+                    .foregroundColor(Color.fromHex("F59E0B"))
+                    .padding(.horizontal, Spacing.sm)
+                    .padding(.vertical, Spacing.xs)
+                    .background(Color.fromHex("F59E0B").opacity(0.15))
+                    .clipShape(Capsule())
                 }
                 .buttonStyle(.plain)
             }
@@ -1318,12 +1514,21 @@ struct PledgeCard: View {
             }
         }
         .padding(Spacing.lg)
-        .background(Terracotta.shade50.opacity(0.3))
+        .background(isHovered ? Terracotta.shade100.opacity(0.5) : Terracotta.shade50.opacity(0.3))
         .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
         .overlay(
             RoundedRectangle(cornerRadius: CornerRadius.lg)
                 .stroke(Terracotta.shade200, lineWidth: 1)
         )
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onTap?()
+        }
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
     }
 }
 
@@ -1634,6 +1839,481 @@ struct AddContributionModal: View {
         }
         .padding(Spacing.xxl)
         .frame(width: 400, height: 300)
+    }
+}
+
+// MARK: - Contribution Detail Modal
+
+struct ContributionDetailModal: View {
+    let contribution: GiftOrOwed
+    let onUpdate: (GiftOrOwed) -> Void
+    let onDelete: () -> Void
+    let onPartialPayment: (Double) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
+
+    @State private var showingPartialSheet = false
+    @State private var editedContribution: GiftOrOwed
+
+    init(
+        contribution: GiftOrOwed,
+        onUpdate: @escaping (GiftOrOwed) -> Void,
+        onDelete: @escaping () -> Void,
+        onPartialPayment: @escaping (Double) -> Void
+    ) {
+        self.contribution = contribution
+        self.onUpdate = onUpdate
+        self.onDelete = onDelete
+        self.onPartialPayment = onPartialPayment
+        self._editedContribution = State(initialValue: contribution)
+    }
+
+    private var isPending: Bool {
+        contribution.status == .pending || contribution.status == .partial
+    }
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: Spacing.xl) {
+                    // Hero Card
+                    contributionHeroCard
+
+                    // Details Card
+                    contributionDetailsCard
+
+                    // Actions Card
+                    if isPending {
+                        contributionActionsCard
+                    }
+
+                    // Payment History (if partial)
+                    if contribution.isPartiallyReceived {
+                        paymentHistoryCard
+                    }
+                }
+                .padding(Spacing.xl)
+            }
+            .background(Color(nsColor: .windowBackgroundColor))
+            .navigationTitle(contribution.title)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Close") { dismiss() }
+                }
+                ToolbarItem(placement: .destructiveAction) {
+                    Button(role: .destructive) {
+                        onDelete()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "trash")
+                    }
+                }
+            }
+        }
+        .frame(width: 600, height: 500)
+        .sheet(isPresented: $showingPartialSheet) {
+            PartialContributionModal(
+                contribution: contribution,
+                onMakePayment: { amount in
+                    onPartialPayment(amount)
+                    dismiss()
+                }
+            )
+            .environmentObject(settingsStore)
+        }
+    }
+
+    private var contributionHeroCard: some View {
+        VStack(spacing: Spacing.lg) {
+            // Status badge
+            HStack {
+                ContributionStatusBadge(status: contribution.status)
+                Spacer()
+                Text(contribution.type.displayName)
+                    .font(Typography.caption)
+                    .foregroundColor(SemanticColors.textSecondary)
+            }
+
+            // Amount
+            VStack(spacing: Spacing.sm) {
+                Text(contribution.amount.currencyFormatted)
+                    .font(.system(size: 48, weight: .bold))
+                    .foregroundColor(SemanticColors.textPrimary)
+
+                if contribution.isPartiallyReceived {
+                    VStack(spacing: Spacing.xs) {
+                        Text("\(contribution.amountReceived.currencyFormatted) received")
+                            .font(Typography.bodySmall)
+                            .foregroundColor(SageGreen.shade600)
+
+                        ProgressView(value: contribution.receivedProgress)
+                            .progressViewStyle(.linear)
+                            .tint(SageGreen.shade500)
+                            .frame(width: 200)
+
+                        Text("\(contribution.remainingBalance.currencyFormatted) remaining")
+                            .font(Typography.caption)
+                            .foregroundColor(SemanticColors.textTertiary)
+                    }
+                }
+            }
+
+            // Contributor
+            HStack(spacing: Spacing.md) {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [BlushPink.shade300, BlushPink.shade500],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 48, height: 48)
+                    .overlay(
+                        Text(String(contribution.fromPerson?.prefix(1) ?? "?"))
+                            .font(Typography.bodyRegular)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                    )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(contribution.fromPerson ?? "Anonymous")
+                        .font(Typography.bodyRegular)
+                        .fontWeight(.semibold)
+                        .foregroundColor(SemanticColors.textPrimary)
+
+                    if let description = contribution.description {
+                        Text(description)
+                            .font(Typography.caption)
+                            .foregroundColor(SemanticColors.textSecondary)
+                    }
+                }
+
+                Spacer()
+            }
+        }
+        .padding(Spacing.xl)
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: CornerRadius.xxl))
+        .overlay(
+            RoundedRectangle(cornerRadius: CornerRadius.xxl)
+                .stroke(Color.white.opacity(0.4), lineWidth: 1)
+        )
+    }
+
+    private var contributionDetailsCard: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("Details")
+                .font(Typography.bodySmall)
+                .fontWeight(.semibold)
+                .foregroundColor(SemanticColors.textSecondary)
+                .textCase(.uppercase)
+
+            Divider()
+
+            // Date rows
+            detailRow(label: "Created", value: DateFormatting.formatDateMedium(contribution.createdAt, timezone: .current))
+
+            if let expectedDate = contribution.expectedDate {
+                detailRow(label: "Expected", value: DateFormatting.formatDateMedium(expectedDate, timezone: .current))
+            }
+
+            if let receivedDate = contribution.receivedDate {
+                detailRow(label: "Received", value: DateFormatting.formatDateMedium(receivedDate, timezone: .current))
+            }
+
+            if let paymentDate = contribution.paymentRecordedAt {
+                detailRow(label: "Last Payment", value: DateFormatting.formatDateMedium(paymentDate, timezone: .current))
+            }
+        }
+        .padding(Spacing.lg)
+        .glassPanel(padding: 0)
+    }
+
+    private func detailRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(Typography.bodySmall)
+                .foregroundColor(SemanticColors.textSecondary)
+            Spacer()
+            Text(value)
+                .font(Typography.bodySmall)
+                .fontWeight(.medium)
+                .foregroundColor(SemanticColors.textPrimary)
+        }
+    }
+
+    private var contributionActionsCard: some View {
+        VStack(spacing: Spacing.md) {
+            Button {
+                var updated = contribution
+                updated.status = .received
+                updated.amountReceived = contribution.amount
+                updated.receivedDate = Date()
+                updated.paymentRecordedAt = Date()
+                onUpdate(updated)
+                dismiss()
+            } label: {
+                HStack {
+                    Image(systemName: "checkmark.circle.fill")
+                    Text("Mark as Fully Received")
+                }
+                .font(Typography.bodyRegular)
+                .fontWeight(.semibold)
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding(Spacing.md)
+                .background(SageGreen.shade500)
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                showingPartialSheet = true
+            } label: {
+                HStack {
+                    Image(systemName: "chart.pie.fill")
+                    Text("Record Partial Payment")
+                }
+                .font(Typography.bodyRegular)
+                .fontWeight(.semibold)
+                .foregroundColor(Color.fromHex("F59E0B"))
+                .frame(maxWidth: .infinity)
+                .padding(Spacing.md)
+                .background(Color.fromHex("F59E0B").opacity(0.15))
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.md))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(Spacing.lg)
+        .glassPanel(padding: 0)
+    }
+
+    private var paymentHistoryCard: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            Text("Payment Progress")
+                .font(Typography.bodySmall)
+                .fontWeight(.semibold)
+                .foregroundColor(SemanticColors.textSecondary)
+                .textCase(.uppercase)
+
+            Divider()
+
+            HStack {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text("Total Amount")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textTertiary)
+                    Text(contribution.amount.currencyFormatted)
+                        .font(Typography.bodyRegular)
+                        .fontWeight(.bold)
+                }
+
+                Spacer()
+
+                VStack(alignment: .center, spacing: Spacing.xs) {
+                    Text("Received")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textTertiary)
+                    Text(contribution.amountReceived.currencyFormatted)
+                        .font(Typography.bodyRegular)
+                        .fontWeight(.bold)
+                        .foregroundColor(SageGreen.shade600)
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: Spacing.xs) {
+                    Text("Remaining")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textTertiary)
+                    Text(contribution.remainingBalance.currencyFormatted)
+                        .font(Typography.bodyRegular)
+                        .fontWeight(.bold)
+                        .foregroundColor(Terracotta.shade600)
+                }
+            }
+
+            ProgressView(value: contribution.receivedProgress)
+                .progressViewStyle(.linear)
+                .tint(SageGreen.shade500)
+        }
+        .padding(Spacing.lg)
+        .glassPanel(padding: 0)
+    }
+}
+
+// MARK: - Partial Contribution Modal
+
+struct PartialContributionModal: View {
+    let contribution: GiftOrOwed
+    let onMakePayment: (Double) async -> Void
+
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var settingsStore: SettingsStoreV2
+
+    @State private var amountText = ""
+    @State private var isProcessing = false
+    @FocusState private var isAmountFocused: Bool
+
+    private var remainingBalance: Double {
+        contribution.remainingBalance
+    }
+
+    private var enteredAmount: Double {
+        Double(amountText) ?? 0
+    }
+
+    private var isValidAmount: Bool {
+        enteredAmount > 0 && enteredAmount <= remainingBalance
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: Spacing.xl) {
+                // Amount display
+                VStack(spacing: Spacing.md) {
+                    Text("Record Partial Payment")
+                        .font(Typography.title2)
+                        .fontWeight(.bold)
+
+                    Text("for \(contribution.fromPerson ?? "Anonymous")")
+                        .font(Typography.bodyRegular)
+                        .foregroundColor(SemanticColors.textSecondary)
+                }
+
+                // Balance info
+                VStack(spacing: Spacing.sm) {
+                    HStack {
+                        Text("Total Amount")
+                            .font(Typography.caption)
+                            .foregroundColor(SemanticColors.textTertiary)
+                        Spacer()
+                        Text(contribution.amount.currencyFormatted)
+                            .font(Typography.bodySmall)
+                            .fontWeight(.medium)
+                    }
+
+                    HStack {
+                        Text("Already Received")
+                            .font(Typography.caption)
+                            .foregroundColor(SemanticColors.textTertiary)
+                        Spacer()
+                        Text(contribution.amountReceived.currencyFormatted)
+                            .font(Typography.bodySmall)
+                            .fontWeight(.medium)
+                            .foregroundColor(SageGreen.shade600)
+                    }
+
+                    Divider()
+
+                    HStack {
+                        Text("Remaining Balance")
+                            .font(Typography.bodySmall)
+                            .fontWeight(.semibold)
+                            .foregroundColor(SemanticColors.textSecondary)
+                        Spacer()
+                        Text(remainingBalance.currencyFormatted)
+                            .font(Typography.bodyRegular)
+                            .fontWeight(.bold)
+                            .foregroundColor(Terracotta.shade600)
+                    }
+                }
+                .padding(Spacing.lg)
+                .background(Color.gray.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
+
+                // Amount input
+                VStack(alignment: .leading, spacing: Spacing.sm) {
+                    Text("Payment Amount")
+                        .font(Typography.caption)
+                        .foregroundColor(SemanticColors.textSecondary)
+
+                    HStack {
+                        Text("$")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(SemanticColors.textSecondary)
+
+                        TextField("0.00", text: $amountText)
+                            .font(.system(size: 32, weight: .bold))
+                            .textFieldStyle(.plain)
+                            .focused($isAmountFocused)
+                    }
+                    .padding(Spacing.lg)
+                    .background(Color.gray.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: CornerRadius.lg))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: CornerRadius.lg)
+                            .stroke(isAmountFocused ? BlushPink.shade500 : Color.clear, lineWidth: 2)
+                    )
+                }
+
+                // Quick amount buttons
+                HStack(spacing: Spacing.md) {
+                    quickAmountButton(amount: remainingBalance * 0.25, label: "25%")
+                    quickAmountButton(amount: remainingBalance * 0.50, label: "50%")
+                    quickAmountButton(amount: remainingBalance * 0.75, label: "75%")
+                    quickAmountButton(amount: remainingBalance, label: "Full")
+                }
+
+                Spacer()
+
+                // Action buttons
+                HStack(spacing: Spacing.md) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button {
+                        Task {
+                            isProcessing = true
+                            await onMakePayment(enteredAmount)
+                            isProcessing = false
+                            dismiss()
+                        }
+                    } label: {
+                        if isProcessing {
+                            ProgressView()
+                                .progressViewStyle(.circular)
+                                .scaleEffect(0.8)
+                        } else {
+                            Text("Record Payment")
+                        }
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(SageGreen.shade500)
+                    .disabled(!isValidAmount || isProcessing)
+                }
+            }
+            .padding(Spacing.xxl)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+        .frame(width: 450, height: 550)
+        .onAppear {
+            isAmountFocused = true
+        }
+    }
+
+    private func quickAmountButton(amount: Double, label: String) -> some View {
+        Button {
+            amountText = String(format: "%.2f", amount)
+        } label: {
+            Text(label)
+                .font(Typography.caption)
+                .fontWeight(.semibold)
+                .foregroundColor(BlushPink.shade600)
+                .padding(.horizontal, Spacing.md)
+                .padding(.vertical, Spacing.sm)
+                .background(BlushPink.shade100)
+                .clipShape(Capsule())
+        }
+        .buttonStyle(.plain)
     }
 }
 

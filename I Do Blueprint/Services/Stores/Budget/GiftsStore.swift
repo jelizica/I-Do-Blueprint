@@ -293,6 +293,218 @@ class GiftsStore: ObservableObject {
         giftsLinkedToScenario(scenarioId).reduce(0) { $0 + $1.amount }
     }
 
+    // MARK: - Gift Linking Operations
+
+    /// Unlink a gift from a budget item
+    /// - Parameters:
+    ///   - giftId: The gift UUID string
+    ///   - budgetItemId: The budget item UUID string
+    ///   - scenarioId: The scenario UUID string used for precise cache invalidation
+    func unlinkGift(giftId: String, budgetItemId: String, scenarioId: String) async throws {
+        // Proportional unlink: remove the specified item from the gift's allocation set,
+        // then rebalance the remaining items proportionally by their budgeted amounts.
+        guard let giftUUID = UUID(uuidString: giftId) else {
+            let errorInfo = [NSLocalizedDescriptionKey: "Invalid gift UUID"]
+            let error = NSError(domain: "GiftsStore", code: -1, userInfo: errorInfo)
+            throw BudgetError.updateFailed(underlying: error)
+        }
+
+        do {
+            logger.info("Starting proportional unlink for gift_id=\(giftId), removing budget_item_id=\(budgetItemId) in scenario=\(scenarioId)")
+
+            async let allocationsAsync = repository.fetchAllocationsForGift(giftId: giftUUID, scenarioId: scenarioId)
+            async let itemsAsync = repository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
+            let (existing, items) = try await (allocationsAsync, itemsAsync)
+
+            // Exclude the removed item
+            let removeKey = budgetItemId.lowercased()
+            var remainingIds = existing.map { $0.budgetItemId.lowercased() }.filter { $0 != removeKey }
+
+            // If nothing remains, replace with empty set (fully unlinked)
+            if remainingIds.isEmpty {
+                try await repository.replaceGiftAllocations(giftId: giftUUID, scenarioId: scenarioId, with: [])
+            } else {
+                // Build weights from remaining items' vendorEstimateWithTax
+                let budgetById = Dictionary(uniqueKeysWithValues: items.map { ($0.id.lowercased(), $0.vendorEstimateWithTax) })
+                // Keep only ids that exist in items
+                remainingIds = remainingIds.filter { budgetById[$0] != nil }
+
+                let totalBudgeted = remainingIds.compactMap { budgetById[$0] }.reduce(0, +)
+                let amount = giftsAndOwed.first(where: { $0.id == giftUUID })?.amount ?? 0
+                let coupleId = existing.first?.coupleId ?? items.first?.coupleId.uuidString ?? ""
+                let isTest = existing.first?.isTestData
+
+                var newAllocations: [GiftAllocation] = []
+                if totalBudgeted > 0 {
+                    var remaining = amount
+                    for (idx, key) in remainingIds.enumerated() {
+                        let weight = budgetById[key]! / totalBudgeted
+                        var value = amount * weight
+                        value = (value * 100).rounded() / 100 // round to cents
+                        if idx == remainingIds.count - 1 { value = (remaining * 100).rounded() / 100 }
+                        remaining -= value
+                        newAllocations.append(
+                            GiftAllocation(
+                                id: UUID().uuidString,
+                                giftId: giftUUID.uuidString,
+                                budgetItemId: key,
+                                allocatedAmount: value,
+                                percentage: nil,
+                                notes: nil,
+                                createdAt: Date(),
+                                updatedAt: nil,
+                                coupleId: coupleId,
+                                scenarioId: scenarioId,
+                                isTestData: isTest
+                            )
+                        )
+                    }
+                } else {
+                    // If we cannot compute weights, allocate 100% to the first remaining item
+                    let target = remainingIds.first!
+                    newAllocations = [
+                        GiftAllocation(
+                            id: UUID().uuidString,
+                            giftId: giftUUID.uuidString,
+                            budgetItemId: target,
+                            allocatedAmount: amount,
+                            percentage: nil,
+                            notes: nil,
+                            createdAt: Date(),
+                            updatedAt: nil,
+                            coupleId: coupleId,
+                            scenarioId: scenarioId,
+                            isTestData: isTest
+                        )
+                    ]
+                }
+
+                try await repository.replaceGiftAllocations(giftId: giftUUID, scenarioId: scenarioId, with: newAllocations)
+            }
+
+            // Invalidate related caches synchronously
+            // Note: scenarioId should NOT be lowercased - it must match the exact cache key format
+            await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
+            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
+            await RepositoryCache.shared.invalidatePrefix("gift_allocations_")
+            await RepositoryCache.shared.invalidatePrefix("budget_overview_items_")
+            await RepositoryCache.shared.invalidatePrefix("budget_dev_items_")
+            if let tenantId = SessionManager.shared.getTenantId()?.uuidString {
+                await RepositoryCache.shared.remove("gifts_and_owed_\(tenantId)")
+            }
+
+            logger.info("Gift proportional unlink complete and caches invalidated for scenarioId=\(scenarioId)")
+        } catch {
+            await handleError(error, operation: "unlinkGift", context: [
+                "giftId": giftId,
+                "budgetItemId": budgetItemId,
+                "scenarioId": scenarioId
+            ])
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    // MARK: - Partial Contribution Support
+
+    /// Record a partial contribution payment
+    /// - Parameters:
+    ///   - contribution: The contribution to record a partial payment for
+    ///   - amountReceived: The amount received in this payment
+    /// - Returns: The updated contribution
+    @discardableResult
+    func recordPartialContribution(contribution: GiftOrOwed, amountReceived: Double) async -> GiftOrOwed? {
+        isLoading = true
+        error = nil
+
+        var updated = contribution
+        let newAmountReceived = contribution.amountReceived + amountReceived
+        updated.amountReceived = newAmountReceived
+        updated.paymentRecordedAt = Date()
+        updated.updatedAt = Date()
+
+        // Determine status based on amount received
+        if newAmountReceived >= contribution.amount {
+            updated.status = .received
+            updated.receivedDate = Date()
+        } else if newAmountReceived > 0 {
+            updated.status = .partial
+        }
+
+        do {
+            let result = try await repository.updateGiftOrOwed(updated)
+            if let index = giftsAndOwed.firstIndex(where: { $0.id == result.id }) {
+                giftsAndOwed[index] = result
+            }
+            logger.info("Recorded partial contribution: \(result.id), amount: \(amountReceived), total received: \(newAmountReceived)")
+            isLoading = false
+            return result
+        } catch {
+            await handleError(error, operation: "recordPartialContribution", context: [
+                "contributionId": contribution.id.uuidString,
+                "amountReceived": String(amountReceived)
+            ]) { [weak self] in
+                await self?.recordPartialContribution(contribution: contribution, amountReceived: amountReceived)
+            }
+            self.error = .updateFailed(underlying: error)
+            isLoading = false
+            return nil
+        }
+    }
+
+    /// Mark a contribution as fully received (shortcut for full payment)
+    /// - Parameter contribution: The contribution to mark as received
+    @discardableResult
+    func markAsReceived(_ contribution: GiftOrOwed) async -> GiftOrOwed? {
+        var updated = contribution
+        updated.status = .received
+        updated.amountReceived = contribution.amount
+        updated.receivedDate = Date()
+        updated.paymentRecordedAt = Date()
+        updated.updatedAt = Date()
+
+        do {
+            let result = try await repository.updateGiftOrOwed(updated)
+            if let index = giftsAndOwed.firstIndex(where: { $0.id == result.id }) {
+                giftsAndOwed[index] = result
+            }
+            logger.info("Marked contribution as received: \(result.id)")
+            return result
+        } catch {
+            await handleError(error, operation: "markAsReceived", context: [
+                "contributionId": contribution.id.uuidString
+            ])
+            self.error = .updateFailed(underlying: error)
+            return nil
+        }
+    }
+
+    /// Reset a contribution back to pending status
+    /// - Parameter contribution: The contribution to reset
+    @discardableResult
+    func markAsPending(_ contribution: GiftOrOwed) async -> GiftOrOwed? {
+        var updated = contribution
+        updated.status = .pending
+        updated.amountReceived = 0
+        updated.receivedDate = nil
+        updated.paymentRecordedAt = nil
+        updated.updatedAt = Date()
+
+        do {
+            let result = try await repository.updateGiftOrOwed(updated)
+            if let index = giftsAndOwed.firstIndex(where: { $0.id == result.id }) {
+                giftsAndOwed[index] = result
+            }
+            logger.info("Reset contribution to pending: \(result.id)")
+            return result
+        } catch {
+            await handleError(error, operation: "markAsPending", context: [
+                "contributionId": contribution.id.uuidString
+            ])
+            self.error = .updateFailed(underlying: error)
+            return nil
+        }
+    }
+
     // MARK: - State Management
 
     /// Reset loaded state (for logout/tenant switch)
