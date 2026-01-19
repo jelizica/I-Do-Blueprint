@@ -29,7 +29,13 @@ struct ExpenseDetailModalView: View {
 
     // State for linked bills
     @State private var linkedBills: [BillCalculator] = []
+    @State private var linkedBillLinks: [ExpenseBillCalculatorLink] = []
     @State private var isLoadingLinkedBills = true
+
+    // State for unlink confirmation
+    @State private var billToUnlink: BillCalculator?
+    @State private var showUnlinkConfirmation = false
+    @State private var isUnlinking = false
 
     private let logger = AppLogger.ui
 
@@ -108,6 +114,22 @@ struct ExpenseDetailModalView: View {
                 .environmentObject(budgetStore)
                 .environmentObject(settingsStore)
                 .environmentObject(coordinator)
+        }
+        .alert(
+            "Unlink Bill",
+            isPresented: $showUnlinkConfirmation,
+            presenting: billToUnlink
+        ) { bill in
+            Button("Cancel", role: .cancel) {
+                billToUnlink = nil
+            }
+            Button("Unlink", role: .destructive) {
+                Task {
+                    await unlinkBill(bill)
+                }
+            }
+        } message: { bill in
+            Text("Are you sure you want to unlink \"\(bill.name.isEmpty ? "Untitled Bill" : bill.name)\" from this expense? The bill calculator will not be deleted.")
         }
     }
 
@@ -1061,6 +1083,23 @@ struct ExpenseDetailModalView: View {
                     Text(formatCurrency(bill.grandTotal))
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(SemanticColors.textPrimary)
+
+                    // Unlink button
+                    Button {
+                        billToUnlink = bill
+                        showUnlinkConfirmation = true
+                    } label: {
+                        Image(systemName: "link.badge.minus")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundColor(SemanticColors.statusError)
+                            .frame(width: 28, height: 28)
+                            .background(SemanticColors.statusErrorLight.opacity(0.5))
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .help("Unlink this bill from the expense")
+                    .disabled(isUnlinking)
+                    .opacity(isUnlinking ? 0.5 : 1)
                 }
 
                 // Vendor and event info
@@ -1130,6 +1169,14 @@ struct ExpenseDetailModalView: View {
             RoundedRectangle(cornerRadius: CornerRadius.md)
                 .stroke(SemanticColors.borderLight, lineWidth: 1)
         )
+        .contextMenu {
+            Button(role: .destructive) {
+                billToUnlink = bill
+                showUnlinkConfirmation = true
+            } label: {
+                Label("Unlink Bill", systemImage: "link.badge.minus")
+            }
+        }
     }
 
     private func itemCountTag(count: Int, label: String, color: Color) -> some View {
@@ -1316,15 +1363,72 @@ struct ExpenseDetailModalView: View {
             isLoadingLinkedBills = true
             do {
                 let links = try await budgetStore.repository.fetchBillCalculatorLinksForExpense(expenseId: expense.id)
+
+                // Store the links for unlinking functionality
+                linkedBillLinks = links
+
+                // Early exit if no links exist
+                guard !links.isEmpty else {
+                    linkedBills = []
+                    isLoadingLinkedBills = false
+                    return
+                }
+
                 let billIds = Set(links.map { $0.billCalculatorId })
 
+                // Ensure bill calculator store is loaded before filtering
+                let billStore = AppStores.shared.billCalculator
+
+                // Wait for bill store to finish loading if it's currently loading
+                // or trigger a load if it hasn't started
+                if billStore.loadingState.isIdle || billStore.loadingState.hasError {
+                    await billStore.loadCalculators()
+                } else if billStore.loadingState.isLoading {
+                    // Wait for the in-progress load to complete by polling with timeout
+                    var waitCount = 0
+                    while billStore.loadingState.isLoading && waitCount < 100 { // Max 5 seconds
+                        try? await Task.sleep(nanoseconds: 50_000_000) // 50ms
+                        waitCount += 1
+                    }
+                }
+
                 // Get bill calculators from the store
-                linkedBills = AppStores.shared.billCalculator.calculators.filter { billIds.contains($0.id) }
+                linkedBills = billStore.calculators.filter { billIds.contains($0.id) }
             } catch {
                 logger.error("Failed to load linked bills for expense \(expense.id)", error: error)
                 linkedBills = []
+                linkedBillLinks = []
             }
             isLoadingLinkedBills = false
+        }
+    }
+
+    // MARK: - Unlink Bill
+
+    /// Unlinks a bill calculator from this expense
+    private func unlinkBill(_ bill: BillCalculator) async {
+        // Find the link ID for this bill
+        guard let link = linkedBillLinks.first(where: { $0.billCalculatorId == bill.id }) else {
+            logger.error("No link found for bill \(bill.id) when trying to unlink")
+            return
+        }
+
+        isUnlinking = true
+        defer { isUnlinking = false }
+
+        do {
+            try await budgetStore.repository.unlinkBillCalculatorFromExpense(linkId: link.id)
+            logger.info("Successfully unlinked bill \(bill.name) from expense \(expense.id)")
+
+            // Update local state
+            linkedBills.removeAll { $0.id == bill.id }
+            linkedBillLinks.removeAll { $0.billCalculatorId == bill.id }
+
+            // Clear the selected bill
+            billToUnlink = nil
+        } catch {
+            logger.error("Failed to unlink bill \(bill.id) from expense \(expense.id)", error: error)
+            // The alert will have already dismissed, so we just log the error
         }
     }
 
