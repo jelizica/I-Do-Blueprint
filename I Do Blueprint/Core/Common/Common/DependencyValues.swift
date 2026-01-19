@@ -16,6 +16,7 @@ private enum LiveRepositories {
     static let settings: any SettingsRepositoryProtocol = LiveSettingsRepository()
     static let notes: any NotesRepositoryProtocol = LiveNotesRepository()
     static let onboarding: any OnboardingRepositoryProtocol = LiveOnboardingRepository()
+    static let billCalculator: any BillCalculatorRepositoryProtocol = LiveBillCalculatorRepository()
 }
 
 // MARK: - Dependency Keys
@@ -90,11 +91,25 @@ private enum OnboardingRepositoryKey: DependencyKey {
     static let previewValue: any OnboardingRepositoryProtocol = MockOnboardingRepository()
 }
 
+/// Dependency key for BillCalculatorRepository
+private enum BillCalculatorRepositoryKey: DependencyKey {
+    static let liveValue: any BillCalculatorRepositoryProtocol = LiveRepositories.billCalculator
+    static let testValue: any BillCalculatorRepositoryProtocol = MockBillCalculatorRepository()
+    static let previewValue: any BillCalculatorRepositoryProtocol = MockBillCalculatorRepository()
+}
+
 /// Dependency key for BudgetAllocationService
 private enum BudgetAllocationServiceKey: DependencyKey {
     static let liveValue: any BudgetAllocationServiceProtocol = BudgetAllocationService(repository: LiveRepositories.budget)
     static let testValue: any BudgetAllocationServiceProtocol = BudgetAllocationService(repository: MockBudgetRepository())
     static let previewValue: any BudgetAllocationServiceProtocol = BudgetAllocationService(repository: MockBudgetRepository())
+}
+
+/// Dependency key for GiftAllocationService
+private enum GiftAllocationServiceKey: DependencyKey {
+    static let liveValue: any GiftAllocationServiceProtocol = GiftAllocationService(repository: LiveRepositories.budget)
+    static let testValue: any GiftAllocationServiceProtocol = GiftAllocationService(repository: MockBudgetRepository())
+    static let previewValue: any GiftAllocationServiceProtocol = GiftAllocationService(repository: MockBudgetRepository())
 }
 
 /// Dependency key for AlertPresenter
@@ -202,11 +217,27 @@ extension DependencyValues {
         set { self[OnboardingRepositoryKey.self] = newValue }
     }
 
+    /// Access the bill calculator repository dependency
+    /// - In production: Returns LiveBillCalculatorRepository with Supabase
+    /// - In tests: Returns MockBillCalculatorRepository with in-memory storage
+    /// - In previews: Returns MockBillCalculatorRepository with sample data
+    var billCalculatorRepository: any BillCalculatorRepositoryProtocol {
+        get { self[BillCalculatorRepositoryKey.self] }
+        set { self[BillCalculatorRepositoryKey.self] = newValue }
+    }
+
     /// Access the budget allocation service dependency
     /// Performs proportional allocation and rebalancing logic
     var budgetAllocationService: any BudgetAllocationServiceProtocol {
         get { self[BudgetAllocationServiceKey.self] }
         set { self[BudgetAllocationServiceKey.self] = newValue }
+    }
+
+    /// Access the gift allocation service dependency
+    /// Performs proportional gift allocation and rebalancing logic
+    var giftAllocationService: any GiftAllocationServiceProtocol {
+        get { self[GiftAllocationServiceKey.self] }
+        set { self[GiftAllocationServiceKey.self] = newValue }
     }
 
     /// Access the alert presenter dependency

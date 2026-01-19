@@ -633,12 +633,10 @@ actor BudgetDevelopmentDataSource {
             logger.info("Linked gift \(giftId) to budget item \(budgetItemId) in \(String(format: "%.2f", duration))s")
             
             await RepositoryCache.shared.remove("gifts_and_owed")
-            
-            // Invalidate budget development items cache
-            let stats = await RepositoryCache.shared.stats()
-            for key in stats.keys where key.hasPrefix("budget_dev_items_") {
-                await RepositoryCache.shared.remove(key)
-            }
+
+            // Invalidate budget development items cache and budget overview items cache
+            await RepositoryCache.shared.invalidatePrefix("budget_dev_items_")
+            await RepositoryCache.shared.invalidatePrefix("budget_overview_items_")
         } catch {
             let duration = Date().timeIntervalSince(startTime)
             logger.error("Gift linking failed after \(String(format: "%.2f", duration))s", error: error)
@@ -650,7 +648,383 @@ actor BudgetDevelopmentDataSource {
             throw BudgetError.updateFailed(underlying: error)
         }
     }
-    
+
+    /// Unlinks a gift from a budget item by clearing the linked_gift_owed_id
+    /// - Parameter budgetItemId: The budget item to unlink the gift from
+    func unlinkGiftFromBudgetItem(budgetItemId: String) async throws {
+        let startTime = Date()
+
+        do {
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .update(["linked_gift_owed_id": AnyJSON.null])
+                    .eq("id", value: budgetItemId)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Unlinked gift from budget item \(budgetItemId) in \(String(format: "%.2f", duration))s")
+
+            // Invalidate caches
+            await RepositoryCache.shared.remove("gifts_and_owed")
+
+            // Invalidate budget development items cache and budget overview items cache
+            await RepositoryCache.shared.invalidatePrefix("budget_dev_items_")
+            await RepositoryCache.shared.invalidatePrefix("budget_overview_items_")
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Gift unlinking failed after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "unlinkGiftFromBudgetItem",
+                "budgetItemId": budgetItemId
+            ])
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    // MARK: - Gift Allocations (Proportional)
+
+    /// Fetches gift allocations for a specific budget item in a scenario
+    func fetchGiftAllocations(scenarioId: String, budgetItemId: String) async throws -> [GiftAllocation] {
+        let startTime = Date()
+
+        do {
+            let allocations: [GiftAllocation] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("gift_budget_allocations")
+                    .select()
+                    .eq("scenario_id", value: scenarioId)
+                    .eq("budget_item_id", value: budgetItemId)
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            if duration > 1.0 {
+                logger.info("Slow gift allocations fetch: \(String(format: "%.2f", duration))s for \(allocations.count) items")
+            }
+
+            return allocations
+        } catch {
+            logger.error("Failed to fetch gift allocations", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchGiftAllocations",
+                "scenarioId": scenarioId,
+                "budgetItemId": budgetItemId
+            ])
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    /// Fetches all gift allocations for a scenario
+    func fetchGiftAllocationsForScenario(scenarioId: String) async throws -> [GiftAllocation] {
+        let startTime = Date()
+
+        do {
+            let allocations: [GiftAllocation] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("gift_budget_allocations")
+                    .select()
+                    .eq("scenario_id", value: scenarioId)
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            if duration > 1.0 {
+                logger.info("Slow gift allocations fetch (scenario): \(String(format: "%.2f", duration))s for \(allocations.count) items")
+            }
+
+            return allocations
+        } catch {
+            logger.error("Failed to fetch gift allocations for scenario", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchGiftAllocationsForScenario",
+                "scenarioId": scenarioId
+            ])
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    /// Creates a new gift allocation
+    func createGiftAllocation(_ allocation: GiftAllocation) async throws -> GiftAllocation {
+        let startTime = Date()
+
+        do {
+            let created: GiftAllocation = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("gift_budget_allocations")
+                    .insert(allocation)
+                    .select()
+                    .single()
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Created gift allocation: \(created.giftId) -> \(created.budgetItemId) in \(String(format: "%.2f", duration))s")
+
+            // Invalidate relevant caches
+            await RepositoryCache.shared.remove("budget_overview_items_\(allocation.scenarioId)")
+            await RepositoryCache.shared.invalidatePrefix("gift_allocations_")
+            return created
+        } catch {
+            logger.error("Failed to create gift allocation", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "createGiftAllocation",
+                "giftId": allocation.giftId,
+                "budgetItemId": allocation.budgetItemId
+            ])
+            throw BudgetError.createFailed(underlying: error)
+        }
+    }
+
+    /// Fetches allocations for a specific gift in a scenario
+    func fetchAllocationsForGift(giftId: UUID, scenarioId: String) async throws -> [GiftAllocation] {
+        let allocations: [GiftAllocation] = try await RepositoryNetwork.withRetry { [self] in
+            try await self.supabase
+                .from("gift_budget_allocations")
+                .select()
+                .eq("gift_id", value: giftId)
+                .eq("scenario_id", value: scenarioId)
+                .execute()
+                .value
+        }
+        return allocations
+    }
+
+    /// Fetches allocations for a specific gift across all scenarios
+    func fetchAllocationsForGiftAllScenarios(giftId: UUID) async throws -> [GiftAllocation] {
+        let allocations: [GiftAllocation] = try await RepositoryNetwork.withRetry { [self] in
+            try await self.supabase
+                .from("gift_budget_allocations")
+                .select()
+                .eq("gift_id", value: giftId)
+                .execute()
+                .value
+        }
+        return allocations
+    }
+
+    /// Replaces all allocations for a gift in a scenario
+    func replaceGiftAllocations(giftId: UUID, scenarioId: String, with newAllocations: [GiftAllocation]) async throws {
+        // Fetch backup of existing allocations
+        let existing: [GiftAllocation] = try await RepositoryNetwork.withRetry { [self] in
+            try await self.supabase
+                .from("gift_budget_allocations")
+                .select()
+                .eq("gift_id", value: giftId)
+                .eq("scenario_id", value: scenarioId)
+                .execute()
+                .value
+        }
+
+        // Delete existing
+        try await RepositoryNetwork.withRetry { [self] in
+            try await self.supabase
+                .from("gift_budget_allocations")
+                .delete()
+                .eq("gift_id", value: giftId)
+                .eq("scenario_id", value: scenarioId)
+                .execute()
+        }
+
+        // Insert new set
+        if !newAllocations.isEmpty {
+            do {
+                try await RepositoryNetwork.withRetry { [self] in
+                    try await self.supabase
+                        .from("gift_budget_allocations")
+                        .insert(newAllocations)
+                        .execute()
+                }
+            } catch {
+                // Attempt to restore previous allocations
+                if !existing.isEmpty {
+                    do {
+                        try await RepositoryNetwork.withRetry { [self] in
+                            try await self.supabase
+                                .from("gift_budget_allocations")
+                                .insert(existing)
+                                .execute()
+                        }
+                        logger.info("Restored previous gift allocations after insert failure for gift: \(giftId)")
+                    } catch {
+                        logger.error("Failed to restore gift allocations after insert failure", error: error)
+                    }
+                }
+                throw error
+            }
+        }
+
+        // Invalidate caches
+        await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
+        await RepositoryCache.shared.invalidatePrefix("gift_allocations_")
+    }
+
+    // MARK: - Bill Calculator Linking
+
+    /// Links a bill calculator to a budget item, replacing its amount with the bill's subtotal
+    /// - Parameters:
+    ///   - billCalculatorId: The bill calculator to link
+    ///   - budgetItemId: The budget item to update
+    ///   - billSubtotal: The pre-tax subtotal from the bill calculator
+    func linkBillCalculatorToBudgetItem(billCalculatorId: UUID, budgetItemId: String, billSubtotal: Double) async throws {
+        let startTime = Date()
+
+        do {
+            // 1. Fetch current item to store pre-link amount and get tax rate
+            let existingItems: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .select()
+                    .eq("id", value: budgetItemId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            guard let existingItem = existingItems.first else {
+                throw BudgetError.fetchFailed(underlying: NSError(
+                    domain: "BudgetDevelopmentDataSource",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Budget item not found: \(budgetItemId)"]
+                ))
+            }
+
+            // 2. Calculate amounts using bill subtotal and item's tax rate
+            let amountWithoutTax = billSubtotal
+            let amountWithTax = billSubtotal * (1 + existingItem.taxRate / 100)
+
+            // 3. Update with linking and store original amount
+            struct BillLinkUpdate: Codable {
+                let linkedBillCalculatorId: UUID
+                let preLinkAmount: Double
+                let vendorEstimateWithoutTax: Double
+                let vendorEstimateWithTax: Double
+                let updatedAt: Date
+
+                enum CodingKeys: String, CodingKey {
+                    case linkedBillCalculatorId = "linked_bill_calculator_id"
+                    case preLinkAmount = "pre_link_amount"
+                    case vendorEstimateWithoutTax = "vendor_estimate_without_tax"
+                    case vendorEstimateWithTax = "vendor_estimate_with_tax"
+                    case updatedAt = "updated_at"
+                }
+            }
+
+            let update = BillLinkUpdate(
+                linkedBillCalculatorId: billCalculatorId,
+                preLinkAmount: existingItem.vendorEstimateWithoutTax,
+                vendorEstimateWithoutTax: amountWithoutTax,
+                vendorEstimateWithTax: amountWithTax,
+                updatedAt: Date()
+            )
+
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .update(update)
+                    .eq("id", value: budgetItemId)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Linked bill \(billCalculatorId) to budget item \(budgetItemId) in \(String(format: "%.2f", duration))s")
+
+            // Invalidate caches
+            await invalidateItemCaches(scenarioId: existingItem.scenarioId)
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Bill calculator linking failed after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "linkBillCalculatorToBudgetItem",
+                "billCalculatorId": billCalculatorId.uuidString,
+                "budgetItemId": budgetItemId
+            ])
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
+    /// Unlinks a bill calculator from a budget item, reverting to the pre-link amount
+    /// - Parameter budgetItemId: The budget item to unlink
+    func unlinkBillCalculatorFromBudgetItem(budgetItemId: String) async throws {
+        let startTime = Date()
+
+        do {
+            // 1. Fetch current item to get pre-link amount and tax rate
+            let existingItems: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .select()
+                    .eq("id", value: budgetItemId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            guard let existingItem = existingItems.first else {
+                throw BudgetError.fetchFailed(underlying: NSError(
+                    domain: "BudgetDevelopmentDataSource",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Budget item not found: \(budgetItemId)"]
+                ))
+            }
+
+            // 2. Revert to original amount (or 0 if no pre-link amount)
+            let revertAmount = existingItem.preLinkAmount ?? 0
+            let amountWithTax = revertAmount * (1 + existingItem.taxRate / 100)
+
+            // 3. Clear link and restore amount
+            struct BillUnlinkUpdate: Codable {
+                let linkedBillCalculatorId: UUID?
+                let preLinkAmount: Double?
+                let vendorEstimateWithoutTax: Double
+                let vendorEstimateWithTax: Double
+                let updatedAt: Date
+
+                enum CodingKeys: String, CodingKey {
+                    case linkedBillCalculatorId = "linked_bill_calculator_id"
+                    case preLinkAmount = "pre_link_amount"
+                    case vendorEstimateWithoutTax = "vendor_estimate_without_tax"
+                    case vendorEstimateWithTax = "vendor_estimate_with_tax"
+                    case updatedAt = "updated_at"
+                }
+            }
+
+            let update = BillUnlinkUpdate(
+                linkedBillCalculatorId: nil,
+                preLinkAmount: nil,
+                vendorEstimateWithoutTax: revertAmount,
+                vendorEstimateWithTax: amountWithTax,
+                updatedAt: Date()
+            )
+
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .update(update)
+                    .eq("id", value: budgetItemId)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Unlinked bill from budget item \(budgetItemId) in \(String(format: "%.2f", duration))s")
+
+            // Invalidate caches
+            await invalidateItemCaches(scenarioId: existingItem.scenarioId)
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Bill calculator unlinking failed after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "unlinkBillCalculatorFromBudgetItem",
+                "budgetItemId": budgetItemId
+            ])
+            throw BudgetError.updateFailed(underlying: error)
+        }
+    }
+
     // MARK: - Composite Saves
     
     /// Saves a budget scenario with its items in a single transaction
@@ -1034,7 +1408,336 @@ actor BudgetDevelopmentDataSource {
         if let scenarioId = scenarioId {
             await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
             await RepositoryCache.shared.remove("budget_items_hierarchical_\(scenarioId)")
+            // Also invalidate budget overview cache so linked bill amounts are reflected
+            await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
         }
         await RepositoryCache.shared.remove("budget_dev_items_all")
+    }
+
+    // MARK: - Budget Item Bill Calculator Links (Multi-Bill Support)
+
+    /// Fetches all bill calculator links for a specific budget item
+    func fetchBillCalculatorLinksForBudgetItem(budgetItemId: String) async throws -> [BudgetItemBillCalculatorLink] {
+        let startTime = Date()
+
+        do {
+            guard let budgetItemUUID = UUID(uuidString: budgetItemId) else {
+                throw BudgetError.fetchFailed(underlying: NSError(
+                    domain: "BudgetDevelopmentDataSource",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Invalid budget item ID format: \(budgetItemId)"]
+                ))
+            }
+
+            let links: [BudgetItemBillCalculatorLink] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_item_bill_calculator_links")
+                    .select()
+                    .eq("budget_item_id", value: budgetItemUUID)
+                    .order("created_at", ascending: true)
+                    .execute()
+                    .value
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Fetched \(links.count) bill calculator links for budget item \(budgetItemId) in \(String(format: "%.2f", duration))s")
+            return links
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to fetch bill calculator links after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "fetchBillCalculatorLinksForBudgetItem",
+                "budgetItemId": budgetItemId
+            ])
+            throw BudgetError.fetchFailed(underlying: error)
+        }
+    }
+
+    /// Links multiple bill calculators to a budget item
+    /// Updates the budget item's amount to sum of all linked bill subtotals and sets linked_bill_calculator_id
+    func linkBillCalculatorsToBudgetItem(
+        budgetItemId: String,
+        billCalculatorIds: [UUID],
+        coupleId: UUID,
+        notes: String?
+    ) async throws -> [BudgetItemBillCalculatorLink] {
+        let startTime = Date()
+
+        guard !billCalculatorIds.isEmpty else {
+            return []
+        }
+
+        guard let budgetItemUUID = UUID(uuidString: budgetItemId) else {
+            throw BudgetError.createFailed(underlying: NSError(
+                domain: "BudgetDevelopmentDataSource",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid budget item ID format: \(budgetItemId)"]
+            ))
+        }
+
+        do {
+            // Fetch the budget item to get its scenario ID and current amount for pre-link backup
+            let existingItems: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .select()
+                    .eq("id", value: budgetItemId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            guard let existingItem = existingItems.first else {
+                throw BudgetError.fetchFailed(underlying: NSError(
+                    domain: "BudgetDevelopmentDataSource",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Budget item not found: \(budgetItemId)"]
+                ))
+            }
+
+            // Fetch the bill calculators to calculate combined subtotal
+            // Note: Use "items:bill_calculator_items(*)" to alias the nested items to match the BillCalculator model's expected key
+            let billCalculators: [BillCalculator] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("bill_calculators")
+                    .select("*, items:bill_calculator_items(*)")
+                    .in("id", values: billCalculatorIds)
+                    .execute()
+                    .value
+            }
+
+            // Calculate combined subtotal from all linked bills
+            let combinedSubtotal = billCalculators.reduce(0.0) { $0 + $1.subtotal }
+            let amountWithTax = combinedSubtotal * (1 + existingItem.taxRate / 100)
+
+            // Create insert data for each link
+            let insertData = billCalculatorIds.map { billId in
+                BudgetItemBillCalculatorLinkInsertData(
+                    budgetItemId: budgetItemUUID,
+                    billCalculatorId: billId,
+                    coupleId: coupleId,
+                    notes: notes
+                )
+            }
+
+            // Insert all links
+            let createdLinks: [BudgetItemBillCalculatorLink] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_item_bill_calculator_links")
+                    .insert(insertData)
+                    .select()
+                    .execute()
+                    .value
+            }
+
+            // Update the budget item with combined amount and set linked_bill_calculator_id
+            // Store original amount in pre_link_amount for revert capability
+            struct BillLinkUpdate: Codable {
+                let linkedBillCalculatorId: UUID?
+                let preLinkAmount: Double?
+                let vendorEstimateWithoutTax: Double
+                let vendorEstimateWithTax: Double
+                let updatedAt: Date
+
+                enum CodingKeys: String, CodingKey {
+                    case linkedBillCalculatorId = "linked_bill_calculator_id"
+                    case preLinkAmount = "pre_link_amount"
+                    case vendorEstimateWithoutTax = "vendor_estimate_without_tax"
+                    case vendorEstimateWithTax = "vendor_estimate_with_tax"
+                    case updatedAt = "updated_at"
+                }
+            }
+
+            // Use first bill ID as the linked_bill_calculator_id (for UI indicator)
+            // The junction table stores all links
+            let update = BillLinkUpdate(
+                linkedBillCalculatorId: billCalculatorIds.first,
+                preLinkAmount: existingItem.preLinkAmount ?? existingItem.vendorEstimateWithoutTax,
+                vendorEstimateWithoutTax: combinedSubtotal,
+                vendorEstimateWithTax: amountWithTax,
+                updatedAt: Date()
+            )
+
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .update(update)
+                    .eq("id", value: budgetItemId)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Linked \(createdLinks.count) bill calculators to budget item \(budgetItemId) (combined subtotal: \(combinedSubtotal)) in \(String(format: "%.2f", duration))s")
+
+            // Invalidate caches
+            await invalidateItemCaches(scenarioId: existingItem.scenarioId)
+
+            return createdLinks
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to link bill calculators after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "linkBillCalculatorsToBudgetItem",
+                "budgetItemId": budgetItemId,
+                "billCalculatorCount": billCalculatorIds.count
+            ])
+            throw BudgetError.createFailed(underlying: error)
+        }
+    }
+
+    /// Removes a specific bill calculator link by link ID
+    func unlinkBillCalculatorFromBudgetItemByLinkId(linkId: UUID) async throws {
+        let startTime = Date()
+
+        do {
+            // First fetch the link to get budget_item_id for cache invalidation
+            let links: [BudgetItemBillCalculatorLink] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_item_bill_calculator_links")
+                    .select()
+                    .eq("id", value: linkId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            guard let link = links.first else {
+                throw BudgetError.deleteFailed(underlying: NSError(
+                    domain: "BudgetDevelopmentDataSource",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Link not found: \(linkId)"]
+                ))
+            }
+
+            // Get the budget item to find scenario for cache invalidation
+            let budgetItems: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .select()
+                    .eq("id", value: link.budgetItemId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            // Delete the link (trigger will update budget item amount)
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_item_bill_calculator_links")
+                    .delete()
+                    .eq("id", value: linkId)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Removed bill calculator link \(linkId) in \(String(format: "%.2f", duration))s")
+
+            // Invalidate caches
+            if let budgetItem = budgetItems.first {
+                await invalidateItemCaches(scenarioId: budgetItem.scenarioId)
+            }
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to remove bill calculator link after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "unlinkBillCalculatorFromBudgetItemByLinkId",
+                "linkId": linkId.uuidString
+            ])
+            throw BudgetError.deleteFailed(underlying: error)
+        }
+    }
+
+    /// Removes all bill calculator links for a budget item
+    func unlinkAllBillCalculatorsFromBudgetItem(budgetItemId: String) async throws {
+        let startTime = Date()
+
+        guard let budgetItemUUID = UUID(uuidString: budgetItemId) else {
+            throw BudgetError.deleteFailed(underlying: NSError(
+                domain: "BudgetDevelopmentDataSource",
+                code: -1,
+                userInfo: [NSLocalizedDescriptionKey: "Invalid budget item ID format: \(budgetItemId)"]
+            ))
+        }
+
+        do {
+            // Get the budget item to find scenario for cache invalidation and pre-link amount
+            let budgetItems: [BudgetItem] = try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .select()
+                    .eq("id", value: budgetItemId)
+                    .limit(1)
+                    .execute()
+                    .value
+            }
+
+            guard let existingItem = budgetItems.first else {
+                throw BudgetError.fetchFailed(underlying: NSError(
+                    domain: "BudgetDevelopmentDataSource",
+                    code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Budget item not found: \(budgetItemId)"]
+                ))
+            }
+
+            // Delete all links for this budget item from junction table
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_item_bill_calculator_links")
+                    .delete()
+                    .eq("budget_item_id", value: budgetItemUUID)
+                    .execute()
+            }
+
+            // Also clear the legacy linked_bill_calculator_id and restore pre-link amount
+            // This ensures the UI state is updated even if no database trigger is configured
+            let revertAmount = existingItem.preLinkAmount ?? 0
+            let amountWithTax = revertAmount * (1 + existingItem.taxRate / 100)
+
+            struct BillUnlinkClear: Codable {
+                let linkedBillCalculatorId: UUID?
+                let preLinkAmount: Double?
+                let vendorEstimateWithoutTax: Double
+                let vendorEstimateWithTax: Double
+                let updatedAt: Date
+
+                enum CodingKeys: String, CodingKey {
+                    case linkedBillCalculatorId = "linked_bill_calculator_id"
+                    case preLinkAmount = "pre_link_amount"
+                    case vendorEstimateWithoutTax = "vendor_estimate_without_tax"
+                    case vendorEstimateWithTax = "vendor_estimate_with_tax"
+                    case updatedAt = "updated_at"
+                }
+            }
+
+            let clearUpdate = BillUnlinkClear(
+                linkedBillCalculatorId: nil,
+                preLinkAmount: nil,
+                vendorEstimateWithoutTax: revertAmount,
+                vendorEstimateWithTax: amountWithTax,
+                updatedAt: Date()
+            )
+
+            try await RepositoryNetwork.withRetry { [self] in
+                try await self.supabase
+                    .from("budget_development_items")
+                    .update(clearUpdate)
+                    .eq("id", value: budgetItemId)
+                    .execute()
+            }
+
+            let duration = Date().timeIntervalSince(startTime)
+            logger.info("Removed all bill calculator links for budget item \(budgetItemId) in \(String(format: "%.2f", duration))s")
+
+            // Invalidate caches
+            await invalidateItemCaches(scenarioId: existingItem.scenarioId)
+        } catch {
+            let duration = Date().timeIntervalSince(startTime)
+            logger.error("Failed to remove all bill calculator links after \(String(format: "%.2f", duration))s", error: error)
+            await SentryService.shared.captureError(error, context: [
+                "operation": "unlinkAllBillCalculatorsFromBudgetItem",
+                "budgetItemId": budgetItemId
+            ])
+            throw BudgetError.deleteFailed(underlying: error)
+        }
     }
 }

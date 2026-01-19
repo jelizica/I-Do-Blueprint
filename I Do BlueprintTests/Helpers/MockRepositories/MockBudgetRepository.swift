@@ -127,6 +127,13 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         paymentSchedules.removeAll(where: { $0.id == id })
     }
 
+    func batchDeletePaymentSchedules(ids: [Int64]) async throws -> Int {
+        if shouldThrowError { throw errorToThrow }
+        let originalCount = paymentSchedules.count
+        paymentSchedules.removeAll { ids.contains($0.id) }
+        return originalCount - paymentSchedules.count
+    }
+
     func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
         if shouldThrowError { throw errorToThrow }
         return paymentSchedules.filter { $0.vendorId == vendorId }
@@ -315,6 +322,60 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if shouldThrowError { throw errorToThrow }
     }
 
+    func unlinkGiftFromBudgetItem(budgetItemId: String) async throws {
+        if shouldThrowError { throw errorToThrow }
+    }
+
+    func linkBillCalculatorToBudgetItem(billCalculatorId: UUID, budgetItemId: String, billSubtotal: Double) async throws {
+        if shouldThrowError { throw errorToThrow }
+    }
+
+    func unlinkBillCalculatorFromBudgetItem(budgetItemId: String) async throws {
+        if shouldThrowError { throw errorToThrow }
+    }
+
+    // MARK: - Budget Item Bill Calculator Link Operations (Multi-Bill Support)
+
+    var budgetItemBillCalculatorLinks: [BudgetItemBillCalculatorLink] = []
+
+    func fetchBillCalculatorLinksForBudgetItem(budgetItemId: String) async throws -> [BudgetItemBillCalculatorLink] {
+        if shouldThrowError { throw errorToThrow }
+        guard let itemUUID = UUID(uuidString: budgetItemId) else { return [] }
+        return budgetItemBillCalculatorLinks.filter { $0.budgetItemId == itemUUID }
+    }
+
+    func linkBillCalculatorsToBudgetItem(budgetItemId: String, billCalculatorIds: [UUID], notes: String?) async throws -> [BudgetItemBillCalculatorLink] {
+        if shouldThrowError { throw errorToThrow }
+        guard let itemUUID = UUID(uuidString: budgetItemId) else { return [] }
+
+        var createdLinks: [BudgetItemBillCalculatorLink] = []
+        for billCalcId in billCalculatorIds {
+            let link = BudgetItemBillCalculatorLink(
+                id: UUID(),
+                budgetItemId: itemUUID,
+                billCalculatorId: billCalcId,
+                coupleId: UUID(),
+                notes: notes,
+                createdAt: Date(),
+                updatedAt: Date()
+            )
+            budgetItemBillCalculatorLinks.append(link)
+            createdLinks.append(link)
+        }
+        return createdLinks
+    }
+
+    func unlinkBillCalculatorFromBudgetItemByLinkId(linkId: UUID) async throws {
+        if shouldThrowError { throw errorToThrow }
+        budgetItemBillCalculatorLinks.removeAll { $0.id == linkId }
+    }
+
+    func unlinkAllBillCalculatorsFromBudgetItem(budgetItemId: String) async throws {
+        if shouldThrowError { throw errorToThrow }
+        guard let itemUUID = UUID(uuidString: budgetItemId) else { return }
+        budgetItemBillCalculatorLinks.removeAll { $0.budgetItemId == itemUUID }
+    }
+
     // MARK: - Gift Received Operations
 
     func fetchGiftsReceived() async throws -> [GiftReceived] {
@@ -399,6 +460,42 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
     func fetchExpenseAllocationsForScenario(scenarioId: String) async throws -> [ExpenseAllocation] {
         if shouldThrowError { throw errorToThrow }
         return expenseAllocations.filter { $0.scenarioId == scenarioId }
+    }
+
+    // MARK: - Gift Allocations (Proportional)
+
+    var giftAllocations: [GiftAllocation] = []
+
+    func fetchGiftAllocations(scenarioId: String, budgetItemId: String) async throws -> [GiftAllocation] {
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter { $0.scenarioId == scenarioId && $0.budgetItemId == budgetItemId }
+    }
+
+    func fetchGiftAllocationsForScenario(scenarioId: String) async throws -> [GiftAllocation] {
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter { $0.scenarioId == scenarioId }
+    }
+
+    func createGiftAllocation(_ allocation: GiftAllocation) async throws -> GiftAllocation {
+        if shouldThrowError { throw errorToThrow }
+        giftAllocations.append(allocation)
+        return allocation
+    }
+
+    func fetchAllocationsForGift(giftId: UUID, scenarioId: String) async throws -> [GiftAllocation] {
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter { $0.giftId == giftId.uuidString && $0.scenarioId == scenarioId }
+    }
+
+    func fetchAllocationsForGiftAllScenarios(giftId: UUID) async throws -> [GiftAllocation] {
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter { $0.giftId == giftId.uuidString }
+    }
+
+    func replaceGiftAllocations(giftId: UUID, scenarioId: String, with newAllocations: [GiftAllocation]) async throws {
+        if shouldThrowError { throw errorToThrow }
+        giftAllocations.removeAll { $0.giftId == giftId.uuidString && $0.scenarioId == scenarioId }
+        giftAllocations.append(contentsOf: newAllocations)
     }
 
     // MARK: - Folder Operations
@@ -565,5 +662,71 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
             
             budgetItems.removeAll(where: { $0.id == folderId })
         }
+    }
+
+    // MARK: - Expense Bill Calculator Link Operations
+
+    func fetchBillCalculatorLinksForExpense(expenseId: UUID) async throws -> [ExpenseBillCalculatorLink] {
+        return []
+    }
+
+    func fetchExpenseLinksForBillCalculator(billCalculatorId: UUID) async throws -> [ExpenseBillCalculatorLink] {
+        return []
+    }
+
+    func linkBillCalculatorsToExpense(expenseId: UUID, billCalculatorIds: [UUID], linkType: ExpenseBillCalculatorLink.LinkType, notes: String?) async throws -> [ExpenseBillCalculatorLink] {
+        return []
+    }
+
+    func unlinkBillCalculatorFromExpense(linkId: UUID) async throws {
+        // No-op for mock
+    }
+
+    func unlinkAllBillCalculatorsFromExpense(expenseId: UUID) async throws {
+        // No-op for mock
+    }
+
+    func fetchBillTotalForExpense(expenseId: UUID) async throws -> ExpenseBillTotal? {
+        return nil
+    }
+
+    // MARK: - Budget Item Bill Calculator Link Operations
+
+    func fetchBillCalculatorLinksForBudgetItem(budgetItemId: String) async throws -> [BudgetItemBillCalculatorLink] {
+        return []
+    }
+
+    func linkBillCalculatorsToBudgetItem(budgetItemId: String, billCalculatorIds: [UUID], notes: String?) async throws -> [BudgetItemBillCalculatorLink] {
+        return []
+    }
+
+    func unlinkBillCalculatorFromBudgetItemByLinkId(linkId: UUID) async throws {
+        // No-op for mock
+    }
+
+    func unlinkAllBillCalculatorsFromBudgetItem(budgetItemId: String) async throws {
+        // No-op for mock
+    }
+
+    // MARK: - Payment Plan Config Operations
+
+    func fetchPaymentPlanConfig(paymentPlanId: UUID) async throws -> PaymentPlanConfig? {
+        return nil
+    }
+
+    func createPaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig {
+        return config
+    }
+
+    func updatePaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig {
+        return config
+    }
+
+    func fetchPaymentPlanConfigsLinkedToBills(billCalculatorIds: [UUID]) async throws -> [PaymentPlanConfig] {
+        return []
+    }
+
+    func fetchPaymentSchedulesByPlanId(paymentPlanId: UUID) async throws -> [PaymentSchedule] {
+        return paymentSchedules.filter { $0.paymentPlanId == paymentPlanId }
     }
 }

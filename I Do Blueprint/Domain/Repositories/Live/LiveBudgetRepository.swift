@@ -271,24 +271,29 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         // Update the expense
         let result = try await dataSource.updateExpense(expense, tenantId: tenantId)
         
-        // Recalculate proportional allocations if expense amount changed
-        // If recalculation fails, attempt rollback to previous state
-        do {
-            try await allocationService.recalculateExpenseAllocationsForAllScenarios(
-                expenseId: expense.id,
-                newAmount: expense.amount
-            )
-        } catch {
-            // Attempt to restore previous expense if available
-            if let previous = previousExpense {
-                do {
-                    try await dataSource.rollbackExpense(previous)
-                    logger.info("Rolled back expense update after allocation recalculation failure for expense: \(expense.id)")
-                } catch {
-                    logger.error("Failed to rollback expense after allocation recalculation failure", error: error)
+        // Only recalculate proportional allocations if expense amount actually changed
+        // This prevents triggering allocation validation when only other fields (like paymentStatus) are updated
+        let amountChanged = previousExpense?.amount != expense.amount
+
+        if amountChanged {
+            // If recalculation fails, attempt rollback to previous state
+            do {
+                try await allocationService.recalculateExpenseAllocationsForAllScenarios(
+                    expenseId: expense.id,
+                    newAmount: expense.amount
+                )
+            } catch {
+                // Attempt to restore previous expense if available
+                if let previous = previousExpense {
+                    do {
+                        try await dataSource.rollbackExpense(previous)
+                        logger.info("Rolled back expense update after allocation recalculation failure for expense: \(expense.id)")
+                    } catch {
+                        logger.error("Failed to rollback expense after allocation recalculation failure", error: error)
+                    }
                 }
+                throw error
             }
-            throw error
         }
         
         return result
@@ -326,6 +331,11 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
     func deletePaymentSchedule(id: Int64) async throws {
         let dataSource = try await getPaymentScheduleDataSource()
         try await dataSource.deletePaymentSchedule(id: id)
+    }
+
+    func batchDeletePaymentSchedules(ids: [Int64]) async throws -> Int {
+        let dataSource = try await getPaymentScheduleDataSource()
+        return try await dataSource.batchDeletePaymentSchedules(ids: ids)
     }
 
     func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
@@ -933,6 +943,57 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         try await dataSource.linkGiftToBudgetItem(giftId: giftId, budgetItemId: budgetItemId)
     }
 
+    func unlinkGiftFromBudgetItem(budgetItemId: String) async throws {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        try await dataSource.unlinkGiftFromBudgetItem(budgetItemId: budgetItemId)
+    }
+
+    // MARK: - Gift Allocations (Proportional) (Delegated to BudgetDevelopmentDataSource)
+
+    func fetchGiftAllocations(scenarioId: String, budgetItemId: String) async throws -> [GiftAllocation] {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        return try await dataSource.fetchGiftAllocations(scenarioId: scenarioId, budgetItemId: budgetItemId)
+    }
+
+    func fetchGiftAllocationsForScenario(scenarioId: String) async throws -> [GiftAllocation] {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        return try await dataSource.fetchGiftAllocationsForScenario(scenarioId: scenarioId)
+    }
+
+    func createGiftAllocation(_ allocation: GiftAllocation) async throws -> GiftAllocation {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        return try await dataSource.createGiftAllocation(allocation)
+    }
+
+    func fetchAllocationsForGift(giftId: UUID, scenarioId: String) async throws -> [GiftAllocation] {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        return try await dataSource.fetchAllocationsForGift(giftId: giftId, scenarioId: scenarioId)
+    }
+
+    func fetchAllocationsForGiftAllScenarios(giftId: UUID) async throws -> [GiftAllocation] {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        return try await dataSource.fetchAllocationsForGiftAllScenarios(giftId: giftId)
+    }
+
+    func replaceGiftAllocations(giftId: UUID, scenarioId: String, with newAllocations: [GiftAllocation]) async throws {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        try await dataSource.replaceGiftAllocations(giftId: giftId, scenarioId: scenarioId, with: newAllocations)
+    }
+
+    func linkBillCalculatorToBudgetItem(billCalculatorId: UUID, budgetItemId: String, billSubtotal: Double) async throws {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        try await dataSource.linkBillCalculatorToBudgetItem(
+            billCalculatorId: billCalculatorId,
+            budgetItemId: budgetItemId,
+            billSubtotal: billSubtotal
+        )
+    }
+
+    func unlinkBillCalculatorFromBudgetItem(budgetItemId: String) async throws {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        try await dataSource.unlinkBillCalculatorFromBudgetItem(budgetItemId: budgetItemId)
+    }
+
     // MARK: - Composite Saves (Scenario + Items) (Delegated to BudgetDevelopmentDataSource)
 
     func saveBudgetScenarioWithItems(_ scenario: SavedScenario, items: [BudgetItem]) async throws -> (scenarioId: String, insertedItems: Int) {
@@ -1059,15 +1120,15 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         try await ensureValidSession()
         let client = try getClient()
 
-        // Create link records
+        // Create link records using proper Codable struct for UUID handling
         let linksToCreate = billCalculatorIds.map { billCalculatorId in
-            [
-                "expense_id": expenseId.uuidString,
-                "bill_calculator_id": billCalculatorId.uuidString,
-                "couple_id": tenantId.uuidString,
-                "link_type": linkType.rawValue,
-                "notes": notes ?? ""
-            ]
+            ExpenseBillCalculatorLinkInsertData(
+                expenseId: expenseId,
+                billCalculatorId: billCalculatorId,
+                coupleId: tenantId,
+                linkType: linkType,
+                notes: notes
+            )
         }
 
         let createdLinks: [ExpenseBillCalculatorLink] = try await RepositoryNetwork.withRetry {
@@ -1150,5 +1211,228 @@ actor LiveBudgetRepository: BudgetRepositoryProtocol {
         }
 
         logger.info("Unlinked all bill calculators from expense \(expenseId)")
+    }
+
+    func fetchBillTotalForExpense(expenseId: UUID) async throws -> ExpenseBillTotal? {
+        // Fetch all bill calculator links for this expense
+        let links = try await fetchBillCalculatorLinksForExpense(expenseId: expenseId)
+
+        // If no links, return nil (not empty) to indicate no bills are linked
+        guard !links.isEmpty else {
+            logger.info("No bill calculators linked to expense \(expenseId)")
+            return nil
+        }
+
+        let tenantId = try await getTenantId()
+        let client = try getClient()
+
+        // Fetch all linked bill calculators with their items
+        var totalAmount: Double = 0
+        var subtotal: Double = 0
+        var taxAmount: Double = 0
+        var billCalculatorIds: [UUID] = []
+
+        for link in links {
+            // Fetch bill calculator with items
+            let calculatorRow: BillCalculatorRow = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("bill_calculators")
+                    .select("""
+                        *,
+                        vendor_information(vendor_name),
+                        wedding_events(event_name),
+                        tax_info(tax_rate, region)
+                    """)
+                    .eq("id", value: link.billCalculatorId)
+                    .eq("couple_id", value: tenantId)
+                    .single()
+                    .execute()
+                    .value
+            }
+
+            let items: [BillCalculatorItem] = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("bill_calculator_items")
+                    .select()
+                    .eq("calculator_id", value: link.billCalculatorId)
+                    .eq("couple_id", value: tenantId)
+                    .order("sort_order", ascending: true)
+                    .execute()
+                    .value
+            }
+
+            let calculator = calculatorRow.toBillCalculator(items: items)
+
+            // Aggregate totals
+            totalAmount += calculator.grandTotal
+            subtotal += calculator.subtotal
+            taxAmount += calculator.taxAmount
+            billCalculatorIds.append(calculator.id)
+        }
+
+        let billTotal = ExpenseBillTotal(
+            expenseId: expenseId,
+            linkedBillCalculatorIds: billCalculatorIds,
+            totalAmount: totalAmount,
+            subtotal: subtotal,
+            taxAmount: taxAmount,
+            billCount: links.count
+        )
+
+        logger.info("Fetched bill total for expense \(expenseId): \(links.count) bills, total: \(totalAmount)")
+        return billTotal
+    }
+
+    // MARK: - Budget Item Bill Calculator Link Operations (Multi-Bill Support)
+
+    func fetchBillCalculatorLinksForBudgetItem(budgetItemId: String) async throws -> [BudgetItemBillCalculatorLink] {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        return try await dataSource.fetchBillCalculatorLinksForBudgetItem(budgetItemId: budgetItemId)
+    }
+
+    func linkBillCalculatorsToBudgetItem(
+        budgetItemId: String,
+        billCalculatorIds: [UUID],
+        notes: String?
+    ) async throws -> [BudgetItemBillCalculatorLink] {
+        let tenantId = try await getTenantId()
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        return try await dataSource.linkBillCalculatorsToBudgetItem(
+            budgetItemId: budgetItemId,
+            billCalculatorIds: billCalculatorIds,
+            coupleId: tenantId,
+            notes: notes
+        )
+    }
+
+    func unlinkBillCalculatorFromBudgetItemByLinkId(linkId: UUID) async throws {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        try await dataSource.unlinkBillCalculatorFromBudgetItemByLinkId(linkId: linkId)
+    }
+
+    func unlinkAllBillCalculatorsFromBudgetItem(budgetItemId: String) async throws {
+        let dataSource = try await getBudgetDevelopmentDataSource()
+        try await dataSource.unlinkAllBillCalculatorsFromBudgetItem(budgetItemId: budgetItemId)
+    }
+
+    // MARK: - Payment Plan Config Operations
+
+    func fetchPaymentPlanConfig(paymentPlanId: UUID) async throws -> PaymentPlanConfig? {
+        let tenantId = try await getTenantId()
+        let client = try getClient()
+
+        do {
+            let config: PaymentPlanConfig = try await RepositoryNetwork.withRetry {
+                try await client
+                    .from("payment_plan_configs")
+                    .select()
+                    .eq("payment_plan_id", value: paymentPlanId)
+                    .eq("couple_id", value: tenantId)
+                    .single()
+                    .execute()
+                    .value
+            }
+
+            logger.info("Fetched payment plan config for \(paymentPlanId)")
+            return config
+        } catch {
+            // Not found is expected for legacy plans
+            if case DecodingError.dataCorrupted = error {
+                logger.info("No payment plan config found for \(paymentPlanId)")
+                return nil
+            }
+            // Check for 406 (no rows) or similar "not found" responses
+            if error.localizedDescription.contains("406") || error.localizedDescription.contains("No rows") {
+                logger.info("No payment plan config found for \(paymentPlanId)")
+                return nil
+            }
+            throw error
+        }
+    }
+
+    func createPaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig {
+        let client = try getClient()
+        let insertData = PaymentPlanConfigInsertData(from: config)
+
+        let created: PaymentPlanConfig = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("payment_plan_configs")
+                .insert(insertData)
+                .select()
+                .single()
+                .execute()
+                .value
+        }
+
+        logger.info("Created payment plan config for plan \(config.paymentPlanId)")
+        return created
+    }
+
+    func updatePaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig {
+        let tenantId = try await getTenantId()
+        let client = try getClient()
+        let updateData = PaymentPlanConfigUpdateData(from: config)
+
+        let updated: PaymentPlanConfig = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("payment_plan_configs")
+                .update(updateData)
+                .eq("id", value: config.id)
+                .eq("couple_id", value: tenantId)
+                .select()
+                .single()
+                .execute()
+                .value
+        }
+
+        logger.info("Updated payment plan config \(config.id)")
+        return updated
+    }
+
+    func fetchPaymentPlanConfigsLinkedToBills(billCalculatorIds: [UUID]) async throws -> [PaymentPlanConfig] {
+        guard !billCalculatorIds.isEmpty else { return [] }
+
+        let tenantId = try await getTenantId()
+        let client = try getClient()
+
+        // Fetch all configs for the tenant, then filter client-side for array overlap
+        // PostgreSQL's array contains operator (@>) doesn't support OR across multiple values easily
+        let allConfigs: [PaymentPlanConfig] = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("payment_plan_configs")
+                .select()
+                .eq("couple_id", value: tenantId)
+                .execute()
+                .value
+        }
+
+        // Filter to configs that have any of the specified bill calculator IDs linked
+        let billCalculatorIdSet = Set(billCalculatorIds)
+        let linkedConfigs = allConfigs.filter { config in
+            !config.linkedBillCalculatorIds.isEmpty &&
+            !billCalculatorIdSet.isDisjoint(with: config.linkedBillCalculatorIds)
+        }
+
+        logger.info("Found \(linkedConfigs.count) payment plan configs linked to \(billCalculatorIds.count) bill calculators")
+        return linkedConfigs
+    }
+
+    func fetchPaymentSchedulesByPlanId(paymentPlanId: UUID) async throws -> [PaymentSchedule] {
+        let tenantId = try await getTenantId()
+        let client = try getClient()
+
+        let schedules: [PaymentSchedule] = try await RepositoryNetwork.withRetry {
+            try await client
+                .from("payment_plans")
+                .select()
+                .eq("payment_plan_id", value: paymentPlanId)
+                .eq("couple_id", value: tenantId)
+                .order("payment_date", ascending: true)
+                .execute()
+                .value
+        }
+
+        logger.info("Fetched \(schedules.count) payment schedules for plan \(paymentPlanId)")
+        return schedules
     }
 }

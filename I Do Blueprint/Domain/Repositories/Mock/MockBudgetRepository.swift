@@ -151,6 +151,14 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         paymentSchedules.removeAll { $0.id == id }
     }
 
+    func batchDeletePaymentSchedules(ids: [Int64]) async throws -> Int {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        let originalCount = paymentSchedules.count
+        paymentSchedules.removeAll { ids.contains($0.id) }
+        return originalCount - paymentSchedules.count
+    }
+
     func fetchPaymentSchedulesByVendor(vendorId: Int64) async throws -> [PaymentSchedule] {
         if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
         if shouldThrowError { throw errorToThrow }
@@ -478,6 +486,86 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
         if let index = budgetDevelopmentItems.firstIndex(where: { $0.id == budgetItemId }) {
             budgetDevelopmentItems[index].linkedGiftOwedId = giftId.uuidString
         }
+    }
+
+    func unlinkGiftFromBudgetItem(budgetItemId: String) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        // Mock implementation - clear linked gift from in-memory budget items
+        if let index = budgetDevelopmentItems.firstIndex(where: { $0.id == budgetItemId }) {
+            budgetDevelopmentItems[index].linkedGiftOwedId = nil
+        }
+    }
+
+    func linkBillCalculatorToBudgetItem(billCalculatorId: UUID, budgetItemId: String, billSubtotal: Double) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        // Mock implementation - update in-memory budget items
+        if let index = budgetDevelopmentItems.firstIndex(where: { $0.id == budgetItemId }) {
+            let item = budgetDevelopmentItems[index]
+            budgetDevelopmentItems[index].preLinkAmount = item.vendorEstimateWithoutTax
+            budgetDevelopmentItems[index].linkedBillCalculatorId = billCalculatorId
+            budgetDevelopmentItems[index].vendorEstimateWithoutTax = billSubtotal
+            budgetDevelopmentItems[index].vendorEstimateWithTax = billSubtotal * (1 + item.taxRate / 100)
+        }
+    }
+
+    func unlinkBillCalculatorFromBudgetItem(budgetItemId: String) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        // Mock implementation - revert to pre-link amount
+        if let index = budgetDevelopmentItems.firstIndex(where: { $0.id == budgetItemId }) {
+            let item = budgetDevelopmentItems[index]
+            let revertAmount = item.preLinkAmount ?? 0
+            budgetDevelopmentItems[index].vendorEstimateWithoutTax = revertAmount
+            budgetDevelopmentItems[index].vendorEstimateWithTax = revertAmount * (1 + item.taxRate / 100)
+            budgetDevelopmentItems[index].linkedBillCalculatorId = nil
+            budgetDevelopmentItems[index].preLinkAmount = nil
+        }
+    }
+
+    // MARK: - Gift Allocations (Proportional)
+
+    private var giftAllocations: [GiftAllocation] = []
+
+    func fetchGiftAllocations(scenarioId: String, budgetItemId: String) async throws -> [GiftAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter {
+            $0.scenarioId == scenarioId && $0.budgetItemId == budgetItemId
+        }
+    }
+
+    func fetchGiftAllocationsForScenario(scenarioId: String) async throws -> [GiftAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter { $0.scenarioId == scenarioId }
+    }
+
+    func createGiftAllocation(_ allocation: GiftAllocation) async throws -> GiftAllocation {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        giftAllocations.append(allocation)
+        return allocation
+    }
+
+    func fetchAllocationsForGift(giftId: UUID, scenarioId: String) async throws -> [GiftAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter { $0.giftId == giftId.uuidString && $0.scenarioId == scenarioId }
+    }
+
+    func fetchAllocationsForGiftAllScenarios(giftId: UUID) async throws -> [GiftAllocation] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return giftAllocations.filter { $0.giftId == giftId.uuidString }
+    }
+
+    func replaceGiftAllocations(giftId: UUID, scenarioId: String, with newAllocations: [GiftAllocation]) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        giftAllocations.removeAll { $0.giftId == giftId.uuidString && $0.scenarioId == scenarioId }
+        giftAllocations.append(contentsOf: newAllocations)
     }
 
     // MARK: - Gift Received Operations
@@ -914,5 +1002,98 @@ class MockBudgetRepository: BudgetRepositoryProtocol {
 
     func unlinkAllBillCalculatorsFromExpense(expenseId: UUID) async throws {
         // No-op for mock
+    }
+
+    func fetchBillTotalForExpense(expenseId: UUID) async throws -> ExpenseBillTotal? {
+        // Return nil by default (no linked bills)
+        return nil
+    }
+
+    // MARK: - Budget Item Bill Calculator Link Operations (Multi-Bill Support)
+
+    var budgetItemBillCalculatorLinks: [BudgetItemBillCalculatorLink] = []
+
+    func fetchBillCalculatorLinksForBudgetItem(budgetItemId: String) async throws -> [BudgetItemBillCalculatorLink] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        guard let itemUUID = UUID(uuidString: budgetItemId) else { return [] }
+        return budgetItemBillCalculatorLinks.filter { $0.budgetItemId == itemUUID }
+    }
+
+    func linkBillCalculatorsToBudgetItem(budgetItemId: String, billCalculatorIds: [UUID], notes: String?) async throws -> [BudgetItemBillCalculatorLink] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        guard let itemUUID = UUID(uuidString: budgetItemId) else { return [] }
+
+        var createdLinks: [BudgetItemBillCalculatorLink] = []
+        for billCalcId in billCalculatorIds {
+            let link = BudgetItemBillCalculatorLink(
+                id: UUID(),
+                budgetItemId: itemUUID,
+                billCalculatorId: billCalcId,
+                coupleId: UUID(),
+                notes: notes,
+                createdAt: Date(),
+                updatedAt: Date()
+            )
+            budgetItemBillCalculatorLinks.append(link)
+            createdLinks.append(link)
+        }
+        return createdLinks
+    }
+
+    func unlinkBillCalculatorFromBudgetItemByLinkId(linkId: UUID) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        budgetItemBillCalculatorLinks.removeAll { $0.id == linkId }
+    }
+
+    func unlinkAllBillCalculatorsFromBudgetItem(budgetItemId: String) async throws {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        guard let itemUUID = UUID(uuidString: budgetItemId) else { return }
+        budgetItemBillCalculatorLinks.removeAll { $0.budgetItemId == itemUUID }
+    }
+
+    // MARK: - Payment Plan Config Operations
+
+    var paymentPlanConfigs: [PaymentPlanConfig] = []
+
+    func fetchPaymentPlanConfig(paymentPlanId: UUID) async throws -> PaymentPlanConfig? {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return paymentPlanConfigs.first { $0.paymentPlanId == paymentPlanId }
+    }
+
+    func createPaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        paymentPlanConfigs.append(config)
+        return config
+    }
+
+    func updatePaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        if let index = paymentPlanConfigs.firstIndex(where: { $0.id == config.id }) {
+            paymentPlanConfigs[index] = config
+        }
+        return config
+    }
+
+    func fetchPaymentPlanConfigsLinkedToBills(billCalculatorIds: [UUID]) async throws -> [PaymentPlanConfig] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        let billCalculatorIdSet = Set(billCalculatorIds)
+        return paymentPlanConfigs.filter { config in
+            !config.linkedBillCalculatorIds.isEmpty &&
+            !billCalculatorIdSet.isDisjoint(with: config.linkedBillCalculatorIds)
+        }
+    }
+
+    func fetchPaymentSchedulesByPlanId(paymentPlanId: UUID) async throws -> [PaymentSchedule] {
+        if delay > 0 { try await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000)) }
+        if shouldThrowError { throw errorToThrow }
+        return paymentSchedules.filter { $0.paymentPlanId == paymentPlanId }
     }
 }

@@ -147,6 +147,12 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Throws: Repository errors if deletion fails or schedule not found
     func deletePaymentSchedule(id: Int64) async throws
 
+    /// Batch deletes multiple payment schedules
+    /// - Parameter ids: Array of payment schedule IDs to delete
+    /// - Returns: Number of successfully deleted schedules
+    /// - Throws: Repository errors if the batch delete operation fails
+    func batchDeletePaymentSchedules(ids: [Int64]) async throws -> Int
+
     /// Fetches payment schedules for a specific vendor
     /// - Parameter vendorId: The ID of the vendor
     /// - Returns: Array of payment schedules linked to the vendor
@@ -429,12 +435,74 @@ protocol BudgetRepositoryProtocol: Sendable {
     ///   - newAllocations: New set of allocations to persist
     func replaceAllocations(expenseId: UUID, scenarioId: String, with newAllocations: [ExpenseAllocation]) async throws
 
-    /// Links a gift to a budget development item
+    /// Links a gift to a budget development item (legacy 1:1 linking - deprecated)
     /// - Parameters:
     ///   - giftId: The UUID of the gift to link
     ///   - budgetItemId: The ID of the budget item to link to
     /// - Throws: Repository errors if linking fails or item not found
+    @available(*, deprecated, message: "Use gift allocation methods for proportional linking")
     func linkGiftToBudgetItem(giftId: UUID, budgetItemId: String) async throws
+
+    /// Unlinks a gift from a budget development item by clearing the linked_gift_owed_id (legacy - deprecated)
+    /// - Parameter budgetItemId: The ID of the budget item to unlink the gift from
+    /// - Throws: Repository errors if unlinking fails or item not found
+    @available(*, deprecated, message: "Use gift allocation methods for proportional linking")
+    func unlinkGiftFromBudgetItem(budgetItemId: String) async throws
+
+    // MARK: - Gift Allocation Operations (Proportional)
+
+    /// Fetches gift allocations for a specific scenario and budget item
+    /// - Parameters:
+    ///   - scenarioId: The scenario ID to filter by
+    ///   - budgetItemId: The budget item ID to filter by
+    /// - Returns: Array of gift allocations
+    /// - Throws: Repository errors if fetch fails
+    func fetchGiftAllocations(scenarioId: String, budgetItemId: String) async throws -> [GiftAllocation]
+
+    /// Fetches all gift allocations for a specific scenario (bulk fetch to avoid N+1 queries)
+    /// - Parameter scenarioId: The scenario ID to fetch allocations for
+    /// - Returns: Array of gift allocations for the scenario
+    /// - Throws: Repository errors if fetch fails
+    func fetchGiftAllocationsForScenario(scenarioId: String) async throws -> [GiftAllocation]
+
+    /// Creates a new gift allocation
+    /// - Parameter allocation: The gift allocation to create
+    /// - Returns: The created allocation with server-assigned timestamps
+    /// - Throws: Repository errors if creation fails or validation errors
+    func createGiftAllocation(_ allocation: GiftAllocation) async throws -> GiftAllocation
+
+    /// Fetches all allocations for a given gift within a scenario
+    /// - Parameters:
+    ///   - giftId: Gift UUID
+    ///   - scenarioId: Scenario ID
+    /// - Returns: Array of gift allocations for this gift in the scenario
+    func fetchAllocationsForGift(giftId: UUID, scenarioId: String) async throws -> [GiftAllocation]
+
+    /// Fetches all allocations for a given gift across all scenarios
+    /// - Parameter giftId: Gift UUID
+    /// - Returns: Array of gift allocations across all scenarios
+    func fetchAllocationsForGiftAllScenarios(giftId: UUID) async throws -> [GiftAllocation]
+
+    /// Atomically replaces all allocations for a gift within a scenario
+    /// - Parameters:
+    ///   - giftId: Gift UUID
+    ///   - scenarioId: Scenario ID
+    ///   - newAllocations: New set of allocations to persist
+    func replaceGiftAllocations(giftId: UUID, scenarioId: String, with newAllocations: [GiftAllocation]) async throws
+
+    /// Links a bill calculator to a budget development item, replacing its amount with the bill's subtotal
+    /// - Parameters:
+    ///   - billCalculatorId: The UUID of the bill calculator to link
+    ///   - budgetItemId: The ID of the budget item to link to
+    ///   - billSubtotal: The pre-tax subtotal from the bill calculator
+    /// - Throws: Repository errors if linking fails or item not found
+    func linkBillCalculatorToBudgetItem(billCalculatorId: UUID, budgetItemId: String, billSubtotal: Double) async throws
+
+    /// Unlinks a bill calculator from a budget development item, reverting to the pre-link amount
+    /// - Parameters:
+    ///   - budgetItemId: The ID of the budget item to unlink
+    /// - Throws: Repository errors if unlinking fails or item not found
+    func unlinkBillCalculatorFromBudgetItem(budgetItemId: String) async throws
 
     /// Fetches the primary budget development scenario
     /// - Returns: The primary scenario, or nil if none exists
@@ -769,4 +837,77 @@ protocol BudgetRepositoryProtocol: Sendable {
     /// - Parameter expenseId: The UUID of the expense
     /// - Throws: Repository errors if deletion fails
     func unlinkAllBillCalculatorsFromExpense(expenseId: UUID) async throws
+
+    /// Fetches aggregated bill total for an expense from all linked bill calculators
+    /// Used for optionally overriding expense amount in payment plan creation
+    /// - Parameter expenseId: The UUID of the expense
+    /// - Returns: ExpenseBillTotal with aggregated amounts, or nil if no bills linked
+    /// - Throws: Repository errors if fetch fails
+    func fetchBillTotalForExpense(expenseId: UUID) async throws -> ExpenseBillTotal?
+
+    // MARK: - Budget Item Bill Calculator Link Operations (Multi-Bill Support)
+
+    /// Fetches all bill calculator links for a specific budget item
+    /// - Parameter budgetItemId: The ID of the budget item (as String, matching BudgetItem.id)
+    /// - Returns: Array of budget item bill calculator links
+    /// - Throws: Repository errors if fetch fails
+    func fetchBillCalculatorLinksForBudgetItem(budgetItemId: String) async throws -> [BudgetItemBillCalculatorLink]
+
+    /// Links multiple bill calculators to a budget item
+    /// The budget item's amount will be updated to the sum of all linked bill subtotals (excluding tax).
+    /// This is handled automatically via database triggers.
+    /// - Parameters:
+    ///   - budgetItemId: The ID of the budget item to link to
+    ///   - billCalculatorIds: Array of bill calculator UUIDs to link
+    ///   - notes: Optional notes for the links
+    /// - Returns: Array of created links
+    /// - Throws: Repository errors if creation fails
+    func linkBillCalculatorsToBudgetItem(
+        budgetItemId: String,
+        billCalculatorIds: [UUID],
+        notes: String?
+    ) async throws -> [BudgetItemBillCalculatorLink]
+
+    /// Removes a specific bill calculator link from a budget item
+    /// - Parameter linkId: The UUID of the link to remove
+    /// - Throws: Repository errors if deletion fails
+    func unlinkBillCalculatorFromBudgetItemByLinkId(linkId: UUID) async throws
+
+    /// Removes all bill calculator links for a specific budget item
+    /// - Parameter budgetItemId: The ID of the budget item
+    /// - Throws: Repository errors if deletion fails
+    func unlinkAllBillCalculatorsFromBudgetItem(budgetItemId: String) async throws
+
+    // MARK: - Payment Plan Config Operations
+
+    /// Fetches the configuration for a payment plan
+    /// - Parameter paymentPlanId: The UUID of the payment plan
+    /// - Returns: The config if found, nil otherwise
+    /// - Throws: Repository errors if fetch fails
+    func fetchPaymentPlanConfig(paymentPlanId: UUID) async throws -> PaymentPlanConfig?
+
+    /// Creates a new payment plan configuration
+    /// - Parameter config: The configuration to create
+    /// - Returns: The created config
+    /// - Throws: Repository errors if creation fails
+    func createPaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig
+
+    /// Updates an existing payment plan configuration
+    /// - Parameter config: The configuration to update
+    /// - Returns: The updated config
+    /// - Throws: Repository errors if update fails
+    func updatePaymentPlanConfig(_ config: PaymentPlanConfig) async throws -> PaymentPlanConfig
+
+    /// Fetches payment plan configs linked to specific bill calculators
+    /// Used to find async payment plans that need recalculation when bill totals change
+    /// - Parameter billCalculatorIds: Array of bill calculator UUIDs to search for
+    /// - Returns: Array of payment plan configs that have any of the specified bill calculators linked
+    /// - Throws: Repository errors if fetch fails
+    func fetchPaymentPlanConfigsLinkedToBills(billCalculatorIds: [UUID]) async throws -> [PaymentPlanConfig]
+
+    /// Fetches payment schedules for a specific payment plan
+    /// - Parameter paymentPlanId: The UUID of the payment plan
+    /// - Returns: Array of payment schedules belonging to this plan
+    /// - Throws: Repository errors if fetch fails
+    func fetchPaymentSchedulesByPlanId(paymentPlanId: UUID) async throws -> [PaymentSchedule]
 }

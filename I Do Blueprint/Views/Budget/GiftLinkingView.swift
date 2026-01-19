@@ -1,3 +1,11 @@
+//
+//  GiftLinkingView.swift
+//  I Do Blueprint
+//
+//  Modal for linking gifts to a budget item with proportional allocation
+//  Updated to support multi-select following the expense linking pattern
+//
+
 import SwiftUI
 import Supabase
 import Dependencies
@@ -10,29 +18,46 @@ struct GiftLinkingView: View {
 
     @EnvironmentObject var budgetStore: BudgetStoreV2
     @Dependency(\.budgetRepository) var budgetRepository
+    @Dependency(\.giftAllocationService) var giftAllocationService
 
     // State for gifts
     @State private var gifts: [GiftOrOwed] = []
     @State private var filteredGifts: [GiftOrOwed] = []
-    @State private var selectedGift: GiftOrOwed?
+    @State private var selectedGiftIds: Set<UUID> = []
     @State private var linkedGiftIds: Set<UUID> = []
+    @State private var existingAllocations: [GiftAllocation] = []
 
     // Search and filter state
     @State private var searchText = ""
     @State private var typeFilter = "all"
     @State private var statusFilter = "all"
+    @State private var hideLinkedGifts = false
 
     // Loading and error state
     @State private var isLoading = true
     @State private var isSubmitting = false
     @State private var errorMessage: String?
+    @State private var linkingProgress: (current: Int, total: Int)?
 
     private var availableGifts: [GiftOrOwed] {
-        filteredGifts.filter { !linkedGiftIds.contains($0.id) }
+        let filtered = filteredGifts.filter { gift in
+            // If hideLinkedGifts is on, filter out already linked gifts
+            !hideLinkedGifts || !linkedGiftIds.contains(gift.id)
+        }
+        return filtered
     }
 
-    private var typeFilterOptions: [String] = ["all", "gift_received", "money_owed", "contribution"]
-    private var statusFilterOptions: [String] = ["all", "pending", "received", "confirmed"]
+    private var selectedGifts: [GiftOrOwed] {
+        gifts.filter { selectedGiftIds.contains($0.id) }
+    }
+
+    private var totalSelectedAmount: Double {
+        selectedGifts.reduce(0) { $0 + $1.amount }
+    }
+
+    private var activeScenarioId: String? {
+        activeScenario?.id
+    }
 
     private let logger = AppLogger.ui
 
@@ -41,7 +66,8 @@ struct GiftLinkingView: View {
         isPresented: Binding<Bool>,
         budgetItem: BudgetOverviewItem,
         activeScenario: SavedScenario?,
-        onSuccess: @escaping () -> Void) {
+        onSuccess: @escaping () -> Void
+    ) {
         _isPresented = isPresented
         self.budgetItem = budgetItem
         self.activeScenario = activeScenario
@@ -62,18 +88,18 @@ struct GiftLinkingView: View {
                         .frame(maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(spacing: 16) {
+                        VStack(spacing: Spacing.md) {
                             searchSection
                             filterSection
 
-                            if selectedGift != nil {
+                            if !selectedGiftIds.isEmpty {
                                 selectionSummary
                             }
 
                             giftsList
 
-                            if selectedGift != nil {
-                                linkingPreview
+                            if !selectedGiftIds.isEmpty {
+                                allocationPreview
                             }
                         }
                         .padding()
@@ -84,11 +110,11 @@ struct GiftLinkingView: View {
 
                 footerSection
             }
-            .frame(width: 700, height: 600)
-            .navigationTitle("Link Gift to \(budgetItem.itemName)")
+            .frame(width: 700, height: 650)
+            .navigationTitle("Link Gifts to \(budgetItem.itemName)")
         }
         .onAppear {
-                        Task {
+            Task {
                 await loadGifts()
             }
         }
@@ -100,13 +126,17 @@ struct GiftLinkingView: View {
     // MARK: - View Components
 
     private var headerSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Select a gift to link to this budget item")
+        VStack(alignment: .leading, spacing: Spacing.sm) {
+            Text("Select gifts to link to this budget item")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
+            Text("Gifts are allocated proportionally across all linked budget items based on their budgeted amounts.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+
             HStack {
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(budgetItem.itemName)
                         .font(.headline)
                         .fontWeight(.semibold)
@@ -117,7 +147,7 @@ struct GiftLinkingView: View {
 
                 Spacer()
 
-                VStack(alignment: .trailing, spacing: 4) {
+                VStack(alignment: .trailing, spacing: Spacing.xs) {
                     Text("Budgeted: \(formatCurrency(budgetItem.budgeted))")
                         .font(.caption)
                         .fontWeight(.medium)
@@ -130,7 +160,7 @@ struct GiftLinkingView: View {
             }
             .padding()
             .background(Color(NSColor.controlBackgroundColor))
-            .cornerRadius(8)
+            .cornerRadius(CornerRadius.md)
         }
         .padding()
     }
@@ -145,23 +175,30 @@ struct GiftLinkingView: View {
         }
         .padding()
         .background(AppColors.Budget.overBudget.opacity(0.1))
-        .cornerRadius(6)
+        .cornerRadius(CornerRadius.sm)
         .padding(.horizontal)
     }
 
     private var searchSection: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: Spacing.sm) {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundStyle(.secondary)
                 TextField("Search gifts by title, description, or person...", text: $searchText)
                     .textFieldStyle(.roundedBorder)
             }
+
+            HStack {
+                Toggle("Hide already linked gifts", isOn: $hideLinkedGifts)
+                    .font(.caption)
+                    .toggleStyle(.checkbox)
+                Spacer()
+            }
         }
     }
 
     private var filterSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: Spacing.sm) {
             HStack {
                 Text("Type:")
                     .font(.caption)
@@ -192,35 +229,33 @@ struct GiftLinkingView: View {
 
     private var selectionSummary: some View {
         HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Selected Gift")
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text("\(selectedGiftIds.count) gift\(selectedGiftIds.count == 1 ? "" : "s") selected")
                     .font(.caption)
                     .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
-                if let gift = selectedGift {
-                    Text(gift.title)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                }
+                Text("Total: \(formatCurrency(totalSelectedAmount))")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(AppColors.Budget.income)
             }
 
             Spacer()
 
             Button("Clear Selection") {
-                selectedGift = nil
+                selectedGiftIds.removeAll()
             }
             .buttonStyle(.plain)
             .font(.caption)
         }
         .padding()
         .background(AppColors.Budget.allocated.opacity(0.1))
-        .cornerRadius(8)
+        .cornerRadius(CornerRadius.md)
     }
 
     private var giftsList: some View {
-        LazyVStack(spacing: 8) {
+        LazyVStack(spacing: Spacing.sm) {
             if availableGifts.isEmpty {
-                VStack(spacing: 8) {
+                VStack(spacing: Spacing.sm) {
                     Image(systemName: "gift.fill")
                         .font(.system(size: 32))
                         .foregroundStyle(.secondary)
@@ -236,69 +271,95 @@ struct GiftLinkingView: View {
                 .padding(.vertical, Spacing.huge)
             } else {
                 ForEach(availableGifts) { gift in
-                    GiftSelectionRowView(
+                    GiftMultiSelectRowView(
                         gift: gift,
-                        isSelected: selectedGift?.id == gift.id,
-                        onSelect: { selectedGift = gift })
+                        isSelected: selectedGiftIds.contains(gift.id),
+                        isAlreadyLinked: linkedGiftIds.contains(gift.id),
+                        onToggle: { toggleGiftSelection(gift) }
+                    )
                 }
             }
         }
     }
 
-    private var linkingPreview: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Linking Preview")
-                .font(.headline)
-                .fontWeight(.semibold)
+    private var allocationPreview: some View {
+        VStack(alignment: .leading, spacing: Spacing.md) {
+            HStack {
+                Text("Allocation Preview")
+                    .font(.headline)
+                    .fontWeight(.semibold)
 
-            if let gift = selectedGift {
-                VStack(spacing: 8) {
-                    HStack {
-                        Text("Budget Item:")
-                            .fontWeight(.medium)
-                        Spacer()
-                        Text(budgetItem.itemName)
-                    }
+                Spacer()
 
-                    HStack {
-                        Text("Gift:")
-                            .fontWeight(.medium)
-                        Spacer()
+                Image(systemName: "info.circle")
+                    .foregroundStyle(.secondary)
+                    .help("Gift amounts are distributed proportionally across linked budget items based on their budgeted amounts")
+            }
+
+            Text("When linked, these gifts will be proportionally allocated across all budget items they're linked to.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            Divider()
+
+            ForEach(selectedGifts) { gift in
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(gift.title)
-                    }
-
-                    HStack {
-                        Text("Gift Value:")
+                            .font(.caption)
                             .fontWeight(.medium)
-                        Spacer()
-                        Text(formatCurrency(gift.amount))
-                            .foregroundStyle(AppColors.Budget.income)
-                    }
-
-                    HStack {
-                        Text("Gift Type:")
-                            .fontWeight(.medium)
-                        Spacer()
                         Text(gift.type.displayName)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
 
-                    Divider()
+                    Spacer()
 
-                    HStack {
-                        Text("Effect on Budget:")
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text(formatCurrency(gift.amount))
+                            .font(.caption)
                             .fontWeight(.semibold)
-                        Spacer()
-                        Text("-\(formatCurrency(min(gift.amount, budgetItem.budgeted)))")
                             .foregroundStyle(AppColors.Budget.income)
-                            .fontWeight(.semibold)
+                        Text("Full amount to this item")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
                     }
                 }
-                .font(.caption)
+                .padding(.vertical, Spacing.xs)
+            }
+
+            Divider()
+
+            HStack {
+                Text("Total Gift Value:")
+                    .fontWeight(.semibold)
+                Spacer()
+                Text(formatCurrency(totalSelectedAmount))
+                    .foregroundStyle(AppColors.Budget.income)
+                    .fontWeight(.bold)
+            }
+            .font(.subheadline)
+
+            // Show note about rebalancing if gifts are already linked elsewhere
+            let giftsWithExistingLinks = selectedGifts.filter { gift in
+                existingAllocations.contains { $0.giftId == gift.id.uuidString }
+            }
+            if !giftsWithExistingLinks.isEmpty {
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: "arrow.triangle.2.circlepath")
+                        .foregroundStyle(AppColors.Budget.allocated)
+                    Text("Some selected gifts have existing allocations and will be rebalanced proportionally.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(Spacing.sm)
+                .background(AppColors.Budget.allocated.opacity(0.1))
+                .cornerRadius(CornerRadius.sm)
             }
         }
         .padding()
         .background(Color(NSColor.controlBackgroundColor))
-        .cornerRadius(8)
+        .cornerRadius(CornerRadius.md)
     }
 
     private var footerSection: some View {
@@ -310,23 +371,41 @@ struct GiftLinkingView: View {
 
             Spacer()
 
-            Button(action: linkGift) {
+            if let progress = linkingProgress {
+                Text("Linking \(progress.current)/\(progress.total)...")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Button(action: linkSelectedGifts) {
                 if isSubmitting {
-                    HStack(spacing: 4) {
+                    HStack(spacing: Spacing.xs) {
                         ProgressView()
                             .scaleEffect(0.8)
                         Text("Linking...")
                     }
                 } else if activeScenario == nil {
                     Text("Active Scenario Required")
+                } else if selectedGiftIds.isEmpty {
+                    Text("Select Gifts to Link")
                 } else {
-                    Text("Link Gift")
+                    Text("Link \(selectedGiftIds.count) Gift\(selectedGiftIds.count == 1 ? "" : "s")")
                 }
             }
             .buttonStyle(.borderedProminent)
-            .disabled(selectedGift == nil || isSubmitting || activeScenario == nil)
+            .disabled(selectedGiftIds.isEmpty || isSubmitting || activeScenario == nil)
         }
         .padding()
+    }
+
+    // MARK: - Actions
+
+    private func toggleGiftSelection(_ gift: GiftOrOwed) {
+        if selectedGiftIds.contains(gift.id) {
+            selectedGiftIds.remove(gift.id)
+        } else {
+            selectedGiftIds.insert(gift.id)
+        }
     }
 
     // MARK: - Data Loading and Actions
@@ -336,27 +415,31 @@ struct GiftLinkingView: View {
         errorMessage = nil
 
         do {
-                        gifts = try await budgetRepository.fetchGiftsAndOwed()
+            gifts = try await budgetRepository.fetchGiftsAndOwed()
             logger.info("Loaded \(gifts.count) gifts")
 
-            // Get linked gift IDs from all budget items in the scenario to exclude them
-            if let scenario = activeScenario {
+            // Get linked gift IDs from allocations in the scenario
+            if let scenarioId = activeScenarioId {
                 do {
-                    // Fetch all budget items for this scenario
-                    let budgetItems = try await budgetRepository.fetchBudgetDevelopmentItems(scenarioId: scenario.id)
+                    // Fetch all gift allocations for this scenario
+                    existingAllocations = try await budgetRepository.fetchGiftAllocationsForScenario(scenarioId: scenarioId)
 
-                    // Extract linked gift IDs
-                    linkedGiftIds = Set(budgetItems.compactMap { item -> UUID? in
-                        guard let giftIdString = item.linkedGiftOwedId else {
-                            return nil
-                        }
+                    // Extract unique gift IDs that are already allocated
+                    linkedGiftIds = Set(existingAllocations.compactMap { UUID(uuidString: $0.giftId) })
+
+                    // Also check legacy 1:1 links on budget items
+                    let budgetItems = try await budgetRepository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
+                    let legacyLinkedIds = Set(budgetItems.compactMap { item -> UUID? in
+                        guard let giftIdString = item.linkedGiftOwedId else { return nil }
                         return UUID(uuidString: giftIdString)
                     })
 
-                                    } catch {
+                    linkedGiftIds = linkedGiftIds.union(legacyLinkedIds)
+                    logger.info("Found \(linkedGiftIds.count) already linked gifts")
+                } catch {
                     logger.error("Failed to fetch linked gift IDs", error: error)
-                    // Continue with empty set on error
                     linkedGiftIds = Set<UUID>()
+                    existingAllocations = []
                 }
             }
 
@@ -394,36 +477,63 @@ struct GiftLinkingView: View {
         filteredGifts = filtered
     }
 
-    private func linkGift() {
-                guard let scenario = activeScenario,
-              let gift = selectedGift else {
-            logger.warning("Guard failed - scenario or gift missing")
+    private func linkSelectedGifts() {
+        guard let scenarioId = activeScenarioId,
+              !selectedGiftIds.isEmpty else {
+            logger.warning("Guard failed - scenario or gifts missing")
             return
         }
 
-                isSubmitting = true
+        isSubmitting = true
         errorMessage = nil
+        linkingProgress = (current: 0, total: selectedGiftIds.count)
 
         Task {
-            do {
-                try await budgetRepository.linkGiftToBudgetItem(
-                    giftId: gift.id,
-                    budgetItemId: budgetItem.id)
-                logger.info("Successfully linked gift to budget item")
+            var successCount = 0
+            var failedGifts: [(gift: GiftOrOwed, error: String)] = []
 
-                await MainActor.run {
-                    onSuccess()
-                    isPresented = false
+            for (index, giftId) in selectedGiftIds.enumerated() {
+                guard let gift = gifts.first(where: { $0.id == giftId }) else {
+                    logger.warning("Could not find gift with ID: \(giftId)")
+                    continue
                 }
-            } catch {
-                logger.error("Failed to link gift", error: error)
-                await MainActor.run {
-                    errorMessage = "Failed to link gift: \(error.localizedDescription)"
+
+                do {
+                    // Proportional link: add to current item and rebalance across all linked items
+                    try await giftAllocationService.linkGiftProportionally(
+                        gift: gift,
+                        to: budgetItem.id,
+                        inScenario: scenarioId
+                    )
+                    logger.info("Successfully linked gift: \(gift.title)")
+                    successCount += 1
+
+                    await MainActor.run {
+                        linkingProgress = (current: index + 1, total: selectedGiftIds.count)
+                    }
+                } catch {
+                    logger.error("Failed to link gift: \(gift.title)", error: error)
+                    failedGifts.append((gift: gift, error: error.localizedDescription))
                 }
             }
 
             await MainActor.run {
                 isSubmitting = false
+                linkingProgress = nil
+
+                if failedGifts.isEmpty {
+                    logger.info("Successfully linked all \(successCount) gifts")
+                    onSuccess()
+                    isPresented = false
+                } else {
+                    let failedNames = failedGifts.map { $0.gift.title }.joined(separator: ", ")
+                    errorMessage = "Failed to link: \(failedNames)"
+
+                    // If some succeeded, still call onSuccess to refresh
+                    if successCount > 0 {
+                        onSuccess()
+                    }
+                }
             }
         }
     }
@@ -435,6 +545,113 @@ struct GiftLinkingView: View {
 
 // MARK: - Supporting Views
 
+struct GiftMultiSelectRowView: View {
+    let gift: GiftOrOwed
+    let isSelected: Bool
+    let isAlreadyLinked: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        Button(action: onToggle) {
+            HStack(spacing: Spacing.md) {
+                // Checkbox
+                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
+                    .font(.title3)
+                    .foregroundStyle(isSelected ? AppColors.Budget.allocated : .secondary)
+
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    HStack {
+                        Text(gift.title)
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+                            .foregroundStyle(.primary)
+
+                        if isAlreadyLinked {
+                            Text("Linked")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(AppColors.Budget.allocated)
+                                .padding(.horizontal, Spacing.xs)
+                                .padding(.vertical, 2)
+                                .background(AppColors.Budget.allocated.opacity(0.15))
+                                .cornerRadius(CornerRadius.xs)
+                        }
+                    }
+
+                    if let description = gift.description {
+                        Text(description)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(2)
+                    }
+
+                    HStack(spacing: Spacing.sm) {
+                        Label(gift.type.displayName, systemImage: gift.type.iconName)
+                            .font(.caption2)
+                            .foregroundStyle(AppColors.Budget.allocated)
+
+                        Label(gift.status.displayName, systemImage: statusIcon(for: gift.status))
+                            .font(.caption2)
+                            .foregroundStyle(gift.status.color)
+
+                        if let person = gift.fromPerson {
+                            Label(person, systemImage: "person.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: Spacing.xs) {
+                    Text(formatCurrency(gift.amount))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(AppColors.Budget.income)
+
+                    if let date = gift.receivedDate ?? gift.expectedDate {
+                        Text(formatDate(date))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding()
+            .background(isSelected ? AppColors.Budget.allocated.opacity(0.1) : Color(NSColor.controlBackgroundColor))
+            .cornerRadius(CornerRadius.md)
+            .overlay(
+                RoundedRectangle(cornerRadius: CornerRadius.md)
+                    .stroke(isSelected ? AppColors.Budget.allocated : Color.clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func statusIcon(for status: GiftOrOwed.GiftOrOwedStatus) -> String {
+        switch status {
+        case .received, .confirmed:
+            "checkmark.circle.fill"
+        case .pending:
+            "clock.fill"
+        }
+    }
+
+    private func formatCurrency(_ amount: Double) -> String {
+        NumberFormatter.currencyShort.string(from: NSNumber(value: amount)) ?? "$0"
+    }
+
+    private func formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Legacy Single-Select Row (Deprecated)
+
+/// Legacy single-select row view - use GiftMultiSelectRowView instead
+@available(*, deprecated, message: "Use GiftMultiSelectRowView for proportional allocation")
 struct GiftSelectionRowView: View {
     let gift: GiftOrOwed
     let isSelected: Bool
