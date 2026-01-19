@@ -51,7 +51,8 @@ actor GiftAllocationService: GiftAllocationServiceProtocol {
         // 3) Fetch scenario items to get budgeted amounts for affected ids
         let items = try await repository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
         let budgetById = Dictionary(uniqueKeysWithValues: items.map { ($0.id.lowercased(), $0.vendorEstimateWithTax) })
-        let keys = affectedItemIds.filter { budgetById[$0] != nil }
+        // Convert Set to sorted Array for consistent iteration order
+        let keys = Array(affectedItemIds.filter { budgetById[$0] != nil }).sorted()
         let totalBudgeted = keys.compactMap { budgetById[$0] }.reduce(0, +)
 
         // 4) Build new allocation set using proportional weights (fallback: 100% to target item)

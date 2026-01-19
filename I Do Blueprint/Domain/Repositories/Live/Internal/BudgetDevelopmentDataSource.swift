@@ -830,13 +830,13 @@ actor BudgetDevelopmentDataSource {
                 .execute()
         }
 
-        // Insert new set
+        // Insert new set using upsert to handle any edge cases with duplicates
         if !newAllocations.isEmpty {
             do {
                 try await RepositoryNetwork.withRetry { [self] in
                     try await self.supabase
                         .from("gift_budget_allocations")
-                        .insert(newAllocations)
+                        .upsert(newAllocations, onConflict: "gift_id,budget_item_id,scenario_id")
                         .execute()
                 }
             } catch {

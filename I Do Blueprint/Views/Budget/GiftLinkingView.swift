@@ -433,13 +433,8 @@ struct GiftLinkingView: View {
                     // Mark as "linked" only gifts already allocated to THIS item
                     linkedGiftIds = Set(allocationsForThisItem.compactMap { UUID(uuidString: $0.giftId) })
 
-                    // Also check legacy 1:1 links specifically for this budget item
-                    let budgetItems = try await budgetRepository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
-                    if let thisItem = budgetItems.first(where: { $0.id == budgetItem.id }),
-                       let legacyGiftIdString = thisItem.linkedGiftOwedId,
-                       let legacyGiftId = UUID(uuidString: legacyGiftIdString) {
-                        linkedGiftIds.insert(legacyGiftId)
-                    }
+                    // Note: Legacy 1:1 linking (linked_gift_owed_id) is deprecated and no longer checked.
+                    // All gift linking now uses the gift_budget_allocations table for proportional allocation.
 
                     // Fetch ALL allocations for scenario to show rebalancing note
                     existingAllocations = try await budgetRepository.fetchGiftAllocationsForScenario(scenarioId: scenarioId)
