@@ -271,10 +271,12 @@ struct GiftLinkingView: View {
                 .padding(.vertical, Spacing.huge)
             } else {
                 ForEach(availableGifts) { gift in
+                    let hasAllocationsElsewhere = existingAllocations.contains { $0.giftId == gift.id.uuidString }
                     GiftMultiSelectRowView(
                         gift: gift,
                         isSelected: selectedGiftIds.contains(gift.id),
                         isAlreadyLinked: linkedGiftIds.contains(gift.id),
+                        hasAllocationsElsewhere: hasAllocationsElsewhere,
                         onToggle: { toggleGiftSelection(gift) }
                     )
                 }
@@ -418,24 +420,31 @@ struct GiftLinkingView: View {
             gifts = try await budgetRepository.fetchGiftsAndOwed()
             logger.info("Loaded \(gifts.count) gifts")
 
-            // Get linked gift IDs from allocations in the scenario
+            // Get linked gift IDs - gifts already linked to THIS SPECIFIC budget item
             if let scenarioId = activeScenarioId {
                 do {
-                    // Fetch all gift allocations for this scenario
+                    // Fetch gift allocations for THIS budget item only (not entire scenario)
+                    // This allows a gift to be linked to multiple items
+                    let allocationsForThisItem = try await budgetRepository.fetchGiftAllocations(
+                        scenarioId: scenarioId,
+                        budgetItemId: budgetItem.id
+                    )
+
+                    // Mark as "linked" only gifts already allocated to THIS item
+                    linkedGiftIds = Set(allocationsForThisItem.compactMap { UUID(uuidString: $0.giftId) })
+
+                    // Also check legacy 1:1 links specifically for this budget item
+                    let budgetItems = try await budgetRepository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
+                    if let thisItem = budgetItems.first(where: { $0.id == budgetItem.id }),
+                       let legacyGiftIdString = thisItem.linkedGiftOwedId,
+                       let legacyGiftId = UUID(uuidString: legacyGiftIdString) {
+                        linkedGiftIds.insert(legacyGiftId)
+                    }
+
+                    // Fetch ALL allocations for scenario to show rebalancing note
                     existingAllocations = try await budgetRepository.fetchGiftAllocationsForScenario(scenarioId: scenarioId)
 
-                    // Extract unique gift IDs that are already allocated
-                    linkedGiftIds = Set(existingAllocations.compactMap { UUID(uuidString: $0.giftId) })
-
-                    // Also check legacy 1:1 links on budget items
-                    let budgetItems = try await budgetRepository.fetchBudgetDevelopmentItems(scenarioId: scenarioId)
-                    let legacyLinkedIds = Set(budgetItems.compactMap { item -> UUID? in
-                        guard let giftIdString = item.linkedGiftOwedId else { return nil }
-                        return UUID(uuidString: giftIdString)
-                    })
-
-                    linkedGiftIds = linkedGiftIds.union(legacyLinkedIds)
-                    logger.info("Found \(linkedGiftIds.count) already linked gifts")
+                    logger.info("Found \(linkedGiftIds.count) gifts already linked to this item, \(existingAllocations.count) total allocations in scenario")
                 } catch {
                     logger.error("Failed to fetch linked gift IDs", error: error)
                     linkedGiftIds = Set<UUID>()
@@ -549,6 +558,7 @@ struct GiftMultiSelectRowView: View {
     let gift: GiftOrOwed
     let isSelected: Bool
     let isAlreadyLinked: Bool
+    let hasAllocationsElsewhere: Bool
     let onToggle: () -> Void
 
     var body: some View {
@@ -567,13 +577,22 @@ struct GiftMultiSelectRowView: View {
                             .foregroundStyle(.primary)
 
                         if isAlreadyLinked {
-                            Text("Linked")
+                            Text("Linked to this item")
                                 .font(.caption2)
                                 .fontWeight(.medium)
                                 .foregroundStyle(AppColors.Budget.allocated)
                                 .padding(.horizontal, Spacing.xs)
                                 .padding(.vertical, 2)
                                 .background(AppColors.Budget.allocated.opacity(0.15))
+                                .cornerRadius(CornerRadius.xs)
+                        } else if hasAllocationsElsewhere {
+                            Text("Linked elsewhere")
+                                .font(.caption2)
+                                .fontWeight(.medium)
+                                .foregroundStyle(AppColors.Budget.income)
+                                .padding(.horizontal, Spacing.xs)
+                                .padding(.vertical, 2)
+                                .background(AppColors.Budget.income.opacity(0.15))
                                 .cornerRadius(CornerRadius.xs)
                         }
                     }
