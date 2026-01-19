@@ -36,9 +36,13 @@ actor BudgetAggregationService: BudgetAggregationServiceProtocol {
         var overview: [BudgetOverviewItem] = []
         overview.reserveCapacity(items.count)
 
-        // Fetch all allocations for the scenario in a single call to avoid N+1 queries
+        // Fetch all expense allocations for the scenario in a single call to avoid N+1 queries
         let allAllocations = try await repository.fetchExpenseAllocationsForScenario(scenarioId: scenarioId)
         let allocationsByItem: [String: [ExpenseAllocation]] = Dictionary(grouping: allAllocations, by: { $0.budgetItemId })
+
+        // Fetch all gift allocations for the scenario in a single call (new proportional allocation system)
+        let allGiftAllocations = try await repository.fetchGiftAllocationsForScenario(scenarioId: scenarioId)
+        let giftAllocationsByItem: [String: [GiftAllocation]] = Dictionary(grouping: allGiftAllocations, by: { $0.budgetItemId.lowercased() })
 
         for item in items {
             // Look up allocations already fetched for this item
@@ -70,10 +74,21 @@ actor BudgetAggregationService: BudgetAggregationServiceProtocol {
 
             let totalSpent = expenseLinks.reduce(0.0) { $0 + $1.amount }
 
-            // Linked gift handling
+            // Gift handling - prioritize new proportional allocations, fallback to legacy 1:1 linking
             var giftLinks: [GiftLink] = []
             var totalGiftAmount = 0.0
-            if let giftId = item.linkedGiftOwedId, let gift = giftById[giftId.lowercased()] {
+
+            // Check for new proportional gift allocations first
+            let giftAllocations = giftAllocationsByItem[item.id.lowercased()] ?? []
+            if !giftAllocations.isEmpty {
+                // Use new proportional allocation system
+                giftLinks = giftAllocations.compactMap { alloc in
+                    guard let giftData = giftById[alloc.giftId.lowercased()] else { return nil }
+                    return GiftLink(id: giftData.id, title: giftData.title, amount: alloc.allocatedAmount)
+                }
+                totalGiftAmount = giftLinks.reduce(0.0) { $0 + $1.amount }
+            } else if let giftId = item.linkedGiftOwedId, let gift = giftById[giftId.lowercased()] {
+                // Fallback to legacy 1:1 linking for backward compatibility
                 giftLinks = [GiftLink(id: gift.id, title: gift.title, amount: gift.amount)]
                 totalGiftAmount = gift.amount
             }
