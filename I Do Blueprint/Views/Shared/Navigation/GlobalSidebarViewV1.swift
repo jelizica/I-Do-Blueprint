@@ -166,9 +166,9 @@ struct GlobalSidebarViewV1: View {
                         title: "Budget Planning",
                         items: [
                             BudgetSubItem(icon: BudgetPage.budgetOverview.icon, title: "Budget Overview", page: .budgetOverview),
-                            BudgetSubItem(icon: BudgetPage.budgetBouquet.icon, title: "Budget Bouquet", page: .budgetBouquet),
                             BudgetSubItem(icon: BudgetPage.budgetBuilder.icon, title: "Budget Builder", page: .budgetBuilder),
-                            BudgetSubItem(icon: BudgetPage.calculator.icon, title: "Calculator", page: .calculator)
+                            BudgetSubItem(icon: BudgetPage.billCalculator.icon, title: "Bill Calculator", page: .billCalculator),
+                            BudgetSubItem(icon: BudgetPage.calculator.icon, title: "Affordability Calculator", page: .calculator)
                         ],
                         selectedPage: coordinator.budgetPage
                     ) { page in
@@ -188,10 +188,11 @@ struct GlobalSidebarViewV1: View {
                         coordinator.navigateToBudget(page: page)
                     }
 
-                    // Income subsection (3 pages)
+                    // Income subsection (4 pages)
                     BudgetSubsectionV1(
                         title: "Income",
                         items: [
+                            BudgetSubItem(icon: BudgetPage.moneyManagement.icon, title: "Money Management", page: .moneyManagement),
                             BudgetSubItem(icon: BudgetPage.moneyTracker.icon, title: "Money Tracker", page: .moneyTracker),
                             BudgetSubItem(icon: BudgetPage.moneyReceived.icon, title: "Money Received", page: .moneyReceived),
                             BudgetSubItem(icon: BudgetPage.moneyOwed.icon, title: "Money Owed", page: .moneyOwed)
@@ -212,15 +213,6 @@ struct GlobalSidebarViewV1: View {
 
     private var additionalNavigationSection: some View {
         VStack(spacing: Spacing.xxs) {
-            SidebarNavItemV1(
-                tab: .billCalculator,
-                icon: "function",
-                title: "Bill Calculator",
-                isSelected: coordinator.selectedTab == .billCalculator
-            ) {
-                coordinator.navigate(to: .billCalculator)
-            }
-
             SidebarNavItemV1(
                 tab: .timeline,
                 icon: "calendar.badge.clock",

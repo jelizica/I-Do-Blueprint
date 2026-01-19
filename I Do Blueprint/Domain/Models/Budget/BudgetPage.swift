@@ -19,8 +19,8 @@ enum BudgetPage: String, CaseIterable, Identifiable {
 
     // Planning & Analysis Group (6 pages)
     case budgetOverview = "Budget Overview"
-    case budgetBouquet = "Budget Bouquet"
     case budgetBuilder = "Budget Builder"
+    case billCalculator = "Bill Calculator"
     case analytics = "Analytics Hub"
     case cashFlow = "Account Cash Flow"
     case calculator = "Calculator"
@@ -31,7 +31,8 @@ enum BudgetPage: String, CaseIterable, Identifiable {
     case expenseCategories = "Expense Categories"
     case paymentSchedule = "Payment Schedule"
 
-    // Income Group (3 pages - renamed from Gifts & Owed)
+    // Income Group (4 pages - renamed from Gifts & Owed)
+    case moneyManagement = "Money Management"
     case moneyTracker = "Money Tracker"
     case moneyReceived = "Money Received"
     case moneyOwed = "Money Owed"
@@ -42,11 +43,11 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         switch self {
         case .hub, .dashboardV1:
             return nil  // Hub and Dashboard are not in a group
-        case .budgetOverview, .budgetBouquet, .budgetBuilder, .analytics, .cashFlow, .calculator:
+        case .budgetOverview, .budgetBuilder, .billCalculator, .analytics, .cashFlow, .calculator:
             return .planningAnalysis
         case .expenseTracker, .expenseReports, .expenseCategories, .paymentSchedule:
             return .expenses
-        case .moneyTracker, .moneyReceived, .moneyOwed:
+        case .moneyManagement, .moneyTracker, .moneyReceived, .moneyOwed:
             return .income
         }
     }
@@ -59,11 +60,11 @@ enum BudgetPage: String, CaseIterable, Identifiable {
 
         // Planning & Analysis
         case .budgetOverview: return "chart.bar.fill"
-        case .budgetBouquet: return "leaf.fill"
         case .budgetBuilder: return "hammer.fill"
+        case .billCalculator: return "function"
         case .analytics: return "chart.xyaxis.line"
         case .cashFlow: return "chart.line.uptrend.xyaxis"
-        case .calculator: return "function"
+        case .calculator: return "equal.square"
 
         // Expenses
         case .expenseTracker: return "receipt.fill"
@@ -72,6 +73,7 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         case .paymentSchedule: return "calendar.badge.clock"
 
         // Income
+        case .moneyManagement: return "banknote.fill"
         case .moneyTracker: return "dollarsign.circle.fill"
         case .moneyReceived: return "arrow.down.circle.fill"
         case .moneyOwed: return "arrow.up.circle.fill"
@@ -92,16 +94,16 @@ enum BudgetPage: String, CaseIterable, Identifiable {
         // Planning & Analysis group
         case .budgetOverview:
             BudgetOverviewDashboardViewV2(currentPage: currentPage)
-        case .budgetBouquet:
-            BudgetBouquetViewV1(currentPage: currentPage)
         case .budgetBuilder:
             BudgetDevelopmentView(currentPage: currentPage)
+        case .billCalculator:
+            BillCalculatorView()
         case .analytics:
             BudgetAnalyticsView()
         case .cashFlow:
             BudgetCashFlowView()
         case .calculator:
-            BudgetCalculatorView()
+            AffordabilityCalculatorViewV2(currentPage: currentPage)
 
         // Expenses group
         case .expenseTracker:
@@ -114,6 +116,8 @@ enum BudgetPage: String, CaseIterable, Identifiable {
             PaymentScheduleView(currentPage: currentPage)
 
         // Income group
+        case .moneyManagement:
+            MoneyManagementViewV2(currentPage: currentPage)
         case .moneyTracker:
             GiftsAndOwedView()
         case .moneyReceived:
@@ -157,7 +161,7 @@ enum BudgetGroup: String, CaseIterable, Identifiable {
         switch self {
         case .planningAnalysis: return .budgetOverview
         case .expenses: return .expenseTracker
-        case .income: return .moneyTracker
+        case .income: return .moneyManagement
         }
     }
 
