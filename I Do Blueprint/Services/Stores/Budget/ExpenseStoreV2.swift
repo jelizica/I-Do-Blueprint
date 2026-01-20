@@ -17,14 +17,19 @@ import SwiftUI
 class ExpenseStoreV2: ObservableObject {
     
     // MARK: - Published State
-    
+
     @Published private(set) var expenses: [Expense] = []
     @Published var isLoading = false
     @Published var error: BudgetError?
+
+    /// Monotonically increasing counter that views can observe to trigger refresh.
+    /// Incremented when bill calculator changes invalidate expense amounts.
+    @Published private(set) var refreshTrigger: Int = 0
     
     // MARK: - Dependencies
-    
+
     @Dependency(\.budgetRepository) var repository
+    @Dependency(\.budgetAllocationService) var allocationService
     private let logger = AppLogger.database
     
     // MARK: - Computed Properties
@@ -266,9 +271,9 @@ class ExpenseStoreV2: ObservableObject {
             }
             
             // Invalidate related caches synchronously
-            let scenarioKey = scenarioId.lowercased()
-            await RepositoryCache.shared.remove("budget_overview_items_\(scenarioKey)")
-            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioKey)")
+            // Note: scenarioId should NOT be lowercased - it must match the exact cache key format
+            await RepositoryCache.shared.remove("budget_overview_items_\(scenarioId)")
+            await RepositoryCache.shared.remove("budget_dev_items_\(scenarioId)")
             if let tenantId = SessionManager.shared.getTenantId()?.uuidString {
                 await RepositoryCache.shared.remove("expenses_\(tenantId)")
             }
@@ -285,11 +290,77 @@ class ExpenseStoreV2: ObservableObject {
     }
     
     // MARK: - State Management
-    
+
     /// Reset loaded state (for logout/tenant switch)
     func resetLoadedState() {
         expenses = []
         isLoading = false
         error = nil
+    }
+
+    // MARK: - Bill Calculator Sync
+
+    /// Called when bill calculator changes may have affected linked expense amounts.
+    /// The database trigger updates expense amounts, so we need to:
+    /// 1. Reload expenses to get the updated amounts
+    /// 2. Recalculate allocations for affected expenses (proportional redistribution)
+    /// 3. Increment refresh trigger so views re-render
+    /// - Parameter billCalculatorId: Optional bill calculator ID to recalculate allocations for linked expenses
+    func invalidateCachesForBillCalculatorChange(billCalculatorId: UUID? = nil) async {
+        logger.info("Invalidating expense caches due to bill calculator change")
+
+        // Reload expenses to get updated amounts from database
+        await loadExpenses()
+
+        // Recalculate allocations for expenses linked to the changed bill calculator
+        if let calculatorId = billCalculatorId {
+            await recalculateAllocationsForLinkedExpenses(billCalculatorId: calculatorId)
+        }
+
+        // Increment refresh trigger to notify views
+        refreshTrigger += 1
+
+        logger.info("Expense refresh triggered (trigger: \(refreshTrigger))")
+    }
+
+    /// Recalculates allocations for all expenses linked to a bill calculator.
+    /// Called after bill calculator changes to ensure expense allocations reflect the new amounts.
+    private func recalculateAllocationsForLinkedExpenses(billCalculatorId: UUID) async {
+        do {
+            // Get all expense links for this bill calculator
+            let links = try await repository.fetchExpenseLinksForBillCalculator(billCalculatorId: billCalculatorId)
+            guard !links.isEmpty else {
+                logger.info("No expenses linked to bill calculator \(billCalculatorId)")
+                return
+            }
+
+            // Get unique expense IDs
+            let expenseIds = Set(links.map { $0.expenseId })
+            logger.info("Recalculating allocations for \(expenseIds.count) expenses linked to bill calculator \(billCalculatorId)")
+
+            // Get updated expense amounts from our reloaded expenses
+            let expenseAmounts = Dictionary(uniqueKeysWithValues: expenses.map { ($0.id, $0.amount) })
+
+            // Recalculate allocations for each affected expense
+            for expenseId in expenseIds {
+                guard let newAmount = expenseAmounts[expenseId] else {
+                    logger.warning("Expense \(expenseId) not found in loaded expenses, skipping allocation recalculation")
+                    continue
+                }
+
+                do {
+                    try await allocationService.recalculateExpenseAllocationsForAllScenarios(
+                        expenseId: expenseId,
+                        newAmount: newAmount
+                    )
+                    logger.info("Recalculated allocations for expense \(expenseId) with new amount \(newAmount)")
+                } catch {
+                    // Log but don't fail the whole operation if one expense fails
+                    logger.error("Failed to recalculate allocations for expense \(expenseId)", error: error)
+                }
+            }
+        } catch {
+            logger.error("Failed to fetch expense links for bill calculator \(billCalculatorId)", error: error)
+        }
     }
 }
