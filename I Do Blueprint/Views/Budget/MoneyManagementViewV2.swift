@@ -21,99 +21,118 @@ struct MoneyManagementViewV2: View {
     @State private var searchText = ""
     @State private var selectedTab: MoneyTab = .all
     @State private var selectedContribution: GiftOrOwed?
-    @State private var showingPartialPaymentModal = false
     @State private var contributionForPartialPayment: GiftOrOwed?
 
     private var giftsStore: GiftsStore { budgetStore.gifts }
 
     var body: some View {
-        ZStack {
-            MeshGradientBackground()
+        GeometryReader { geometry in
+            let windowSize = geometry.size.width.windowSize
+            let horizontalPadding = windowSize == .compact ? Spacing.lg : Spacing.xxl
+            let availableWidth = geometry.size.width - (horizontalPadding * 2)
 
-            ScrollView {
-                VStack(spacing: Spacing.xxl) {
-                    // Summary Cards
-                    MoneyManagementSummaryCards(
+            ZStack {
+                // Mesh gradient background matching other budget pages
+                MeshGradientBackground()
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // Unified header bar - compact 56px style matching Budget Overview
+                    MoneyManagementUnifiedHeader(
+                        windowSize: windowSize,
+                        selectedTab: $selectedTab,
+                        searchText: $searchText,
+                        contributorCount: contributorCount,
+                        totalContributions: totalContributions,
+                        onAddContribution: { showingAddContribution = true }
+                    )
+
+                    // Summary cards - FIXED at top (outside ScrollView)
+                    MoneyManagementSummaryCardsV2(
+                        windowSize: windowSize,
                         totalContributions: totalContributions,
                         giftsReceived: totalGiftsReceived,
                         pledgedAmount: totalPledged,
                         goalProgress: goalProgress,
                         contributorCount: contributorCount,
-                        giftItemCount: giftItemCount
+                        giftItemCount: giftItemCount,
+                        goalAmount: goalAmount
                     )
+                    .frame(width: availableWidth)
+                    .padding(.horizontal, horizontalPadding)
+                    .padding(.top, windowSize == .compact ? Spacing.md : Spacing.lg)
+                    .padding(.bottom, Spacing.md)
 
-                    // Goal Tracker Banner (moved up per user request)
-                    MoneyManagementGoalTracker(
-                        currentAmount: totalContributions,
-                        goalAmount: goalAmount,
-                        contributorCount: contributorCount,
-                        daysToWedding: daysToWedding,
-                        averageContribution: averageContribution,
-                        giftItemCount: giftItemCount
-                    )
+                    // Main content - SCROLLABLE
+                    ScrollView(.vertical, showsIndicators: true) {
+                        VStack(spacing: Spacing.xxl) {
+                            // Recent Contributions + Top Contributors
+                            MoneyManagementContributionsSection(
+                                contributions: filteredContributions,
+                                topContributors: topContributors,
+                                totalPledged: totalPledged,
+                                pendingCount: pendingPledges.count,
+                                onContributionTap: { contribution in
+                                    selectedContribution = contribution
+                                },
+                                onMarkReceived: { contribution in
+                                    Task {
+                                        await giftsStore.markAsReceived(contribution)
+                                    }
+                                },
+                                onPartialPayment: { contribution in
+                                    contributionForPartialPayment = contribution
+                                }
+                            )
 
-                    // Recent Contributions + Top Contributors (moved up per user request)
-                    MoneyManagementContributionsSection(
-                        contributions: sortedContributions,
-                        topContributors: topContributors,
-                        totalPledged: totalPledged,
-                        pendingCount: pendingPledges.count,
-                        onContributionTap: { contribution in
-                            selectedContribution = contribution
-                        },
-                        onMarkReceived: { contribution in
-                            Task {
-                                await giftsStore.markAsReceived(contribution)
-                            }
-                        },
-                        onPartialPayment: { contribution in
-                            contributionForPartialPayment = contribution
-                            showingPartialPaymentModal = true
+                            // Charts Section
+                            MoneyManagementChartsSection(
+                                contributions: sortedContributions,
+                                selectedTimeRange: $selectedTimeRange
+                            )
+
+                            // Gift Registry Items
+                            MoneyManagementGiftRegistry(
+                                gifts: physicalGifts,
+                                onAddItem: { showingAddContribution = true }
+                            )
+
+                            // Pending Pledges
+                            MoneyManagementPendingPledges(
+                                pledges: pendingPledges,
+                                totalPledged: totalPledged,
+                                onPledgeTap: { pledge in
+                                    selectedContribution = pledge
+                                },
+                                onMarkReceived: { pledge in
+                                    Task {
+                                        await giftsStore.markAsReceived(pledge)
+                                    }
+                                },
+                                onPartialPayment: { pledge in
+                                    contributionForPartialPayment = pledge
+                                }
+                            )
+
+                            // Contribution Insights
+                            MoneyManagementInsights(
+                                contributions: sortedContributions
+                            )
+
+                            // Thank You Messages Section
+                            MoneyManagementThankYouSection(
+                                sentCount: thankYouSentCount,
+                                pendingCount: thankYouPendingCount
+                            )
                         }
-                    )
-
-                    // Charts Section (moved below contributions per user request)
-                    MoneyManagementChartsSection(
-                        contributions: sortedContributions,
-                        selectedTimeRange: $selectedTimeRange
-                    )
-
-                    // Gift Registry Items
-                    MoneyManagementGiftRegistry(
-                        gifts: physicalGifts,
-                        onAddItem: { showingAddContribution = true }
-                    )
-
-                    // Pending Pledges
-                    MoneyManagementPendingPledges(
-                        pledges: pendingPledges,
-                        totalPledged: totalPledged,
-                        onPledgeTap: { pledge in
-                            selectedContribution = pledge
-                        },
-                        onMarkReceived: { pledge in
-                            Task {
-                                await giftsStore.markAsReceived(pledge)
-                            }
-                        },
-                        onPartialPayment: { pledge in
-                            contributionForPartialPayment = pledge
-                            showingPartialPaymentModal = true
-                        }
-                    )
-
-                    // Contribution Insights
-                    MoneyManagementInsights(
-                        contributions: sortedContributions
-                    )
-
-                    // Thank You Messages Section
-                    MoneyManagementThankYouSection(
-                        sentCount: thankYouSentCount,
-                        pendingCount: thankYouPendingCount
-                    )
+                        // Constrain to available width to prevent edge clipping
+                        .frame(width: availableWidth)
+                        .padding(.horizontal, horizontalPadding)
+                        .padding(.vertical, windowSize == .compact ? Spacing.md : Spacing.lg)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
-                .padding(Spacing.xxl)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .task {
@@ -143,16 +162,14 @@ struct MoneyManagementViewV2: View {
             )
             .environmentObject(settingsStore)
         }
-        .sheet(isPresented: $showingPartialPaymentModal) {
-            if let contribution = contributionForPartialPayment {
-                PartialContributionModal(
-                    contribution: contribution,
-                    onMakePayment: { amount in
-                        await giftsStore.recordPartialContribution(contribution: contribution, amountReceived: amount)
-                    }
-                )
-                .environmentObject(settingsStore)
-            }
+        .sheet(item: $contributionForPartialPayment) { contribution in
+            PartialContributionModal(
+                contribution: contribution,
+                onMakePayment: { amount in
+                    await giftsStore.recordPartialContribution(contribution: contribution, amountReceived: amount)
+                }
+            )
+            .environmentObject(settingsStore)
         }
     }
 
@@ -160,6 +177,33 @@ struct MoneyManagementViewV2: View {
 
     private var sortedContributions: [GiftOrOwed] {
         giftsStore.giftsAndOwed.sorted { ($0.createdAt) > ($1.createdAt) }
+    }
+
+    /// Filtered contributions based on search text and selected tab
+    private var filteredContributions: [GiftOrOwed] {
+        var result = sortedContributions
+
+        // Filter by search text
+        if !searchText.isEmpty {
+            result = result.filter { contribution in
+                contribution.fromPerson?.localizedCaseInsensitiveContains(searchText) == true ||
+                contribution.description?.localizedCaseInsensitiveContains(searchText) == true
+            }
+        }
+
+        // Filter by selected tab
+        switch selectedTab {
+        case .all:
+            break
+        case .contributions:
+            result = result.filter { $0.type == .moneyOwed || $0.type == .contribution }
+        case .gifts:
+            result = result.filter { $0.type == .giftReceived }
+        case .pledges:
+            result = result.filter { $0.status == .pending }
+        }
+
+        return result
     }
 
     private var totalContributions: Double {
@@ -807,6 +851,9 @@ struct RecentContributionsTable: View {
                     .frame(width: 120, alignment: .leading)
                 Text("Status")
                     .frame(width: 100, alignment: .leading)
+                // Spacer for action buttons column
+                Spacer()
+                    .frame(width: 60)
             }
             .font(Typography.caption2)
             .fontWeight(.semibold)
@@ -950,34 +997,30 @@ struct ContributionRow: View {
             ContributionStatusBadge(status: contribution.status)
                 .frame(width: 100, alignment: .leading)
 
-            // Action buttons (visible on hover)
-            if isHovered && isPending {
-                HStack(spacing: Spacing.sm) {
-                    Button {
-                        onMarkReceived?()
-                    } label: {
-                        Image(systemName: "checkmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(SageGreen.shade500)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Mark as Received")
-
-                    Button {
-                        onPartialPayment?()
-                    } label: {
-                        Image(systemName: "chart.pie.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color.fromHex("F59E0B"))
-                    }
-                    .buttonStyle(.plain)
-                    .help("Record Partial Payment")
+            // Action buttons (always present to prevent layout shift, opacity controlled by hover)
+            HStack(spacing: Spacing.sm) {
+                Button {
+                    onMarkReceived?()
+                } label: {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(SageGreen.shade500)
                 }
-                .frame(width: 60)
-            } else {
-                Spacer()
-                    .frame(width: 60)
+                .buttonStyle(.plain)
+                .help("Mark as Received")
+
+                Button {
+                    onPartialPayment?()
+                } label: {
+                    Image(systemName: "chart.pie.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color.fromHex("F59E0B"))
+                }
+                .buttonStyle(.plain)
+                .help("Record Partial Payment")
             }
+            .frame(width: 60)
+            .opacity(isHovered && isPending ? 1 : 0)
         }
         .padding(.horizontal, Spacing.lg)
         .padding(.vertical, Spacing.md)
